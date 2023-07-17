@@ -1,0 +1,15 @@
+db
+logs
+.eslintcache
+node_modules
+.idea
+local.json
+.vscode
+build
+dist
+coverage
+
+*.log
+.DS_Store
+
+

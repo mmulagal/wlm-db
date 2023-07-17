@@ -1,0 +1,15 @@
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "Frontend App for Workload Manager for SQL",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.ngage.netapp.com/scm/wlmdb/wlmdb.git"
+  },
+  "author": "",
+  "license": "ISC"
+}

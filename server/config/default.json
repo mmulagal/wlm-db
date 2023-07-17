@@ -1,0 +1,37 @@
+{
+    "app-port": 8085,
+    "jwt": {
+        "audience": {
+            "tenancy": "https://api.cloud.netapp.com"
+        }
+    },
+    "urls": {
+        "auth0": "https://staging-netapp-cloud-account.auth0.com",
+        "cloud-manager": "https://staging.api.bluexp.netapp.com",
+        "local-connector": "http://127.0.0.1:8098",
+        "signoz": "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces"
+    },
+    "got": {
+        "internal": {
+            "lookup-timeout": "1s",
+            "connect-timeout": "1s",
+            "response-timeout": "10s",
+            "retry-count": 2
+        },
+        "external": {
+            "lookup-timeout": "2s",
+            "connect-timeout": "2s",
+            "response-timeout": "50s",
+            "retry-count": 2
+        }
+    },
+    "log4js": {
+        "config-file": "./config/log4js.json"
+    },
+    "kinesis": {
+        "stream-name": "audit-service-staging-stream"
+    },
+    "service-token": {
+        "expiration-margin": "10s"
+    }
+}

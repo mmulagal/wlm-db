@@ -1,0 +1,11 @@
+{
+    "urls": {
+        "auth0": "https://netapp-cloud-account.auth0.com",
+        "cloud-manager": "https://api.bluexp.netapp.com",
+        "tenancy": "https://api.bluexp.netapp.com",
+        "credentials": "https://api.bluexp.netapp.com"
+    },
+    "kinesis": {
+        "stream-name": "audit-service-prod-stream"
+    }
+}
