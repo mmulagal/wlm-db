@@ -3,8 +3,8 @@ import config from "config";
 import { join } from "path";
 
 //General
-export const APP_NAME = "Workload Manager for SQL";
-export const API_TITLE = "Workload Manager for SQL API";
+export const APP_NAME = "Workload Manager for DB";
+export const API_TITLE = "Workload Manager for DB API";
 
 // local storage keys
 export const USER_TOKEN = "USER_TOKEN";

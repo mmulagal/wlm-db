@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Server App for Workload Manager for SQL",
+  "description": "Server App for Workload Manager for DB",
   "type": "module",
   "private": true,
   "main": "index.ts",
