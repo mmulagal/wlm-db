@@ -7,12 +7,13 @@
   "main": "index.ts",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "start": "node --loader @esbuild-kit/esm-loader dist/src/index.js",
+    "start": "node --loader @esbuild-kit/esm-loader dist/index.js",
     "dev": "node --loader @esbuild-kit/esm-loader --inspect --watch src/index.ts",
     "simulator": "cross-env NODE_ENV=simulator node --loader @esbuild-kit/esm-loader --inspect --watch test/simulator/index.ts",
     "lint": "prettier --write .",
     "outdated": "npx npm-check-updates",
-    "unused": "npx depcheck"
+    "unused": "npx depcheck",
+    "build:dev": "npm run build && npm run start"
   },
   "repository": {
     "type": "git",
@@ -44,6 +45,7 @@
     "randomatic": "^3.1.1"
   },
   "devDependencies": {
+    "@aws-sdk/client-ec2": "^3.371.0",
     "@aws-sdk/types": "^3.337.0",
     "@types/async": "^3.2.20",
     "@types/config": "^3.3.0",

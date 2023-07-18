@@ -1,17 +1,10 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { Static, Type } from '@sinclair/typebox';
+import { Static } from '@sinclair/typebox';
 import { VERSION } from '../utils/consts';
+import { getHealthinessSchema, getSystemInfoSchema } from '../validation/routes-schema-validation';
+import { HealthResponse, AboutResponse } from '../types/route-types';
 
-const AboutResponse = Type.Object({
-    version: Type.String(),
-    nodeVersion: Type.String(),
-    mode: Type.Optional(Type.String()),
-    build: Type.Optional(Type.String()),
-    git: Type.Optional(Type.String())
-});
 type AboutResponseType = Static<typeof AboutResponse>;
-
-const HealthResponse = Type.String();
 type HealthResponseType = Static<typeof HealthResponse>;
 
 export default function systemRoutes(fastify: FastifyInstance) {
@@ -19,13 +12,7 @@ export default function systemRoutes(fastify: FastifyInstance) {
         .get<{ Reply: AboutResponseType }>(
             '/about',
             {
-                schema: {
-                    tags: ['System'],
-                    description: 'Get system information',
-                    response: {
-                        200: AboutResponse
-                    }
-                }
+                schema: getSystemInfoSchema
             },
             (_, reply) => {
                 reply.send({
@@ -39,13 +26,7 @@ export default function systemRoutes(fastify: FastifyInstance) {
         )
         .get<{ Reply: HealthResponseType }>(
             '/health',
-            {
-                schema: {
-                    tags: ['System'],
-                    description: 'Health and liveness',
-                    response: { 200: HealthResponse }
-                }
-            },
+            { schema: getHealthinessSchema },
             (_, reply) => {
                 reply.code(200).send('wlm-db_health 1');
             }
