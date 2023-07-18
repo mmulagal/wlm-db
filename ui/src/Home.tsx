@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Routes, Route, useLocation } from "react-router-dom";
 import AppNotification from "./common/AppNotification/AppNotification";
-import Test from "./components/Test";
+
 import styles from "./Home.module.scss";
 import {
   clearNotifications,
