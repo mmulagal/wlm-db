@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import styles from "./Home.module.scss";
 
 const Home = () => {
+  //routing logic here
   return (
     <div className={styles["app-layout"]}>
       <Routes>
