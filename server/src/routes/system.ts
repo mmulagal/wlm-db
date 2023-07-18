@@ -1,11 +1,7 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { Static } from '@sinclair/typebox';
 import { VERSION } from '../utils/consts';
 import { getHealthinessSchema, getSystemInfoSchema } from '../validation/routes-schema-validation';
-import { HealthResponse, AboutResponse } from '../types/route-types';
-
-type AboutResponseType = Static<typeof AboutResponse>;
-type HealthResponseType = Static<typeof HealthResponse>;
+import { AboutResponseType, HealthResponseType } from '../types/route-types';
 
 export default function systemRoutes(fastify: FastifyInstance) {
     fastify

@@ -1,10 +1,7 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { Static } from '@sinclair/typebox';
 import { getVpcsListSchema } from '../validation/routes-schema-validation';
-import { VpcListResponse } from '../types/route-types';
+import { VpcResponseType } from '../types/route-types';
 import { getVpcsList } from '../operations/aws/aws';
-
-type VpcResponseType = Static<typeof VpcListResponse>;
 
 interface IParam {
     accountId: string,

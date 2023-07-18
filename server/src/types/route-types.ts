@@ -1,4 +1,5 @@
 import { Type } from '@sinclair/typebox';
+import { Static } from '@sinclair/typebox';
 
 const HealthResponse = Type.String();
 
@@ -34,6 +35,10 @@ const VpcListResponse = Type.Object({
         }))
     })),
 });
+
+export type VpcResponseType = Static<typeof VpcListResponse>;
+export type AboutResponseType = Static<typeof AboutResponse>;
+export type HealthResponseType = Static<typeof HealthResponse>;
 
 export {
     HealthResponse, AboutResponse, VpcListResponse
