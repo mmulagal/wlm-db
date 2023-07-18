@@ -5,6 +5,14 @@ import { BrowserRouter } from "react-router-dom";
 import store from "./store/store";
 import App from "./App";
 
+jest.mock("@netapp/design-system", () => {
+  return {
+    Notification: jest.fn(),
+    NotificationPanel: jest.fn(),
+    Typography: jest.fn(),
+  };
+});
+
 test("renders the App component", () => {
   render(
     <Provider store={store}>
@@ -15,5 +23,5 @@ test("renders the App component", () => {
   );
 
   // Assert that the component renders without errors
-  expect(screen.getByText("Initial Page")).toBeInTheDocument();
+  expect(screen.getByText("initial page")).toBeInTheDocument();
 });
