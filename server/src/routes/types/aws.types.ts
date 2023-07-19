@@ -12,13 +12,13 @@ const VpcListResponse = Type.Object({
             subnets: Type.Optional(
                 Type.Array(
                     Type.Object({
-                        id: Type.String(),
-                        state: Type.String(),
-                        vpcId: Type.String(),
-                        cidrBlock: Type.String(),
-                        availabilityZone: Type.String(),
-                        availableIps: Type.Number(),
-                        tags: Type.Any(),
+                        id: Type.Optional(Type.String()),
+                        state: Type.Optional(Type.String()),
+                        vpcId: Type.Optional(Type.String()),
+                        cidrBlock: Type.Optional(Type.String()),
+                        availabilityZone: Type.Optional(Type.String()),
+                        availableIps: Type.Optional(Type.Number()),
+                        tags: Type.Optional(Type.Any()),
                         name: Type.Optional(Type.String()),
                     })
                 )
@@ -26,10 +26,10 @@ const VpcListResponse = Type.Object({
             securityGroups: Type.Optional(
                 Type.Array(
                     Type.Object({
-                        id: Type.String(),
-                        description: Type.String(),
-                        vpcId: Type.String(),
-                        ipPermissions: Type.Any(),
+                        id: Type.Optional(Type.String()),
+                        description: Type.Optional(Type.String()),
+                        vpcId: Type.Optional(Type.String()),
+                        ipPermissions: Type.Optional(Type.Any()),
                     })
                 )
             ),

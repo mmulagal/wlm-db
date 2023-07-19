@@ -16,7 +16,7 @@ interface Subnet {
     id?: string;
     state?: string;
     vpcId?: string;
-    tags: any;
+    tags?: any;
     cidrBlock?: string;
     availabilityZone?: string;
     availableIps?: number;
