@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { getVpcsListSchema } from '../validation/routes-schema-validation';
-import { VpcResponseType } from '../types/route-types';
+import { getVpcsListSchema } from './schemas/aws-schemas';
+import { VpcResponseType } from './types/aws.types';
 import { getVpcsList } from '../operations/aws/aws';
 
 interface IParam {

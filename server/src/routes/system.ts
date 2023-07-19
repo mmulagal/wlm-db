@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { VERSION } from '../utils/consts';
-import { getHealthinessSchema, getSystemInfoSchema } from '../validation/routes-schema-validation';
-import { AboutResponseType, HealthResponseType } from '../types/route-types';
+import { getHealthinessSchema, getSystemInfoSchema } from './schemas/system-schemas';
+import { AboutResponseType, HealthResponseType } from './types/system.types';
 
 export default function systemRoutes(fastify: FastifyInstance) {
     fastify

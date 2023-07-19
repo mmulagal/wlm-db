@@ -1,20 +1,4 @@
-import { HealthResponse, AboutResponse, VpcListResponse } from '../types/route-types';
-
-// System schemas:
-const getHealthinessSchema = {
-    tags: ['System'],
-    hide: true,
-    description: 'Health and liveness',
-    response: { 200: HealthResponse }
-};
-
-const getSystemInfoSchema = {
-    tags: ['System'],
-    description: 'Get system information',
-    response: {
-        200: AboutResponse
-    }
-};
+import { VpcListResponse } from '../types/aws.types';
 
 // Aws schemas
 const getVpcsListSchema = {
@@ -44,7 +28,5 @@ const getVpcsListSchema = {
 };
 
 export {
-    getHealthinessSchema,
-    getSystemInfoSchema,
     getVpcsListSchema
 }
