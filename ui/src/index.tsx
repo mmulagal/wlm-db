@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider as ReduxContextProvider } from "react-redux";
-import { ThemeProvider } from "@netapp/design-system";
+import { DialogContextProvider, ThemeProvider } from "@netapp/design-system";
 import { BrowserRouter } from "react-router-dom";
 import store from "./store/store";
 import "./index.css";
@@ -15,7 +15,9 @@ root.render(
     <ReduxContextProvider store={store}>
       <ThemeProvider isIframe={false} theme={"light"}>
         <BrowserRouter>
-          <App />
+          <DialogContextProvider>
+            <App />
+          </DialogContextProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ReduxContextProvider>
