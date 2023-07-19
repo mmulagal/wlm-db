@@ -1,4 +1,5 @@
 import { DescribeSubnetsRequest } from '@aws-sdk/client-ec2';
+import { AWSQueryFields } from '../../utils/consts';
 import { describeVpc, describeSecurityGroups, describeSubnets } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 
@@ -41,12 +42,12 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
 
     const { Vpcs } = (await describeVpc(credentialsId, region, {})) || [];
 
-    const vpcs: Array<VPC> = [];
+    let vpcs: Array<VPC> = [];
 
     if (Vpcs?.length && fieldsValues.length === 0) {
-        Vpcs.forEach((vpc) => {
+        vpcs = Vpcs.map((vpc) => {
             const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
-            vpcs.push({ id, state, tags, cidrBlock, isDefault });
+            return { id, state, tags, cidrBlock, isDefault };
         });
     }
 
@@ -65,12 +66,12 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
                     };
 
                     let subnetsList: Array<Subnet> = [];
-                    if (fields?.includes('subnet')) {
+                    if (fields?.includes(AWSQueryFields.SUBNET)) {
                         subnetsList = await getSubnetsList(credentialsId, region, params);
                     }
 
                     let securityGroupList: Array<SecurityGroup> = [];
-                    if (fields?.includes('securitygroup')) {
+                    if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
                         securityGroupList = await getSecurityGroupsList(credentialsId, region, params);
                     }
                     vpcs.push({ id, state, tags, cidrBlock, isDefault, subnets: subnetsList, securityGroups: securityGroupList });
@@ -84,21 +85,29 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
 }
 
 async function getSubnetsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
+    logger.info('List Subnets in a region', { credentialsId, region, params });
+
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
-    const subnetsList: Array<Subnet> = [];
-    subnets?.forEach((subnet) => {
-        const { SubnetId: id, State: state, VpcId: vpcId, Tags: tags, CidrBlock: cidrBlock, AvailabilityZone: availabilityZone, AvailableIpAddressCount: availableIps } = subnet;
-        subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps });
-    });
+    let subnetsList: Array<Subnet> = [];
+    if (subnets?.length) {
+        subnetsList = subnets.map((subnet) => {
+            const { SubnetId: id, State: state, VpcId: vpcId, Tags: tags, CidrBlock: cidrBlock, AvailabilityZone: availabilityZone, AvailableIpAddressCount: availableIps } = subnet;
+            return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps };
+        });
+    }
     return subnetsList;
 }
 
 async function getSecurityGroupsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
+    logger.info('List Security Groups in a region', { credentialsId, region, params });
+
     const { SecurityGroups: securityGroups } = await describeSecurityGroups(credentialsId, region, params);
-    const securityGroupList: Array<SecurityGroup> = [];
-    securityGroups?.forEach((sg) => {
-        const { GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions } = sg;
-        securityGroupList.push({ id: id!, description: description!, vpcId: vpcId!, ipPermissions });
-    });
+    let securityGroupList: Array<SecurityGroup> = [];
+    if (securityGroups?.length) {
+        securityGroupList = securityGroups.map((sg) => {
+            const { GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions } = sg;
+            return { id: id, description: description, vpcId: vpcId, ipPermissions };
+        });
+    }
     return securityGroupList;
 }
