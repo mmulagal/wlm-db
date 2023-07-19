@@ -26,9 +26,7 @@ interface AwsCredentials extends Credentials {
     };
 }
 
-export async function getAllAwsCredentials(credentialsType: CredentialsType.AWS) {
-    logger.info("Getting all AWS credentials ", credentialsType)
-    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
+export async function getAllAwsCredentials(accountId:string) {
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials`, {
             prefixUrl: CREDENTIALS_ENDPOINT,
@@ -36,7 +34,7 @@ export async function getAllAwsCredentials(credentialsType: CredentialsType.AWS)
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
             },
             searchParams: {
-                credentialsType
+                credentialsType: CredentialsType.AWS
             }
         })
         .json<AwsCredentials[]>();

@@ -30,6 +30,7 @@ import {
 } from './utils/async-local-storage';
 import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
+import credentialsRoutes from './routes/credentials';
 
 
 const logger = getLogger();
@@ -108,6 +109,7 @@ const app = fastify({
     .register(
         (instance, _, done) => {
             systemRoutes(instance);
+            credentialsRoutes(instance);
             done();
         },
         { prefix: API_PREFIX_PATH }
