@@ -1,6 +1,4 @@
-import {
-    EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand
-} from '@aws-sdk/client-ec2';
+import { EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand, DescribeSubnetsRequest, DescribeVpcsRequest, DescribeSecurityGroupsRequest } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -8,12 +6,14 @@ const logger = getLogger();
 async function getEC2(region: string, credentialsId: string) {
     logger.debug('Getting EC2 client:', region, credentialsId);
 
-    const { credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId:sessionToken } } = await getCredentialDetails(credentialsId);
+    const {
+        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken },
+    } = await getCredentialDetails(credentialsId);
     let credentials = { accessKeyId, secretAccessKey, sessionToken };
     return new EC2Client({ credentials, region });
 }
 
-async function describeVpc(credentialsId: string, region: string, params: object) {
+async function describeVpc(credentialsId: string, region: string, params: DescribeVpcsRequest) {
     logger.info('Describe VPC', { region, params });
 
     const ec2 = await getEC2(region, credentialsId);
@@ -24,7 +24,7 @@ async function describeVpc(credentialsId: string, region: string, params: object
     return resp;
 }
 
-async function describeSubnets(credentialsId: string, region: string, params: object) {
+async function describeSubnets(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
     logger.info('Describe Subnets', { region, params });
 
     const ec2 = await getEC2(region, credentialsId);
@@ -35,7 +35,7 @@ async function describeSubnets(credentialsId: string, region: string, params: ob
     return resp;
 }
 
-async function describeSecurityGroups(credentialsId: string, region: string, params: object) {
+async function describeSecurityGroups(credentialsId: string, region: string, params: DescribeSecurityGroupsRequest) {
     logger.info('Describe Security Groups', { region, params });
 
     const ec2 = await getEC2(region, credentialsId);
@@ -46,6 +46,4 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
     return resp;
 }
 
-export {
-    getEC2, describeVpc, describeSubnets, describeSecurityGroups
-};
+export { getEC2, describeVpc, describeSubnets, describeSecurityGroups };

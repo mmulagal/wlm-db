@@ -9,24 +9,22 @@ const getVpcsListSchema = {
         properties: {
             accountId: {
                 type: 'string',
-                description: 'Account ID'
+                description: 'Account ID',
             },
             credentialsId: {
                 type: 'string',
-                description: 'Credentials ID'
+                description: 'Credentials ID',
             },
             region: {
                 type: 'string',
-                description: 'Aws Region'
-            }
+                description: 'Aws Region',
+            },
         },
-        required: ['accountId']
+        required: ['accountId'],
     },
     response: {
-        200: VpcListResponse
-    }
+        200: VpcListResponse,
+    },
 };
 
-export {
-    getVpcsListSchema
-}
+export { getVpcsListSchema };
