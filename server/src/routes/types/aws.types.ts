@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox';
 import { Static } from '@sinclair/typebox';
 
-const VpcListResponse = Type.Object({
+export const VpcListResponse = Type.Object({
     vpcs: Type.Array(
         Type.Object({
             id: Type.Optional(Type.String()),
@@ -37,7 +37,7 @@ const VpcListResponse = Type.Object({
     ),
 });
 
-const IParam = Type.Object({
+export const IParam = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String(),
@@ -45,5 +45,3 @@ const IParam = Type.Object({
 
 export type VpcResponseType = Static<typeof VpcListResponse>;
 export type IParamType = Static<typeof IParam>;
-
-export { VpcListResponse };
