@@ -8,7 +8,6 @@ export const AboutResponse = Type.Object({
     nodeVersion: Type.String(),
     mode: Type.Optional(Type.String()),
     build: Type.Optional(Type.String()),
-    git: Type.Optional(Type.String()),
 });
 
 export type AboutResponseType = Static<typeof AboutResponse>;

@@ -1,7 +1,7 @@
 import { VpcListResponse } from '../types/aws.types';
 
 // Aws schemas
-export const getVpcsListSchema = {
+export const GetVpcsListSchema = {
     tags: ['aws'],
     description: 'List Vpcs in a region',
     params: {

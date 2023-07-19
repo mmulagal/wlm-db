@@ -37,11 +37,16 @@ export const VpcListResponse = Type.Object({
     ),
 });
 
-export const IParam = Type.Object({
+export const AwsParam = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String(),
 });
 
+export const AwsQueryString = Type.Object({
+    fields: Type.String(),
+});
+
 export type VpcResponseType = Static<typeof VpcListResponse>;
-export type IParamType = Static<typeof IParam>;
+export type AwsParamType = Static<typeof AwsParam>;
+export type AwsQueryStringType = Static<typeof AwsQueryString>;

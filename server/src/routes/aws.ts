@@ -1,14 +1,19 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { getVpcsListSchema } from './schemas/aws-schemas';
-import { VpcResponseType, IParamType } from './types/aws.types';
+import { GetVpcsListSchema } from './schemas/aws-schemas';
+import { VpcResponseType, AwsParamType, AwsQueryStringType } from './types/aws.types';
 import { getVpcsList } from '../operations/aws/aws-operations';
 
 export default function awsRoutes(fastify: FastifyInstance) {
-    fastify.get<{ Reply: VpcResponseType; Params: IParamType }>('/accounts/:accountId/credentials/:credentialsId/regions/:region/vpcs', { schema: getVpcsListSchema }, async (request, reply) => {
-        const {
-            params: { credentialsId, region },
-        } = request;
-        const response = await getVpcsList(credentialsId, region);
-        return reply.send(response);
-    });
+    fastify.get<{ Reply: VpcResponseType; Params: AwsParamType; Querystring: AwsQueryStringType }>(
+        '/accounts/:accountId/credentials/:credentialsId/regions/:region/vpcs',
+        { schema: GetVpcsListSchema },
+        async (request, reply) => {
+            const {
+                params: { credentialsId, region },
+                query: { fields },
+            } = request;
+            const response = await getVpcsList(credentialsId, region, fields);
+            return reply.send(response);
+        }
+    );
 }

@@ -42,10 +42,10 @@
         "lodash-es": "^4.17.21",
         "log4js": "^6.9.1",
         "nanoid": "^4.0.2",
-        "randomatic": "^3.1.1"
+        "randomatic": "^3.1.1",
+        "@aws-sdk/client-ec2": "^3.371.0"
     },
     "devDependencies": {
-        "@aws-sdk/client-ec2": "^3.371.0",
         "@aws-sdk/types": "^3.337.0",
         "@types/async": "^3.2.20",
         "@types/config": "^3.3.0",
