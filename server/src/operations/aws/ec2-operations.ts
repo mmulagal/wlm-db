@@ -1,0 +1,161 @@
+import createError from 'http-errors';
+import { DescribeSubnetsRequest } from '@aws-sdk/client-ec2';
+import { AWSQueryFields, SQL_AMI_NAMES } from '../../utils/consts';
+import { describeVpc, describeSecurityGroups, describeSubnets, getAmis } from '../../lib/aws/ec2';
+import getLogger from '../../utils/logger';
+
+const logger = getLogger();
+
+export interface VPC {
+    id?: string;
+    state?: string;
+    cidrBlock?: any;
+    tags?: any;
+    isDefault?: boolean;
+    subnets?: Array<Subnet>;
+    securityGroups?: Array<SecurityGroup>;
+}
+interface Subnet {
+    id?: string;
+    state?: string;
+    vpcId?: string;
+    tags?: any;
+    cidrBlock?: string;
+    availabilityZone?: string;
+    availableIps?: number;
+}
+interface SecurityGroup {
+    id?: string;
+    description?: string;
+    vpcId?: string;
+    ipPermissions?: any;
+}
+
+export async function getVpcsList(credentialsId: string, region: string, fields: string) {
+    logger.info('List vpcs in a region', { credentialsId, region, fields });
+
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const { Vpcs } = (await describeVpc(credentialsId, region, {})) || [];
+
+    let vpcs: Array<VPC> = [];
+
+    if (Vpcs?.length && fieldsValues.length === 0) {
+        vpcs = Vpcs.map((vpc) => {
+            const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
+            return { id, state, tags, cidrBlock, isDefault };
+        });
+    }
+
+    if (Vpcs?.length) {
+        await Promise.all(
+            Vpcs.map(async (vpc) => {
+                try {
+                    const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
+                    const params: DescribeSubnetsRequest = {
+                        Filters: [
+                            {
+                                Name: 'vpc-id',
+                                Values: [id as string],
+                            },
+                        ],
+                    };
+
+                    let subnetsList: Array<Subnet> = [];
+                    if (fields?.includes(AWSQueryFields.SUBNET)) {
+                        subnetsList = await getSubnetsList(credentialsId, region, params);
+                    }
+
+                    let securityGroupList: Array<SecurityGroup> = [];
+                    if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
+                        securityGroupList = await getSecurityGroupsList(credentialsId, region, params);
+                    }
+                    vpcs.push({ id, state, tags, cidrBlock, isDefault, subnets: subnetsList, securityGroups: securityGroupList });
+                } catch (err) {
+                    logger.error('Failed to get the vpc details', { vpc, err });
+                }
+            })
+        );
+    }
+    return { vpcs: vpcs };
+}
+
+async function getSubnetsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
+    logger.info('List Subnets in a region', { credentialsId, region, params });
+
+    const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
+    let subnetsList: Array<Subnet> = [];
+    if (subnets?.length) {
+        subnetsList = subnets.map((subnet) => {
+            const { SubnetId: id, State: state, VpcId: vpcId, Tags: tags, CidrBlock: cidrBlock, AvailabilityZone: availabilityZone, AvailableIpAddressCount: availableIps } = subnet;
+            return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps };
+        });
+    }
+    return subnetsList;
+}
+
+async function getSecurityGroupsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
+    logger.info('List Security Groups in a region', { credentialsId, region, params });
+
+    const { SecurityGroups: securityGroups } = await describeSecurityGroups(credentialsId, region, params);
+    let securityGroupList: Array<SecurityGroup> = [];
+    if (securityGroups?.length) {
+        securityGroupList = securityGroups.map((sg) => {
+            const { GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions } = sg;
+            return { id: id, description: description, vpcId: vpcId, ipPermissions };
+        });
+    }
+    return securityGroupList;
+}
+
+
+export async function getAmiList(credentialsId: string, region: string) {
+    logger.info('Get AWS Amis', { credentialsId, region });
+
+    try {
+        const amis = await getAmis(credentialsId, region, {
+            Filters: [
+                { Name: 'name', Values: SQL_AMI_NAMES },
+                { Name: 'owner-alias', Values: ['amazon'] }
+            ] 
+        });
+        
+        if (!amis?.Images) {
+            return { amis: [] };
+        }
+    
+        return { 
+            amis: amis?.Images?.map(({
+                Name,
+                Description,
+                Architecture,
+                ImageId,
+                ImageLocation,
+                Public,
+                Platform,
+                PlatformDetails,
+                State,
+                Hypervisor,
+            }) => ({
+                name: Name,
+                description: Description,
+                architecture: Architecture,
+                imageId: ImageId,
+                imageLocation: ImageLocation,
+                public: Public,
+                platform: Platform,
+                platformDetails: PlatformDetails,
+                state: State,
+                hypervisor: Hypervisor
+            }))
+        }
+    } catch (error: any) {
+        logger.error('Failed to get the aws amis ', error.message);
+        throw createError(error.statusCode || error.code || 500, error.message)
+    }
+}

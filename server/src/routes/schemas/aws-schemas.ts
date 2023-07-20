@@ -1,7 +1,7 @@
 import { VpcListResponse, AmiResponse } from '../types/aws.types';
 
 // Aws schemas
-const getVpcsListSchema = {
+export const GetVpcsListSchema = {
     tags: ['aws'],
     description: 'List Vpcs in a region',
     params: {
@@ -27,7 +27,7 @@ const getVpcsListSchema = {
     }
 };
 
-const GetAmiSchema = {
+export const GetAmiSchema = {
     tags: ['aws'],
     description: 'Get AMIs in a region',
     params: {
@@ -52,5 +52,3 @@ const GetAmiSchema = {
         200: AmiResponse,
     },
 }
-
-export { getVpcsListSchema, GetAmiSchema };

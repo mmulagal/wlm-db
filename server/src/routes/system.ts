@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { VERSION } from '../utils/consts';
-import { getHealthinessSchema, getSystemInfoSchema } from './schemas/system-schemas';
+import { GetHealthinessSchema, GetSystemInfoSchema } from './schemas/system-schemas';
 import { AboutResponseType, HealthResponseType } from './types/system.types';
 
 export default function systemRoutes(fastify: FastifyInstance) {
@@ -8,7 +8,7 @@ export default function systemRoutes(fastify: FastifyInstance) {
         .get<{ Reply: AboutResponseType }>(
             '/about',
             {
-                schema: getSystemInfoSchema
+                schema: GetSystemInfoSchema,
             },
             (_, reply) => {
                 reply.send({
@@ -16,15 +16,10 @@ export default function systemRoutes(fastify: FastifyInstance) {
                     nodeVersion: process.version,
                     mode: process.env.ENV_SS_BUILD_MODE,
                     build: process.env.ENV_SS_BUILD_TC,
-                    git: process.env.ENV_SS_BUILD_GIT
                 });
             }
         )
-        .get<{ Reply: HealthResponseType }>(
-            '/health',
-            { schema: getHealthinessSchema },
-            (_, reply) => {
-                reply.code(200).send('wlm-db_health 1');
-            }
-        );
+        .get<{ Reply: HealthResponseType }>('/health', { schema: GetHealthinessSchema }, (_, reply) => {
+            reply.code(200).send('wlm-db_health 1');
+        });
 }

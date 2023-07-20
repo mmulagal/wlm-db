@@ -1,18 +1,15 @@
 import { Type } from '@sinclair/typebox';
 import { Static } from '@sinclair/typebox';
 
-
-// Request Params - Common for every request
-const IParam = Type.Object({
+// AWS Request Params
+export const AwsParam = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String(),
 });
 
-type IParamType = Static<typeof IParam>;
-
 // VPC list Response
-const VpcListResponse = Type.Object({
+export const VpcListResponse = Type.Object({
     vpcs: Type.Array(
         Type.Object({
             id: Type.Optional(Type.String()),
@@ -48,10 +45,8 @@ const VpcListResponse = Type.Object({
     ),
 });
 
-type VpcResponseType = Static<typeof VpcListResponse>;
-
 // AMI Response 
-const AmiResponse = Type.Object({
+export const AmiResponse = Type.Object({
     amis: Type.Array(
         Type.Object({
             name: Type.Optional(Type.String()),
@@ -68,12 +63,11 @@ const AmiResponse = Type.Object({
     )
 })
 
-type AmiResponseType = Static<typeof AmiResponse>;
+export const AwsQueryString = Type.Object({
+    fields: Type.String(),
+});
 
-export {
-    IParamType,
-    VpcListResponse,
-    VpcResponseType,
-    AmiResponse,
-    AmiResponseType
-};
+export type VpcResponseType = Static<typeof VpcListResponse>;
+export type AwsParamType = Static<typeof AwsParam>;
+export type AwsQueryStringType = Static<typeof AwsQueryString>;
+export type AmiResponseType = Static<typeof AmiResponse>;

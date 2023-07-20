@@ -1,9 +1,9 @@
 import { Type } from '@sinclair/typebox';
 import { Static } from '@sinclair/typebox';
 
-const HealthResponse = Type.String();
+export const HealthResponse = Type.String();
 
-const AboutResponse = Type.Object({
+export const AboutResponse = Type.Object({
     version: Type.String(),
     nodeVersion: Type.String(),
     mode: Type.Optional(Type.String()),
@@ -12,5 +12,3 @@ const AboutResponse = Type.Object({
 
 export type AboutResponseType = Static<typeof AboutResponse>;
 export type HealthResponseType = Static<typeof HealthResponse>;
-
-export { HealthResponse, AboutResponse };
