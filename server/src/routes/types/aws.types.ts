@@ -1,6 +1,17 @@
 import { Type } from '@sinclair/typebox';
 import { Static } from '@sinclair/typebox';
 
+
+// Request Params - Common for every request
+const IParam = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String(),
+});
+
+type IParamType = Static<typeof IParam>;
+
+// VPC list Response
 const VpcListResponse = Type.Object({
     vpcs: Type.Array(
         Type.Object({
@@ -37,13 +48,32 @@ const VpcListResponse = Type.Object({
     ),
 });
 
-const IParam = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String(),
-});
+type VpcResponseType = Static<typeof VpcListResponse>;
 
-export type VpcResponseType = Static<typeof VpcListResponse>;
-export type IParamType = Static<typeof IParam>;
+// AMI Response 
+const AmiResponse = Type.Object({
+    amis: Type.Array(
+        Type.Object({
+            name: Type.Optional(Type.String()),
+            description: Type.Optional(Type.String()),
+            architecture: Type.Optional(Type.String()),
+            imageId: Type.Optional(Type.String()),
+            imageLocation: Type.Optional(Type.String()),
+            public: Type.Optional(Type.Boolean()),
+            platform: Type.Optional(Type.String()),
+            platformDetails: Type.Optional(Type.String()),
+            state: Type.Optional(Type.String()),
+            hypervisor: Type.Optional(Type.String())
+        })
+    )
+})
 
-export { VpcListResponse };
+type AmiResponseType = Static<typeof AmiResponse>;
+
+export {
+    IParamType,
+    VpcListResponse,
+    VpcResponseType,
+    AmiResponse,
+    AmiResponseType
+};

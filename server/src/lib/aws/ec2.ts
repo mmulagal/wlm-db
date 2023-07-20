@@ -1,4 +1,7 @@
-import { EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand, DescribeSubnetsRequest, DescribeVpcsRequest, DescribeSecurityGroupsRequest } from '@aws-sdk/client-ec2';
+import { EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand, DescribeSubnetsRequest, DescribeVpcsRequest, DescribeSecurityGroupsRequest,
+DescribeImagesCommand,
+DescribeImagesCommandInput
+} from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -46,4 +49,15 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
     return resp;
 }
 
-export { getEC2, describeVpc, describeSubnets, describeSecurityGroups };
+async function getAmis(credentialsId: string, region: string, params: DescribeImagesCommandInput) {
+    logger.info('Get AMIs', { region, params });
+
+    const ec2 = await getEC2(region, credentialsId);
+
+    const resp = await ec2.send(new DescribeImagesCommand(params));
+    logger.debug('descibeSecurityGroupss response:', resp);
+
+    return resp;
+}
+
+export { getEC2, describeVpc, describeSubnets, describeSecurityGroups, getAmis };

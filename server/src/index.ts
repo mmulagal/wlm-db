@@ -37,7 +37,7 @@ const accessLogger = getLogger('access');
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
-const API_PREFIX_PATH = 'wlm-db/api';
+const API_PREFIX_PATH = 'wlm-db/accounts/:accountId/api';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -180,7 +180,7 @@ const app = fastify({
         return payload;
     });
 
-await app.listen({ port, host }, err => {
+app.listen({ port, host }, err => {
     if (err) {
         logger.error('Failed to start server', err.message);
         process.exit(1);
