@@ -1,0 +1,14 @@
+import { Type } from '@sinclair/typebox';
+import { Static } from '@sinclair/typebox';
+
+export const HealthResponse = Type.String();
+
+export const AboutResponse = Type.Object({
+    version: Type.String(),
+    nodeVersion: Type.String(),
+    mode: Type.Optional(Type.String()),
+    build: Type.Optional(Type.String()),
+});
+
+export type AboutResponseType = Static<typeof AboutResponse>;
+export type HealthResponseType = Static<typeof HealthResponse>;
