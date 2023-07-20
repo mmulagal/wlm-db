@@ -2,7 +2,7 @@ import { VpcListResponse, AdsParams, AdsResponse } from '../types/aws.types';
 
 // Aws schemas
 export const GetVpcsListSchema = {
-    tags: ['aws'],
+    tags: ['AWS'],
     description: 'List Vpcs in a region',
     params: {
         type: 'object',

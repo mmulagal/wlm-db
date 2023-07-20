@@ -48,7 +48,7 @@ export const AwsQueryString = Type.Object({
 
 export const AdsResponse = Type.Object({
     directories: Type.Array(Type.Object({
-        directoryId: Type.String(),
+        directoryId: Type.Optional(Type.String()),
         dnsIpAddress: Type.Optional(Type.Array(Type.String())),
         launchTime: Type.Optional(Type.Date()),
         domainName: Type.Optional(Type.String()),

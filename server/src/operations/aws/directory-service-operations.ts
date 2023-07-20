@@ -4,7 +4,7 @@ import getLogger from '../../utils/logger';
 const logger = getLogger();
 
 export interface AdsInterface {
-    directoryId: string;
+    directoryId?: string;
     dnsIpAddress?: Array<string>;
     launchTime?: Date;
     domainName?: string;
@@ -27,7 +27,7 @@ export async function getAdsList(credentialsId: string, region: string, vpcId: s
         directories = directoryDesc?.filter(
             (perDs)=> perDs.VpcSettings?.VpcId === vpcId).map((perDs) => 
             ({
-                directoryId: perDs.DirectoryId!, dnsIpAddress: perDs.DnsIpAddrs, 
+                directoryId: perDs.DirectoryId, dnsIpAddress: perDs.DnsIpAddrs, 
                 launchTime: perDs.LaunchTime, domainName: perDs.Name, 
                 shortName: perDs.ShortName, ssoEnabled: perDs.SsoEnabled, 
                 status: perDs.Stage, type: perDs.Type, 

@@ -15,6 +15,6 @@ export async function describeDirectories(credentialsId: string, region: string,
     logger.info('Describe Active Directories', { region, params });
     const ds = await getDsClient(region, credentialsId);
     const resp = await ds.send(new DescribeDirectoriesCommand(params));
-    logger.info('Descibe Active Directory response:', resp);
+    logger.debug('Descibe Active Directory response:', resp);
     return resp;
 }

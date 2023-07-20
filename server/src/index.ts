@@ -108,7 +108,6 @@ const app = fastify({
     .register(
         (instance, _, done) => {
             systemRoutes(instance);
-            awsRoutes(instance);
             done();
         },
         { prefix: API_PREFIX_PATH }
