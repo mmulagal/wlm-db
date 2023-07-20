@@ -1,4 +1,12 @@
-import { EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand, DescribeSubnetsRequest, DescribeVpcsRequest, DescribeSecurityGroupsRequest } from '@aws-sdk/client-ec2';
+import {
+    EC2Client,
+    DescribeVpcsCommand,
+    DescribeSubnetsCommand,
+    DescribeSecurityGroupsCommand,
+    DescribeSubnetsRequest,
+    DescribeVpcsRequest,
+    DescribeSecurityGroupsRequest
+} from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -7,9 +15,9 @@ async function getEC2(region: string, credentialsId: string) {
     logger.debug('Getting EC2 client:', region, credentialsId);
 
     const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken },
+        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
-    let credentials = { accessKeyId, secretAccessKey, sessionToken };
+    const credentials = { accessKeyId, secretAccessKey, sessionToken };
     return new EC2Client({ credentials, region });
 }
 
