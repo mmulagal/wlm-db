@@ -45,24 +45,36 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
     let vpcs: Array<VPC> = [];
 
     if (Vpcs?.length && fieldsValues.length === 0) {
-        vpcs = Vpcs.map((vpc) => {
-            const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
+        vpcs = Vpcs.map(vpc => {
+            const {
+                VpcId: id,
+                State: state,
+                Tags: tags,
+                CidrBlockAssociationSet: cidrBlock,
+                IsDefault: isDefault
+            } = vpc;
             return { id, state, tags, cidrBlock, isDefault };
         });
     }
 
     if (Vpcs?.length) {
         await Promise.all(
-            Vpcs.map(async (vpc) => {
+            Vpcs.map(async vpc => {
                 try {
-                    const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
+                    const {
+                        VpcId: id,
+                        State: state,
+                        Tags: tags,
+                        CidrBlockAssociationSet: cidrBlock,
+                        IsDefault: isDefault
+                    } = vpc;
                     const params: DescribeSubnetsRequest = {
                         Filters: [
                             {
                                 Name: 'vpc-id',
-                                Values: [id as string],
-                            },
-                        ],
+                                Values: [id as string]
+                            }
+                        ]
                     };
 
                     let subnetsList: Array<Subnet> = [];
@@ -74,7 +86,15 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
                     if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
                         securityGroupList = await getSecurityGroupsList(credentialsId, region, params);
                     }
-                    vpcs.push({ id, state, tags, cidrBlock, isDefault, subnets: subnetsList, securityGroups: securityGroupList });
+                    vpcs.push({
+                        id,
+                        state,
+                        tags,
+                        cidrBlock,
+                        isDefault,
+                        subnets: subnetsList,
+                        securityGroups: securityGroupList
+                    });
                 } catch (err) {
                     logger.error('Failed to get the vpc details', { vpc, err });
                 }
@@ -90,8 +110,16 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
     let subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        subnetsList = subnets.map((subnet) => {
-            const { SubnetId: id, State: state, VpcId: vpcId, Tags: tags, CidrBlock: cidrBlock, AvailabilityZone: availabilityZone, AvailableIpAddressCount: availableIps } = subnet;
+        subnetsList = subnets.map(subnet => {
+            const {
+                SubnetId: id,
+                State: state,
+                VpcId: vpcId,
+                Tags: tags,
+                CidrBlock: cidrBlock,
+                AvailabilityZone: availabilityZone,
+                AvailableIpAddressCount: availableIps
+            } = subnet;
             return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps };
         });
     }
@@ -104,7 +132,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     const { SecurityGroups: securityGroups } = await describeSecurityGroups(credentialsId, region, params);
     let securityGroupList: Array<SecurityGroup> = [];
     if (securityGroups?.length) {
-        securityGroupList = securityGroups.map((sg) => {
+        securityGroupList = securityGroups.map(sg => {
             const { GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions } = sg;
             return { id: id, description: description, vpcId: vpcId, ipPermissions };
         });
