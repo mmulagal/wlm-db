@@ -32,7 +32,6 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import awsRoutes from './routes/aws';
 
-
 const logger = getLogger();
 const accessLogger = getLogger('access');
 
@@ -134,6 +133,7 @@ const app = fastify({
                     }
                 }
             );
+            awsRoutes(instance);
             next();
         },
         { prefix: API_PREFIX_PATH }
@@ -155,6 +155,7 @@ const app = fastify({
                     params: { accountId },
                     id: requestId
                 } = request;
+                logger.debug(url, reply);
                 setAsyncLocalStorageResource(REQUEST_ID, requestId);
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
