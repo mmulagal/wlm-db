@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider as ReduxContextProvider } from "react-redux";
+import { ThemeProvider } from "@netapp/design-system";
 import { BrowserRouter } from "react-router-dom";
 import store from "./store/store";
 import "./index.css";
@@ -12,9 +13,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <ReduxContextProvider store={store}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider isIframe={false} theme={"light"}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
     </ReduxContextProvider>
   </React.StrictMode>
 );
