@@ -5,6 +5,7 @@ export const CredentialsResponse = Type.Array(
       credentialsId: Type.String(),
       name: Type.String(),
       arn: Type.String(),
+      providerAccountId:  Type.String(),
     })
   );
 export type CredentialsResponseType = Static<typeof CredentialsResponse>;

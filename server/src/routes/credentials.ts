@@ -15,10 +15,7 @@ export default function credentialsRoutes(fastify: FastifyInstance) {
             {
                 schema: CredentialsSchema
             },
-            async request => {
-                const {
-                    params: { accountId }
-                } = request;
-                return getAwsCredentials(accountId);
+            async () => {
+                return getAwsCredentials();
             }
         )}

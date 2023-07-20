@@ -49,6 +49,7 @@ function handleValidationError(
   message: string,
   request: FastifyRequest
 ) {
+  logger.debug(request);
   const code = statusCode ?? reply.raw.statusCode ?? 400;
   if (Array.isArray(validation)) {
     const allowedValuesMessage = validation.reduce(

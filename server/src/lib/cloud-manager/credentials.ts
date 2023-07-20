@@ -32,8 +32,9 @@ interface AwsCredentials extends Credentials {
  * @param accountId 
  * @returns Array of credentials added to BlueXP
  */
-export async function getAllAwsCredentials(accountId:string) {
+export async function getAllAwsCredentials() {
     logger.info("Getting all AWS credentials ", CredentialsType.AWS)
+    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID)
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials`, {
             prefixUrl: CREDENTIALS_ENDPOINT,

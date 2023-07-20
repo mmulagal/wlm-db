@@ -10,12 +10,13 @@ import { getAllAwsCredentials } from '../../lib/cloud-manager/credentials';
     arn
   }]
  */
-export async function getAwsCredentials(accountId: string){
-  const data = await getAllAwsCredentials(accountId);
+export async function getAwsCredentials(){
+  const data = await getAllAwsCredentials();
   const modifiedData = data.map(({ credentialsId, extra: { name, arn } }) => ({
     credentialsId,
     name,
-    arn
+    arn,
+    providerAccountId: arn.match(/\d+/)?.[0] || '',
   }));
   return modifiedData
 }
