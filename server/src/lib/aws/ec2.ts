@@ -17,7 +17,7 @@ async function getEC2(region: string, credentialsId: string) {
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
-    const credentials = { accessKeyId, secretAccessKey, sessionToken };
+    let credentials = { accessKeyId, secretAccessKey, sessionToken };
     return new EC2Client({ credentials, region });
 }
 
