@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Routes, Route, useLocation } from "react-router-dom";
 import AppNotification from "./common/AppNotification/AppNotification";
-import Header from "./components/Header/Header";
+import MainComponent from "./components/MainComponent/MainComponent";
 
 import styles from "./Home.module.scss";
 import {
@@ -24,7 +24,7 @@ const Home = () => {
   return (
     <div className={styles["app-layout"]}>
       <Routes>
-        <Route path={`/`} element={<Header />} />
+        <Route path={`/`} element={<MainComponent />} />
       </Routes>
 
       {/* To Display the notification */}
