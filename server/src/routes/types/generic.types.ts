@@ -1,6 +1,8 @@
 import {Static, Type } from "@sinclair/typebox";
 
-export const AccountIdParams = Type.Object({
+const AccountIdParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
 });
-export type AccountIdParamsType = Static<typeof AccountIdParams>;
+type AccountIdParamsType = Static<typeof AccountIdParams>;
+
+export { AccountIdParams, AccountIdParamsType}

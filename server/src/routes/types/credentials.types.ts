@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox';
 
-export const CredentialsResponse = Type.Array(
+const CredentialsResponse = Type.Array(
     Type.Object({
       credentialsId: Type.String(),
       name: Type.String(),
@@ -8,4 +8,6 @@ export const CredentialsResponse = Type.Array(
       providerAccountId:  Type.String(),
     })
   );
-export type CredentialsResponseType = Static<typeof CredentialsResponse>;
+type CredentialsResponseType = Static<typeof CredentialsResponse>;
+
+export { CredentialsResponse, CredentialsResponseType };
