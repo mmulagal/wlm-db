@@ -1,4 +1,4 @@
-import { DescribeSubnetsRequest } from '@aws-sdk/client-ec2';
+import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
 import { AWSQueryFields } from '../../utils/consts';
 import { describeVpc, describeSecurityGroups, describeSubnets } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
@@ -13,9 +13,11 @@ export interface VPC {
     isDefault?: boolean;
     subnets?: Array<Subnet>;
     securityGroups?: Array<SecurityGroup>;
+    name?: string;
 }
 interface Subnet {
     id?: string;
+    name?: string;
     state?: string;
     vpcId?: string;
     tags?: any;
@@ -28,6 +30,7 @@ interface SecurityGroup {
     description?: string;
     vpcId?: string;
     ipPermissions?: any;
+    name?: string;
 }
 
 export async function getVpcsList(credentialsId: string, region: string, fields: string) {
@@ -45,16 +48,16 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
     let vpcs: Array<VPC> = [];
 
     if (Vpcs?.length && fieldsValues.length === 0) {
-        vpcs = Vpcs.map(vpc => {
-            const {
-                VpcId: id,
-                State: state,
-                Tags: tags,
-                CidrBlockAssociationSet: cidrBlock,
-                IsDefault: isDefault
-            } = vpc;
-            return { id, state, tags, cidrBlock, isDefault };
-        });
+        vpcs = Vpcs.map(
+            ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
+                let name;
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
+                }
+                return { id, state, tags, cidrBlock, isDefault, ...(name && { name }) };
+            }
+        );
+        return { vpcs: vpcs };
     }
 
     if (Vpcs?.length) {
@@ -68,6 +71,12 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
                         CidrBlockAssociationSet: cidrBlock,
                         IsDefault: isDefault
                     } = vpc;
+
+                    let name;
+                    if (tags?.length) {
+                        name = findNameFromTags(tags);
+                    }
+
                     const params: DescribeSubnetsRequest = {
                         Filters: [
                             {
@@ -93,7 +102,8 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
                         cidrBlock,
                         isDefault,
                         subnets: subnetsList,
-                        securityGroups: securityGroupList
+                        securityGroups: securityGroupList,
+                        ...(name && { name })
                     });
                 } catch (err) {
                     logger.error('Failed to get the vpc details', { vpc, err });
@@ -110,8 +120,8 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
     let subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        subnetsList = subnets.map(subnet => {
-            const {
+        subnetsList = subnets.map(
+            ({
                 SubnetId: id,
                 State: state,
                 VpcId: vpcId,
@@ -119,23 +129,39 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 CidrBlock: cidrBlock,
                 AvailabilityZone: availabilityZone,
                 AvailableIpAddressCount: availableIps
-            } = subnet;
-            return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps };
-        });
+            }) => {
+                let name;
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
+                }
+                return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, ...(name && { name }) };
+            }
+        );
     }
     return subnetsList;
 }
 
-async function getSecurityGroupsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
+async function getSecurityGroupsList(credentialsId: string, region: string, params: DescribeSecurityGroupsRequest) {
     logger.info('List Security Groups in a region', { credentialsId, region, params });
 
     const { SecurityGroups: securityGroups } = await describeSecurityGroups(credentialsId, region, params);
     let securityGroupList: Array<SecurityGroup> = [];
     if (securityGroups?.length) {
-        securityGroupList = securityGroups.map(sg => {
-            const { GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions } = sg;
-            return { id: id, description: description, vpcId: vpcId, ipPermissions };
-        });
+        securityGroupList = securityGroups.map(
+            ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
+                let name;
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
+                }
+                return { id: id, description: description, vpcId: vpcId, ipPermissions, ...(name && { name }) };
+            }
+        );
     }
     return securityGroupList;
+}
+
+function findNameFromTags(tags: Tag[]) {
+    logger.info('Find name from the tags', { tags });
+    const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
+    return name;
 }

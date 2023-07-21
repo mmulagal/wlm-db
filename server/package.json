@@ -50,6 +50,7 @@
     },
     "devDependencies": {
         "@aws-sdk/types": "^3.337.0",
+        "@faker-js/faker": "^8.0.2",
         "@types/async": "^3.2.20",
         "@types/config": "^3.3.0",
         "@types/jsonwebtoken": "^9.0.2",

@@ -1,7 +1,38 @@
+import { faker } from '@faker-js/faker';
 import nock from 'nock';
 import { CREDENTIALS_ENDPOINT } from '../../../../src/utils/consts.js';
-import cloudManagerAwsCredentials from '../../responses/cloud-manager/cloud-manager-aws-credentials.json';
-import cloudManagerAllAwsCredentials from '../../responses/cloud-manager/cloud-manager-aws-all-credentials.json';
+
+const cloudManagerAllAwsCredentials = [
+    {
+        credentialsId: `${faker.string.alphanumeric(20)}`,
+        credentialsType: 'aws_assume_role',
+        extra: {
+            name: `${faker.string.alpha(10)}`,
+            externalId: `${faker.string.alphanumeric(10)}`,
+            arn: 'arn:aws:iam::210811601128:role/fsx_blanchet_role_occm',
+            isGov: false
+        },
+        isSimulated: false
+    }
+];
+
+const cloudManagerAwsCredentials = {
+    credentialsId: `${faker.string.alphanumeric(20)}`,
+    credentialsType: 'aws_assume_role',
+    extra: {
+        name: `${faker.string.alpha(10)}`,
+        externalId: `${faker.string.alphanumeric(10)}`,
+        arn: 'arn:aws:iam::210811601128:role/fsx_blanchet_role_occm',
+        isGov: false
+    },
+    credentials: {
+        accessKey: `${faker.string.alphanumeric(20)}`,
+        secretKey: `${faker.string.alphanumeric(20)}`,
+        sessionId: `${faker.string.alphanumeric(60)}`,
+        expiration: '2023-07-18T16:04:22.000Z'
+    },
+    isSimulated: false
+};
 
 const cloudManagerCredentialsScope = nock(`${CREDENTIALS_ENDPOINT}`)
     .persist(true)

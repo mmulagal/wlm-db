@@ -15,33 +15,28 @@ const CLIENT = jwksRsa({
 
 async function verifyToken(token: string) {
     logger.debug('Verify token', token);
-    try {
-        const jwt = jsonwebtoken.decode(token, { complete: true });
-        if (jwt) {
-            const signingKey = await CLIENT.getSigningKey(jwt.header.kid);
+    const jwt = jsonwebtoken.decode(token, { complete: true });
+    if (jwt) {
+        const signingKey = await CLIENT.getSigningKey(jwt.header.kid);
 
-            return new Promise<string | jsonwebtoken.JwtPayload>((resolve, reject) => {
-                jsonwebtoken.verify(
-                    token,
-                    signingKey.getPublicKey(),
-                    {
-                        audience: AUTH0_AUDIENCE,
-                        issuer: `${AUTH0_SERVER_ADDRESS}/`,
-                        algorithms: ['RS256']
-                    },
-                    (error, payload) => {
-                        logger.error('error here is', error);
-                        return error || !payload ? reject(error) : resolve(payload);
-                    }
-                );
-            });
-        } else {
-            logger.error('token decode');
-            throw new Error('Token decode failed');
-        }
-    } catch (err) {
-        logger.error('errror', err);
-        throw new Error('Token decode failed');
+        return new Promise<string | jsonwebtoken.JwtPayload>((resolve, reject) => {
+            jsonwebtoken.verify(
+                token,
+                signingKey.getPublicKey(),
+                {
+                    audience: AUTH0_AUDIENCE,
+                    issuer: `${AUTH0_SERVER_ADDRESS}/`,
+                    algorithms: ['RS256']
+                },
+                (error, payload) => {
+                    return error || !payload ? reject(error) : resolve(payload);
+                }
+            );
+        });
+    } else {
+        const errMsg = 'Token decode failed';
+        logger.error(errMsg);
+        throw new Error(errMsg);
     }
 }
 

@@ -28,7 +28,7 @@ async function describeVpc(credentialsId: string, region: string, params: Descri
     const ec2 = await getEC2(region, credentialsId);
 
     const resp = await ec2.send(new DescribeVpcsCommand(params));
-    logger.info('descibeVpcs response:', resp);
+    logger.debug('descibeVpcs response:', resp);
 
     return resp;
 }
@@ -39,7 +39,7 @@ async function describeSubnets(credentialsId: string, region: string, params: De
     const ec2 = await getEC2(region, credentialsId);
 
     const resp = await ec2.send(new DescribeSubnetsCommand(params));
-    logger.info('descibeSubnets response:', resp);
+    logger.debug('descibeSubnets response:', resp);
 
     return resp;
 }
@@ -50,7 +50,7 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
     const ec2 = await getEC2(region, credentialsId);
 
     const resp = await ec2.send(new DescribeSecurityGroupsCommand(params));
-    logger.info('descibeSecurityGroupss response:', resp);
+    logger.debug('descibeSecurityGroupss response:', resp);
 
     return resp;
 }
