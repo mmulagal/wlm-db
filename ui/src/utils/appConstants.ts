@@ -6,4 +6,9 @@ export const SELECT_CONFIG = {
   EASY_CREATE_CONTENT:
     "Use a recommended est-practice configuration. You can change most configuration options after database is created.",
   COMING_SOON: "Coming soon",
+  CONTINUE: "Continue",
+  CANCEL: "Cancel",
+  WIZARD_HEADING: "Create new Microsoft SQL server",
+  LOAD_CONFIG: "Load configuration",
+  SAVE_CONFIG: "Save configuration",
 };
