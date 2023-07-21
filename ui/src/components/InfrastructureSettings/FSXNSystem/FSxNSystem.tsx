@@ -1,20 +1,21 @@
 import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
-import styles from "./AwsAccount.module.scss";
+import ActionRequired from "../../../common/ActionRequired/ActionRequired";
+import { GENERAL } from "../../../utils/appConstants";
 import CommonStyles from "../../../utils/CommonStyles.module.scss";
 
-const AwsAccount = () => {
+const FSxNSystem = () => {
   //Set the Header text here
   const setHeader = () => {
-    return "No account";
+    return <ActionRequired />;
   };
   return (
-    <div className={styles["aws-account"]}>
+    <div className={""}>
       <AccordionCard
         ValueContent={() => (
           <div className={CommonStyles["heading-content"]}>{setHeader()}</div>
         )}
-        id="1"
-        title={<div className={CommonStyles.title}>AWS account</div>}
+        id="15"
+        title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
       >
         <AccordionCardContent>Content here</AccordionCardContent>
       </AccordionCard>
@@ -22,4 +23,4 @@ const AwsAccount = () => {
   );
 };
 
-export default AwsAccount;
+export default FSxNSystem;

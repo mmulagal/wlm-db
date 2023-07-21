@@ -1,25 +1,26 @@
 import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
-import styles from "./AwsAccount.module.scss";
+import ActionRequired from "../../../common/ActionRequired/ActionRequired";
+
+import styles from "./AvailabilityZone.module.scss";
 import CommonStyles from "../../../utils/CommonStyles.module.scss";
 
-const AwsAccount = () => {
+const AvailabilityZone = () => {
   //Set the Header text here
   const setHeader = () => {
-    return "No account";
+    return <ActionRequired />;
   };
   return (
-    <div className={styles["aws-account"]}>
+    <div className={styles["availability-zone"]}>
       <AccordionCard
         ValueContent={() => (
           <div className={CommonStyles["heading-content"]}>{setHeader()}</div>
         )}
-        id="1"
-        title={<div className={CommonStyles.title}>AWS account</div>}
+        id="3"
+        title={<div className={CommonStyles.title}>Availability zones</div>}
       >
         <AccordionCardContent>Content here</AccordionCardContent>
       </AccordionCard>
     </div>
   );
 };
-
-export default AwsAccount;
+export default AvailabilityZone;

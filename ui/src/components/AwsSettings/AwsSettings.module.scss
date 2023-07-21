@@ -1,4 +1,6 @@
 .aws-settings {
-  width: 1063px;
-  margin-top: 32px;
+  .header-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
 }

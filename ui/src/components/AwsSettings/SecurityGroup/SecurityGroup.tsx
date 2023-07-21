@@ -1,25 +1,29 @@
 import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
-import styles from "./AwsAccount.module.scss";
+import { SELECT_CONFIG } from "../../../utils/appConstants";
+import styles from "./SecurityGroup.module.scss";
 import CommonStyles from "../../../utils/CommonStyles.module.scss";
 
-const AwsAccount = () => {
+const SecurityGroup = () => {
   //Set the Header text here
   const setHeader = () => {
-    return "No account";
+    return ["Use an existing security group"];
   };
   return (
-    <div className={styles["aws-account"]}>
+    <div className={styles["security-group"]}>
       <AccordionCard
         ValueContent={() => (
           <div className={CommonStyles["heading-content"]}>{setHeader()}</div>
         )}
-        id="1"
-        title={<div className={CommonStyles.title}>AWS account</div>}
+        id="4"
+        title={
+          <div className={CommonStyles.title}>
+            {SELECT_CONFIG.SECURITY_GROUP}
+          </div>
+        }
       >
         <AccordionCardContent>Content here</AccordionCardContent>
       </AccordionCard>
     </div>
   );
 };
-
-export default AwsAccount;
+export default SecurityGroup;

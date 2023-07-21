@@ -6,7 +6,11 @@ import {
   WizardFooter,
 } from "@netapp/design-system";
 import { SELECT_CONFIG } from "../../utils/appConstants";
+import ApplicationSettings from "../ApplicationSettings/ApplicationSettings";
 import AwsSettings from "../AwsSettings/AwsSettings";
+import CloudFormation from "../CloudFormation/CloudFormation";
+import Connectivity from "../Connectivity/Connectivity";
+import InfrastructureSettings from "../InfrastructureSettings/InfrastructureSettings";
 import SelectConfig from "../SelectConfig/SelectConfig";
 import styles from "./MainComponent.module.scss";
 
@@ -39,7 +43,13 @@ const MainComponent = () => {
       </Header>
       <WizardContent className={styles.content}>
         <SelectConfig />
+        {/* setting up Accordions Group here */}
         <AwsSettings />
+        <ApplicationSettings />
+        <Connectivity />
+        <InfrastructureSettings />
+        {/* Accordions end here */}
+        <CloudFormation />
       </WizardContent>
       <WizardFooter>
         <Button variant="secondary" isThin>
