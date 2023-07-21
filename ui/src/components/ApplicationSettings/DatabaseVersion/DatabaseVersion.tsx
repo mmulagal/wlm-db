@@ -1,20 +1,22 @@
 import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
-import styles from "./AwsAccount.module.scss";
+import { GENERAL } from "../../../utils/appConstants";
 import CommonStyles from "../../../utils/CommonStyles.module.scss";
 
-const AwsAccount = () => {
+const DatabaseVersion = () => {
   //Set the Header text here
   const setHeader = () => {
-    return "No account";
+    return ["SQL Server 2019"];
   };
   return (
-    <div className={styles["aws-account"]}>
+    <div className={""}>
       <AccordionCard
         ValueContent={() => (
           <div className={CommonStyles["heading-content"]}>{setHeader()}</div>
         )}
-        id="1"
-        title={<div className={CommonStyles.title}>AWS account</div>}
+        id="8"
+        title={
+          <div className={CommonStyles.title}>{GENERAL.DATABASE_VERSION}</div>
+        }
       >
         <AccordionCardContent>Content here</AccordionCardContent>
       </AccordionCard>
@@ -22,4 +24,4 @@ const AwsAccount = () => {
   );
 };
 
-export default AwsAccount;
+export default DatabaseVersion;
