@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox';
 import { Static } from '@sinclair/typebox';
 
-export const VpcListResponse = Type.Object({
+const VpcListResponse = Type.Object({
     vpcs: Type.Array(
         Type.Object({
             id: Type.Optional(Type.String()),
@@ -39,16 +39,18 @@ export const VpcListResponse = Type.Object({
     )
 });
 
-export const AwsParam = Type.Object({
+const AwsParam = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String()
 });
 
-export const AwsQueryString = Type.Object({
+const AwsQueryString = Type.Object({
     fields: Type.String()
 });
 
-export type VpcResponseType = Static<typeof VpcListResponse>;
-export type AwsParamType = Static<typeof AwsParam>;
-export type AwsQueryStringType = Static<typeof AwsQueryString>;
+type VpcResponseType = Static<typeof VpcListResponse>;
+type AwsParamType = Static<typeof AwsParam>;
+type AwsQueryStringType = Static<typeof AwsQueryString>;
+
+export { VpcResponseType, AwsParamType, AwsQueryStringType, AwsQueryString, AwsParam, VpcListResponse };

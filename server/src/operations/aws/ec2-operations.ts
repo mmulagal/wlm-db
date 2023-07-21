@@ -5,7 +5,7 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-export interface VPC {
+interface VPC {
     id?: string;
     state?: string;
     cidrBlock?: any;
@@ -33,7 +33,7 @@ interface SecurityGroup {
     name?: string;
 }
 
-export async function getVpcsList(credentialsId: string, region: string, fields: string) {
+async function getVpcsList(credentialsId: string, region: string, fields: string) {
     logger.info('List vpcs in a region', { credentialsId, region, fields });
 
     let fieldsValues: Array<string> = [];
@@ -165,3 +165,5 @@ function findNameFromTags(tags: Tag[]) {
     const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
     return name;
 }
+
+export { getVpcsList };
