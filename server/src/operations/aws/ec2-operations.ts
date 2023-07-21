@@ -72,7 +72,7 @@ async function getVpcsList(credentialsId: string, region: string, fields: string
                         IsDefault: isDefault
                     } = vpc;
 
-                    let name;
+                    let name = '-';
                     if (tags?.length) {
                         name = findNameFromTags(tags);
                     }
@@ -130,7 +130,7 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 AvailabilityZone: availabilityZone,
                 AvailableIpAddressCount: availableIps
             }) => {
-                let name;
+                let name = '-';
                 if (tags?.length) {
                     name = findNameFromTags(tags);
                 }
@@ -149,7 +149,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     if (securityGroups?.length) {
         securityGroupList = securityGroups.map(
             ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
-                let name;
+                let name = '-';
                 if (tags?.length) {
                     name = findNameFromTags(tags);
                 }
@@ -163,7 +163,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
 function findNameFromTags(tags: Tag[]) {
     logger.info('Find name from the tags', { tags });
     const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
-    return name;
+    return name ? name : '-';
 }
 
 export { getVpcsList };
