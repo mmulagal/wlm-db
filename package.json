@@ -1,0 +1,26 @@
+{
+    "name": "wlmdb",
+    "scripts": {
+        "prepare": "husky install"
+    },
+    "lint-staged": {
+        "./server/src/**/*.ts": [
+            "eslint",
+            "prettier --check",
+            "prettier --write"
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://bitbucket.ngage.netapp.com/scm/wlmdb/wlmdb.git"
+    },
+    "devDependencies": {
+        "eslint": "^8.45.0",
+        "lint-staged": "^13.2.3",
+        "husky": "^8.0.0",
+        "@typescript-eslint/eslint-plugin": "^6.1.0",
+        "@typescript-eslint/parser": "^6.1.0",
+        "eslint-config-prettier": "^8.8.0",
+        "prettier": "2.8.8"
+    }
+}

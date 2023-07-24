@@ -8,14 +8,14 @@ export default function systemRoutes(fastify: FastifyInstance) {
         .get<{ Reply: AboutResponseType }>(
             '/about',
             {
-                schema: GetSystemInfoSchema,
+                schema: GetSystemInfoSchema
             },
             (_, reply) => {
                 reply.send({
                     version: VERSION,
                     nodeVersion: process.version,
                     mode: process.env.ENV_SS_BUILD_MODE,
-                    build: process.env.ENV_SS_BUILD_TC,
+                    build: process.env.ENV_SS_BUILD_TC
                 });
             }
         )

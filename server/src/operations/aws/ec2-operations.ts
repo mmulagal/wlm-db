@@ -1,12 +1,12 @@
 import createError from 'http-errors';
-import { DescribeSubnetsRequest } from '@aws-sdk/client-ec2';
+import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
 import { AWSQueryFields, SQL_AMI_NAMES } from '../../utils/consts';
 import { describeVpc, describeSecurityGroups, describeSubnets, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-export interface VPC {
+interface VPC {
     id?: string;
     state?: string;
     cidrBlock?: any;
@@ -14,9 +14,11 @@ export interface VPC {
     isDefault?: boolean;
     subnets?: Array<Subnet>;
     securityGroups?: Array<SecurityGroup>;
+    name?: string;
 }
 interface Subnet {
     id?: string;
+    name?: string;
     state?: string;
     vpcId?: string;
     tags?: any;
@@ -29,9 +31,10 @@ interface SecurityGroup {
     description?: string;
     vpcId?: string;
     ipPermissions?: any;
+    name?: string;
 }
 
-export async function getVpcsList(credentialsId: string, region: string, fields: string) {
+async function getVpcsList(credentialsId: string, region: string, fields: string) {
     logger.info('List vpcs in a region', { credentialsId, region, fields });
 
     let fieldsValues: Array<string> = [];
@@ -46,36 +49,71 @@ export async function getVpcsList(credentialsId: string, region: string, fields:
     let vpcs: Array<VPC> = [];
 
     if (Vpcs?.length && fieldsValues.length === 0) {
-        vpcs = Vpcs.map((vpc) => {
-            const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
-            return { id, state, tags, cidrBlock, isDefault };
-        });
+        vpcs = Vpcs.map(
+            ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
+                let name = '-';
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
+                }
+                return { id, state, tags, cidrBlock, isDefault, name };
+            }
+        );
+        return { vpcs: vpcs };
     }
 
     if (Vpcs?.length) {
         await Promise.all(
-            Vpcs.map(async (vpc) => {
+            Vpcs.map(async vpc => {
                 try {
-                    const { VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault } = vpc;
-                    const params: DescribeSubnetsRequest = {
+                    const {
+                        VpcId: id,
+                        State: state,
+                        Tags: tags,
+                        CidrBlockAssociationSet: cidrBlock,
+                        IsDefault: isDefault
+                    } = vpc;
+
+                    let name = '-';
+                    if (tags?.length) {
+                        name = findNameFromTags(tags);
+                    }
+
+                    const subnetParams: DescribeSubnetsRequest = {
                         Filters: [
                             {
                                 Name: 'vpc-id',
-                                Values: [id as string],
-                            },
-                        ],
+                                Values: [id as string]
+                            }
+                        ]
                     };
 
                     let subnetsList: Array<Subnet> = [];
                     if (fields?.includes(AWSQueryFields.SUBNET)) {
-                        subnetsList = await getSubnetsList(credentialsId, region, params);
+                        subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
                     }
 
+                    const sgParams: DescribeSecurityGroupsRequest = {
+                        Filters: [
+                            {
+                                Name: 'vpc-id',
+                                Values: [id as string]
+                            }
+                        ]
+                    };
                     let securityGroupList: Array<SecurityGroup> = [];
                     if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
-                        securityGroupList = await getSecurityGroupsList(credentialsId, region, params);
+                        securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
                     }
-                    vpcs.push({ id, state, tags, cidrBlock, isDefault, subnets: subnetsList, securityGroups: securityGroupList });
+                    vpcs.push({
+                        id,
+                        state,
+                        tags,
+                        cidrBlock,
+                        isDefault,
+                        subnets: subnetsList,
+                        securityGroups: securityGroupList,
+                        name
+                    });
                 } catch (err) {
                     logger.error('Failed to get the vpc details', { vpc, err });
                 }
@@ -91,28 +129,45 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
     let subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        subnetsList = subnets.map((subnet) => {
-            const { SubnetId: id, State: state, VpcId: vpcId, Tags: tags, CidrBlock: cidrBlock, AvailabilityZone: availabilityZone, AvailableIpAddressCount: availableIps } = subnet;
-            return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps };
-        });
+        subnetsList = subnets.map(
+            ({
+                SubnetId: id,
+                State: state,
+                VpcId: vpcId,
+                Tags: tags,
+                CidrBlock: cidrBlock,
+                AvailabilityZone: availabilityZone,
+                AvailableIpAddressCount: availableIps
+            }) => {
+                let name = '-';
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
+                }
+                return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name };
+            }
+        );
     }
     return subnetsList;
 }
 
-async function getSecurityGroupsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
+async function getSecurityGroupsList(credentialsId: string, region: string, params: DescribeSecurityGroupsRequest) {
     logger.info('List Security Groups in a region', { credentialsId, region, params });
 
     const { SecurityGroups: securityGroups } = await describeSecurityGroups(credentialsId, region, params);
     let securityGroupList: Array<SecurityGroup> = [];
     if (securityGroups?.length) {
-        securityGroupList = securityGroups.map((sg) => {
-            const { GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions } = sg;
-            return { id: id, description: description, vpcId: vpcId, ipPermissions };
-        });
+        securityGroupList = securityGroups.map(
+            ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
+                let name = '-';
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
+                }
+                return { id: id, description: description, vpcId: vpcId, ipPermissions, name };
+            }
+        );
     }
     return securityGroupList;
 }
-
 
 export async function getAmiList(credentialsId: string, region: string) {
     logger.info('Get AWS Amis', { credentialsId, region });
@@ -122,40 +177,49 @@ export async function getAmiList(credentialsId: string, region: string) {
             Filters: [
                 { Name: 'name', Values: SQL_AMI_NAMES },
                 { Name: 'owner-alias', Values: ['amazon'] }
-            ] 
+            ]
         });
-        
+
         if (!amis?.Images) {
             return { amis: [] };
         }
-    
-        return { 
-            amis: amis?.Images?.map(({
-                Name,
-                Description,
-                Architecture,
-                ImageId,
-                ImageLocation,
-                Public,
-                Platform,
-                PlatformDetails,
-                State,
-                Hypervisor,
-            }) => ({
-                name: Name,
-                description: Description,
-                architecture: Architecture,
-                imageId: ImageId,
-                imageLocation: ImageLocation,
-                public: Public,
-                platform: Platform,
-                platformDetails: PlatformDetails,
-                state: State,
-                hypervisor: Hypervisor
-            }))
-        }
+
+        return {
+            amis: amis?.Images?.map(
+                ({
+                    Name,
+                    Description,
+                    Architecture,
+                    ImageId,
+                    ImageLocation,
+                    Public,
+                    Platform,
+                    PlatformDetails,
+                    State,
+                    Hypervisor
+                }) => ({
+                    name: Name,
+                    description: Description,
+                    architecture: Architecture,
+                    imageId: ImageId,
+                    imageLocation: ImageLocation,
+                    public: Public,
+                    platform: Platform,
+                    platformDetails: PlatformDetails,
+                    state: State,
+                    hypervisor: Hypervisor
+                })
+            )
+        };
     } catch (error: any) {
         logger.error('Failed to get the aws amis ', error.message);
-        throw createError(error.statusCode || error.code || 500, error.message)
+        throw createError(error.statusCode || error.code || 500, error.message);
     }
 }
+function findNameFromTags(tags: Tag[]) {
+    logger.info('Find name from the tags', { tags });
+    const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
+    return name ? name : '-';
+}
+
+export { getVpcsList };

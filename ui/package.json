@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@netapp/design-system": "0.4.7",
+    "@netapp/design-system": "0.4.13",
     "@netapp/icons": "^1.0.5",
     "@reduxjs/toolkit": "1.8.6",
     "@testing-library/jest-dom": "^5.16.5",
@@ -24,7 +24,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
+    "start": "cross-env HOST=localhost PORT=4200 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
     "build:local": "cross-env REACT_APP_USE_CM_FORWARDER=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

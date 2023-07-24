@@ -10,7 +10,10 @@
         "start": "node --loader @esbuild-kit/esm-loader dist/src/index.js",
         "dev": "node --loader @esbuild-kit/esm-loader --inspect --watch src/index.ts",
         "simulator": "cross-env NODE_ENV=simulator node --loader @esbuild-kit/esm-loader --inspect --watch test/simulator/index.ts",
-        "lint": "prettier --write .",
+        "format": "../node_modules/prettier/bin-prettier.js --write .",
+        "format:check": "../node_modules/prettier/bin-prettier.js --check .",
+        "lint": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\"",
+        "lint:fix": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\" --fix",
         "outdated": "npx npm-check-updates",
         "unused": "npx depcheck",
         "build:dev": "npm run build && npm run start"
@@ -22,6 +25,7 @@
     "author": "NETAPP",
     "license": "UNLICENSED",
     "dependencies": {
+        "@aws-sdk/client-ec2": "^3.371.0",
         "@esbuild-kit/esm-loader": "^2.5.5",
         "@fastify/compress": "^6.4.0",
         "@fastify/cors": "^8.3.0",
@@ -42,11 +46,11 @@
         "lodash-es": "^4.17.21",
         "log4js": "^6.9.1",
         "nanoid": "^4.0.2",
-        "randomatic": "^3.1.1",
-        "@aws-sdk/client-ec2": "^3.371.0"
+        "randomatic": "^3.1.1"
     },
     "devDependencies": {
         "@aws-sdk/types": "^3.337.0",
+        "@faker-js/faker": "^8.0.2",
         "@types/async": "^3.2.20",
         "@types/config": "^3.3.0",
         "@types/jsonwebtoken": "^9.0.2",
@@ -58,7 +62,6 @@
         "aws-sdk-client-mock": "^2.1.1",
         "cross-env": "^7.0.3",
         "nock": "^13.3.1",
-        "prettier": "2.8.8",
         "rimraf": "^4.4.1",
         "typescript": "^5.0.4"
     }

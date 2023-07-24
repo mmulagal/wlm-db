@@ -1,15 +1,18 @@
-import { Type } from '@sinclair/typebox';
-import { Static } from '@sinclair/typebox';
+import { Type, Static } from '@sinclair/typebox';
 
 // AWS Request Params
-export const AwsParam = Type.Object({
+const AwsParam = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
-    region: Type.String(),
+    region: Type.String()
 });
 
-// VPC list Response
-export const VpcListResponse = Type.Object({
+// VPC list Request and Response
+const AwsVpcQueryString = Type.Object({
+    fields: Type.String()
+});
+
+const VpcListResponse = Type.Object({
     vpcs: Type.Array(
         Type.Object({
             id: Type.Optional(Type.String()),
@@ -17,6 +20,7 @@ export const VpcListResponse = Type.Object({
             cidrBlock: Type.Optional(Type.Any()),
             tags: Type.Optional(Type.Any()),
             isDefault: Type.Optional(Type.Boolean()),
+            name: Type.Optional(Type.String()),
             subnets: Type.Optional(
                 Type.Array(
                     Type.Object({
@@ -27,7 +31,7 @@ export const VpcListResponse = Type.Object({
                         availabilityZone: Type.Optional(Type.String()),
                         availableIps: Type.Optional(Type.Number()),
                         tags: Type.Optional(Type.Any()),
-                        name: Type.Optional(Type.String()),
+                        name: Type.Optional(Type.String())
                     })
                 )
             ),
@@ -38,15 +42,16 @@ export const VpcListResponse = Type.Object({
                         description: Type.Optional(Type.String()),
                         vpcId: Type.Optional(Type.String()),
                         ipPermissions: Type.Optional(Type.Any()),
+                        name: Type.Optional(Type.String())
                     })
                 )
-            ),
+            )
         })
-    ),
+    )
 });
 
-// AMI Response 
-export const AmiResponse = Type.Object({
+// AMI Request and Response
+const AmiResponse = Type.Object({
     amis: Type.Array(
         Type.Object({
             name: Type.Optional(Type.String()),
@@ -61,13 +66,20 @@ export const AmiResponse = Type.Object({
             hypervisor: Type.Optional(Type.String())
         })
     )
-})
-
-export const AwsQueryString = Type.Object({
-    fields: Type.String(),
 });
 
-export type VpcResponseType = Static<typeof VpcListResponse>;
-export type AwsParamType = Static<typeof AwsParam>;
-export type AwsQueryStringType = Static<typeof AwsQueryString>;
-export type AmiResponseType = Static<typeof AmiResponse>;
+type AmiResponseType = Static<typeof AmiResponse>;
+type VpcResponseType = Static<typeof VpcListResponse>;
+type AwsParamType = Static<typeof AwsParam>;
+type AwsVpcQueryStringType = Static<typeof AwsVpcQueryString>;
+
+export {
+    VpcResponseType,
+    AwsParamType,
+    AwsVpcQueryStringType,
+    AwsVpcQueryString,
+    AwsParam,
+    VpcListResponse,
+    AmiResponse,
+    AmiResponseType
+};

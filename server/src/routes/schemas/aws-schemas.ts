@@ -5,35 +5,37 @@ const params = {
     properties: {
         accountId: {
             type: 'string',
-            description: 'Account ID',
+            description: 'Account ID'
         },
         credentialsId: {
             type: 'string',
-            description: 'Credentials ID',
+            description: 'Credentials ID'
         },
         region: {
             type: 'string',
-            description: 'Aws Region',
-        },
+            description: 'Aws Region'
+        }
     },
-    required: ['accountId'],
+    required: ['accountId']
 };
 
 // Aws schemas
-export const GetVpcsListSchema = {
+const GetVpcsListSchema = {
     tags: ['aws'],
     description: 'List Vpcs in a region',
     params,
     response: {
-        200: VpcListResponse,
+        200: VpcListResponse
     }
 };
 
-export const GetAmiSchema = {
+const GetAmiSchema = {
     tags: ['aws'],
     description: 'Get AMIs in a region',
     params,
     response: {
-        200: AmiResponse,
-    },
-}
+        200: AmiResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema };
