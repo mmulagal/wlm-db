@@ -1,6 +1,9 @@
-import { DescribeSubnetsRequest } from '@aws-sdk/client-ec2';
-import { AWSQueryFields } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets } from '../../lib/aws/ec2';
+import {
+    DescribeRegionsCommandInput,
+    DescribeSubnetsRequest
+} from '@aws-sdk/client-ec2';
+import { AWSQueryFields, FSxSupportedRegions } from '../../utils/consts';
+import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -29,6 +32,11 @@ interface SecurityGroup {
     vpcId?: string;
     ipPermissions?: any;
 }
+
+type FSxAvailableRegions = {
+    regionName: string;
+    descriptiveRegionName: string;
+}; 
 
 export async function getVpcsList(credentialsId: string, region: string, fields: string) {
     logger.info('List vpcs in a region', { credentialsId, region, fields });
@@ -110,4 +118,38 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
         });
     }
     return securityGroupList;
+}
+
+export async function getFSxAvailableRegionsList(
+    credentialsId: string,
+    region: string,
+    input: DescribeRegionsCommandInput
+): Promise<{ regions: FSxAvailableRegions[]; }> {
+    logger.info(
+        'List regions supporting Amazon FSx for NetApp ONTAP',
+        Array.from(arguments)
+    );
+
+    const { Regions: regions } = await describeRegions(
+        credentialsId,
+        region,
+        input
+    );
+
+    let fsxRegionsList: Array<FSxAvailableRegions> = [];
+
+    if (regions?.length) {
+        regions.forEach((region) => {
+            const { RegionName: name } = region;
+
+            if (name && FSxSupportedRegions.has(name)) {
+                fsxRegionsList.push({
+                    regionName: name,
+                    descriptiveRegionName: FSxSupportedRegions.get(name)!
+                });
+            }
+        });
+    }
+
+    return { regions: fsxRegionsList };
 }

@@ -1,0 +1,9 @@
+# Configuration for "prettier" used for building target "lint".
+trailingComma: none
+tabWidth: 4
+useTabs: false
+semi: true
+singleQuote: true
+bracketSpacing: true
+arrowParens: always
+endOfLine: lf

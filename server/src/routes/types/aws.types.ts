@@ -37,7 +37,7 @@ export const VpcListResponse = Type.Object({
     ),
 });
 
-export const AwsParam = Type.Object({
+export const AwsParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String(),
@@ -47,6 +47,16 @@ export const AwsQueryString = Type.Object({
     fields: Type.String(),
 });
 
+export const FSxRegionsResponse = Type.Object({
+    regions: Type.Array(
+        Type.Object({
+            regionName: Type.String(),
+            descriptiveRegionName: Type.String()
+        })
+    )
+});
+
 export type VpcResponseType = Static<typeof VpcListResponse>;
-export type AwsParamType = Static<typeof AwsParam>;
+export type AwsParamsType = Static<typeof AwsParams>;
 export type AwsQueryStringType = Static<typeof AwsQueryString>;
+export type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
