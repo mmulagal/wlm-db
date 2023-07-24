@@ -1,5 +1,4 @@
-import { Type } from '@sinclair/typebox';
-import { Static } from '@sinclair/typebox';
+import { Type, Static } from '@sinclair/typebox';
 
 const HealthResponse = Type.String();
 

@@ -15,8 +15,7 @@
         "lint": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\"",
         "lint:fix": "../node_modules/eslint/bin/eslint.js \"{src,test}/**/*.ts\" --fix",
         "outdated": "npx npm-check-updates",
-        "unused": "npx depcheck",
-        "build:dev": "npm run build && npm run start"
+        "unused": "npx depcheck"
     },
     "repository": {
         "type": "git",
