@@ -58,7 +58,7 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
 }
 
 async function getAmis(credentialsId: string, region: string, params: DescribeImagesCommandInput) {
-    logger.info('Get AMIs', { region, params });
+    logger.info('Get AMIs', { credentialsId, region, params });
 
     const ec2 = await getEC2(region, credentialsId);
 
