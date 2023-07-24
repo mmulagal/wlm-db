@@ -15,9 +15,7 @@ export const AUDIT_GROUP = 'AUDIT_GROUP';
 export const WORKSPACE_ID = 'WORKSPACE_ID';
 
 // version
-export const VERSION: string = JSON.parse(
-    readFileSync(join(process.cwd(), 'package.json')).toString()
-).version;
+export const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
 
 export const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
     ? `https://${process.env.AUTH0_ENDPOINT}`
@@ -48,20 +46,17 @@ export const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
     ? config.get<string>('urls.local-connector')
     : config.get<string>('urls.cloud-manager');
 
-export const CLOUD_MANAGER_SERVER_ADDRESS =
-    config.get<string>('urls.cloud-manager');
+export const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
 export const DEFAULT_AWS_REGION = 'us-east-1';
 
-export const CLOUD_MANAGER_ENDPOINT: string =
-    config.get<string>('urls.cloud-manager');
+export const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 export const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 export const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 export const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
 
-export const CREDENTIALS_ENDPOINT: string =
-    config.get<string>('urls.cloud-manager');
+export const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
 export const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 

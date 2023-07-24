@@ -1,10 +1,4 @@
-import {
-    ACCOUNT_ID,
-    CREDENTIALS_ENDPOINT,
-    CredentialsType,
-    HEADERS,
-    USER_TOKEN
-} from '../../utils/consts';
+import { ACCOUNT_ID, CREDENTIALS_ENDPOINT, HEADERS, USER_TOKEN } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
@@ -17,7 +11,6 @@ interface Credentials {
     isSimulated: boolean;
 }
 
-
 interface AwsCredentials extends Credentials {
     extra: {
         name: string;
@@ -29,12 +22,12 @@ interface AwsCredentials extends Credentials {
 /**
  * Retuns an array of provided credentialsType
  * credentials added to that account by calling SaS credentials API
- * @param credentialsType 
+ * @param credentialsType
  * @returns Array of credentials added to BlueXP
  */
-async function getAllAwsCredentials(credentialsType:string) {
-    logger.info("Getting credentials for credentials type ", credentialsType)
-    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID)
+async function getAllAwsCredentials(credentialsType: string) {
+    logger.info('Getting credentials for credentials type ', credentialsType);
+    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials`, {
             prefixUrl: CREDENTIALS_ENDPOINT,
@@ -45,21 +38,21 @@ async function getAllAwsCredentials(credentialsType:string) {
                 credentialsType: credentialsType
             }
         })
-        .json<AwsCredentials[]>();      
+        .json<AwsCredentials[]>();
 }
 
 /**
- * Takes credentials as parameter and returns credntial keys by calling 
+ * Takes credentials as parameter and returns credntial keys by calling
  * SaS credentials API
- * @param credentialsId 
- * @returns credentials: 
- * { accessKey: string; 
- *  secretKey: string; 
+ * @param credentialsId
+ * @returns credentials:
+ * { accessKey: string;
+ *  secretKey: string;
  *  sessionId: string;
- *  expiration: Date } 
+ *  expiration: Date }
  */
 async function getCredentialDetails(credentialsId: string) {
-    logger.info("Getting credential details for ", credentialsId)
+    logger.info('Getting credential details for ', credentialsId);
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials/${credentialsId}`, {
@@ -73,4 +66,5 @@ async function getCredentialDetails(credentialsId: string) {
         })
         .json<{ credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date } }>();
 }
-export {getAllAwsCredentials, getCredentialDetails};
+
+export { getCredentialDetails, getAllAwsCredentials };

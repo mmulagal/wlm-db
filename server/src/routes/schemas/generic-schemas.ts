@@ -1,4 +1,4 @@
-import { CredentialsResponse, CredentialsListParams } from "../types/credentials.types"
+import { CredentialsResponse, CredentialsListParams } from '../types/credentials.types';
 
 const CredentialsSchema = {
     tags: ['Generic'],
@@ -7,6 +7,6 @@ const CredentialsSchema = {
     response: {
         200: CredentialsResponse
     }
-}
+};
 
 export { CredentialsSchema };
