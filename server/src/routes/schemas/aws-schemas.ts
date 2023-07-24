@@ -1,13 +1,8 @@
-import {
-    AwsParams,
-    FSxRegionsResponse,
-    VpcListResponse
-} from '../types/aws.types';
-import { RouteTags } from '../../utils/consts';
+import { VpcListResponse } from '../types/aws.types';
 
 // Aws schemas
 export const GetVpcsListSchema = {
-    tags: [RouteTags.AWS],
+    tags: ['aws'],
     description: 'List Vpcs in a region',
     params: {
         type: 'object',
@@ -30,14 +25,4 @@ export const GetVpcsListSchema = {
     response: {
         200: VpcListResponse,
     },
-};
-
-// Schema for FSx supported regions
-export const GetFSxRegionsSchema = {
-    tags: [RouteTags.AWS],
-    params: AwsParams,
-    descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
-    response: {
-        200: FSxRegionsResponse
-    }
 };
