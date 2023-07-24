@@ -1,0 +1,27 @@
+{
+    "DirectoryDescriptions": [
+      {
+        "DirectoryId": "d-926example",
+        "DnsIpAddrs": [
+          "172.30.21.228",
+          "172.30.9.82"
+        ],
+        "Name": "corp.example.com",
+        "ShortName": "example",
+        "SsoEnabled": true,
+        "Stage": "Active",
+        "Type": "MicrosoftAD",
+        "VpcSettings": {
+          "AvailabilityZones": [
+            "us-west-2a",
+            "us-west-2b"
+          ],
+          "SubnetIds": [
+            "subnet-ba0146de",
+            "subnet-bef46bc8"
+          ],
+          "VpcId": "vpc-45025421"
+        }
+      }
+    ]
+  }
