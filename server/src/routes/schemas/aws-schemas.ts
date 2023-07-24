@@ -34,6 +34,6 @@ const AdsSchema = {
     response: {
         200: AdsResponse
     }
-}
+};
 
 export { GetVpcsListSchema, AdsSchema };

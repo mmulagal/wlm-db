@@ -49,28 +49,32 @@ const AwsQueryString = Type.Object({
 });
 
 const AdsResponse = Type.Object({
-    directories: Type.Array(Type.Object({
-        directoryId: Type.Optional(Type.String()),
-        dnsIpAddress: Type.Optional(Type.Array(Type.String())),
-        launchTime: Type.Optional(Type.Date()),
-        domainName: Type.Optional(Type.String()),
-        shortName: Type.Optional(Type.String()),
-        ssoEnabled: Type.Optional(Type.Boolean()),
-        status: Type.Optional(Type.String()),
-        type: Type.Optional(Type.String()),
-        vpcSettings: Type.Optional(Type.Object({
-            vpcId: Type.Optional(Type.String()),
-            subnetIds: Type.Optional(Type.Array(Type.String())),
-            availabilityZones: Type.Optional(Type.Array(Type.String())),
-        }))
-    })),
+    directories: Type.Array(
+        Type.Object({
+            directoryId: Type.Optional(Type.String()),
+            dnsIpAddress: Type.Optional(Type.Array(Type.String())),
+            launchTime: Type.Optional(Type.Date()),
+            domainName: Type.Optional(Type.String()),
+            shortName: Type.Optional(Type.String()),
+            ssoEnabled: Type.Optional(Type.Boolean()),
+            status: Type.Optional(Type.String()),
+            type: Type.Optional(Type.String()),
+            vpcSettings: Type.Optional(
+                Type.Object({
+                    vpcId: Type.Optional(Type.String()),
+                    subnetIds: Type.Optional(Type.Array(Type.String())),
+                    availabilityZones: Type.Optional(Type.Array(Type.String()))
+                })
+            )
+        })
+    )
 });
 
 const AdsParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String(),
-    vpcId: Type.String(),
+    vpcId: Type.String()
 });
 
 type VpcResponseType = Static<typeof VpcListResponse>;
@@ -79,5 +83,15 @@ type AwsQueryStringType = Static<typeof AwsQueryString>;
 type AdsResponseType = Static<typeof AdsResponse>;
 type AdsParamsType = Static<typeof AdsParams>;
 
-export { VpcResponseType, AwsParamType, AwsQueryStringType, AwsQueryString, AwsParam, VpcListResponse, 
-    AdsResponse, AdsParams, AdsResponseType, AdsParamsType };
+export {
+    VpcResponseType,
+    AwsParamType,
+    AwsQueryStringType,
+    AwsQueryString,
+    AwsParam,
+    VpcListResponse,
+    AdsResponse,
+    AdsParams,
+    AdsResponseType,
+    AdsParamsType
+};
