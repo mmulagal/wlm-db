@@ -50,11 +50,11 @@ async function getVpcsList(credentialsId: string, region: string, fields: string
     if (Vpcs?.length && fieldsValues.length === 0) {
         vpcs = Vpcs.map(
             ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
-                let name;
+                let name = '-';
                 if (tags?.length) {
                     name = findNameFromTags(tags);
                 }
-                return { id, state, tags, cidrBlock, isDefault, ...(name && { name }) };
+                return { id, state, tags, cidrBlock, isDefault, name };
             }
         );
         return { vpcs: vpcs };
@@ -111,7 +111,7 @@ async function getVpcsList(credentialsId: string, region: string, fields: string
                         isDefault,
                         subnets: subnetsList,
                         securityGroups: securityGroupList,
-                        ...(name && { name })
+                        name
                     });
                 } catch (err) {
                     logger.error('Failed to get the vpc details', { vpc, err });
@@ -142,7 +142,7 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 if (tags?.length) {
                     name = findNameFromTags(tags);
                 }
-                return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, ...(name && { name }) };
+                return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name };
             }
         );
     }
@@ -161,7 +161,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
                 if (tags?.length) {
                     name = findNameFromTags(tags);
                 }
-                return { id: id, description: description, vpcId: vpcId, ipPermissions, ...(name && { name }) };
+                return { id: id, description: description, vpcId: vpcId, ipPermissions, name };
             }
         );
     }
