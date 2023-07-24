@@ -7,7 +7,7 @@ const API_PATH_AWS = '/v1/credentials/:credentialsId/regions/:region';
 
 export default function awsRoutes(fastify: FastifyInstance) {
     fastify.get<{ Reply: VpcResponseType; Params: AwsParamType; Querystring: AwsQueryStringType }>(
-        '/accounts/:accountId/credentials/:credentialsId/regions/:region/vpcs',
+        `${API_PATH_AWS}/vpcs`,
         { schema: GetVpcsListSchema },
         async (request, reply) => {
             const {
