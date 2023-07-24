@@ -16,6 +16,12 @@
         "quotes": ["error", "single"],
         "semi": ["error", "always"],
         "no-console": 2,
-        "@typescript-eslint/no-explicit-any": 1
+        "@typescript-eslint/no-explicit-any": 1,
+        "no-unused-expressions": 2,
+        "no-const-assign": 2,
+        "no-duplicate-imports": 2,
+        "no-func-assign": 2,
+        "no-unreachable": 2,
+        "prefer-destructuring": 1
     }
 }

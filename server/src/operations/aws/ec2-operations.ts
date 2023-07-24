@@ -77,7 +77,7 @@ async function getVpcsList(credentialsId: string, region: string, fields: string
                         name = findNameFromTags(tags);
                     }
 
-                    const params: DescribeSubnetsRequest = {
+                    const subnetParams: DescribeSubnetsRequest = {
                         Filters: [
                             {
                                 Name: 'vpc-id',
@@ -88,12 +88,20 @@ async function getVpcsList(credentialsId: string, region: string, fields: string
 
                     let subnetsList: Array<Subnet> = [];
                     if (fields?.includes(AWSQueryFields.SUBNET)) {
-                        subnetsList = await getSubnetsList(credentialsId, region, params);
+                        subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
                     }
 
+                    const sgParams: DescribeSecurityGroupsRequest = {
+                        Filters: [
+                            {
+                                Name: 'vpc-id',
+                                Values: [id as string]
+                            }
+                        ]
+                    };
                     let securityGroupList: Array<SecurityGroup> = [];
                     if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
-                        securityGroupList = await getSecurityGroupsList(credentialsId, region, params);
+                        securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
                     }
                     vpcs.push({
                         id,
