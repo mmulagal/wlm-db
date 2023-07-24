@@ -1,23 +1,30 @@
-import { VpcListResponse, AmiResponse, AwsVpcQueryString, AwsParam } from '../types/aws.types';
+import { Type } from '@sinclair/typebox';
+import { AmiResponse, VpcListResponse, AwsParams } from '../types/aws.types';
+import headers from './headers';
 
-// AWS Params
-const params = AwsParam;
-
-// Aws schemas
-const GetVpcsListSchema = {
+// Base Request for AWS Routes
+const baseRequest = {
     tags: ['aws'],
+    headers,
+    params: AwsParams
+};
+
+// GET VPC List Schema
+const GetVpcsListSchema = {
+    ...baseRequest,
     description: 'List Vpcs in a region',
-    params,
-    query: AwsVpcQueryString,
+    querystring: Type.Object({
+        fields: Type.String()
+    }),
     response: {
         200: VpcListResponse
     }
 };
 
+// GET AMI Schema
 const GetAmiSchema = {
-    tags: ['aws'],
+    ...baseRequest,
     description: 'Get AMIs in a region',
-    params,
     response: {
         200: AmiResponse
     }
