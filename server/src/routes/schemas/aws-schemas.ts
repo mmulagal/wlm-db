@@ -1,11 +1,12 @@
 import { VpcListResponse, AmiResponse, AwsVpcQueryString, AwsParam, AdsParams, AdsResponse } from '../types/aws.types';
+import { AWS_TAG } from '../../utils/consts';
 
 // AWS Params
 const params = AwsParam;
 
 // Aws schemas
 const GetVpcsListSchema = {
-    tags: ['AWS'],
+    tags: [AWS_TAG],
     description: 'List Vpcs in a region',
     params,
     query: AwsVpcQueryString,
@@ -15,7 +16,7 @@ const GetVpcsListSchema = {
 };
 
 const AdsSchema = {
-    tags: ['AWS'],
+    tags: [AWS_TAG],
     params: AdsParams,
     description: 'List Active Directories',
     response: {
@@ -24,7 +25,7 @@ const AdsSchema = {
 };
 
 const GetAmiSchema = {
-    tags: ['aws'],
+    tags: [AWS_TAG],
     description: 'Get AMIs in a region',
     params,
     response: {
