@@ -23,11 +23,8 @@ import {
     VERSION,
     WORKSPACE_ID
 } from './utils/consts';
-import { verifyToken } from './utils/jwt';
-import {
-    getLocalStorage,
-    setAsyncLocalStorageResource
-} from './utils/async-local-storage';
+import jwtOperation from './utils/jwt';
+import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
 import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import awsRoutes from './routes/aws';
@@ -35,9 +32,11 @@ import awsRoutes from './routes/aws';
 const logger = getLogger();
 const accessLogger = getLogger('access');
 
+const { verifyToken } = jwtOperation;
+
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
-const API_PREFIX_PATH = 'wlm-db/api';
+const API_PREFIX_PATH = 'wlm-db/accounts/:accountId/api';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -52,7 +51,6 @@ interface Headers {
     [HEADERS.WORKSPACE_ID]?: string;
     [HEADERS.AGENT_ID]?: string;
 }
-
 
 const app = fastify({
     trustProxy: true,
@@ -188,4 +186,3 @@ await app.listen({ port, host }, err => {
     logger.info(`Server listening on ${host}:${port}`);
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
 });
-

@@ -1,0 +1,72 @@
+{
+    "Vpcs": [
+        {
+            "CidrBlock": "172.30.0.0/20",
+            "DhcpOptionsId": "dopt-3a8d7f5f",
+            "State": "available",
+            "VpcId": "vpc-7d4a2818",
+            "OwnerId": "210811600188",
+            "InstanceTenancy": "default",
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-c08773a9",
+                    "CidrBlock": "172.30.0.0/20",
+                    "CidrBlockState": { "State": "associated" }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [{ "Key": "Name", "Value": "sathish" }]
+        },
+        {
+            "CidrBlock": "192.168.16.0/20",
+            "DhcpOptionsId": "dopt-37dcc655",
+            "State": "available",
+            "VpcId": "vpc-d4f1aab1",
+            "OwnerId": "210811600188",
+            "InstanceTenancy": "default",
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-aa9068c3",
+                    "CidrBlock": "192.168.16.0/20",
+                    "CidrBlockState": { "State": "associated" }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [{ "Key": "Name", "Value": "HCL-VPCOF-2 - to be deleted" }]
+        },
+        {
+            "CidrBlock": "10.0.0.0/16",
+            "DhcpOptionsId": "dopt-37dcc655",
+            "State": "available",
+            "VpcId": "vpc-62720a04",
+            "OwnerId": "210811600188",
+            "InstanceTenancy": "default",
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-17412d7f",
+                    "CidrBlock": "10.0.0.0/16",
+                    "CidrBlockState": { "State": "associated" }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [{ "Key": "Name", "Value": "SGWS" }]
+        },
+        {
+            "CidrBlock": "192.168.16.0/20",
+            "DhcpOptionsId": "dopt-37dcc655",
+            "State": "available",
+            "VpcId": "vpc-ba1ed1de",
+            "OwnerId": "210811600188",
+            "InstanceTenancy": "default",
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-d63dc1bf",
+                    "CidrBlock": "192.168.16.0/20",
+                    "CidrBlockState": { "State": "associated" }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [{ "Key": "Name", "Value": "HCL-CC" }]
+        }
+    ]
+}
