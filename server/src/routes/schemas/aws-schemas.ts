@@ -1,30 +1,26 @@
-import { VpcListResponse } from '../types/aws.types';
+import { VpcListResponse, AmiResponse, AwsVpcQueryString, AwsParam } from '../types/aws.types';
+
+// AWS Params
+const params = AwsParam;
 
 // Aws schemas
 const GetVpcsListSchema = {
     tags: ['aws'],
     description: 'List Vpcs in a region',
-    params: {
-        type: 'object',
-        properties: {
-            accountId: {
-                type: 'string',
-                description: 'Account ID'
-            },
-            credentialsId: {
-                type: 'string',
-                description: 'Credentials ID'
-            },
-            region: {
-                type: 'string',
-                description: 'Aws Region'
-            }
-        },
-        required: ['accountId']
-    },
+    params,
+    query: AwsVpcQueryString,
     response: {
         200: VpcListResponse
     }
 };
 
-export { GetVpcsListSchema };
+const GetAmiSchema = {
+    tags: ['aws'],
+    description: 'Get AMIs in a region',
+    params,
+    response: {
+        200: AmiResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema };

@@ -180,7 +180,7 @@ const app = fastify({
         return payload;
     });
 
-await app.listen({ port, host }, err => {
+app.listen({ port, host }, err => {
     if (err) {
         logger.error('Failed to start server', err.message);
         process.exit(1);

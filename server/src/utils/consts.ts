@@ -144,6 +144,29 @@ export const SECRET_WORDS = [
     'username'
 ];
 
+export const SQL_AMI_NAMES = [
+    'Windows_Server-2016-English-Full-SQL_2017_Enterprise*',
+    'Windows_Server-2016-English-Full-SQL_2019_Standard*',
+    'Windows_Server-2019-English-Full-SQL_2019_Enterprise*',
+    'Windows_Server-2019-English-Full-SQL_2019_Standard*',
+    'Windows_Server-2022-English-Full-SQL_2017_Standard*',
+    'Windows_Server-2022-English-Full-SQL_2017_Enterprise*',
+    'Windows_Server-2022-English-Full-SQL_2019_Enterprise*',
+    'Windows_Server-2022-English-Full-SQL_2019_Standard*',
+    'Windows_Server-2019-English-Full-SQL_2022_Enterprise*',
+    'Windows_Server-2019-English-Full-SQL_2022_Standard*',
+    'Windows_Server-2022-English-Full-SQL_2022_Enterprise*',
+    'Windows_Server-2016-English-Full-SQL_2016_SP*_Enterprise*',
+    'Windows_Server-2022-English-Full-SQL_2022_Standard*',
+    'Windows_Server-2019-English-Full-SQL_2016_SP*_Enterprise*',
+    'Windows_Server-2019-English-Full-SQL_2017_Enterprise*',
+    'Windows_Server-2016-English-Full-SQL_2017_Standard*',
+    'Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*',
+    'Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*',
+    'Windows_Server-2019-English-Full-SQL_2017_Standard*',
+    'Windows_Server-2016-English-Full-SQL_2019_Enterprise*'
+];
+
 export enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'

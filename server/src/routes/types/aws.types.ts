@@ -1,5 +1,17 @@
 import { Type, Static } from '@sinclair/typebox';
 
+// AWS Request Params
+const AwsParam = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String()
+});
+
+// VPC list Request and Response
+const AwsVpcQueryString = Type.Object({
+    fields: Type.String()
+});
+
 const VpcListResponse = Type.Object({
     vpcs: Type.Array(
         Type.Object({
@@ -38,18 +50,36 @@ const VpcListResponse = Type.Object({
     )
 });
 
-const AwsParam = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String()
+// AMI Request and Response
+const AmiResponse = Type.Object({
+    amis: Type.Array(
+        Type.Object({
+            name: Type.Optional(Type.String()),
+            description: Type.Optional(Type.String()),
+            architecture: Type.Optional(Type.String()),
+            imageId: Type.Optional(Type.String()),
+            imageLocation: Type.Optional(Type.String()),
+            public: Type.Optional(Type.Boolean()),
+            platform: Type.Optional(Type.String()),
+            platformDetails: Type.Optional(Type.String()),
+            state: Type.Optional(Type.String()),
+            hypervisor: Type.Optional(Type.String())
+        })
+    )
 });
 
-const AwsQueryString = Type.Object({
-    fields: Type.String()
-});
-
+type AmiResponseType = Static<typeof AmiResponse>;
 type VpcResponseType = Static<typeof VpcListResponse>;
 type AwsParamType = Static<typeof AwsParam>;
-type AwsQueryStringType = Static<typeof AwsQueryString>;
+type AwsVpcQueryStringType = Static<typeof AwsVpcQueryString>;
 
-export { VpcResponseType, AwsParamType, AwsQueryStringType, AwsQueryString, AwsParam, VpcListResponse };
+export {
+    VpcResponseType,
+    AwsParamType,
+    AwsVpcQueryStringType,
+    AwsVpcQueryString,
+    AwsParam,
+    VpcListResponse,
+    AmiResponse,
+    AmiResponseType
+};

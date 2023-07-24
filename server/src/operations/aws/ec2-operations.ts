@@ -1,6 +1,7 @@
+import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets } from '../../lib/aws/ec2';
+import { AWSQueryFields, SQL_AMI_NAMES } from '../../utils/consts';
+import { describeVpc, describeSecurityGroups, describeSubnets, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -168,8 +169,55 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     return securityGroupList;
 }
 
+export async function getAmiList(credentialsId: string, region: string) {
+    logger.info('Get AWS Amis', { credentialsId, region });
+
+    try {
+        const amis = await getAmis(credentialsId, region, {
+            Filters: [
+                { Name: 'name', Values: SQL_AMI_NAMES },
+                { Name: 'owner-alias', Values: ['amazon'] }
+            ]
+        });
+
+        if (!amis?.Images) {
+            return { amis: [] };
+        }
+
+        return {
+            amis: amis?.Images?.map(
+                ({
+                    Name,
+                    Description,
+                    Architecture,
+                    ImageId,
+                    ImageLocation,
+                    Public,
+                    Platform,
+                    PlatformDetails,
+                    State,
+                    Hypervisor
+                }) => ({
+                    name: Name,
+                    description: Description,
+                    architecture: Architecture,
+                    imageId: ImageId,
+                    imageLocation: ImageLocation,
+                    public: Public,
+                    platform: Platform,
+                    platformDetails: PlatformDetails,
+                    state: State,
+                    hypervisor: Hypervisor
+                })
+            )
+        };
+    } catch (error: any) {
+        logger.error('Failed to get the aws amis ', error.message);
+        throw createError(error.statusCode || error.code || 500, error.message);
+    }
+}
 function findNameFromTags(tags: Tag[]) {
-    logger.info('Find name from the tags', { tags });
+    logger.debug('Find name from the tags', { tags });
     const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
     return name ? name : '-';
 }
