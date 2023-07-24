@@ -1,21 +1,23 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { CredentialsResponseType } from './types/credentials.types';
+import { CredentialsResponseType, CredentialsListParamsType } from './types/credentials.types';
 import { CredentialsSchema } from './schemas/generic-schemas';
-import { AccountIdParamsType } from './types/generic.types';
 import { getAwsCredentials } from '../operations/cloud-manager/credentials-operations';
 
-const API_PATH_ACCOUNTS: string = '/v1/wlm-db/accounts/:accountId'
+const API_PATH_ACCOUNTS: string = '/accounts/:accountId/v1'
 
 export default function credentialsRoutes(fastify: FastifyInstance) {
     fastify
         .get<{
-            Params: AccountIdParamsType;
+            Params: CredentialsListParamsType;
             Reply: CredentialsResponseType; }>(
-            `${API_PATH_ACCOUNTS}/credentials`,
+            `${API_PATH_ACCOUNTS}/credentials/:credentialsType`,
             {
                 schema: CredentialsSchema
             },
-            async () => {
-                return getAwsCredentials();
+            async (request) => {
+                const {
+                    params:{ credentialsType }
+                } = request;
+                return getAwsCredentials(credentialsType);
             }
         )}

@@ -27,12 +27,13 @@ interface AwsCredentials extends Credentials {
 }
 
 /**
- * Retuns an array of aws assume role
+ * Retuns an array of provided credentialsType
  * credentials added to that account by calling SaS credentials API
+ * @param credentialsType 
  * @returns Array of credentials added to BlueXP
  */
-async function getAllAwsCredentials() {
-    logger.info("Getting all AWS credentials ", CredentialsType.AWS)
+async function getAllAwsCredentials(credentialsType:string) {
+    logger.info("Getting credentials for credentials type ", credentialsType)
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID)
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials`, {
@@ -41,7 +42,7 @@ async function getAllAwsCredentials() {
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
             },
             searchParams: {
-                credentialsType: CredentialsType.AWS
+                credentialsType: credentialsType
             }
         })
         .json<AwsCredentials[]>();      

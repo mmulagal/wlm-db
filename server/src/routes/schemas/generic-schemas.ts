@@ -1,10 +1,9 @@
-import { CredentialsResponse } from "../types/credentials.types"
-import { AccountIdParams } from "../types/generic.types"
+import { CredentialsResponse, CredentialsListParams } from "../types/credentials.types"
 
 const CredentialsSchema = {
     tags: ['Generic'],
-    params: AccountIdParams,
-    description: 'List added AWS credentials',
+    params: CredentialsListParams,
+    description: 'List added credentials',
     response: {
         200: CredentialsResponse
     }

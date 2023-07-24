@@ -10,4 +10,10 @@ const CredentialsResponse = Type.Array(
   );
 type CredentialsResponseType = Static<typeof CredentialsResponse>;
 
-export { CredentialsResponse, CredentialsResponseType };
+const CredentialsListParams = Type.Object({
+  accountId: Type.String({ minLength: 1 }),
+  credentialsType: Type.String({ minLength: 1 }),
+});
+type CredentialsListParamsType = Static<typeof CredentialsListParams>;
+
+export { CredentialsResponse, CredentialsResponseType, CredentialsListParams, CredentialsListParamsType };
