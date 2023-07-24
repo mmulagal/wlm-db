@@ -1,6 +1,7 @@
 import { getAwsCredentials } from '../../../src/operations/cloud-manager/credentials-operations';
 import { faker } from '@faker-js/faker';
 
+const aws_credentialsType = 'aws_assume_role';
 const credentialsid_1 = `${faker.string.alphanumeric(20)}`;
 const credentialsid_2 = `${faker.string.alphanumeric(20)}`;
 const mockapidata = [
@@ -51,7 +52,7 @@ vi.mock('../../../src/lib/cloud-manager/credentials', async () => {
 
 describe('getAwsCredentials method', () => {
     it('getAwsCredentials method should return mock data', async () => {
-        const resp = await getAwsCredentials();
+        const resp = await getAwsCredentials(aws_credentialsType);
         expect(resp).toEqual(mockdata);
     });
 });
