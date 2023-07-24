@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest,  Tag } from '@aws-sdk/client-ec2';
+import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
 import { AWSQueryFields, FSX_SUPPORTED_REGIONS, SQL_AMI_NAMES } from '../../utils/consts';
 import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
@@ -230,23 +230,21 @@ function findNameFromTags(tags: Tag[]) {
 async function getFSxAvailableRegionsList(
     credentialsId: string,
     region: string
-): Promise<{ regions: FSxAvailableRegions[]; }> {
-    logger.info(
-        'List regions supporting Amazon FSx for NetApp ONTAP',
-        Array.from(arguments)
-    );
+): Promise<{ regions: FSxAvailableRegions[] }> {
+    // eslint-disable-next-line prefer-rest-params
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', Array.from(arguments));
 
-    const input = { 
-        AllRegions: false,      // Describe only the regions enabled for the account
+    const input = {
+        AllRegions: false, // Describe only the regions enabled for the account
         DryRun: false,
         Filter: {
-            RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys())     // Limit describe to known FSx regions only
+            RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys()) // Limit describe to known FSx regions only
         }
     };
 
     const { Regions: regions } = await describeRegions(credentialsId, region, input);
 
-    let fsxRegionsList: Array<FSxAvailableRegions> = [];
+    const fsxRegionsList: Array<FSxAvailableRegions> = [];
 
     if (regions?.length) {
         regions.forEach(({ RegionName: name }) => {

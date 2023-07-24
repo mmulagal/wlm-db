@@ -1,6 +1,12 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { GetAmiSchema, GetVpcsListSchema, GetFSxRegionsSchema } from './schemas/aws-schemas';
-import { VpcResponseType, AmiResponseType, AwsParamsType, AwsVpcQueryStringType, FSxRegionsResponseType } from './types/aws.types';
+import {
+    VpcResponseType,
+    AmiResponseType,
+    AwsParamsType,
+    AwsVpcQueryStringType,
+    FSxRegionsResponseType
+} from './types/aws.types';
 import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../operations/aws/ec2-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -32,22 +38,15 @@ export default function awsRoutes(fastify: FastifyInstance) {
     );
 
     fastify.get<{
-            Params: AwsParamsType;
-            Reply: FSxRegionsResponseType;
-        }>(
-            `${API_PREFIX_PATH}/fsxregions`,
-            { schema: GetFSxRegionsSchema },
-            async (request, reply) => {
-                const {
-                    params: { credentialsId, region }
-                } = request;
+        Params: AwsParamsType;
+        Reply: FSxRegionsResponseType;
+    }>(`${API_PREFIX_PATH}/fsxregions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
+        const {
+            params: { credentialsId, region }
+        } = request;
 
-                const response = await getFSxAvailableRegionsList(
-                    credentialsId,
-                    region
-                );
+        const response = await getFSxAvailableRegionsList(credentialsId, region);
 
-                return reply.send(response);
-            }
-        );        
+        return reply.send(response);
+    });
 }
