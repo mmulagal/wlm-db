@@ -217,7 +217,7 @@ export async function getAmiList(credentialsId: string, region: string) {
     }
 }
 function findNameFromTags(tags: Tag[]) {
-    logger.info('Find name from the tags', { tags });
+    logger.debug('Find name from the tags', { tags });
     const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
     return name ? name : '-';
 }
