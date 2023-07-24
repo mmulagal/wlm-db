@@ -1,7 +1,7 @@
 import { Type, Static } from '@sinclair/typebox';
 
 // AWS Request Params
-const AwsParam = Type.Object({
+const AwsParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String()
@@ -68,18 +68,30 @@ const AmiResponse = Type.Object({
     )
 });
 
+const FSxRegionsResponse = Type.Object({
+    regions: Type.Array(
+        Type.Object({
+            regionName: Type.String(),
+            descriptiveRegionName: Type.String()
+        })
+    )
+});
+
 type AmiResponseType = Static<typeof AmiResponse>;
 type VpcResponseType = Static<typeof VpcListResponse>;
-type AwsParamType = Static<typeof AwsParam>;
+type AwsParamsType = Static<typeof AwsParams>;
 type AwsVpcQueryStringType = Static<typeof AwsVpcQueryString>;
+type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
 
 export {
-    VpcResponseType,
-    AwsParamType,
-    AwsVpcQueryStringType,
-    AwsVpcQueryString,
-    AwsParam,
-    VpcListResponse,
     AmiResponse,
-    AmiResponseType
+    AmiResponseType,
+    AwsParams,
+    AwsParamsType,
+    AwsVpcQueryString,
+    AwsVpcQueryStringType,
+    FSxRegionsResponse,
+    FSxRegionsResponseType,
+    VpcListResponse,
+    VpcResponseType,
 };

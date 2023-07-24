@@ -1,11 +1,12 @@
-import { VpcListResponse, AmiResponse, AwsVpcQueryString, AwsParam } from '../types/aws.types';
+import { VpcListResponse, AmiResponse, AwsVpcQueryString, AwsParams, FSxRegionsResponse } from '../types/aws.types';
+import { RouteTags } from '../../utils/consts';
 
 // AWS Params
-const params = AwsParam;
+const params = AwsParams;
 
 // Aws schemas
 const GetVpcsListSchema = {
-    tags: ['aws'],
+    tags: [RouteTags.AWS],
     description: 'List Vpcs in a region',
     params,
     query: AwsVpcQueryString,
@@ -15,7 +16,7 @@ const GetVpcsListSchema = {
 };
 
 const GetAmiSchema = {
-    tags: ['aws'],
+    tags: [RouteTags.AWS],
     description: 'Get AMIs in a region',
     params,
     response: {
@@ -23,4 +24,12 @@ const GetAmiSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema };
+const GetFSxRegionsSchema = {
+    tags: [RouteTags.AWS],
+    params: AwsParams,
+    descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
+    response: {
+        200: FSxRegionsResponse
+    }
+};
+export { GetVpcsListSchema, GetAmiSchema, GetFSxRegionsSchema };

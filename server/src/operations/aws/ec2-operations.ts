@@ -1,7 +1,7 @@
 import createError from 'http-errors';
-import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields, SQL_AMI_NAMES } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets, getAmis } from '../../lib/aws/ec2';
+import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest,  Tag } from '@aws-sdk/client-ec2';
+import { AWSQueryFields, FSX_SUPPORTED_REGIONS, SQL_AMI_NAMES } from '../../utils/consts';
+import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -32,6 +32,11 @@ interface SecurityGroup {
     vpcId?: string;
     ipPermissions?: any;
     name?: string;
+}
+
+interface FSxAvailableRegions {
+    regionName: string;
+    descriptiveRegionName: string;
 }
 
 async function getVpcsList(credentialsId: string, region: string, fields: string) {
@@ -222,4 +227,39 @@ function findNameFromTags(tags: Tag[]) {
     return name ? name : '-';
 }
 
-export { getVpcsList };
+async function getFSxAvailableRegionsList(
+    credentialsId: string,
+    region: string
+): Promise<{ regions: FSxAvailableRegions[]; }> {
+    logger.info(
+        'List regions supporting Amazon FSx for NetApp ONTAP',
+        Array.from(arguments)
+    );
+
+    const input = { 
+        AllRegions: false,      // Describe only the regions enabled for the account
+        DryRun: false,
+        Filter: {
+            RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys())     // Limit describe to known FSx regions only
+        }
+    };
+
+    const { Regions: regions } = await describeRegions(credentialsId, region, input);
+
+    let fsxRegionsList: Array<FSxAvailableRegions> = [];
+
+    if (regions?.length) {
+        regions.forEach(({ RegionName: name }) => {
+            if (name && FSX_SUPPORTED_REGIONS.has(name)) {
+                fsxRegionsList.push({
+                    regionName: name,
+                    descriptiveRegionName: FSX_SUPPORTED_REGIONS.get(name)!
+                });
+            }
+        });
+    }
+
+    return { regions: fsxRegionsList };
+}
+
+export { getVpcsList, getFSxAvailableRegionsList };
