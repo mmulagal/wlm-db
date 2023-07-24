@@ -1,10 +1,4 @@
-import {
-    ACCOUNT_ID,
-    CREDENTIALS_ENDPOINT,
-    CredentialsType,
-    HEADERS,
-    USER_TOKEN
-} from '../../utils/consts';
+import { ACCOUNT_ID, CREDENTIALS_ENDPOINT, CredentialsType, HEADERS, USER_TOKEN } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
@@ -17,7 +11,6 @@ interface Credentials {
     isSimulated: boolean;
 }
 
-
 interface AwsCredentials extends Credentials {
     extra: {
         name: string;
@@ -26,8 +19,8 @@ interface AwsCredentials extends Credentials {
     };
 }
 
-export async function getAllAwsCredentials(credentialsType: CredentialsType.AWS) {
-    logger.info("Getting all AWS credentials ", credentialsType)
+async function getAllAwsCredentials(credentialsType: CredentialsType.AWS) {
+    logger.info('Getting all AWS credentials ', credentialsType);
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials`, {
@@ -40,12 +33,10 @@ export async function getAllAwsCredentials(credentialsType: CredentialsType.AWS)
             }
         })
         .json<AwsCredentials[]>();
-        
 }
 
-
-export async function getCredentialDetails(credentialsId: string) {
-    logger.info("Getting credential details for ", credentialsId)
+async function getCredentialDetails(credentialsId: string) {
+    logger.info('Getting credential details for ', credentialsId);
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials/${credentialsId}`, {
@@ -59,3 +50,5 @@ export async function getCredentialDetails(credentialsId: string) {
         })
         .json<{ credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date } }>();
 }
+
+export { getCredentialDetails, getAllAwsCredentials };
