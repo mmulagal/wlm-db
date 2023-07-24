@@ -3,7 +3,7 @@ import { describeDirectories } from '../../lib/aws/directory-service';
 import getLogger from '../../utils/logger';
 const logger = getLogger();
 
-export interface AdsInterface {
+interface AdsInterface {
     directoryId?: string;
     dnsIpAddress?: Array<string>;
     launchTime?: Date;
@@ -16,28 +16,33 @@ export interface AdsInterface {
         vpcId?: string;
         subnetIds?: Array<string>;
         availabilityZones?: Array<string>;
-    }
+    };
 }
 
-export async function getAdsList(credentialsId: string, region: string, vpcId: string) {
+async function getAdsList(credentialsId: string, region: string, vpcId: string) {
     logger.info('List Active Directories in a region for a given VPC', { credentialsId, region, vpcId });
-    const { DirectoryDescriptions: directoryDesc } = await describeDirectories(credentialsId, region, {}) || [];
+    const { DirectoryDescriptions: directoryDesc } = (await describeDirectories(credentialsId, region, {})) || [];
     let directories: Array<AdsInterface> = [];
     if (directoryDesc?.length) {
-        directories = directoryDesc?.filter(
-            (perDs)=> perDs.VpcSettings?.VpcId === vpcId).map((perDs) => 
-            ({
-                directoryId: perDs.DirectoryId, dnsIpAddress: perDs.DnsIpAddrs, 
-                launchTime: perDs.LaunchTime, domainName: perDs.Name, 
-                shortName: perDs.ShortName, ssoEnabled: perDs.SsoEnabled, 
-                status: perDs.Stage, type: perDs.Type, 
-                vpcSettings: 
-                {
-                    vpcId: perDs.VpcSettings?.VpcId, 
-                    availabilityZones: perDs.VpcSettings?.AvailabilityZones, 
+        directories = directoryDesc
+            ?.filter(perDs => perDs.VpcSettings?.VpcId === vpcId)
+            .map(perDs => ({
+                directoryId: perDs.DirectoryId,
+                dnsIpAddress: perDs.DnsIpAddrs,
+                launchTime: perDs.LaunchTime,
+                domainName: perDs.Name,
+                shortName: perDs.ShortName,
+                ssoEnabled: perDs.SsoEnabled,
+                status: perDs.Stage,
+                type: perDs.Type,
+                vpcSettings: {
+                    vpcId: perDs.VpcSettings?.VpcId,
+                    availabilityZones: perDs.VpcSettings?.AvailabilityZones,
                     subnetIds: perDs.VpcSettings?.SubnetIds
                 }
-            }))
+            }));
     }
     return { directories: directories };
 }
+
+export { getAdsList };
