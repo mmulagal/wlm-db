@@ -1,0 +1,61 @@
+{
+    "Subnets": [
+        {
+            "AvailabilityZone": "us-east-1d",
+            "AvailabilityZoneId": "use1-az4",
+            "AvailableIpAddressCount": 251,
+            "CidrBlock": "192.168.16.0/24",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-5a37222d",
+            "VpcId": "vpc-ba1ed1de",
+            "OwnerId": "210811600188",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                { "Key": "KubernetesCluster", "Value": "netehenfhk" },
+                { "Key": "eco-groupname", "Value": "HCL" },
+                { "Key": "Name", "Value": "HCL-CC-1" },
+                { "Key": "eco-shared-resource", "Value": "Y" }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-east-1:210811600188:subnet/subnet-5a37222d",
+            "EnableDns64": false,
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            }
+        },
+        {
+            "AvailabilityZone": "us-east-1d",
+            "AvailabilityZoneId": "use1-az4",
+            "AvailableIpAddressCount": 251,
+            "CidrBlock": "192.168.17.0/24",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-74a1b303",
+            "VpcId": "vpc-ba1ed1de",
+            "OwnerId": "210811600188",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                { "Key": "Name", "Value": "HCL-CC-2" },
+                { "Key": "eco-shared-resource", "Value": "Y" },
+                { "Key": "eco-groupname", "Value": "HCL" }
+            ],
+            "SubnetArn": "arn:aws:ec2:us-east-1:210811600188:subnet/subnet-74a1b303",
+            "EnableDns64": false,
+            "Ipv6Native": false,
+            "PrivateDnsNameOptionsOnLaunch": {
+                "HostnameType": "ip-name",
+                "EnableResourceNameDnsARecord": false,
+                "EnableResourceNameDnsAAAARecord": false
+            }
+        }
+    ]
+}
