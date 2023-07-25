@@ -1,0 +1,16 @@
+.operating-system {
+    .handleRadio {
+        display: flex;
+        gap: 32px;
+        padding-bottom: 10px;
+    }
+
+    .text {
+        color: var(--grey-50);
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 24px;
+        margin-bottom: 24px;
+    }
+}
