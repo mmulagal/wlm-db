@@ -8,7 +8,7 @@ const DatabaseEdition = () => {
     const [dbEdition, setDbEdition] = useState(GENERAL.SQL_SERVER_STANDARD_EDITION);
     //Set the Header text here
     const setHeader = () => {
-        return ['Windows server 2016'];
+        return <Typography variant="Regular_14">{dbEdition}</Typography>;
     };
     return (
         <div className={styles['db-edition']}>
