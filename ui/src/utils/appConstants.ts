@@ -57,5 +57,8 @@ export const GENERAL = {
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Generated security group',
-    EXISTING_SECURITY_GROUP: 'Existing security group'
+    EXISTING_SECURITY_GROUP: 'Existing security group',
+    WIN_SERVER_2016: 'Windows server 2016',
+    WIN_SERVER_2019: 'Windows server 2019',
+    OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.'
 };
