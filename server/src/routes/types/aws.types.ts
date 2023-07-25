@@ -9,7 +9,7 @@ const AwsParams = Type.Object({
 
 // VPC list Request and Response
 const AwsVpcQueryString = Type.Object({
-    fields: Type.String()
+    fields: Type.Optional(Type.String())
 });
 
 const VpcListResponse = Type.Object({

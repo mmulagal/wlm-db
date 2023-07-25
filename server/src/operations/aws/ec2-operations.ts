@@ -34,7 +34,7 @@ interface SecurityGroup {
     name?: string;
 }
 
-async function getVpcsList(credentialsId: string, region: string, fields: string) {
+async function getVpcsList(credentialsId: string, region: string, fields?: string) {
     logger.info('List vpcs in a region', { credentialsId, region, fields });
 
     let fieldsValues: Array<string> = [];

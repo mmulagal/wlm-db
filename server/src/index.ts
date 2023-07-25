@@ -27,6 +27,7 @@ import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
 import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
+import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
 
 const logger = getLogger();
@@ -131,6 +132,7 @@ const app = fastify({
                 }
             );
             awsRoutes(instance);
+            credentialsRoutes(instance);
             next();
         },
         { prefix: API_PREFIX_PATH }
