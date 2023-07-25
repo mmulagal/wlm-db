@@ -1,27 +1,58 @@
-import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
-import { GENERAL } from "../../../utils/appConstants";
-import CommonStyles from "../../../utils/CommonStyles.module.scss";
+import { useState } from 'react';
+import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { GENERAL } from '../../../utils/appConstants';
+import styles from './DatabaseName.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import AccordionError from '../../../common/AccordionError/AccordionError';
 
 const DatabaseName = () => {
-  //Set the Header text here
-  const setHeader = () => {
-    return ["sqldatabase-1"];
-  };
-  return (
-    <div className={""}>
-      <AccordionCard
-        ValueContent={() => (
-          <div className={CommonStyles["heading-content"]}>{setHeader()}</div>
-        )}
-        id="10"
-        title={
-          <div className={CommonStyles.title}>{GENERAL.DATABASE_NAME}</div>
+    const [input, setInput] = useState('');
+
+    function isValidDBName() {
+        const firstChar = input.charAt(0);
+        // Check if the instance name is 16 characters or less in length
+
+        if (
+            input.length > 0 &&
+            (input.length > 16 || !/^[a-zA-Z_#&]/.test(firstChar) || !/^[a-zA-Z0-9_#&]+$/.test(input))
+        ) {
+            return GENERAL.DB_NAME_TOOLTIP;
         }
-      >
-        <AccordionCardContent>Content here</AccordionCardContent>
-      </AccordionCard>
-    </div>
-  );
+    }
+    //Set the Header text here
+    const setHeader = () => {
+        if (isValidDBName()) {
+            return <AccordionError />;
+        } else {
+            return <Typography variant="Regular_14">{input}</Typography>;
+        }
+    };
+
+    return (
+        <div className={styles['db-name']}>
+            <AccordionCard
+                ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
+                id="10"
+                title={<div className={CommonStyles.title}>{GENERAL.DATABASE_NAME}</div>}
+            >
+                <AccordionCardContent>
+                    <Typography>
+                        <div className={styles.content}>
+                            <TextField
+                                info={GENERAL.DB_NAME_TOOLTIP}
+                                label={GENERAL.DATABASE_INSTANCE_NAME}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setInput(e.target.value);
+                                }}
+                                error={isValidDBName()}
+                                value={input}
+                            />
+                        </div>
+                    </Typography>
+                </AccordionCardContent>
+            </AccordionCard>
+        </div>
+    );
 };
 
 export default DatabaseName;
