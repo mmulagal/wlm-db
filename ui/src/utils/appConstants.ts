@@ -54,5 +54,8 @@ export const GENERAL = {
     GO_TO_THE: 'Go to the',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials',
-    ADD_NEW_CREDENTIALS: 'To add a new credentials, visit'
+    ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
+    USE_AN_EXISTING_SECURITY: 'Use an existing security group',
+    GENERATED_SECURITY_GROUP: 'Generated security group',
+    EXISTING_SECURITY_GROUP: 'Existing security group'
 };

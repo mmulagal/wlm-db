@@ -1,2 +1,27 @@
 .security-group {
+    .handleRadio {
+        display: flex;
+        gap: 32px;
+    }
+
+    .handleSelect {
+        margin-top: 24px;
+        width: 477px;
+    }
+
+    .changeColor {
+        color: #404040 !important;
+    }
+
+    .setHeaderStyle {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        color: #404040;
+    }
+
+    .separator {
+        border-right: 1px solid #e0e0e0;
+        height: 16px;
+    }
 }
