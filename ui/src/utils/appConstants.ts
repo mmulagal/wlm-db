@@ -55,16 +55,20 @@ export const GENERAL = {
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials',
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
+    //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Generated security group',
     EXISTING_SECURITY_GROUP: 'Existing security group',
+    //Constants for Op system
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
+    //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover Cluster Instances (FCI)',
     FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across Multiple Availability Zones',
     SINGLE_INSTANCE: 'Single Instance',
     SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
+    //Constants for DB Edition
     SQL_SERVER_STANDARD_EDITION: 'SQL Server Standard Edition',
     SQL_SERVER_STANDARD_EDITION_TEXT:
         'Core data management and business intelligence capabilities for mission-critical applications and mixed workloads.',
@@ -73,5 +77,10 @@ export const GENERAL = {
         "In accordance with Microsoft's licensing policies, it can only be used to support public and Internet-accessible webpages, websites, web applications, and web services.",
     SQL_SERVER_ENTERPRiSE_EDITION: 'SQL Server Enterprise Edition',
     SQL_SERVER_ENTERPRiSE_EDITION_TEXT:
-        'Comprehensive high-end capabilities for mission-critical applications with demanding database workloads and business intelligence requirements.'
+        'Comprehensive high-end capabilities for mission-critical applications with demanding database workloads and business intelligence requirements.',
+    //Constants for DB version
+    SQL_SERVER_2019: 'SQL Server 2019',
+    SQL_SERVER_2016: 'SQL Server 2016',
+    SQL_SERVER_2022: 'SQL Server 2022',
+    VERSION: 'Version'
 };
