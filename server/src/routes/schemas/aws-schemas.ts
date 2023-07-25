@@ -15,7 +15,7 @@ const GetVpcsListSchema = {
     }
 };
 
-const AdsSchema = {
+const GetAdsSchema = {
     tags: [AWS_TAG],
     params: AdsParams,
     description: 'List Active Directories',
@@ -33,4 +33,4 @@ const GetAmiSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, AdsSchema };
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema };

@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import { GetAmiSchema, GetVpcsListSchema, AdsSchema } from './schemas/aws-schemas';
+import { GetAmiSchema, GetVpcsListSchema, GetAdsSchema } from './schemas/aws-schemas';
 import {
     VpcResponseType,
     AmiResponseType,
@@ -29,7 +29,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         )
         .get<{ Reply: AdsResponseType; Params: AdsParamsType }>(
             `${API_PREFIX_PATH}/vpcs/:vpcId/ads`,
-            { schema: AdsSchema },
+            { schema: GetAdsSchema },
             async (request, reply) => {
                 const {
                     params: { credentialsId, region, vpcId }
