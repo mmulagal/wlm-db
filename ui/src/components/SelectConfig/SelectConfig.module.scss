@@ -1,116 +1,117 @@
 .select-config {
-  display: flex;
-  gap: 24px;
-  .standard-create {
     display: flex;
-    width: 520px;
-    height: 136px;
-    padding: 24px 0 24px 24px;
-    background-color: #fff;
+    gap: 24px;
+    .standard-create {
+        display: flex;
+        width: 520px;
+        height: 136px;
+        padding: 24px 0 24px 24px;
+        background-color: #fff;
+        border: 1px solid var(--light-selectors-selector-on-bg, #0067c5);
 
-    .standard-create-content {
-      display: flex;
-      flex-direction: column;
-      padding-left: 24px;
+        .standard-create-content {
+            display: flex;
+            flex-direction: column;
+            padding-left: 24px;
 
-      .standard-create-heading {
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 590;
-        line-height: 28px;
-        text-align: left;
-      }
+            .standard-create-heading {
+                font-size: 16px;
+                font-style: normal;
+                font-weight: 590;
+                line-height: 28px;
+                text-align: left;
+            }
 
-      .standard-create-content-text {
-        font-size: 13px;
-        font-style: normal;
-        font-weight: 400;
-        width: 328px;
-        text-align: left;
-      }
+            .standard-create-content-text {
+                font-size: 13px;
+                font-style: normal;
+                font-weight: 400;
+                width: 328px;
+                text-align: left;
+            }
+        }
+
+        .tick-placement {
+            padding-left: 60px;
+        }
     }
 
-    .tick-placement {
-      padding-left: 60px;
+    .easy-create {
+        display: flex;
+        width: 520px;
+        height: 136px;
+        padding: 24px 0 24px 24px;
+        background-color: #fff;
+
+        .easy-create-content {
+            display: flex;
+            flex-direction: column;
+            padding-left: 24px;
+
+            .easy-create-heading {
+                font-size: 16px;
+                font-style: normal;
+                font-weight: 590;
+                line-height: 28px;
+                text-align: left;
+                color: #a7a7a7;
+            }
+
+            .easy-create-content-text {
+                font-size: 13px;
+                font-style: normal;
+                font-weight: 400;
+                width: 328px;
+                text-align: left;
+                color: #a7a7a7;
+            }
+        }
+
+        .tag {
+            position: relative;
+            right: 24px;
+        }
     }
-  }
-
-  .easy-create {
-    display: flex;
-    width: 520px;
-    height: 136px;
-    padding: 24px 0 24px 24px;
-    background-color: #fff;
-
-    .easy-create-content {
-      display: flex;
-      flex-direction: column;
-      padding-left: 24px;
-
-      .easy-create-heading {
-        font-size: 16px;
-        font-style: normal;
-        font-weight: 590;
-        line-height: 28px;
-        text-align: left;
-        color: #a7a7a7;
-      }
-
-      .easy-create-content-text {
-        font-size: 13px;
-        font-style: normal;
-        font-weight: 400;
-        width: 328px;
-        text-align: left;
-        color: #a7a7a7;
-      }
-    }
-
-    .tag {
-      position: relative;
-      right: 24px;
-    }
-  }
 }
 
 @media screen and (max-width: 1350px) {
-  .select-config {
-    .standard-create {
-      width: 504px;
+    .select-config {
+        .standard-create {
+            width: 504px;
 
-      .tick-placement {
-        padding-left: 44px;
-      }
+            .tick-placement {
+                padding-left: 44px;
+            }
+        }
+
+        .easy-create {
+            width: 504px;
+
+            .tag {
+                position: relative;
+                right: 5;
+            }
+        }
     }
-
-    .easy-create {
-      width: 504px;
-
-      .tag {
-        position: relative;
-        right: 5;
-      }
-    }
-  }
 }
 
 @media screen and (min-width: 1351px) and (max-width: 1520px) {
-  .select-config {
-    .standard-create {
-      width: 552px;
+    .select-config {
+        .standard-create {
+            width: 552px;
 
-      .tick-placement {
-        padding-left: 94px;
-      }
+            .tick-placement {
+                padding-left: 94px;
+            }
+        }
+
+        .easy-create {
+            width: 552px;
+
+            .tag {
+                position: relative;
+                right: 0;
+            }
+        }
     }
-
-    .easy-create {
-      width: 552px;
-
-      .tag {
-        position: relative;
-        right: 0;
-      }
-    }
-  }
 }
