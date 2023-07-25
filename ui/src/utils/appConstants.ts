@@ -60,5 +60,9 @@ export const GENERAL = {
     EXISTING_SECURITY_GROUP: 'Existing security group',
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
-    OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.'
+    OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
+    FAILOVER_CLUSTER: 'Failover Cluster Instances (FCI)',
+    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across Multiple Availability Zones',
+    SINGLE_INSTANCE: 'Single Instance',
+    SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.'
 };
