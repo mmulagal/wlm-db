@@ -64,5 +64,14 @@ export const GENERAL = {
     FAILOVER_CLUSTER: 'Failover Cluster Instances (FCI)',
     FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across Multiple Availability Zones',
     SINGLE_INSTANCE: 'Single Instance',
-    SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.'
+    SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
+    SQL_SERVER_STANDARD_EDITION: 'SQL Server Standard Edition',
+    SQL_SERVER_STANDARD_EDITION_TEXT:
+        'Core data management and business intelligence capabilities for mission-critical applications and mixed workloads.',
+    SQL_SERVER_WEB_EDITION: 'SQL Server Web Edition',
+    SQL_SERVER_WEB_EDITION_TEXT:
+        "In accordance with Microsoft's licensing policies, it can only be used to support public and Internet-accessible webpages, websites, web applications, and web services.",
+    SQL_SERVER_ENTERPRiSE_EDITION: 'SQL Server Enterprise Edition',
+    SQL_SERVER_ENTERPRiSE_EDITION_TEXT:
+        'Comprehensive high-end capabilities for mission-critical applications with demanding database workloads and business intelligence requirements.'
 };
