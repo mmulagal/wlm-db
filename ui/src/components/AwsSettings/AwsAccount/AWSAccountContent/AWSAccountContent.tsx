@@ -45,7 +45,7 @@ const AWSAccountContent = () => {
                 <SelectField
                     label={GENERAL.CREDENTIALS}
                     isClearable={false}
-                    defaultValue={generateAWSAccounts}
+                    defaultValue={[generateAWSAccounts[0]]}
                     onChange={(selectedOptions: any): void => {
                         console.log(selectedOptions);
                     }}
