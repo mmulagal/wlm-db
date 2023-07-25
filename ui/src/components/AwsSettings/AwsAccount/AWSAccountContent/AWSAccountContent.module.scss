@@ -1,6 +1,6 @@
 .aws-account-content {
     .default-sub-text {
-        color: var(--light-text-text-primary, #404040);
+        color: var(--grey-50);
         /* Body/14 . Regular */
         font-size: 14px;
         font-style: normal;
@@ -9,7 +9,7 @@
     }
 
     ul {
-        color: var(--light-text-text-primary, #404040);
+        color: var(--grey-50);
         /* Body/14 . Regular */
         font-size: 14px;
         font-style: normal;
@@ -28,7 +28,7 @@
     }
 
     .sub-text {
-        color: var(--light-text-text-primary, #404040);
+        color: var(--grey-50);
         /* Body/14 . Regular */
         font-size: 14px;
         font-style: normal;
@@ -43,7 +43,7 @@
     }
 
     .bottomText {
-        color: var(--light-text-text-primary, #404040);
+        color: var(--grey-50);
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
