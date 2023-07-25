@@ -1,0 +1,21 @@
+.license {
+    .licenseText {
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 24px;
+        color: var(--grey-50);
+        width: 647px;
+    }
+
+    .radio-container {
+        display: flex;
+        gap: 32px;
+        margin-top: 24px;
+        margin-bottom: 16px;
+    }
+
+    .handleSelect {
+        width: 396px;
+    }
+}
