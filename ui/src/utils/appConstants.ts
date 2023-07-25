@@ -42,5 +42,17 @@ export const GENERAL = {
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     LOAD: 'Load',
-    Cancel: 'Cancel'
+    Cancel: 'Cancel',
+    DEFAULT_AWS_ACCOUNT_SUB_TEXT:
+        'No AWS credentials are available to create Microsoft SQL server. In order to continue you have two options:',
+    AWS_ACCOUNT_SUB_TEXT:
+        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP. For more information, visit ',
+    AWS_ACCOUNT_DEFAULT_LIST_TWO:
+        'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
+    AWS_DEFAULT_LIST_FIRST:
+        "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
+    GO_TO_THE: 'Go to the',
+    MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
+    CREDENTIALS: 'Credentials',
+    ADD_NEW_CREDENTIALS: 'To add a new credentials, visit'
 };

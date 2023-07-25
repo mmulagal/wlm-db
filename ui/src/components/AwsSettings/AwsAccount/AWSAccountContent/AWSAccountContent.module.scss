@@ -1,0 +1,52 @@
+.aws-account-content {
+    .default-sub-text {
+        color: var(--light-text-text-primary, #404040);
+        /* Body/14 . Regular */
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 24px; /* 171.429% */
+    }
+
+    ul {
+        color: var(--light-text-text-primary, #404040);
+        /* Body/14 . Regular */
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 24px; /* 171.429% */
+        padding: 0;
+        padding-left: 16px;
+
+        li {
+            width: 519px;
+        }
+
+        li:first-child {
+            margin-bottom: 16px;
+        }
+    }
+
+    .sub-text {
+        color: var(--light-text-text-primary, #404040);
+        /* Body/14 . Regular */
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        width: 518px;
+        line-height: 24px; /* 171.429% */
+    }
+
+    .selectField {
+        width: 476px;
+        margin-top: 16px;
+    }
+
+    .bottomText {
+        color: var(--light-text-text-primary, #404040);
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 24px;
+    }
+}
