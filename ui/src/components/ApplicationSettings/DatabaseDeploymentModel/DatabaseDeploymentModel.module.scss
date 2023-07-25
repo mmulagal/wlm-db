@@ -13,5 +13,10 @@
             border-top: 1px solid var(--grey-15);
             width: 812px;
         }
+        .failoverTextDisabled {
+            padding-left: 32px;
+            margin-bottom: 16px;
+            color: rgb(167, 167, 167);
+        }
     }
 }

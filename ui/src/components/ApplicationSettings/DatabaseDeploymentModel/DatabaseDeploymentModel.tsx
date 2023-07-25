@@ -40,8 +40,9 @@ const DatabaseDeploymentModel = () => {
                                 }}
                                 children={GENERAL.SINGLE_INSTANCE}
                                 className={styles.radio}
+                                isDisabled
                             />
-                            <Typography variant="Regular_14" className={styles.failoverText}>
+                            <Typography variant="Regular_14" className={styles.failoverTextDisabled}>
                                 {GENERAL.SINGLE_INSTANCE_TEXT}
                             </Typography>
                             <div className={styles.separator} />
