@@ -19,9 +19,13 @@ export const hooks: Hooks = {
     afterResponse: [
         response => {
             const {
-                statusCode, requestUrl, body, request: {
+                statusCode,
+                requestUrl,
+                body,
+                request: {
                     options: { method }
-                }, timings
+                },
+                timings
             } = response;
 
             logger.info(
