@@ -1,2 +1,23 @@
 .security-group {
+    .handleRadio {
+        display: flex;
+        gap: 32px;
+    }
+
+    .handleSelect {
+        margin-top: 24px;
+        width: 477px;
+    }
+
+    .setHeaderStyle {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        color: var(--grey-50);
+    }
+
+    .separator {
+        border-right: 1px solid var(--grey-15);
+        height: 16px;
+    }
 }

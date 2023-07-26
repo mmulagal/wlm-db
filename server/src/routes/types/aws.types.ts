@@ -1,7 +1,7 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 
 // AWS Request Params
-const AwsParam = Type.Object({
+const AwsParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String()
@@ -68,6 +68,7 @@ const AmiResponse = Type.Object({
     )
 });
 
+// Active Directory Response
 const AdsResponse = Type.Object({
     directories: Type.Array(
         Type.Object({
@@ -97,24 +98,4 @@ const AdsParams = Type.Object({
     vpcId: Type.String()
 });
 
-type AmiResponseType = Static<typeof AmiResponse>;
-type VpcResponseType = Static<typeof VpcListResponse>;
-type AwsParamType = Static<typeof AwsParam>;
-type AwsVpcQueryStringType = Static<typeof AwsVpcQueryString>;
-type AdsResponseType = Static<typeof AdsResponse>;
-type AdsParamsType = Static<typeof AdsParams>;
-
-export {
-    VpcResponseType,
-    AwsParamType,
-    AdsResponse,
-    AdsParams,
-    AdsParamsType,
-    AdsResponseType,
-    AwsVpcQueryStringType,
-    AwsVpcQueryString,
-    AwsParam,
-    VpcListResponse,
-    AmiResponse,
-    AmiResponseType
-};
+export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams };

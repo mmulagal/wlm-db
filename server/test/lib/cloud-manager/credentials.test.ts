@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { getAllAwsCredentials, getCredentialDetails } from '../../../src/lib/cloud-manager/credentials';
 import {
-    cloudManagerCredentialsScope,
     cloudManagerAllAwsCredentials,
     cloudManagerAwsCredentials,
     credentialsId
@@ -16,9 +15,6 @@ vi.mock('../../../src/utils/async-local-storage.ts', () => {
         }
     };
 });
-
-// eslint-disable-next-line no-unused-expressions
-cloudManagerCredentialsScope;
 
 describe('getAllAwsCredentials', () => {
     it('should return a list of AWS credentials', async () => {
