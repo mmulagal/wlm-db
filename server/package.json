@@ -34,6 +34,7 @@
         "@fastify/sensible": "^5.2.0",
         "@fastify/swagger": "^8.8.0",
         "@fastify/swagger-ui": "^1.9.2",
+        "@fastify/type-provider-typebox": "^3.3.0",
         "@opentelemetry/instrumentation-fastify": "^0.32.0",
         "@opentelemetry/instrumentation-http": "^0.41.0",
         "@opentelemetry/sdk-node": "^0.41.0",
