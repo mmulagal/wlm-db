@@ -14,6 +14,9 @@ export const AGENT_ID = 'AGENT_ID';
 export const AUDIT_GROUP = 'AUDIT_GROUP';
 export const WORKSPACE_ID = 'WORKSPACE_ID';
 
+//Tags Name
+export const AWS_TAG = 'AWS';
+
 // version
 export const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
 
