@@ -91,11 +91,4 @@ const AdsResponse = Type.Object({
     )
 });
 
-const AdsParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String(),
-    vpcId: Type.String()
-});
-
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams };
+export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse };
