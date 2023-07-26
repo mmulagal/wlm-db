@@ -123,5 +123,18 @@ export const GENERAL = {
     USER_NAME: 'User name',
     FSX_PASSWORD: 'FSxN password',
     NOTICE: 'Notice:',
-    NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.'
+    NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
+    //Active Directory
+    DOMAIN_NAME: 'Domain name',
+    DNS_ADDRESS: 'DNS address',
+    AD_TEXT: 'Lörem ipsum ireliga pakrongen emedan biolavis prelig det dehetist. Selingar pakrosel var. ',
+    PASSWORD: 'Password',
+    //Region VPC acordion
+    REGION: 'Region',
+    REGION_VPC_TEXT:
+        'Choose the Virtual private cloud (VPC). The VPC defines the virtual  networking  environment for this DB instance.',
+    SELECT_EXISTING_VPC: 'Select an existing VPC',
+    CREATE_NEW_VPC: 'Create new VPC',
+    REGION_VPC: 'Region & VPC',
+    VPC: 'VPC'
 };

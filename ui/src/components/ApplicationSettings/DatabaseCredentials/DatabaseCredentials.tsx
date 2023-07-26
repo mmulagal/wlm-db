@@ -1,29 +1,55 @@
-import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
-import { GENERAL } from "../../../utils/appConstants";
-import CommonStyles from "../../../utils/CommonStyles.module.scss";
+import { useState } from 'react';
+import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { GENERAL } from '../../../utils/appConstants';
+import styles from './DatabaseCredentials.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 
 const DatabaseCredentials = () => {
-  //Set the Header text here
-  const setHeader = () => {
-    return ["sqldatabase-1"];
-  };
-  return (
-    <div className={""}>
-      <AccordionCard
-        ValueContent={() => (
-          <div className={CommonStyles["heading-content"]}>{setHeader()}</div>
-        )}
-        id="11"
-        title={
-          <div className={CommonStyles.title}>
-            {GENERAL.DATABASE_CREDENTIALS}
-          </div>
+    const [userName, setUserName] = useState('');
+    const [password, setPassword] = useState('');
+    //Set the Header text here
+    const setHeader = () => {
+        if (!userName || !password) {
+            return <ActionRequired />;
+        } else {
+            return <Typography variant="Regular_14">{userName}</Typography>;
         }
-      >
-        <AccordionCardContent>Content here</AccordionCardContent>
-      </AccordionCard>
-    </div>
-  );
+    };
+    return (
+        <div className={styles.credentials}>
+            <AccordionCard
+                ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
+                id="11"
+                title={<div className={CommonStyles.title}>{GENERAL.DATABASE_CREDENTIALS}</div>}
+            >
+                <AccordionCardContent>
+                    <Typography>
+                        <div className={styles.secondContainer}>
+                            <TextField
+                                label={GENERAL.USER_NAME}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setUserName(e.target.value);
+                                }}
+                                value={userName}
+                                className={styles.textField}
+                            />
+                            <TextField
+                                label={GENERAL.PASSWORD}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPassword(e.target.value);
+                                }}
+                                value={password}
+                                className={styles.textField}
+                                //@ts-ignore
+                                type="password"
+                            />
+                        </div>
+                    </Typography>
+                </AccordionCardContent>
+            </AccordionCard>
+        </div>
+    );
 };
 
 export default DatabaseCredentials;
