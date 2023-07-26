@@ -68,4 +68,12 @@ const AmiResponse = Type.Object({
     )
 });
 
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse };
+const SnsResponse = Type.Object({
+    Topics: Type.Array(
+        Type.Object({
+            TopicArn: Type.Optional(Type.String())
+        })
+    )
+});
+
+export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, SnsResponse };
