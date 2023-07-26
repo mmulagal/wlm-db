@@ -25,6 +25,7 @@ import SimpleNotificationService from '../InfrastructureSettings/SimpleNotificat
 
 import styles from './MSsqlAccordions.module.scss';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
+import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
 
 const MSSqlAccordions = () => {
     return (
@@ -104,6 +105,7 @@ const MSSqlAccordions = () => {
                 <Encryption />
                 <Tags />
                 <SimpleNotificationService />
+                <CloudWatch />
                 {/* Ends here */}
             </AccordionController>
         </div>
