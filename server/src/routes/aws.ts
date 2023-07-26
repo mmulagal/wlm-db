@@ -2,7 +2,6 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 import { FastifyInstance } from 'fastify/types/instance';
 import { GetAmiSchema, GetVpcsListSchema } from './schemas/aws-schemas';
-// import { VpcResponseType, AmiResponseType, AwsParamType, AwsVpcQueryStringType } from './types/aws.types';
 import { getAmiList, getVpcsList } from '../operations/aws/ec2-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
