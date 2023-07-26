@@ -15,6 +15,7 @@
     "@types/react-dom": "^18.2.7",
     "axios": "^0.21.1",
     "lodash": "^4.17.21",
+    "query-string": "^8.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",
@@ -25,7 +26,9 @@
   },
   "scripts": {
     "start": "cross-env HOST=localhost PORT=4200 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
-    "build:local": "cross-env REACT_APP_USE_CM_FORWARDER=false react-scripts build",
+    "build:local": "dotenv -e .env.development react-scripts build",
+    "build:staging": "dotenv -e .env.staging react-scripts build",
+    "build:production": "dotenv -e .env.production react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

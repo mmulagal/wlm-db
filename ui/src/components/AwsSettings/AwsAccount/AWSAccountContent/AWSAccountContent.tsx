@@ -4,17 +4,23 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './AWSAccountContent.module.scss';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const AWSAccountContent = () => {
+
+    const {credentialData} = useAppSelector((state) => state.mssql.getCredentials);
+
     //Mock data to be removed later
     const accountType: string = 'accounts';
-    const awsAccounts = ['FSxCredentials | Account ID: 123456', 'FSxCredentials | Account ID: 543211'];
+    const awsAccounts = credentialData;
+    // const awsAccounts = ['FSxCredentials | Account ID: 123456', 'FSxCredentials | Account ID: 543211'];
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         awsAccounts?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+            const credId = val.credentialsId;
+            const option = generateOptionType(credId, credId, '', false, '');
             options.push(option);
         });
         return options;
