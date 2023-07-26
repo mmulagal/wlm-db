@@ -35,7 +35,7 @@ const cloudManagerAwsCredentials = {
     isSimulated: false
 };
 
-const cloudManagerCredentialsScope = nock(`${CREDENTIALS_ENDPOINT}`)
+nock(`${CREDENTIALS_ENDPOINT}`)
     .persist(true)
     .get(/^\/credentials\/accounts\/(.+)\/credentials$/)
     .query(queryObj => queryObj?.credentialsType === 'aws_assume_role')
@@ -43,4 +43,4 @@ const cloudManagerCredentialsScope = nock(`${CREDENTIALS_ENDPOINT}`)
     .get(/^\/credentials\/accounts\/(.+)\/credentials\/(.+)$/)
     .reply(() => [200, cloudManagerAwsCredentials]);
 
-export { cloudManagerCredentialsScope, cloudManagerAllAwsCredentials, cloudManagerAwsCredentials, credentialsId };
+export { cloudManagerAllAwsCredentials, cloudManagerAwsCredentials, credentialsId };
