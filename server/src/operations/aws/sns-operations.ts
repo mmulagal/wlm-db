@@ -8,16 +8,14 @@ async function getSnsTopics(credentialsId: string, region: string) {
     logger.info('List SNS topics in a region', { credentialsId, region });
 
     try {
-        const topics = await listTopics(credentialsId, region);
+        const { Topics: topics } = await listTopics(credentialsId, region);
 
-        if (!topics.Topics) {
+        if (!topics) {
             return { Topics: [] };
         }
 
         return {
-            Topics: topics?.Topics?.map(({ TopicArn }) => ({
-                TopicArn: TopicArn
-            }))
+            Topics: topics.map(({ TopicArn }) => ({ TopicArn }))
         };
     } catch (error: any) {
         logger.error('Failed to get the SNS topics ', error.message);

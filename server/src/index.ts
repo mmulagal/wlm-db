@@ -49,8 +49,6 @@ interface Params {
 
 interface Headers {
     [HEADERS.AUTHORIZATION]: string;
-    [HEADERS.WORKSPACE_ID]?: string;
-    [HEADERS.AGENT_ID]?: string;
 }
 
 const app = fastify({
