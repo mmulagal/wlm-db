@@ -21,7 +21,7 @@ const ProvisionedIOPS = () => {
     };
 
     const checkError = () => {
-        if (Number(input) < 3072 || Number(input) > 160000) {
+        if (provisionValue === GENERAL.USER_PROVISIONED && (Number(input) < 3072 || Number(input) > 160000)) {
             return 'range should be between 3072 - 160000 IOPS';
         }
     };

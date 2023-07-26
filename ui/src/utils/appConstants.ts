@@ -129,12 +129,18 @@ export const GENERAL = {
     DNS_ADDRESS: 'DNS address',
     AD_TEXT: 'Lörem ipsum ireliga pakrongen emedan biolavis prelig det dehetist. Selingar pakrosel var. ',
     PASSWORD: 'Password',
-    //Region VPC acordion
+    //Region VPC accordion
     REGION: 'Region',
     REGION_VPC_TEXT:
         'Choose the Virtual private cloud (VPC). The VPC defines the virtual  networking  environment for this DB instance.',
     SELECT_EXISTING_VPC: 'Select an existing VPC',
     CREATE_NEW_VPC: 'Create new VPC',
     REGION_VPC: 'Region & VPC',
-    VPC: 'VPC'
+    VPC: 'VPC',
+    //Availability zone
+    AZ_TEXT: 'Choose Availability Zones and corresponding private subnets for a minimum of two Availability Zones.',
+    CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
+    CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
+    AZ_Zone: 'Availability zone',
+    SUBNET: 'Subnet'
 };
