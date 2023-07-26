@@ -6,8 +6,8 @@ import '../../simulator/scopes/aws/directory-service-scope';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;
 
-describe('describeDirectories method', () => {
-    it('describeDirectories method should return mock data', async () => {
+describe('Directory service Lib', () => {
+    it('Describe directories', async () => {
         const resp = await describeDirectories(credentialsid, 'ap-southeast-1', {});
         expect(resp).toEqual(adsResponse);
     });
