@@ -115,5 +115,13 @@ export const GENERAL = {
     //Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
     CLOUD_WATCH_TEXT:
-        'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.'
+        'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
+    //FSX Accordion
+    CREATE_NEW_FSXN: 'Create new FSxN',
+    SELECT_EXISTING_FSX: 'Select an existing FSxN ',
+    FSXN_NAME: 'FSxN name',
+    USER_NAME: 'User name',
+    FSX_PASSWORD: 'FSxN password',
+    NOTICE: 'Notice:',
+    NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.'
 };
