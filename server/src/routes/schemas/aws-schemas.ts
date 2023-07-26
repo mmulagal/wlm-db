@@ -4,7 +4,6 @@ import {
     VpcListResponse,
     AwsParams,
     AwsVpcQueryString,
-    AdsParams,
     AdsResponse,
     FSxRegionsResponse
 } from '../types/aws.types';
@@ -29,8 +28,7 @@ const GetVpcsListSchema = {
 
 // Get AD Schema
 const GetAdsSchema = {
-    tags: [RouteTags.AWS],
-    params: AdsParams,
+    ...baseRequest,
     description: 'List Active Directories',
     response: {
         200: AdsResponse

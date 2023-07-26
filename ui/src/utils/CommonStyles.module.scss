@@ -18,11 +18,19 @@
     height: 16px;
 }
 
+.regular {
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    color: var(--grey-50);
+}
+
 .setHeaderStyle {
     display: flex;
     gap: 16px;
     font-size: 14px;
     color: var(--grey-50);
+    line-height: none !important;
 }
 
 @media screen and (max-width: 1350px) {

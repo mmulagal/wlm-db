@@ -115,5 +115,32 @@ export const GENERAL = {
     //Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
     CLOUD_WATCH_TEXT:
-        'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.'
+        'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
+    //FSX Accordion
+    CREATE_NEW_FSXN: 'Create new FSxN',
+    SELECT_EXISTING_FSX: 'Select an existing FSxN ',
+    FSXN_NAME: 'FSxN name',
+    USER_NAME: 'User name',
+    FSX_PASSWORD: 'FSxN password',
+    NOTICE: 'Notice:',
+    NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
+    //Active Directory
+    DOMAIN_NAME: 'Domain name',
+    DNS_ADDRESS: 'DNS address',
+    AD_TEXT: 'Lörem ipsum ireliga pakrongen emedan biolavis prelig det dehetist. Selingar pakrosel var. ',
+    PASSWORD: 'Password',
+    //Region VPC accordion
+    REGION: 'Region',
+    REGION_VPC_TEXT:
+        'Choose the Virtual private cloud (VPC). The VPC defines the virtual  networking  environment for this DB instance.',
+    SELECT_EXISTING_VPC: 'Select an existing VPC',
+    CREATE_NEW_VPC: 'Create new VPC',
+    REGION_VPC: 'Region & VPC',
+    VPC: 'VPC',
+    //Availability zone
+    AZ_TEXT: 'Choose Availability Zones and corresponding private subnets for a minimum of two Availability Zones.',
+    CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
+    CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
+    AZ_Zone: 'Availability zone',
+    SUBNET: 'Subnet'
 };
