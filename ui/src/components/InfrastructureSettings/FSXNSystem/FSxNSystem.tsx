@@ -118,6 +118,11 @@ const FSxNSystem = () => {
                                 type="password"
                             />
                         </div>
+
+                        <Typography variant="Regular_14" className={styles.bottomText}>
+                            <span style={{ fontWeight: '590' }}>{GENERAL.NOTICE}</span>&nbsp;
+                            {GENERAL.NOTICE_FSX_TEXT}
+                        </Typography>
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

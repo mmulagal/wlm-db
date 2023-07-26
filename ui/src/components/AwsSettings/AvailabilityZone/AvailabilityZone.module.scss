@@ -1,2 +1,11 @@
 .availability-zone {
+    .selectField {
+        width: 312px;
+    }
+
+    .firstContainer {
+        display: flex;
+        gap: 24px;
+        margin-top: 32px;
+    }
 }
