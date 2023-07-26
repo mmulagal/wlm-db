@@ -40,7 +40,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     fastify.get<{
         Params: AwsParamsType;
         Reply: FSxRegionsResponseType;
-    }>(`${API_PREFIX_PATH}/fsxregions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
+    }>(`${API_PREFIX_PATH}/fsx/regions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
