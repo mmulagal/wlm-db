@@ -1,5 +1,4 @@
-import { Type } from '@sinclair/typebox';
-import { AmiResponse, VpcListResponse, AwsParams } from '../types/aws.types';
+import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString } from '../types/aws.types';
 import headers from './headers';
 
 // Base Request for AWS Routes
@@ -13,9 +12,7 @@ const baseRequest = {
 const GetVpcsListSchema = {
     ...baseRequest,
     description: 'List Vpcs in a region',
-    querystring: Type.Object({
-        fields: Type.String()
-    }),
+    querystring: AwsVpcQueryString,
     response: {
         200: VpcListResponse
     }
