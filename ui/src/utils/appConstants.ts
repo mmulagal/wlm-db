@@ -95,5 +95,6 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database instance name',
     DB_NAME_TOOLTIP:
-        'First character should not be a numerical value (0-9), it can be an alphabet (a-z), underscore ‘_’, number sign ‘#’, or ampersand ‘&’. Space and special characters (such as @, ^, *,  ) are not allowed. Instance name should be 16 chars or less in length.'
+        'First character should not be a numerical value (0-9), it can be an alphabet (a-z), underscore ‘_’, number sign ‘#’, or ampersand ‘&’. Space and special characters (such as @, ^, *,  ) are not allowed. Instance name should be 16 chars or less in length.',
+    KEY_PAIR_NAME: 'Key pair'
 };
