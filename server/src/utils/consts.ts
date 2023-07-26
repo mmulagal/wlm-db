@@ -171,3 +171,162 @@ export enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
 }
+
+export const SECRETS_MANAGER = 'secretsmanager';
+export const SECRECTS_MANAGER_ACTION_NAMES = [
+    'GetSecretValue',
+    'CreateSecret',
+    'GetRandomPassword',
+    'DeleteSecret',
+    'ListSecretVersionIds',
+    'TagResource',
+    'UntagResource',
+    'PutResourcePolicy',
+    'DeleteResourcePolicy',
+    'GetSecretValue',
+    'ListSecrets'
+].map(action => `${SECRETS_MANAGER}:${action}`);
+
+export const KMS = 'kms';
+export const KMS_ACTION_NAMES = ['ListKeys', 'ListAliases'].map(action => `${KMS}:${action}`);
+
+export const EC2 = 'ec2';
+export const EC2_ACTION_NAMES = [
+    'CreateVpc',
+    'AssignPrivateIpAddresses',
+    'RunInstances',
+    'AttachNetworkInterface',
+    'AssociateRouteTable',
+    'DeleteSubnet',
+    'GetConsoleOutput',
+    'CreateKeyPair',
+    'AssociateAddress',
+    'StartInstances',
+    'AttachVolume',
+    'AssociateVpcCidrBlock',
+    'DetachNetworkInterface',
+    'GetPasswordData',
+    'CreateRoute',
+    'CreateNetworkInterface',
+    'ModifyInstanceAttribute',
+    'DeleteSecurityGroup',
+    'DeleteNetworkAcl',
+    'DisassociateAddress',
+    'ReplaceRoute',
+    'CreateRouteTable',
+    'CreateVolume',
+    'ModifySubnetAttribute',
+    'DeleteVolume',
+    'DeleteNetworkInterface',
+    'DisassociateVpcCidrBlock',
+    'ReleaseAddress',
+    'CreateSubnet',
+    'CreateVpcEndpoint',
+    'ModifyVolumeAttribute',
+    'DeleteKeyPair',
+    'DeleteNetworkInterfacePermission',
+    'ModifyNetworkInterfaceAttribute',
+    'ReplaceRouteTableAssociation',
+    'AllocateAddress',
+    'CreateTags',
+    'ModifyVpcAttribute',
+    'DeleteVpc',
+    'DeleteRoute',
+    'ModifyVolume',
+    'RevokeSecurityGroupEgress',
+    'AllocateHosts',
+    'DeleteTags',
+    'AssociateSubnetCidrBlock',
+    'DetachVolume',
+    'DeleteRouteTable',
+    'AuthorizeSecurityGroupEgress',
+    'RevokeSecurityGroupIngress',
+    'DisassociateIamInstanceProfile',
+    'DisassociateRouteTable',
+    'DisassociateSubnetCidrBlock',
+    'ModifyInstancePlacement',
+    'DeletePlacementGroup',
+    'CreatePlacementGroup',
+    'StopInstances',
+    'TerminateInstances',
+    'Describe',
+    '*	Get',
+    '*'
+].map(action => `${EC2}:${action}`);
+
+export const CLOUDFORMATION = 'cloudformation';
+export const CLOUDFORMATION_ACTION_NAMES = [
+    'cloudformation',
+    'GetTemplateSummary',
+    'DescribeStack*',
+    'Get*',
+    'ListStacks',
+    'SignalResource',
+    'DeleteStack',
+    'DescribeAccountLimits',
+    'DescribeStackDriftDetectionStatus',
+    'List*',
+    'ValidateTemplate',
+    'Describe*',
+    'CreateStack'
+].map(action => `${CLOUDFORMATION}:${action}`);
+
+export const IAM = 'iam';
+export const IAM_ACTION_NAMES = [
+    'CreateInstanceProfile',
+    'DeleteInstanceProfile	',
+    'RemoveRoleFromInstanceProfile',
+    'AddRoleToInstanceProfile',
+    'GetRole',
+    'GetRolePolicy	',
+    'GetUser',
+    'GetPolicyVersion',
+    'GetPolicy',
+    'List*'
+].map(action => `${IAM}:${action}`);
+
+export const SNS = 'sns';
+export const SNS_ACTION_NAMES = [
+    'ListSubscriptionsByTopic',
+    'Publish',
+    'CreateTopic',
+    'DeleteTopic',
+    'Subscribe',
+    'Unsubscribe'
+].map(action => `${SNS}:${action}`);
+
+export const RESOURCE_GROUPS = 'resource-groups';
+export const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'DeleteGroup', 'Get*'].map(
+    action => `${RESOURCE_GROUPS}:${action}`
+);
+
+export const S3 = 's3';
+export const S3_ACTION_NAMES = ['CreateBucket', 'PutBucketVersioning', 'DeleteBucket'].map(action => `${S3}:${action}`);
+
+export const FSX = 'fsx';
+export const FSX_ACTION_NAMES = [
+    'CreateFileSystem',
+    'DeleteFileSystem',
+    'ListTagsForResource',
+    'TagResource',
+    'UntagResource',
+    'DescribeFileSystems'
+].map(action => `${FSX}:${action}`);
+
+export const SERVICE_QUOTAS = 'servicequotas';
+export const SERVICE_QUOTAS_ACTION_NAMES = ['GetServiceQuota', 'ListServiceQuotas'].map(
+    action => `${SERVICE_QUOTAS}:${action}`
+);
+
+export const AWS_RESOURCES_ACTION_MAP = {
+    [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
+    [KMS]: KMS_ACTION_NAMES,
+    [EC2]: EC2_ACTION_NAMES,
+    [CLOUDFORMATION]: CLOUDFORMATION_ACTION_NAMES,
+    [IAM]: IAM_ACTION_NAMES,
+    [SNS]: SNS_ACTION_NAMES,
+    [RESOURCE_GROUPS]: RESOURCE_GROUPS_ACTION_NAMES,
+    [S3]: S3_ACTION_NAMES,
+    [FSX]: FSX_ACTION_NAMES,
+    [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
+};
