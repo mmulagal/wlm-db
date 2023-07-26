@@ -76,6 +76,7 @@ async function describeRegions(
     region: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
+    // eslint-disable-next-line
     logger.info('Describe AWS regions:', Array.from(arguments));
 
     const client = await getEC2Client(region, credentialsId);

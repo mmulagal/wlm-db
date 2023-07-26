@@ -1,35 +1,57 @@
-import { VpcListResponse, AmiResponse, AwsVpcQueryString, AwsParams, FSxRegionsResponse } from '../types/aws.types';
 import { RouteTags } from '../../utils/consts';
+import {
+    AmiResponse,
+    VpcListResponse,
+    AwsParams,
+    AwsVpcQueryString,
+    AdsParams,
+    AdsResponse,
+    FSxRegionsResponse
+} from '../types/aws.types';
+import headers from './headers';
 
-// AWS Params
-const params = AwsParams;
-
-// Aws schemas
-const GetVpcsListSchema = {
+// Base Request for AWS Routes
+const baseRequest = {
     tags: [RouteTags.AWS],
+    headers,
+    params: AwsParams
+};
+
+// GET VPC List Schema
+const GetVpcsListSchema = {
+    ...baseRequest,
     description: 'List Vpcs in a region',
-    params,
-    query: AwsVpcQueryString,
+    querystring: AwsVpcQueryString,
     response: {
         200: VpcListResponse
     }
 };
 
-const GetAmiSchema = {
+// Get AD Schema
+const GetAdsSchema = {
     tags: [RouteTags.AWS],
+    params: AdsParams,
+    description: 'List Active Directories',
+    response: {
+        200: AdsResponse
+    }
+};
+
+// GET AMI Schema
+const GetAmiSchema = {
+    ...baseRequest,
     description: 'Get AMIs in a region',
-    params,
     response: {
         200: AmiResponse
     }
 };
 
 const GetFSxRegionsSchema = {
-    tags: [RouteTags.AWS],
-    params: AwsParams,
+    ...baseRequest,
     descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse
     }
 };
-export { GetVpcsListSchema, GetAmiSchema, GetFSxRegionsSchema };
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetFSxRegionsSchema };

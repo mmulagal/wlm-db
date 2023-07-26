@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 
 // AWS Request Params
 const AwsParams = Type.Object({
@@ -68,6 +68,7 @@ const AmiResponse = Type.Object({
     )
 });
 
+// Regions supporting FSx for ONTAP response
 const FSxRegionsResponse = Type.Object({
     regions: Type.Array(
         Type.Object({
@@ -77,21 +78,34 @@ const FSxRegionsResponse = Type.Object({
     )
 });
 
-type AmiResponseType = Static<typeof AmiResponse>;
-type VpcResponseType = Static<typeof VpcListResponse>;
-type AwsParamsType = Static<typeof AwsParams>;
-type AwsVpcQueryStringType = Static<typeof AwsVpcQueryString>;
-type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
+// Active Directory Response
+const AdsResponse = Type.Object({
+    directories: Type.Array(
+        Type.Object({
+            id: Type.Optional(Type.String()),
+            dnsIpAddress: Type.Optional(Type.Array(Type.String())),
+            launchTime: Type.Optional(Type.Date()),
+            domainName: Type.Optional(Type.String()),
+            shortName: Type.Optional(Type.String()),
+            ssoEnabled: Type.Optional(Type.Boolean()),
+            status: Type.Optional(Type.String()),
+            type: Type.Optional(Type.String()),
+            vpcSettings: Type.Optional(
+                Type.Object({
+                    vpcId: Type.Optional(Type.String()),
+                    subnetIds: Type.Optional(Type.Array(Type.String())),
+                    availabilityZones: Type.Optional(Type.Array(Type.String()))
+                })
+            )
+        })
+    )
+});
 
-export {
-    AmiResponse,
-    AmiResponseType,
-    AwsParams,
-    AwsParamsType,
-    AwsVpcQueryString,
-    AwsVpcQueryStringType,
-    FSxRegionsResponse,
-    FSxRegionsResponseType,
-    VpcListResponse,
-    VpcResponseType
-};
+const AdsParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String(),
+    vpcId: Type.String()
+});
+
+export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams, FSxRegionsResponse };
