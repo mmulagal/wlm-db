@@ -96,5 +96,24 @@ export const GENERAL = {
     DATABASE_INSTANCE_NAME: 'Database instance name',
     DB_NAME_TOOLTIP:
         'First character should not be a numerical value (0-9), it can be an alphabet (a-z), underscore ‘_’, number sign ‘#’, or ampersand ‘&’. Space and special characters (such as @, ^, *,  ) are not allowed. Instance name should be 16 chars or less in length.',
-    KEY_PAIR_NAME: 'Key pair'
+    KEY_PAIR_NAME: 'Key pair',
+    //Constants for Storage capacity
+    CAPACITY: 'capacity',
+    UNIT: 'Unit',
+    ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
+    //Provisioned IOPS
+    AUTOMATIC: 'Automatic',
+    USER_PROVISIONED: 'User-provisioned',
+    IOPS_VALUE: 'IOPS value',
+    AUTOMATIC_IOPS: '3 IOPS per GiB of SSD storage will be created.',
+    PLACEHOLDER_PROVISIONED: '3072 - 160000 IOPS',
+    THROUGHPUT: 'Throughput',
+    //SIMPLE NOTIFICATION SERVICES
+    SNS: 'Simple Notification Service (SNS) topic ARN',
+    SNS_TEXT: 'Enter an SNS topic for Workload Manager to send notifications and alerts.',
+    ARN: 'ARN',
+    //Cloud watch
+    CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
+    CLOUD_WATCH_TEXT:
+        'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.'
 };
