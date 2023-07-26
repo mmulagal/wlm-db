@@ -1,9 +1,10 @@
-import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString } from '../types/aws.types';
+import { AWS_TAG } from '../../utils/consts';
+import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString, AdsParams, AdsResponse } from '../types/aws.types';
 import headers from './headers';
 
 // Base Request for AWS Routes
 const baseRequest = {
-    tags: ['aws'],
+    tags: [AWS_TAG],
     headers,
     params: AwsParams
 };
@@ -18,6 +19,16 @@ const GetVpcsListSchema = {
     }
 };
 
+// Get AD Schema
+const GetAdsSchema = {
+    tags: [AWS_TAG],
+    params: AdsParams,
+    description: 'List Active Directories',
+    response: {
+        200: AdsResponse
+    }
+};
+
 // GET AMI Schema
 const GetAmiSchema = {
     ...baseRequest,
@@ -27,4 +38,4 @@ const GetAmiSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema };
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema };
