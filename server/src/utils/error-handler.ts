@@ -14,7 +14,8 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         handleValidationError(statusCode, reply, validation, message, request);
     } else if (error.$metadata) {
         // error from aws sdk
-        reply.status(error.$metadata.httpStatusCode).send({ message: error.message });
+        const errCode = error.$metadata.httpStatusCode ? error.$metadata.httpStatusCode : statusCode;
+        reply.status(errCode).send({ message: error.message });
     } else if (isHTTPError(error)) {
         const body = error.response.body as any;
         const statusCode = error.response.statusCode;

@@ -1,5 +1,5 @@
 import { AWS_TAG } from '../../utils/consts';
-import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString, AdsParams, AdsResponse } from '../types/aws.types';
+import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString, AdsResponse } from '../types/aws.types';
 import headers from './headers';
 
 // Base Request for AWS Routes
@@ -21,8 +21,7 @@ const GetVpcsListSchema = {
 
 // Get AD Schema
 const GetAdsSchema = {
-    tags: [AWS_TAG],
-    params: AdsParams,
+    ...baseRequest,
     description: 'List Active Directories',
     response: {
         200: AdsResponse
