@@ -49,9 +49,11 @@ async function listAliases(
         params.Marker = markerId;
     }
 
-    const res = await kms.send(new ListAliasesCommand(params));
-    logger.info('aliases resp', JSON.stringify(res));
-    const { Aliases: aliases, Truncated: truncated, NextMarker: nextMarker } = res;
+    const {
+        Aliases: aliases,
+        Truncated: truncated,
+        NextMarker: nextMarker
+    } = await kms.send(new ListAliasesCommand(params));
     if (aliases?.length) {
         for (const item of aliases) {
             data.push(item);

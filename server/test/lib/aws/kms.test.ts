@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { describeKey, listAliases, listKeys } from '../../../src/lib/aws/kms';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';

@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { faker } from '@faker-js/faker';
 import { getAmis, describeVpc, describeSecurityGroups, describeSubnets } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
