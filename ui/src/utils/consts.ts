@@ -9,3 +9,5 @@ export const AUTH_STATUS = {
 export const PRODUCTION = 'PRODUCTION';
 export const STAGING = 'STAGING';
 export const LOCAL = 'LOCAL';
+
+export const AWS_ASSUME_ROLE = 'aws_assume_role'
