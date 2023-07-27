@@ -108,4 +108,30 @@ const AdsResponse = Type.Object({
     )
 });
 
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AmiQueryString, AdsResponse, SnsResponse };
+// Regions Request Params
+const AwsRegionsParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String()
+});
+
+// Regions supporting FSx for ONTAP response
+const FSxRegionsResponse = Type.Object({
+    regions: Type.Array(
+        Type.Object({
+            regionCode: Type.String(),
+            regionName: Type.String()
+        })
+    )
+});
+
+export {
+    AwsVpcQueryString,
+    AwsParams,
+    AwsRegionsParams,
+    VpcListResponse,
+    AmiResponse,
+    AmiQueryString,
+    AdsResponse,
+    SnsResponse,
+    FSxRegionsResponse
+};

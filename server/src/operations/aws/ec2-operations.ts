@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets, getAmis } from '../../lib/aws/ec2';
+import { AWSQueryFields, FSX_SUPPORTED_REGIONS } from '../../utils/consts';
+import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { filterSqlAmis } from '../../utils/utils';
 
@@ -33,6 +33,11 @@ interface SecurityGroup {
     vpcId?: string;
     ipPermissions?: any;
     name?: string;
+}
+
+interface FSxAvailableRegions {
+    regionCode: string;
+    regionName: string;
 }
 
 async function getVpcsList(credentialsId: string, region: string, fields?: string) {
@@ -241,4 +246,34 @@ function findNameFromTags(tags: Tag[]) {
     return name ? name : '-';
 }
 
-export { getVpcsList };
+async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
+    // eslint-disable-next-line prefer-rest-params
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', Array.from(arguments));
+
+    const input = {
+        AllRegions: false, // Describe only the regions enabled for the account
+        DryRun: false,
+        Filter: {
+            RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys()) // Limit describe to known FSx regions only
+        }
+    };
+
+    const { Regions: regions } = await describeRegions(credentialsId, input);
+
+    const fsxRegionsList: Array<FSxAvailableRegions> = [];
+
+    if (regions?.length) {
+        regions.forEach(({ RegionName: code }) => {
+            if (code && FSX_SUPPORTED_REGIONS.has(code)) {
+                fsxRegionsList.push({
+                    regionCode: code,
+                    regionName: FSX_SUPPORTED_REGIONS.get(code)!
+                });
+            }
+        });
+    }
+
+    return { regions: fsxRegionsList };
+}
+
+export { getVpcsList, getFSxAvailableRegionsList };
