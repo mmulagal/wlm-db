@@ -22,9 +22,18 @@ export default function awsRoutes(fastify: FastifyInstance) {
 
     server.get(`${API_PREFIX_PATH}/amis`, { schema: GetAmiSchema }, async (request, reply) => {
         const {
-            params: { credentialsId, region }
+            params: { credentialsId, region },
+            query: { osType, databaseType, osVersion, databaseEdition, databaseVersion }
         } = request;
-        const response = await getAmiList(credentialsId, region);
+        const response = await getAmiList(
+            credentialsId,
+            region,
+            osType,
+            databaseType,
+            osVersion,
+            databaseVersion,
+            databaseEdition
+        );
         return reply.send(response);
     });
 

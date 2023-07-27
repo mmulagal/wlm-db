@@ -1,8 +1,9 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields, SQL_AMI_NAMES } from '../../utils/consts';
+import { AWSQueryFields } from '../../utils/consts';
 import { describeVpc, describeSecurityGroups, describeSubnets, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
+import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -169,13 +170,31 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     return securityGroupList;
 }
 
-export async function getAmiList(credentialsId: string, region: string) {
-    logger.info('Get AWS Amis', { credentialsId, region });
+export async function getAmiList(
+    credentialsId: string,
+    region: string,
+    osType: string,
+    databaseType: string,
+    osVersion?: string,
+    databaseVersion?: string,
+    databaseEdition?: string
+) {
+    logger.info('Get AWS Amis', {
+        credentialsId,
+        region,
+        osType,
+        osVersion,
+        databaseType,
+        databaseEdition,
+        databaseVersion
+    });
 
     try {
+        const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
+
         const amis = await getAmis(credentialsId, region, {
             Filters: [
-                { Name: 'name', Values: SQL_AMI_NAMES },
+                { Name: 'name', Values: amiNames },
                 { Name: 'owner-alias', Values: ['amazon'] }
             ]
         });
