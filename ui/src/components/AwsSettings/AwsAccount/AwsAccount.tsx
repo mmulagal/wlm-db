@@ -1,27 +1,36 @@
 import { AccordionCard, AccordionCardContent, Typography, Button, SelectField } from '@netapp/design-system';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const AwsAccount = () => {
+    const {credentialData, credentialLoading} = useAppSelector((state) => state.mssql.getCredentials);
+
     //Mock data to be removed later
     const accountType: string = 'accounts';
-    const awsAccounts = ['FSxCredentials | Account ID: 123456', 'FSxCredentials | Account ID: 543211'];
+    // const awsAccounts = ['FSxCredentials | Account ID: 123456', 'FSxCredentials | Account ID: 543211'];
+
     const [accountSelected, setAccountSelected] = useState('');
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        awsAccounts?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        credentialData?.map((val, idx: number) => {
+            const credValue = val.name + " | Account: " + val.providerAccountId;
+            const option = generateOptionType(credValue, credValue, '', false, '');
             options.push(option);
         });
-        setAccountSelected(options[0].label);
         return options;
-    }, []);
+    }, [credentialData]);
+
+    useEffect(() => {
+        setAccountSelected(generateAWSAccounts[0]?.label);
+    }, [generateAWSAccounts])
+
     //Set the Header text here
     const setHeader = () => {
         if (accountType === 'No accounts') {
@@ -32,7 +41,7 @@ const AwsAccount = () => {
     };
     return (
         <div className={styles['aws-account']}>
-            <AccordionCard
+            <AccordionCard isLoading={credentialLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
                 title={<div className={CommonStyles.title}>AWS account</div>}

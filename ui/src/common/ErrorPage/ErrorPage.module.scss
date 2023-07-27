@@ -1,0 +1,14 @@
+.error-page {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    padding-top: 150px;
+    height: 100%;
+  
+    .cloud-icon {
+      width: 100px;
+      padding-bottom: 30px;
+    }
+  }
+  
