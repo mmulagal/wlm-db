@@ -8,7 +8,7 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const ThroughputCapacity = () => {
     const units = ['128 MBps', '256 MBps', '512 MBps', '1 GBps', '2 GBps', '3 GBps', '4 GBps'];
-    const [selectedUnit, setSelectedUnit] = useState(GENERAL.SQL_SERVER_2016);
+    const [selectedUnit, setSelectedUnit] = useState('');
 
     //Function to generate the options for Select Field
     const generateThroughputUnits = useMemo<optionType[]>((): optionType[] => {
@@ -17,6 +17,7 @@ const ThroughputCapacity = () => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
+        setSelectedUnit(options[0].label);
         return options;
     }, []);
     //Set the Header text here
