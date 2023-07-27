@@ -6,7 +6,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 describe('List EC2 AMIs Operation', () => {
     it('list of EC2 AMIs', async () => {
         const credentialsType = 'aws_assume_role';
-        const resp = await getAmiList(credentialsType, 'us-east-1');
+        const resp = await getAmiList(credentialsType, 'us-east-1', 'windows', 'sql');
         expect(resp).toBeDefined();
     });
 });

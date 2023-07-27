@@ -12,11 +12,9 @@ const logger = getLogger();
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
-    const amis = SQL_AMI_NAMES.filter(name => (osVersion ? name.includes(`Windows_Server-${osVersion}`) : true))
+    return SQL_AMI_NAMES.filter(name => (osVersion ? name.includes(`Windows_Server-${osVersion}`) : true))
         .filter(name => (dbVersion ? name.includes(`SQL_${dbVersion}`) : true))
         .filter(name => (dbEdition ? name.includes(dbEdition) : true));
-
-    return amis;
 }
 
 export { filterSqlAmis };

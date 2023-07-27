@@ -189,51 +189,51 @@ export async function getAmiList(
         databaseVersion
     });
 
-    try {
-        const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
+    const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
 
-        const amis = await getAmis(credentialsId, region, {
-            Filters: [
-                { Name: 'name', Values: amiNames },
-                { Name: 'owner-alias', Values: ['amazon'] }
-            ]
-        });
+    const amis = await getAmis(credentialsId, region, {
+        Filters: [
+            { Name: 'name', Values: amiNames },
+            { Name: 'owner-alias', Values: ['amazon'] }
+        ]
+    });
 
-        if (!amis?.Images) {
-            return { amis: [] };
-        }
-
-        return {
-            amis: amis?.Images?.map(
-                ({
-                    Name,
-                    Description,
-                    Architecture,
-                    ImageId,
-                    ImageLocation,
-                    Public,
-                    Platform,
-                    PlatformDetails,
-                    State,
-                    Hypervisor
-                }) => ({
-                    name: Name,
-                    description: Description,
-                    architecture: Architecture,
-                    imageId: ImageId,
-                    imageLocation: ImageLocation,
-                    public: Public,
-                    platform: Platform,
-                    platformDetails: PlatformDetails,
-                    state: State,
-                    hypervisor: Hypervisor
-                })
-            )
-        };
-    } catch (error: any) {
-        logger.error('Failed to get the aws amis ', error.message);
-        throw createError(error.statusCode || error.code || 500, error.message);
+    if (!amis?.Images) {
+        throw createError(`The requested ${osType} ${databaseType} AMI could not be found`);
     }
+
+    const response = amis.Images.map(
+        ({
+            Name,
+            Description,
+            Architecture,
+            ImageId,
+            ImageLocation,
+            Public,
+            Platform,
+            PlatformDetails,
+            State,
+            Hypervisor
+        }) => ({
+            name: Name as string,
+            description: Description,
+            architecture: Architecture,
+            imageId: ImageId,
+            imageLocation: ImageLocation,
+            public: Public,
+            platform: Platform,
+            platformDetails: PlatformDetails,
+            state: State,
+            hypervisor: Hypervisor
+        })
+    );
+
+    response?.sort(
+        (a, b) =>
+            new Date(b.name.substring(b.name.length - 10)).getTime() -
+            new Date(a.name.substring(a.name.length - 10)).getTime()
+    );
+    return { ami: response[0] };
 }
 function findNameFromTags(tags: Tag[]) {
     logger.debug('Find name from the tags', { tags });

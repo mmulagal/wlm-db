@@ -63,20 +63,18 @@ const AmiQueryString = Type.Object({
 });
 
 const AmiResponse = Type.Object({
-    amis: Type.Array(
-        Type.Object({
-            name: Type.Optional(Type.String()),
-            description: Type.Optional(Type.String()),
-            architecture: Type.Optional(Type.String()),
-            imageId: Type.Optional(Type.String()),
-            imageLocation: Type.Optional(Type.String()),
-            public: Type.Optional(Type.Boolean()),
-            platform: Type.Optional(Type.String()),
-            platformDetails: Type.Optional(Type.String()),
-            state: Type.Optional(Type.String()),
-            hypervisor: Type.Optional(Type.String())
-        })
-    )
+    ami: Type.Object({
+        name: Type.Optional(Type.String()),
+        description: Type.Optional(Type.String()),
+        architecture: Type.Optional(Type.String()),
+        imageId: Type.Optional(Type.String()),
+        imageLocation: Type.Optional(Type.String()),
+        public: Type.Optional(Type.Boolean()),
+        platform: Type.Optional(Type.String()),
+        platformDetails: Type.Optional(Type.String()),
+        state: Type.Optional(Type.String()),
+        hypervisor: Type.Optional(Type.String())
+    })
 });
 
 const SnsResponse = Type.Object({
