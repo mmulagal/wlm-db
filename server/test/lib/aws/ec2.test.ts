@@ -1,20 +1,59 @@
-import { getAmis } from '../../../src/lib/aws/ec2';
-import { SQL_AMI_NAMES } from '../../../src/utils/consts';
+import { describe, it, expect } from 'vitest';
+import { faker } from '@faker-js/faker';
+import { getAmis, describeVpc, describeSecurityGroups, describeSubnets } from '../../../src/lib/aws/ec2';
+import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
+import vpcList from '../../simulator/responses/aws/list-vpcs.json';
+import subnetsList from '../../simulator/responses/aws/list-subnets.json';
+import sgList from '../../simulator/responses/aws/list-security-groups.json';
 
-describe('List EC2 AMIs', () => {
+describe('EC2 Lib', () => {
     it('should return a list of EC2 AMIs', async () => {
-        const credentialsType = 'aws_assume_role';
+        const credentialsId = `${faker.string.alpha(20)}`;
         const params = {
             Filters: [
                 { Name: 'name', Values: SQL_AMI_NAMES },
                 { Name: 'owner-alias', Values: ['amazon'] }
             ]
         };
-        const resp = await getAmis(credentialsType, 'us-east-1', params);
+        const resp = await getAmis(credentialsId, DEFAULT_AWS_REGION, params);
         expect(resp).toEqual(ec2Images);
+    });
+
+    it('should return a list of Vpis', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const resp = await describeVpc(credentialsId, DEFAULT_AWS_REGION, {});
+        expect(resp).toEqual(vpcList);
+    });
+
+    it('should return a list of Subnets', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const params = {
+            Filters: [
+                {
+                    Name: 'vpc-id',
+                    Values: ['vpc-7d4a2818']
+                }
+            ]
+        };
+        const resp = await describeSubnets(credentialsId, DEFAULT_AWS_REGION, params);
+        expect(resp).toEqual(subnetsList);
+    });
+
+    it('should return a list of Security Groups', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const params = {
+            Filters: [
+                {
+                    Name: 'vpc-id',
+                    Values: ['vpc-7d4a2818']
+                }
+            ]
+        };
+        const resp = await describeSecurityGroups(credentialsId, DEFAULT_AWS_REGION, params);
+        expect(resp).toEqual(sgList);
     });
 });

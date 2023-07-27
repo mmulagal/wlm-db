@@ -114,8 +114,10 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                         securityGroups: securityGroupList,
                         name
                     });
-                } catch (err) {
-                    logger.error('Failed to get the vpc details', { vpc, err });
+                } catch (err: any) {
+                    const errMsg = `Failed to get the vpc details. ${err.message}`;
+                    logger.error(errMsg);
+                    throw createError(err.statusCode || 500, errMsg);
                 }
             })
         );
@@ -169,7 +171,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     return securityGroupList;
 }
 
-export async function getAmiList(credentialsId: string, region: string) {
+async function getAmiList(credentialsId: string, region: string) {
     logger.info('Get AWS Amis', { credentialsId, region });
 
     try {
@@ -216,10 +218,11 @@ export async function getAmiList(credentialsId: string, region: string) {
         throw createError(error.statusCode || error.code || 500, error.message);
     }
 }
+
 function findNameFromTags(tags: Tag[]) {
     logger.debug('Find name from the tags', { tags });
     const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
     return name ? name : '-';
 }
 
-export { getVpcsList };
+export { getVpcsList, getAmiList };

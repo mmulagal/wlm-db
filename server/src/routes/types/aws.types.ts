@@ -91,6 +91,17 @@ const AdsResponse = Type.Object({
     )
 });
 
+// KMS Keys List Request and Response
+const KmsKeysListResponse = Type.Object({
+    keys: Type.Array(
+        Type.Object({
+            id: Type.Optional(Type.String()),
+            name: Type.Optional(Type.String()),
+            origin: Type.Optional(Type.String())
+        })
+    )
+});
+
 const AdsParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
@@ -98,4 +109,4 @@ const AdsParams = Type.Object({
     vpcId: Type.String()
 });
 
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams };
+export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams, KmsKeysListResponse };

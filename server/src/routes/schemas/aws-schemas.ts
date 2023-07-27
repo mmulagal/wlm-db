@@ -1,5 +1,13 @@
 import { AWS_TAG } from '../../utils/consts';
-import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString, AdsParams, AdsResponse } from '../types/aws.types';
+import {
+    AmiResponse,
+    VpcListResponse,
+    AwsParams,
+    AwsVpcQueryString,
+    AdsParams,
+    AdsResponse,
+    KmsKeysListResponse
+} from '../types/aws.types';
 import headers from './headers';
 
 // Base Request for AWS Routes
@@ -38,4 +46,13 @@ const GetAmiSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema };
+// GET Kms Keys List Schema
+const GetKmsKeysListSchema = {
+    ...baseRequest,
+    description: 'List Kms Keys in a region',
+    response: {
+        200: KmsKeysListResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetKmsKeysListSchema };
