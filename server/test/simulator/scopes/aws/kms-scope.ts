@@ -1,3 +1,5 @@
+// workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
+// @ts-nocheck
 import { KMSClient, ListKeysCommand, DescribeKeyCommand, ListAliasesCommand } from '@aws-sdk/client-kms';
 import { mockClient } from 'aws-sdk-client-mock';
 import listKeysResponse from '../../responses/aws/list-keys.json';
