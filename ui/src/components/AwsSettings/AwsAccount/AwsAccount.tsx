@@ -13,6 +13,7 @@ const AwsAccount = () => {
     //Mock data to be removed later
     const accountType: string = 'accounts';
     // const awsAccounts = ['FSxCredentials | Account ID: 123456', 'FSxCredentials | Account ID: 543211'];
+
     const [accountSelected, setAccountSelected] = useState('');
 
     //Function to generate the options for Select Field

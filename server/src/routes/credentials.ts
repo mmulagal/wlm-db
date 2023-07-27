@@ -3,14 +3,14 @@ import { CredentialsResponseType, CredentialsListParamsType } from './types/cred
 import { CredentialsSchema } from './schemas/generic-schemas';
 import { getAwsCredentials } from '../operations/cloud-manager/credentials-operations';
 
-const API_PATH_ACCOUNTS: string = '/accounts/:accountId/v1';
+const API_PATH_ACCOUNTS: string = '/v1/credentials/:credentialsType';
 
 export default function credentialsRoutes(fastify: FastifyInstance) {
     fastify.get<{
         Params: CredentialsListParamsType;
         Reply: CredentialsResponseType;
     }>(
-        `${API_PATH_ACCOUNTS}/credentials/:credentialsType`,
+        `${API_PATH_ACCOUNTS}`,
         {
             schema: CredentialsSchema
         },
