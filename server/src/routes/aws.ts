@@ -38,9 +38,9 @@ export default function awsRoutes(fastify: FastifyInstance) {
 
     server.get(`${API_PREFIX_PATH}/vpcs/:vpcId/ads`, { schema: GetAdsSchema }, async (request, reply) => {
         const {
-            params: { credentialsId, region, vpcId }
+            params: { credentialsId, region }
         } = request;
-        const response = await getAdsList(credentialsId, region, vpcId);
+        const response = await getAdsList(credentialsId, region);
         return reply.send(response);
     });
 }
