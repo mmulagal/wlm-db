@@ -1,16 +1,18 @@
-import { AWS_TAG } from '../../utils/consts';
+import { RouteTags } from '../../utils/consts';
 import {
     AmiResponse,
     VpcListResponse,
     AwsParams,
+    AwsRegionsParams,
     AwsVpcQueryString,
     AdsResponse,
-    SnsResponse
+    SnsResponse,
+    FSxRegionsResponse
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
 const baseRequest = {
-    tags: [AWS_TAG],
+    tags: [RouteTags.AWS],
     params: AwsParams
 };
 
@@ -51,4 +53,13 @@ const GetSnsTopics = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics };
+const GetFSxRegionsSchema = {
+    tags: [RouteTags.AWS],
+    params: AwsRegionsParams,
+    descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
+    response: {
+        200: FSxRegionsResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema };
