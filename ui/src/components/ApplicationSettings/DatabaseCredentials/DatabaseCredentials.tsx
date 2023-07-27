@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -34,15 +34,13 @@ const DatabaseCredentials = () => {
                                 value={userName}
                                 className={styles.textField}
                             />
-                            <TextField
+                            <PasswordField
                                 label={GENERAL.PASSWORD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                 }}
                                 value={password}
                                 className={styles.textField}
-                                //@ts-ignore
-                                type="password"
                             />
                         </div>
                     </Typography>

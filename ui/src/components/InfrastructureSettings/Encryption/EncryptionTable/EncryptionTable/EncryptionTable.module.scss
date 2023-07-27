@@ -1,0 +1,17 @@
+.table {
+    margin-top: 24px;
+    .keyName {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        svg {
+            position: relative;
+            top: 5px;
+        }
+    }
+
+    .bottomText {
+        margin-top: 24px;
+    }
+}
