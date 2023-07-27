@@ -68,6 +68,14 @@ const AmiResponse = Type.Object({
     )
 });
 
+const SnsResponse = Type.Object({
+    Topics: Type.Array(
+        Type.Object({
+            TopicArn: Type.Optional(Type.String())
+        })
+    )
+});
+
 // Active Directory Response
 const AdsResponse = Type.Object({
     directories: Type.Array(
@@ -91,4 +99,4 @@ const AdsResponse = Type.Object({
     )
 });
 
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse };
+export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, SnsResponse };

@@ -1,11 +1,16 @@
 import { AWS_TAG } from '../../utils/consts';
-import { AmiResponse, VpcListResponse, AwsParams, AwsVpcQueryString, AdsResponse } from '../types/aws.types';
-import headers from './headers';
+import {
+    AmiResponse,
+    VpcListResponse,
+    AwsParams,
+    AwsVpcQueryString,
+    AdsResponse,
+    SnsResponse
+} from '../types/aws.types';
 
 // Base Request for AWS Routes
 const baseRequest = {
     tags: [AWS_TAG],
-    headers,
     params: AwsParams
 };
 
@@ -37,4 +42,13 @@ const GetAmiSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema };
+// GET SNS Topics
+const GetSnsTopics = {
+    ...baseRequest,
+    description: 'Get SNS Topics in the region',
+    response: {
+        200: SnsResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics };
