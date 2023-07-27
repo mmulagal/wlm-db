@@ -1,8 +1,14 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 import { FastifyInstance } from 'fastify/types/instance';
-import { GetAmiSchema, GetAdsSchema, GetVpcsListSchema, GetSnsTopics } from './schemas/aws-schemas';
-import { getAmiList, getVpcsList } from '../operations/aws/ec2-operations';
+import {
+    GetAmiSchema,
+    GetAdsSchema,
+    GetVpcsListSchema,
+    GetSnsTopics,
+    GetFSxRegionsSchema
+} from './schemas/aws-schemas';
+import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 
@@ -43,4 +49,18 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const response = await getAdsList(credentialsId, region);
         return reply.send(response);
     });
+
+    server.get(
+        '/v1/credentials/:credentialsId/aws/fsx/regions',
+        { schema: GetFSxRegionsSchema },
+        async (request, reply) => {
+            const {
+                params: { credentialsId }
+            } = request;
+
+            const response = await getFSxAvailableRegionsList(credentialsId);
+
+            return reply.send(response);
+        }
+    );
 }

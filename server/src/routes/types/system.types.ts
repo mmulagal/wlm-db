@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { Type, Static } from '@sinclair/typebox';
 
 const HealthResponse = Type.String();
 
@@ -9,4 +9,7 @@ const AboutResponse = Type.Object({
     build: Type.Optional(Type.String())
 });
 
-export { AboutResponse, HealthResponse };
+type AboutResponseType = Static<typeof AboutResponse>;
+type HealthResponseType = Static<typeof HealthResponse>;
+
+export { AboutResponseType, HealthResponseType, AboutResponse, HealthResponse };

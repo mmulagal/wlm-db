@@ -14,9 +14,6 @@ export const AGENT_ID = 'AGENT_ID';
 export const AUDIT_GROUP = 'AUDIT_GROUP';
 export const WORKSPACE_ID = 'WORKSPACE_ID';
 
-//Tags Name
-export const AWS_TAG = 'AWS';
-
 // version
 export const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
 
@@ -54,6 +51,8 @@ export const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manag
 // Audit
 export const DEFAULT_AWS_REGION = 'us-east-1';
 
+export const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
+
 export const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 export const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 export const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
@@ -77,6 +76,12 @@ export enum CloudProviders {
     AWS = 'AWS',
     AZURE = 'AZURE',
     GCP = 'GCP'
+}
+
+export enum RouteTags {
+    AWS = 'AWS',
+    GENERIC = 'Generic',
+    SYSTEM = 'System'
 }
 
 export const CARGO = 'cargo';
@@ -174,3 +179,38 @@ export enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
 }
+
+// List of regions having "Amazon FSx for NetApp ONTAP" service.
+// List taken from https://www.aws-services.info/fsx-ontap.html
+export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
+    // "Region Code"    "Region Name"
+    // -------------    -------------
+    ['af-south-1', 'Africa (Cape Town)'],
+    ['ap-east-1', 'Asia Pacific (Hong Kong)'],
+    ['ap-northeast-1', 'Asia Pacific (Tokyo)'],
+    ['ap-northeast-2', 'Asia Pacific (Seoul)'],
+    ['ap-south-1', 'Asia Pacific (Mumbai)'],
+    ['ap-south-2', 'Asia Pacific (Hyderabad)'],
+    ['ap-southeast-1', 'Asia Pacific (Singapore)'],
+    ['ap-southeast-2', 'Asia Pacific (Sydney)'],
+    ['ap-southeast-3', 'Asia Pacific (Jakarta)'],
+    ['ap-southeast-4', 'Asia Pacific (Melbourne)'],
+    ['ca-central-1', 'Canada (Central)'],
+    ['eu-central-1', 'Europe (Frankfurt)'],
+    ['eu-central-2', 'Europe (Zurich)'],
+    ['eu-north-1', 'Europe (Stockholm)'],
+    ['eu-south-1', 'Europe (Milan)'],
+    ['eu-south-2', 'Europe (Spain)'],
+    ['eu-west-1', 'Europe (Ireland)'],
+    ['eu-west-2', 'Europe (London)'],
+    ['eu-west-3', 'Europe (Paris)'],
+    ['me-central-1', 'Middle East (UAE)'],
+    ['me-south-1', 'Middle East (Bahrain)'],
+    ['sa-east-1', 'South America (Sao Paulo)'],
+    ['us-east-1', 'US East (N. Virginia)'],
+    ['us-east-2', 'US East (Ohio)'],
+    ['us-gov-east-1', 'AWS GovCloud (US-East)'],
+    ['us-gov-west-1', 'AWS GovCloud (US-West)'],
+    ['us-west-1', 'US West (N. California)'],
+    ['us-west-2', 'US West (Oregon)']
+]);
