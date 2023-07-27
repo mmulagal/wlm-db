@@ -9,7 +9,6 @@ import { useAppSelector } from '../../../store/storeHooks';
 
 const AwsAccount = () => {
     const {credentialData, credentialLoading} = useAppSelector((state) => state.mssql.getCredentials);
-    console.log(credentialData);
 
     //Mock data to be removed later
     const accountType: string = 'accounts';
