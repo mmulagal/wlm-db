@@ -2,13 +2,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AppContextState {
     accountId: string | null;
-    isDemoMode: boolean;
     environment: string | null;
 }
 
 const initialState: AppContextState = {
     accountId: null,
-    isDemoMode: false,
     environment: null,
 };
 

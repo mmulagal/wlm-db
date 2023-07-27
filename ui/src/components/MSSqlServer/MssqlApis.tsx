@@ -1,6 +1,6 @@
 import { useAppDispatch } from "../../store/storeHooks";
 import { useGetCredentialsQuery } from "../../utils/apiService";
-import { addCredentials } from "../../store/mssqlSlice";
+import { addCredentials } from "../../store/mssql/mssqlSlice";
 import { useEffect } from "react";
 
 

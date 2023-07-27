@@ -3,7 +3,7 @@ import notificationSlice from "./notificationSlice";
 import { awsApi } from "../utils/apiService";
 import authSlice from './authSlice';
 import appContextSlice from "./appContextSlice";
-import mssqlSlice from "./mssqlSlice";
+import mssqlSlice from "./mssql/mssqlSlice";
 
 const rootReducer = combineReducers({
   [notificationSlice.name]: notificationSlice.reducer,
