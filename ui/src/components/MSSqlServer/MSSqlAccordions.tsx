@@ -26,14 +26,10 @@ import SimpleNotificationService from '../InfrastructureSettings/SimpleNotificat
 import styles from './MSSqlAccordions.module.scss';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import MssqlApis from './MssqlApis';
-import { useEffect } from 'react';
 
 const MSSqlAccordions = () => {
 
-    useEffect(()=> {
-        MssqlApis();
-    }, []);
-    
+    MssqlApis();
 
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>
