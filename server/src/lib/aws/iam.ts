@@ -26,7 +26,14 @@ async function getIAM(
     return new IAMClient({ credentials });
 }
 
-async function getPermissionsList(credentialsId: string, region: string, skipResources?: Array<string>) {
+/**
+ *
+ * @param credentialsId
+ * @param region
+ * @param skipResources - array containing the resources where we don't need to check the permissions
+ * @returns permissions - array of permissions required
+ */
+async function getMissingPermissionsList(credentialsId: string, region: string, skipResources?: Array<string>) {
     logger.info('Get Permissions List', { credentialsId, region, skipResources });
 
     const {
@@ -56,4 +63,4 @@ async function getPermissionsList(credentialsId: string, region: string, skipRes
     return { permissions };
 }
 
-export { getPermissionsList };
+export { getMissingPermissionsList };

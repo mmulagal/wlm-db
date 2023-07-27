@@ -257,9 +257,8 @@ export const EC2_ACTION_NAMES = [
     'CreatePlacementGroup',
     'StopInstances',
     'TerminateInstances',
-    'Describe',
-    '*	Get',
-    '*'
+    'Describe*',
+    'Get*'
 ].map(action => `${EC2}:${action}`);
 
 export const CLOUDFORMATION = 'cloudformation';
