@@ -4,6 +4,8 @@ import queryString from 'query-string';
 import { setAppContext } from "../store/appContextSlice";
 import { updateAuthFailed, updateAuthSuccess } from "../store/authSlice";
 import { get } from "lodash";
+import { LOCAL } from "./consts";
+import Auth, { refreshSso } from './auth';
 
 const AUTH_0_OPTIONS = {
     clientID: process.env.REACT_APP_AUTH_CLIENT,
@@ -94,6 +96,17 @@ const useInitialize = () => {
         if (accessTokenAsString) {
             handleAuthSuccess({
                 accessToken: accessTokenAsString,
+            });
+        }
+
+        if (environment === LOCAL) {
+            (window as any).auth = new Auth(AUTH_0_OPTIONS);
+            console.log(`connecting to auth0 with ${JSON.stringify(AUTH_0_OPTIONS)}`);
+            //start login flow
+            refreshSso({
+                allowLoginRedirect: environment === LOCAL,
+                handleAuthSuccess,
+                handleAuthFailed
             });
         }
         
