@@ -96,5 +96,51 @@ export const GENERAL = {
     DATABASE_INSTANCE_NAME: 'Database instance name',
     DB_NAME_TOOLTIP:
         'First character should not be a numerical value (0-9), it can be an alphabet (a-z), underscore ‘_’, number sign ‘#’, or ampersand ‘&’. Space and special characters (such as @, ^, *,  ) are not allowed. Instance name should be 16 chars or less in length.',
-    KEY_PAIR_NAME: 'Key pair'
+    KEY_PAIR_NAME: 'Key pair',
+    //Constants for Storage capacity
+    CAPACITY: 'capacity',
+    UNIT: 'Unit',
+    ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
+    //Provisioned IOPS
+    AUTOMATIC: 'Automatic',
+    USER_PROVISIONED: 'User-provisioned',
+    IOPS_VALUE: 'IOPS value',
+    AUTOMATIC_IOPS: '3 IOPS per GiB of SSD storage will be created.',
+    PLACEHOLDER_PROVISIONED: '3072 - 160000 IOPS',
+    THROUGHPUT: 'Throughput',
+    //SIMPLE NOTIFICATION SERVICES
+    SNS: 'Simple Notification Service (SNS) topic ARN',
+    SNS_TEXT: 'Enter an SNS topic for Workload Manager to send notifications and alerts.',
+    ARN: 'ARN',
+    //Cloud watch
+    CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
+    CLOUD_WATCH_TEXT:
+        'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
+    //FSX Accordion
+    CREATE_NEW_FSXN: 'Create new FSxN',
+    SELECT_EXISTING_FSX: 'Select an existing FSxN ',
+    FSXN_NAME: 'FSxN name',
+    USER_NAME: 'User name',
+    FSX_PASSWORD: 'FSxN password',
+    NOTICE: 'Notice:',
+    NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
+    //Active Directory
+    DOMAIN_NAME: 'Domain name',
+    DNS_ADDRESS: 'DNS address',
+    AD_TEXT: 'Lörem ipsum ireliga pakrongen emedan biolavis prelig det dehetist. Selingar pakrosel var. ',
+    PASSWORD: 'Password',
+    //Region VPC accordion
+    REGION: 'Region',
+    REGION_VPC_TEXT:
+        'Choose the Virtual private cloud (VPC). The VPC defines the virtual  networking  environment for this DB instance.',
+    SELECT_EXISTING_VPC: 'Select an existing VPC',
+    CREATE_NEW_VPC: 'Create new VPC',
+    REGION_VPC: 'Region & VPC',
+    VPC: 'VPC',
+    //Availability zone
+    AZ_TEXT: 'Choose Availability Zones and corresponding private subnets for a minimum of two Availability Zones.',
+    CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
+    CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
+    AZ_Zone: 'Availability zone',
+    SUBNET: 'Subnet'
 };

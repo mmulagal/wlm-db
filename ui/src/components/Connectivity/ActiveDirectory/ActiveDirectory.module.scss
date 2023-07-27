@@ -1,0 +1,17 @@
+.active {
+    .firstContainer {
+        margin-top: 16px;
+        display: flex;
+        gap: 24px;
+    }
+
+    .secondContainer {
+        margin-top: 40px;
+        display: flex;
+        gap: 24px;
+    }
+
+    .textField {
+        width: 312px;
+    }
+}

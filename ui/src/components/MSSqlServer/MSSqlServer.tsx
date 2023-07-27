@@ -1,4 +1,4 @@
-import MSSqlAccordions from '../AwsSettings/MSSqlAccordions';
+import MSSqlAccordions from './MSSqlAccordions';
 
 import CloudFormation from '../CloudFormation/CloudFormation';
 

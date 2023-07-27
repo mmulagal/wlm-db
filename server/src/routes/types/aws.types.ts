@@ -68,6 +68,14 @@ const AmiResponse = Type.Object({
     )
 });
 
+const SnsResponse = Type.Object({
+    Topics: Type.Array(
+        Type.Object({
+            TopicArn: Type.Optional(Type.String())
+        })
+    )
+});
+
 // Active Directory Response
 const AdsResponse = Type.Object({
     directories: Type.Array(
@@ -91,11 +99,29 @@ const AdsResponse = Type.Object({
     )
 });
 
-const AdsParams = Type.Object({
+// Regions Request Params
+const AwsRegionsParams = Type.Object({
     accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String(),
-    vpcId: Type.String()
+    credentialsId: Type.String()
 });
 
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams };
+// Regions supporting FSx for ONTAP response
+const FSxRegionsResponse = Type.Object({
+    regions: Type.Array(
+        Type.Object({
+            regionCode: Type.String(),
+            regionName: Type.String()
+        })
+    )
+});
+
+export {
+    AwsVpcQueryString,
+    AwsParams,
+    AwsRegionsParams,
+    VpcListResponse,
+    AmiResponse,
+    AdsResponse,
+    SnsResponse,
+    FSxRegionsResponse
+};
