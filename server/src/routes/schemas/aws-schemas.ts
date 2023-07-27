@@ -1,19 +1,19 @@
-import { AWS_TAG } from '../../utils/consts';
+import { RouteTags } from '../../utils/consts';
 import {
     AmiResponse,
     VpcListResponse,
     AwsParams,
+    AwsRegionsParams,
     AwsVpcQueryString,
-    AdsParams,
     AdsResponse,
+    SnsResponse,
+    FSxRegionsResponse,
     KmsKeysListResponse
 } from '../types/aws.types';
-import headers from './headers';
 
 // Base Request for AWS Routes
 const baseRequest = {
-    tags: [AWS_TAG],
-    headers,
+    tags: [RouteTags.AWS],
     params: AwsParams
 };
 
@@ -29,8 +29,7 @@ const GetVpcsListSchema = {
 
 // Get AD Schema
 const GetAdsSchema = {
-    tags: [AWS_TAG],
-    params: AdsParams,
+    ...baseRequest,
     description: 'List Active Directories',
     response: {
         200: AdsResponse
@@ -46,6 +45,24 @@ const GetAmiSchema = {
     }
 };
 
+// GET SNS Topics
+const GetSnsTopics = {
+    ...baseRequest,
+    description: 'Get SNS Topics in the region',
+    response: {
+        200: SnsResponse
+    }
+};
+
+const GetFSxRegionsSchema = {
+    tags: [RouteTags.AWS],
+    params: AwsRegionsParams,
+    descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
+    response: {
+        200: FSxRegionsResponse
+    }
+};
+
 // GET Kms Keys List Schema
 const GetKmsKeysListSchema = {
     ...baseRequest,
@@ -55,4 +72,4 @@ const GetKmsKeysListSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetKmsKeysListSchema };
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema, GetKmsKeysListSchema };

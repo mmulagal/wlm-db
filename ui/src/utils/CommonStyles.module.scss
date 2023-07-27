@@ -1,26 +1,46 @@
 .heading-content {
-  width: 100%;
-  position: relative;
-  left: 10%;
+    width: 100%;
+    position: relative;
+    left: 10%;
 }
 
 .title {
-  width: 196px;
+    width: 196px;
 }
 
 .accordion-group {
-  width: 1063px;
-  margin-top: 32px;
+    width: 1063px;
+    margin-top: 32px;
+}
+
+.separator {
+    border-right: 1px solid var(--grey-15);
+    height: 16px;
+}
+
+.regular {
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    color: var(--grey-50);
+}
+
+.setHeaderStyle {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--grey-50);
+    line-height: none !important;
 }
 
 @media screen and (max-width: 1350px) {
-  .accordion-group {
-    width: 1032px;
-  }
+    .accordion-group {
+        width: 1032px;
+    }
 }
 
 @media screen and (min-width: 1351px) and (max-width: 1520px) {
-  .accordion-group {
-    width: 1128px;
-  }
+    .accordion-group {
+        width: 1128px;
+    }
 }

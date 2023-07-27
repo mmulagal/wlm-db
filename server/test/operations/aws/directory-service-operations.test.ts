@@ -7,13 +7,8 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 const credentialsid = `${faker.string.alphanumeric(20)}`;
 
 describe('Directory service operations', () => {
-    it('List all Active Directories in a VPC', async () => {
-        const resp = await getAdsList(credentialsid, 'ap-southeast-1', 'vpc-7d4a2818');
+    it('List all Active Directories in a region', async () => {
+        const resp = await getAdsList(credentialsid, 'ap-southeast-1');
         expect(resp.directories).toBeDefined();
-    });
-
-    it('List all Active Directories in a VPC - VPC ID is not matched', async () => {
-        const resp = await getAdsList(credentialsid, 'ap-southeast-1', 'vpc-123');
-        expect(resp).toEqual({ directories: [] });
     });
 });

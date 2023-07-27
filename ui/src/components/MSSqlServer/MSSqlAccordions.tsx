@@ -1,10 +1,10 @@
 import { AccordionController, Button, Typography } from '@netapp/design-system';
 
 import { GENERAL } from '../../utils/appConstants';
-import AvailabilityZone from './AvailabilityZone/AvailabilityZone';
-import AwsAccount from './AwsAccount/AwsAccount';
-import RegionVpc from './RegionVpc/RegionVpc';
-import SecurityGroup from './SecurityGroup/SecurityGroup';
+import AvailabilityZone from '../AwsSettings/AvailabilityZone/AvailabilityZone';
+import AwsAccount from '../AwsSettings/AwsAccount/AwsAccount';
+import RegionVpc from '../AwsSettings/RegionVpc/RegionVpc';
+import SecurityGroup from '../AwsSettings/SecurityGroup/SecurityGroup';
 import OperatingSystem from '../ApplicationSettings/OperatingSystem/OperatingSystem';
 import DatabaseDeploymentModel from '../ApplicationSettings/DatabaseDeploymentModel/DatabaseDeploymentModel';
 import DatabaseEdition from '../ApplicationSettings/DatabaseEdition/DatabaseEdition';
@@ -23,10 +23,14 @@ import Encryption from '../InfrastructureSettings/Encryption/Encryption';
 import Tags from '../InfrastructureSettings/Tags/Tags';
 import SimpleNotificationService from '../InfrastructureSettings/SimpleNotificationService/SimpleNotificationService';
 
-import styles from './MSsqlAccordions.module.scss';
+import styles from './MSSqlAccordions.module.scss';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
+import MssqlApis from './MssqlApis';
 
 const MSSqlAccordions = () => {
+
+    MssqlApis();
+
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>
             <AccordionController isGrouped>
@@ -44,6 +48,7 @@ const MSSqlAccordions = () => {
                     </Button>
                 </div>
                 {/* AWS Accounts Accordion */}
+                {/* <MssqlApis /> */}
                 <AwsAccount />
                 <RegionVpc />
                 <AvailabilityZone />

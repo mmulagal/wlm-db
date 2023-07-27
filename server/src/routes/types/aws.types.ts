@@ -68,6 +68,14 @@ const AmiResponse = Type.Object({
     )
 });
 
+const SnsResponse = Type.Object({
+    Topics: Type.Array(
+        Type.Object({
+            TopicArn: Type.Optional(Type.String())
+        })
+    )
+});
+
 // Active Directory Response
 const AdsResponse = Type.Object({
     directories: Type.Array(
@@ -91,6 +99,22 @@ const AdsResponse = Type.Object({
     )
 });
 
+// Regions Request Params
+const AwsRegionsParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String()
+});
+
+// Regions supporting FSx for ONTAP response
+const FSxRegionsResponse = Type.Object({
+    regions: Type.Array(
+        Type.Object({
+            regionCode: Type.String(),
+            regionName: Type.String()
+        })
+    )
+});
+
 // KMS Keys List Request and Response
 const KmsKeysListResponse = Type.Object({
     keys: Type.Array(
@@ -102,11 +126,14 @@ const KmsKeysListResponse = Type.Object({
     )
 });
 
-const AdsParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String(),
-    region: Type.String(),
-    vpcId: Type.String()
-});
-
-export { AwsVpcQueryString, AwsParams, VpcListResponse, AmiResponse, AdsResponse, AdsParams, KmsKeysListResponse };
+export {
+    AwsVpcQueryString,
+    AwsParams,
+    AwsRegionsParams,
+    VpcListResponse,
+    AmiResponse,
+    AdsResponse,
+    SnsResponse,
+    FSxRegionsResponse,
+    KmsKeysListResponse
+};

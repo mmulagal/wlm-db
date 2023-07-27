@@ -1,10 +1,16 @@
 import { faker } from '@faker-js/faker';
-import { getAmis, describeVpc, describeSecurityGroups, describeSubnets } from '../../../src/lib/aws/ec2';
-import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-
+import {
+    getAmis,
+    describeRegions,
+    describeVpc,
+    describeSecurityGroups,
+    describeSubnets
+} from '../../../src/lib/aws/ec2';
+import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
+import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
 import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
@@ -54,5 +60,22 @@ describe('EC2 Lib', () => {
         };
         const resp = await describeSecurityGroups(credentialsId, DEFAULT_AWS_REGION, params);
         expect(resp).toEqual(sgList);
+    });
+});
+
+describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
+    it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
+        const credentialsType = 'aws_assume_role';
+
+        const input = {
+            AllRegions: false, // Describe only the regions enabled for the account
+            DryRun: false,
+            Filter: {
+                RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys()) // Limit describe to known FSx regions only
+            }
+        };
+
+        const response = await describeRegions(credentialsType, input);
+        expect(response).toEqual(fsxRegions);
     });
 });
