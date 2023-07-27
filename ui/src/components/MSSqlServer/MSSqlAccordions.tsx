@@ -30,7 +30,7 @@ import MssqlApis from './MssqlApis';
 const MSSqlAccordions = () => {
 
     MssqlApis();
-
+    
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>
             <AccordionController isGrouped>

@@ -142,5 +142,19 @@ export const GENERAL = {
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
-    SUBNET: 'Subnet'
+    SUBNET: 'Subnet',
+    //Encryption
+    ENCRYPTION_TEXT:
+        'Key that will be used to protect the key used to encrypt this database storage (FSxN). You can select from master keys in your account or type/paste the ARN of a key from a different account.',
+    ENCRYPTION_SELECT_FROM_ACCOUNT: 'Select a key from your account',
+    ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT: 'Select a key from another account',
+    ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_TEXT:
+        'If needed, you can select a customer managed key from another AWS account by entering the Amazon Resource Name (ARN) of that key. You can find the ARN from the Amazon Key Management Service console. Key ARN starts with ‘arn:aws:kms’ or ‘arn:aws-us-gov:kms’.',
+    ENCRYPTION_TEXT_FIELD: 'Encryption key ARN',
+    ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_SUB_TEXT:
+        'AWS is responsible for data encryption and decryption operations. Key management is handled by AWS Key Management Service.',
+    CUSTOMER_MASTER_KEY_NAME: 'Customer master key name',
+    EXPIRATION_DATE: 'Expiration date',
+    ORIGIN: 'Origin',
+    ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.'
 };
