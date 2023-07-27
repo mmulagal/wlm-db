@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AD, Ami, Credentials, VPC } from "../utils/types";
+import { AD, Ami, Credentials, VPC } from "../../utils/types/mssqlTypes";
 
 interface mssqlEntities {
     getCredentials: {
