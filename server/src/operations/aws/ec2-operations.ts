@@ -204,7 +204,7 @@ export async function getAmiList(
     });
 
     if (!amis?.Images) {
-        throw createError(`The requested ${osType} ${databaseType} AMI could not be found`);
+        throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
     }
 
     const response = amis.Images.map(

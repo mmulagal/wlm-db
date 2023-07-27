@@ -8,8 +8,6 @@ import getLogger from './logger';
 
 const logger = getLogger();
 
-// import { SQL_AMI_NAMES } from "./consts";
-
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
     return SQL_AMI_NAMES.filter(name => (osVersion ? name.includes(`Windows_Server-${osVersion}`) : true))
