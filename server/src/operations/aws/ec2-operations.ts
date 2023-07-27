@@ -35,8 +35,8 @@ interface SecurityGroup {
 }
 
 interface FSxAvailableRegions {
+    regionCode: string;
     regionName: string;
-    descriptiveRegionName: string;
 }
 
 async function getVpcsList(credentialsId: string, region: string, fields?: string) {
@@ -227,10 +227,7 @@ function findNameFromTags(tags: Tag[]) {
     return name ? name : '-';
 }
 
-async function getFSxAvailableRegionsList(
-    credentialsId: string,
-    region: string
-): Promise<{ regions: FSxAvailableRegions[] }> {
+async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
     // eslint-disable-next-line prefer-rest-params
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', Array.from(arguments));
 
@@ -242,16 +239,16 @@ async function getFSxAvailableRegionsList(
         }
     };
 
-    const { Regions: regions } = await describeRegions(credentialsId, region, input);
+    const { Regions: regions } = await describeRegions(credentialsId, input);
 
     const fsxRegionsList: Array<FSxAvailableRegions> = [];
 
     if (regions?.length) {
-        regions.forEach(({ RegionName: name }) => {
-            if (name && FSX_SUPPORTED_REGIONS.has(name)) {
+        regions.forEach(({ RegionName: code }) => {
+            if (code && FSX_SUPPORTED_REGIONS.has(code)) {
                 fsxRegionsList.push({
-                    regionName: name,
-                    descriptiveRegionName: FSX_SUPPORTED_REGIONS.get(name)!
+                    regionCode: code,
+                    regionName: FSX_SUPPORTED_REGIONS.get(code)!
                 });
             }
         });

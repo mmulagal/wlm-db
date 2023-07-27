@@ -1,11 +1,11 @@
 import { getAmiList, getFSxAvailableRegionsList } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
-import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../../../server/src/utils/consts';
 
 describe('List EC2 AMIs Operation', () => {
     it('list of EC2 AMIs', async () => {
-        const credentialsType = 'aws_assume_role';
+        const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
         const resp = await getAmiList(credentialsType, 'us-east-1');
         expect(resp).toBeDefined();
     });
@@ -16,115 +16,115 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
         const fsxRegionsResponse = {
             regions: [
                 {
-                    regionName: 'ap-south-2',
-                    descriptiveRegionName: 'Asia Pacific (Hyderabad)'
+                    regionCode: 'ap-south-2',
+                    regionName: 'Asia Pacific (Hyderabad)'
                 },
                 {
-                    regionName: 'ap-south-1',
-                    descriptiveRegionName: 'Asia Pacific (Mumbai)'
+                    regionCode: 'ap-south-1',
+                    regionName: 'Asia Pacific (Mumbai)'
                 },
                 {
-                    regionName: 'eu-south-1',
-                    descriptiveRegionName: 'Europe (Milan)'
+                    regionCode: 'eu-south-1',
+                    regionName: 'Europe (Milan)'
                 },
                 {
-                    regionName: 'eu-south-2',
-                    descriptiveRegionName: 'Europe (Spain)'
+                    regionCode: 'eu-south-2',
+                    regionName: 'Europe (Spain)'
                 },
                 {
-                    regionName: 'me-central-1',
-                    descriptiveRegionName: 'Middle East (UAE)'
+                    regionCode: 'me-central-1',
+                    regionName: 'Middle East (UAE)'
                 },
                 {
-                    regionName: 'ca-central-1',
-                    descriptiveRegionName: 'Canada (Central)'
+                    regionCode: 'ca-central-1',
+                    regionName: 'Canada (Central)'
                 },
                 {
-                    regionName: 'eu-central-1',
-                    descriptiveRegionName: 'Europe (Frankfurt)'
+                    regionCode: 'eu-central-1',
+                    regionName: 'Europe (Frankfurt)'
                 },
                 {
-                    regionName: 'eu-central-2',
-                    descriptiveRegionName: 'Europe (Zurich)'
+                    regionCode: 'eu-central-2',
+                    regionName: 'Europe (Zurich)'
                 },
                 {
-                    regionName: 'us-west-1',
-                    descriptiveRegionName: 'US West (N. California)'
+                    regionCode: 'us-west-1',
+                    regionName: 'US West (N. California)'
                 },
                 {
-                    regionName: 'us-west-2',
-                    descriptiveRegionName: 'US West (Oregon)'
+                    regionCode: 'us-west-2',
+                    regionName: 'US West (Oregon)'
                 },
                 {
-                    regionName: 'af-south-1',
-                    descriptiveRegionName: 'Africa (Cape Town)'
+                    regionCode: 'af-south-1',
+                    regionName: 'Africa (Cape Town)'
                 },
                 {
-                    regionName: 'eu-north-1',
-                    descriptiveRegionName: 'Europe (Stockholm)'
+                    regionCode: 'eu-north-1',
+                    regionName: 'Europe (Stockholm)'
                 },
                 {
-                    regionName: 'eu-west-3',
-                    descriptiveRegionName: 'Europe (Paris)'
+                    regionCode: 'eu-west-3',
+                    regionName: 'Europe (Paris)'
                 },
                 {
-                    regionName: 'eu-west-2',
-                    descriptiveRegionName: 'Europe (London)'
+                    regionCode: 'eu-west-2',
+                    regionName: 'Europe (London)'
                 },
                 {
-                    regionName: 'eu-west-1',
-                    descriptiveRegionName: 'Europe (Ireland)'
+                    regionCode: 'eu-west-1',
+                    regionName: 'Europe (Ireland)'
                 },
                 {
-                    regionName: 'ap-northeast-2',
-                    descriptiveRegionName: 'Asia Pacific (Seoul)'
+                    regionCode: 'ap-northeast-2',
+                    regionName: 'Asia Pacific (Seoul)'
                 },
                 {
-                    regionName: 'me-south-1',
-                    descriptiveRegionName: 'Middle East (Bahrain)'
+                    regionCode: 'me-south-1',
+                    regionName: 'Middle East (Bahrain)'
                 },
                 {
-                    regionName: 'ap-northeast-1',
-                    descriptiveRegionName: 'Asia Pacific (Tokyo)'
+                    regionCode: 'ap-northeast-1',
+                    regionName: 'Asia Pacific (Tokyo)'
                 },
                 {
-                    regionName: 'sa-east-1',
-                    descriptiveRegionName: 'South America (Sao Paulo)'
+                    regionCode: 'sa-east-1',
+                    regionName: 'South America (Sao Paulo)'
                 },
                 {
-                    regionName: 'ap-east-1',
-                    descriptiveRegionName: 'Asia Pacific (Hong Kong)'
+                    regionCode: 'ap-east-1',
+                    regionName: 'Asia Pacific (Hong Kong)'
                 },
                 {
-                    regionName: 'ap-southeast-1',
-                    descriptiveRegionName: 'Asia Pacific (Singapore)'
+                    regionCode: 'ap-southeast-1',
+                    regionName: 'Asia Pacific (Singapore)'
                 },
                 {
-                    regionName: 'ap-southeast-2',
-                    descriptiveRegionName: 'Asia Pacific (Sydney)'
+                    regionCode: 'ap-southeast-2',
+                    regionName: 'Asia Pacific (Sydney)'
                 },
                 {
-                    regionName: 'ap-southeast-3',
-                    descriptiveRegionName: 'Asia Pacific (Jakarta)'
+                    regionCode: 'ap-southeast-3',
+                    regionName: 'Asia Pacific (Jakarta)'
                 },
                 {
-                    regionName: 'ap-southeast-4',
-                    descriptiveRegionName: 'Asia Pacific (Melbourne)'
+                    regionCode: 'ap-southeast-4',
+                    regionName: 'Asia Pacific (Melbourne)'
                 },
                 {
-                    regionName: 'us-east-1',
-                    descriptiveRegionName: 'US East (N. Virginia)'
+                    regionCode: 'us-east-1',
+                    regionName: 'US East (N. Virginia)'
                 },
                 {
-                    regionName: 'us-east-2',
-                    descriptiveRegionName: 'US East (Ohio)'
+                    regionCode: 'us-east-2',
+                    regionName: 'US East (Ohio)'
                 }
             ]
         };
 
-        const credentialsType = 'aws_assume_role';
+        const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
 
-        const response = await getFSxAvailableRegionsList(credentialsType, DEFAULT_AWS_REGION);
+        const response = await getFSxAvailableRegionsList(credentialsType);
         expect(response).toEqual(fsxRegionsResponse);
     });
 });

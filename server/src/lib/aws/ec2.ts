@@ -14,6 +14,7 @@ import {
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
+import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 const logger = getLogger();
 async function getEC2Client(region: string, credentialsId: string) {
@@ -73,13 +74,12 @@ async function getAmis(credentialsId: string, region: string, params: DescribeIm
 
 async function describeRegions(
     credentialsId: string,
-    region: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
     // eslint-disable-next-line
     logger.info('Describe AWS regions:', Array.from(arguments));
 
-    const client = await getEC2Client(region, credentialsId);
+    const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
     const response = await client.send(new DescribeRegionsCommand(input));
 
     logger.debug('Describe AWS regions response:', response);

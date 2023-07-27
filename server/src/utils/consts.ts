@@ -51,6 +51,8 @@ export const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manag
 // Audit
 export const DEFAULT_AWS_REGION = 'us-east-1';
 
+export const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
+
 export const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 export const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 export const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
@@ -181,8 +183,8 @@ export enum AWSQueryFields {
 // List of regions having "Amazon FSx for NetApp ONTAP" service.
 // List taken from https://www.aws-services.info/fsx-ontap.html
 export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
-    // "Region Name"    "Descriptive Region Name"
-    // -------------    -------------------------
+    // "Region Code"    "Region Name"
+    // -------------    -------------
     ['af-south-1', 'Africa (Cape Town)'],
     ['ap-east-1', 'Asia Pacific (Hong Kong)'],
     ['ap-northeast-1', 'Asia Pacific (Tokyo)'],
