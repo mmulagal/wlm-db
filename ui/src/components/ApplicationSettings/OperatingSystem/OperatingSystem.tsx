@@ -2,10 +2,13 @@ import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@n
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './OperatingSystem.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSelectedOperatingSystem } from '../../../store/mssql/mssqlFormSlice';
 
 const OperatingSystem = () => {
     const [operatingSystem, setOperatingSystem] = useState(GENERAL.WIN_SERVER_2016);
+    const dispatch = useDispatch();
+
     //Set the Header text here
     const setHeader = () => {
         return operatingSystem;
@@ -25,6 +28,7 @@ const OperatingSystem = () => {
                                 isChecked={operatingSystem === GENERAL.WIN_SERVER_2016}
                                 onChange={() => {
                                     setOperatingSystem(GENERAL.WIN_SERVER_2016);
+                                    dispatch(setSelectedOperatingSystem(GENERAL.WIN_SERVER_2016));
                                 }}
                                 children={GENERAL.WIN_SERVER_2016}
                                 className=""
@@ -33,6 +37,7 @@ const OperatingSystem = () => {
                                 isChecked={operatingSystem === GENERAL.WIN_SERVER_2019}
                                 onChange={() => {
                                     setOperatingSystem(GENERAL.WIN_SERVER_2019);
+                                    dispatch(setSelectedOperatingSystem(GENERAL.WIN_SERVER_2019));
                                 }}
                                 children={GENERAL.WIN_SERVER_2019}
                                 className=""
