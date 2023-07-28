@@ -43,6 +43,8 @@ export const GENERAL = {
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     LOAD: 'Load',
+    CLOSE: 'Close',
+    API_REQUEST: 'API request',
     Cancel: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT:
         'No AWS credentials are available to create Microsoft SQL server. In order to continue you have two options:',
