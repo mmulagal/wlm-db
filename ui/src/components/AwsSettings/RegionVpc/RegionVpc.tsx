@@ -6,15 +6,21 @@ import { generateOptionType } from '../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
+import { useDispatch, useSelector } from 'react-redux';
+import { setSelectedRegionData, setSelectedVPC } from '../../../store/mssql/mssqlFormSlice';
 
 const RegionVpc = () => {
+    const dispatch = useDispatch();
+
+    //Getting the Data from state
+    const selectedRegionData = useSelector((state: any) => state.mssqlForm.regionAndVpc.selectedRegions);
+    const selectedVPCData = useSelector((state: any) => state.mssqlForm.regionAndVpc.selectedVPC);
+
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
-    const [optionSelected, setOptionSelected] = useState<any>(''); //This is for select VPC in drop down
 
     //Set up for Region select field
     const regions = ['us-east-1 | US East - N.Virginia', 'us-east-2 | US East - Ohio', 'us-west-2 | US West - Oregon'];
-    const [selectedRegion, setSelectedRegion] = useState(''); //This is for selected region in drop down
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
@@ -23,8 +29,8 @@ const RegionVpc = () => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
-        //@ts-ignore
-        setSelectedRegion(options[0]);
+
+        dispatch(setSelectedRegionData(options[0]));
         return options;
     }, []);
 
@@ -47,15 +53,15 @@ const RegionVpc = () => {
 
     //Set the Header text here
     const setHeader = () => {
-        if (!selectedRegion || !optionSelected) {
+        if (!selectedRegionData || !selectedVPCData) {
             return <ActionRequired />;
         } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
                     {/* @ts-ignore */}
-                    <div>{selectedRegion?.label || selectedRegion}</div>
+                    <div>{selectedRegionData?.label || selectedRegionData}</div>
                     <div className={CommonStyles.separator} />
-                    <div>{optionSelected.label}</div>
+                    <div>{selectedVPCData.label}</div>
                 </Typography>
             );
         }
@@ -72,9 +78,9 @@ const RegionVpc = () => {
                         <SelectField
                             label={GENERAL.REGION}
                             isClearable={false}
-                            defaultValue={[generateRegionsData[0]]}
+                            defaultValue={selectedRegionData ? [selectedRegionData] : [generateRegionsData[0]]}
                             onChange={(selectedOptions: any): void => {
-                                setSelectedRegion(selectedOptions.label);
+                                dispatch(setSelectedRegionData(selectedOptions));
                             }}
                             isSearchable={generateRegionsData.length > 5}
                             options={generateRegionsData}
@@ -109,19 +115,18 @@ const RegionVpc = () => {
                                     label={GENERAL.VPC}
                                     isClearable={false}
                                     value={
-                                        optionSelected
+                                        selectedVPCData
                                             ? generateOptionType(
-                                                  optionSelected.value,
-                                                  optionSelected.label,
-                                                  optionSelected.label2,
+                                                  selectedVPCData.value,
+                                                  selectedVPCData.label,
+                                                  selectedVPCData.label2,
                                                   false,
                                                   ''
                                               )
                                             : undefined
                                     }
                                     onChange={(selectedOptions: any): void => {
-                                        setOptionSelected(selectedOptions);
-                                        console.log(selectedOptions);
+                                        dispatch(setSelectedVPC(selectedOptions));
                                     }}
                                     placeholder="Select a VPC"
                                     isSearchable={generateVPCOptions.length > 5}

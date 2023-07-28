@@ -3,8 +3,11 @@ import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseDeploymentModel.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setSelectedDBDeploymentModel } from '../../../store/mssql/mssqlFormSlice';
 
 const DatabaseDeploymentModel = () => {
+    const dispatch = useDispatch();
     const [deploymentModel, setDeploymentModel] = useState(GENERAL.FAILOVER_CLUSTER);
     //Set the Header text here
     const setHeader = () => {
@@ -24,6 +27,7 @@ const DatabaseDeploymentModel = () => {
                                 isChecked={deploymentModel === GENERAL.FAILOVER_CLUSTER}
                                 onChange={() => {
                                     setDeploymentModel(GENERAL.FAILOVER_CLUSTER);
+                                    dispatch(setSelectedDBDeploymentModel(GENERAL.FAILOVER_CLUSTER));
                                 }}
                                 children={GENERAL.FAILOVER_CLUSTER}
                                 className={styles.radio}
