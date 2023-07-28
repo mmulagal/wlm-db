@@ -4,6 +4,7 @@ import { awsApi } from "../utils/apiService";
 import authSlice from './authSlice';
 import appContextSlice from "./appContextSlice";
 import mssqlSlice from "./mssql/mssqlSlice";
+import mssqlFormSlice from "./mssql/mssqlFormSlice";
 
 const rootReducer = combineReducers({
   [notificationSlice.name]: notificationSlice.reducer,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
   [authSlice.name]: authSlice.reducer,
   [awsApi.reducerPath]: awsApi.reducer,
   [mssqlSlice.name]: mssqlSlice.reducer,
+  [mssqlFormSlice.name] : mssqlFormSlice.reducer
 })
 
 const store = configureStore({
