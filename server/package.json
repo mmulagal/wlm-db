@@ -26,8 +26,9 @@
     "author": "NETAPP",
     "license": "UNLICENSED",
     "dependencies": {
-        "@aws-sdk/client-directory-service": "^3.370.0",
         "@aws-sdk/client-ec2": "^3.371.0",
+        "@aws-sdk/client-iam": "^3.377.0",
+        "@aws-sdk/client-directory-service": "^3.370.0",
         "@aws-sdk/client-sns": "^3.377.0",
         "@esbuild-kit/esm-loader": "^2.5.5",
         "@fastify/compress": "^6.4.0",
@@ -54,6 +55,7 @@
     },
     "devDependencies": {
         "@aws-sdk/types": "^3.337.0",
+        "@esbuild/darwin-arm64": "^0.18.17",
         "@faker-js/faker": "^8.0.2",
         "@types/async": "^3.2.20",
         "@types/config": "^3.3.0",

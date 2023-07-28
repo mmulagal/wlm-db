@@ -64,7 +64,10 @@ async function getCredentialDetails(credentialsId: string) {
                 getDecrypted: true
             }
         })
-        .json<{ credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date } }>();
+        .json<{
+            credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date };
+            extra: { arn: string };
+        }>();
 }
 
 export { getCredentialDetails, getAllAwsCredentials };
