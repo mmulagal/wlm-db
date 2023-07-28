@@ -1,34 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AD, Ami, Credentials, VPC } from "../../utils/types/mssqlTypes";
+import { MssqlEntities } from "../../utils/types/mssqlTypes";
 
-interface mssqlEntities {
-    getCredentials: {
-        credentialData: Credentials[],
-        credentialLoading: false,
-        credentialError: null
-    },
-    getVPCList: {
-        vpcData: VPC[],
-        vpcLoading: false,
-        vpcError: null
-    },
-    getAdsList: {
-        adData: AD[],
-        adLoading: false,
-        adError: null
-    },
-    getAmiList: {
-        amiData: Ami[],
-        amiLoading: false,
-        amiError: null
-    },
-}
 
-const initialState: mssqlEntities =  {
+const initialState: MssqlEntities =  {
     getCredentials: {
         credentialData: [],
         credentialLoading: false,
         credentialError: null
+    },
+    getRegions: {
+        regionsData: {},
+        regionsLoading: false,
+        regionsError: null
     },
     getVPCList: {
         vpcData: [],
@@ -54,6 +37,9 @@ const mssqlSlice = createSlice({
         addCredentials: (state, action: PayloadAction<any>) => {
             state.getCredentials = action.payload;
         },
+        addRegions: (state, action: PayloadAction<any>) => {
+            state.getRegions = action.payload;
+        },
         addVpcList: (state, action: PayloadAction<any>) => {
             state.getVPCList = action.payload;
         },
@@ -67,5 +53,5 @@ const mssqlSlice = createSlice({
 
 })
 
-export const { addCredentials, addVpcList } = mssqlSlice.actions;
+export const { addCredentials, addRegions, addVpcList } = mssqlSlice.actions;
 export default mssqlSlice;
