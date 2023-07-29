@@ -5,11 +5,12 @@ import { GENERAL } from '../../../utils/appConstants';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
+import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../store/mssql/mssqlFormSlice';
+import { useDispatch } from 'react-redux';
 
 const AwsAccount = () => {
-    const dispatch = useAppDispatch();
+    const dispatch = useDispatch();
     
     //Getting the Data from state
     const {credentialData, credentialLoading} = useAppSelector((state) => state.mssql.getCredentials);
@@ -17,16 +18,11 @@ const AwsAccount = () => {
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
-
-    // Selected account option
-    const [selectedOption, setSelectedOption] = useState({});
     
     // To set noAccount flag is present or not
     useEffect(() => {
         if(credentialData && credentialData.length > 0){
             setNoAccount(false)
-        }else{
-            setNoAccount(true)
         }
     }, [credentialData]);
 
@@ -38,14 +34,13 @@ const AwsAccount = () => {
             const option = generateOptionType(credValue, credValue, '', false, '', val);
             options.push(option);
         });
-        setSelectedOption(options[0]);
         return options;
     }, [credentialData]);
 
     // Update selected region in form data store
     useEffect(()=> {
-        dispatch(setSelectedCredentials(selectedOption));
-    }, [dispatch, selectedOption]);
+        dispatch(setSelectedCredentials(generateAWSAccounts[0]));
+    }, [dispatch, generateAWSAccounts]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -96,7 +91,7 @@ const AwsAccount = () => {
                                         isClearable={false}
                                         defaultValue={selectedCredential? [selectedCredential] : [generateAWSAccounts[0]]}
                                         onChange={(selectedOptions: any): void => {
-                                            setSelectedOption(selectedOptions);
+                                            dispatch(setSelectedCredentials(selectedOptions));
                                         }}
                                         isSearchable={generateAWSAccounts.length > 5}
                                         options={generateAWSAccounts}

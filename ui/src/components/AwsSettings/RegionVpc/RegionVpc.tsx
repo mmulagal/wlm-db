@@ -7,10 +7,11 @@ import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { setSelectedRegionData, setSelectedVPC } from '../../../store/mssql/mssqlFormSlice';
-import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
 
 const RegionVpc = () => {
-    const dispatch = useAppDispatch();
+    const dispatch = useDispatch();
 
     //Getting the Data from state
     const {regionsData, regionsLoading} = useAppSelector((state) => state.mssql.getRegions);
@@ -20,40 +21,27 @@ const RegionVpc = () => {
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
-
-    //State for selected region and vpc
-    const [selectedRegion, setSelectedRegion] = useState({});
-    const [selectedVpc, setSelectedVpc] = useState({});
-
-    //To get regions list from API response
-    const regions = regionsData?.regions;
     
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        regions?.map((val, idx: number) => {
+        regionsData?.regions?.map((val, idx: number) => {
             const regionValue = val.regionCode + " | " + val.regionName;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
-
-        setSelectedRegion(options[0]);
         return options;
-    }, [regions]);
+    }, [regionsData]);
 
     //Update selected region in form data store
     useEffect(() => {
-        dispatch(setSelectedRegionData(selectedRegion));
-    }, [dispatch, selectedRegion]);
-
-
-    //setup for VPC select field
-    const vpcs = vpcData?.vpcs;
+        dispatch(setSelectedRegionData(generateRegionsData[0]));
+    }, [dispatch, generateRegionsData]);
 
     //Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        vpcs?.map((val, idx: number) => {
+        vpcData?.vpcs?.map((val, idx: number) => {
             const vpcValue = val.name + " - " + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
             const vpcLabel2 = val.id!;
             const vpcData = {
@@ -64,15 +52,13 @@ const RegionVpc = () => {
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
         });
-
-        setSelectedVpc(options[0]);
         return options;
-    }, [vpcs]);
+    }, [vpcData]);
 
     //Update selected VPC in form data store
     useEffect(() => {
-        dispatch(setSelectedVPC(selectedVpc));
-    }, [dispatch, selectedVpc]);
+        dispatch(setSelectedVPC(generateVPCOptions[0]));
+    }, [dispatch, generateVPCOptions]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -103,7 +89,7 @@ const RegionVpc = () => {
                             isClearable={false}
                             defaultValue={selectedRegionData ? [selectedRegionData] :[generateRegionsData[0]]}
                             onChange={(selectedOptions: any): void => {
-                                setSelectedRegion(selectedOptions);
+                                dispatch(setSelectedRegionData(selectedOptions));
                             }}
                             isSearchable={generateRegionsData.length > 5}
                             options={generateRegionsData}
@@ -139,7 +125,7 @@ const RegionVpc = () => {
                                     isClearable={false}
                                     value={selectedVPCData ? selectedVPCData: undefined}
                                     onChange={(selectedOptions: any): void => {
-                                        setSelectedVpc(selectedOptions);
+                                        dispatch(setSelectedVPC(selectedOptions));
                                     }}
                                     placeholder="Select a VPC"
                                     isSearchable={generateVPCOptions.length > 5}
