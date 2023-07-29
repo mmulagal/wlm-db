@@ -6,14 +6,16 @@ export const generateOptionType = (
     label: string,
     label2: string,
     isDisabled: boolean,
-    disabledTitle: string
+    disabledTitle: string,
+    data?: Object
 ) => {
     const option: optionType = {
         value: value,
         label: label,
         label2: label2,
         isDisabled: isDisabled,
-        disabledTitle: disabledTitle
+        disabledTitle: disabledTitle,
+        data: data || {}
     };
     return option;
 };

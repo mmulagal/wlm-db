@@ -14,20 +14,25 @@ const initialState: MssqlEntities =  {
         regionsError: null
     },
     getVPCList: {
-        vpcData: [],
+        vpcData: {},
         vpcLoading: false,
         vpcError: null
     },
     getAdsList: {
-        adData: [],
+        adData: {},
         adLoading: false,
         adError: null
     },
     getAmiList: {
-        amiData: [],
+        amiData: {},
         amiLoading: false,
         amiError: null
     },
+    getSnsList: {
+        snsData: {},
+        snsLoading: false,
+        snsError: null
+    }
 };
 
 const mssqlSlice = createSlice({
@@ -48,10 +53,13 @@ const mssqlSlice = createSlice({
         },
         addAmiList: (state, action: PayloadAction<any>) => {
             state.getAmiList= action.payload;
+        },
+        addSnsList: (state, action: PayloadAction<any>) => {
+            state.getSnsList= action.payload;
         }
     }
 
 })
 
-export const { addCredentials, addRegions, addVpcList } = mssqlSlice.actions;
+export const { addCredentials, addRegions, addVpcList, addAdsList, addAmiList, addSnsList } = mssqlSlice.actions;
 export default mssqlSlice;
