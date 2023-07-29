@@ -20,10 +20,12 @@ const RegionVpc = () => {
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
+
+    //State for selected region and vpc
     const [selectedRegion, setSelectedRegion] = useState({});
     const [selectedVpc, setSelectedVpc] = useState({});
 
-    //Set up for Region select field
+    //To get regions list from API response
     const regions = regionsData?.regions;
     
     //Function to generate the options for Select Field
@@ -39,6 +41,7 @@ const RegionVpc = () => {
         return options;
     }, [regions]);
 
+    //Update selected region in form data store
     useEffect(() => {
         dispatch(setSelectedRegionData(selectedRegion));
     }, [dispatch, selectedRegion]);
@@ -66,6 +69,7 @@ const RegionVpc = () => {
         return options;
     }, [vpcs]);
 
+    //Update selected VPC in form data store
     useEffect(() => {
         dispatch(setSelectedVPC(selectedVpc));
     }, [dispatch, selectedVpc]);

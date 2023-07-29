@@ -1,6 +1,7 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 
+// Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
     data?: Object;
 }

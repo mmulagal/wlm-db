@@ -11,12 +11,17 @@ import { setSelectedCredentials } from '../../../store/mssql/mssqlFormSlice';
 const AwsAccount = () => {
     const dispatch = useAppDispatch();
     
+    //Getting the Data from state
     const {credentialData, credentialLoading} = useAppSelector((state) => state.mssql.getCredentials);
     const {selectedCredential} = useAppSelector((state) => state.mssqlForm.awsAccount);
 
+    // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
+
+    // Selected account option
     const [selectedOption, setSelectedOption] = useState({});
     
+    // To set noAccount flag is present or not
     useEffect(() => {
         if(credentialData && credentialData.length > 0){
             setNoAccount(false)
@@ -37,6 +42,7 @@ const AwsAccount = () => {
         return options;
     }, [credentialData]);
 
+    // Update selected region in form data store
     useEffect(()=> {
         dispatch(setSelectedCredentials(selectedOption));
     }, [dispatch, selectedOption]);

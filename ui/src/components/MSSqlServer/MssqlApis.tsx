@@ -8,12 +8,19 @@ import { AWS_ASSUME_ROLE } from "../../utils/consts";
 const MssqlApis = () => {
     const dispatch = useAppDispatch();
 
+    // CredentialId state
     const [selectedCredId, setSelectedCredId]= useState(undefined);
+
+    // RegionCode state
     const [selectedRegionCode, setSelectedRegionCode]= useState(undefined);
 
+    // credSkip to skip APi call when credentialId is not defined
     const [credSkip, setCredSkip] = useState(true);
+
+    // credAndRegionSkip to skip APi call when credentialId and regionCode is not defined
     const [credAndRegionSkip, setCredAndRegionSkip] = useState(true);
 
+    //Getting the Data from state
     const selectedCredentialData = useAppSelector((state) => state.mssqlForm.awsAccount.selectedCredential);
     const selectedRegionData = useAppSelector((state) => state.mssqlForm.regionAndVpc.selectedRegion);
 
