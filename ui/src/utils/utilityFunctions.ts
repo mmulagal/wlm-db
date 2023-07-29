@@ -1,6 +1,10 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 
+interface OptionsWithData extends optionType {
+    data?: Object;
+}
+
 export const generateOptionType = (
     value: string,
     label: string,
@@ -9,13 +13,13 @@ export const generateOptionType = (
     disabledTitle: string,
     data?: Object
 ) => {
-    const option: optionType = {
+    const option: OptionsWithData = {
         value: value,
         label: label,
         label2: label2,
         isDisabled: isDisabled,
         disabledTitle: disabledTitle,
-        data: data || {}
+        data: data
     };
     return option;
 };
