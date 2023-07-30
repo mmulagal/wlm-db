@@ -5,8 +5,8 @@ type DialogProps = {
     header: string;
     content: ReactNode | string;
     primaryButton: string;
-    secondaryButton: string;
-    callback: any;
+    secondaryButton?: string;
+    callback?: any;
 };
 
 const DialogComponent = ({ header, content, primaryButton, secondaryButton, callback }: DialogProps) => {
@@ -28,9 +28,11 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                 >
                     {primaryButton}
                 </Button>
-                <Button variant={'secondary'} isThin={true} onClick={() => closeDialog(null)}>
-                    {secondaryButton}
-                </Button>
+                {secondaryButton && (
+                    <Button variant={'secondary'} isThin={true} onClick={() => closeDialog(null)}>
+                        {secondaryButton}
+                    </Button>
+                )}
             </DialogFooter>
         </DialogLayout>
     );

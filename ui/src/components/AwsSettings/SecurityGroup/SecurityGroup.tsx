@@ -5,8 +5,14 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import styles from './SecurityGroup.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
+import { useDispatch, useSelector } from 'react-redux';
+import { setSelectedExistingSecurityGroup, setSelectedSecurityGroup } from '../../../store/mssql/mssqlFormSlice';
 
 const SecurityGroup = () => {
+    const dispatch = useDispatch();
+    const selectedExistingSecurityGroup = useSelector(
+        (state: any) => state.mssqlForm.securityGroup.selectedExistingSecurityGroup
+    );
     const [securityGroup, setSecurityGroup] = useState(GENERAL.USE_AN_EXISTING_SECURITY);
     const [optionSelected, setOptionSelected] = useState<string | any>({
         label: ''
@@ -27,6 +33,7 @@ const SecurityGroup = () => {
         });
         //To set the header value for first load
         setOptionSelected(options[0]);
+        dispatch(setSelectedExistingSecurityGroup(options[0]));
         return options;
     }, []);
 
@@ -59,6 +66,7 @@ const SecurityGroup = () => {
                                 isChecked={securityGroup === GENERAL.USE_AN_EXISTING_SECURITY}
                                 onChange={() => {
                                     setSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY);
+                                    dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
                                 }}
                                 children={GENERAL.USE_AN_EXISTING_SECURITY}
                                 className=""
@@ -67,6 +75,7 @@ const SecurityGroup = () => {
                                 isChecked={securityGroup === GENERAL.GENERATED_SECURITY_GROUP}
                                 onChange={() => {
                                     setSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP);
+                                    dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
                                 }}
                                 children={GENERAL.GENERATED_SECURITY_GROUP}
                                 className=""
@@ -77,10 +86,14 @@ const SecurityGroup = () => {
                                 <SelectField
                                     label={GENERAL.EXISTING_SECURITY_GROUP}
                                     isClearable={false}
-                                    defaultValue={[generateExistingSecurity[0]]}
+                                    defaultValue={
+                                        selectedExistingSecurityGroup
+                                            ? [selectedExistingSecurityGroup]
+                                            : [generateExistingSecurity[0]]
+                                    }
                                     onChange={(selectedOptions: any): void => {
                                         setOptionSelected(selectedOptions);
-                                        console.log(selectedOptions);
+                                        dispatch(setSelectedExistingSecurityGroup(selectedOptions));
                                     }}
                                     isSearchable={generateExistingSecurity.length > 5}
                                     options={generateExistingSecurity}
