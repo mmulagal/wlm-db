@@ -48,10 +48,10 @@ export const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
 
 export const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
-// Audit
+// Default values used in test routines.
 export const DEFAULT_AWS_REGION = 'us-east-1';
-
 export const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
+export const DEFAULT_AWS_CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 
 export const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 export const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;

@@ -7,7 +7,9 @@ import {
     AwsVpcQueryString,
     AdsResponse,
     SnsResponse,
-    FSxRegionsResponse
+    FSxRegionsResponse,
+    FSxFileSystemParams,
+    FSxFileSystemsResponse
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -62,4 +64,14 @@ const GetFSxRegionsSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema };
+// Get FSxFileSystems schema
+const GetFSxFileSystemsSchema = {
+    tags: [RouteTags.AWS],
+    params: FSxFileSystemParams,
+    description: 'List Amazon FSx for NetApp ONTAP filesystems',
+    response: {
+        200: FSxFileSystemsResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema, GetFSxFileSystemsSchema };

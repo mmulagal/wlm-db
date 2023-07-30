@@ -6,11 +6,13 @@ import {
     GetAdsSchema,
     GetVpcsListSchema,
     GetSnsTopics,
-    GetFSxRegionsSchema
+    GetFSxRegionsSchema,
+    GetFSxFileSystemsSchema
 } from './schemas/aws-schemas';
 import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
+import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -59,8 +61,16 @@ export default function awsRoutes(fastify: FastifyInstance) {
             } = request;
 
             const response = await getFSxAvailableRegionsList(credentialsId);
-
             return reply.send(response);
         }
     );
+
+    server.get(`${API_PREFIX_PATH}/vpcs/:vpcId/fsxs`, { schema: GetFSxFileSystemsSchema }, async (request, reply) => {
+        const {
+            params: { credentialsId, region, vpcId }
+        } = request;
+        const response = await getFSxFileSystemsList(credentialsId, region, vpcId);
+
+        return reply.send(response);
+    });
 }
