@@ -87,12 +87,16 @@ export enum RouteTags {
 export enum HttpErrorCodes {
     INTERNAL_SERVER_ERROR = '500',
     NOT_FOUND = '404',
-    UNAUTHORIZED = '403'
+    UNAUTHORIZED = '401',
+    FORBIDDEN = '403'
 }
 
 export const VPC_COUNT_QUOTANAME = 'VPCs per Region';
 
 export const CF_STACK_COUNT_QUOTANAME = 'Stack count';
+
+// Carries number of stacks that will be deployed.
+export const STACKS_DEPLOYED = 5;
 
 export enum AWSServiceNames {
     VPC = 'vpc',

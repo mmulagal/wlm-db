@@ -1,4 +1,5 @@
-import { getAmiList, getFSxAvailableRegionsList } from '../../../src/operations/aws/ec2-operations';
+import { faker } from '@faker-js/faker';
+import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
@@ -6,10 +7,16 @@ import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../se
 const WINDOWS = 'windows';
 const SQL = 'sql';
 
-describe('List EC2 AMIs Operation', () => {
+describe('EC2 Operations', () => {
     it('list of EC2 AMIs', async () => {
         const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
         const resp = await getAmiList(credentialsType, DEFAULT_AWS_REGION, WINDOWS, SQL);
+        expect(resp).toBeDefined();
+    });
+
+    it('list of vpc', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const resp = await getVpcsList(credentialsId, DEFAULT_AWS_REGION);
         expect(resp).toBeDefined();
     });
 });

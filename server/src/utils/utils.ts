@@ -5,9 +5,9 @@
 import createError from 'http-errors';
 import { getSecretsManagerClient, createSecret } from '../lib/aws/secrets-manager';
 import { getVpcsList } from '../operations/aws/ec2-operations';
-import { vpcQuota, cfQuota } from '../operations/aws/service-quotas-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
-import { SQL_AMI_NAMES, HttpErrorCodes } from './consts';
+import { cfQuota, vpcQuota } from '../operations/aws/service-quotas-operations';
+import { SQL_AMI_NAMES, HttpErrorCodes, STACKS_DEPLOYED } from './consts';
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -23,10 +23,7 @@ async function isVpcQuotaReached(credentialsId: string, region: string) {
     logger.info('Performing vpc quota check in region ', { credentialsId, region });
     const quotaDetails = await vpcQuota(credentialsId, region);
     const currentVpcCount = (await getVpcsList(credentialsId, region)).vpcs.length;
-    if (currentVpcCount == quotaDetails.vpcCountQuota) {
-        return true;
-    }
-    return false;
+    return currentVpcCount == quotaDetails.vpcCountQuota;
 }
 
 async function isCfStackQuotaReached(credentialsId: string, region: string) {
@@ -39,13 +36,11 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
             `Unable to get cloudformation stacks in region ${region} and credentials ${credentialsId}.`
         );
     }
-    if (
+    // We might deploy more than 1 stack and diff (cfstackquota, current deployed stacks) must be >= STACKS_DEPLOYED
+    return (
         stacksCount.currentStacksCount == quotaDetails.cfCountQuota ||
-        quotaDetails.cfCountQuota - stacksCount.currentStacksCount < 5
-    ) {
-        return true;
-    }
-    return false;
+        quotaDetails.cfCountQuota - stacksCount.currentStacksCount < STACKS_DEPLOYED
+    );
 }
 
 async function createSecretsString(

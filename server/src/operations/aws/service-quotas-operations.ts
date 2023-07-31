@@ -1,7 +1,7 @@
 import createError from 'http-errors';
-import { getServiceQuotasClient, getVpcQuota, getCloudFormationQuota } from '../../lib/aws/service-quotas';
+import { getServiceQuotasClient, listServiceQuota } from '../../lib/aws/service-quotas';
 import getLogger from '../../utils/logger';
-import { VPC_COUNT_QUOTANAME, CF_STACK_COUNT_QUOTANAME, HttpErrorCodes } from '../../utils/consts';
+import { VPC_COUNT_QUOTANAME, CF_STACK_COUNT_QUOTANAME, HttpErrorCodes, AWSServiceNames } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -9,7 +9,9 @@ async function vpcQuota(credentialsId: string, region: string) {
     logger.info('Fetching Vpc quotas in region ', { credentialsId, region });
     const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
     const vpcCountQuota =
-        (await getVpcQuota(serviceQuotaClient)).Quotas?.filter(x => x.QuotaName == VPC_COUNT_QUOTANAME) || [];
+        (await listServiceQuota(serviceQuotaClient, AWSServiceNames.VPC)).Quotas?.filter(
+            x => x.QuotaName == VPC_COUNT_QUOTANAME
+        ) || [];
     logger.debug('VPC count quota ' + vpcCountQuota);
     if (vpcCountQuota.length < 0) {
         {
@@ -19,14 +21,14 @@ async function vpcQuota(credentialsId: string, region: string) {
             );
         }
     }
-    return { vpcCountQuota: vpcCountQuota[0].Value || 0 };
+    return { vpcCountQuota: vpcCountQuota[0].Value! };
 }
 
 async function cfQuota(credentialsId: string, region: string) {
     logger.info('Fetching CloudFormation quotas in region ', { credentialsId, region });
     const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
     const cfCountQuota =
-        (await getCloudFormationQuota(serviceQuotaClient)).Quotas?.filter(
+        (await listServiceQuota(serviceQuotaClient, AWSServiceNames.CLOUDFORMATION)).Quotas?.filter(
             x => x.QuotaName == CF_STACK_COUNT_QUOTANAME
         ) || [];
     logger.debug('CF count quota ' + cfCountQuota);
@@ -38,7 +40,7 @@ async function cfQuota(credentialsId: string, region: string) {
             );
         }
     }
-    return { cfCountQuota: cfCountQuota[0].Value || 0 };
+    return { cfCountQuota: cfCountQuota[0].Value! };
 }
 
 export { vpcQuota, cfQuota };

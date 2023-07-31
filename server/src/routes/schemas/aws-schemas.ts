@@ -7,8 +7,9 @@ import {
     AwsVpcQueryString,
     AdsResponse,
     SnsResponse,
-    AmiQueryString,
-    FSxRegionsResponse
+    FSxRegionsResponse,
+    KmsKeysListResponse,
+    AmiQueryString
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -64,4 +65,13 @@ const GetFSxRegionsSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema };
+// GET Kms Keys List Schema
+const GetKmsKeysListSchema = {
+    ...baseRequest,
+    description: 'List Kms Keys in a region',
+    response: {
+        200: KmsKeysListResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema, GetKmsKeysListSchema };

@@ -5,9 +5,14 @@ import styles from './SimpleNotificationService.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useMemo, useState } from 'react';
 import { generateOptionType } from '../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setSNSARN, setSNSState } from '../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SimpleNotificationService = () => {
     const [toggle, setToggle] = useState(false);
+    const dispatch = useDispatch();
+    const selectedARNValue = useAppSelector((state: any) => state.mssqlForm.simpleNotification.snsARN);
     //Set the Header text here
     const setHeader = () => {
         if (!toggle) {
@@ -17,7 +22,7 @@ const SimpleNotificationService = () => {
                 <div className={CommonStyles.setHeaderStyle}>
                     <div>Enabled</div>
                     <div className={CommonStyles.separator} />
-                    <div>{arn}</div>
+                    <div>{selectedARNValue?.label}</div>
                 </div>
             );
         }
@@ -25,10 +30,10 @@ const SimpleNotificationService = () => {
 
     const handleChange = () => {
         setToggle(prev => !prev);
+        dispatch(setSNSState(!toggle));
     };
 
     const versions = ['val1', 'val2'];
-    const [arn, setArn] = useState('');
 
     //Function to generate the options for Select Field
     const generateArn = useMemo<optionType[]>((): optionType[] => {
@@ -61,12 +66,12 @@ const SimpleNotificationService = () => {
                                 isClearable={false}
                                 placeholder="Select an ARN"
                                 onChange={(selectedOptions: any): void => {
-                                    setArn(selectedOptions.label);
+                                    dispatch(setSNSARN(selectedOptions));
                                 }}
                                 isSearchable={generateArn.length > 5}
                                 options={generateArn}
                                 isDisabled={!toggle}
-                                value={arn ? generateOptionType(arn, arn, '', false, '') : undefined}
+                                value={selectedARNValue ? selectedARNValue : undefined}
                             />
                         </div>
                     </Typography>

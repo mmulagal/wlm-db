@@ -5,8 +5,13 @@ import { ReactComponent as DefaultTag } from '../../../../../assets/defaultTag.s
 import styles from './EncryptionTable.module.scss';
 import { useEffect } from 'react';
 import { getSelectedFromSelectionState } from '../../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setEncryptionRow } from '../../../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../../../store/storeHooks';
 
 const EncryptionTable = () => {
+    const dispatch = useDispatch();
+    const selectedRow = useAppSelector((state: any) => state.mssqlForm.encryption.selectedRow);
     const data: any = [
         { key: 'aws/fsx', expirationDate: 'None', origin: 'AWS_KMS', id: '1' },
         {
@@ -19,7 +24,16 @@ const EncryptionTable = () => {
             }
         },
         { key: 'about to expire', expirationDate: 'None', origin: 'AWS_KMS', id: '5' },
-        { key: 'key 4', expirationDate: 'None', origin: 'AWS_KMS', id: '6' }
+        { key: 'key 4', expirationDate: 'None', origin: 'AWS_KMS', id: '6' },
+        {
+            key: 'expired',
+            expirationDate: 'None',
+            origin: 'External',
+            cellProps: {
+                isDisabled: true
+            },
+            id: '7'
+        }
     ];
 
     const EncryptionColDefs: ColumnProps[] = [
@@ -29,13 +43,11 @@ const EncryptionTable = () => {
             id: '1',
             isSortable: false,
 
-            width: '335px',
+            width: '256px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.keyName}>
-                        <Typography variant="Regular_14" className={styles.content}>
-                            {cellData}
-                        </Typography>
+                        <div className={styles.content}>{cellData}</div>
                         {cellData === 'aws/fsx' && (
                             <div className={styles.tag}>
                                 <DefaultTag />
@@ -49,7 +61,7 @@ const EncryptionTable = () => {
             Header: GENERAL.EXPIRATION_DATE,
             accessor: 'expirationDate',
             id: '2',
-            width: '250px',
+            width: '256px',
 
             renderCell: (cellData: any) => {
                 return (
@@ -66,11 +78,13 @@ const EncryptionTable = () => {
             width: '256px'
         }
     ];
+
     const tableProps = useTable({
         //@ts-ignore
         selectAllProps: false,
         //@ts-ignore
         manageColumnsProps: false,
+        defaultSelectedRows: selectedRow ? [selectedRow[0] && selectedRow[0].id] : [EncryptionColDefs[0].id],
         isSorting: false,
         selectionType: 'singular',
         columns: EncryptionColDefs,
@@ -79,8 +93,8 @@ const EncryptionTable = () => {
     });
 
     useEffect(() => {
-        const rows = getSelectedFromSelectionState(tableProps.selectionState, data);
-        console.log(rows);
+        const row = getSelectedFromSelectionState(tableProps.selectionState, data);
+        dispatch(setEncryptionRow(row));
     }, [tableProps.selectionState]);
 
     return (
