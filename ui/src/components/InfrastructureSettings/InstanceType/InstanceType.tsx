@@ -1,15 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './InstanceType.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../store/storeHooks';
+import { setInstanceType } from '../../../store/mssql/mssqlFormSlice';
 
 const InstanceType = () => {
-    const [optionSelected, setOptionSelected] = useState<string | any>({
-        label: ''
-    });
+    const dispatch = useDispatch();
+    const selectedInstanceType = useAppSelector((state: any) => state.mssqlForm.instanceType);
 
     //Mock data to be removed later
     const instances = [
@@ -24,14 +26,17 @@ const InstanceType = () => {
             const option = generateOptionType(val.value, val.label1, val.label2, false, '');
             options.push(option);
         });
-        //To set the header value for first load
-        setOptionSelected(options[0].label);
+
         return options;
     }, []);
 
+    useEffect(() => {
+        dispatch(setInstanceType(generateInstances[0]));
+    }, [generateInstances]);
+
     //Set the Header text here
     const setHeader = () => {
-        return <Typography variant="Regular_14">{optionSelected}</Typography>;
+        return <Typography variant="Regular_14">{selectedInstanceType?.label}</Typography>;
     };
     return (
         <div className={styles['instance-type']}>
@@ -46,10 +51,9 @@ const InstanceType = () => {
                             <SelectField
                                 label={GENERAL.INSTANCE_TYPE}
                                 isClearable={false}
-                                defaultValue={[generateInstances[0]]}
+                                defaultValue={selectedInstanceType ? [selectedInstanceType] : [generateInstances[0]]}
                                 onChange={(selectedOptions: any): void => {
-                                    setOptionSelected(selectedOptions.label);
-                                    console.log(selectedOptions);
+                                    dispatch(setInstanceType(selectedOptions));
                                 }}
                                 isSearchable={generateInstances.length > 5}
                                 options={generateInstances}

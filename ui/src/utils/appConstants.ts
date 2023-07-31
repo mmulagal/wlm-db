@@ -30,7 +30,7 @@ export const GENERAL = {
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
     INSTANCE_TYPE: 'Instance type',
     FSXN_SYSTEM: 'FSxN system',
-    STORAGE_CAPACITY: 'Storage capacity',
+    STORAGE_CAPACITY: 'Data drive size',
     PROVISIONED_IOPS: 'Provisioned IOPS',
     THROUGHPUT_CAPACITY: 'Throughput capacity',
     ENCRYPTION: 'Encryption',
@@ -93,6 +93,7 @@ export const GENERAL = {
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
     SELECT_AMI_ID: 'Select AMI ID',
+    SELECT_AMI_NAME: 'Select AMI Name',
 
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database instance name',
@@ -102,6 +103,8 @@ export const GENERAL = {
     //Constants for Storage capacity
     CAPACITY: 'capacity',
     UNIT: 'Unit',
+    CAPACITY_TOOLTIP:
+        "Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSxN filesystem volumes, as well as LUNs, will be performed according to NetApp's best practices for SQL configuration. You can change the recommended defaults to meet your requirements",
     ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',

@@ -3,9 +3,12 @@ import { AccordionCard, AccordionCardContent, ToggleSelector, Typography } from 
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './CloudWatch.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useDispatch } from 'react-redux';
+import { setCloudWatch } from '../../../store/mssql/mssqlFormSlice';
 
 const CloudWatch = () => {
     const [toggle, setToggle] = useState(false);
+    const dispatch = useDispatch();
     //Set the Header text here
     const setHeader = () => {
         return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
@@ -13,6 +16,7 @@ const CloudWatch = () => {
 
     const handleChange = () => {
         setToggle(prev => !prev);
+        dispatch(setCloudWatch(!toggle));
     };
 
     return (

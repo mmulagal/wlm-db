@@ -3,8 +3,9 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     GetAmiSchema,
-    GetAdsSchema,
     GetVpcsListSchema,
+    GetAdsSchema,
+    GetKmsKeysListSchema,
     GetSnsTopics,
     GetFSxRegionsSchema,
     GetFSxFileSystemsSchema
@@ -13,6 +14,7 @@ import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../operatio
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
+import { getKmsKeysList } from '../operations/aws/kms-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -80,6 +82,14 @@ export default function awsRoutes(fastify: FastifyInstance) {
         } = request;
         const response = await getFSxFileSystemsList(credentialsId, region, vpcId);
 
+        return reply.send(response);
+    });
+
+    server.get(`${API_PREFIX_PATH}/kmsKeys`, { schema: GetKmsKeysListSchema }, async (request, reply) => {
+        const {
+            params: { credentialsId, region }
+        } = request;
+        const response = await getKmsKeysList(credentialsId, region);
         return reply.send(response);
     });
 }

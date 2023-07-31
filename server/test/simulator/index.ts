@@ -8,6 +8,7 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/cloud-manager-credentials-scope');
     await import('./scopes/aws/ec2-scope');
     await import('./scopes/aws/directory-service-scope');
+    await import('./scopes/aws/kms-scope');
     await import('./scopes/aws/sns-scope');
     await import('./scopes/aws/fsx-scope');
     // Load server
