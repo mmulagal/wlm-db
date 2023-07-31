@@ -1,7 +1,14 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields, FSX_SUPPORTED_REGIONS } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
+import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2INSTANCETYPESE_EXCLUDE } from '../../utils/consts';
+import {
+    describeVpc,
+    describeSecurityGroups,
+    describeSubnets,
+    describeRegions,
+    getAmis,
+    getEC2instnaceTypes
+} from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { filterSqlAmis } from '../../utils/utils';
 
@@ -275,4 +282,42 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
     return { regions: fsxRegionsList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList };
+async function getEc2InstnaceTypes(credentialsId: string, region: string) {
+    logger.info('List Ec2 Instance Types in region', { credentialsId, region });
+    try {
+        const response = await getEC2instnaceTypes(credentialsId, region);
+        /* 
+        SDK returns all the instance types which cannot be used to create the instance for SQL deployment.
+        Still trying to figure out on what basis the instances are listed in fro creation. As temp solution 
+        went through the instances listed in Launch wizard and excluded few types. Needs work to filter out
+        Created a list of instance that can be excluded EC2INSTANCETYPESE_EXCLUDE
+        */
+        const filteredInstances = response
+            .filter(
+                (instance: { InstanceType: string | string[] }) =>
+                    !EC2INSTANCETYPESE_EXCLUDE.some((excludedType: string) =>
+                        instance.InstanceType.includes(excludedType)
+                    )
+            )
+            .map(
+                (instance: {
+                    EbsInfo: { EbsOptimizedInfo: { MaximumBandwidthInMbps: number } };
+                    VCpuInfo: { DefaultVCpus: number };
+                    MemoryInfo: { SizeInMiB: number };
+                    InstanceType: string;
+                }) => ({
+                    instanceType: instance.InstanceType,
+                    iopsInMbps: instance.EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
+                    vCpus: instance.VCpuInfo?.DefaultVCpus,
+                    ramInMib: instance.MemoryInfo?.SizeInMiB
+                })
+            );
+        const totalRecords = filteredInstances?.length;
+        return { instaceTypes: filteredInstances, totalRecords };
+    } catch (error: any) {
+        logger.error('Failed to get the ec2 instance types', error.message);
+        throw createError(error.statusCode || error.code || 500, error.message);
+    }
+}
+
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getEc2InstnaceTypes };

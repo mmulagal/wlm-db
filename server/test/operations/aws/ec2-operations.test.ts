@@ -1,11 +1,70 @@
 import { faker } from '@faker-js/faker';
-import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../../../src/operations/aws/ec2-operations';
+import {
+    getAmiList,
+    getVpcsList,
+    getFSxAvailableRegionsList,
+    getEc2InstnaceTypes
+} from '../../../src/operations/aws/ec2-operations';
+
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
+
+const ec2InstaceTypesResponse = {
+    instaceTypes: [
+        {
+            instanceType: 'x1e.8xlarge',
+            vCpus: 32,
+            ramInMib: 999424,
+            iopsInMbps: 3500
+        },
+        {
+            instanceType: 'g3.16xlarge',
+            vCpus: 64,
+            ramInMib: 499712,
+            iopsInMbps: 14000
+        },
+        {
+            instanceType: 'r6g.16xlarge',
+            vCpus: 64,
+            ramInMib: 524288,
+            iopsInMbps: 19000
+        },
+        {
+            instanceType: 'c6a.48xlarge',
+            vCpus: 192,
+            ramInMib: 393216,
+            iopsInMbps: 40000
+        },
+        {
+            instanceType: 'c6i.32xlarge',
+            vCpus: 128,
+            ramInMib: 262144,
+            iopsInMbps: 40000
+        },
+        {
+            instanceType: 'r6idn.xlarge',
+            vCpus: 4,
+            ramInMib: 32768,
+            iopsInMbps: 20000
+        },
+        {
+            instanceType: 'm5a.16xlarge',
+            vCpus: 64,
+            ramInMib: 262144,
+            iopsInMbps: 9500
+        },
+        {
+            instanceType: 'r6in.metal',
+            vCpus: 128,
+            ramInMib: 1048576,
+            iopsInMbps: 80000
+        }
+    ]
+};
 
 describe('EC2 Operations', () => {
     it('list of EC2 AMIs', async () => {
@@ -136,5 +195,13 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
 
         const response = await getFSxAvailableRegionsList(credentialsType);
         expect(response).toEqual(fsxRegionsResponse);
+    });
+});
+
+describe('List EC2 instance types forn specific region', () => {
+    it('should return a lsist EC2 instance types forn specific region', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const resp = await getEc2InstnaceTypes(credentialsId, 'us-east-1');
+        expect(resp).toEqual(ec2InstaceTypesResponse);
     });
 });

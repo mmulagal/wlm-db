@@ -7,6 +7,19 @@ const AwsParams = Type.Object({
     region: Type.String()
 });
 
+// EC2 instance Types response
+const Ec2InstaceTypes = Type.Object({
+    instaceTypes: Type.Array(
+        Type.Object({
+            instanceType: Type.Optional(Type.String()),
+            vCpus: Type.Optional(Type.Number()),
+            ramInMib: Type.Optional(Type.Number()),
+            iopsInMbps: Type.Optional(Type.Number())
+        })
+    ),
+    totalRecords: Type.Optional(Type.Number())
+});
+
 // VPC list Request and Response
 const AwsVpcQueryString = Type.Object({
     fields: Type.Optional(Type.String())
@@ -80,6 +93,7 @@ const AmiResponse = Type.Object({
     )
 });
 
+//SNS list topics Response
 const SnsResponse = Type.Object({
     Topics: Type.Array(
         Type.Object({
@@ -144,6 +158,7 @@ const KmsKeysListResponse = Type.Object({
 export {
     AwsVpcQueryString,
     AwsParams,
+    Ec2InstaceTypes,
     AwsRegionsParams,
     VpcListResponse,
     AmiResponse,

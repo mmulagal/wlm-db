@@ -4,7 +4,8 @@ import {
     describeRegions,
     describeVpc,
     describeSecurityGroups,
-    describeSubnets
+    describeSubnets,
+    getEC2instnaceTypes
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -14,6 +15,7 @@ import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
 import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
+import ec2InstaceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 const REGION = DEFAULT_AWS_REGION;
@@ -79,5 +81,13 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
 
         const response = await describeRegions(credentialsType, input);
         expect(response).toEqual(fsxRegions);
+    });
+});
+
+describe('List EC2 instance types forn specific region', () => {
+    it('List EC2 instance types forn specific region', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const resp = await getEC2instnaceTypes(credentialsId, 'us-east-1');
+        expect(resp).toEqual(ec2InstaceTypes.InstanceTypes);
     });
 });
