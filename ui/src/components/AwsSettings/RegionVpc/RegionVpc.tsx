@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
@@ -6,50 +6,59 @@ import { generateOptionType } from '../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedRegionData, setSelectedVPC } from '../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
 
     //Getting the Data from state
-    const selectedRegionData = useSelector((state: any) => state.mssqlForm.regionAndVpc.selectedRegions);
-    const selectedVPCData = useSelector((state: any) => state.mssqlForm.regionAndVpc.selectedVPC);
+    const {regionsData, regionsLoading} = useAppSelector((state) => state.mssql.getRegions);
+    const {vpcData, vpcLoading} = useAppSelector((state) => state.mssql.getVPCList);
+    const selectedRegionData = useAppSelector((state: any) => state.mssqlForm.regionAndVpc.selectedRegion);
+    const selectedVPCData = useAppSelector((state: any) => state.mssqlForm.regionAndVpc.selectedVPC);
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
-
-    //Set up for Region select field
-    const regions = ['us-east-1 | US East - N.Virginia', 'us-east-2 | US East - Ohio', 'us-west-2 | US West - Oregon'];
-
+    
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        regions?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        regionsData?.regions?.map((val, idx: number) => {
+            const regionValue = val.regionCode + " | " + val.regionName;
+            const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
-
-        dispatch(setSelectedRegionData(options[0]));
         return options;
-    }, []);
+    }, [regionsData]);
 
-    //setup for VPC select field
-    const vpcs = [
-        { label1: 'VPC1 - 10.0.0.0/16', value: 'VPC1 - 10.0.0.0/16', label2: 'vpc-123456' },
-        { label1: 'VPC2 - 10.0.0.1/18', value: 'VPC2 - 10.0.0.1/18', label2: 'sg-123456' }
-    ];
+    //Update selected region in form data store
+    useEffect(() => {
+        dispatch(setSelectedRegionData(generateRegionsData[0]));
+    }, [dispatch, generateRegionsData]);
 
     //Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        vpcs?.map((val, idx: number) => {
-            const option = generateOptionType(val.value, val.label1, val.label2, false, '');
+        vpcData?.vpcs?.map((val, idx: number) => {
+            const vpcValue = val.name + " - " + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
+            const vpcLabel2 = val.id!;
+            const vpcData = {
+                id: val.id,
+                name: val.name,
+                cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : ''
+            }
+            const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
         });
-
         return options;
-    }, []);
+    }, [vpcData]);
+
+    //Update selected VPC in form data store
+    useEffect(() => {
+        dispatch(setSelectedVPC(generateVPCOptions[0]));
+    }, [dispatch, generateVPCOptions]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -59,16 +68,16 @@ const RegionVpc = () => {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
                     {/* @ts-ignore */}
-                    <div>{selectedRegionData?.label || selectedRegionData}</div>
+                    <div>{selectedRegionData.value}</div>
                     <div className={CommonStyles.separator} />
-                    <div>{selectedVPCData.label}</div>
+                    <div>{selectedVPCData.value}</div>
                 </Typography>
             );
         }
     };
     return (
         <div className={styles['region-vpc']}>
-            <AccordionCard
+            <AccordionCard isLoading={regionsLoading || vpcLoading} 
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
                 title={<div className={CommonStyles.title}>{GENERAL.REGION_VPC}</div>}
@@ -78,7 +87,7 @@ const RegionVpc = () => {
                         <SelectField
                             label={GENERAL.REGION}
                             isClearable={false}
-                            defaultValue={selectedRegionData ? [selectedRegionData] : [generateRegionsData[0]]}
+                            defaultValue={selectedRegionData ? [selectedRegionData] :[generateRegionsData[0]]}
                             onChange={(selectedOptions: any): void => {
                                 dispatch(setSelectedRegionData(selectedOptions));
                             }}
@@ -114,17 +123,7 @@ const RegionVpc = () => {
                                 <SelectField
                                     label={GENERAL.VPC}
                                     isClearable={false}
-                                    value={
-                                        selectedVPCData
-                                            ? generateOptionType(
-                                                  selectedVPCData.value,
-                                                  selectedVPCData.label,
-                                                  selectedVPCData.label2,
-                                                  false,
-                                                  ''
-                                              )
-                                            : undefined
-                                    }
+                                    value={selectedVPCData ? selectedVPCData: undefined}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedVPC(selectedOptions));
                                     }}

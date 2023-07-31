@@ -1,6 +1,8 @@
 import credentials from './credentials';
+import aws from './aws';
 
 const routes = {
-    credentials
+    credentials,
+    aws
 };
 export default routes;

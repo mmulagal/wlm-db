@@ -1,14 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL } from '../../utils/appConstants';
-import { MssqlFormEntities } from '../../utils/types/mssqlTypes';
 
 const initialState: any = {
     awsAccount: {
-        credentials: ''
+        selectedCredential: {}
     },
     regionAndVpc: {
-        selectedRegions: '',
-        selectedVPC: ''
+        selectedRegion: {},
+        selectedVPC: {}
     },
     securityGroup: {
         selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
@@ -26,6 +25,9 @@ const mssqlFormSlice = createSlice({
     name: 'mssqlForm',
     initialState,
     reducers: {
+        setSelectedCredentials(state, action: PayloadAction<any>) {
+            state.awsAccount.selectedCredential = action.payload;
+        },
         setSelectedOperatingSystem(state, action: PayloadAction<any>) {
             state.operatingSystem.selectedOperatingSystem = action.payload;
         },
@@ -39,7 +41,7 @@ const mssqlFormSlice = createSlice({
             state.dbVersion = action.payload;
         },
         setSelectedRegionData(state, action: PayloadAction<any>) {
-            state.regionAndVpc.selectedRegions = action.payload;
+            state.regionAndVpc.selectedRegion = action.payload;
         },
         setSelectedVPC(state, action: PayloadAction<any>) {
             state.regionAndVpc.selectedVPC = action.payload;
@@ -54,6 +56,7 @@ const mssqlFormSlice = createSlice({
 });
 
 export const {
+    setSelectedCredentials,
     setSelectedOperatingSystem,
     setSelectedSecurityGroup,
     setSelectedExistingSecurityGroup,
