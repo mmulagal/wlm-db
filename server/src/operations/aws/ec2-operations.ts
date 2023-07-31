@@ -238,7 +238,7 @@ export async function getAmiList(
             new Date(b.name.substring(b.name.length - 10)).getTime() -
             new Date(a.name.substring(a.name.length - 10)).getTime()
     );
-    return { ami: response[0] };
+    return { amis: response };
 }
 function findNameFromTags(tags: Tag[]) {
     logger.debug('Find name from the tags', { tags });
