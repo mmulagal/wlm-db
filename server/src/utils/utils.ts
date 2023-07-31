@@ -15,4 +15,21 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
         .filter(name => (dbEdition ? name.includes(dbEdition) : true));
 }
 
-export { filterSqlAmis };
+function generateFsxParams(FSxDataLunSize: number) {
+    const prefix = 'wlmdb';
+    const suffix = Date.now();
+
+    return {
+        FSxFileSystemName: `${prefix}-fsx-${suffix}`,
+        FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
+        FSxDataVolumeSize: 1.1 * FSxDataLunSize, // FSxDataLunSize + 10% of FSxDataLunSize
+        FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
+        FSxLogVolumeSize: 0.25 * 1.1 * FSxDataLunSize, // 25% of FSxDataVolumeSize
+        FSxTempDBVolumeName: `${prefix}-sqltemp-${suffix}`,
+        FSxTempDBVolumeSize: 0.1 * 1.1 * FSxDataLunSize, // 10% of FSxDataVolumeSize
+        FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
+        FSxSvmName: `${prefix}-svm-${suffix}`
+    };
+}
+
+export { filterSqlAmis, generateFsxParams };
