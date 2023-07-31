@@ -4,10 +4,13 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
 
+const WINDOWS = 'windows';
+const SQL = 'sql';
+
 describe('EC2 Operations', () => {
     it('list of EC2 AMIs', async () => {
-        const credentialsId = `${faker.string.alpha(20)}`;
-        const resp = await getAmiList(credentialsId, DEFAULT_AWS_REGION);
+        const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
+        const resp = await getAmiList(credentialsType, DEFAULT_AWS_REGION, WINDOWS, SQL);
         expect(resp).toBeDefined();
     });
 

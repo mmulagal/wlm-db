@@ -8,7 +8,8 @@ import {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
-    KmsKeysListResponse
+    KmsKeysListResponse,
+    AmiQueryString
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -40,6 +41,7 @@ const GetAdsSchema = {
 const GetAmiSchema = {
     ...baseRequest,
     description: 'Get AMIs in a region',
+    querystring: AmiQueryString,
     response: {
         200: AmiResponse
     }
