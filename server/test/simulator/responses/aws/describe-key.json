@@ -1,0 +1,17 @@
+{
+    "KeyMetadata": {
+        "AWSAccountId": "210811600188",
+        "Arn": "arn:aws:kms:us-east-1:210811600188:key/0a93acf4-ca6e-4847-8baa-9b0f561567b1",
+        "CustomerMasterKeySpec": "SYMMETRIC_DEFAULT",
+        "Description": "nviet-openlab-key6",
+        "Enabled": true,
+        "EncryptionAlgorithms": ["SYMMETRIC_DEFAULT"],
+        "KeyId": "0a93acf4-ca6e-4847-8baa-9b0f561567b1",
+        "KeyManager": "CUSTOMER",
+        "KeySpec": "SYMMETRIC_DEFAULT",
+        "KeyState": "Enabled",
+        "KeyUsage": "ENCRYPT_DECRYPT",
+        "MultiRegion": false,
+        "Origin": "AWS_KMS"
+    }
+}

@@ -30,6 +30,7 @@
         "@aws-sdk/client-iam": "^3.377.0",
         "@aws-sdk/client-directory-service": "^3.370.0",
         "@aws-sdk/client-sns": "^3.377.0",
+        "@aws-sdk/client-kms": "^3.378.0",
         "@esbuild-kit/esm-loader": "^2.5.5",
         "@fastify/compress": "^6.4.0",
         "@fastify/cors": "^8.3.0",

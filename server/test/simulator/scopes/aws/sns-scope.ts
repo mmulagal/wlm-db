@@ -1,3 +1,4 @@
+// workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
 // @ts-nocheck
 import { SNSClient, ListTopicsCommand } from '@aws-sdk/client-sns';
 import { mockClient } from 'aws-sdk-client-mock';

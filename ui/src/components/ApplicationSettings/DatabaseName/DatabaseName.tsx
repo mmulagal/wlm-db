@@ -4,9 +4,12 @@ import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseName.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../common/AccordionError/AccordionError';
+import { useDispatch } from 'react-redux';
+import { setDBName } from '../../../store/mssql/mssqlFormSlice';
 
 const DatabaseName = () => {
     const [input, setInput] = useState('');
+    const dispatch = useDispatch();
 
     function isValidDBName() {
         const firstChar = input.charAt(0);
@@ -43,6 +46,7 @@ const DatabaseName = () => {
                                 label={GENERAL.DATABASE_INSTANCE_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setInput(e.target.value);
+                                    dispatch(setDBName(e.target.value));
                                 }}
                                 error={isValidDBName()}
                                 value={input}
