@@ -1,5 +1,4 @@
 import { getServiceQuotasClient, getVpcQuota, getCloudFormationQuota } from '../../../src/lib/aws/service-quotas';
-import quotaResponse from '../../simulator/responses/aws/service-quotas.json';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
