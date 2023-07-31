@@ -74,4 +74,20 @@ const GetKmsKeysListSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema, GetKmsKeysListSchema };
+const CreateTemplateSchema = {
+    ...baseRequest,
+    description: 'Create Cloud formation template in a region for existing vpc',
+    response: {
+        200: KmsKeysListResponse
+    }
+};
+
+export {
+    GetVpcsListSchema,
+    GetAmiSchema,
+    GetAdsSchema,
+    GetSnsTopics,
+    GetFSxRegionsSchema,
+    GetKmsKeysListSchema,
+    CreateTemplateSchema
+};

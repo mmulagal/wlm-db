@@ -13,6 +13,7 @@ import { getAmiList, getVpcsList, getFSxAvailableRegionsList } from '../operatio
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getKmsKeysList } from '../operations/aws/kms-operations';
+import { createTemplate } from '../operations/aws/cloud-formation-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -82,4 +83,16 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const response = await getKmsKeysList(credentialsId, region);
         return reply.send(response);
     });
+
+    server.post(
+        `${API_PREFIX_PATH}/vpcs/:vpcId/template/create`,
+        { schema: CreateTemplateSchema },
+        async (request, reply) => {
+            const {
+                params: { credentialsId, region, vpcId }
+            } = request;
+            const response = await createTemplate(credentialsId, region, vpcId);
+            return reply.send(response);
+        }
+    );
 }
