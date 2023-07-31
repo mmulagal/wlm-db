@@ -24,7 +24,7 @@ async function getKMS(region: string, credentialsId: string) {
 }
 
 async function describeKey(credentialsId: string, region: string, params: DescribeKeyRequest) {
-    logger.info('Describe Key', { credentialsId, region, params });
+    logger.debug('Describe Key', { credentialsId, region, params });
 
     const kms = await getKMS(region, credentialsId);
 
@@ -39,11 +39,12 @@ async function listAliases(
     region: string,
     params: ListAliasesRequest = {},
     data: AliasListEntry[] = [],
-    markerId: string | undefined = undefined
+    markerId: string | undefined = undefined,
+    kmsClient: any = undefined
 ) {
-    logger.info('List aliases for a key', { credentialsId, region, params, markerId });
+    logger.debug('List aliases for a key', { credentialsId, region, params, markerId });
 
-    const kms = await getKMS(region, credentialsId);
+    const kms = kmsClient ? kmsClient : await getKMS(region, credentialsId);
 
     if (markerId) {
         params.Marker = markerId;
@@ -61,7 +62,7 @@ async function listAliases(
     }
 
     if (truncated) {
-        return listAliases(credentialsId, region, params, data, nextMarker);
+        return listAliases(credentialsId, region, params, data, nextMarker, kms);
     }
     logger.debug('list aliases response', data);
     return data;
@@ -71,7 +72,8 @@ async function listKeys(
     credentialsId: string,
     region: string,
     data: KeyListEntry[] = [],
-    markerId: string | undefined = undefined
+    markerId: string | undefined = undefined,
+    kmsClient: any = undefined
 ) {
     logger.info('List Kms Keys', {
         credentialsId,
@@ -80,7 +82,7 @@ async function listKeys(
         markerId
     });
 
-    const kms = await getKMS(region, credentialsId);
+    const kms = kmsClient ? kmsClient : await getKMS(region, credentialsId);
 
     const {
         Keys: keys,
@@ -94,7 +96,7 @@ async function listKeys(
     }
 
     if (truncated) {
-        return listKeys(credentialsId, region, data, nextMarker);
+        return listKeys(credentialsId, region, data, nextMarker, kms);
     }
     logger.debug('list keys response', data);
     return data;

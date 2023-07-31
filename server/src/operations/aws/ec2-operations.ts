@@ -47,7 +47,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.replace(/\s+/g, '')?.split(',');
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
     const { Vpcs } = (await describeVpc(credentialsId, region, {})) || [];
@@ -71,61 +71,55 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
     if (Vpcs?.length) {
         await Promise.all(
             Vpcs.map(async vpc => {
-                try {
-                    const {
-                        VpcId: id,
-                        State: state,
-                        Tags: tags,
-                        CidrBlockAssociationSet: cidrBlock,
-                        IsDefault: isDefault
-                    } = vpc;
+                const {
+                    VpcId: id,
+                    State: state,
+                    Tags: tags,
+                    CidrBlockAssociationSet: cidrBlock,
+                    IsDefault: isDefault
+                } = vpc;
 
-                    let name = '-';
-                    if (tags?.length) {
-                        name = findNameFromTags(tags);
-                    }
-
-                    const subnetParams: DescribeSubnetsRequest = {
-                        Filters: [
-                            {
-                                Name: 'vpc-id',
-                                Values: [id as string]
-                            }
-                        ]
-                    };
-
-                    let subnetsList: Array<Subnet> = [];
-                    if (fields?.includes(AWSQueryFields.SUBNET)) {
-                        subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
-                    }
-
-                    const sgParams: DescribeSecurityGroupsRequest = {
-                        Filters: [
-                            {
-                                Name: 'vpc-id',
-                                Values: [id as string]
-                            }
-                        ]
-                    };
-                    let securityGroupList: Array<SecurityGroup> = [];
-                    if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
-                        securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
-                    }
-                    vpcs.push({
-                        id,
-                        state,
-                        tags,
-                        cidrBlock,
-                        isDefault,
-                        subnets: subnetsList,
-                        securityGroups: securityGroupList,
-                        name
-                    });
-                } catch (err: any) {
-                    const errMsg = `Failed to get the vpc details. ${err.message}`;
-                    logger.error(errMsg);
-                    throw createError(err.statusCode || 500, errMsg);
+                let name = '-';
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
                 }
+
+                const subnetParams: DescribeSubnetsRequest = {
+                    Filters: [
+                        {
+                            Name: 'vpc-id',
+                            Values: [id as string]
+                        }
+                    ]
+                };
+
+                let subnetsList: Array<Subnet> = [];
+                if (fieldsValues?.includes(AWSQueryFields.SUBNET)) {
+                    subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
+                }
+
+                const sgParams: DescribeSecurityGroupsRequest = {
+                    Filters: [
+                        {
+                            Name: 'vpc-id',
+                            Values: [id as string]
+                        }
+                    ]
+                };
+                let securityGroupList: Array<SecurityGroup> = [];
+                if (fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)) {
+                    securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
+                }
+                vpcs.push({
+                    id,
+                    state,
+                    tags,
+                    cidrBlock,
+                    isDefault,
+                    subnets: subnetsList,
+                    securityGroups: securityGroupList,
+                    name
+                });
             })
         );
     }
