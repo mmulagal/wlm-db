@@ -1,7 +1,7 @@
-import { getAmiList, getFSxAvailableRegionsList } from '../../../src/operations/aws/ec2-operations';
+import { getAmiList, getFSxAvailableRegionsList, getKeyPairsList } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
-import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../../../server/src/utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
 
 describe('List EC2 AMIs Operation', () => {
     it('list of EC2 AMIs', async () => {
@@ -126,5 +126,61 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
 
         const response = await getFSxAvailableRegionsList(credentialsType);
         expect(response).toEqual(fsxRegionsResponse);
+    });
+});
+
+describe('List key-pairs for a given region', () => {
+    it('List of key-pairs for a given region', async () => {
+        const keyPairsResponse = {
+            keyPairs: [
+                {
+                    id: 'key-04f1051b36abc1204',
+                    name: 'occm_qa'
+                },
+                {
+                    id: 'key-06265c604f218fdef',
+                    name: 'kanikaj_key'
+                },
+                {
+                    id: 'key-0a03292a613b2664a',
+                    name: 'nithin_xcp_sg'
+                },
+                {
+                    id: 'key-068f2936f9d8832d0',
+                    name: 'sonamy_key'
+                },
+                {
+                    id: 'key-0f0fe217f3d4ebbd8',
+                    name: 'mshreyas'
+                },
+                {
+                    id: 'key-0e5dc6e98586e1c33',
+                    name: 'Shri_Key'
+                },
+                {
+                    id: 'key-01a3bbe0d86f50d64',
+                    name: 'mshreyas_key'
+                },
+                {
+                    id: 'key-05443864696a2e0e1',
+                    name: 'krithi_key'
+                },
+                {
+                    id: 'key-0d591bc32a2d90343',
+                    name: 'rranga-key-pair'
+                },
+                {
+                    id: 'key-031d0d4e6255adefb',
+                    name: 'nithin_dbs'
+                },
+                {
+                    id: 'key-0202510d315019a51',
+                    name: 'krithi_new_key'
+                }
+            ]
+        };
+
+        const response = await getKeyPairsList(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION);
+        expect(response).toEqual(keyPairsResponse);
     });
 });

@@ -7,7 +7,8 @@ import {
     AwsVpcQueryString,
     AdsResponse,
     SnsResponse,
-    FSxRegionsResponse
+    FSxRegionsResponse,
+    KeyPairsResponse
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -62,4 +63,12 @@ const GetFSxRegionsSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema };
+const GetKeyPairsSchema = {
+    ...baseRequest,
+    description: 'List Key-Pairs in the given region',
+    response: {
+        200: KeyPairsResponse
+    }
+};
+
+export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema, GetKeyPairsSchema };

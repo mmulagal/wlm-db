@@ -115,6 +115,17 @@ const FSxRegionsResponse = Type.Object({
     )
 });
 
+// Keypair schema
+const KeyPairsSchema = Type.Object({
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String())
+});
+
+// GET keyPairs schema
+const KeyPairsResponse = Type.Object({
+    keyPairs: Type.Array(KeyPairsSchema)
+});
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -123,5 +134,7 @@ export {
     AmiResponse,
     AdsResponse,
     SnsResponse,
-    FSxRegionsResponse
+    FSxRegionsResponse,
+    KeyPairsSchema,
+    KeyPairsResponse
 };
