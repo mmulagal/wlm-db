@@ -141,6 +141,17 @@ const KmsKeysListResponse = Type.Object({
     totalRecords: Type.Optional(Type.Number())
 });
 
+// Keypair schema
+const KeyPairsSchema = Type.Object({
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String())
+});
+
+// GET keyPairs schema
+const KeyPairsResponse = Type.Object({
+    keyPairs: Type.Array(KeyPairsSchema)
+});
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -151,5 +162,7 @@ export {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
-    KmsKeysListResponse
+    KmsKeysListResponse,
+    KeyPairsSchema,
+    KeyPairsResponse
 };

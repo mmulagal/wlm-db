@@ -10,7 +10,9 @@ import {
     DescribeImagesCommandInput,
     DescribeRegionsCommand,
     DescribeRegionsCommandInput,
-    DescribeRegionsCommandOutput
+    DescribeRegionsCommandOutput,
+    DescribeKeyPairsCommand,
+    DescribeKeyPairsCommandOutput
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -76,8 +78,7 @@ async function describeRegions(
     credentialsId: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
-    // eslint-disable-next-line
-    logger.info('Describe AWS regions:', Array.from(arguments));
+    logger.info('Describe AWS regions:', { credentialsId, input });
 
     const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
     const response = await client.send(new DescribeRegionsCommand(input));
@@ -87,4 +88,26 @@ async function describeRegions(
     return response;
 }
 
-export { getEC2Client, describeVpc, describeSubnets, describeSecurityGroups, getAmis, describeRegions };
+async function describeKeyPairs(
+    credentialsId: string,
+    region: string,
+    input: DescribeRegionsCommandInput
+): Promise<DescribeKeyPairsCommandOutput> {
+    logger.info('Describe key-pair:', { credentialsId, region, input });
+
+    const client = await getEC2Client(region, credentialsId);
+    const response = await client.send(new DescribeKeyPairsCommand(input));
+
+    logger.debug('Describe key-pairs response:', response);
+    return response;
+}
+
+export {
+    getEC2Client,
+    describeVpc,
+    describeSubnets,
+    describeSecurityGroups,
+    getAmis,
+    describeRegions,
+    describeKeyPairs
+};
