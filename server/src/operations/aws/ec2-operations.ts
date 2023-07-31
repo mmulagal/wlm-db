@@ -63,7 +63,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 return { id, state, tags, cidrBlock, isDefault, name };
             }
         );
-        return { vpcs: vpcs };
+        const totalRecords = vpcs?.length;
+        return { vpcs: vpcs, totalRecords };
     }
 
     if (Vpcs?.length) {
@@ -127,7 +128,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
             })
         );
     }
-    return { vpcs: vpcs };
+    const totalRecords = vpcs?.length;
+    return { vpcs: vpcs, totalRecords };
 }
 
 async function getSubnetsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {

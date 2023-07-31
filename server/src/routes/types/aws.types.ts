@@ -47,7 +47,8 @@ const VpcListResponse = Type.Object({
                 )
             )
         })
-    )
+    ),
+    totalRecords: Type.Optional(Type.Number())
 });
 
 // AMI Request and Response
@@ -121,9 +122,12 @@ const KmsKeysListResponse = Type.Object({
         Type.Object({
             id: Type.Optional(Type.String()),
             name: Type.Optional(Type.String()),
-            origin: Type.Optional(Type.String())
+            origin: Type.Optional(Type.String()),
+            state: Type.Optional(Type.String()),
+            expirationDate: Type.Optional(Type.String())
         })
-    )
+    ),
+    totalRecords: Type.Optional(Type.Number())
 });
 
 export {

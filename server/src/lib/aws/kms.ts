@@ -61,7 +61,7 @@ async function listAliases(
     }
 
     if (truncated) {
-        return listAliases(credentialsId, region, {}, data, nextMarker);
+        return listAliases(credentialsId, region, params, data, nextMarker);
     }
     logger.debug('list aliases response', data);
     return data;
