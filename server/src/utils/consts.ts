@@ -84,6 +84,15 @@ export enum RouteTags {
     SYSTEM = 'System'
 }
 
+export const VPC_COUNT_QUOTANAME = 'VPCs per Region';
+
+export const CF_STACK_COUNT_QUOTANAME = 'Stack count';
+
+export enum AWSServiceNames {
+    VPC = 'vpc',
+    CLOUDFORMATION = 'cloudformation'
+}
+
 export const CARGO = 'cargo';
 
 export const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
