@@ -88,25 +88,11 @@ async function describeRegions(
     return response;
 }
 
-async function getEC2instnaceTypes(credentialsId: string, region: string) {
+async function describeInstanceTypes(credentialsId: string, region: string) {
     const ec2 = await getEC2Client(region, credentialsId);
     const token: string | undefined = undefined;
     const allMappedData: any[] = [];
     const options: any = {};
-
-    // while (true) {
-    //     if (token) {
-    //         options.NextToken = token;
-    //     }
-    //     const instanceTypes: any = await ec2.send(new DescribeInstanceTypesCommand(options));
-    //     allMappedData.push(...instanceTypes.InstanceTypes);
-    //     if (instanceTypes.NextToken != null) {
-    //         token = instanceTypes.NextToken;
-    //     } else {
-    //         break;
-    //     }
-    // }
-    // return allMappedData;
     await listInstances(ec2, options, token, allMappedData);
     return allMappedData;
 }
@@ -119,7 +105,7 @@ async function listInstances(ec2: EC2Client, options: any, token: undefined, all
     const temp = instanceTypes.InstanceTypes;
     allMappedData.push(...temp);
     if (instanceTypes.NextToken) {
-        return await listInstances(ec2, options, instanceTypes.NextToken, allMappedData);
+        return listInstances(ec2, options, instanceTypes.NextToken, allMappedData);
     }
 }
 export {
@@ -129,5 +115,5 @@ export {
     describeSecurityGroups,
     getAmis,
     describeRegions,
-    getEC2instnaceTypes
+    describeInstanceTypes
 };

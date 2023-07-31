@@ -8,8 +8,8 @@ const AwsParams = Type.Object({
 });
 
 // EC2 instance Types response
-const Ec2InstaceTypes = Type.Object({
-    instaceTypes: Type.Array(
+const InstanceTypes = Type.Object({
+    instanceTypes: Type.Array(
         Type.Object({
             instanceType: Type.Optional(Type.String()),
             vCpus: Type.Optional(Type.Number()),
@@ -158,7 +158,7 @@ const KmsKeysListResponse = Type.Object({
 export {
     AwsVpcQueryString,
     AwsParams,
-    Ec2InstaceTypes,
+    InstanceTypes,
     AwsRegionsParams,
     VpcListResponse,
     AmiResponse,

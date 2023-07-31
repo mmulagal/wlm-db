@@ -6,15 +6,15 @@ import {
     GetVpcsListSchema,
     GetAdsSchema,
     GetKmsKeysListSchema,
-    GetSnsTopics,
+    GetSnsTopicsSchema,
     GetFSxRegionsSchema,
-    GetEc2InstanceTypesSchema
+    GetInstanceTypesSchema
 } from './schemas/aws-schemas';
 import {
     getAmiList,
     getVpcsList,
     getFSxAvailableRegionsList,
-    getEc2InstnaceTypes
+    getInstnaceTypes
 } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
@@ -51,7 +51,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${API_PREFIX_PATH}/snsTopics`, { schema: GetSnsTopics }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/snsTopics`, { schema: GetSnsTopicsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
@@ -67,11 +67,11 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${API_PREFIX_PATH}/instanceTypes`, { schema: GetEc2InstanceTypesSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/instanceTypes`, { schema: GetInstanceTypesSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
-        const response = await getEc2InstnaceTypes(credentialsId, region);
+        const response = await getInstnaceTypes(credentialsId, region);
         return reply.send(response);
     });
 

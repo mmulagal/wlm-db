@@ -10,7 +10,7 @@ import {
     FSxRegionsResponse,
     KmsKeysListResponse,
     AmiQueryString,
-    Ec2InstaceTypes
+    InstanceTypes
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -49,16 +49,16 @@ const GetAmiSchema = {
 };
 
 // GET EC2 instncetypes
-const GetEc2InstanceTypesSchema = {
+const GetInstanceTypesSchema = {
     ...baseRequest,
     description: 'Get EC2 instnce types in the region',
     response: {
-        200: Ec2InstaceTypes
+        200: InstanceTypes
     }
 };
 
 // GET SNS Topics
-const GetSnsTopics = {
+const GetSnsTopicsSchema = {
     ...baseRequest,
     description: 'Get SNS Topics in the region',
     response: {
@@ -88,8 +88,8 @@ export {
     GetVpcsListSchema,
     GetAmiSchema,
     GetAdsSchema,
-    GetSnsTopics,
+    GetSnsTopicsSchema,
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
-    GetEc2InstanceTypesSchema
+    GetInstanceTypesSchema
 };

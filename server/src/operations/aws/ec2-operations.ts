@@ -7,7 +7,7 @@ import {
     describeSubnets,
     describeRegions,
     getAmis,
-    getEC2instnaceTypes
+    describeInstanceTypes
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { filterSqlAmis } from '../../utils/utils';
@@ -282,10 +282,10 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
     return { regions: fsxRegionsList };
 }
 
-async function getEc2InstnaceTypes(credentialsId: string, region: string) {
+async function getInstnaceTypes(credentialsId: string, region: string) {
     logger.info('List Ec2 Instance Types in region', { credentialsId, region });
     try {
-        const response = await getEC2instnaceTypes(credentialsId, region);
+        const response = await describeInstanceTypes(credentialsId, region);
         /* 
         SDK returns all the instance types which cannot be used to create the instance for SQL deployment.
         Still trying to figure out on what basis the instances are listed in fro creation. As temp solution 
@@ -313,11 +313,11 @@ async function getEc2InstnaceTypes(credentialsId: string, region: string) {
                 })
             );
         const totalRecords = filteredInstances?.length;
-        return { instaceTypes: filteredInstances, totalRecords };
+        return { instanceTypes: filteredInstances, totalRecords };
     } catch (error: any) {
         logger.error('Failed to get the ec2 instance types', error.message);
         throw createError(error.statusCode || error.code || 500, error.message);
     }
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getEc2InstnaceTypes };
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getInstnaceTypes };

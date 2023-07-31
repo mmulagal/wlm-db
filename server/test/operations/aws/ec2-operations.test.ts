@@ -3,7 +3,7 @@ import {
     getAmiList,
     getVpcsList,
     getFSxAvailableRegionsList,
-    getEc2InstnaceTypes
+    getInstnaceTypes
 } from '../../../src/operations/aws/ec2-operations';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -13,8 +13,8 @@ import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../se
 const WINDOWS = 'windows';
 const SQL = 'sql';
 
-const ec2InstaceTypesResponse = {
-    instaceTypes: [
+const ec2instanceTypesResponse = {
+    instanceTypes: [
         {
             instanceType: 'x1e.8xlarge',
             vCpus: 32,
@@ -201,7 +201,7 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
 describe('List EC2 instance types forn specific region', () => {
     it('should return a lsist EC2 instance types forn specific region', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        const resp = await getEc2InstnaceTypes(credentialsId, 'us-east-1');
-        expect(resp).toEqual(ec2InstaceTypesResponse);
+        const resp = await getInstnaceTypes(credentialsId, 'us-east-1');
+        expect(resp).toEqual(ec2instanceTypesResponse);
     });
 });
