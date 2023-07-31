@@ -51,6 +51,17 @@ const VpcListResponse = Type.Object({
 });
 
 // AMI Request and Response
+const OS_TYPES = Type.Union([Type.Literal('windows')]);
+const DB_TYPES = Type.Union([Type.Literal('sql')]);
+
+const AmiQueryString = Type.Object({
+    osType: OS_TYPES,
+    osVersion: Type.Optional(Type.String()),
+    databaseType: DB_TYPES,
+    databaseEdition: Type.Optional(Type.String()),
+    databaseVersion: Type.Optional(Type.String())
+});
+
 const AmiResponse = Type.Object({
     amis: Type.Array(
         Type.Object({
@@ -132,6 +143,7 @@ export {
     AwsRegionsParams,
     VpcListResponse,
     AmiResponse,
+    AmiQueryString,
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,

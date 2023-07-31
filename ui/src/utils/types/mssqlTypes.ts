@@ -14,7 +14,11 @@ export interface Regions {
 export interface VPC {
     id?: string,
     name?: string,
-    cidrBlock?: string
+    cidrBlock?: [
+        {
+            CidrBlock?: String
+        }
+    ]
 }
 
 export interface AD {
@@ -26,6 +30,10 @@ export interface AD {
 export interface Ami {
     name: string,
     imageId: string
+}
+
+export interface SNS {
+    TopicArn: string,
 }
 
 
@@ -41,26 +49,23 @@ export interface MssqlEntities {
         regionsError: null
     },
     getVPCList: {
-        vpcData: VPC[],
+        vpcData: {vpcs?: VPC[]},
         vpcLoading: false,
         vpcError: null
     },
     getAdsList: {
-        adData: AD[],
+        adData: {directories?: AD[]},
         adLoading: false,
         adError: null
     },
     getAmiList: {
-        amiData: Ami[],
+        amiData: {amis?: Ami[]},
         amiLoading: false,
         amiError: null
     },
-}
-
-
-export interface MssqlFormEntities {
-    credentials?: Credentials,
-    regions?: Regions,
-    existingVpc?: VPC,
-    newVpcName?: string
+    getSnsList: {
+        snsData: {Topics?: SNS[]},
+        snsLoading: false,
+        snsError: null
+    },
 }
