@@ -15,16 +15,18 @@ import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
 
+const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
+const REGION = DEFAULT_AWS_REGION;
+
 describe('EC2 Lib', () => {
     it('should return a list of EC2 AMIs', async () => {
-        const credentialsId = `${faker.string.alpha(20)}`;
         const params = {
             Filters: [
                 { Name: 'name', Values: SQL_AMI_NAMES },
                 { Name: 'owner-alias', Values: ['amazon'] }
             ]
         };
-        const resp = await getAmis(credentialsId, DEFAULT_AWS_REGION, params);
+        const resp = await getAmis(CREDENTIALS_ID, REGION, params);
         expect(resp).toEqual(ec2Images);
     });
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
     EC2Client,
     DescribeVpcsCommand,

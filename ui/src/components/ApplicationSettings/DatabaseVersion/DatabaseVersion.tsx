@@ -5,10 +5,13 @@ import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseVersion.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDBVersion } from '../../../store/mssql/mssqlFormSlice';
 
 const DatabaseVersion = () => {
+    const dispatch = useDispatch();
+    const getDBVersion = useSelector((state: any) => state.mssqlForm.dbVersion);
     const versions = [GENERAL.SQL_SERVER_2016, GENERAL.SQL_SERVER_2019, GENERAL.SQL_SERVER_2022];
-    const [version, setVersion] = useState(GENERAL.SQL_SERVER_2016);
 
     //Function to generate the options for Select Field
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
@@ -17,11 +20,12 @@ const DatabaseVersion = () => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
+        dispatch(setDBVersion(options[0].label));
         return options;
     }, []);
     //Set the Header text here
     const setHeader = () => {
-        return <Typography variant="Regular_14">{version}</Typography>;
+        return <Typography variant="Regular_14">{getDBVersion}</Typography>;
     };
     return (
         <div className={''}>
@@ -36,9 +40,13 @@ const DatabaseVersion = () => {
                             <SelectField
                                 label={GENERAL.VERSION}
                                 isClearable={false}
-                                defaultValue={[generateDbVersions[0]]}
+                                defaultValue={
+                                    getDBVersion
+                                        ? [generateOptionType(getDBVersion, getDBVersion, '', false, '')]
+                                        : [generateDbVersions[0]]
+                                }
                                 onChange={(selectedOptions: any): void => {
-                                    setVersion(selectedOptions.label);
+                                    dispatch(setDBVersion(selectedOptions.label));
                                 }}
                                 isSearchable={generateDbVersions.length > 5}
                                 options={generateDbVersions}

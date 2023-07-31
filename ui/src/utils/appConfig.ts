@@ -3,7 +3,6 @@ import { useAppDispatch } from "../store/storeHooks";
 import queryString from 'query-string';
 import { setAppContext } from "../store/appContextSlice";
 import { updateAuthFailed, updateAuthSuccess } from "../store/authSlice";
-import { get } from "lodash";
 import { LOCAL } from "./consts";
 import Auth, { refreshSso } from './auth';
 
@@ -74,7 +73,6 @@ const useInitialize = () => {
         const accessTokenAsString = Array.isArray(accessToken)
             ? accessToken[0]
             : accessToken;
-        const isDemoMode = get(search, 'isDemoMode', 'false') === 'true';
         const environment = process.env.REACT_APP_ENVIRONMENT ?? null;
 
         const handleAuthSuccess = (payload: any) => {
@@ -88,26 +86,25 @@ const useInitialize = () => {
         if (accountIdAsString) {
             const appContext = {
                 accountId: accountIdAsString,
-                isDemoMode,
                 environment
             };
             dispatch(setAppContext(appContext));
         }
-        if (accessTokenAsString) {
-            handleAuthSuccess({
-                accessToken: accessTokenAsString,
-            });
-        }
+        
+        handleAuthSuccess({
+            accessToken: accessTokenAsString || '',
+        });
 
         if (environment === LOCAL) {
             (window as any).auth = new Auth(AUTH_0_OPTIONS);
             console.log(`connecting to auth0 with ${JSON.stringify(AUTH_0_OPTIONS)}`);
+
             //start login flow
-            refreshSso({
-                allowLoginRedirect: environment === LOCAL,
-                handleAuthSuccess,
-                handleAuthFailed
-            });
+            // refreshSso({
+            //     allowLoginRedirect: environment === LOCAL,
+            //     handleAuthSuccess,
+            //     handleAuthFailed
+            // });
         }
         
         sendAppReady();

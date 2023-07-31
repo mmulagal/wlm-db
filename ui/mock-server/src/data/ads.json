@@ -1,0 +1,96 @@
+{
+    "directories": [
+      {
+        "id": "d-927example",
+        "dnsIpAddress": [
+          "172.30.21.228",
+          "172.30.9.82"
+        ],
+        "domainName": "corp.example.com",
+        "shortName": "example",
+        "ssoEnabled": true,
+        "status": "Active",
+        "type": "MicrosoftAD",
+        "vpcSettings": {
+          "vpcId": "vpc-7d4a2818",
+          "subnetIds": [
+            "subnet-ba0146de",
+            "subnet-bef46bc8"
+          ],
+          "availabilityZones": [
+            "us-west-2a",
+            "us-west-2b"
+          ]
+        }
+      },
+      {
+        "id": "d-926example",
+        "dnsIpAddress": [
+          "172.30.21.228",
+          "172.30.9.82"
+        ],
+        "domainName": "corp.example.com",
+        "shortName": "example",
+        "ssoEnabled": true,
+        "status": "Active",
+        "type": "MicrosoftAD",
+        "vpcSettings": {
+          "vpcId": "vpc-d4f1aab1",
+          "subnetIds": [
+            "subnet-ba0146de",
+            "subnet-bef46bc8"
+          ],
+          "availabilityZones": [
+            "us-west-2a",
+            "us-west-2b"
+          ]
+        }
+      },
+      {
+        "id": "d-928example",
+        "dnsIpAddress": [
+          "172.30.21.228",
+          "172.30.9.82"
+        ],
+        "domainName": "corp.example.com",
+        "shortName": "example",
+        "ssoEnabled": true,
+        "status": "Active",
+        "type": "MicrosoftAD",
+        "vpcSettings": {
+          "vpcId": "vpc-62720a04",
+          "subnetIds": [
+            "subnet-ba0146de",
+            "subnet-bef46bc8"
+          ],
+          "availabilityZones": [
+            "us-west-2a",
+            "us-west-2b"
+          ]
+        }
+      },
+      {
+        "id": "d-929example",
+        "dnsIpAddress": [
+          "172.30.21.228",
+          "172.30.9.82"
+        ],
+        "domainName": "corp.example.com",
+        "shortName": "example",
+        "ssoEnabled": true,
+        "status": "Active",
+        "type": "MicrosoftAD",
+        "vpcSettings": {
+          "vpcId": "vpc-ba1ed1de",
+          "subnetIds": [
+            "subnet-ba0146de",
+            "subnet-bef46bc8"
+          ],
+          "availabilityZones": [
+            "us-west-2a",
+            "us-west-2b"
+          ]
+        }
+      }
+    ]
+}
