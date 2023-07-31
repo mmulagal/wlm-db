@@ -1,12 +1,18 @@
 import { getAmiList, getFSxAvailableRegionsList, getKeyPairsList } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
-import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
+import {
+    DEFAULT_AWS_CREDENTIALS_TYPE,
+    DEFAULT_AWS_REGION
+} from '../../../../server/src/utils/consts';
+
+const WINDOWS = 'windows';
+const SQL = 'sql';
 
 describe('List EC2 AMIs Operation', () => {
     it('list of EC2 AMIs', async () => {
         const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
-        const resp = await getAmiList(credentialsType, 'us-east-1');
+        const resp = await getAmiList(credentialsType, DEFAULT_AWS_REGION, WINDOWS, SQL);
         expect(resp).toBeDefined();
     });
 });
