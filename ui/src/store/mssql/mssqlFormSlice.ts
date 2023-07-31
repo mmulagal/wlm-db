@@ -3,11 +3,11 @@ import { GENERAL } from '../../utils/appConstants';
 
 const initialState: any = {
     awsAccount: {
-        selectedCredential: {}
+        selectedCredential: null
     },
     regionAndVpc: {
-        selectedRegion: {},
-        selectedVPC: {}
+        selectedRegion: null,
+        selectedVPC: null
     },
     securityGroup: {
         selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
