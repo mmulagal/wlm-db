@@ -1,8 +1,9 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields, FSX_SUPPORTED_REGIONS, SQL_AMI_NAMES } from '../../utils/consts';
+import { AWSQueryFields, FSX_SUPPORTED_REGIONS } from '../../utils/consts';
 import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
+import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -174,52 +175,70 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     return securityGroupList;
 }
 
-export async function getAmiList(credentialsId: string, region: string) {
-    logger.info('Get AWS Amis', { credentialsId, region });
+export async function getAmiList(
+    credentialsId: string,
+    region: string,
+    osType: string,
+    databaseType: string,
+    osVersion?: string,
+    databaseVersion?: string,
+    databaseEdition?: string
+) {
+    logger.info('Get AWS Amis', {
+        credentialsId,
+        region,
+        osType,
+        osVersion,
+        databaseType,
+        databaseEdition,
+        databaseVersion
+    });
 
-    try {
-        const amis = await getAmis(credentialsId, region, {
-            Filters: [
-                { Name: 'name', Values: SQL_AMI_NAMES },
-                { Name: 'owner-alias', Values: ['amazon'] }
-            ]
-        });
+    const amiNames = filterSqlAmis(osVersion, databaseVersion, databaseEdition);
 
-        if (!amis?.Images) {
-            return { amis: [] };
-        }
+    const amis = await getAmis(credentialsId, region, {
+        Filters: [
+            { Name: 'name', Values: amiNames },
+            { Name: 'owner-alias', Values: ['amazon'] }
+        ]
+    });
 
-        return {
-            amis: amis?.Images?.map(
-                ({
-                    Name,
-                    Description,
-                    Architecture,
-                    ImageId,
-                    ImageLocation,
-                    Public,
-                    Platform,
-                    PlatformDetails,
-                    State,
-                    Hypervisor
-                }) => ({
-                    name: Name,
-                    description: Description,
-                    architecture: Architecture,
-                    imageId: ImageId,
-                    imageLocation: ImageLocation,
-                    public: Public,
-                    platform: Platform,
-                    platformDetails: PlatformDetails,
-                    state: State,
-                    hypervisor: Hypervisor
-                })
-            )
-        };
-    } catch (error: any) {
-        logger.error('Failed to get the aws amis ', error.message);
-        throw createError(error.statusCode || error.code || 500, error.message);
+    if (!amis?.Images) {
+        throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
     }
+
+    const response = amis.Images.map(
+        ({
+            Name,
+            Description,
+            Architecture,
+            ImageId,
+            ImageLocation,
+            Public,
+            Platform,
+            PlatformDetails,
+            State,
+            Hypervisor
+        }) => ({
+            name: Name as string,
+            description: Description,
+            architecture: Architecture,
+            imageId: ImageId,
+            imageLocation: ImageLocation,
+            public: Public,
+            platform: Platform,
+            platformDetails: PlatformDetails,
+            state: State,
+            hypervisor: Hypervisor
+        })
+    );
+
+    response?.sort(
+        (a, b) =>
+            new Date(b.name.substring(b.name.length - 10)).getTime() -
+            new Date(a.name.substring(a.name.length - 10)).getTime()
+    );
+    return { amis: response };
 }
 function findNameFromTags(tags: Tag[]) {
     logger.debug('Find name from the tags', { tags });

@@ -4,9 +4,9 @@ import { VPC_COUNT_QUOTANAME, CF_STACK_COUNT_QUOTANAME } from '../../utils/const
 
 const logger = getLogger();
 
-async function regionQuotas(region: string) {
-    logger.info('Fetching quotas in region ', { region });
-    const serviceQuotaClient = await getServiceQuotasClient(region);
+async function regionQuotas(credentialsId: string, region: string) {
+    logger.info('Fetching quotas in region ', { credentialsId, region });
+    const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
     const vpcCountQuota =
         (await getVpcQuota(serviceQuotaClient)).Quotas?.filter(x => x.QuotaName == VPC_COUNT_QUOTANAME) || [];
     const cfCountQuota =
