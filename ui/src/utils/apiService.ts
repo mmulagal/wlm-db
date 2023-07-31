@@ -45,6 +45,9 @@ export const awsApi = createApi({
             getCredentials: builder.query({
                 query: ({credentialsType}) => ({url: `credentials/${credentialsType}`})
             }),
+            getRegions: builder.query({
+                query: ({credentialId}) => ({url: `credentials/${credentialId}/aws/fsx/regions`})
+            }),
             getVPCList: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs`})
             }),
@@ -54,8 +57,12 @@ export const awsApi = createApi({
             getAmiList: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/amis`})
             }),
+            getSnsTopics: builder.query({
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/snsTopics`})
+            }),
         }
     }
 });
 
-export const { useGetCredentialsQuery, useGetVPCListQuery, useGetAdsListQuery, useGetAmiListQuery } = awsApi;
+export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, 
+    useGetAdsListQuery, useGetAmiListQuery, useGetSnsTopicsQuery } = awsApi;

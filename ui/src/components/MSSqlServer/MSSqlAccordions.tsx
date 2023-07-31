@@ -1,4 +1,4 @@
-import { AccordionController, Button, Typography } from '@netapp/design-system';
+import { AccordionController, Button, Typography, useDialog } from '@netapp/design-system';
 
 import { GENERAL } from '../../utils/appConstants';
 import AvailabilityZone from '../AwsSettings/AvailabilityZone/AvailabilityZone';
@@ -26,11 +26,24 @@ import SimpleNotificationService from '../InfrastructureSettings/SimpleNotificat
 import styles from './MSSqlAccordions.module.scss';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import MssqlApis from './MssqlApis';
+import DialogComponent from '../../common/Dialog/DialogComponent';
 
 const MSSqlAccordions = () => {
+    const { setDialog } = useDialog();
 
     MssqlApis();
-    
+
+    const handleViewAPIRequest = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.API_REQUEST}
+                content={'View API'}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    };
+
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>
             <AccordionController isGrouped>
@@ -43,7 +56,7 @@ const MSSqlAccordions = () => {
                     >
                         {GENERAL.AWS_SETTINGS}
                     </Typography>
-                    <Button Component="button" variant="text">
+                    <Button onClick={handleViewAPIRequest} Component="button" variant="text">
                         {GENERAL.VIEW_API_REQUEST}
                     </Button>
                 </div>

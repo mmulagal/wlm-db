@@ -7,6 +7,7 @@ import {
     AwsVpcQueryString,
     AdsResponse,
     SnsResponse,
+    AmiQueryString,
     FSxRegionsResponse,
     FSxFileSystemParams,
     FSxFileSystemsResponse
@@ -41,6 +42,7 @@ const GetAdsSchema = {
 const GetAmiSchema = {
     ...baseRequest,
     description: 'Get AMIs in a region',
+    querystring: AmiQueryString,
     response: {
         200: AmiResponse
     }

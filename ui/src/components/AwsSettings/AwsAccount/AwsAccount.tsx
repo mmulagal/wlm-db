@@ -6,37 +6,48 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
+import { setSelectedCredentials } from '../../../store/mssql/mssqlFormSlice';
+import { useDispatch } from 'react-redux';
 
 const AwsAccount = () => {
+    const dispatch = useDispatch();
+    
+    //Getting the Data from state
     const {credentialData, credentialLoading} = useAppSelector((state) => state.mssql.getCredentials);
+    const {selectedCredential} = useAppSelector((state) => state.mssqlForm.awsAccount);
 
-    //Mock data to be removed later
-    const accountType: string = 'accounts';
-    // const awsAccounts = ['FSxCredentials | Account ID: 123456', 'FSxCredentials | Account ID: 543211'];
-
-    const [accountSelected, setAccountSelected] = useState('');
+    // To check whether account present or not
+    const [noAccount, setNoAccount] = useState(true);
+    
+    // To set noAccount flag is present or not
+    useEffect(() => {
+        if(credentialData && credentialData.length > 0){
+            setNoAccount(false)
+        }
+    }, [credentialData]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         credentialData?.map((val, idx: number) => {
             const credValue = val.name + " | Account: " + val.providerAccountId;
-            const option = generateOptionType(credValue, credValue, '', false, '');
+            const option = generateOptionType(credValue, credValue, '', false, '', val);
             options.push(option);
         });
         return options;
     }, [credentialData]);
 
-    useEffect(() => {
-        setAccountSelected(generateAWSAccounts[0]?.label);
-    }, [generateAWSAccounts])
+    // Update selected region in form data store
+    useEffect(()=> {
+        dispatch(setSelectedCredentials(generateAWSAccounts[0]));
+    }, [dispatch, generateAWSAccounts]);
 
     //Set the Header text here
     const setHeader = () => {
-        if (accountType === 'No accounts') {
+        if (noAccount) {
             return <Typography variant="Regular_14">No account</Typography>;
         } else {
-            return <Typography variant="Regular_14">{accountSelected}</Typography>;
+            return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
         }
     };
     return (
@@ -48,7 +59,7 @@ const AwsAccount = () => {
             >
                 <AccordionCardContent>
                     <Typography>
-                        {accountType === 'No accounts' ? (
+                        {noAccount ? (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
                                 <ul>
@@ -78,9 +89,9 @@ const AwsAccount = () => {
                                     <SelectField
                                         label={GENERAL.CREDENTIALS}
                                         isClearable={false}
-                                        defaultValue={[generateAWSAccounts[0]]}
+                                        defaultValue={selectedCredential? [selectedCredential] : [generateAWSAccounts[0]]}
                                         onChange={(selectedOptions: any): void => {
-                                            setAccountSelected(selectedOptions.label);
+                                            dispatch(setSelectedCredentials(selectedOptions));
                                         }}
                                         isSearchable={generateAWSAccounts.length > 5}
                                         options={generateAWSAccounts}

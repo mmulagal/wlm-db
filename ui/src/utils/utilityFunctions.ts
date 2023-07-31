@@ -1,19 +1,26 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 
+// Extended to store data that requires for another API input or post request
+interface OptionsWithData extends optionType {
+    data?: Object;
+}
+
 export const generateOptionType = (
     value: string,
     label: string,
     label2: string,
     isDisabled: boolean,
-    disabledTitle: string
+    disabledTitle: string,
+    data?: Object
 ) => {
-    const option: optionType = {
+    const option: OptionsWithData = {
         value: value,
         label: label,
         label2: label2,
         isDisabled: isDisabled,
-        disabledTitle: disabledTitle
+        disabledTitle: disabledTitle,
+        data: data
     };
     return option;
 };

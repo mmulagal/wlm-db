@@ -1,9 +1,16 @@
-import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import notificationSlice from "./notificationSlice";
+import { 
+  configureStore, 
+  combineReducers,
+  MiddlewareAPI,
+  isRejectedWithValue,
+  Middleware
+ } from "@reduxjs/toolkit";
+import notificationSlice, { addNotification } from "./notificationSlice";
 import { awsApi } from "../utils/apiService";
 import authSlice from './authSlice';
 import appContextSlice from "./appContextSlice";
 import mssqlSlice from "./mssql/mssqlSlice";
+import mssqlFormSlice from "./mssql/mssqlFormSlice";
 
 const rootReducer = combineReducers({
   [notificationSlice.name]: notificationSlice.reducer,
@@ -11,12 +18,29 @@ const rootReducer = combineReducers({
   [authSlice.name]: authSlice.reducer,
   [awsApi.reducerPath]: awsApi.reducer,
   [mssqlSlice.name]: mssqlSlice.reducer,
+  [mssqlFormSlice.name] : mssqlFormSlice.reducer
 })
+
+const rtkQueryErrorLogger: Middleware =
+    (api: MiddlewareAPI) => next => action => {
+        // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
+        if (
+            isRejectedWithValue(action) &&
+            !action.meta.arg.originalArgs.selfErrorHandling
+        ) {
+            const errorMsg = action.payload.error || action.payload.data?.message;
+            api.dispatch(addNotification({notificationType: 'ERROR', message: errorMsg }));
+        }
+
+        return next(action);
+    };
 
 const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(awsApi.middleware),
+    getDefaultMiddleware({serializableCheck: false})
+    .concat(awsApi.middleware)
+    .concat(rtkQueryErrorLogger)
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
