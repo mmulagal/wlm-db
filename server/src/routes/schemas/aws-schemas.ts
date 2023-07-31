@@ -7,8 +7,9 @@ import {
     AwsVpcQueryString,
     AdsResponse,
     SnsResponse,
-    AmiQueryString,
     FSxRegionsResponse,
+    KmsKeysListResponse,
+    AmiQueryString,
     KeyPairsResponse
 } from '../types/aws.types';
 
@@ -65,6 +66,15 @@ const GetFSxRegionsSchema = {
     }
 };
 
+// GET Kms Keys List Schema
+const GetKmsKeysListSchema = {
+    ...baseRequest,
+    description: 'List Kms Keys in a region',
+    response: {
+        200: KmsKeysListResponse
+    }
+};
+
 const GetKeyPairsSchema = {
     ...baseRequest,
     description: 'List Key-Pairs in the given region',
@@ -73,4 +83,12 @@ const GetKeyPairsSchema = {
     }
 };
 
-export { GetVpcsListSchema, GetAmiSchema, GetAdsSchema, GetSnsTopics, GetFSxRegionsSchema, GetKeyPairsSchema };
+export {
+    GetVpcsListSchema,
+    GetAmiSchema,
+    GetAdsSchema,
+    GetSnsTopics,
+    GetFSxRegionsSchema,
+    GetKmsKeysListSchema,
+    GetKeyPairsSchema
+};

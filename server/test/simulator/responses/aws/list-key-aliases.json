@@ -1,0 +1,16 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "c4aed6f5-990c-40e5-bd27-cdd16a4e79b5",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Aliases": [
+        {
+            "AliasArn": "arn:aws:kms:us-east-1:210811600188:alias/nviet-openlab-key6",
+            "AliasName": "alias/nviet-openlab-key6",
+            "TargetKeyId": "0a93acf4-ca6e-4847-8baa-9b0f561567b1"
+        }
+    ],
+    "Truncated": false
+}

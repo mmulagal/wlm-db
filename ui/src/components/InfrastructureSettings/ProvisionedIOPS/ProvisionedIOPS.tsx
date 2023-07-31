@@ -5,8 +5,11 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useState } from 'react';
 
 import AccordionError from '../../../common/AccordionError/AccordionError';
+import { useDispatch } from 'react-redux';
+import { setProvisionedIOPSValue, setProvisionedType } from '../../../store/mssql/mssqlFormSlice';
 
 const ProvisionedIOPS = () => {
+    const dispatch = useDispatch();
     const [input, setInput] = useState('');
     const [provisionValue, setProvisionValue] = useState(GENERAL.AUTOMATIC);
     //Set the Header text here
@@ -21,7 +24,11 @@ const ProvisionedIOPS = () => {
     };
 
     const checkError = () => {
-        if (provisionValue === GENERAL.USER_PROVISIONED && (Number(input) < 3072 || Number(input) > 160000)) {
+        if (
+            provisionValue === GENERAL.USER_PROVISIONED &&
+            input.length &&
+            (Number(input) < 3072 || Number(input) > 160000)
+        ) {
             return 'range should be between 3072 - 160000 IOPS';
         }
     };
@@ -39,6 +46,7 @@ const ProvisionedIOPS = () => {
                                 isChecked={provisionValue === GENERAL.AUTOMATIC}
                                 onChange={() => {
                                     setProvisionValue(GENERAL.AUTOMATIC);
+                                    dispatch(setProvisionedType(GENERAL.AUTOMATIC));
                                 }}
                                 children={GENERAL.AUTOMATIC}
                                 className=""
@@ -47,6 +55,7 @@ const ProvisionedIOPS = () => {
                                 isChecked={provisionValue === GENERAL.USER_PROVISIONED}
                                 onChange={() => {
                                     setProvisionValue(GENERAL.USER_PROVISIONED);
+                                    dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
                                 }}
                                 children={GENERAL.USER_PROVISIONED}
                                 className=""
@@ -63,6 +72,7 @@ const ProvisionedIOPS = () => {
                                     label={GENERAL.IOPS_VALUE}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         setInput(e.target.value);
+                                        dispatch(setProvisionedIOPSValue(e.target.value));
                                     }}
                                     value={input}
                                     className={styles.textfield}

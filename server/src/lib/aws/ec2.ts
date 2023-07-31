@@ -78,8 +78,7 @@ async function describeRegions(
     credentialsId: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
-    // eslint-disable-next-line
-    logger.info('Describe AWS regions:', Array.from(arguments));
+    logger.info('Describe AWS regions:', { credentialsId, input });
 
     const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
     const response = await client.send(new DescribeRegionsCommand(input));
@@ -94,7 +93,7 @@ async function describeKeyPairs(
     region: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeKeyPairsCommandOutput> {
-    logger.info('Describe key-pair:', Array.from(arguments)); // eslint-disable-line
+    logger.info('Describe key-pair:', { credentialsId, region, input });
 
     const client = await getEC2Client(region, credentialsId);
     const response = await client.send(new DescribeKeyPairsCommand(input));

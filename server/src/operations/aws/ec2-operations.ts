@@ -58,7 +58,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
 
     if (fields) {
         // remove the empty spaces in the string & split the fields by comma separated array values
-        fieldsValues = fields?.replace(/\s+/g, '')?.split(',');
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
     const { Vpcs } = (await describeVpc(credentialsId, region, {})) || [];
@@ -75,69 +75,67 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 return { id, state, tags, cidrBlock, isDefault, name };
             }
         );
-        return { vpcs: vpcs };
+        const totalRecords = vpcs?.length;
+        return { vpcs: vpcs, totalRecords };
     }
 
     if (Vpcs?.length) {
         await Promise.all(
             Vpcs.map(async vpc => {
-                try {
-                    const {
-                        VpcId: id,
-                        State: state,
-                        Tags: tags,
-                        CidrBlockAssociationSet: cidrBlock,
-                        IsDefault: isDefault
-                    } = vpc;
+                const {
+                    VpcId: id,
+                    State: state,
+                    Tags: tags,
+                    CidrBlockAssociationSet: cidrBlock,
+                    IsDefault: isDefault
+                } = vpc;
 
-                    let name = '-';
-                    if (tags?.length) {
-                        name = findNameFromTags(tags);
-                    }
-
-                    const subnetParams: DescribeSubnetsRequest = {
-                        Filters: [
-                            {
-                                Name: 'vpc-id',
-                                Values: [id as string]
-                            }
-                        ]
-                    };
-
-                    let subnetsList: Array<Subnet> = [];
-                    if (fields?.includes(AWSQueryFields.SUBNET)) {
-                        subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
-                    }
-
-                    const sgParams: DescribeSecurityGroupsRequest = {
-                        Filters: [
-                            {
-                                Name: 'vpc-id',
-                                Values: [id as string]
-                            }
-                        ]
-                    };
-                    let securityGroupList: Array<SecurityGroup> = [];
-                    if (fields?.includes(AWSQueryFields.SECURITY_GROUP)) {
-                        securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
-                    }
-                    vpcs.push({
-                        id,
-                        state,
-                        tags,
-                        cidrBlock,
-                        isDefault,
-                        subnets: subnetsList,
-                        securityGroups: securityGroupList,
-                        name
-                    });
-                } catch (err) {
-                    logger.error('Failed to get the vpc details', { vpc, err });
+                let name = '-';
+                if (tags?.length) {
+                    name = findNameFromTags(tags);
                 }
+
+                const subnetParams: DescribeSubnetsRequest = {
+                    Filters: [
+                        {
+                            Name: 'vpc-id',
+                            Values: [id as string]
+                        }
+                    ]
+                };
+
+                let subnetsList: Array<Subnet> = [];
+                if (fieldsValues?.includes(AWSQueryFields.SUBNET)) {
+                    subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
+                }
+
+                const sgParams: DescribeSecurityGroupsRequest = {
+                    Filters: [
+                        {
+                            Name: 'vpc-id',
+                            Values: [id as string]
+                        }
+                    ]
+                };
+                let securityGroupList: Array<SecurityGroup> = [];
+                if (fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)) {
+                    securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
+                }
+                vpcs.push({
+                    id,
+                    state,
+                    tags,
+                    cidrBlock,
+                    isDefault,
+                    subnets: subnetsList,
+                    securityGroups: securityGroupList,
+                    name
+                });
             })
         );
     }
-    return { vpcs: vpcs };
+    const totalRecords = vpcs?.length;
+    return { vpcs: vpcs, totalRecords };
 }
 
 async function getSubnetsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
@@ -186,7 +184,7 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     return securityGroupList;
 }
 
-export async function getAmiList(
+async function getAmiList(
     credentialsId: string,
     region: string,
     osType: string,
@@ -251,6 +249,7 @@ export async function getAmiList(
     );
     return { amis: response };
 }
+
 function findNameFromTags(tags: Tag[]) {
     logger.debug('Find name from the tags', { tags });
     const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
@@ -258,8 +257,7 @@ function findNameFromTags(tags: Tag[]) {
 }
 
 async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
-    // eslint-disable-next-line prefer-rest-params
-    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', Array.from(arguments));
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const input = {
         AllRegions: false, // Describe only the regions enabled for the account
@@ -288,7 +286,7 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
 }
 
 async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
-    logger.info('List key-pairs:', Array.from(arguments)); // eslint-disable-line
+    logger.info('List key-pairs:', { credentialsId, region });
 
     let kpList: Array<KeyPairType> = [];
     const { KeyPairs: kps } = await describeKeyPairs(credentialsId, region, {});
@@ -302,4 +300,4 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     return { keyPairs: kpList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getKeyPairsList };
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList };
