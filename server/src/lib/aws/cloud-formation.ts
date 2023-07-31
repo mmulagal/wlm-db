@@ -1,4 +1,11 @@
-import { CloudFormationClient, ListStacksCommand, StackStatus } from '@aws-sdk/client-cloudformation';
+import {
+    CloudFormationClient,
+    ListStacksCommand,
+    StackStatus,
+    CreateStackCommand,
+    CreateStackInput,
+    Parameter
+} from '@aws-sdk/client-cloudformation';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -19,4 +26,25 @@ async function listStacks(cloudformationClient: CloudFormationClient, stackStatu
     return resp;
 }
 
-export { getCloudformationClient, listStacks };
+async function createStack(
+    cloudformationClient: CloudFormationClient,
+    stackName: string,
+    templateUrl: string,
+    disableRollback: boolean,
+    timeoutInMinutes: number,
+    templateParams: Parameter[]
+) {
+    logger.info('Create cloudformation stack');
+    const createStackInput: CreateStackInput = {
+        StackName: stackName,
+        TemplateURL: templateUrl,
+        Parameters: templateParams,
+        DisableRollback: disableRollback,
+        TimeoutInMinutes: timeoutInMinutes
+    };
+    const resp = await cloudformationClient.send(new CreateStackCommand(createStackInput));
+    logger.debug('Create stack response', resp);
+    return resp;
+}
+
+export { getCloudformationClient, listStacks, createStack };

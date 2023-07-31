@@ -1,4 +1,4 @@
-import { getCloudformationClient, listStacks } from '../../../src/lib/aws/cloud-formation';
+import { getCloudformationClient, listStacks, createStack } from '../../../src/lib/aws/cloud-formation';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -34,5 +34,49 @@ describe('Cloud formation stacks', () => {
         } catch (error: any) {
             expect(error.code.includes('ENOTFOUND')).toBeTruthy();
         }
+    });
+});
+
+describe('Create cloud formation stack', () => {
+    const params = [
+        // Parameters
+        {
+            // Parameter
+            ParameterKey: 'VPCName',
+            ParameterValue: 'krithi_vpc'
+        },
+        {
+            // Parameter
+            ParameterKey: 'VPCCIDR',
+            ParameterValue: '10.0.0.0/16'
+        },
+        {
+            // Parameter
+            ParameterKey: 'AvailabilityZones',
+            ParameterValue: 'ap-southeast-1a,ap-southeast-1c'
+        },
+        {
+            // Parameter
+            ParameterKey: 'PrivateSubnetCIDRs',
+            ParameterValue: '10.0.0.0/20,10.0.0.0/20'
+        },
+        {
+            // Parameter
+            ParameterKey: 'PublicSubnetCIDR',
+            ParameterValue: '10.0.128.0/20'
+        },
+        {
+            // Parameter
+            ParameterKey: 'NumberOfPublicSubnets',
+            ParameterValue: '1'
+        }
+    ];
+    it('Create cloud formation stack', async () => {
+        const client = await getCloudformationClient(CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        const resp = await createStack(client, 'TestStack1', 'sampleurl', false, 20, params);
+        expect(resp).toBeDefined();
+        expect(resp.StackId).toEqual(
+            'arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TestStack1/7a2cccd0-2fb0-11ee-a6b7-0253026d13ca'
+        );
     });
 });
