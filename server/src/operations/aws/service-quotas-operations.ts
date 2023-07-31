@@ -5,16 +5,12 @@ import { VPC_COUNT_QUOTANAME, CF_STACK_COUNT_QUOTANAME, HttpErrorCodes } from '.
 
 const logger = getLogger();
 
-async function regionQuotas(credentialsId: string, region: string) {
-    logger.info('Fetching quotas in region ', { credentialsId, region });
+async function vpcQuota(credentialsId: string, region: string) {
+    logger.info('Fetching Vpc quotas in region ', { credentialsId, region });
     const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
     const vpcCountQuota =
         (await getVpcQuota(serviceQuotaClient)).Quotas?.filter(x => x.QuotaName == VPC_COUNT_QUOTANAME) || [];
-    const cfCountQuota =
-        (await getCloudFormationQuota(serviceQuotaClient)).Quotas?.filter(
-            x => x.QuotaName == CF_STACK_COUNT_QUOTANAME
-        ) || [];
-    logger.debug('VPC count quota ' + vpcCountQuota + '. CF count quota ' + cfCountQuota);
+    logger.debug('VPC count quota ' + vpcCountQuota);
     if (vpcCountQuota.length < 0) {
         {
             throw createError(
@@ -23,6 +19,17 @@ async function regionQuotas(credentialsId: string, region: string) {
             );
         }
     }
+    return { vpcCountQuota: vpcCountQuota[0].Value || 0 };
+}
+
+async function cfQuota(credentialsId: string, region: string) {
+    logger.info('Fetching CloudFormation quotas in region ', { credentialsId, region });
+    const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
+    const cfCountQuota =
+        (await getCloudFormationQuota(serviceQuotaClient)).Quotas?.filter(
+            x => x.QuotaName == CF_STACK_COUNT_QUOTANAME
+        ) || [];
+    logger.debug('CF count quota ' + cfCountQuota);
     if (cfCountQuota.length < 0) {
         {
             throw createError(
@@ -31,7 +38,7 @@ async function regionQuotas(credentialsId: string, region: string) {
             );
         }
     }
-    return { vpcCountQuota: vpcCountQuota[0].Value || 0, cfCountQuota: cfCountQuota[0].Value || 0 };
+    return { cfCountQuota: cfCountQuota[0].Value || 0 };
 }
 
-export { regionQuotas };
+export { vpcQuota, cfQuota };

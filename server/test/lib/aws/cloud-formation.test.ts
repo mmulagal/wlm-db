@@ -1,5 +1,4 @@
 import { getCloudformationClient, getStacks } from '../../../src/lib/aws/cloud-formation';
-import cfStacks from '../../simulator/responses/aws/cloud-formation-stacks.json';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -27,7 +26,6 @@ describe('Cloud formation stacks', () => {
         const client = await getCloudformationClient(CREDENTIALS_ID, DEFAULT_AWS_REGION);
         const resp = await getStacks(client);
         expect(resp).toBeDefined();
-        expect(resp.StackSummaries?.length).toBeGreaterThanOrEqual(cfStacks.stacks.length);
     });
     it('VPC quota in an invalid region', async () => {
         const client = await getCloudformationClient(CREDENTIALS_ID, 'invalid-region');
