@@ -141,6 +141,17 @@ const KmsKeysListResponse = Type.Object({
     totalRecords: Type.Optional(Type.Number())
 });
 
+// Keypair schema
+const KeyPairsSchema = Type.Object({
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String())
+});
+
+// GET keyPairs schema
+const KeyPairsResponse = Type.Object({
+    keyPairs: Type.Array(KeyPairsSchema)
+});
+
 // GET FSx filesystems request parameters
 const FSxFileSystemParams = Type.Object({
     accountId: Type.String(),
@@ -220,5 +231,7 @@ export {
     FSxFileSystemParams,
     FSxFileSystemSchema,
     FSxFileSystemsResponse,
-    KmsKeysListResponse
+    KmsKeysListResponse,
+    KeyPairsSchema,
+    KeyPairsResponse
 };
