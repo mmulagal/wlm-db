@@ -34,7 +34,9 @@ async function createStack(
     timeoutInMinutes: number,
     templateParams: Parameter[]
 ) {
-    logger.info('Create cloudformation stack');
+    logger.info(
+        `Create cloudformation stack ${stackName} for template ${templateUrl} with ${timeoutInMinutes} timeoutInMinutes.`
+    );
     const createStackInput: CreateStackInput = {
         StackName: stackName,
         TemplateURL: templateUrl,
@@ -43,7 +45,7 @@ async function createStack(
         TimeoutInMinutes: timeoutInMinutes
     };
     const resp = await cloudformationClient.send(new CreateStackCommand(createStackInput));
-    logger.debug('Create stack response', resp);
+    logger.debug('Create stack response ', resp);
     return resp;
 }
 
