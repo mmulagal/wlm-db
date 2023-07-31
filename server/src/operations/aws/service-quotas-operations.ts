@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { getServiceQuotasClient, getVpcQuota, getCloudFormationQuota } from '../../lib/aws/service-quotas';
 import getLogger from '../../utils/logger';
-import { VPC_COUNT_QUOTANAME, CF_STACK_COUNT_QUOTANAME } from '../../utils/consts';
+import { VPC_COUNT_QUOTANAME, CF_STACK_COUNT_QUOTANAME, HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -18,7 +18,7 @@ async function regionQuotas(credentialsId: string, region: string) {
     if (vpcCountQuota.length < 0) {
         {
             throw createError(
-                500,
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
                 `Unable to fetch Vpc count quota for region ${region} and credentials ${credentialsId}.`
             );
         }
@@ -26,7 +26,7 @@ async function regionQuotas(credentialsId: string, region: string) {
     if (cfCountQuota.length < 0) {
         {
             throw createError(
-                500,
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
                 `Unable to fetch CloudFormation stack count quota for region ${region} and credentials ${credentialsId}.`
             );
         }

@@ -2,10 +2,11 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
+import createError from 'http-errors';
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { regionQuotas } from '../operations/aws/service-quotas-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
-import { SQL_AMI_NAMES } from './consts';
+import { SQL_AMI_NAMES, HttpErrorCodes } from './consts';
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -31,6 +32,12 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     logger.info('Performing cloudformation stacks quota check in region ', region);
     const quotaDetails = await regionQuotas(credentialsId, region);
     const stacksCount = await currentCfStacksCount(credentialsId, region);
+    if (!stacksCount.currentStacksCount) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to get cloudformation stacks in region ${region} and credentials ${credentialsId}.`
+        );
+    }
     if (
         stacksCount.currentStacksCount == quotaDetails.cfCountQuota ||
         quotaDetails.cfCountQuota - stacksCount.currentStacksCount < 5
