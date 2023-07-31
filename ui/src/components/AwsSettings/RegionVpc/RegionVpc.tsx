@@ -57,7 +57,7 @@ const RegionVpc = () => {
 
     //Update selected VPC in form data store
     useEffect(() => {
-        dispatch(setSelectedVPC(generateVPCOptions[0]));
+        dispatch(setSelectedVPC(null));
     }, [dispatch, generateVPCOptions]);
 
     //Set the Header text here
@@ -123,7 +123,7 @@ const RegionVpc = () => {
                                 <SelectField
                                     label={GENERAL.VPC}
                                     isClearable={false}
-                                    value={selectedVPCData ? selectedVPCData: undefined}
+                                    value={selectedVPCData ? selectedVPCData: null}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedVPC(selectedOptions));
                                     }}
