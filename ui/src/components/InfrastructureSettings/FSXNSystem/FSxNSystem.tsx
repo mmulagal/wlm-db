@@ -22,6 +22,7 @@ const FSxNSystem = () => {
     const selectedFsxnName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxName);
     const selectedFsxnUserName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNUserName);
     const selectedFsxnPassword = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNPassword);
+    const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const selectedExistingFsxnName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNExistingName);
 
     const [fsxType, setFsxType] = useState(GENERAL.CREATE_NEW_FSXN);
@@ -97,6 +98,7 @@ const FSxNSystem = () => {
                             {fsxType === GENERAL.CREATE_NEW_FSXN && (
                                 <TextField
                                     label={GENERAL.FSXN_NAME}
+                                    error={!isFsxNNameFilled ? 'Action Required' : ''}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         setInputName(e.target.value);
                                         dispatch(setFsxNName(e.target.value));
