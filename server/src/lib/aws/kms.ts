@@ -38,10 +38,10 @@ async function listAliases(
     credentialsId: string,
     region: string,
     params: ListAliasesRequest = {},
-    data: AliasListEntry[] = [],
-    markerId: string | undefined = undefined,
-    kmsClient: any = undefined
-) {
+    data: Array<AliasListEntry> = [],
+    markerId?: string,
+    kmsClient?: any
+): Promise<Array<AliasListEntry>> {
     logger.debug('List aliases for a key', { credentialsId, region, params, markerId });
 
     const kms = kmsClient ? kmsClient : await getKMS(region, credentialsId);
@@ -57,7 +57,7 @@ async function listAliases(
     } = await kms.send(new ListAliasesCommand(params));
     if (aliases?.length) {
         for (const item of aliases) {
-            data.push(item);
+            data.push(item as AliasListEntry);
         }
     }
 
@@ -71,10 +71,10 @@ async function listAliases(
 async function listKeys(
     credentialsId: string,
     region: string,
-    data: KeyListEntry[] = [],
-    markerId: string | undefined = undefined,
-    kmsClient: any = undefined
-) {
+    data: Array<KeyListEntry> = [],
+    markerId?: string,
+    kmsClient?: KMSClient
+): Promise<Array<KeyListEntry>> {
     logger.info('List Kms Keys', {
         credentialsId,
         region,

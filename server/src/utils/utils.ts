@@ -3,7 +3,7 @@
  * These functions can be re-used at different places and act as helper functions
  */
 
-import { SQL_AMI_NAMES } from './consts';
+import { SQL_AMI_NAMES, WLMDB } from './consts';
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -16,7 +16,7 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
 }
 
 function generateFsxParams(FSxDataLunSize: number) {
-    const prefix = 'wlmdb';
+    const prefix = WLMDB;
     const suffix = Date.now();
 
     const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize

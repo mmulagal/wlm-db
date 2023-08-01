@@ -30,7 +30,7 @@ const VpcListResponse = Type.Object({
                         cidrBlock: Type.Optional(Type.String()),
                         availabilityZone: Type.Optional(Type.String()),
                         availableIps: Type.Optional(Type.Number()),
-                        tags: Type.Optional(Type.Object({ Key: Type.String(), Value: Type.String() })),
+                        tags: Type.Optional(Type.Array(Type.Object({ Key: Type.Optional(Type.String()), Value: Type.Optional(Type.String()) }))),
                         name: Type.Optional(Type.String()),
                         routeTableId: Type.Optional(Type.String())
                     })
