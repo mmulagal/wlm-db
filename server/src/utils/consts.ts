@@ -390,3 +390,5 @@ export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)']
 ]);
+
+export const WLMDB = 'wlmdb';

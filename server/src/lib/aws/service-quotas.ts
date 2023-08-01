@@ -12,8 +12,9 @@ async function getServiceQuotasClient(credentialsId: string, region: string) {
     return new ServiceQuotasClient({ region: region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
-async function listServiceQuota(serviceQuotaClient: ServiceQuotasClient, serviceCode: string) {
-    logger.info(`List ${serviceCode} quota`);
+async function listServiceQuota(credentialsId: string, region: string, serviceCode: string) {
+    logger.info(`List ${serviceCode} quota in region ${region} with credentials ${credentialsId}.`);
+    const serviceQuotaClient = await getServiceQuotasClient(credentialsId, region);
     const resp = await serviceQuotaClient.send(new ListServiceQuotasCommand({ ServiceCode: serviceCode }));
     logger.debug(`${serviceCode} quota response ${resp}`);
     return resp;

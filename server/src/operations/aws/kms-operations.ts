@@ -38,7 +38,8 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
                         (await listAliases(credentialsId, region, {
                             KeyId: id
                         })) || [];
-                    keyData.push({ id, name, origin, expirationDate, state });
+                    const aliasName = name?.replace('alias/', '');
+                    keyData.push({ id, name: aliasName, origin, expirationDate, state });
                 } catch (err: any) {
                     logger.error('Failed to get the kms key details', { key, err });
                 }

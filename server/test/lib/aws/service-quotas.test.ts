@@ -12,9 +12,8 @@ describe('Service quota client', () => {
         expect(client).toBeDefined();
     });
     it('Service quota client in an invalid region', async () => {
-        const client = await getServiceQuotasClient(CREDENTIALS_ID, 'invalid-region');
         try {
-            await listServiceQuota(client, AWSServiceNames.CLOUDFORMATION);
+            await listServiceQuota(CREDENTIALS_ID, DEFAULT_AWS_REGION, AWSServiceNames.CLOUDFORMATION);
         } catch (error: any) {
             expect(error.code.includes('ENOTFOUND')).toBeTruthy();
         }
@@ -23,14 +22,12 @@ describe('Service quota client', () => {
 
 describe('VPC quota', () => {
     it('VPC quota in valid region', async () => {
-        const client = await getServiceQuotasClient(CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        const resp = await listServiceQuota(client, AWSServiceNames.VPC);
+        const resp = await listServiceQuota(CREDENTIALS_ID, DEFAULT_AWS_REGION, AWSServiceNames.VPC);
         expect(resp).toBeDefined();
     });
     it('VPC quota in an invalid region', async () => {
-        const client = await getServiceQuotasClient(CREDENTIALS_ID, 'invalid-region');
         try {
-            await listServiceQuota(client, AWSServiceNames.VPC);
+            await listServiceQuota(CREDENTIALS_ID, DEFAULT_AWS_REGION, AWSServiceNames.VPC);
         } catch (error: any) {
             expect(error.code.includes('ENOTFOUND')).toBeTruthy();
         }
@@ -39,14 +36,12 @@ describe('VPC quota', () => {
 
 describe('Cloudformation quota', () => {
     it('Cloudformation quota in valid region', async () => {
-        const client = await getServiceQuotasClient(CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        const resp = await listServiceQuota(client, AWSServiceNames.CLOUDFORMATION);
+        const resp = await listServiceQuota(CREDENTIALS_ID, DEFAULT_AWS_REGION, AWSServiceNames.CLOUDFORMATION);
         expect(resp).toBeDefined();
     });
     it('Cloudformation quota in an invalid region', async () => {
-        const client = await getServiceQuotasClient(CREDENTIALS_ID, 'invalid-region');
         try {
-            await listServiceQuota(client, AWSServiceNames.CLOUDFORMATION);
+            await listServiceQuota(CREDENTIALS_ID, DEFAULT_AWS_REGION, AWSServiceNames.CLOUDFORMATION);
         } catch (error: any) {
             expect(error.code.includes('ENOTFOUND')).toBeTruthy();
         }

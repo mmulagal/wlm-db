@@ -1,22 +1,26 @@
-{"stacks": [{
-    "StackId": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/VSStack/1020ad00-2ed6-11ee-b05a-06207a136082",
-    "StackName": "VSStack",
-    "TemplateDescription": "This workload template deploys a SqlFSx instance in an existing VPC. **WARNING** This template creates EC2 instances and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
-    "CreationTime": "2023-07-30T12:39:02.671000+00:00",
-    "DeletionTime": "2023-07-30T18:19:13.985000+00:00",
-    "StackStatus": "DELETE_COMPLETE",
-    "DriftInformation": {
-        "StackDriftStatus": "NOT_CHECKED"
-    }
-},
 {
-    "StackId": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/dfioe2ebroker-ap-southeast-1/75e06550-2e6c-11ee-b35c-06aafe2dddb6",
-    "StackName": "dfioe2ebroker-ap-southeast-1",
-    "TemplateDescription": "Launch NetApp Data Broker for Cloud Sync",
-    "CreationTime": "2023-07-30T00:03:08.505000+00:00",
-    "DeletionTime": "2023-07-30T00:27:16.623000+00:00",
-    "StackStatus": "DELETE_COMPLETE",
-    "DriftInformation": {
-        "StackDriftStatus": "NOT_CHECKED"
-    }
-}]}
+    "stacks": [
+        {
+            "StackId": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/VSStack/1020ad00-2ed6-11ee-b05a-06207a136082",
+            "StackName": "VSStack",
+            "TemplateDescription": "This workload template deploys a SqlFSx instance in an existing VPC. **WARNING** This template creates EC2 instances and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+            "CreationTime": "2023-07-30T12:39:02.671000+00:00",
+            "DeletionTime": "2023-07-30T18:19:13.985000+00:00",
+            "StackStatus": "DELETE_COMPLETE",
+            "DriftInformation": {
+                "StackDriftStatus": "NOT_CHECKED"
+            }
+        },
+        {
+            "StackId": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/dfioe2ebroker-ap-southeast-1/75e06550-2e6c-11ee-b35c-06aafe2dddb6",
+            "StackName": "dfioe2ebroker-ap-southeast-1",
+            "TemplateDescription": "Launch NetApp Data Broker for Cloud Sync",
+            "CreationTime": "2023-07-30T00:03:08.505000+00:00",
+            "DeletionTime": "2023-07-30T00:27:16.623000+00:00",
+            "StackStatus": "DELETE_COMPLETE",
+            "DriftInformation": {
+                "StackDriftStatus": "NOT_CHECKED"
+            }
+        }
+    ]
+}

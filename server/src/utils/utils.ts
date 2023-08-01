@@ -7,7 +7,8 @@ import { getSecretsManagerClient, createSecret } from '../lib/aws/secrets-manage
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
-import { SQL_AMI_NAMES, HttpErrorCodes, STACKS_DEPLOYED } from './consts';
+import { SQL_AMI_NAMES, HttpErrorCodes, STACKS_DEPLOYED, WLMDB } from './consts';
+
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -55,4 +56,34 @@ async function createSecretsString(
     const resp = await createSecret(secretsManagerClient, secretName, username, password);
     return resp.Name;
 }
-export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, createSecretsString };
+
+function generateFsxParams(FSxDataLunSize: number) {
+    const prefix = WLMDB;
+    const suffix = Date.now();
+
+    const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize
+
+    return {
+        StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
+        VpcName: `${prefix}-vpc-${suffix}`,
+        WSFClusterName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
+        FSxFileSystemName: `${prefix}-fsx-${suffix}`,
+        FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
+        FSxDataVolumeSize,
+        FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
+        FSxLogVolumeSize: 0.25 * FSxDataVolumeSize, // 25% of FSxDataVolumeSize
+        FSxTempDBVolumeName: `${prefix}-sqltemp-${suffix}`,
+        FSxTempDBVolumeSize: 0.1 * FSxDataVolumeSize, // 10% of FSxDataVolumeSize
+        FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
+        FSxSvmName: `${prefix}-svm-${suffix}`,
+        SQLigroupname: `${prefix}-sqligroup-${suffix}`,
+        SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
+        NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`]
+    };
+}
+
+function generateRandomNumberInRange(min: number, max: number) {
+    return Math.floor(min + Math.random() * (max - min + 1));
+}
+
+export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, createSecretsString, generateFsxParams };
