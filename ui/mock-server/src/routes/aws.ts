@@ -1,12 +1,13 @@
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 
-import { AdsRes, AmisRes, RegionRes, SnsTopicsRes, VpcRes } from '../types/awsTypes';
+import { AdsRes, AmisRes, KmsKeysRes, RegionRes, SnsTopicsRes, VpcRes } from '../types/awsTypes';
 
 import vpcsData from '../data/vpcs.json';
 import regionsData from '../data/regions.json';
 import adsData from '../data/ads.json';
 import amisData from '../data/amis.json';
 import snsTopicsData from '../data/sns-topics.json';
+import kmsKeysData from '../data/kms-keys.json';
 
 const router = require('express').Router();
 
@@ -37,6 +38,12 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/amis`, asy
 // Get SNS mock response
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/snsTopics`, async (req: {}, res: SnsTopicsRes) => {
     const retData = snsTopicsData;
+    generateResponse(res, 200, retData);
+});
+
+// Get KMS mock response
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/kmsKeys`, async (req: {}, res: KmsKeysRes) => {
+    const retData = kmsKeysData;
     generateResponse(res, 200, retData);
 });
 

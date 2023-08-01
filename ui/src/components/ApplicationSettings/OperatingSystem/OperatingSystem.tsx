@@ -2,17 +2,20 @@ import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@n
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './OperatingSystem.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSelectedOperatingSystem } from '../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const OperatingSystem = () => {
-    const [operatingSystem, setOperatingSystem] = useState(GENERAL.WIN_SERVER_2016);
+
     const dispatch = useDispatch();
+
+    // To get selected OS 
+    const osVersion = useAppSelector((state) => state.mssqlForm.operatingSystem);
 
     //Set the Header text here
     const setHeader = () => {
-        return operatingSystem;
+        return <Typography variant="Regular_14">{osVersion?.label}</Typography>;
     };
     return (
         <div className={styles['operating-system']}>
@@ -26,19 +29,19 @@ const OperatingSystem = () => {
                         <div className={styles.text}>{GENERAL.OP_SYS_TEXT}</div>
                         <div className={styles.handleRadio}>
                             <RadioButton
-                                isChecked={operatingSystem === GENERAL.WIN_SERVER_2016}
+                                isChecked={osVersion?.label === GENERAL.WIN_SERVER_2016}
                                 onChange={() => {
-                                    setOperatingSystem(GENERAL.WIN_SERVER_2016);
-                                    dispatch(setSelectedOperatingSystem(GENERAL.WIN_SERVER_2016));
+                                    dispatch(setSelectedOperatingSystem({label:GENERAL.WIN_SERVER_2016, 
+                                        value: GENERAL.WIN_SERVER_2016_VERSION}));
                                 }}
                                 children={GENERAL.WIN_SERVER_2016}
                                 className=""
                             />
                             <RadioButton
-                                isChecked={operatingSystem === GENERAL.WIN_SERVER_2019}
+                                isChecked={osVersion?.label === GENERAL.WIN_SERVER_2019}
                                 onChange={() => {
-                                    setOperatingSystem(GENERAL.WIN_SERVER_2019);
-                                    dispatch(setSelectedOperatingSystem(GENERAL.WIN_SERVER_2019));
+                                    dispatch(setSelectedOperatingSystem({label:GENERAL.WIN_SERVER_2019, 
+                                        value: GENERAL.WIN_SERVER_2019_VERSION}));
                                 }}
                                 children={GENERAL.WIN_SERVER_2019}
                                 className=""
