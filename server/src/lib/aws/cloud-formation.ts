@@ -19,15 +19,17 @@ async function getCloudformationClient(credentialsId: string, region: string) {
     return new CloudFormationClient({ region: region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
-async function listStacks(cloudformationClient: CloudFormationClient, stackStatusFilter?: (StackStatus | string)[]) {
-    logger.info('List cloudformation stacks ');
+async function listStacks(credentialsId: string, region: string, stackStatusFilter?: (StackStatus | string)[]) {
+    logger.info(`List cloudformation stacks in region ${region} with credentials ${credentialsId}.`);
+    const cloudformationClient = await getCloudformationClient(credentialsId, region);
     const resp = await cloudformationClient.send(new ListStacksCommand({ StackStatusFilter: stackStatusFilter }));
     logger.debug('Stacks response', resp);
     return resp;
 }
 
 async function createStack(
-    cloudformationClient: CloudFormationClient,
+    credentialsId: string,
+    region: string,
     stackName: string,
     templateUrl: string,
     disableRollback: boolean,
@@ -44,6 +46,7 @@ async function createStack(
         DisableRollback: disableRollback,
         TimeoutInMinutes: timeoutInMinutes
     };
+    const cloudformationClient = await getCloudformationClient(credentialsId, region);
     const resp = await cloudformationClient.send(new CreateStackCommand(createStackInput));
     logger.debug('Create stack response ', resp);
     return resp;
