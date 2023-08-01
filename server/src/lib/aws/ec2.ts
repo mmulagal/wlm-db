@@ -12,7 +12,11 @@ import {
     DescribeRegionsCommandInput,
     DescribeRegionsCommandOutput,
     DescribeRouteTablesCommand,
-    DescribeRouteTablesCommandInput
+    DescribeRouteTablesCommandInput,
+    DescribeKeyPairsCommand,
+    DescribeKeyPairsCommandOutput,
+    DescribeRouteTablesCommandOutput,
+    DescribeImagesCommandOutput
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -63,7 +67,11 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
     return resp;
 }
 
-async function getAmis(credentialsId: string, region: string, params: DescribeImagesCommandInput) {
+async function getAmis(
+    credentialsId: string,
+    region: string,
+    params: DescribeImagesCommandInput
+): Promise<DescribeImagesCommandOutput> {
     logger.info('Get AMIs', { credentialsId, region, params });
 
     const ec2 = await getEC2Client(region, credentialsId);
@@ -78,8 +86,7 @@ async function describeRegions(
     credentialsId: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
-    // eslint-disable-next-line
-    logger.info('Describe AWS regions:', Array.from(arguments));
+    logger.info('Describe AWS regions:', { credentialsId, input });
 
     const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
     const response = await client.send(new DescribeRegionsCommand(input));
@@ -89,7 +96,11 @@ async function describeRegions(
     return response;
 }
 
-async function describeRouteTable(credentialsId: string, region: string, params: DescribeRouteTablesCommandInput) {
+async function describeRouteTable(
+    credentialsId: string,
+    region: string,
+    params: DescribeRouteTablesCommandInput
+): Promise<DescribeRouteTablesCommandOutput> {
     logger.info('Describe route table:', { region, params });
 
     const ec2 = await getEC2Client(region, credentialsId);
@@ -100,6 +111,20 @@ async function describeRouteTable(credentialsId: string, region: string, params:
     return resp;
 }
 
+async function describeKeyPairs(
+    credentialsId: string,
+    region: string,
+    input: DescribeRegionsCommandInput
+): Promise<DescribeKeyPairsCommandOutput> {
+    logger.info('Describe key-pair:', { credentialsId, region, input });
+
+    const client = await getEC2Client(region, credentialsId);
+    const response = await client.send(new DescribeKeyPairsCommand(input));
+
+    logger.debug('Describe key-pairs response:', response);
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -107,5 +132,6 @@ export {
     describeSecurityGroups,
     getAmis,
     describeRegions,
-    describeRouteTable
+    describeRouteTable,
+    describeKeyPairs
 };

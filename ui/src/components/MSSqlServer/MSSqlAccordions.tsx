@@ -27,6 +27,7 @@ import styles from './MSSqlAccordions.module.scss';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 import MssqlApis from './MssqlApis';
 import DialogComponent from '../../common/Dialog/DialogComponent';
+import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -122,6 +123,7 @@ const MSSqlAccordions = () => {
                 <Encryption />
                 <Tags />
                 <SimpleNotificationService />
+                <CloudWatch />
                 {/* Ends here */}
             </AccordionController>
         </div>

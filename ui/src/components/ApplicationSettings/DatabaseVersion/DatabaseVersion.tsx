@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
@@ -20,8 +20,12 @@ const DatabaseVersion = () => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
-        dispatch(setDBVersion(options[0].label));
+
         return options;
+    }, []);
+
+    useEffect(() => {
+        dispatch(setDBVersion(generateDbVersions[0].label));
     }, []);
     //Set the Header text here
     const setHeader = () => {

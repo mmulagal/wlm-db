@@ -1,15 +1,34 @@
-import { getAmis, describeRegions, describeRouteTable } from '../../../src/lib/aws/ec2';
-import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { faker } from '@faker-js/faker';
+import {
+    getAmis,
+    describeRegions,
+    describeKeyPairs,
+    describeVpc,
+    describeSecurityGroups,
+    describeSubnets,
+    describeRouteTable
+} from '../../../src/lib/aws/ec2';
+import {
+    SQL_AMI_NAMES,
+    FSX_SUPPORTED_REGIONS,
+    DEFAULT_AWS_REGION,
+    DEFAULT_AWS_CREDENTIALS_TYPE
+} from '../../../src/utils/consts';
+
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
 import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
 import routeTables from '../../simulator/responses/aws/list-route-tables.json';
+import keyPairs from '../../simulator/responses/aws/list-key-pairs.json';
+import vpcList from '../../simulator/responses/aws/list-vpcs.json';
+import subnetsList from '../../simulator/responses/aws/list-subnets.json';
+import sgList from '../../simulator/responses/aws/list-security-groups.json';
 
-const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 const REGION = DEFAULT_AWS_REGION;
 
-describe('List EC2 AMIs', () => {
+describe('EC2 Lib', () => {
+    const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
     it('should return a list of EC2 AMIs', async () => {
         const params = {
             Filters: [
@@ -20,12 +39,48 @@ describe('List EC2 AMIs', () => {
         const resp = await getAmis(CREDENTIALS_ID, REGION, params);
         expect(resp).toEqual(ec2Images);
     });
-});
 
-describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
+    it('should return a list of Vpis', async () => {
+        const resp = await describeVpc(CREDENTIALS_ID, DEFAULT_AWS_REGION, {});
+        expect(resp).toEqual(vpcList);
+    });
+
+    it('should return a list of Subnets', async () => {
+        const params = {
+            Filters: [
+                {
+                    Name: 'vpc-id',
+                    Values: ['vpc-7d4a2818']
+                }
+            ]
+        };
+        const resp = await describeSubnets(CREDENTIALS_ID, DEFAULT_AWS_REGION, params);
+        expect(resp).toEqual(subnetsList);
+    });
+
+    it('should return a list of Security Groups', async () => {
+        const params = {
+            Filters: [
+                {
+                    Name: 'vpc-id',
+                    Values: ['vpc-7d4a2818']
+                }
+            ]
+        };
+        const resp = await describeSecurityGroups(CREDENTIALS_ID, DEFAULT_AWS_REGION, params);
+        expect(resp).toEqual(sgList);
+    });
+
+    it('Lists Route tables for a subnet', async () => {
+        const params = {
+            Filters: [{ Name: 'association.subnet-id', Values: ['subnet-5a37222d'] }]
+        };
+
+        const response = await describeRouteTable(CREDENTIALS_ID, REGION, params);
+        expect(response).toEqual(routeTables);
+    });
+
     it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
-        const credentialsType = 'aws_assume_role';
-
         const input = {
             AllRegions: false, // Describe only the regions enabled for the account
             DryRun: false,
@@ -34,18 +89,12 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
             }
         };
 
-        const response = await describeRegions(credentialsType, input);
+        const response = await describeRegions(DEFAULT_AWS_CREDENTIALS_TYPE, input);
         expect(response).toEqual(fsxRegions);
     });
-});
 
-describe('List Route Tables', () => {
-    it('Lists Route tables for a subnet', async () => {
-        const params = {
-            Filters: [{ Name: 'association.subnet-id', Values: ['subnet-5a37222d'] }]
-        };
-
-        const response = await describeRouteTable(CREDENTIALS_ID, REGION, params);
-        expect(response).toEqual(routeTables);
+    it('List of key-pairs in a given AWS region', async () => {
+        const response = await describeKeyPairs(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {});
+        expect(response).toEqual(keyPairs);
     });
 });
