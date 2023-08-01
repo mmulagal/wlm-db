@@ -49,20 +49,24 @@ export const awsApi = createApi({
                 query: ({credentialId}) => ({url: `credentials/${credentialId}/aws/fsx/regions`})
             }),
             getVPCList: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs`})
+                query: ({credentialId, region, fields}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`})
             }),
             getAdsList: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/ads`})
             }),
             getAmiList: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/amis`})
+                query: ({credentialId, region, osType, osVersion, databaseType, databaseEdition, databaseVersion}) => 
+                ({url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&osVersion=${osVersion}&databaseType=${databaseType}&databaseEdition=${databaseEdition}&databaseVersion=${databaseVersion}`})
             }),
             getSnsTopics: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/snsTopics`})
+            }),
+            getKmsKeys: builder.query({
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/kmsKeys`})
             }),
         }
     }
 });
 
 export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, 
-    useGetAdsListQuery, useGetAmiListQuery, useGetSnsTopicsQuery } = awsApi;
+    useGetAdsListQuery, useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery } = awsApi;

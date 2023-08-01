@@ -16,8 +16,8 @@ const RegionVpc = () => {
     //Getting the Data from state
     const {regionsData, regionsLoading} = useAppSelector((state) => state.mssql.getRegions);
     const {vpcData, vpcLoading} = useAppSelector((state) => state.mssql.getVPCList);
-    const selectedRegionData = useAppSelector((state: any) => state.mssqlForm.regionAndVpc.selectedRegion);
-    const selectedVPCData = useAppSelector((state: any) => state.mssqlForm.regionAndVpc.selectedVPC);
+    const selectedRegionData = useAppSelector((state) => state.mssqlForm.regionAndVpc.selectedRegion);
+    const selectedVPCData = useAppSelector((state) => state.mssqlForm.regionAndVpc.selectedVPC);
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
@@ -47,7 +47,9 @@ const RegionVpc = () => {
             const vpcData = {
                 id: val.id,
                 name: val.name,
-                cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : ''
+                cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '',
+                subnets: val.subnets,
+                securityGroups: val.securityGroups
             }
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);

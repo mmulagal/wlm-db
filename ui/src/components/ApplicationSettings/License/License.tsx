@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -16,17 +16,22 @@ import {
 const License = () => {
     //Store related Data
     const dispatch = useDispatch();
-    const licenseType = useAppSelector((state: any) => state.mssqlForm.license.selectedLicenseType);
-    const selectedLicenseId = useAppSelector((state: any) => state.mssqlForm.license.selectedLicenseId);
-    const selectedCustomAMI = useAppSelector((state: any) => state.mssqlForm.license.selectedCustomAMI);
+
+    // This is to get license included AMI data
+    const {amiData, amiLoading} = useAppSelector((state) => state.mssql.getAmiList);
+
+    const licenseType = useAppSelector((state) => state.mssqlForm.license.selectedLicenseType);
+    const selectedLicenseId = useAppSelector((state) => state.mssqlForm.license.selectedLicenseId);
+    const selectedCustomAMI = useAppSelector((state) => state.mssqlForm.license.selectedCustomAMI);
     const [licenseSelect, setLicenseSelect] = useState(licenseType);
 
-    const amid = ['AMID1', 'AMID2', 'AMID3'];
+    // Custom AMI list will be blank for as it is not supported in phase 1
+    const customAmiId: any[] = [];
 
     //Function to generate the options for Select Field
     const generateAMIId = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        amid?.map((val, idx: number) => {
+        customAmiId?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
@@ -36,24 +41,30 @@ const License = () => {
     //Function to generate the options for Select Field for License
     const generateAMIIdForLicense = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        amid?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        amiData?.amis?.map((val, idx: number) => {
+            const amiVal = val.imageId;
+            const option = generateOptionType(amiVal, amiVal, '', false, '');
             options.push(option);
         });
         return options;
-    }, []);
+    }, [amiData]);
+
+    useEffect(() => {
+        dispatch(setSelectedLicenseId(null))
+    }, [dispatch, generateAMIIdForLicense]);
+    
     //Set the Header text here
     const setHeader = () => {
         if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
-            return <Typography variant="Regular_14">{GENERAL.LICENSE_INCLUDED_AMI}</Typography>;
+            return <Typography variant="Regular_14">{selectedLicenseId?.value || GENERAL.LICENSE_INCLUDED_AMI}</Typography>;
         }
         if (licenseSelect === GENERAL.USE_CUSTOM_AMI) {
-            return <Typography variant="Regular_14">{selectedCustomAMI}</Typography>;
+            return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
         }
     };
     return (
         <div className={styles.license}>
-            <AccordionCard
+            <AccordionCard isLoading={amiLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="9"
                 title={<div className={CommonStyles.title}>{GENERAL.LICENSE}</div>}
@@ -67,6 +78,7 @@ const License = () => {
                                 onChange={() => {
                                     setLicenseSelect(GENERAL.LICENSE_INCLUDED_AMI);
                                     dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
+                                    dispatch(setSelectedCustomAMI(null));
                                 }}
                                 children={GENERAL.LICENSE_INCLUDED_AMI}
                                 className=""
@@ -76,9 +88,11 @@ const License = () => {
                                 onChange={() => {
                                     setLicenseSelect(GENERAL.USE_CUSTOM_AMI);
                                     dispatch(setSelectedLicenseType(GENERAL.USE_CUSTOM_AMI));
+                                    dispatch(setSelectedLicenseId(null));
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
+                                // isDisabled
                             />
                         </div>
                         {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
@@ -87,10 +101,10 @@ const License = () => {
                                     label={'License ID'}
                                     placeholder={GENERAL.SELECT_AMI_ID}
                                     isClearable={false}
+                                    defaultValue={selectedLicenseId}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedLicenseId(selectedOptions));
                                     }}
-                                    value={selectedLicenseId ? selectedLicenseId : undefined}
                                     isSearchable={generateAMIIdForLicense.length > 5}
                                     options={generateAMIIdForLicense}
                                 />
@@ -102,10 +116,10 @@ const License = () => {
                                     label={GENERAL.AMI_ID}
                                     placeholder={GENERAL.SELECT_AMI_NAME}
                                     isClearable={false}
+                                    defaultValue={selectedCustomAMI}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedCustomAMI(selectedOptions));
                                     }}
-                                    value={selectedCustomAMI ? selectedCustomAMI : undefined}
                                     isSearchable={generateAMIId.length > 5}
                                     options={generateAMIId}
                                 />
