@@ -18,6 +18,7 @@ const RegionVpc = () => {
     const { vpcData, vpcLoading } = useAppSelector(state => state.mssql.getVPCList);
     const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
@@ -65,7 +66,7 @@ const RegionVpc = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!selectedRegionData || !selectedVPCData) {
-            return <ActionRequired />;
+            return <ActionRequired error={!isVPCNotFilled ? true : false} />;
         } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
