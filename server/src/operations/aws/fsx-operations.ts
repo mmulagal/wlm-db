@@ -25,11 +25,11 @@ async function getFSxFileSystemsList(
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
     // 2. The returned FileSystemIds need to be always defined and unique, so
-    //    that the API caller always gets unique records.  Though AWs alway
+    //    that the API caller always gets unique records.  Though AWS always
     //    returns unique FileSystemIds, the field type is string|undefined.
     //    We shall avoid any records with undefined FileSystemId.
-    // 3. DescribeFSxFileSystems() always returns all filesystems within
-    //    a given AWS region.  We shall avoid returning any filesystems not
+    // 3. DescribeFSxFileSystems() returns all filesystems in a given AWS
+    //    region, spanning different VPCs. We shall return only the filesystems
     //    in the given VPC.
     allFSxFilesystems = allFSxFilesystems?.filter(({ FileSystemType, FileSystemId, VpcId, StorageType }) => {
         return (
