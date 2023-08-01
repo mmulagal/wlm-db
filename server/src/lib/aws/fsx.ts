@@ -25,7 +25,7 @@ async function describeFSxFileSystems(
     credentialsId: string,
     region: string
 ): Promise<DescribeFileSystemsCommandOutput> {
-    logger.info('Describe Amazon FSx for NetApp ONTAP filesystem:', { credentialsId, region });
+    logger.info('Describe Amazon FSx for NetApp ONTAP filesystems:', { credentialsId, region });
 
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeFileSystemsCommand({}));
