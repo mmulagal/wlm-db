@@ -147,6 +147,19 @@ const mssqlFormSlice = createSlice({
         setSelectedKeyPair(state, action: PayloadAction<any>) {
             state.keyPair.selectedKeyPair = action.payload;
         },
+        //AD
+        setSelectedADDomainName(state, action: PayloadAction<any>) {
+            state.activeDirectory.domainName = action.payload;
+        },
+        setSelectedADDomainAddress(state, action: PayloadAction<any>) {
+            state.activeDirectory.domainAddress = action.payload;
+        },
+        setSelectedADUserName(state, action: PayloadAction<any>) {
+            state.activeDirectory.userName = action.payload;
+        },
+        setSelectedADPassword(state, action: PayloadAction<any>) {
+            state.activeDirectory.password = action.payload;
+        },
         //Instance Type
         setInstanceType(state, action: PayloadAction<any>) {
             state.instanceType = action.payload;
@@ -210,6 +223,10 @@ const mssqlFormSlice = createSlice({
 });
 
 export const {
+    setSelectedADDomainName,
+    setSelectedADDomainAddress,
+    setSelectedADUserName,
+    setSelectedADPassword,
     setEncryptionType,
     setEncryptionRow,
     setEncryptionARN,
