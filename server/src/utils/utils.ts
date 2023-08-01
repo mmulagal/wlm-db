@@ -3,7 +3,7 @@
  * These functions can be re-used at different places and act as helper functions
  */
 
-import { SQL_AMI_NAMES } from './consts';
+import { SQL_AMI_NAMES, WLMDB } from './consts';
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -15,4 +15,33 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
         .filter(name => (dbEdition ? name.includes(dbEdition) : true));
 }
 
-export { filterSqlAmis };
+function generateFsxParams(FSxDataLunSize: number) {
+    const prefix = WLMDB;
+    const suffix = Date.now();
+
+    const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize
+
+    return {
+        StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
+        VpcName: `${prefix}-vpc-${suffix}`,
+        WSFClusterName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
+        FSxFileSystemName: `${prefix}-fsx-${suffix}`,
+        FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
+        FSxDataVolumeSize,
+        FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
+        FSxLogVolumeSize: 0.25 * FSxDataVolumeSize, // 25% of FSxDataVolumeSize
+        FSxTempDBVolumeName: `${prefix}-sqltemp-${suffix}`,
+        FSxTempDBVolumeSize: 0.1 * FSxDataVolumeSize, // 10% of FSxDataVolumeSize
+        FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
+        FSxSvmName: `${prefix}-svm-${suffix}`,
+        SQLigroupname: `${prefix}-sqligroup-${suffix}`,
+        SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
+        NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`]
+    };
+}
+
+function generateRandomNumberInRange(min: number, max: number) {
+    return Math.floor(min + Math.random() * (max - min + 1));
+}
+
+export { filterSqlAmis, generateFsxParams };

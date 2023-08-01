@@ -386,3 +386,4 @@ export const EC2INSTANCETYPESE_EXCLUDE = [
     'C7g',
     'Im4gn'
 ];
+export const WLMDB = 'wlmdb';

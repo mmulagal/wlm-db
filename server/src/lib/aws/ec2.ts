@@ -12,8 +12,12 @@ import {
     DescribeRegionsCommandInput,
     DescribeRegionsCommandOutput,
     paginateDescribeInstanceTypes,
+    DescribeRouteTablesCommand,
+    DescribeRouteTablesCommandInput,
     DescribeKeyPairsCommand,
-    DescribeKeyPairsCommandOutput
+    DescribeKeyPairsCommandOutput,
+    DescribeRouteTablesCommandOutput,
+    DescribeImagesCommandOutput
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -64,7 +68,11 @@ async function describeSecurityGroups(credentialsId: string, region: string, par
     return resp;
 }
 
-async function getAmis(credentialsId: string, region: string, params: DescribeImagesCommandInput) {
+async function getAmis(
+    credentialsId: string,
+    region: string,
+    params: DescribeImagesCommandInput
+): Promise<DescribeImagesCommandOutput> {
     logger.info('Get AMIs', { credentialsId, region, params });
 
     const ec2 = await getEC2Client(region, credentialsId);
@@ -107,6 +115,20 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
 
     return instanceTypes;
 }
+async function describeRouteTable(
+    credentialsId: string,
+    region: string,
+    params: DescribeRouteTablesCommandInput
+): Promise<DescribeRouteTablesCommandOutput> {
+    logger.info('Describe route table:', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(new DescribeRouteTablesCommand(params));
+    logger.debug('describe route table response:', resp);
+
+    return resp;
+}
 
 async function describeKeyPairs(
     credentialsId: string,
@@ -130,5 +152,6 @@ export {
     getAmis,
     describeRegions,
     describeInstanceTypes,
+    describeRouteTable,
     describeKeyPairs
 };
