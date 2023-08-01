@@ -160,7 +160,7 @@ const FSxFileSystemParams = Type.Object({
     vpcId: Type.String()
 });
 
-// GET FSx filesysems response
+// FSx filesystem schema
 const FSxFileSystemSchema = Type.Object({
     fileSystemId: Type.String(),
     kmsKeyId: Type.Optional(Type.String()),
@@ -181,7 +181,7 @@ const FSxFileSystemSchema = Type.Object({
                     mode: Type.Optional(Type.String())
                 })
             ),
-            endPoints: Type.Optional(
+            endpoints: Type.Optional(
                 Type.Object({
                     intercluster: Type.Optional(
                         Type.Object({
@@ -214,6 +214,7 @@ const FSxFileSystemSchema = Type.Object({
     )
 });
 
+// GET FSx filesystems response
 const FSxFileSystemsResponse = Type.Object({
     filesystems: Type.Array(FSxFileSystemSchema)
 });

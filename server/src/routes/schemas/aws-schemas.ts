@@ -68,7 +68,6 @@ const GetFSxRegionsSchema = {
     }
 };
 
-// Get FSxFileSystems schema
 const GetFSxFileSystemsSchema = {
     tags: [RouteTags.AWS],
     params: FSxFileSystemParams,

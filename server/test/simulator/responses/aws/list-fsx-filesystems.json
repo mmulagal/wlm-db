@@ -10,7 +10,7 @@
     "FileSystems": [
         {
             "CreationTime": "2023-07-26T07:27:48.159Z",
-            "FileSystemId": "fs-0abd890a05fd6d3a6",
+            "FileSystemId": "fs-03773e21b2f0e39b4",
             "FileSystemType": "ONTAP",
             "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89",
             "Lifecycle": "AVAILABLE",
@@ -26,11 +26,11 @@
                 "EndpointIpAddressRange": "172.31.255.255/26",
                 "Endpoints": {
                     "Intercluster": {
-                        "dnsName": "intercluster.fs-0abd890a05fd6d3a6.fsx.ap-southeast-1.amazonaws.com",
+                        "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
                         "ipAddresses": ["172.31.24.147", "172.31.11.147"]
                     },
                     "Management": {
-                        "dnsName": "management.fs-0abd890a05fd6d3a6.fsx.ap-southeast-1.amazonaws.com",
+                        "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
                         "ipAddresses": ["172.31.255.204"]
                     }
                 },
@@ -40,7 +40,7 @@
                 "WeeklyMaintenanceStartTime": "1:14:30"
             },
             "OwnerId": "464262061435",
-            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-0abd890a05fd6d3a6",
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061435:file-system/fs-03773e21b2f0e39b4",
             "StorageCapacity": 1024,
             "StorageType": "SSD",
             "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
