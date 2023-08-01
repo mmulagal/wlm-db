@@ -81,3 +81,16 @@ export interface SnsTopicsRes {
         }
     ];
 }
+
+export interface KmsKeysRes {
+    keys: [
+        {
+            id: string;
+            name: string;
+            origin: string;
+            state: string;
+            expirationDate: string;
+        }
+    ];
+    totalRecords: 0;
+}

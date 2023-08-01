@@ -1,8 +1,15 @@
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { useGetAdsListQuery, useGetAmiListQuery, useGetCredentialsQuery, useGetRegionsQuery, useGetSnsTopicsQuery, useGetVPCListQuery } from "../../utils/apiService";
-import { addAdsList, addAmiList, addCredentials, addRegions, addVpcList } from "../../store/mssql/mssqlSlice";
+import { 
+    useGetAdsListQuery, 
+    useGetAmiListQuery, 
+    useGetCredentialsQuery, 
+    useGetKmsKeysQuery, 
+    useGetRegionsQuery, 
+    useGetSnsTopicsQuery, 
+    useGetVPCListQuery } from "../../utils/apiService";
+import { addAdsList, addAmiList, addCredentials, addKmsKeysList, addRegions, addSnsList, addVpcList } from "../../store/mssql/mssqlSlice";
 import { useEffect, useState } from "react";
-import { AWS_ASSUME_ROLE } from "../../utils/consts";
+import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from "../../utils/consts";
 
 
 const MssqlApis = () => {
@@ -20,9 +27,15 @@ const MssqlApis = () => {
     // credAndRegionSkip to skip APi call when credentialId and regionCode is not defined
     const [credAndRegionSkip, setCredAndRegionSkip] = useState(true);
 
+    // licenseAmiSkip to skip AMI APi call when credentialId, regionCode, os, edition and version is not defined
+    const [licenseAmiSkip, setLicenseAmiSkip] = useState(true);
+
     //Getting the Data from state
     const selectedCredentialData = useAppSelector((state) => state.mssqlForm.awsAccount.selectedCredential);
     const selectedRegionData = useAppSelector((state) => state.mssqlForm.regionAndVpc.selectedRegion);
+    const osVersion = useAppSelector((state) => state.mssqlForm.operatingSystem);
+    const dbEdition = useAppSelector((state) => state.mssqlForm.dbEdition);
+    const dbVersion = useAppSelector((state) => state.mssqlForm.dbVersion);
 
     // API call to get credentials list for user account
     const { 
@@ -45,7 +58,7 @@ const MssqlApis = () => {
         data: vpcData,
         isFetching: vpcLoading,
         isError: vpcError,
-    } = useGetVPCListQuery({credentialId: selectedCredId, region: selectedRegionCode}, {
+    } = useGetVPCListQuery({credentialId: selectedCredId, region: selectedRegionCode, fields: VPC_API_FIELDS}, {
         skip: credAndRegionSkip,
     });
 
@@ -63,8 +76,9 @@ const MssqlApis = () => {
         data: amiData,
         isFetching: amiLoading,
         isError: amiError,
-    } = useGetAmiListQuery({credentialId: selectedCredId, region: selectedRegionCode}, {
-        skip: credAndRegionSkip,
+    } = useGetAmiListQuery({credentialId: selectedCredId, region: selectedRegionCode, osType: OS_TYPE, 
+        osVersion: osVersion?.value, databaseType: DATABASE_TYPE, databaseEdition: dbEdition?.value, databaseVersion: dbVersion?.value}, {
+        skip: licenseAmiSkip,
     });
 
     // API call to get SNS Topics list for selected credentials and region 
@@ -73,6 +87,15 @@ const MssqlApis = () => {
         isFetching: snsLoading,
         isError: snsError,
     } = useGetSnsTopicsQuery({credentialId: selectedCredId, region: selectedRegionCode}, {
+        skip: credAndRegionSkip,
+    });
+
+    // API call to get KMS Keys list for selected credentials and region 
+    const { 
+        data: kmsData,
+        isFetching: kmsLoading,
+        isError: kmsError,
+    } = useGetKmsKeysQuery({credentialId: selectedCredId, region: selectedRegionCode}, {
         skip: credAndRegionSkip,
     });
 
@@ -97,32 +120,66 @@ const MssqlApis = () => {
         }else{
             setCredAndRegionSkip(true);
         }
-    }, [selectedCredentialData, selectedRegionData])
+        if(regionCode && credId && osVersion?.value && dbEdition?.value && dbVersion?.value){
+            setLicenseAmiSkip(false);
+        }else{
+            setLicenseAmiSkip(true);
+        }
+    }, [selectedCredentialData, selectedRegionData, osVersion, dbEdition, dbVersion])
 
     // To add credentials information in MssqlEntities
     useEffect(() => {
-        dispatch(addRegions({regionsData, regionsLoading, regionsError}));
+        if(regionsError){
+            dispatch(addRegions({undefined, regionsLoading, regionsError}));
+        }else{
+            dispatch(addRegions({regionsData, regionsLoading, regionsError}));
+        }
     }, [dispatch, regionsData, regionsError, regionsLoading]);
 
     // To add VPC information in MssqlEntities
     useEffect(() => {
-        dispatch(addVpcList({vpcData, vpcLoading, vpcError}));
+        if(vpcError){
+            dispatch(addVpcList({undefined, vpcLoading, vpcError}));
+        }else{
+            dispatch(addVpcList({vpcData, vpcLoading, vpcError}));
+        }
     }, [dispatch, vpcData, vpcLoading, vpcError]);
 
     // To add Ads information in MssqlEntities
     useEffect(() => {
-        dispatch(addAdsList({adsData, adsLoading, adsError}));
+        if(adsError){
+            dispatch(addAdsList({undefined, adsLoading, adsError}));
+        }else{
+            dispatch(addAdsList({adsData, adsLoading, adsError}));
+        }
     }, [dispatch, adsData , adsLoading, adsError]);
 
     // To add AMI information in MssqlEntities
     useEffect(() => {
-        dispatch(addAmiList({amiData, amiLoading, amiError}));
+        if(amiError){
+            dispatch(addAmiList({undefined, amiLoading, amiError}));
+        }else{
+            dispatch(addAmiList({amiData, amiLoading, amiError}));
+        }
     }, [dispatch, amiData , amiLoading, amiError]);
 
     // To add SNS information in MssqlEntities
     useEffect(() => {
-        dispatch(addAmiList({snsData, snsLoading, snsError}));
+        if(snsError){
+            dispatch(addSnsList({undefined, snsLoading, snsError}));
+        }else{
+            dispatch(addSnsList({snsData, snsLoading, snsError}));
+        }
     }, [dispatch, snsData , snsLoading, snsError]);
+
+    // To add KMS Keys in MssqlEntities
+    useEffect(() => {
+        if(kmsError){
+            dispatch(addKmsKeysList({undefined, kmsLoading, kmsError}));
+        }else{
+            dispatch(addKmsKeysList({kmsData, kmsLoading, kmsError}));
+        }
+    }, [dispatch, kmsData , kmsLoading, kmsError]);
 
     return;
 };
