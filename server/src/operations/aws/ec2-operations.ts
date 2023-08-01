@@ -7,9 +7,12 @@ import {
     describeSubnets,
     describeRegions,
     getAmis,
-    describeInstanceTypes
+    describeInstanceTypes,
+    describeKeyPairs
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
+import { KeyPairsSchema } from '../../routes/types/aws.types';
+import { Static } from '@sinclair/typebox';
 import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
@@ -46,6 +49,8 @@ interface FSxAvailableRegions {
     regionCode: string;
     regionName: string;
 }
+
+type KeyPairType = Static<typeof KeyPairsSchema>;
 
 async function getVpcsList(credentialsId: string, region: string, fields?: string) {
     logger.info('List vpcs in a region', { credentialsId, region, fields });
@@ -253,8 +258,7 @@ function findNameFromTags(tags: Tag[]) {
 }
 
 async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
-    // eslint-disable-next-line prefer-rest-params
-    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', Array.from(arguments));
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const input = {
         AllRegions: false, // Describe only the regions enabled for the account
@@ -294,24 +298,15 @@ async function getInstnaceTypes(credentialsId: string, region: string) {
         */
         const filteredInstances = response
             .filter(
-                (instance: { InstanceType: string | string[] }) =>
-                    !EC2INSTANCETYPESE_EXCLUDE.some((excludedType: string) =>
-                        instance.InstanceType.includes(excludedType)
-                    )
+                ({ InstanceType }) =>
+                    !EC2INSTANCETYPESE_EXCLUDE.some((excludedType: string) => InstanceType?.includes(excludedType))
             )
-            .map(
-                (instance: {
-                    EbsInfo: { EbsOptimizedInfo: { MaximumBandwidthInMbps: number } };
-                    VCpuInfo: { DefaultVCpus: number };
-                    MemoryInfo: { SizeInMiB: number };
-                    InstanceType: string;
-                }) => ({
-                    instanceType: instance.InstanceType,
-                    iopsInMbps: instance.EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
-                    vCpus: instance.VCpuInfo?.DefaultVCpus,
-                    ramInMib: instance.MemoryInfo?.SizeInMiB
-                })
-            );
+            .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo }) => ({
+                instanceType: InstanceType,
+                iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
+                vCpus: VCpuInfo?.DefaultVCpus,
+                ramInMib: MemoryInfo?.SizeInMiB
+            }));
         const totalRecords = filteredInstances?.length;
         return { instanceTypes: filteredInstances, totalRecords };
     } catch (error: any) {
@@ -320,4 +315,19 @@ async function getInstnaceTypes(credentialsId: string, region: string) {
     }
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getInstnaceTypes };
+async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
+    logger.info('List key-pairs:', { credentialsId, region });
+
+    let kpList: Array<KeyPairType> = [];
+    const { KeyPairs: kps } = await describeKeyPairs(credentialsId, region, {});
+
+    if (kps?.length) {
+        kpList = kps.map(({ KeyPairId: id, KeyName: name }) => {
+            return { id, name };
+        });
+    }
+
+    return { keyPairs: kpList };
+}
+
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstnaceTypes };

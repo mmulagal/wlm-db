@@ -97,6 +97,7 @@ const AmiResponse = Type.Object({
 const SnsResponse = Type.Object({
     Topics: Type.Array(
         Type.Object({
+            TopicName: Type.Optional(Type.String()),
             TopicArn: Type.Optional(Type.String())
         })
     )
@@ -155,6 +156,17 @@ const KmsKeysListResponse = Type.Object({
     totalRecords: Type.Optional(Type.Number())
 });
 
+// Keypair schema
+const KeyPairsSchema = Type.Object({
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String())
+});
+
+// GET keyPairs schema
+const KeyPairsResponse = Type.Object({
+    keyPairs: Type.Array(KeyPairsSchema)
+});
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -166,5 +178,7 @@ export {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
-    KmsKeysListResponse
+    KmsKeysListResponse,
+    KeyPairsSchema,
+    KeyPairsResponse
 };

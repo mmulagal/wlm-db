@@ -10,7 +10,8 @@ import {
     FSxRegionsResponse,
     KmsKeysListResponse,
     AmiQueryString,
-    InstanceTypes
+    InstanceTypes,
+    KeyPairsResponse
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -84,6 +85,13 @@ const GetKmsKeysListSchema = {
     }
 };
 
+const GetKeyPairsSchema = {
+    ...baseRequest,
+    description: 'List Key-Pairs in the given region',
+    response: {
+        200: KeyPairsResponse
+    }
+};
 export {
     GetVpcsListSchema,
     GetAmiSchema,
@@ -91,5 +99,6 @@ export {
     GetSnsTopicsSchema,
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
-    GetInstanceTypesSchema
+    GetInstanceTypesSchema,
+    GetKeyPairsSchema
 };

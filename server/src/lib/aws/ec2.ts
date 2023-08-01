@@ -11,7 +11,9 @@ import {
     DescribeRegionsCommand,
     DescribeRegionsCommandInput,
     DescribeRegionsCommandOutput,
-    DescribeInstanceTypesCommand
+    paginateDescribeInstanceTypes,
+    DescribeKeyPairsCommand,
+    DescribeKeyPairsCommandOutput
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -77,8 +79,7 @@ async function describeRegions(
     credentialsId: string,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
-    // eslint-disable-next-line
-    logger.info('Describe AWS regions:', Array.from(arguments));
+    logger.info('Describe AWS regions:', { credentialsId, input });
 
     const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
     const response = await client.send(new DescribeRegionsCommand(input));
@@ -89,25 +90,38 @@ async function describeRegions(
 }
 
 async function describeInstanceTypes(credentialsId: string, region: string) {
-    const ec2 = await getEC2Client(region, credentialsId);
-    const token: string | undefined = undefined;
-    const allMappedData: any[] = [];
-    const options: any = {};
-    await listInstances(ec2, options, token, allMappedData);
-    return allMappedData;
+    const client = await getEC2Client(region, credentialsId);
+    const paginator = paginateDescribeInstanceTypes(
+        { client, pageSize: 10 },
+        {
+            Filters: [{ Name: 'instance-type', Values: ['*'] }]
+        }
+    );
+    const instanceTypes = [];
+
+    for await (const page of paginator) {
+        if (page.InstanceTypes?.length) {
+            instanceTypes.push(...page.InstanceTypes);
+        }
+    }
+
+    return instanceTypes;
 }
 
-async function listInstances(ec2: EC2Client, options: any, token: undefined, allMappedData: any[]): Promise<any> {
-    if (token) {
-        options.NextToken = token;
-    }
-    const instanceTypes: any = await ec2.send(new DescribeInstanceTypesCommand(options));
-    const temp = instanceTypes.InstanceTypes;
-    allMappedData.push(...temp);
-    if (instanceTypes.NextToken) {
-        return listInstances(ec2, options, instanceTypes.NextToken, allMappedData);
-    }
+async function describeKeyPairs(
+    credentialsId: string,
+    region: string,
+    input: DescribeRegionsCommandInput
+): Promise<DescribeKeyPairsCommandOutput> {
+    logger.info('Describe key-pair:', { credentialsId, region, input });
+
+    const client = await getEC2Client(region, credentialsId);
+    const response = await client.send(new DescribeKeyPairsCommand(input));
+
+    logger.debug('Describe key-pairs response:', response);
+    return response;
 }
+
 export {
     getEC2Client,
     describeVpc,
@@ -115,5 +129,6 @@ export {
     describeSecurityGroups,
     getAmis,
     describeRegions,
-    describeInstanceTypes
+    describeInstanceTypes,
+    describeKeyPairs
 };

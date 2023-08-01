@@ -65,7 +65,12 @@ const initialState: any = {
         snsState: false,
         snsARN: ''
     },
-    cloudWatch: false
+    cloudWatch: false,
+    encryption: {
+        encryptionType: GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT,
+        selectedRow: null,
+        encryptionArn: ''
+    }
 };
 
 const mssqlFormSlice = createSlice({
@@ -190,11 +195,24 @@ const mssqlFormSlice = createSlice({
         //Cloud watch
         setCloudWatch(state, action: PayloadAction<any>) {
             state.cloudWatch = action.payload;
+        },
+        //Encryption
+        setEncryptionType(state, action: PayloadAction<any>) {
+            state.encryption.encryptionType = action.payload;
+        },
+        setEncryptionRow(state, action: PayloadAction<any>) {
+            state.encryption.selectedRow = action.payload;
+        },
+        setEncryptionARN(state, action: PayloadAction<any>) {
+            state.encryption.encryptionArn = action.payload;
         }
     }
 });
 
 export const {
+    setEncryptionType,
+    setEncryptionRow,
+    setEncryptionARN,
     setCloudWatch,
     setSNSState,
     setSNSARN,

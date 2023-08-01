@@ -7,10 +7,12 @@ import '../../simulator/scopes/aws/sns-scope';
 const opsresponse = {
     Topics: [
         {
-            TopicArn: 'arn:aws:sns:ap-southeast-1:464262061435:LaunchWizardEventForwarder-DO_NOT_MODIFY'
+            TopicArn: 'arn:aws:sns:ap-southeast-1:464262061435:LaunchWizardEventForwarder-DO_NOT_MODIFY',
+            TopicName: 'LaunchWizardEventForwarder-DO_NOT_MODIFY'
         },
         {
-            TopicArn: 'arn:aws:sns:ap-southeast-1:464262061435:config-topic-464262061435'
+            TopicArn: 'arn:aws:sns:ap-southeast-1:464262061435:config-topic-464262061435',
+            TopicName: 'config-topic-464262061435'
         }
     ]
 };

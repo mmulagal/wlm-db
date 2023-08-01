@@ -8,12 +8,14 @@ import {
     GetKmsKeysListSchema,
     GetSnsTopicsSchema,
     GetFSxRegionsSchema,
-    GetInstanceTypesSchema
+    GetInstanceTypesSchema,
+    GetKeyPairsSchema
 } from './schemas/aws-schemas';
 import {
     getAmiList,
     getVpcsList,
     getFSxAvailableRegionsList,
+    getKeyPairsList,
     getInstnaceTypes
 } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
@@ -94,6 +96,15 @@ export default function awsRoutes(fastify: FastifyInstance) {
             params: { credentialsId, region }
         } = request;
         const response = await getKmsKeysList(credentialsId, region);
+        return reply.send(response);
+    });
+
+    server.get(`${API_PREFIX_PATH}/keypairs`, { schema: GetKeyPairsSchema }, async (request, reply) => {
+        const {
+            params: { credentialsId, region }
+        } = request;
+
+        const response = await getKeyPairsList(credentialsId, region);
         return reply.send(response);
     });
 }
