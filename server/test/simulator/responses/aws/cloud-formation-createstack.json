@@ -1,0 +1,9 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "affe3fe5-29c5-4f20-bdc4-ec2782b99ee4",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "StackId": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TestStack1/7a2cccd0-2fb0-11ee-a6b7-0253026d13ca"
+}
