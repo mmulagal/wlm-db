@@ -18,7 +18,9 @@ export interface VPC {
         {
             CidrBlock?: String
         }
-    ]
+    ],
+    subnets: [],
+    securityGroups: []
 }
 
 export interface AD {
@@ -34,6 +36,14 @@ export interface Ami {
 
 export interface SNS {
     TopicArn: string,
+}
+
+export interface KmsKeys {
+    id?: string,
+    name?: string,
+    origin?: string,
+    state?: string,
+    expirationDate?: string
 }
 
 
@@ -68,4 +78,9 @@ export interface MssqlEntities {
         snsLoading: false,
         snsError: null
     },
+    getKmsList: {
+        kmsData: {keys?: KmsKeys[]},
+        kmsLoading: false,
+        kmsError: null
+    }
 }
