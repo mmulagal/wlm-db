@@ -16,7 +16,7 @@ import {
     getVpcsList,
     getFSxAvailableRegionsList,
     getKeyPairsList,
-    getInstnaceTypes
+    getInstanceTypes
 } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
@@ -73,7 +73,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const {
             params: { credentialsId, region }
         } = request;
-        const response = await getInstnaceTypes(credentialsId, region);
+        const response = await getInstanceTypes(credentialsId, region);
         return reply.send(response);
     });
 

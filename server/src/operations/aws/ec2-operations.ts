@@ -298,7 +298,7 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
     return { regions: fsxRegionsList };
 }
 
-async function getInstnaceTypes(credentialsId: string, region: string) {
+async function getInstanceTypes(credentialsId: string, region: string) {
     logger.info('List Ec2 Instance Types in region', { credentialsId, region });
     try {
         const response = await describeInstanceTypes(credentialsId, region);
@@ -342,4 +342,4 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     return { keyPairs: kpList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstnaceTypes };
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstanceTypes };

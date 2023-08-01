@@ -14,12 +14,10 @@ async function getSnsTopics(credentialsId: string, region: string) {
             return { Topics: [] };
         }
         const regexPattern = /(?<=:)[^:]+$/;
-        const updatedTopics = Topics.map(topic => {
-            const { TopicArn } = topic;
-            const topicNameMatch = TopicArn ? TopicArn.match(regexPattern) : ' ';
-            const TopicName = topicNameMatch ? topicNameMatch[0] : ' ';
-            return { TopicArn, TopicName };
-        });
+        const updatedTopics = Topics.map(({ TopicArn }) => ({
+            topicArn: TopicArn,
+            topicName: TopicArn?.match(regexPattern)?.[0] || '-'
+        }));
 
         return { Topics: updatedTopics };
     } catch (error: any) {
