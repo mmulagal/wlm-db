@@ -1,0 +1,319 @@
+{
+    "cf-quota": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "e87acaf2-dc8b-4576-94a0-52a93e4e7064",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Quotas": [
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:cloudformation/L-6A4B2F69",
+                "QuotaCode": "L-6A4B2F69",
+                "QuotaName": "Stack instance operations per administrator account",
+                "ServiceCode": "cloudformation",
+                "ServiceName": "AWS CloudFormation",
+                "Unit": "None",
+                "UsageMetric": {
+                    "MetricDimensions": {
+                        "Class": "None",
+                        "Resource": "StackInstanceOperations",
+                        "Service": "CloudFormation",
+                        "Type": "Resource"
+                    },
+                    "MetricName": "ResourceCount",
+                    "MetricNamespace": "AWS/Usage",
+                    "MetricStatisticRecommendation": "Maximum"
+                },
+                "Value": 10000
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:cloudformation/L-C8225BA5",
+                "QuotaCode": "L-C8225BA5",
+                "QuotaName": "Stack instances per stack set",
+                "ServiceCode": "cloudformation",
+                "ServiceName": "AWS CloudFormation",
+                "Unit": "None",
+                "Value": 100000
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:cloudformation/L-EC62D81A",
+                "QuotaCode": "L-EC62D81A",
+                "QuotaName": "Stack sets per administrator account",
+                "ServiceCode": "cloudformation",
+                "ServiceName": "AWS CloudFormation",
+                "Unit": "None",
+                "UsageMetric": {
+                    "MetricDimensions": {
+                        "Class": "None",
+                        "Resource": "StackSets",
+                        "Service": "CloudFormation",
+                        "Type": "Resource"
+                    },
+                    "MetricName": "ResourceCount",
+                    "MetricNamespace": "AWS/Usage",
+                    "MetricStatisticRecommendation": "Maximum"
+                },
+                "Value": 1000
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:cloudformation/L-0485CB21",
+                "QuotaCode": "L-0485CB21",
+                "QuotaName": "Stack count",
+                "ServiceCode": "cloudformation",
+                "ServiceName": "AWS CloudFormation",
+                "Unit": "None",
+                "Value": 2000
+            },
+            {
+                "Adjustable": false,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:cloudformation/L-87D14FB7",
+                "QuotaCode": "L-87D14FB7",
+                "QuotaName": "Output count in CloudFormation template",
+                "ServiceCode": "cloudformation",
+                "ServiceName": "AWS CloudFormation",
+                "Unit": "None",
+                "Value": 200
+            }
+        ]
+    },
+    "vpc-quota": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "2c5d5e80-dd45-425e-b702-1f32f37f3ae8",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "Quotas": [
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-5F53652F",
+                "QuotaCode": "L-5F53652F",
+                "QuotaName": "Elastic IP address quota per NAT gateway",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 2
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-E79EC296",
+                "QuotaCode": "L-E79EC296",
+                "QuotaName": "VPC security groups per Region",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 2500
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-F678F1CE",
+                "QuotaCode": "L-F678F1CE",
+                "QuotaName": "VPCs per Region",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-7E9ECCDB",
+                "QuotaCode": "L-7E9ECCDB",
+                "QuotaName": "Active VPC peering connections per VPC",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 50
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-93826ACB",
+                "QuotaCode": "L-93826ACB",
+                "QuotaName": "Routes per route table",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 50
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-45FE3B85",
+                "QuotaCode": "L-45FE3B85",
+                "QuotaName": "Egress-only internet gateways per Region",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-A4707A72",
+                "QuotaCode": "L-A4707A72",
+                "QuotaName": "Internet gateways per Region",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-589F43AA",
+                "QuotaCode": "L-589F43AA",
+                "QuotaName": "Route tables per VPC",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 200
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-B4A6D682",
+                "QuotaCode": "L-B4A6D682",
+                "QuotaName": "Network ACLs per VPC",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 200
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-DF5E4CA3",
+                "QuotaCode": "L-DF5E4CA3",
+                "QuotaName": "Network interfaces per Region",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5000
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-DFA99DE7",
+                "QuotaCode": "L-DFA99DE7",
+                "QuotaName": "Private IP address quota per NAT gateway",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 8
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-44499CD2",
+                "QuotaCode": "L-44499CD2",
+                "QuotaName": "Subnets that can be shared with an account",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 100
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-1B52E74A",
+                "QuotaCode": "L-1B52E74A",
+                "QuotaName": "Gateway VPC endpoints per Region",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 20
+            },
+            {
+                "Adjustable": false,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-8312C5BB",
+                "QuotaCode": "L-8312C5BB",
+                "QuotaName": "VPC peering connection request expiry hours",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 168
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-FE5A380F",
+                "QuotaCode": "L-FE5A380F",
+                "QuotaName": "NAT gateways per Availability Zone",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-83CA0A9D",
+                "QuotaCode": "L-83CA0A9D",
+                "QuotaName": "IPv4 CIDR blocks per VPC",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-2C462E13",
+                "QuotaCode": "L-2C462E13",
+                "QuotaName": "Participant accounts per VPC",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 100
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-DC9F7029",
+                "QuotaCode": "L-DC9F7029",
+                "QuotaName": "Outstanding VPC peering connection requests",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 25
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-29B6F2EB",
+                "QuotaCode": "L-29B6F2EB",
+                "QuotaName": "Interface VPC endpoints per VPC",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 50
+            },
+            {
+                "Adjustable": true,
+                "GlobalQuota": false,
+                "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:464262061435:vpc/L-2AFB9258",
+                "QuotaCode": "L-2AFB9258",
+                "QuotaName": "Security groups per network interface",
+                "ServiceCode": "vpc",
+                "ServiceName": "Amazon Virtual Private Cloud (Amazon VPC)",
+                "Unit": "None",
+                "Value": 5
+            }
+        ]
+    }
+}
