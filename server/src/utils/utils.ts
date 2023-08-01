@@ -22,7 +22,7 @@ function generateFsxParams(FSxDataLunSize: number) {
     const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize
 
     return {
-        StackName: `${prefix}-SQLFCIStack-${suffix}`,
+        StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
         VpcName: `${prefix}-vpc-${suffix}`,
         WSFClusterName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
         FSxFileSystemName: `${prefix}-fsx-${suffix}`,
