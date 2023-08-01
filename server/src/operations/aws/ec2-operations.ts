@@ -1,8 +1,18 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
 import { AWSQueryFields, FSX_SUPPORTED_REGIONS } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
+import {
+    describeVpc,
+    describeSecurityGroups,
+    describeSubnets,
+    describeRegions,
+    getAmis,
+    describeRouteTable,
+    describeKeyPairs
+} from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
+import { KeyPairsSchema } from '../../routes/types/aws.types';
+import { Static } from '@sinclair/typebox';
 import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
@@ -11,7 +21,7 @@ interface VPC {
     id?: string;
     state?: string;
     cidrBlock?: any;
-    tags?: any;
+    tags?: Array<{ Key?: string; Value?: string }>;
     isDefault?: boolean;
     subnets?: Array<Subnet>;
     securityGroups?: Array<SecurityGroup>;
@@ -22,10 +32,11 @@ interface Subnet {
     name?: string;
     state?: string;
     vpcId?: string;
-    tags?: any;
+    tags?: Array<{ Key?: string; Value?: string }>;
     cidrBlock?: string;
     availabilityZone?: string;
     availableIps?: number;
+    routeTableId?: string;
 }
 interface SecurityGroup {
     id?: string;
@@ -39,6 +50,8 @@ interface FSxAvailableRegions {
     regionCode: string;
     regionName: string;
 }
+
+type KeyPairType = Static<typeof KeyPairsSchema>;
 
 async function getVpcsList(credentialsId: string, region: string, fields?: string) {
     logger.info('List vpcs in a region', { credentialsId, region, fields });
@@ -131,10 +144,10 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     logger.info('List Subnets in a region', { credentialsId, region, params });
 
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
-    let subnetsList: Array<Subnet> = [];
+    const subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        subnetsList = subnets.map(
-            ({
+        for (const subnet of subnets) {
+            const {
                 SubnetId: id,
                 State: state,
                 VpcId: vpcId,
@@ -142,14 +155,24 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 CidrBlock: cidrBlock,
                 AvailabilityZone: availabilityZone,
                 AvailableIpAddressCount: availableIps
-            }) => {
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
-                }
-                return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name };
+            } = subnet;
+
+            let name = '-';
+            if (tags?.length) {
+                name = findNameFromTags(tags);
             }
-        );
+
+            const params = {
+                Filters: [{ Name: 'association.subnet-id', Values: [id as string] }]
+            };
+            const { RouteTables: [{ RouteTableId: routeTableId }] = [{}] } = await describeRouteTable(
+                credentialsId,
+                region,
+                params
+            );
+
+            subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name, routeTableId });
+        }
     }
     return subnetsList;
 }
@@ -246,8 +269,7 @@ function findNameFromTags(tags: Tag[]) {
 }
 
 async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
-    // eslint-disable-next-line prefer-rest-params
-    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', Array.from(arguments));
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const input = {
         AllRegions: false, // Describe only the regions enabled for the account
@@ -275,4 +297,19 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
     return { regions: fsxRegionsList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList };
+async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
+    logger.info('List key-pairs:', { credentialsId, region });
+
+    let kpList: Array<KeyPairType> = [];
+    const { KeyPairs: kps } = await describeKeyPairs(credentialsId, region, {});
+
+    if (kps?.length) {
+        kpList = kps.map(({ KeyPairId: id, KeyName: name }) => {
+            return { id, name };
+        });
+    }
+
+    return { keyPairs: kpList };
+}
+
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList };
