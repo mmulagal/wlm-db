@@ -6,7 +6,7 @@ import createError from 'http-errors';
 import { getSecretsManagerClient, createSecret } from '../lib/aws/secrets-manager';
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
-import { cfQuota, vpcQuota } from '../operations/aws/service-quotas-operations';
+import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
 import { SQL_AMI_NAMES, HttpErrorCodes, STACKS_DEPLOYED } from './consts';
 import getLogger from './logger';
 
@@ -21,14 +21,14 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
 
 async function isVpcQuotaReached(credentialsId: string, region: string) {
     logger.info('Performing vpc quota check in region ', { credentialsId, region });
-    const quotaDetails = await vpcQuota(credentialsId, region);
+    const quotaDetails = await getVpcQuota(credentialsId, region);
     const currentVpcCount = (await getVpcsList(credentialsId, region)).vpcs.length;
     return currentVpcCount == quotaDetails.vpcCountQuota;
 }
 
 async function isCfStackQuotaReached(credentialsId: string, region: string) {
     logger.info('Performing cloudformation stacks quota check in region ', region);
-    const quotaDetails = await cfQuota(credentialsId, region);
+    const quotaDetails = await getCfQuota(credentialsId, region);
     const stacksCount = await currentCfStacksCount(credentialsId, region);
     if (!stacksCount.currentStacksCount) {
         throw createError(
