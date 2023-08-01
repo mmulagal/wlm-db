@@ -1,17 +1,14 @@
-// import { KeyListEntry } from '@aws-sdk/client-kms';
-import createError from 'http-errors';
-// import { listKeys } from '../../lib/aws/kms';
+import { listStacks } from '../../lib/aws/cloud-formation';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-// interface KMS {
-//     id?: string;
-//     name?: string;
-//     origin?: string;
-//     state?: string;
-//     expirationDate?: any;
-// }
+async function currentCfStacksCount(credentialsId: string, region: string) {
+    logger.info('Fetching cloudformation stacks in region ', region);
+    const currentStacksCount = (await listStacks(credentialsId, region)).StackSummaries?.length;
+    logger.debug('Completed stacks count ', currentStacksCount);
+    return { currentStacksCount: currentStacksCount };
+}
 
 async function createTemplate(credentialsId: string, region: string) {
     logger.info('List Kms keys in a region', { credentialsId, region });
@@ -28,4 +25,4 @@ async function createTemplate(credentialsId: string, region: string) {
     }
 }
 
-export { createTemplate };
+export { currentCfStacksCount, createTemplate };
