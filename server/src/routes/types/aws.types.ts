@@ -152,6 +152,52 @@ const KeyPairsResponse = Type.Object({
     keyPairs: Type.Array(KeyPairsSchema)
 });
 
+// Cloud formation template creation Request and Response
+const cloudFormationTemplateResponse = Type.Object({
+    networkConfiguration: Type.Array(
+        Type.Object({
+            vpcId: Type.String(),
+            vpcCidr: Type.String(),
+            privateSubnet1Id: Type.String(),
+            routeTable1Id: Type.String(),
+            availabilityZone1: Type.String(),
+            privateSubnet2Id: Type.String(),
+            routeTable2Id: Type.String(),
+            availabilityZone2: Type.String()
+        })
+    ),
+    ec2Configuration: Type.Array(
+        Type.Object({
+            workloadInstanceType: Type.String(),
+            keyPairName: Type.String()
+        })
+    ),
+    adConfiguration: Type.Array(
+        Type.Object({
+            adScenarioType: Type.String(),
+            domainUsername: Type.String(),
+            domainPassword: Type.String(),
+            domainDnsname: Type.String(),
+            dnsIpaddress: Type.String()
+        })
+    ),
+    fsxConfiguration: Type.Array(
+        Type.Object({
+            fsxFileSystemId: Type.String(),
+            fsxUsername: Type.String(),
+            fsxPassword: Type.String(),
+            databaseSize: Type.String()
+        })
+    ),
+    sqlConfiguration: Type.Array(
+        Type.Object({
+            sqlAmiId: Type.String(),
+            serviceAccountName: Type.String(),
+            serviceAccountPassword: Type.String()
+        })
+    )
+});
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -164,5 +210,6 @@ export {
     FSxRegionsResponse,
     KmsKeysListResponse,
     KeyPairsSchema,
-    KeyPairsResponse
+    KeyPairsResponse,
+    cloudFormationTemplateResponse
 };

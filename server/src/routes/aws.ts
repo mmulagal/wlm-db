@@ -8,7 +8,8 @@ import {
     GetKmsKeysListSchema,
     GetSnsTopics,
     GetFSxRegionsSchema,
-    GetKeyPairsSchema
+    GetKeyPairsSchema,
+    CreateTemplateSchema
 } from './schemas/aws-schemas';
 import { getAmiList, getVpcsList, getFSxAvailableRegionsList, getKeyPairsList } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
@@ -99,9 +100,19 @@ export default function awsRoutes(fastify: FastifyInstance) {
         { schema: CreateTemplateSchema },
         async (request, reply) => {
             const {
-                params: { credentialsId, region, vpcId }
+                params: { credentialsId, region, vpcId },
+                body: { networkConfiguration, ec2Configuration, adConfiguration, fsxConfiguration, sqlConfiguration }
             } = request;
-            const response = await createTemplate(credentialsId, region, vpcId);
+            const response = await createTemplate(
+                credentialsId,
+                region,
+                vpcId,
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration
+            );
             return reply.send(response);
         }
     );
