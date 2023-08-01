@@ -9,7 +9,8 @@ import {
     SnsResponse,
     FSxRegionsResponse,
     KmsKeysListResponse,
-    AmiQueryString
+    AmiQueryString,
+    KeyPairsResponse
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -74,6 +75,14 @@ const GetKmsKeysListSchema = {
     }
 };
 
+const GetKeyPairsSchema = {
+    ...baseRequest,
+    description: 'List Key-Pairs in the given region',
+    response: {
+        200: KeyPairsResponse
+    }
+};
+
 const CreateTemplateSchema = {
     ...baseRequest,
     description: 'Create Cloud formation template in a region for existing vpc',
@@ -89,5 +98,6 @@ export {
     GetSnsTopics,
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
-    CreateTemplateSchema
+    CreateTemplateSchema,
+    GetKeyPairsSchema
 };

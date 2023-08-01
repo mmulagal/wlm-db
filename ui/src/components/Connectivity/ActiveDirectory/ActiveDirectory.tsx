@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './ActiveDirectory.module.scss';
@@ -65,13 +65,13 @@ const ActiveDirectory = () => {
                                 value={userName}
                                 className={styles.textField}
                             />
-                            <TextField
+                            <PasswordField
                                 label={GENERAL.PASSWORD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                 }}
                                 value={password}
-                                className={styles.textField}
+                                className={styles.textFieldPassword}
                                 //@ts-ignore
                                 type="password"
                             />

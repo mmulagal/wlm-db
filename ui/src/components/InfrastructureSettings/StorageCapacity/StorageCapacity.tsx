@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
@@ -6,12 +6,16 @@ import styles from './StorageCapacity.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import AccordionError from '../../../common/AccordionError/AccordionError';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../store/storeHooks';
+import { setStorageCapacity, setStorageUnit } from '../../../store/mssql/mssqlFormSlice';
 
 const StorageCapacity = () => {
-    const [input, setInput] = useState('');
+    const [input, setInput] = useState('1024');
+    const dispatch = useDispatch();
+    const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
 
     const units = ['TiB', 'GiB'];
-    const [unit, setUnit] = useState(GENERAL.SQL_SERVER_2016);
 
     //Function to generate the options for Select Field
     const generateUnitsForStorage = useMemo<optionType[]>((): optionType[] => {
@@ -22,6 +26,10 @@ const StorageCapacity = () => {
         });
         return options;
     }, []);
+
+    useEffect(() => {
+        dispatch(setStorageUnit(generateUnitsForStorage[1]));
+    }, [generateUnitsForStorage]);
     //Set the Header text here
     const setHeader = () => {
         if (checkError()) {
@@ -29,7 +37,7 @@ const StorageCapacity = () => {
         }
         return (
             <Typography variant="Regular_14">
-                {input} {unit}
+                {input} {selectedUnit?.label}
             </Typography>
         );
     };
@@ -41,11 +49,12 @@ const StorageCapacity = () => {
 
         if (e.target.value === '' || re.test(e.target.value)) {
             setInput(e.target.value);
+            dispatch(setStorageCapacity(e.target.value));
         }
     };
 
     const checkError = () => {
-        if (unit === 'TiB' && Number(input) > 192) {
+        if (selectedUnit?.label === 'TiB' && Number(input) > 192) {
             return GENERAL.ERROR_CAPACITY;
         }
     };
@@ -61,6 +70,7 @@ const StorageCapacity = () => {
                         <div className={styles.container}>
                             <TextField
                                 label={GENERAL.CAPACITY}
+                                info={<div>{GENERAL.CAPACITY_TOOLTIP}</div>}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     handleChange(e);
                                 }}
@@ -71,9 +81,9 @@ const StorageCapacity = () => {
                             <SelectField
                                 label={GENERAL.UNIT}
                                 isClearable={false}
-                                defaultValue={[generateUnitsForStorage[0]]}
+                                defaultValue={selectedUnit ? [selectedUnit] : [generateUnitsForStorage[0]]}
                                 onChange={(selectedOptions: any): void => {
-                                    setUnit(selectedOptions.label);
+                                    dispatch(setStorageUnit(selectedOptions));
                                 }}
                                 isSearchable={generateUnitsForStorage.length > 5}
                                 options={generateUnitsForStorage}

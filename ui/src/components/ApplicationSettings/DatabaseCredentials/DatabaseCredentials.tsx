@@ -4,10 +4,13 @@ import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
+import { useDispatch } from 'react-redux';
+import { setDBCredentialsName, setDBCredentialsPassword } from '../../../store/mssql/mssqlFormSlice';
 
 const DatabaseCredentials = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
+    const dispatch = useDispatch();
     //Set the Header text here
     const setHeader = () => {
         if (!userName || !password) {
@@ -30,6 +33,7 @@ const DatabaseCredentials = () => {
                                 label={GENERAL.USER_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setUserName(e.target.value);
+                                    dispatch(setDBCredentialsName(e.target.value));
                                 }}
                                 value={userName}
                                 className={styles.textField}
@@ -38,6 +42,7 @@ const DatabaseCredentials = () => {
                                 label={GENERAL.PASSWORD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
+                                    dispatch(setDBCredentialsPassword(e.target.value));
                                 }}
                                 value={password}
                                 className={styles.textField}

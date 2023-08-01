@@ -6,12 +6,21 @@ import { GENERAL } from '../../../utils/appConstants';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import styles from './AvailabilityZone.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../store/storeHooks';
+import {
+    setSelectedAzNode1,
+    setSelectedAzNode2,
+    setSelectedSubnetNode1,
+    setSelectedSubnetNode2
+} from '../../../store/mssql/mssqlFormSlice';
 
 const AvailabilityZone = () => {
-    const [zone1, setZone1] = useState('');
-    const [subNet1, setSubnet1] = useState<string | any>('');
-    const [zone2, setZone2] = useState('');
-    const [subNet2, setSubnet2] = useState<string | any>('');
+    const dispatch = useDispatch();
+    const selectedZone1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode1);
+    const selectedZone2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode2);
+    const selectedSubnet1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode1);
+    const selectedSubnet2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode2);
 
     //Function to generate the options for Select Field for Zones
     const zones = ['us-east-1a', 'us-east-1b'];
@@ -43,17 +52,17 @@ const AvailabilityZone = () => {
 
     //Set the Header text here
     const setHeader = () => {
-        if (!zone1 || !zone2 || !subNet1 || !subNet2) {
+        if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired />;
         } else {
             return (
                 <div className={CommonStyles.setHeaderStyle}>
                     <div className={CommonStyles.regular}>
-                        Node 1:{zone1} ({subNet1.label})
+                        Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
                     </div>
                     <div className={CommonStyles.separator} />
                     <div className={CommonStyles.regular}>
-                        Node 2:{zone2} ({subNet2.label})
+                        Node 2:{selectedZone2?.label} ({selectedSubnet2?.label})
                     </div>
                 </div>
             );
@@ -78,9 +87,9 @@ const AvailabilityZone = () => {
                                 label={GENERAL.AZ_Zone}
                                 placeholder="Select an availability zone"
                                 isClearable={false}
-                                value={zone1 ? generateOptionType(zone1, zone1, '', false, '') : undefined}
+                                value={selectedZone1 ? selectedZone1 : undefined}
                                 onChange={(selectedOptions: any): void => {
-                                    setZone1(selectedOptions.label);
+                                    dispatch(setSelectedAzNode1(selectedOptions));
                                 }}
                                 isSearchable={generateZones.length > 5}
                                 options={generateZones}
@@ -91,13 +100,9 @@ const AvailabilityZone = () => {
                                 label={GENERAL.SUBNET}
                                 placeholder="Select a subnet"
                                 isClearable={false}
-                                value={
-                                    subNet1
-                                        ? generateOptionType(subNet1.value, subNet1.label, subNet1.label2, false, '')
-                                        : undefined
-                                }
+                                value={selectedSubnet1 ? selectedSubnet1 : undefined}
                                 onChange={(selectedOptions: any): void => {
-                                    setSubnet1(selectedOptions);
+                                    dispatch(setSelectedSubnetNode1(selectedOptions));
                                 }}
                                 isSearchable={generateSubnetOptions.length > 5}
                                 options={generateSubnetOptions}
@@ -112,9 +117,9 @@ const AvailabilityZone = () => {
                                 label={GENERAL.AZ_Zone}
                                 placeholder="Select an availability zone"
                                 isClearable={false}
-                                value={zone2 ? generateOptionType(zone2, zone2, '', false, '') : undefined}
+                                value={selectedZone2 ? selectedZone2 : undefined}
                                 onChange={(selectedOptions: any): void => {
-                                    setZone2(selectedOptions.label);
+                                    dispatch(setSelectedAzNode2(selectedOptions));
                                 }}
                                 isSearchable={generateZones.length > 5}
                                 options={generateZones}
@@ -125,13 +130,9 @@ const AvailabilityZone = () => {
                                 label={GENERAL.SUBNET}
                                 placeholder="Select a subnet"
                                 isClearable={false}
-                                value={
-                                    subNet2
-                                        ? generateOptionType(subNet2.value, subNet2.label, subNet2.label2, false, '')
-                                        : undefined
-                                }
+                                value={selectedSubnet2 ? selectedSubnet2 : undefined}
                                 onChange={(selectedOptions: any): void => {
-                                    setSubnet2(selectedOptions);
+                                    dispatch(setSelectedSubnetNode2(selectedOptions));
                                 }}
                                 isSearchable={generateSubnetOptions.length > 5}
                                 options={generateSubnetOptions}

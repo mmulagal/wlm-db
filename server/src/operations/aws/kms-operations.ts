@@ -1,5 +1,4 @@
 import { KeyListEntry } from '@aws-sdk/client-kms';
-import createError from 'http-errors';
 import { listKeys, describeKey, listAliases } from '../../lib/aws/kms';
 import getLogger from '../../utils/logger';
 
@@ -16,16 +15,10 @@ interface KMS {
 async function getKmsKeysList(credentialsId: string, region: string): Promise<{ keys: KMS[]; totalRecords: number }> {
     logger.info('List Kms keys in a region', { credentialsId, region });
 
-    try {
-        const kmsKeysList = (await listKeys(credentialsId, region)) || [];
-        const keyData = await getKmsKeyDetails(credentialsId, region, kmsKeysList);
-        const totalRecords = keyData?.length;
-        return { keys: keyData, totalRecords };
-    } catch (error: any) {
-        const errMsg = `Failed to get the kms keys list. ${error.message}`;
-        logger.error(errMsg);
-        throw createError(error.statusCode || 500, errMsg);
-    }
+    const kmsKeysList = (await listKeys(credentialsId, region)) || [];
+    const keyData = await getKmsKeyDetails(credentialsId, region, kmsKeysList);
+    const totalRecords = keyData?.length;
+    return { keys: keyData, totalRecords };
 }
 
 async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysList: KeyListEntry[]): Promise<KMS[]> {

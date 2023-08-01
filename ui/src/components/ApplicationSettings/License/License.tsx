@@ -5,15 +5,36 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import styles from './License.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from '../../../store/storeHooks';
+import {
+    setSelectedCustomAMI,
+    setSelectedLicenseId,
+    setSelectedLicenseType
+} from '../../../store/mssql/mssqlFormSlice';
 
 const License = () => {
-    const [licenseSelect, setLicenseSelect] = useState(GENERAL.LICENSE_INCLUDED_AMI);
+    //Store related Data
+    const dispatch = useDispatch();
+    const licenseType = useAppSelector((state: any) => state.mssqlForm.license.selectedLicenseType);
+    const selectedLicenseId = useAppSelector((state: any) => state.mssqlForm.license.selectedLicenseId);
+    const selectedCustomAMI = useAppSelector((state: any) => state.mssqlForm.license.selectedCustomAMI);
+    const [licenseSelect, setLicenseSelect] = useState(licenseType);
 
     const amid = ['AMID1', 'AMID2', 'AMID3'];
-    const [amiID, setAmiID] = useState('');
 
     //Function to generate the options for Select Field
     const generateAMIId = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        amid?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '');
+            options.push(option);
+        });
+        return options;
+    }, []);
+
+    //Function to generate the options for Select Field for License
+    const generateAMIIdForLicense = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         amid?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -27,7 +48,7 @@ const License = () => {
             return <Typography variant="Regular_14">{GENERAL.LICENSE_INCLUDED_AMI}</Typography>;
         }
         if (licenseSelect === GENERAL.USE_CUSTOM_AMI) {
-            return <Typography variant="Regular_14">{amiID}</Typography>;
+            return <Typography variant="Regular_14">{selectedCustomAMI}</Typography>;
         }
     };
     return (
@@ -45,6 +66,7 @@ const License = () => {
                                 isChecked={licenseSelect === GENERAL.LICENSE_INCLUDED_AMI}
                                 onChange={() => {
                                     setLicenseSelect(GENERAL.LICENSE_INCLUDED_AMI);
+                                    dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
                                 }}
                                 children={GENERAL.LICENSE_INCLUDED_AMI}
                                 className=""
@@ -53,21 +75,37 @@ const License = () => {
                                 isChecked={licenseSelect === GENERAL.USE_CUSTOM_AMI}
                                 onChange={() => {
                                     setLicenseSelect(GENERAL.USE_CUSTOM_AMI);
+                                    dispatch(setSelectedLicenseType(GENERAL.USE_CUSTOM_AMI));
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
                             />
                         </div>
+                        {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
+                            <div className={styles.handleSelect}>
+                                <SelectField
+                                    label={'License ID'}
+                                    placeholder={GENERAL.SELECT_AMI_ID}
+                                    isClearable={false}
+                                    onChange={(selectedOptions: any): void => {
+                                        dispatch(setSelectedLicenseId(selectedOptions));
+                                    }}
+                                    value={selectedLicenseId ? selectedLicenseId : undefined}
+                                    isSearchable={generateAMIIdForLicense.length > 5}
+                                    options={generateAMIIdForLicense}
+                                />
+                            </div>
+                        )}
                         {licenseSelect === GENERAL.USE_CUSTOM_AMI && (
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.AMI_ID}
-                                    placeholder={GENERAL.SELECT_AMI_ID}
+                                    placeholder={GENERAL.SELECT_AMI_NAME}
                                     isClearable={false}
                                     onChange={(selectedOptions: any): void => {
-                                        setAmiID(selectedOptions.label);
+                                        dispatch(setSelectedCustomAMI(selectedOptions));
                                     }}
-                                    defaultValue={[generateAMIId[0]]}
+                                    value={selectedCustomAMI ? selectedCustomAMI : undefined}
                                     isSearchable={generateAMIId.length > 5}
                                     options={generateAMIId}
                                 />
