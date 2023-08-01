@@ -1,0 +1,16 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "4b29666b-76c2-49cc-91fe-a9d7910276eb",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "RouteTables": [
+        {
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-0252de162c006de11",
+            "VpcId": "vpc-116d9174",
+            "OwnerId": "464262061435"
+        }
+    ]
+}

@@ -10,7 +10,9 @@ import {
     DescribeImagesCommandInput,
     DescribeRegionsCommand,
     DescribeRegionsCommandInput,
-    DescribeRegionsCommandOutput
+    DescribeRegionsCommandOutput,
+    DescribeRouteTablesCommand,
+    DescribeRouteTablesCommandInput
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -87,4 +89,23 @@ async function describeRegions(
     return response;
 }
 
-export { getEC2Client, describeVpc, describeSubnets, describeSecurityGroups, getAmis, describeRegions };
+async function describeRouteTable(credentialsId: string, region: string, params: DescribeRouteTablesCommandInput) {
+    logger.info('Describe route table:', { region, params });
+
+    const ec2 = await getEC2Client(region, credentialsId);
+
+    const resp = await ec2.send(new DescribeRouteTablesCommand(params));
+    logger.debug('describe route table response:', resp);
+
+    return resp;
+}
+
+export {
+    getEC2Client,
+    describeVpc,
+    describeSubnets,
+    describeSecurityGroups,
+    getAmis,
+    describeRegions,
+    describeRouteTable
+};

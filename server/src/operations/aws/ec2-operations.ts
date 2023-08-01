@@ -1,7 +1,14 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
 import { AWSQueryFields, FSX_SUPPORTED_REGIONS } from '../../utils/consts';
-import { describeVpc, describeSecurityGroups, describeSubnets, describeRegions, getAmis } from '../../lib/aws/ec2';
+import {
+    describeVpc,
+    describeSecurityGroups,
+    describeSubnets,
+    describeRegions,
+    getAmis,
+    describeRouteTable
+} from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { filterSqlAmis } from '../../utils/utils';
 
@@ -11,7 +18,7 @@ interface VPC {
     id?: string;
     state?: string;
     cidrBlock?: any;
-    tags?: any;
+    tags?: Array<{ Key?: string; Value?: string }>;
     isDefault?: boolean;
     subnets?: Array<Subnet>;
     securityGroups?: Array<SecurityGroup>;
@@ -22,10 +29,11 @@ interface Subnet {
     name?: string;
     state?: string;
     vpcId?: string;
-    tags?: any;
+    tags?: Array<{ Key?: string; Value?: string }>;
     cidrBlock?: string;
     availabilityZone?: string;
     availableIps?: number;
+    routeTableId?: string;
 }
 interface SecurityGroup {
     id?: string;
@@ -133,10 +141,10 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
     logger.info('List Subnets in a region', { credentialsId, region, params });
 
     const { Subnets: subnets } = await describeSubnets(credentialsId, region, params);
-    let subnetsList: Array<Subnet> = [];
+    const subnetsList: Array<Subnet> = [];
     if (subnets?.length) {
-        subnetsList = subnets.map(
-            ({
+        for (const subnet of subnets) {
+            const {
                 SubnetId: id,
                 State: state,
                 VpcId: vpcId,
@@ -144,14 +152,24 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 CidrBlock: cidrBlock,
                 AvailabilityZone: availabilityZone,
                 AvailableIpAddressCount: availableIps
-            }) => {
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
-                }
-                return { id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name };
+            } = subnet;
+
+            let name = '-';
+            if (tags?.length) {
+                name = findNameFromTags(tags);
             }
-        );
+
+            const params = {
+                Filters: [{ Name: 'association.subnet-id', Values: [id as string] }]
+            };
+            const { RouteTables: [{ RouteTableId: routeTableId }] = [{}] } = await describeRouteTable(
+                credentialsId,
+                region,
+                params
+            );
+
+            subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name, routeTableId });
+        }
     }
     return subnetsList;
 }

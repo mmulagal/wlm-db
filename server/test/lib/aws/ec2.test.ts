@@ -1,9 +1,10 @@
-import { getAmis, describeRegions } from '../../../src/lib/aws/ec2';
+import { getAmis, describeRegions, describeRouteTable } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
 import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
+import routeTables from '../../simulator/responses/aws/list-route-tables.json';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 const REGION = DEFAULT_AWS_REGION;
@@ -35,5 +36,16 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
 
         const response = await describeRegions(credentialsType, input);
         expect(response).toEqual(fsxRegions);
+    });
+});
+
+describe('List Route Tables', () => {
+    it('Lists Route tables for a subnet', async () => {
+        const params = {
+            Filters: [{ Name: 'association.subnet-id', Values: ['subnet-5a37222d'] }]
+        };
+
+        const response = await describeRouteTable(CREDENTIALS_ID, REGION, params);
+        expect(response).toEqual(routeTables);
     });
 });

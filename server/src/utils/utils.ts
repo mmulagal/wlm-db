@@ -19,17 +19,29 @@ function generateFsxParams(FSxDataLunSize: number) {
     const prefix = 'wlmdb';
     const suffix = Date.now();
 
+    const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize
+
     return {
+        StackName: `${prefix}-SQLFCIStack-${suffix}`,
+        VpcName: `${prefix}-vpc-${suffix}`,
+        WSFClusterName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
         FSxFileSystemName: `${prefix}-fsx-${suffix}`,
         FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
-        FSxDataVolumeSize: 1.1 * FSxDataLunSize, // FSxDataLunSize + 10% of FSxDataLunSize
+        FSxDataVolumeSize,
         FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
-        FSxLogVolumeSize: 0.25 * 1.1 * FSxDataLunSize, // 25% of FSxDataVolumeSize
+        FSxLogVolumeSize: 0.25 * FSxDataVolumeSize, // 25% of FSxDataVolumeSize
         FSxTempDBVolumeName: `${prefix}-sqltemp-${suffix}`,
-        FSxTempDBVolumeSize: 0.1 * 1.1 * FSxDataLunSize, // 10% of FSxDataVolumeSize
+        FSxTempDBVolumeSize: 0.1 * FSxDataVolumeSize, // 10% of FSxDataVolumeSize
         FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
-        FSxSvmName: `${prefix}-svm-${suffix}`
+        FSxSvmName: `${prefix}-svm-${suffix}`,
+        SQLigroupname: `${prefix}-sqligroup-${suffix}`,
+        SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
+        NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`]
     };
+}
+
+function generateRandomNumberInRange(min: number, max: number) {
+    return Math.floor(min + Math.random() * (max - min + 1));
 }
 
 export { filterSqlAmis, generateFsxParams };
