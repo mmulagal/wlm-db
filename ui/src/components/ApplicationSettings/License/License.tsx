@@ -92,7 +92,7 @@ const License = () => {
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
-                                // isDisabled
+                                isDisabled
                             />
                         </div>
                         {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
