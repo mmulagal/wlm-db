@@ -166,11 +166,8 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
             const params = {
                 Filters: [{ Name: 'association.subnet-id', Values: [id as string] }]
             };
-            const { RouteTables: [{ RouteTableId: routeTableId }] = [{}] } = await describeRouteTable(
-                credentialsId,
-                region,
-                params
-            );
+            const { RouteTables: [{ RouteTableId: routeTableId } = { RouteTableId: undefined }] = [] } =
+                await describeRouteTable(credentialsId, region, params);
 
             subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name, routeTableId });
         }
