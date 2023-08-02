@@ -20,7 +20,7 @@ async function getFSxFileSystemsList(
     logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
 
     let { FileSystems: allFSxFilesystems } = await describeFSxFileSystems(credentialsId, region);
-    const ontapFSxFilesystems: Array<FSxFileSystemType> = [];
+    const ontapFSxFilesystems: FSxFileSystemType[] = [];
 
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
