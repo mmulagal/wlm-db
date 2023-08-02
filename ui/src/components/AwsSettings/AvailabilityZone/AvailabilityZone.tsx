@@ -21,6 +21,7 @@ const AvailabilityZone = () => {
     const selectedZone2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode2);
     const selectedSubnet1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode1);
     const selectedSubnet2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode2);
+    const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
 
     //Function to generate the options for Select Field for Zones
     const zones = ['us-east-1a', 'us-east-1b'];
@@ -53,7 +54,7 @@ const AvailabilityZone = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
-            return <ActionRequired />;
+            return <ActionRequired error={!isAZNotFilled ? true : false} />;
         } else {
             return (
                 <div className={CommonStyles.setHeaderStyle}>

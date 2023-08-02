@@ -1,11 +1,17 @@
-import { getAllAwsCredentials } from '../../lib/cloud-manager/credentials';
+import { getAllCredentials } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
+import getLogger from '../../utils/logger';
+
+const logger = getLogger();
+
 /**
  * Returns array of aws assume role
  * credentials added to the account
  */
-async function getAwsCredentials(credentialsType: string): Promise<CredentialsResponseType> {
-    const data = await getAllAwsCredentials(credentialsType);
+async function getCredentials(credentialsType: string): Promise<CredentialsResponseType> {
+    logger.info('Getting credentials ', credentialsType);
+
+    const data = await getAllCredentials(credentialsType);
     return data.map(({ credentialsId, extra: { name, arn } }) => ({
         credentialsId,
         name,
@@ -14,4 +20,4 @@ async function getAwsCredentials(credentialsType: string): Promise<CredentialsRe
     }));
 }
 
-export { getAwsCredentials };
+export { getCredentials };

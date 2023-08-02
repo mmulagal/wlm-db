@@ -1,10 +1,9 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { MssqlEntities } from "../../utils/types/mssqlTypes";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { MssqlEntities } from '../../utils/types/mssqlTypes';
 
-
-const initialState: MssqlEntities =  {
+const initialState: MssqlEntities = {
     getCredentials: {
-        credentialData: [],
+        credentialData: null,
         credentialLoading: false,
         credentialError: null
     },
@@ -19,9 +18,9 @@ const initialState: MssqlEntities =  {
         vpcError: null
     },
     getAdsList: {
-        adData: {},
-        adLoading: false,
-        adError: null
+        adsData: {},
+        adsLoading: false,
+        adsError: null
     },
     getAmiList: {
         amiData: {},
@@ -37,7 +36,23 @@ const initialState: MssqlEntities =  {
         kmsData: {},
         kmsLoading: false,
         kmsError: null
-    }
+    },
+    getKeyPairList: {
+        keyPairData: {},
+        keyPairLoading: false,
+        keyPairError: null
+    },
+    getInstanceTypeList: {
+        instanceTypeData: {},
+        instanceTypeLoading: false,
+        instanceTypeError: null
+    },
+    getFsxnList: {
+        fsxnData: {},
+        fsxnLoading: false,
+        fsxnError: null
+    },
+
 };
 
 const mssqlSlice = createSlice({
@@ -57,25 +72,36 @@ const mssqlSlice = createSlice({
             state.getAdsList = action.payload;
         },
         addAmiList: (state, action: PayloadAction<any>) => {
-            state.getAmiList= action.payload;
+            state.getAmiList = action.payload;
         },
         addSnsList: (state, action: PayloadAction<any>) => {
-            state.getSnsList= action.payload;
+            state.getSnsList = action.payload;
         },
         addKmsKeysList: (state, action: PayloadAction<any>) => {
-            state.getKmsList= action.payload;
+            state.getKmsList = action.payload;
+        },
+        addKeyPairList: (state, action: PayloadAction<any>) => {
+            state.getKeyPairList= action.payload;
+        },
+        addInstanceTypeList: (state, action: PayloadAction<any>) => {
+            state.getInstanceTypeList= action.payload;
+        },
+        addFsxnList: (state, action: PayloadAction<any>) => {
+            state.getFsxnList= action.payload;
         }
     }
+});
 
-})
-
-export const { 
-    addCredentials, 
-    addRegions, 
-    addVpcList, 
-    addAdsList, 
-    addAmiList, 
-    addSnsList, 
-    addKmsKeysList 
+export const {
+    addCredentials,
+    addRegions,
+    addVpcList,
+    addAdsList,
+    addAmiList,
+    addSnsList,
+    addKmsKeysList,
+    addKeyPairList,
+    addInstanceTypeList,
+    addFsxnList
 } = mssqlSlice.actions;
 export default mssqlSlice;

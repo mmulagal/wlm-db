@@ -7,6 +7,19 @@ const AwsParams = Type.Object({
     region: Type.String()
 });
 
+// EC2 instance Types response
+const InstanceTypes = Type.Object({
+    instanceTypes: Type.Array(
+        Type.Object({
+            instanceType: Type.Optional(Type.String()),
+            vCpus: Type.Optional(Type.Number()),
+            ramInMib: Type.Optional(Type.Number()),
+            iopsInMbps: Type.Optional(Type.Number())
+        })
+    ),
+    totalRecords: Type.Optional(Type.Number())
+});
+
 // VPC list Request and Response
 const AwsVpcQueryString = Type.Object({
     fields: Type.Optional(Type.String())
@@ -85,10 +98,12 @@ const AmiResponse = Type.Object({
     )
 });
 
+//SNS list topics Response
 const SnsResponse = Type.Object({
     Topics: Type.Array(
         Type.Object({
-            TopicArn: Type.Optional(Type.String())
+            topicName: Type.Optional(Type.String()),
+            topicArn: Type.Optional(Type.String())
         })
     )
 });
@@ -227,6 +242,7 @@ const FSxFileSystemsResponse = Type.Object({
 export {
     AwsVpcQueryString,
     AwsParams,
+    InstanceTypes,
     AwsRegionsParams,
     VpcListResponse,
     AmiResponse,

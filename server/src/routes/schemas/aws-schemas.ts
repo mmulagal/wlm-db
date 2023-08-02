@@ -12,6 +12,7 @@ import {
     FSxFileSystemsResponse,
     KmsKeysListResponse,
     AmiQueryString,
+    InstanceTypes,
     KeyPairsResponse
 } from '../types/aws.types';
 
@@ -50,8 +51,17 @@ const GetAmiSchema = {
     }
 };
 
+// GET EC2 instncetypes
+const GetInstanceTypesSchema = {
+    ...baseRequest,
+    description: 'Get EC2 instnce types in the region',
+    response: {
+        200: InstanceTypes
+    }
+};
+
 // GET SNS Topics
-const GetSnsTopics = {
+const GetSnsTopicsSchema = {
     ...baseRequest,
     description: 'Get SNS Topics in the region',
     response: {
@@ -93,14 +103,14 @@ const GetKeyPairsSchema = {
         200: KeyPairsResponse
     }
 };
-
 export {
     GetVpcsListSchema,
     GetAmiSchema,
     GetAdsSchema,
-    GetSnsTopics,
+    GetSnsTopicsSchema,
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
+    GetInstanceTypesSchema,
     GetKeyPairsSchema,
     GetFSxFileSystemsSchema
 };

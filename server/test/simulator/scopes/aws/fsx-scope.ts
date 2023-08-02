@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { FSxClient, DescribeFileSystemsCommand, DescribeVolumesCommand } from '@aws-sdk/client-fsx';
 import { mockClient } from 'aws-sdk-client-mock';

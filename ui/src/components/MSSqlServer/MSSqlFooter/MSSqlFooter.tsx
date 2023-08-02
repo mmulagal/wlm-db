@@ -5,7 +5,7 @@ import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { handleCreateSQLServer } from './createSqlServer';
 
 const MSSqlFooter = () => {
-    const state = useAppSelector(state => state.mssqlForm);
+    const state = useAppSelector(state => state);
     const dispatch = useDispatch();
     const handleCreate = () => {
         handleCreateSQLServer(state, dispatch);

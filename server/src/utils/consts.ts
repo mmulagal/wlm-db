@@ -53,10 +53,7 @@ export const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
 export const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Default values used in test routines.
-export const DEFAULT_AWS_CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
-export const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 export const DEFAULT_AWS_REGION = 'us-east-1';
-export const DEFAULT_AWS_VPC_ID = 'vpc-84b3afe6';
 
 export const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 export const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
@@ -395,5 +392,20 @@ export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)']
 ]);
+
+export const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
+    '.nano',
+    '.micro',
+    '.small',
+    '.large',
+    'gd',
+    'gn',
+    't3a',
+    't3g',
+    'mac',
+    'm7g',
+    'C7g',
+    'Im4gn'
+];
 
 export const WLMDB = 'wlmdb';

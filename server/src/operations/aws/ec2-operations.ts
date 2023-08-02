@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields, FSX_SUPPORTED_REGIONS } from '../../utils/consts';
+import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -8,7 +8,8 @@ import {
     describeRegions,
     getAmis,
     describeRouteTable,
-    describeKeyPairs
+    describeKeyPairs,
+    describeInstanceTypes
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -256,6 +257,7 @@ async function getAmiList(
             new Date(b.name.substring(b.name.length - 10)).getTime() -
             new Date(a.name.substring(a.name.length - 10)).getTime()
     );
+
     return { amis: response };
 }
 
@@ -294,6 +296,31 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
     return { regions: fsxRegionsList };
 }
 
+async function getInstanceTypes(credentialsId: string, region: string) {
+    logger.info('List Ec2 Instance Types in region', { credentialsId, region });
+
+    const response = await describeInstanceTypes(credentialsId, region);
+    /* 
+        SDK returns all the instance types which cannot be used to create the instance for SQL deployment.
+        Still trying to figure out on what basis the instances are listed in fro creation. As temp solution 
+        went through the instances listed in Launch wizard and excluded few types. Needs work to filter out
+        Created a list of instance that can be excluded EC2_INSTANCE_TYPE_EXCLUDE_LIST
+        */
+    const filteredInstances = response
+        .filter(
+            ({ InstanceType }) =>
+                !EC2_INSTANCE_TYPE_EXCLUDE_LIST.some((excludedType: string) => InstanceType?.includes(excludedType))
+        )
+        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo }) => ({
+            instanceType: InstanceType,
+            iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
+            vCpus: VCpuInfo?.DefaultVCpus,
+            ramInMib: MemoryInfo?.SizeInMiB
+        }));
+    const totalRecords = filteredInstances?.length;
+    return { instanceTypes: filteredInstances, totalRecords };
+}
+
 async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
     logger.info('List key-pairs:', { credentialsId, region });
 
@@ -309,4 +336,4 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     return { keyPairs: kpList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList };
+export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstanceTypes };

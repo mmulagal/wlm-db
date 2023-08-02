@@ -65,6 +65,7 @@ async function listAliases(
         return listAliases(credentialsId, region, params, data, nextMarker, kms);
     }
     logger.debug('list aliases response', data);
+
     return data;
 }
 
@@ -99,6 +100,7 @@ async function listKeys(
         return listKeys(credentialsId, region, data, nextMarker, kms);
     }
     logger.debug('list keys response', data);
+
     return data;
 }
 

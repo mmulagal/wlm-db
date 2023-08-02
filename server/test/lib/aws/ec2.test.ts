@@ -6,14 +6,10 @@ import {
     describeVpc,
     describeSecurityGroups,
     describeSubnets,
+    describeInstanceTypes,
     describeRouteTable
 } from '../../../src/lib/aws/ec2';
-import {
-    SQL_AMI_NAMES,
-    FSX_SUPPORTED_REGIONS,
-    DEFAULT_AWS_REGION,
-    DEFAULT_AWS_CREDENTIALS_TYPE
-} from '../../../src/utils/consts';
+import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
@@ -24,6 +20,8 @@ import keyPairs from '../../simulator/responses/aws/list-key-pairs.json';
 import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
+import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
+import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
 
@@ -91,6 +89,12 @@ describe('EC2 Lib', () => {
 
         const response = await describeRegions(DEFAULT_AWS_CREDENTIALS_TYPE, input);
         expect(response).toEqual(fsxRegions);
+    });
+
+    it('List EC2 instance types forn specific region', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const resp = await describeInstanceTypes(credentialsId, 'us-east-1');
+        expect(resp).toEqual(ec2instanceTypes.InstanceTypes);
     });
 
     it('List of key-pairs in a given AWS region', async () => {

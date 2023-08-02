@@ -21,36 +21,6 @@ const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const dispatch = useDispatch();
 
-    //Code to open the Accordion
-    const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
-    const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
-    const isCreatePresed = useAppSelector(state => state.msSqlAction.isCreatePressed);
-    const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
-    const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
-    const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
-
-    useEffect(() => {
-        if (isCreatePresed && (!isVPCNotFilled || !isAZNotFilled || !isDBCredPassword)) {
-            accordionContext({
-                2: !isVPCNotFilled ? true : false,
-                3: !isAZNotFilled ? true : false,
-                11: !isDBCredPassword ? true : false,
-                13: !isActiveDirectoryFilled ? true : false,
-                15: !isFsxNNameFilled ? true : false
-            });
-            dispatch(setCreatePressed(false));
-        }
-    }, [
-        dispatch,
-        accordionContext,
-        isVPCNotFilled,
-        isCreatePresed,
-        isDBCredPassword,
-        isAZNotFilled,
-        isActiveDirectoryFilled,
-        isFsxNNameFilled
-    ]);
-
     //Getting the Data from state
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
@@ -62,8 +32,56 @@ const AwsAccount = () => {
     useEffect(() => {
         if (credentialData && credentialData.length > 0) {
             setNoAccount(false);
+            accordionContext({
+                1: false
+            });
+        } else if (credentialData && credentialData.length === 0) {
+            accordionContext({
+                1: true
+            });
         }
     }, [credentialData]);
+
+    //Code to open the Accordion
+    const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
+    const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
+    const isCreatePresed = useAppSelector(state => state.msSqlAction.isCreatePressed);
+    const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
+    const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
+    const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isProperDBName = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+
+    useEffect(() => {
+        if (
+            isCreatePresed &&
+            (!isVPCNotFilled ||
+                !isAZNotFilled ||
+                !isDBCredPassword ||
+                !isActiveDirectoryFilled ||
+                !isFsxNNameFilled ||
+                !isProperDBName)
+        ) {
+            accordionContext({
+                2: !isVPCNotFilled ? true : false,
+                3: !isAZNotFilled ? true : false,
+                11: !isDBCredPassword ? true : false,
+                13: !isActiveDirectoryFilled ? true : false,
+                15: !isFsxNNameFilled ? true : false,
+                10: !isProperDBName ? true : false
+            });
+            dispatch(setCreatePressed(false));
+        }
+    }, [
+        dispatch,
+        accordionContext,
+        isVPCNotFilled,
+        isCreatePresed,
+        isDBCredPassword,
+        isAZNotFilled,
+        isActiveDirectoryFilled,
+        isFsxNNameFilled,
+        isProperDBName
+    ]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {

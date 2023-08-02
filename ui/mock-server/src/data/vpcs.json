@@ -46,7 +46,8 @@
               "Value": "Y"
             }
           ],
-          "name": "HCL-CC-1"
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
         },
         {
           "id": "subnet-74a1b303",
@@ -69,7 +70,8 @@
               "Value": "HCL"
             }
           ],
-          "name": "HCL-CC-2"
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
         }
       ],
       "securityGroups": [
@@ -142,7 +144,8 @@
               "Value": "Y"
             }
           ],
-          "name": "HCL-CC-1"
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
         },
         {
           "id": "subnet-74a1b303",
@@ -165,7 +168,8 @@
               "Value": "HCL"
             }
           ],
-          "name": "HCL-CC-2"
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
         }
       ],
       "securityGroups": [
@@ -238,7 +242,8 @@
               "Value": "Y"
             }
           ],
-          "name": "HCL-CC-1"
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
         },
         {
           "id": "subnet-74a1b303",
@@ -261,7 +266,8 @@
               "Value": "HCL"
             }
           ],
-          "name": "HCL-CC-2"
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
         }
       ],
       "securityGroups": [
@@ -334,7 +340,8 @@
               "Value": "Y"
             }
           ],
-          "name": "HCL-CC-1"
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
         },
         {
           "id": "subnet-74a1b303",
@@ -357,7 +364,8 @@
               "Value": "HCL"
             }
           ],
-          "name": "HCL-CC-2"
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
         }
       ],
       "securityGroups": [
