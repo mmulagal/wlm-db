@@ -1,96 +1,94 @@
-
 export interface Credentials {
-    credentialsId?: string,
-    name?: string,
-    arn?: string,
-    providerAccountId?: string
+    credentialsId?: string;
+    name?: string;
+    arn?: string;
+    providerAccountId?: string;
 }
 
 export interface Regions {
-    regionCode?: string,
-    regionName?: string
+    regionCode?: string;
+    regionName?: string;
 }
 
 export interface VPC {
-    id?: string,
-    name?: string,
+    id?: string;
+    name?: string;
     cidrBlock?: [
         {
-            CidrBlock?: String
+            CidrBlock?: String;
         }
-    ],
-    subnets: [],
-    securityGroups: []
+    ];
+    subnets: [];
+    securityGroups: [];
 }
 
 export interface AD {
-    id?: string,
-    dnsIpAddress?: Array<string>,
-    domainName?: string
+    id?: string;
+    dnsIpAddress?: Array<string>;
+    domainName?: string;
 }
 
 export interface Ami {
-    name: string,
-    imageId: string
+    name: string;
+    imageId: string;
 }
 
 export interface SNS {
-    TopicArn: string,
+    TopicArn: string;
 }
 
 export interface KmsKeys {
-    id?: string,
-    name?: string,
-    origin?: string,
-    state?: string,
-    expirationDate?: string
+    id?: string;
+    name?: string;
+    origin?: string;
+    state?: string;
+    expirationDate?: string;
 }
 
 export interface KeyPairs {
-    id?: string,
-    name?: string
+    id?: string;
+    name?: string;
 }
-
 
 export interface MssqlEntities {
     getCredentials: {
-        credentialData: Credentials[],
-        credentialLoading: false,
-        credentialError: null
-    },
+        credentialData: Credentials[] | null;
+        credentialLoading: false;
+        credentialError: null;
+    };
     getRegions: {
-        regionsData: {regions?: Regions[]},
-        regionsLoading: false,
-        regionsError: null
-    },
+        regionsData: { regions?: Regions[] };
+        regionsLoading: false;
+        regionsError: null;
+    };
     getVPCList: {
-        vpcData: {vpcs?: VPC[]},
-        vpcLoading: false,
-        vpcError: null
-    },
+        vpcData: { vpcs?: VPC[] };
+        vpcLoading: false;
+        vpcError: null;
+    };
     getAdsList: {
-        adsData: {directories?: AD[]},
-        adsLoading: false,
-        adsError: null
-    },
+        adsData: { directories?: AD[] };
+        adsLoading: false;
+        adsError: null;
+    };
     getAmiList: {
-        amiData: {amis?: Ami[]},
-        amiLoading: false,
-        amiError: null
-    },
+        amiData: { amis?: Ami[] };
+        amiLoading: false;
+        amiError: null;
+    };
     getSnsList: {
-        snsData: {Topics?: SNS[]},
-        snsLoading: false,
-        snsError: null
-    },
+        snsData: { Topics?: SNS[] };
+        snsLoading: false;
+        snsError: null;
+    };
     getKmsList: {
-        kmsData: {keys?: KmsKeys[]},
-        kmsLoading: false,
-        kmsError: null
-    },
+        kmsData: { keys?: KmsKeys[] };
+        kmsLoading: false;
+        kmsError: null;
+    };
     getKeyPairList: {
-        keyPairData: {keyPairs?: KmsKeys[]},
-        keyPairLoading: false,
-        keyPairError: null
-    }
+        keyPairData: { keyPairs?: KmsKeys[] };
+        keyPairLoading: false;
+        keyPairError: null;
+    };
 }

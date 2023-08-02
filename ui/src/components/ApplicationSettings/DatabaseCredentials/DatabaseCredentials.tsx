@@ -43,6 +43,7 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
+                                error={!isDBPasswordFilled ? 'Action Required' : ''}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setDBCredentialsPassword(e.target.value));

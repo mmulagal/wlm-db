@@ -21,6 +21,27 @@ const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const dispatch = useDispatch();
 
+    //Getting the Data from state
+    const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
+    const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
+
+    // To check whether account present or not
+    const [noAccount, setNoAccount] = useState(true);
+
+    // To set noAccount flag is present or not
+    useEffect(() => {
+        if (credentialData && credentialData.length > 0) {
+            setNoAccount(false);
+            accordionContext({
+                1: false
+            });
+        } else if (credentialData && credentialData.length === 0) {
+            accordionContext({
+                1: true
+            });
+        }
+    }, [credentialData]);
+
     //Code to open the Accordion
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
@@ -31,7 +52,15 @@ const AwsAccount = () => {
     const isProperDBName = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
     useEffect(() => {
-        if (isCreatePresed && (!isVPCNotFilled || !isAZNotFilled || !isDBCredPassword)) {
+        if (
+            isCreatePresed &&
+            (!isVPCNotFilled ||
+                !isAZNotFilled ||
+                !isDBCredPassword ||
+                !isActiveDirectoryFilled ||
+                !isFsxNNameFilled ||
+                !isProperDBName)
+        ) {
             accordionContext({
                 2: !isVPCNotFilled ? true : false,
                 3: !isAZNotFilled ? true : false,
@@ -51,22 +80,9 @@ const AwsAccount = () => {
         isAZNotFilled,
         isActiveDirectoryFilled,
         isFsxNNameFilled,
-        isProperDBName
+        isProperDBName,
+        noAccount
     ]);
-
-    //Getting the Data from state
-    const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
-    const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
-
-    // To check whether account present or not
-    const [noAccount, setNoAccount] = useState(true);
-
-    // To set noAccount flag is present or not
-    useEffect(() => {
-        if (credentialData && credentialData.length > 0) {
-            setNoAccount(false);
-        }
-    }, [credentialData]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
