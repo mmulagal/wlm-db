@@ -20,15 +20,22 @@ const initialState: any = {
         selectedExistingSecurityGroup: ''
     },
     operatingSystem: {
-        selectedOperatingSystem: GENERAL.WIN_SERVER_2016
+        label: GENERAL.WIN_SERVER_2016,
+        value: GENERAL.WIN_SERVER_2016_VERSION
     },
-    dbVersion: GENERAL.SQL_SERVER_2016,
+    dbVersion: {
+        value: GENERAL.SQL_SERVER_2016_VERSION,
+        label: GENERAL.SQL_SERVER_2016
+    },
     dbDeploymentModel: GENERAL.FAILOVER_CLUSTER,
-    dbEdition: GENERAL.SQL_SERVER_STANDARD_EDITION,
+    dbEdition: {
+        label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+        value: GENERAL.SQL_SERVER_STANDARD
+    },
     license: {
         selectedLicenseType: GENERAL.LICENSE_INCLUDED_AMI,
-        selectedLicenseId: '',
-        selectedCustomAMI: ''
+        selectedLicenseId: null,
+        selectedCustomAMI: null
     },
     dbName: '',
     dbCredentials: {
@@ -81,7 +88,7 @@ const mssqlFormSlice = createSlice({
             state.awsAccount.selectedCredential = action.payload;
         },
         setSelectedOperatingSystem(state, action: PayloadAction<any>) {
-            state.operatingSystem.selectedOperatingSystem = action.payload;
+            state.operatingSystem = action.payload;
         },
         //Security Group
         setSelectedSecurityGroup(state, action: PayloadAction<any>) {
@@ -147,6 +154,19 @@ const mssqlFormSlice = createSlice({
         setSelectedKeyPair(state, action: PayloadAction<any>) {
             state.keyPair.selectedKeyPair = action.payload;
         },
+        //AD
+        setSelectedADDomainName(state, action: PayloadAction<any>) {
+            state.activeDirectory.domainName = action.payload;
+        },
+        setSelectedADDomainAddress(state, action: PayloadAction<any>) {
+            state.activeDirectory.domainAddress = action.payload;
+        },
+        setSelectedADUserName(state, action: PayloadAction<any>) {
+            state.activeDirectory.userName = action.payload;
+        },
+        setSelectedADPassword(state, action: PayloadAction<any>) {
+            state.activeDirectory.password = action.payload;
+        },
         //Instance Type
         setInstanceType(state, action: PayloadAction<any>) {
             state.instanceType = action.payload;
@@ -210,6 +230,10 @@ const mssqlFormSlice = createSlice({
 });
 
 export const {
+    setSelectedADDomainName,
+    setSelectedADDomainAddress,
+    setSelectedADUserName,
+    setSelectedADPassword,
     setEncryptionType,
     setEncryptionRow,
     setEncryptionARN,

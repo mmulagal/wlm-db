@@ -1,23 +1,31 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseVersion.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
-    const getDBVersion = useSelector((state: any) => state.mssqlForm.dbVersion);
-    const versions = [GENERAL.SQL_SERVER_2016, GENERAL.SQL_SERVER_2019, GENERAL.SQL_SERVER_2022];
+
+    // Getting selected DB version
+    const getDBVersion = useAppSelector((state) => state.mssqlForm.dbVersion);
+    
+    const versions = [
+        {label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION}, 
+        {label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION}, 
+        {label: GENERAL.SQL_SERVER_2022, value: GENERAL.SQL_SERVER_2022_VERSION}
+    ];
 
     //Function to generate the options for Select Field
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+            const option = generateOptionType(val.value, val.label, '', false, '');
             options.push(option);
         });
 
@@ -25,11 +33,12 @@ const DatabaseVersion = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(setDBVersion(generateDbVersions[0].label));
-    }, []);
+        dispatch(setDBVersion(generateDbVersions[0]));
+    }, [dispatch, generateDbVersions]);
+
     //Set the Header text here
     const setHeader = () => {
-        return <Typography variant="Regular_14">{getDBVersion}</Typography>;
+        return <Typography variant="Regular_14">{getDBVersion?.label}</Typography>;
     };
     return (
         <div className={''}>
@@ -46,11 +55,11 @@ const DatabaseVersion = () => {
                                 isClearable={false}
                                 defaultValue={
                                     getDBVersion
-                                        ? [generateOptionType(getDBVersion, getDBVersion, '', false, '')]
+                                        ? [getDBVersion]
                                         : [generateDbVersions[0]]
                                 }
                                 onChange={(selectedOptions: any): void => {
-                                    dispatch(setDBVersion(selectedOptions.label));
+                                    dispatch(setDBVersion(selectedOptions));
                                 }}
                                 isSearchable={generateDbVersions.length > 5}
                                 options={generateDbVersions}
