@@ -8,6 +8,8 @@ import {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
+    FSxFileSystemParams,
+    FSxFileSystemsResponse,
     KmsKeysListResponse,
     AmiQueryString,
     InstanceTypes,
@@ -76,6 +78,15 @@ const GetFSxRegionsSchema = {
     }
 };
 
+const GetFSxFileSystemsSchema = {
+    tags: [RouteTags.AWS],
+    params: FSxFileSystemParams,
+    description: 'List Amazon FSx for NetApp ONTAP filesystems',
+    response: {
+        200: FSxFileSystemsResponse
+    }
+};
+
 // GET Kms Keys List Schema
 const GetKmsKeysListSchema = {
     ...baseRequest,
@@ -100,5 +111,6 @@ export {
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
     GetInstanceTypesSchema,
-    GetKeyPairsSchema
+    GetKeyPairsSchema,
+    GetFSxFileSystemsSchema
 };
