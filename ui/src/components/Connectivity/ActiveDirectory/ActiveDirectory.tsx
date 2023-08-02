@@ -26,19 +26,21 @@ const delay = () => {
 const ActiveDirectory = () => {
     const dispatch = useDispatch();
 
-    const {adsData, adsLoading} = useAppSelector(state => state.mssql.getAdsList);
+    const { adsData, adsLoading } = useAppSelector(state => state.mssql.getAdsList);
     const selectedADDomainName = useAppSelector(state => state.mssqlForm.activeDirectory.domainName);
     const selectedADDomainAddress = useAppSelector(state => state.mssqlForm.activeDirectory.domainAddress);
+
+    const isADNotFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
 
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
-    const [versions, setVersions] = useState<{ domainName: string; dnsIpAddress: string; }[]>([]);
+    const [versions, setVersions] = useState<{ domainName: string; dnsIpAddress: string }[]>([]);
     const [isCreating, setIsCreating] = useState(false);
 
     const addNewOption = async (option: any) => {
         setIsCreating(true);
-        const newVer = [...versions, {domainName: option, dnsIpAddress: ''}];
+        const newVer = [...versions, { domainName: option, dnsIpAddress: '' }];
         setVersions(newVer);
         await delay();
         dispatch(setSelectedADDomainAddress(''));
@@ -49,10 +51,10 @@ const ActiveDirectory = () => {
 
     // Initial versions list
     useEffect(() => {
-        const verList: any[] = []
-        adsData?.directories?.map((val:any, ids: number) => {
-            const newItem = {domainName:val?.domainName, dnsIpAddress: val?.dnsIpAddress};
-            verList.push(newItem)
+        const verList: any[] = [];
+        adsData?.directories?.map((val: any, ids: number) => {
+            const newItem = { domainName: val?.domainName, dnsIpAddress: val?.dnsIpAddress };
+            verList.push(newItem);
         });
         setVersions(verList);
     }, [adsData]);
@@ -65,7 +67,7 @@ const ActiveDirectory = () => {
             const data = {
                 domainName: val?.domainName,
                 dnsIpAddress: (val?.dnsIpAddress || '').toString()
-            }
+            };
             const option = generateOptionType(verVal, verVal, '', false, '', data);
             options.push(option);
         });
@@ -75,13 +77,13 @@ const ActiveDirectory = () => {
     useEffect(() => {
         dispatch(setSelectedADDomainName(null));
         dispatch(setSelectedADDomainAddress(''));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateActiveDirectories]);
 
     //Set the Header text here
     const setHeader = () => {
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
-            return <ActionRequired />;
+            return <ActionRequired error={!isADNotFilled ? true : false} />;
         } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
@@ -96,14 +98,17 @@ const ActiveDirectory = () => {
     };
     return (
         <div className={styles.active}>
-            <AccordionCard isLoading={adsLoading}
+            <AccordionCard
+                isLoading={adsLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="13"
                 title={<div className={CommonStyles.title}>{GENERAL.ACTIVE_DIRECTORY}</div>}
             >
                 <AccordionCardContent>
                     <Typography>
-                        <Typography variant="Regular_14" className={styles.adText}>{GENERAL.AD_TEXT}</Typography>
+                        <Typography variant="Regular_14" className={styles.adText}>
+                            {GENERAL.AD_TEXT}
+                        </Typography>
                         <div className={styles.firstContainer}>
                             <SelectField
                                 label={GENERAL.DOMAIN_NAME}
