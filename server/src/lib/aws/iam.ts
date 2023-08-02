@@ -12,7 +12,7 @@ async function getIAM(credentialsId: string, region: string) {
     } = await getCredentialDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
-    return new IAMClient({ credentials });
+    return new IAMClient({ credentials, region });
 }
 
 async function getPermissionsList(credentialsId: string, region: string, command: SimulatePrincipalPolicyCommandInput) {
