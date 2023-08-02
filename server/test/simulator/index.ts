@@ -10,6 +10,7 @@ async function initiateSimulator() {
     await import('./scopes/aws/directory-service-scope');
     await import('./scopes/aws/kms-scope');
     await import('./scopes/aws/sns-scope');
+    await import('./scopes/aws/fsx-scope');
     await import('./scopes/aws/cloud-formation-scope');
     await import('./scopes/aws/service-quota-scope');
     await import('./scopes/aws/secrets-manager-scope');
