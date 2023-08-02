@@ -6,9 +6,9 @@ import {
     DescribeSecurityGroupsCommand,
     DescribeImagesCommand,
     DescribeRegionsCommand,
-    paginateDescribeInstanceTypes,
     DescribeRouteTablesCommand,
-    DescribeKeyPairsCommand
+    DescribeKeyPairsCommand,
+    DescribeInstanceTypesCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -32,7 +32,7 @@ ec2Mock.on(DescribeImagesCommand).resolves(ec2ImagesResponse);
 
 ec2Mock.on(DescribeRegionsCommand).resolves(fsxRegionsResponse);
 
-ec2Mock.on(paginateDescribeInstanceTypes).resolves(ec2InstanaceTypes);
+ec2Mock.on(DescribeInstanceTypesCommand).resolves(ec2InstanaceTypes);
 
 ec2Mock.on(DescribeRouteTablesCommand).resolves(routeTablesResponse);
 

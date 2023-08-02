@@ -78,9 +78,7 @@ describe('EC2 Operations', () => {
         const resp = await getVpcsList(credentialsId, DEFAULT_AWS_REGION);
         expect(resp).toBeDefined();
     });
-});
 
-describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
     it('List of Amazon FSx for NetApp ONTAP regions', async () => {
         const fsxRegionsResponse = {
             regions: [
@@ -196,17 +194,13 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
         const response = await getFSxAvailableRegionsList(credentialsType);
         expect(response).toEqual(fsxRegionsResponse);
     });
-});
 
-describe('List EC2 instance types forn specific region', () => {
     it('should return a lsist EC2 instance types forn specific region', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         const resp = await getInstanceTypes(credentialsId, 'us-east-1');
         expect(resp).toEqual(ec2instanceTypesResponse);
     });
-});
 
-describe('List key-pairs for a given region', () => {
     it('List of key-pairs for a given region', async () => {
         const keyPairsResponse = {
             keyPairs: [

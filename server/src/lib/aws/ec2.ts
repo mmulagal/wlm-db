@@ -100,7 +100,7 @@ async function describeRegions(
 async function describeInstanceTypes(credentialsId: string, region: string) {
     const client = await getEC2Client(region, credentialsId);
     const paginator = paginateDescribeInstanceTypes(
-        { client, pageSize: 10 },
+        { client, pageSize: 50 },
         {
             Filters: [{ Name: 'instance-type', Values: ['*'] }]
         }

@@ -396,7 +396,7 @@ export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['us-west-2', 'US West (Oregon)']
 ]);
 
-export const EC2INSTANCETYPESE_EXCLUDE = [
+export const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
     '.nano',
     '.micro',
     '.small',

@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
-import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2INSTANCETYPESE_EXCLUDE } from '../../utils/consts';
+import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -297,31 +297,27 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
 
 async function getInstanceTypes(credentialsId: string, region: string) {
     logger.info('List Ec2 Instance Types in region', { credentialsId, region });
-    try {
-        const response = await describeInstanceTypes(credentialsId, region);
-        /* 
+
+    const response = await describeInstanceTypes(credentialsId, region);
+    /* 
         SDK returns all the instance types which cannot be used to create the instance for SQL deployment.
         Still trying to figure out on what basis the instances are listed in fro creation. As temp solution 
         went through the instances listed in Launch wizard and excluded few types. Needs work to filter out
-        Created a list of instance that can be excluded EC2INSTANCETYPESE_EXCLUDE
+        Created a list of instance that can be excluded EC2_INSTANCE_TYPE_EXCLUDE_LIST
         */
-        const filteredInstances = response
-            .filter(
-                ({ InstanceType }) =>
-                    !EC2INSTANCETYPESE_EXCLUDE.some((excludedType: string) => InstanceType?.includes(excludedType))
-            )
-            .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo }) => ({
-                instanceType: InstanceType,
-                iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
-                vCpus: VCpuInfo?.DefaultVCpus,
-                ramInMib: MemoryInfo?.SizeInMiB
-            }));
-        const totalRecords = filteredInstances?.length;
-        return { instanceTypes: filteredInstances, totalRecords };
-    } catch (error: any) {
-        logger.error('Failed to get the ec2 instance types', error.message);
-        throw createError(error.statusCode || error.code || 500, error.message);
-    }
+    const filteredInstances = response
+        .filter(
+            ({ InstanceType }) =>
+                !EC2_INSTANCE_TYPE_EXCLUDE_LIST.some((excludedType: string) => InstanceType?.includes(excludedType))
+        )
+        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo }) => ({
+            instanceType: InstanceType,
+            iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
+            vCpus: VCpuInfo?.DefaultVCpus,
+            ramInMib: MemoryInfo?.SizeInMiB
+        }));
+    const totalRecords = filteredInstances?.length;
+    return { instanceTypes: filteredInstances, totalRecords };
 }
 
 async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
