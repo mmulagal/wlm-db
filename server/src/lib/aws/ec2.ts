@@ -91,13 +91,14 @@ async function describeRegions(
 
     const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId);
     const response = await client.send(new DescribeRegionsCommand(input));
-
     logger.debug('Describe AWS regions response:', response);
 
     return response;
 }
 
 async function describeInstanceTypes(credentialsId: string, region: string) {
+    logger.info('Describe AWS instance types:', { credentialsId, region });
+
     const client = await getEC2Client(region, credentialsId);
     const paginator = paginateDescribeInstanceTypes(
         { client, pageSize: 50 },
@@ -139,8 +140,8 @@ async function describeKeyPairs(
 
     const client = await getEC2Client(region, credentialsId);
     const response = await client.send(new DescribeKeyPairsCommand(input));
-
     logger.debug('Describe key-pairs response:', response);
+
     return response;
 }
 

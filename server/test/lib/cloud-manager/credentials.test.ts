@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getAllAwsCredentials, getCredentialDetails } from '../../../src/lib/cloud-manager/credentials';
+import { getAllCredentials, getCredentialDetails } from '../../../src/lib/cloud-manager/credentials';
 import {
     cloudManagerAllAwsCredentials,
     cloudManagerAwsCredentials,
@@ -19,7 +19,7 @@ vi.mock('../../../src/utils/async-local-storage.ts', () => {
 describe('getAllAwsCredentials', () => {
     it('should return a list of AWS credentials', async () => {
         const credentialsType = 'aws_assume_role';
-        const resp = await getAllAwsCredentials(credentialsType);
+        const resp = await getAllCredentials(credentialsType);
         expect(resp).toEqual(cloudManagerAllAwsCredentials);
     });
 });

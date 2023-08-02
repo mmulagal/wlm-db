@@ -18,7 +18,7 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         reply.status(errCode).send({ message: error.message });
     } else if (isHTTPError(error)) {
         const body = error.response.body as any;
-        const statusCode = error.response.statusCode;
+        const { statusCode } = error.response;
         if (body.error && isArray(body.error.errors)) {
             // then it's gcp error
             reply.status(statusCode).send({ message: body.error.message });

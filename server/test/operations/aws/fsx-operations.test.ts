@@ -1,7 +1,8 @@
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
-import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, DEFAULT_AWS_VPC_ID } from '../../../src/utils/consts';
+import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import { getFSxFileSystemsList } from '../../../src/operations/aws/fsx-operations';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
 
 describe('Testcases for Amazon FSx resources operations', () => {
     it('List FSx filesystems and volume details', async () => {

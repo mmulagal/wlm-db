@@ -28,8 +28,8 @@ async function describeFSxFileSystems(
     logger.info('Describe Amazon FSx for NetApp ONTAP filesystems:', { credentialsId, region });
 
     const client = await getFSxClient(credentialsId, region);
-    const response = await client.send(new DescribeFileSystemsCommand({}));
 
+    const response = await client.send(new DescribeFileSystemsCommand({}));
     logger.debug('Describe Amazon FSx for NetApp ONTAp filesystem response:', response);
 
     return response;
@@ -44,8 +44,8 @@ async function describeFSxVolumes(
     const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
-    const response = await client.send(new DescribeVolumesCommand(input));
 
+    const response = await client.send(new DescribeVolumesCommand(input));
     logger.debug('Decribe Amazon FSx for NetApp ONTAP volumes response:', response);
 
     return response;
