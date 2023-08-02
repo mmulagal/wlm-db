@@ -67,9 +67,16 @@ export const awsApi = createApi({
             getKeyPairs: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/keypairs`})
             }),
+            getInstanceTypes: builder.query({
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/instanceTypes`})
+            }),
+            getFsxnList: builder.query({
+                query: ({credentialId, region, vpcId}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs/${vpcId}/fsxs`})
+            })
         }
     }
 });
 
 export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
-    useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery } = awsApi;
+    useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
+    useGetFsxnListQuery } = awsApi;

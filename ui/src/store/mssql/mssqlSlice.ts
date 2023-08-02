@@ -41,7 +41,18 @@ const initialState: MssqlEntities = {
         keyPairData: {},
         keyPairLoading: false,
         keyPairError: null
-    }
+    },
+    getInstanceTypeList: {
+        instanceTypeData: {},
+        instanceTypeLoading: false,
+        instanceTypeError: null
+    },
+    getFsxnList: {
+        fsxnData: {},
+        fsxnLoading: false,
+        fsxnError: null
+    },
+
 };
 
 const mssqlSlice = createSlice({
@@ -70,7 +81,13 @@ const mssqlSlice = createSlice({
             state.getKmsList = action.payload;
         },
         addKeyPairList: (state, action: PayloadAction<any>) => {
-            state.getKeyPairList = action.payload;
+            state.getKeyPairList= action.payload;
+        },
+        addInstanceTypeList: (state, action: PayloadAction<any>) => {
+            state.getInstanceTypeList= action.payload;
+        },
+        addFsxnList: (state, action: PayloadAction<any>) => {
+            state.getFsxnList= action.payload;
         }
     }
 });
@@ -83,6 +100,8 @@ export const {
     addAmiList,
     addSnsList,
     addKmsKeysList,
-    addKeyPairList
+    addKeyPairList,
+    addInstanceTypeList,
+    addFsxnList
 } = mssqlSlice.actions;
 export default mssqlSlice;

@@ -50,6 +50,18 @@ export interface KeyPairs {
     name?: string;
 }
 
+export interface InstanceType {
+    instanceType?: string,
+    vCpus?: number,
+    ramInMib?: number,
+    iopsInMbps?: number
+}
+
+export interface FSxN {
+    fileSystemId?: string,
+}
+
+
 export interface MssqlEntities {
     getCredentials: {
         credentialData: Credentials[] | null;
@@ -87,8 +99,18 @@ export interface MssqlEntities {
         kmsError: null;
     };
     getKeyPairList: {
-        keyPairData: { keyPairs?: KmsKeys[] };
+        keyPairData: { keyPairs?: KeyPairs[] };
         keyPairLoading: false;
         keyPairError: null;
+    };
+    getInstanceTypeList: {
+        instanceTypeData: { instanceTypes?: InstanceType[] };
+        instanceTypeLoading: false;
+        instanceTypeError: null;
+    };
+    getFsxnList: {
+        fsxnData: { filesystems?: InstanceType[] };
+        fsxnLoading: false;
+        fsxnError: null;
     };
 }

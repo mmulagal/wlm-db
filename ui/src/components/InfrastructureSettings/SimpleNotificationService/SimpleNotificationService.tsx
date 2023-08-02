@@ -42,7 +42,7 @@ const SimpleNotificationService = () => {
     const generateArn = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         snsData?.Topics?.map((val, idx: number) => {
-            const arnVal = val.TopicArn;
+            const arnVal = val?.topicArn;
             const option = generateOptionType(arnVal, arnVal, '', false, '');
             options.push(option);
         });

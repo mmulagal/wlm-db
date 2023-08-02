@@ -103,3 +103,22 @@ export interface KeyPairRes {
         }
     ];
 }
+
+export interface InstanceTypeRes {
+    instanceTypes: [
+        {
+            instanceType: string;
+            vCpus: number;
+            ramInMib: number;
+            iopsInMbps: number;
+        }
+    ];
+}
+
+export interface FsxnRes {
+    filesystems: [
+        {
+            fileSystemId: string;
+        }
+    ];
+}
