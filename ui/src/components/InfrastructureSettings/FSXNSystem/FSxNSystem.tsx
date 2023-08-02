@@ -109,10 +109,9 @@ const FSxNSystem = () => {
                                     label={GENERAL.FSXN_NAME}
                                     error={!isFsxNNameFilled ? 'Action Required' : ''}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        // setInputName(e.target.value);
                                         dispatch(setFsxNName(e.target.value));
                                     }}
-                                    defaultValue={selectedFsxnName ? selectedFsxnName : ''}
+                                    value={selectedFsxnName ? selectedFsxnName : ''}
                                     className={styles.textField}
                                 />
                             )}
@@ -148,8 +147,6 @@ const FSxNSystem = () => {
                                 }}
                                 value={selectedFsxnPassword}
                                 className={styles.textFieldPassword}
-                                //@ts-ignore
-                                type="password"
                             />
                         </div>
 
