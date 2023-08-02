@@ -125,10 +125,7 @@ const ActiveDirectory = () => {
 
                             <TextField
                                 label={GENERAL.DNS_ADDRESS}
-<<<<<<< HEAD
                                 placeholder="DNS IP addresses"
-=======
->>>>>>> df5a7738e0f221a9b1ca8013bc77d1e0d19be0e9
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADDomainAddress(e.target.value));
                                 }}
