@@ -11,6 +11,7 @@ import {
     DescribeRegionsCommand,
     DescribeRegionsCommandInput,
     DescribeRegionsCommandOutput,
+    paginateDescribeInstanceTypes,
     DescribeRouteTablesCommand,
     DescribeRouteTablesCommandInput,
     DescribeKeyPairsCommand,
@@ -96,6 +97,24 @@ async function describeRegions(
     return response;
 }
 
+async function describeInstanceTypes(credentialsId: string, region: string) {
+    const client = await getEC2Client(region, credentialsId);
+    const paginator = paginateDescribeInstanceTypes(
+        { client, pageSize: 50 },
+        {
+            Filters: [{ Name: 'instance-type', Values: ['*'] }]
+        }
+    );
+    const instanceTypes = [];
+
+    for await (const page of paginator) {
+        if (page.InstanceTypes?.length) {
+            instanceTypes.push(...page.InstanceTypes);
+        }
+    }
+
+    return instanceTypes;
+}
 async function describeRouteTable(
     credentialsId: string,
     region: string,
@@ -132,6 +151,7 @@ export {
     describeSecurityGroups,
     getAmis,
     describeRegions,
+    describeInstanceTypes,
     describeRouteTable,
     describeKeyPairs
 };

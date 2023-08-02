@@ -34,7 +34,7 @@ export interface Ami {
 }
 
 export interface SNS {
-    TopicArn: string;
+    topicArn: string;
 }
 
 export interface KmsKeys {

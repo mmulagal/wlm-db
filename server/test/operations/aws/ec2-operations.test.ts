@@ -3,6 +3,7 @@ import {
     getAmiList,
     getVpcsList,
     getFSxAvailableRegionsList,
+    getInstanceTypes,
     getKeyPairsList
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -11,6 +12,59 @@ import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../se
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
+
+const ec2instanceTypesResponse = {
+    instanceTypes: [
+        {
+            instanceType: 'x1e.8xlarge',
+            vCpus: 32,
+            ramInMib: 999424,
+            iopsInMbps: 3500
+        },
+        {
+            instanceType: 'g3.16xlarge',
+            vCpus: 64,
+            ramInMib: 499712,
+            iopsInMbps: 14000
+        },
+        {
+            instanceType: 'r6g.16xlarge',
+            vCpus: 64,
+            ramInMib: 524288,
+            iopsInMbps: 19000
+        },
+        {
+            instanceType: 'c6a.48xlarge',
+            vCpus: 192,
+            ramInMib: 393216,
+            iopsInMbps: 40000
+        },
+        {
+            instanceType: 'c6i.32xlarge',
+            vCpus: 128,
+            ramInMib: 262144,
+            iopsInMbps: 40000
+        },
+        {
+            instanceType: 'r6idn.xlarge',
+            vCpus: 4,
+            ramInMib: 32768,
+            iopsInMbps: 20000
+        },
+        {
+            instanceType: 'm5a.16xlarge',
+            vCpus: 64,
+            ramInMib: 262144,
+            iopsInMbps: 9500
+        },
+        {
+            instanceType: 'r6in.metal',
+            vCpus: 128,
+            ramInMib: 1048576,
+            iopsInMbps: 80000
+        }
+    ]
+};
 
 describe('EC2 Operations', () => {
     it('list of EC2 AMIs', async () => {
@@ -24,9 +78,7 @@ describe('EC2 Operations', () => {
         const resp = await getVpcsList(credentialsId, DEFAULT_AWS_REGION);
         expect(resp).toBeDefined();
     });
-});
 
-describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
     it('List of Amazon FSx for NetApp ONTAP regions', async () => {
         const fsxRegionsResponse = {
             regions: [
@@ -142,9 +194,13 @@ describe('List AWS regions supporting Amazon FSx for NetApp ONTAP', () => {
         const response = await getFSxAvailableRegionsList(credentialsType);
         expect(response).toEqual(fsxRegionsResponse);
     });
-});
 
-describe('List key-pairs for a given region', () => {
+    it('should return a lsist EC2 instance types forn specific region', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const resp = await getInstanceTypes(credentialsId, 'us-east-1');
+        expect(resp).toEqual(ec2instanceTypesResponse);
+    });
+
     it('List of key-pairs for a given region', async () => {
         const keyPairsResponse = {
             keyPairs: [

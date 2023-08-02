@@ -80,8 +80,7 @@ const AwsAccount = () => {
         isAZNotFilled,
         isActiveDirectoryFilled,
         isFsxNNameFilled,
-        isProperDBName,
-        noAccount
+        isProperDBName
     ]);
 
     //Function to generate the options for Select Field
