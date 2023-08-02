@@ -15,9 +15,11 @@ const logger = getLogger();
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
-    return SQL_AMI_NAMES.filter(name => (osVersion ? name.includes(`Windows_Server-${osVersion}`) : true))
-        .filter(name => (dbVersion ? name.includes(`SQL_${dbVersion}`) : true))
-        .filter(name => (dbEdition ? name.includes(dbEdition) : true));
+    return SQL_AMI_NAMES.filter(ami =>
+        osVersion ? ami.toLowerCase().includes(`Windows_Server-${osVersion}`.toLowerCase()) : true
+    )
+        .filter(ami => (dbVersion ? ami.toLowerCase().includes(`SQL_${dbVersion}`.toLowerCase()) : true))
+        .filter(ami => (dbEdition ? ami.toLowerCase().includes(dbEdition.toLowerCase()) : true));
 }
 
 async function isVpcQuotaReached(credentialsId: string, region: string) {
