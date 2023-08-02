@@ -1,10 +1,9 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { MssqlEntities } from "../../utils/types/mssqlTypes";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { MssqlEntities } from '../../utils/types/mssqlTypes';
 
-
-const initialState: MssqlEntities =  {
+const initialState: MssqlEntities = {
     getCredentials: {
-        credentialData: [],
+        credentialData: null,
         credentialLoading: false,
         credentialError: null
     },
@@ -62,28 +61,27 @@ const mssqlSlice = createSlice({
             state.getAdsList = action.payload;
         },
         addAmiList: (state, action: PayloadAction<any>) => {
-            state.getAmiList= action.payload;
+            state.getAmiList = action.payload;
         },
         addSnsList: (state, action: PayloadAction<any>) => {
-            state.getSnsList= action.payload;
+            state.getSnsList = action.payload;
         },
         addKmsKeysList: (state, action: PayloadAction<any>) => {
-            state.getKmsList= action.payload;
+            state.getKmsList = action.payload;
         },
         addKeyPairList: (state, action: PayloadAction<any>) => {
-            state.getKeyPairList= action.payload;
+            state.getKeyPairList = action.payload;
         }
     }
+});
 
-})
-
-export const { 
-    addCredentials, 
-    addRegions, 
-    addVpcList, 
-    addAdsList, 
-    addAmiList, 
-    addSnsList, 
+export const {
+    addCredentials,
+    addRegions,
+    addVpcList,
+    addAdsList,
+    addAmiList,
+    addSnsList,
     addKmsKeysList,
     addKeyPairList
 } = mssqlSlice.actions;
