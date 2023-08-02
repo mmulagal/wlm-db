@@ -396,4 +396,19 @@ export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['us-west-2', 'US West (Oregon)']
 ]);
 
+export const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
+    '.nano',
+    '.micro',
+    '.small',
+    '.large',
+    'gd',
+    'gn',
+    't3a',
+    't3g',
+    'mac',
+    'm7g',
+    'C7g',
+    'Im4gn'
+];
+
 export const WLMDB = 'wlmdb';
