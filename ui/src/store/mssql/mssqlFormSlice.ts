@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL } from '../../utils/appConstants';
+import { FSXADMIN } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -55,8 +56,9 @@ const initialState: any = {
     fsxN: {
         fsxNType: GENERAL.CREATE_NEW_FSXN,
         fsxNName: '',
-        fsxNExistingName: '',
-        fsxNUserName: '',
+        fsxNNewUserName: FSXADMIN,
+        fsxNExistingName: null,
+        fsxNExistingUserName: '',
         fsxNPassword: ''
     },
     storageCapacity: {
@@ -178,8 +180,8 @@ const mssqlFormSlice = createSlice({
         setFsxNName(state, action: PayloadAction<any>) {
             state.fsxN.fsxNName = action.payload;
         },
-        setFsxNUserName(state, action: PayloadAction<any>) {
-            state.fsxN.fsxNUserName = action.payload;
+        setFsxNExistingUserName(state, action: PayloadAction<any>) {
+            state.fsxN.fsxNExistingUserName = action.payload;
         },
         setFsxNPassword(state, action: PayloadAction<any>) {
             state.fsxN.fsxNPassword = action.payload;
@@ -248,7 +250,7 @@ export const {
     setFsxNType,
     setExistingFsxnName,
     setFsxNName,
-    setFsxNUserName,
+    setFsxNExistingUserName,
     setFsxNPassword,
     setSelectedCredentials,
     setSelectedOperatingSystem,

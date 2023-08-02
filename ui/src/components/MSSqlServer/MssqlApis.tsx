@@ -10,7 +10,7 @@ import {
     useGetRegionsQuery, 
     useGetSnsTopicsQuery, 
     useGetVPCListQuery } from "../../utils/apiService";
-import { addAdsList, addAmiList, addCredentials, addInstanceTypeList, addKeyPairList, addKmsKeysList, addRegions, addSnsList, addVpcList } from "../../store/mssql/mssqlSlice";
+import { addAdsList, addAmiList, addCredentials, addFsxnList, addInstanceTypeList, addKeyPairList, addKmsKeysList, addRegions, addSnsList, addVpcList } from "../../store/mssql/mssqlSlice";
 import { useEffect, useState } from "react";
 import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from "../../utils/consts";
 
@@ -250,9 +250,9 @@ const MssqlApis = () => {
     // To add FSxN in MssqlEntities
     useEffect(() => {
         if(fsxnError){
-            dispatch(addKeyPairList({undefined, fsxnLoading, fsxnError}));
+            dispatch(addFsxnList({undefined, fsxnLoading, fsxnError}));
         }else{
-            dispatch(addKeyPairList({fsxnData, fsxnLoading, fsxnError}));
+            dispatch(addFsxnList({fsxnData, fsxnLoading, fsxnError}));
         }
     }, [dispatch, fsxnData , fsxnLoading, fsxnError]);
 

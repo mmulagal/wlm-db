@@ -1,5 +1,6 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
+import numeral from 'numeral';
 
 // Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
@@ -49,3 +50,19 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
 
     return rows;
 }
+
+export const formatSize = (value: number, passedformat?: string) => {
+    let byteVal = 0;
+    if(passedformat === 'kib'){
+        byteVal = value * 1024;
+    } else if(passedformat === 'mib'){
+        byteVal = value * 1024 * 1024
+    } else if(passedformat === 'gib'){
+        byteVal = value * 1024 * 1024 * 1024
+    } else if(passedformat === 'tib'){
+        byteVal = value * 1024 * 1024 * 1024 * 1024
+    } else {
+        byteVal = value
+    }
+    return numeral(byteVal).format('0.[00] ib')
+};

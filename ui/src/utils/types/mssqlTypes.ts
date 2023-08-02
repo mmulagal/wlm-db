@@ -59,6 +59,7 @@ export interface InstanceType {
 
 export interface FSxN {
     fileSystemId?: string,
+    fileSystemName?: string
 }
 
 
@@ -109,7 +110,7 @@ export interface MssqlEntities {
         instanceTypeError: null;
     };
     getFsxnList: {
-        fsxnData: { filesystems?: InstanceType[] };
+        fsxnData: { filesystems?: FSxN[] };
         fsxnLoading: false;
         fsxnError: null;
     };
