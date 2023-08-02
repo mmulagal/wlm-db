@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccordionCard, AccordionCardContent, RadioButton, SelectField, Typography } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    RadioButton,
+    SelectField,
+    Typography,
+    useAccordionContext
+} from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -12,9 +19,11 @@ import { useDispatch } from 'react-redux';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
+    const accordionContext = useAccordionContext()?.setOpenChildren!;
 
     //Getting the Data from state
     const { regionsData, regionsLoading } = useAppSelector(state => state.mssql.getRegions);
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const { vpcData, vpcLoading } = useAppSelector(state => state.mssql.getVPCList);
     const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
@@ -22,6 +31,15 @@ const RegionVpc = () => {
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
+
+    //To open accordion if default account is present
+    useEffect(() => {
+        if (credentialData && credentialData.length > 0) {
+            accordionContext({
+                2: true
+            });
+        }
+    }, [credentialData]);
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {

@@ -23,9 +23,9 @@ export interface VPC {
 }
 
 export interface AD {
-    id: string;
-    dnsIpAddress: Array<string>;
-    domainName: string;
+    id?: string;
+    dnsIpAddress?: Array<string>;
+    domainName?: string;
 }
 
 export interface Ami {
@@ -64,7 +64,7 @@ export interface FSxN {
 
 export interface MssqlEntities {
     getCredentials: {
-        credentialData: Credentials[];
+        credentialData: Credentials[] | null;
         credentialLoading: false;
         credentialError: null;
     };
