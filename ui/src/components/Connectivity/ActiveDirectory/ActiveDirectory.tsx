@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -25,45 +25,69 @@ const delay = () => {
 
 const ActiveDirectory = () => {
     const dispatch = useDispatch();
-    const selectedADDomainName = useAppSelector((state: any) => state.mssqlForm.activeDirectory.domainName);
 
-    const [dnsAddress, setDNSAddress] = useState('');
+    const {adsData, adsLoading} = useAppSelector(state => state.mssql.getAdsList);
+    const selectedADDomainName = useAppSelector(state => state.mssqlForm.activeDirectory.domainName);
+    const selectedADDomainAddress = useAppSelector(state => state.mssqlForm.activeDirectory.domainAddress);
+
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
-    const [versions, setVersions] = useState(['AD1', 'AD2', 'AD3']);
+    const [versions, setVersions] = useState<{ domainName: string; dnsIpAddress: string; }[]>([]);
     const [isCreating, setIsCreating] = useState(false);
 
     const addNewOption = async (option: any) => {
         setIsCreating(true);
-        const newVer = [...versions, option];
+        const newVer = [...versions, {domainName: option, dnsIpAddress: ''}];
         setVersions(newVer);
         await delay();
+        dispatch(setSelectedADDomainAddress(''));
         setIsCreating(false);
 
         return generateOptionType(option, option, '', false, '');
     };
 
+    // Initial versions list
+    useEffect(() => {
+        const verList: any[] = []
+        adsData?.directories?.map((val:any, ids: number) => {
+            const newItem = {domainName:val?.domainName, dnsIpAddress: val?.dnsIpAddress};
+            verList.push(newItem)
+        });
+        setVersions(verList);
+    }, [adsData]);
+
     //Function to generate the options for Select Field
     const generateActiveDirectories = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+            const verVal = val?.domainName;
+            const data = {
+                domainName: val?.domainName,
+                dnsIpAddress: (val?.dnsIpAddress || '').toString()
+            }
+            const option = generateOptionType(verVal, verVal, '', false, '', data);
             options.push(option);
         });
-
         return options;
     }, [versions]);
+
+    useEffect(() => {
+        dispatch(setSelectedADDomainName(null));
+        dispatch(setSelectedADDomainAddress(''));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateActiveDirectories]);
+
     //Set the Header text here
     const setHeader = () => {
-        if (!selectedADDomainName.label || !dnsAddress || !userName || !password) {
+        if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
             return <ActionRequired />;
         } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
-                    <div>{selectedADDomainName.label}</div>
+                    <div>{selectedADDomainName?.label}</div>
                     <div className={CommonStyles.separator} />
-                    <div>{dnsAddress}</div>
+                    <div>{selectedADDomainAddress}</div>
                     <div className={CommonStyles.separator} />
                     <div>{userName}</div>
                 </Typography>
@@ -72,14 +96,14 @@ const ActiveDirectory = () => {
     };
     return (
         <div className={styles.active}>
-            <AccordionCard
+            <AccordionCard isLoading={adsLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="13"
                 title={<div className={CommonStyles.title}>{GENERAL.ACTIVE_DIRECTORY}</div>}
             >
                 <AccordionCardContent>
                     <Typography>
-                        <Typography variant="Regular_14">{GENERAL.AD_TEXT}</Typography>
+                        <Typography variant="Regular_14" className={styles.adText}>{GENERAL.AD_TEXT}</Typography>
                         <div className={styles.firstContainer}>
                             <SelectField
                                 label={GENERAL.DOMAIN_NAME}
@@ -88,9 +112,10 @@ const ActiveDirectory = () => {
                                 isOptionsAddingEnabled
                                 //@ts-ignore
                                 onCreateOption={addNewOption}
-                                value={selectedADDomainName ? selectedADDomainName : null}
+                                defaultValue={selectedADDomainName ? selectedADDomainName : null}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedADDomainName(selectedOptions));
+                                    dispatch(setSelectedADDomainAddress(selectedOptions?.data?.dnsIpAddress));
                                 }}
                                 placeholder="example.com"
                                 isSearchable={true}
@@ -100,12 +125,11 @@ const ActiveDirectory = () => {
 
                             <TextField
                                 label={GENERAL.DNS_ADDRESS}
-                                placeholder="example.com"
+                                placeholder="DNS IP addresses"
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setDNSAddress(e.target.value);
                                     dispatch(setSelectedADDomainAddress(e.target.value));
                                 }}
-                                value={dnsAddress}
+                                value={selectedADDomainAddress ? selectedADDomainAddress : ''}
                                 className={styles.textField}
                             />
                         </div>

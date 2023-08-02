@@ -45,6 +45,11 @@ export interface KmsKeys {
     expirationDate?: string;
 }
 
+export interface KeyPairs {
+    id?: string;
+    name?: string;
+}
+
 export interface MssqlEntities {
     getCredentials: {
         credentialData: Credentials[];
@@ -62,9 +67,9 @@ export interface MssqlEntities {
         vpcError: null;
     };
     getAdsList: {
-        adData: { directories?: AD[] };
-        adLoading: false;
-        adError: null;
+        adsData: { directories?: AD[] };
+        adsLoading: false;
+        adsError: null;
     };
     getAmiList: {
         amiData: { amis?: Ami[] };
@@ -80,5 +85,10 @@ export interface MssqlEntities {
         kmsData: { keys?: KmsKeys[] };
         kmsLoading: false;
         kmsError: null;
+    };
+    getKeyPairList: {
+        keyPairData: { keyPairs?: KmsKeys[] };
+        keyPairLoading: false;
+        keyPairError: null;
     };
 }

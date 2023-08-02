@@ -1,0 +1,16 @@
+{
+    "keyPairs": [
+      {
+        "id": "key-04f1051b366781204",
+        "name": "key_pair_1"
+      },
+      {
+        "id": "key-06265c604f789fdef",
+        "name": "key_pair_2"
+      },
+      {
+        "id": "key-0a03292a613byui4a",
+        "name": "key_pair_3"
+      }
+    ]
+}  

@@ -94,3 +94,12 @@ export interface KmsKeysRes {
     ];
     totalRecords: 0;
 }
+
+export interface KeyPairRes {
+    keyPairs: [
+        {
+            id: string;
+            name: string;
+        }
+    ];
+}
