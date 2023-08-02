@@ -5,6 +5,7 @@ import getLogger from '../../utils/logger';
 import { BUCKET_NAME, CLOUD_FORMATION_BUCKET_OWNER_KEY } from '../../utils/consts';
 
 const logger = getLogger();
+
 async function getS3Client(region: string, credentialsId: string) {
     logger.debug('Getting S3 client:', region, credentialsId);
 
@@ -16,7 +17,7 @@ async function getS3Client(region: string, credentialsId: string) {
     return new S3Client({ credentials, region });
 }
 
-async function getPreSignedUrl(credentialId: string, region: string, key: string) {
+async function getPreSignedUrl(credentialId: string, region: string, key?: string) {
     logger.info('Getting presigned url', { credentialId, region });
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,

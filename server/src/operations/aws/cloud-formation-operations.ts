@@ -1,6 +1,6 @@
-import createError from 'http-errors';
 import { listStacks } from '../../lib/aws/cloud-formation';
 import { getMissingPermissionsList } from '../../lib/aws/iam';
+import { getPreSignedUrl } from '../../lib/aws/s3';
 import getLogger from '../../utils/logger';
 import { generateFsxParams } from '../../utils/utils';
 import {
@@ -10,6 +10,7 @@ import {
     FSXConfigurationType,
     SQLConfigurationType
 } from '../../routes/types/deployment.types';
+import { CLOUD_FORMATION_STACK_URL } from '../../utils/consts';
 const logger = getLogger();
 
 async function currentCfStacksCount(credentialsId: string, region: string) {
@@ -40,44 +41,23 @@ async function createCloudFormationTemplateForUserDeployment(
         sqlConfiguration
     });
 
-    // StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
-    // VpcName: `${prefix}-vpc-${suffix}`,
-    // WSFClusterName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
-    // FSxFileSystemName: `${prefix}-fsx-${suffix}`,
-    // FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
-    // FSxDataVolumeSize,
-    // FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
-    // FSxLogVolumeSize: 0.25 * FSxDataVolumeSize, // 25% of FSxDataVolumeSize
-    // FSxTempDBVolumeName: `${prefix}-sqltemp-${suffix}`,
-    // FSxTempDBVolumeSize: 0.1 * FSxDataVolumeSize, // 10% of FSxDataVolumeSize
-    // FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
-    // FSxSvmName: `${prefix}-svm-${suffix}`,
-    // SQLigroupname: `${prefix}-sqligroup-${suffix}`,
-    // SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
-    // NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`]
-
-    //     &stackName=WLM-DB-VPC2
-
-    //    &param_VPCName=krithi_vpc
-
-    //    &param_VPCCIDR=10.0.0.0/16
-
-    //    &param_AvailabilityZones=ap-southeast-1a,ap-southeast-1c
-
-    //    &param_PrivateSubnetCIDRs=10.0.0.0/20,10.0.0.0/20
-
-    //    &param_PublicSubnetCIDR=10.0.128.0/20
-
-    //    &param_NumberOfPublicSubnets=1
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
+    // logger.info('permissions', permissions);
     if (permissions?.length) {
-        throw createError(404, 'Required permissions are not available to create the cloud formation template');
+        logger.error('Required permissions are not available to create the cloud formation template');
     }
     const data = await generateFsxParams(fsxConfiguration.databaseSize);
-    // const signedURL =
-    // domainPassword
-    logger.info(data);
-    return { cloudFormationUrl: 'test url' };
+    const signedURL = await getPreSignedUrl(credentialsId, region);
+
+    let params: string = `stackName=${data.StackName}`;
+    Object.entries(data).forEach(([key, value]) => {
+        if (key !== 'StackName') {
+            params += `&param_${key}=${value}`;
+        }
+    });
+    // logger.info(params);
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}${params}`;
+    return { cloudFormationUrl: signedTemplateURL };
 }
 
 export { currentCfStacksCount, createCloudFormationTemplateForUserDeployment };

@@ -394,8 +394,9 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = '';
-const CLOUD_FORMATION_BUCKET_OWNER_KEY = '';
+const BUCKET_NAME = 'sathish-byob';
+const CLOUD_FORMATION_BUCKET_OWNER_KEY = 'wlm-master.yaml';
+const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 
 export {
     WLMDB,
@@ -462,5 +463,6 @@ export {
     API_TITLE,
     APP_NAME,
     BUCKET_NAME,
-    CLOUD_FORMATION_BUCKET_OWNER_KEY
+    CLOUD_FORMATION_BUCKET_OWNER_KEY,
+    CLOUD_FORMATION_STACK_URL
 };

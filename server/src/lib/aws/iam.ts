@@ -23,7 +23,7 @@ async function getIAM(
         credentials = { accessKeyId, secretAccessKey, sessionToken };
     }
 
-    return new IAMClient({ credentials });
+    return new IAMClient({ credentials, region });
 }
 
 /**
