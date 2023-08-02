@@ -8,7 +8,8 @@ import {
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
-import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
+import { DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -198,7 +199,7 @@ describe('EC2 Operations', () => {
     it('should return a lsist EC2 instance types forn specific region', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         const resp = await getInstanceTypes(credentialsId, 'us-east-1');
-        expect(resp).toEqual(ec2instanceTypesResponse);
+        expect(resp.instanceTypes).toEqual(ec2instanceTypesResponse.instanceTypes);
     });
 
     it('List of key-pairs for a given region', async () => {

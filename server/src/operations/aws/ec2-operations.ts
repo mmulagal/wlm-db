@@ -257,6 +257,7 @@ async function getAmiList(
             new Date(b.name.substring(b.name.length - 10)).getTime() -
             new Date(a.name.substring(a.name.length - 10)).getTime()
     );
+
     return { amis: response };
 }
 
