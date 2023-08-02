@@ -33,7 +33,7 @@ const ActiveDirectory = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
-    const [versions, setVersions] = useState<{ domainName: any; dnsIpAddress: string; }[]>([]);
+    const [versions, setVersions] = useState<{ domainName: string; dnsIpAddress: string; }[]>([]);
     const [isCreating, setIsCreating] = useState(false);
 
     const addNewOption = async (option: any) => {
@@ -75,7 +75,8 @@ const ActiveDirectory = () => {
     useEffect(() => {
         dispatch(setSelectedADDomainName(null));
         dispatch(setSelectedADDomainAddress(''));
-    }, [dispatch, generateActiveDirectories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateActiveDirectories]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -124,6 +125,7 @@ const ActiveDirectory = () => {
 
                             <TextField
                                 label={GENERAL.DNS_ADDRESS}
+                                placeholder="DNS IP addresses"
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADDomainAddress(e.target.value));
                                 }}

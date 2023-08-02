@@ -31,7 +31,8 @@ const KeyPair = () => {
 
     useEffect(() => {
         dispatch(setSelectedKeyPair(generateKey[0]));
-    }, [dispatch, generateKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateKey]);
 
     //Set the Header text here
     const setHeader = () => {
