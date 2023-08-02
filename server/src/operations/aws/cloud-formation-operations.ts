@@ -9,7 +9,7 @@ import {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType
-} from '../../routes/types/aws.types';
+} from '../../routes/types/deployment.types';
 const logger = getLogger();
 
 async function currentCfStacksCount(credentialsId: string, region: string) {
@@ -73,7 +73,8 @@ async function createCloudFormationTemplateForUserDeployment(
     if (permissions?.length) {
         throw createError(404, 'Required permissions are not available to create the cloud formation template');
     }
-    const data = generateFsxParams(fsxConfiguration.databaseSize);
+    const data = await generateFsxParams(fsxConfiguration.databaseSize);
+    // const signedURL =
     // domainPassword
     logger.info(data);
     return { cloudFormationUrl: 'test url' };

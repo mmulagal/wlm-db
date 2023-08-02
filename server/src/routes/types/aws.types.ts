@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 
 // AWS Request Params
 const AwsParams = Type.Object({
@@ -6,14 +6,6 @@ const AwsParams = Type.Object({
     credentialsId: Type.String(),
     region: Type.String()
 });
-
-// AWS Request Params
-const AwsVpcParams = Type.Composite([
-    AwsParams,
-    Type.Object({
-        vpcId: Type.String()
-    })
-]);
 
 // VPC list Request and Response
 const AwsVpcQueryString = Type.Object({
@@ -166,63 +158,6 @@ const KeyPairsResponse = Type.Object({
     keyPairs: Type.Array(KeyPairsSchema)
 });
 
-const CFNetworkConfiguration = Type.Object({
-    vpcId: Type.String(),
-    vpcCidr: Type.String(),
-    privateSubnet1Id: Type.String(),
-    routeTable1Id: Type.String(),
-    availabilityZone1: Type.String(),
-    privateSubnet2Id: Type.String(),
-    routeTable2Id: Type.String(),
-    availabilityZone2: Type.String()
-});
-
-const EC2Configuration = Type.Object({
-    workloadInstanceType: Type.String(),
-    keyPairName: Type.String()
-});
-
-const ADConfiguration = Type.Object({
-    adScenarioType: Type.String(),
-    domainUsername: Type.String(),
-    domainPassword: Type.String(),
-    domainDnsname: Type.String(),
-    dnsIpaddress: Type.String(),
-    securityGroupId: Type.String()
-});
-
-const FSXConfiguration = Type.Object({
-    fsxFileSystemId: Type.String(),
-    fsxUsername: Type.String(),
-    fsxPassword: Type.String(),
-    databaseSize: Type.Number()
-});
-
-const SQLConfiguration = Type.Object({
-    sqlAmiId: Type.String(),
-    serviceAccountName: Type.String(),
-    serviceAccountPassword: Type.String()
-});
-
-// Cloud formation template creation Request and Response
-const CloudFormationTemplateRequestBody = Type.Object({
-    networkConfiguration: CFNetworkConfiguration,
-    ec2Configuration: EC2Configuration,
-    adConfiguration: ADConfiguration,
-    fsxConfiguration: FSXConfiguration,
-    sqlConfiguration: SQLConfiguration
-});
-
-const CloudFormationTemplateResponse = Type.Object({
-    cloudFormationUrl: Type.String()
-});
-
-type CFNetworkConfigurationType = Static<typeof CFNetworkConfiguration>;
-type EC2ConfigurationType = Static<typeof EC2Configuration>;
-type ADConfigurationType = Static<typeof ADConfiguration>;
-type FSXConfigurationType = Static<typeof FSXConfiguration>;
-type SQLConfigurationType = Static<typeof SQLConfiguration>;
-
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -235,13 +170,5 @@ export {
     FSxRegionsResponse,
     KmsKeysListResponse,
     KeyPairsSchema,
-    KeyPairsResponse,
-    AwsVpcParams,
-    CloudFormationTemplateRequestBody,
-    CloudFormationTemplateResponse,
-    CFNetworkConfigurationType,
-    EC2ConfigurationType,
-    ADConfigurationType,
-    FSXConfigurationType,
-    SQLConfigurationType
+    KeyPairsResponse
 };

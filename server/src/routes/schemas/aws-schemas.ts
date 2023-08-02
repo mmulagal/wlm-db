@@ -10,10 +10,7 @@ import {
     FSxRegionsResponse,
     KmsKeysListResponse,
     AmiQueryString,
-    KeyPairsResponse,
-    CloudFormationTemplateRequestBody,
-    AwsVpcParams,
-    CloudFormationTemplateResponse
+    KeyPairsResponse
 } from '../types/aws.types';
 
 // Base Request for AWS Routes
@@ -86,16 +83,6 @@ const GetKeyPairsSchema = {
     }
 };
 
-const CreateCloudFormationTemplateSchema = {
-    ...baseRequest,
-    params: AwsVpcParams,
-    description: 'Create Cloud formation template in a region for existing vpc',
-    body: CloudFormationTemplateRequestBody,
-    response: {
-        200: CloudFormationTemplateResponse
-    }
-};
-
 export {
     GetVpcsListSchema,
     GetAmiSchema,
@@ -103,6 +90,5 @@ export {
     GetSnsTopics,
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
-    CreateCloudFormationTemplateSchema,
     GetKeyPairsSchema
 };
