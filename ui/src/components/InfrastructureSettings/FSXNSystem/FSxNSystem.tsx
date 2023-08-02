@@ -25,6 +25,8 @@ const FSxNSystem = () => {
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const selectedExistingFsxnName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNExistingName);
 
+    const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+
     const [fsxType, setFsxType] = useState(GENERAL.CREATE_NEW_FSXN);
     const [inputName, setInputName] = useState('');
     const [userName, setUserName] = useState('');
@@ -52,7 +54,7 @@ const FSxNSystem = () => {
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
             if (!inputName || !userName || !password) {
-                return <ActionRequired />;
+                return <ActionRequired error={!isFsxNotFilled ? true : false} />;
             } else {
                 return <Typography variant="Regular_14">{inputName}</Typography>;
             }

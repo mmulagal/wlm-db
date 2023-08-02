@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
-import styles from './DatabaseCredentials.module.scss';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { useDispatch } from 'react-redux';
 import { setDBCredentialsName, setDBCredentialsPassword } from '../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../store/storeHooks';
+
+import styles from './DatabaseCredentials.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const DatabaseCredentials = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const dispatch = useDispatch();
+    const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     //Set the Header text here
     const setHeader = () => {
         if (!userName || !password) {
-            return <ActionRequired />;
+            return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
         } else {
             return <Typography variant="Regular_14">{userName}</Typography>;
         }

@@ -28,6 +28,7 @@ const AwsAccount = () => {
     const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isProperDBName = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
     useEffect(() => {
         if (isCreatePresed && (!isVPCNotFilled || !isAZNotFilled || !isDBCredPassword)) {
@@ -36,7 +37,8 @@ const AwsAccount = () => {
                 3: !isAZNotFilled ? true : false,
                 11: !isDBCredPassword ? true : false,
                 13: !isActiveDirectoryFilled ? true : false,
-                15: !isFsxNNameFilled ? true : false
+                15: !isFsxNNameFilled ? true : false,
+                10: !isProperDBName ? true : false
             });
             dispatch(setCreatePressed(false));
         }
@@ -48,7 +50,8 @@ const AwsAccount = () => {
         isDBCredPassword,
         isAZNotFilled,
         isActiveDirectoryFilled,
-        isFsxNNameFilled
+        isFsxNNameFilled,
+        isProperDBName
     ]);
 
     //Getting the Data from state
