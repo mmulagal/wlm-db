@@ -10,25 +10,28 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedKeyPair } from '../../../store/mssql/mssqlFormSlice';
 
 const KeyPair = () => {
-    const keys = ['Key1', 'Key2'];
-    const [key, setKey] = useState('');
     const dispatch = useDispatch();
+
+    //Getting the Data from state
+    const { keyPairData, keyPairLoading } = useAppSelector(state => state.mssql.getKeyPairList);
+    
     const selectedKey = useAppSelector((state: any) => state.mssqlForm.keyPair.selectedKeyPair);
 
     //Function to generate the options for Select Field
     const generateKey = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        keys?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        keyPairData?.keyPairs?.map((val, idx: number) => {
+            const keyPairName = val?.name || '';
+            const option = generateOptionType(keyPairName, keyPairName, '', false, '', val);
             options.push(option);
         });
 
         return options;
-    }, []);
+    }, [keyPairData]);
 
     useEffect(() => {
         dispatch(setSelectedKeyPair(generateKey[0]));
-    }, [generateKey]);
+    }, [dispatch, generateKey]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -36,7 +39,7 @@ const KeyPair = () => {
     };
     return (
         <div className={styles.key}>
-            <AccordionCard
+            <AccordionCard isLoading={keyPairLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="12"
                 title={<div className={CommonStyles.title}>{GENERAL.KEY_PAIR}</div>}

@@ -140,7 +140,7 @@ export const GENERAL = {
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
-    AD_TEXT: 'Lörem ipsum ireliga pakrongen emedan biolavis prelig det dehetist. Selingar pakrosel var. ',
+    AD_TEXT: 'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
     PASSWORD: 'Password',
     //Region VPC accordion
     REGION: 'Region',
