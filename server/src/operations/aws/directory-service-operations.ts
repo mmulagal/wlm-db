@@ -42,8 +42,8 @@ async function getAdsList(credentialsId: string, region: string) {
             }
         }));
     }
-
     logger.debug('Active Directories list', directories);
+
     return { directories: directories };
 }
 

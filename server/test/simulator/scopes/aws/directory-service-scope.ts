@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { DirectoryServiceClient, DescribeDirectoriesCommand } from '@aws-sdk/client-directory-service';
 import { mockClient } from 'aws-sdk-client-mock';

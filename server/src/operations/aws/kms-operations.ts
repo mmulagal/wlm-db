@@ -23,6 +23,7 @@ async function getKmsKeysList(credentialsId: string, region: string): Promise<{ 
 
 async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysList: KeyListEntry[]): Promise<KMS[]> {
     logger.debug('Get Kms key details', { credentialsId, region, kmsKeysList });
+
     const keyData: Array<KMS> = [];
     if (kmsKeysList?.length) {
         await Promise.all(
@@ -46,6 +47,7 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
             })
         );
     }
+
     return keyData;
 }
 

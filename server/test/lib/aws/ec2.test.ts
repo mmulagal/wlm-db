@@ -9,12 +9,7 @@ import {
     describeInstanceTypes,
     describeRouteTable
 } from '../../../src/lib/aws/ec2';
-import {
-    SQL_AMI_NAMES,
-    FSX_SUPPORTED_REGIONS,
-    DEFAULT_AWS_REGION,
-    DEFAULT_AWS_CREDENTIALS_TYPE
-} from '../../../src/utils/consts';
+import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
@@ -26,6 +21,7 @@ import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
+import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
 

@@ -1,0 +1,25 @@
+import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/aws/iam-scope';
+import getMissingPermissionsList from '../../../src/operations/aws/iam-operations';
+import { DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, SNS } from '../../../src/utils/consts';
+
+describe('List permissions required', () => {
+    it('list permissions required to deploy the stack - with all resources', async () => {
+        const response = await getMissingPermissionsList(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        expect(response).toBeDefined();
+    });
+
+    it('list permissions required to deploy the stack - with skipped resources', async () => {
+        const { permissions } = await getMissingPermissionsList(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [SNS]);
+        let isSnsFound = false;
+        for (const perm of permissions) {
+            if (perm.includes(SNS)) {
+                isSnsFound = true;
+                break;
+            }
+        }
+
+        expect(isSnsFound).toBe(false);
+    });
+});

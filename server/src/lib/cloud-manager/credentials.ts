@@ -11,7 +11,7 @@ interface Credentials {
     isSimulated: boolean;
 }
 
-interface AwsCredentials extends Credentials {
+interface AllCredentials extends Credentials {
     extra: {
         name: string;
         externalId?: string;
@@ -25,8 +25,9 @@ interface AwsCredentials extends Credentials {
  * @param credentialsType
  * @returns Array of credentials added to BlueXP
  */
-async function getAllAwsCredentials(credentialsType: string) {
-    logger.info('Getting credentials for credentials type ', credentialsType);
+async function getAllCredentials(credentialsType: string) {
+    logger.info('Getting all credentials for credentials type ', credentialsType);
+
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials`, {
@@ -38,7 +39,7 @@ async function getAllAwsCredentials(credentialsType: string) {
                 credentialsType: credentialsType
             }
         })
-        .json<AwsCredentials[]>();
+        .json<AllCredentials[]>();
 }
 
 /**
@@ -53,6 +54,7 @@ async function getAllAwsCredentials(credentialsType: string) {
  */
 async function getCredentialDetails(credentialsId: string) {
     logger.info('Getting credential details for ', credentialsId);
+
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${accountId}/credentials/${credentialsId}`, {
@@ -70,4 +72,4 @@ async function getCredentialDetails(credentialsId: string) {
         }>();
 }
 
-export { getCredentialDetails, getAllAwsCredentials };
+export { getCredentialDetails, getAllCredentials };

@@ -1,4 +1,5 @@
 // workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { KMSClient, ListKeysCommand, DescribeKeyCommand, ListAliasesCommand } from '@aws-sdk/client-kms';
 import { mockClient } from 'aws-sdk-client-mock';
