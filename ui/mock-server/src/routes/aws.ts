@@ -8,6 +8,7 @@ import adsData from '../data/ads.json';
 import amisData from '../data/amis.json';
 import snsTopicsData from '../data/sns-topics.json';
 import kmsKeysData from '../data/kms-keys.json';
+import keyPairData from '../data/key-pairs.json';
 
 const router = require('express').Router();
 
@@ -44,6 +45,12 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/snsTopics`
 // Get KMS mock response
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/kmsKeys`, async (req: {}, res: KmsKeysRes) => {
     const retData = kmsKeysData;
+    generateResponse(res, 200, retData);
+});
+
+// Get Key Pair mock response
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/keypairs`, async (req: {}, res: KmsKeysRes) => {
+    const retData = keyPairData;
     generateResponse(res, 200, retData);
 });
 
