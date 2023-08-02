@@ -9,13 +9,13 @@ import {
     GetSnsTopics,
     GetFSxRegionsSchema,
     GetKeyPairsSchema,
-    CreateTemplateSchema
+    CreateCloudFormationTemplateSchema
 } from './schemas/aws-schemas';
 import { getAmiList, getVpcsList, getFSxAvailableRegionsList, getKeyPairsList } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getKmsKeysList } from '../operations/aws/kms-operations';
-import { createTemplate } from '../operations/aws/cloud-formation-operations';
+import { createCloudFormationTemplateForUserDeployment } from '../operations/aws/cloud-formation-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -97,13 +97,13 @@ export default function awsRoutes(fastify: FastifyInstance) {
 
     server.post(
         `${API_PREFIX_PATH}/vpcs/:vpcId/template/create`,
-        { schema: CreateTemplateSchema },
+        { schema: CreateCloudFormationTemplateSchema },
         async (request, reply) => {
             const {
                 params: { credentialsId, region, vpcId },
                 body: { networkConfiguration, ec2Configuration, adConfiguration, fsxConfiguration, sqlConfiguration }
             } = request;
-            const response = await createTemplate(
+            const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
                 vpcId,
