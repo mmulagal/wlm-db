@@ -1,12 +1,12 @@
 .action-required {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-  .text {
-    color: #404040;
-    line-height: 24px;
-    position: relative;
-    top: 1px;
-  }
+    .text {
+        color: #404040;
+        line-height: 24px;
+        position: relative;
+        top: 1.5px;
+    }
 }
