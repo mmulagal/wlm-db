@@ -19,9 +19,9 @@ const initialState: MssqlEntities =  {
         vpcError: null
     },
     getAdsList: {
-        adData: {},
-        adLoading: false,
-        adError: null
+        adsData: {},
+        adsLoading: false,
+        adsError: null
     },
     getAmiList: {
         amiData: {},
@@ -37,6 +37,11 @@ const initialState: MssqlEntities =  {
         kmsData: {},
         kmsLoading: false,
         kmsError: null
+    },
+    getKeyPairList: {
+        keyPairData: {},
+        keyPairLoading: false,
+        keyPairError: null
     }
 };
 
@@ -64,6 +69,9 @@ const mssqlSlice = createSlice({
         },
         addKmsKeysList: (state, action: PayloadAction<any>) => {
             state.getKmsList= action.payload;
+        },
+        addKeyPairList: (state, action: PayloadAction<any>) => {
+            state.getKeyPairList= action.payload;
         }
     }
 
@@ -76,6 +84,7 @@ export const {
     addAdsList, 
     addAmiList, 
     addSnsList, 
-    addKmsKeysList 
+    addKmsKeysList,
+    addKeyPairList
 } = mssqlSlice.actions;
 export default mssqlSlice;

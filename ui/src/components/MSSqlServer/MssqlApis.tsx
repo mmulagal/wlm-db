@@ -3,11 +3,12 @@ import {
     useGetAdsListQuery, 
     useGetAmiListQuery, 
     useGetCredentialsQuery, 
+    useGetKeyPairsQuery, 
     useGetKmsKeysQuery, 
     useGetRegionsQuery, 
     useGetSnsTopicsQuery, 
     useGetVPCListQuery } from "../../utils/apiService";
-import { addAdsList, addAmiList, addCredentials, addKmsKeysList, addRegions, addSnsList, addVpcList } from "../../store/mssql/mssqlSlice";
+import { addAdsList, addAmiList, addCredentials, addKeyPairList, addKmsKeysList, addRegions, addSnsList, addVpcList } from "../../store/mssql/mssqlSlice";
 import { useEffect, useState } from "react";
 import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from "../../utils/consts";
 
@@ -99,6 +100,15 @@ const MssqlApis = () => {
         skip: credAndRegionSkip,
     });
 
+    // API call to get Key Pairs list for selected credentials and region 
+    const { 
+        data: keyPairData,
+        isFetching: keyPairLoading,
+        isError: keyPairError,
+    } = useGetKeyPairsQuery({credentialId: selectedCredId, region: selectedRegionCode}, {
+        skip: credAndRegionSkip,
+    });
+
     // To add credentials information in MssqlEntities
     useEffect(() => {
         dispatch(addCredentials({credentialData, credentialLoading, credentialError}));
@@ -180,6 +190,15 @@ const MssqlApis = () => {
             dispatch(addKmsKeysList({kmsData, kmsLoading, kmsError}));
         }
     }, [dispatch, kmsData , kmsLoading, kmsError]);
+
+    // To add Key Pair in MssqlEntities
+    useEffect(() => {
+        if(keyPairError){
+            dispatch(addKeyPairList({undefined, keyPairLoading, keyPairError}));
+        }else{
+            dispatch(addKeyPairList({keyPairData, keyPairLoading, keyPairError}));
+        }
+    }, [dispatch, keyPairData , keyPairLoading, keyPairError]);
 
     return;
 };
