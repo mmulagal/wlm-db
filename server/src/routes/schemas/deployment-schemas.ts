@@ -2,7 +2,8 @@ import { RouteTags } from '../../utils/consts';
 import {
     CloudFormationTemplateRequestBody,
     DeploymentParams,
-    CloudFormationTemplateResponse
+    CloudFormationTemplateResponse,
+    DeployTemplateResponse
 } from '../types/deployment.types';
 
 // Base Request for Deployment Routes
@@ -21,4 +22,14 @@ const CreateCloudFormationTemplateSchema = {
     }
 };
 
-export { CreateCloudFormationTemplateSchema };
+// Create cloud formation template for user deployment Schema
+const DeployTemplateSchema = {
+    ...baseRequest,
+    description: 'Deploy cloud formation template to provision SQL FCI',
+    body: CloudFormationTemplateRequestBody,
+    response: {
+        200: DeployTemplateResponse
+    }
+};
+
+export { CreateCloudFormationTemplateSchema, DeployTemplateSchema };

@@ -15,15 +15,16 @@ async function getSecretsManagerClient(credentialsId: string, region: string) {
 }
 
 async function createSecret(
-    secretManagerClient: SecretsManagerClient,
+    credentialsId: string,
+    region: string,
     secretName: string,
     username: string,
     password: string
 ) {
     logger.info('Create Secrets Manager String');
-
+    const secretsManagerClient = await getSecretsManagerClient(credentialsId, region);
     const secretString = { username: username, password: password };
-    const resp = await secretManagerClient.send(
+    const resp = await secretsManagerClient.send(
         new CreateSecretCommand({ Name: secretName, SecretString: JSON.stringify(secretString) })
     );
     logger.debug('Create Secrets Manager response', resp);

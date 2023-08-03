@@ -36,9 +36,9 @@ async function createStack(
     region: string,
     stackName: string,
     templateUrl: string,
-    disableRollback: boolean,
-    timeoutInMinutes: number,
-    templateParams: Parameter[]
+    templateParams: Parameter[],
+    disableRollback: boolean = false,
+    timeoutInMinutes?: number
 ) {
     logger.info(
         `Create cloudformation stack ${stackName} for template ${templateUrl} with ${timeoutInMinutes} timeoutInMinutes.`

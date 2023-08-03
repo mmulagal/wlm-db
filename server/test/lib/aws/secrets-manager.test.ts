@@ -13,9 +13,8 @@ describe(' Secrets Manager client', () => {
         expect(client).toBeDefined();
     });
     it(' Secrets Manager client in an invalid region', async () => {
-        const client = await getSecretsManagerClient(credentialsId, 'invalid-region');
         try {
-            await createSecret(client, 'test-string-1', 'username', 'password');
+            await createSecret(credentialsId, 'invalid-region', 'test-string-1', 'username', 'password');
         } catch (error: any) {
             expect(error.code.includes('ENOTFOUND')).toBeTruthy();
         }
@@ -25,8 +24,7 @@ describe(' Secrets Manager client', () => {
 describe('Create Secrets Manager String', () => {
     it('Secrets Manager String', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        const client = await getSecretsManagerClient(credentialsId, DEFAULT_AWS_REGION);
-        const resp = await createSecret(client, 'test-string-1', 'username', 'password');
+        const resp = await createSecret(credentialsId, DEFAULT_AWS_REGION, 'test-string-1', 'username', 'password');
         expect(resp).toEqual(secretManagerResponse);
     });
 });
