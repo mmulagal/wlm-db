@@ -35,7 +35,7 @@ const AwsAccount = () => {
             accordionContext({
                 1: false
             });
-        } else if (credentialData && credentialData.length === 0) {
+        } else if (!credentialData) {
             accordionContext({
                 1: true
             });

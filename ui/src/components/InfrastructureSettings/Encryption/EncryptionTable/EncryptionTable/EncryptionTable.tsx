@@ -13,18 +13,37 @@ const EncryptionTable = () => {
     const dispatch = useDispatch();
     const selectedRow = useAppSelector((state: any) => state.mssqlForm.encryption.selectedRow);
     const data: any = [
-        { key: 'aws/fsx', expirationDate: 'None', origin: 'AWS_KMS', id: '1' },
+        {
+            key: 'aws/fsx',
+            expirationDate: 'None',
+            origin: 'AWS_KMS',
+            id: '1',
+            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
+        },
         {
             key: 'key2',
             expirationDate: 'None',
             origin: 'AWS_KMS',
             id: '2',
+            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R',
             cellProps: {
                 isDisabled: true
             }
         },
-        { key: 'about to expire', expirationDate: 'None', origin: 'AWS_KMS', id: '5' },
-        { key: 'key 4', expirationDate: 'None', origin: 'AWS_KMS', id: '6' },
+        {
+            key: 'about to expire',
+            expirationDate: 'None',
+            origin: 'AWS_KMS',
+            id: '5',
+            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
+        },
+        {
+            key: 'key 4',
+            expirationDate: 'None',
+            origin: 'AWS_KMS',
+            id: '6',
+            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
+        },
         {
             key: 'expired',
             expirationDate: 'None',
@@ -32,7 +51,8 @@ const EncryptionTable = () => {
             cellProps: {
                 isDisabled: true
             },
-            id: '7'
+            id: '7',
+            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
         }
     ];
 
@@ -43,7 +63,7 @@ const EncryptionTable = () => {
             id: '1',
             isSortable: false,
 
-            width: '256px',
+            width: '180px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.keyName}>
@@ -58,10 +78,16 @@ const EncryptionTable = () => {
             }
         },
         {
+            Header: GENERAL.ORIGIN,
+            accessor: 'key_id',
+            id: '2',
+            width: '348px'
+        },
+        {
             Header: GENERAL.EXPIRATION_DATE,
             accessor: 'expirationDate',
-            id: '2',
-            width: '256px',
+            id: '3',
+            width: '177px',
 
             renderCell: (cellData: any) => {
                 return (
@@ -74,8 +100,8 @@ const EncryptionTable = () => {
         {
             Header: GENERAL.ORIGIN,
             accessor: 'origin',
-            id: '3',
-            width: '256px'
+            id: '4',
+            width: '126px'
         }
     ];
 
