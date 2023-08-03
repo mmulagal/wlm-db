@@ -30,18 +30,6 @@ const RegionVpc = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
 
-    //Setup for radio buttons
-    const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
-
-    //To open accordion if default account is present
-    useEffect(() => {
-        if (credentialData && credentialData.length > 0) {
-            accordionContext({
-                2: true
-            });
-        }
-    }, [credentialData]);
-
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -57,6 +45,18 @@ const RegionVpc = () => {
     useEffect(() => {
         dispatch(setSelectedRegionData(generateRegionsData[0]));
     }, [dispatch, generateRegionsData]);
+
+    //Setup for radio buttons
+    const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
+
+    //To open accordion if default account is present
+    useEffect(() => {
+        if (credentialData && credentialData.length > 0 && regionsData) {
+            accordionContext({
+                2: true
+            });
+        }
+    }, [credentialData, regionsData]);
 
     //Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {

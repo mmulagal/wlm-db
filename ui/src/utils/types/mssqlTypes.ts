@@ -51,17 +51,16 @@ export interface KeyPairs {
 }
 
 export interface InstanceType {
-    instanceType?: string,
-    vCpus?: number,
-    ramInMib?: number,
-    iopsInMbps?: number
+    instanceType?: string;
+    vCpus?: number;
+    ramInMib?: number;
+    iopsInMbps?: number;
 }
 
 export interface FSxN {
-    fileSystemId?: string,
-    fileSystemName?: string
+    fileSystemId?: string;
+    fileSystemName?: string;
 }
-
 
 export interface MssqlEntities {
     getCredentials: {
@@ -70,7 +69,7 @@ export interface MssqlEntities {
         credentialError: null;
     };
     getRegions: {
-        regionsData: { regions?: Regions[] };
+        regionsData: { regions?: Regions[] } | null;
         regionsLoading: false;
         regionsError: null;
     };
