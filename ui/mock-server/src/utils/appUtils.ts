@@ -1,7 +1,7 @@
 import Haikunator from 'haikunator';
 const haikunator = new Haikunator();
 
-export const BASE_URL = '/accounts/:accountId/api';
+export const BASE_URL = '/wlm-db/accounts/:accountId/api';
 
 export const generateResponse = function generateResponse(res: any, statusCode: number, result: any) {
     return res.status(statusCode).send(result);
