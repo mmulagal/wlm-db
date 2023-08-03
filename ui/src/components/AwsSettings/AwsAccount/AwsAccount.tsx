@@ -16,6 +16,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../store/mssql/mssqlFormSlice';
 import { useDispatch } from 'react-redux';
 import { setCreatePressed } from '../../../store/mssql/msSqlActionSlice';
+import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../utils/consts';
 
 const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
@@ -107,6 +108,14 @@ const AwsAccount = () => {
             return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
         }
     };
+
+    // To open new tab with credential page on click of credential link
+    const openCredentialTab = () => {
+        const url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? 
+                    CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+        window.open(url, '_blank', 'noopener');
+    };
+
     return (
         <div className={styles['aws-account']}>
             <AccordionCard
@@ -126,7 +135,7 @@ const AwsAccount = () => {
                                         <span>
                                             <Button
                                                 Component="button"
-                                                onClick={function noRefCheck() {}}
+                                                onClick={openCredentialTab}
                                                 variant="text"
                                             >
                                                 {GENERAL.CREDENTIALS}
@@ -159,7 +168,7 @@ const AwsAccount = () => {
                                 </div>
                                 <div className={styles.bottomText}>
                                     {GENERAL.ADD_NEW_CREDENTIALS}{' '}
-                                    <Button Component="button" onClick={function noRefCheck() {}} variant="text">
+                                    <Button Component="button" onClick={openCredentialTab} variant="text">
                                         {GENERAL.CREDENTIALS}
                                     </Button>
                                     .
