@@ -168,7 +168,8 @@ export const GENERAL = {
     ENCRYPTION_TEXT_FIELD: 'Encryption key ARN',
     ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_SUB_TEXT:
         'AWS is responsible for data encryption and decryption operations. Key management is handled by AWS Key Management Service.',
-    CUSTOMER_MASTER_KEY_NAME: 'Customer master key name',
+    CUSTOMER_MASTER_KEY_NAME: 'Key name',
+    KEY_ID: 'Key ID',
     EXPIRATION_DATE: 'Expiration date',
     ORIGIN: 'Origin',
     ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.'
