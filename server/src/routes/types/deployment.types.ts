@@ -38,7 +38,10 @@ const FSXConfiguration = Type.Object({
     fsxFileSystemId: Type.String(),
     fsxUsername: Type.String(),
     fsxPassword: Type.String(),
-    databaseSize: Type.Number()
+    databaseSize: Type.Number(),
+    fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1, 2] }),
+    fsxIOPS: Type.Number(),
+    encryptionKey: Type.Optional(Type.String())
 });
 
 const SQLConfiguration = Type.Object({
@@ -60,6 +63,10 @@ const CloudFormationTemplateResponse = Type.Object({
     cloudFormationUrl: Type.String()
 });
 
+const DeployTemplateResponse = Type.Object({
+    cloudFormationStackId: Type.String()
+});
+
 type CFNetworkConfigurationType = Static<typeof CFNetworkConfiguration>;
 type EC2ConfigurationType = Static<typeof EC2Configuration>;
 type ADConfigurationType = Static<typeof ADConfiguration>;
@@ -74,5 +81,6 @@ export {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    DeploymentParams
+    DeploymentParams,
+    DeployTemplateResponse
 };

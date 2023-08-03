@@ -69,15 +69,7 @@ describe('Create cloud formation stack', () => {
         }
     ];
     it('Create cloud formation stack', async () => {
-        const resp = await createStack(
-            CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'TestStack1',
-            'sampleurl',
-            false,
-            20,
-            params
-        );
+        const resp = await createStack(CREDENTIALS_ID, DEFAULT_AWS_REGION, 'TestStack1', 'sampleurl', params);
         expect(resp).toBeDefined();
         expect(resp.StackId).toEqual(
             'arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TestStack1/7a2cccd0-2fb0-11ee-a6b7-0253026d13ca'

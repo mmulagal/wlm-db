@@ -3,7 +3,6 @@
  * These functions can be re-used at different places and act as helper functions
  */
 import createError from 'http-errors';
-import { getSecretsManagerClient, createSecret } from '../lib/aws/secrets-manager';
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
@@ -44,19 +43,6 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-async function createSecretsString(
-    credentialsId: string,
-    region: string,
-    secretName: string,
-    username: string,
-    password: string
-) {
-    logger.info(`Creating ${secretName} secret in region ${region} with credentials ${credentialsId}.`);
-    const secretsManagerClient = await getSecretsManagerClient(credentialsId, region);
-    const resp = await createSecret(secretsManagerClient, secretName, username, password);
-    return resp.Name;
-}
-
 function generateFsxParams(FSxDataLunSize: number) {
     const prefix = WLMDB;
     const suffix = Date.now();
@@ -78,7 +64,10 @@ function generateFsxParams(FSxDataLunSize: number) {
         FSxSvmName: `${prefix}-svm-${suffix}`,
         SQLigroupname: `${prefix}-sqligroup-${suffix}`,
         SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
-        NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`]
+        NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`],
+        DomainAdminSecretName: `${prefix}-DOMAIN-${suffix}`,
+        FSxAdministratorPasswordSecret: `${prefix}-FSX-${suffix}`,
+        SQLServiceAccountSecret: `${prefix}-SQL-${suffix}`
     };
 }
 
@@ -86,4 +75,4 @@ function generateRandomNumberInRange(min: number, max: number) {
     return Math.floor(min + Math.random() * (max - min + 1));
 }
 
-export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, createSecretsString, generateFsxParams };
+export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, generateFsxParams };
