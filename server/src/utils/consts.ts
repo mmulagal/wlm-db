@@ -410,7 +410,7 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'sathish-byob';
+const BUCKET_NAME = 'sathish-wlm';
 const BUCKET_PREFIX = 'sample-prefix';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';

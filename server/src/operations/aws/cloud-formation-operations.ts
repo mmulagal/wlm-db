@@ -1,6 +1,6 @@
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { listStacks, createStack } from '../../lib/aws/cloud-formation';
-import { getMissingPermissionsList } from '../../lib/aws/iam';
+import getMissingPermissionsList from './iam-operations';
 import { createSecrets } from './secrets-manager-operations';
 import { getPreSignedUrl } from '../../lib/aws/s3';
 import getLogger from '../../utils/logger';
@@ -47,21 +47,52 @@ async function createCloudFormationTemplateForUserDeployment(
     });
 
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
-    // logger.info('permissions', permissions);
+
     if (permissions?.length) {
         logger.error('Required permissions are not available to create the cloud formation template');
     }
-    const data = await generateFsxParams(fsxConfiguration.databaseSize);
+    const derivedParams = await generateFsxParams(fsxConfiguration.databaseSize);
+
+    await createSecrets(credentialsId, region, [
+        {
+            secretName: derivedParams.DomainAdminSecretName,
+            username: adConfiguration.domainUsername,
+            password: adConfiguration.domainPassword
+        },
+        {
+            secretName: derivedParams.FSxAdministratorPasswordSecret,
+            username: fsxConfiguration.fsxUsername,
+            password: fsxConfiguration.fsxPassword
+        },
+        {
+            secretName: derivedParams.SQLServiceAccountSecret,
+            username: sqlConfiguration.serviceAccountName,
+            password: sqlConfiguration.serviceAccountPassword
+        }
+    ]);
+
     const signedURL = await getPreSignedUrl(credentialsId, region);
 
-    let params: string = `stackName=${data.StackName}`;
-    Object.entries(data).forEach(([key, value]) => {
+    let templateParams: string = `stackName=${derivedParams.StackName}`;
+    Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
-            params += `&param_${key}=${value}`;
+            templateParams += `&param_${key}=${value}`;
         }
     });
-    // logger.info(params);
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}${params}`;
+
+    const clubbedParamList = {
+        ...networkConfiguration,
+        ...adConfiguration,
+        ...networkConfiguration,
+        ...sqlConfiguration,
+        ...ec2Configuration
+    };
+
+    Object.entries(clubbedParamList).forEach(([key, value]) => {
+        templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+    });
+    logger.info(templateParams);
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
     return { cloudFormationUrl: signedTemplateURL };
 }
 
