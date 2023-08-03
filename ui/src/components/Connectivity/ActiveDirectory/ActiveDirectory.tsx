@@ -132,7 +132,7 @@ const ActiveDirectory = () => {
                             <TextField
                                 label={GENERAL.DNS_ADDRESS}
                                 placeholder="DNS IP addresses"
-                                error={!isADNotFilled && !selectedADDomainAddress ? 'Action Required' : ''}
+                                error={!isADNotFilled && !selectedADDomainAddress ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
@@ -155,7 +155,7 @@ const ActiveDirectory = () => {
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
-                                error={!isADNotFilled && !userName ? 'Action Required' : ''}
+                                error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
@@ -181,7 +181,7 @@ const ActiveDirectory = () => {
                                     setPassword(e.target.value);
                                     dispatch(setSelectedADPassword(e.target.value));
                                 }}
-                                error={!isADNotFilled && !password ? 'Action Required' : ''}
+                                error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={

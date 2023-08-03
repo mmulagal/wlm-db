@@ -44,7 +44,7 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
-                                error={!isDBPasswordFilled ? 'Action Required' : ''}
+                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
