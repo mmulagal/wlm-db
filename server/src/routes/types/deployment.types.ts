@@ -26,7 +26,7 @@ const EC2Configuration = Type.Object({
 });
 
 const ADConfiguration = Type.Object({
-    adScenarioType: Type.String(),
+    adScenarioType: Type.String({ enum: ['AWS_MANAGED_AD', 'MICROSOFT_AD_ON_EC2'] }),
     domainUsername: Type.String(),
     domainPassword: Type.String(),
     domainDnsname: Type.String(),
@@ -39,6 +39,7 @@ const FSXConfiguration = Type.Object({
     fsxUsername: Type.String(),
     fsxPassword: Type.String(),
     databaseSize: Type.Number(),
+    ontapSgGroupId: Type.String(),
     fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1, 2] }),
     fsxIOPS: Type.Number(),
     encryptionKey: Type.Optional(Type.String())

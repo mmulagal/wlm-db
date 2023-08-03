@@ -48,26 +48,33 @@ function generateFsxParams(FSxDataLunSize: number) {
     const suffix = Date.now();
 
     const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize
+    const FSxLogVolumeSize = 0.25 * FSxDataVolumeSize; // 25% of FSxDataVolumeSize
+    const FSxTempDbVolumeSize = 0.1 * FSxDataVolumeSize; // 10% of FSxDataVolumeSize
+    const FSxQuorumVolumeSize = 10000; // 10GB
+    const FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
 
     return {
+        UniqueID: suffix,
         StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
-        VpcName: `${prefix}-vpc-${suffix}`,
-        WSFClusterName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
+        //VpcName: `${prefix}-vpc-${suffix}`,
+        SqlFSxWSFCName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
         FSxFileSystemName: `${prefix}-fsx-${suffix}`,
         FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
         FSxDataVolumeSize,
         FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
-        FSxLogVolumeSize: 0.25 * FSxDataVolumeSize, // 25% of FSxDataVolumeSize
-        FSxTempDBVolumeName: `${prefix}-sqltemp-${suffix}`,
-        FSxTempDBVolumeSize: 0.1 * FSxDataVolumeSize, // 10% of FSxDataVolumeSize
+        FSxLogVolumeSize, // 25% of FSxDataVolumeSize
+        FSxTempDbVolumeName: `${prefix}-sqltemp-${suffix}`,
+        FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
         FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
+        FSxQuorumVolumeSize,
         FSxSvmName: `${prefix}-svm-${suffix}`,
         SQLigroupname: `${prefix}-sqligroup-${suffix}`,
         SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
         NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`],
         DomainAdminSecretName: `${prefix}-DOMAIN-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-FSX-${suffix}`,
-        SQLServiceAccountSecret: `${prefix}-SQL-${suffix}`
+        SQLServiceAccountSecret: `${prefix}-SQL-${suffix}`,
+        FSxStorageCapacity
     };
 }
 

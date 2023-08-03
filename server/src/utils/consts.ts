@@ -391,26 +391,27 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'sathish-byob';
-const BUCKET_PREFIX = 'sample-prefix';
+const BUCKET_NAME = 'wlmbucket';
+const BUCKET_PREFIX = 'templates';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
+const ASSETS_REGION_CODE = 'ap-southeast-1';
 const CLOUD_FORMATION_BUCKET_OWNER_KEY = 'wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = 'https://wlmbucket.s3.ap-southeast-1.amazonaws.com/templates/wlm-master.yaml';
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
-    vpcId: 'VPCCIDR',
-    vpcCidr: 'VPCID',
+    vpcId: 'VPCID',
+    vpcCidr: 'VPCCIDR',
     vpcName: 'VPCName',
     privateSubnet1Id: 'PrivateSubnet1ID',
     routeTable1Id: 'RouteTable1Id',
     privateSubnet2Id: 'PrivateSubnet2ID',
-    RouteTable2Id: 'routeTable2Id',
+    routeTable2Id: 'RouteTable2Id',
 
     adScenarioType: 'ADScenarioType',
-    domainUsername: 'DomainDNSName',
-    domainDnsname: 'DomainAdminSecretName',
+    domainUsername: 'DomainAdminUser',
+    domainDnsname: 'DomainDNSName',
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
 
@@ -418,18 +419,24 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     databaseSize: 'FSxDataLunSize',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
+    ontapSgGroupId: 'ONTAPSecurityGroupID',
     encryptionKey: 'FileSystemEncryptionKeyId',
 
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
+    sqlFciName: 'SqlFSxFCIName',
 
     workloadInstanceType: 'WorkloadInstanceType',
-    keyPairName: 'KeyPairName',
+    keyPairName: 'KeyPairName'
+};
 
+const WLM_ASSETS: Record<string, string> = {
     AssetsBucketName: BUCKET_NAME,
     AssetsS3KeyPrefix: BUCKET_PREFIX,
     MSSQLMediaBucketName: MSSQL_MEDIA_BUCKET_NAME,
-    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY
+    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY,
+    AssetsS3RegionCode: ASSETS_REGION_CODE,
+    Ec2RoleName: 'AmazonEC2RoleForLaunchWizard'
 };
 
 export {
@@ -500,5 +507,6 @@ export {
     CLOUD_FORMATION_BUCKET_OWNER_KEY,
     CLOUD_FORMATION_STACK_URL,
     TEMPLATE_CONFIGURATION_MAPPING,
+    WLM_ASSETS,
     MASTER_TEMPLATE_URL
 };
