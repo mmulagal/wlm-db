@@ -7,6 +7,7 @@ import {
     Typography,
     useAccordionContext
 } from '@netapp/design-system';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -144,6 +145,19 @@ const RegionVpc = () => {
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.VPC}
+                                    error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
+                                    //@ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--error'
+                                            }}
+                                        />
+                                    }
                                     isClearable={false}
                                     value={selectedVPCData ? selectedVPCData : null}
                                     onChange={(selectedOptions: any): void => {
