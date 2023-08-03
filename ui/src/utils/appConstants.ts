@@ -15,6 +15,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
     OPERATING_SYSTEM: 'Operating system',
@@ -78,11 +79,11 @@ export const GENERAL = {
     SQL_SERVER_STANDARD_EDITION: 'SQL Server Standard Edition',
     SQL_SERVER_STANDARD_EDITION_TEXT:
         'Core data management and business intelligence capabilities for mission-critical applications and mixed workloads.',
-    SQL_SERVER_WEB : 'Web',
+    SQL_SERVER_WEB: 'Web',
     SQL_SERVER_WEB_EDITION: 'SQL Server Web Edition',
     SQL_SERVER_WEB_EDITION_TEXT:
         "In accordance with Microsoft's licensing policies, it can only be used to support public and Internet-accessible webpages, websites, web applications, and web services.",
-    SQL_SERVER_ENTERPRISE : 'Enterprise',
+    SQL_SERVER_ENTERPRISE: 'Enterprise',
     SQL_SERVER_ENTERPRiSE_EDITION: 'SQL Server Enterprise Edition',
     SQL_SERVER_ENTERPRiSE_EDITION_TEXT:
         'Comprehensive high-end capabilities for mission-critical applications with demanding database workloads and business intelligence requirements.',
@@ -140,7 +141,8 @@ export const GENERAL = {
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
-    AD_TEXT: 'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
+    AD_TEXT:
+        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
     PASSWORD: 'Password',
     //Region VPC accordion
     REGION: 'Region',
@@ -166,7 +168,8 @@ export const GENERAL = {
     ENCRYPTION_TEXT_FIELD: 'Encryption key ARN',
     ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_SUB_TEXT:
         'AWS is responsible for data encryption and decryption operations. Key management is handled by AWS Key Management Service.',
-    CUSTOMER_MASTER_KEY_NAME: 'Customer master key name',
+    CUSTOMER_MASTER_KEY_NAME: 'Key name',
+    KEY_ID: 'Key ID',
     EXPIRATION_DATE: 'Expiration date',
     ORIGIN: 'Origin',
     ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.'

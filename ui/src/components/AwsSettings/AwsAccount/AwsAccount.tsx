@@ -35,7 +35,7 @@ const AwsAccount = () => {
             accordionContext({
                 1: false
             });
-        } else if (credentialData && credentialData.length === 0) {
+        } else if (!credentialData) {
             accordionContext({
                 1: true
             });
@@ -49,7 +49,7 @@ const AwsAccount = () => {
     const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
-    const isProperDBName = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
 
     useEffect(() => {
         if (

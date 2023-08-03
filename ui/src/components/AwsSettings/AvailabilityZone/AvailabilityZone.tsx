@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -92,6 +93,19 @@ const AvailabilityZone = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedAzNode1(selectedOptions));
                                 }}
+                                error={!isAZNotFilled && !selectedZone1 ? GENERAL.ACTION_REQUIRED : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 isSearchable={generateZones.length > 5}
                                 options={generateZones}
                                 className={styles.selectField}
@@ -101,6 +115,19 @@ const AvailabilityZone = () => {
                                 label={GENERAL.SUBNET}
                                 placeholder="Select a subnet"
                                 isClearable={false}
+                                error={!isAZNotFilled && !selectedSubnet1 ? GENERAL.ACTION_REQUIRED : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 value={selectedSubnet1 ? selectedSubnet1 : undefined}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode1(selectedOptions));
@@ -119,6 +146,19 @@ const AvailabilityZone = () => {
                                 placeholder="Select an availability zone"
                                 isClearable={false}
                                 value={selectedZone2 ? selectedZone2 : undefined}
+                                error={!isAZNotFilled && !selectedZone2 ? GENERAL.ACTION_REQUIRED : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedAzNode2(selectedOptions));
                                 }}
@@ -132,6 +172,19 @@ const AvailabilityZone = () => {
                                 placeholder="Select a subnet"
                                 isClearable={false}
                                 value={selectedSubnet2 ? selectedSubnet2 : undefined}
+                                error={!isAZNotFilled && !selectedSubnet2 ? GENERAL.ACTION_REQUIRED : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode2(selectedOptions));
                                 }}

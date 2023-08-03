@@ -28,6 +28,7 @@ import CommonStyles from '../../utils/CommonStyles.module.scss';
 import MssqlApis from './MssqlApis';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
+import ViewAPIRequest from './ViewAPIRequest/ViewAPIRequest';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -38,7 +39,7 @@ const MSSqlAccordions = () => {
         setDialog(
             <DialogComponent
                 header={GENERAL.API_REQUEST}
-                content={'View API'}
+                content={<ViewAPIRequest />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
