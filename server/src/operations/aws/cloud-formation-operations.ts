@@ -12,7 +12,12 @@ import {
     FSXConfigurationType,
     SQLConfigurationType
 } from '../../routes/types/deployment.types';
-import { TEMPLATE_CONFIGURATION_MAPPING, CLOUD_FORMATION_STACK_URL, MASTER_TEMPLATE_URL } from '../../utils/consts';
+import {
+    TEMPLATE_CONFIGURATION_MAPPING,
+    CLOUD_FORMATION_STACK_URL,
+    MASTER_TEMPLATE_URL,
+    WLM_ASSETS
+} from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -145,19 +150,22 @@ async function deploySqlTemplate(
         }
     ]);
 
+    const stackName = derivedParams.StackName;
     const templateParams: Array<Parameter> = [];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
-        templateParams.push({
-            ParameterKey: key,
-            ParameterValue: value.toString()
-        });
+        if (key != 'StackName') {
+            templateParams.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
+        }
     });
 
     const clubbedParamList = {
         ...networkConfiguration,
         ...adConfiguration,
-        ...networkConfiguration,
+        ...fsxConfiguration,
         ...sqlConfiguration,
         ...ec2Configuration
     };
@@ -169,17 +177,24 @@ async function deploySqlTemplate(
         });
     });
 
-    logger.info(`Stack ${derivedParams.StackName} parameters ${JSON.stringify(templateParams)}.`);
+    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
+    });
+
+    logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParams)}.`);
 
     const deployStackResponse = await createStack(
         credentialsId,
         region,
-        derivedParams.StackName,
+        stackName,
         MASTER_TEMPLATE_URL,
         templateParams
     );
 
-    logger.debug(`Stack ${derivedParams.StackName} response ${deployStackResponse}`);
+    logger.info(`Stack ${stackName} response ${deployStackResponse}`);
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
