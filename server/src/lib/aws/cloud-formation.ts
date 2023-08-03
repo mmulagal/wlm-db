@@ -44,6 +44,7 @@ async function createStack(
         TemplateURL: templateUrl,
         Parameters: templateParams,
         DisableRollback: disableRollback,
+        Capabilities: ['CAPABILITY_IAM'],
         TimeoutInMinutes: timeoutInMinutes
     };
     const cloudformationClient = await getCloudformationClient(credentialsId, region);

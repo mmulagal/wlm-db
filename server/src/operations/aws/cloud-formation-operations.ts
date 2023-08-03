@@ -2,6 +2,7 @@ import { Parameter } from '@aws-sdk/client-cloudformation';
 import { listStacks, createStack } from '../../lib/aws/cloud-formation';
 import { getMissingPermissionsList } from '../../lib/aws/iam';
 import { createSecrets } from './secrets-manager-operations';
+import { getRoleName } from '../cloud-manager/credentials-operations';
 import { getPreSignedUrl } from '../../lib/aws/s3';
 import getLogger from '../../utils/logger';
 import { generateFsxParams } from '../../utils/utils';
@@ -16,7 +17,8 @@ import {
     TEMPLATE_CONFIGURATION_MAPPING,
     CLOUD_FORMATION_STACK_URL,
     MASTER_TEMPLATE_URL,
-    WLM_ASSETS
+    WLM_ASSETS,
+    EC2_ROLE_NAME
 } from '../../utils/consts';
 
 const logger = getLogger();
@@ -118,7 +120,8 @@ async function deploySqlTemplate(
     ]);
 
     const stackName = derivedParams.StackName;
-    const templateParams: Array<Parameter> = [];
+    const { roleName } = await getRoleName(credentialsId);
+    const templateParams: Array<Parameter> = [{ ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName }];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key != 'StackName') {

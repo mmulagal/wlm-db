@@ -393,6 +393,7 @@ const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = 'wlmbucket';
 const BUCKET_PREFIX = 'templates';
+const EC2_ROLE_NAME = 'Ec2RoleName';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 'ap-southeast-1';
@@ -435,8 +436,7 @@ const WLM_ASSETS: Record<string, string> = {
     AssetsS3KeyPrefix: BUCKET_PREFIX,
     MSSQLMediaBucketName: MSSQL_MEDIA_BUCKET_NAME,
     MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY,
-    AssetsS3RegionCode: ASSETS_REGION_CODE,
-    Ec2RoleName: 'AmazonEC2RoleForLaunchWizard'
+    AssetsS3RegionCode: ASSETS_REGION_CODE
 };
 
 export {
@@ -508,5 +508,6 @@ export {
     CLOUD_FORMATION_STACK_URL,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
-    MASTER_TEMPLATE_URL
+    MASTER_TEMPLATE_URL,
+    EC2_ROLE_NAME
 };

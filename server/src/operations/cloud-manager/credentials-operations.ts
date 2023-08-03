@@ -1,4 +1,4 @@
-import { getAllAwsCredentials } from '../../lib/cloud-manager/credentials';
+import { getAllAwsCredentials, getCredentialDetails } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 /**
  * Returns array of aws assume role
@@ -14,4 +14,9 @@ async function getAwsCredentials(credentialsType: string): Promise<CredentialsRe
     }));
 }
 
-export { getAwsCredentials };
+async function getRoleName(credentialsId: string) {
+    const data = await getCredentialDetails(credentialsId);
+    return { roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '' };
+}
+
+export { getAwsCredentials, getRoleName };

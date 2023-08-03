@@ -9,6 +9,7 @@ import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operat
 import { SQL_AMI_NAMES, HttpErrorCodes, STACKS_DEPLOYED, WLMDB } from './consts';
 
 import getLogger from './logger';
+import { round } from 'lodash-es';
 
 const logger = getLogger();
 
@@ -46,31 +47,32 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
 function generateFsxParams(FSxDataLunSize: number) {
     const prefix = WLMDB;
     const suffix = Date.now();
+    const randomDigits = generateRandomNumberInRange(10000, 99999);
 
-    const FSxDataVolumeSize = 1.1 * FSxDataLunSize; // FSxDataLunSize + 10% of FSxDataLunSize
-    const FSxLogVolumeSize = 0.25 * FSxDataVolumeSize; // 25% of FSxDataVolumeSize
-    const FSxTempDbVolumeSize = 0.1 * FSxDataVolumeSize; // 10% of FSxDataVolumeSize
+    const FSxDataVolumeSize = round(1.1 * FSxDataLunSize); // FSxDataLunSize + 10% of FSxDataLunSize
+    const FSxLogVolumeSize = round(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+    const FSxTempDbVolumeSize = round(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
     const FSxQuorumVolumeSize = 10000; // 10GB
-    const FSxStorageCapacity = FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize;
+    const FSxStorageCapacity = round(FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize);
 
     return {
         UniqueID: suffix,
         StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
         //VpcName: `${prefix}-vpc-${suffix}`,
-        SqlFSxWSFCName: `WLMWSFC-${generateRandomNumberInRange(10000, 99999)}`,
+        SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
         FSxFileSystemName: `${prefix}-fsx-${suffix}`,
-        FSxDataVolumeName: `${prefix}-sqldata-${suffix}`,
+        FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
         FSxDataVolumeSize,
-        FSxLogVolumeName: `${prefix}-sqllog-${suffix}`,
+        FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
         FSxLogVolumeSize, // 25% of FSxDataVolumeSize
-        FSxTempDbVolumeName: `${prefix}-sqltemp-${suffix}`,
+        FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
         FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
-        FSxQuorumVolumeName: `${prefix}-quorum-${suffix}`,
+        FSxQuorumVolumeName: `${prefix}_quorum_${suffix}`,
         FSxQuorumVolumeSize,
-        FSxSvmName: `${prefix}-svm-${suffix}`,
-        SQLigroupname: `${prefix}-sqligroup-${suffix}`,
-        SQLSvmName: `${prefix}-sqlsvm-${suffix}`,
-        NodeNetBIOSNames: [`${prefix}-node1-${suffix}`, `${prefix}-node2-${suffix}`],
+        FSxSvmName: `${prefix}_svm_${suffix}`,
+        SQLigroupname: `${prefix}_sqligroup_${suffix}`,
+        SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
+        NodeNetBIOSNames: [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`],
         DomainAdminSecretName: `${prefix}-DOMAIN-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-FSX-${suffix}`,
         SQLServiceAccountSecret: `${prefix}-SQL-${suffix}`,
