@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 
-import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, PasswordField, RadioButton, TextField, Typography } from '@netapp/design-system';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -14,53 +14,60 @@ import {
     setFsxNName,
     setFsxNPassword,
     setFsxNType,
-    setFsxNUserName
+    setFsxNExistingUserName
 } from '../../../store/mssql/mssqlFormSlice';
+import { FSXADMIN } from '../../../utils/consts';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
-    const selectedFsxnName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxName);
-    const selectedFsxnUserName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNUserName);
-    const selectedFsxnPassword = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNPassword);
+
+    const {fsxnData, fsxnLoading} = useAppSelector(state => state.mssql.getFsxnList)
+    const selectedFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNName);
+    const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+    const selectedFsxnNewUserName = useAppSelector(state => state.mssqlForm.fsxN.fsxNNewUserName);
+    const selectedFsxnExistingUserName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingUserName);
+    const selectedFsxnPassword = useAppSelector(state => state.mssqlForm.fsxN.fsxNPassword);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
-    const selectedExistingFsxnName = useAppSelector((state: any) => state.mssqlForm.fsxN.fsxNExistingName);
+    const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
-    const [fsxType, setFsxType] = useState(GENERAL.CREATE_NEW_FSXN);
-    const [inputName, setInputName] = useState('');
-    const [userName, setUserName] = useState('');
-    const [password, setPassword] = useState('');
-
-    //Code for select field
-    const fsxList = ['myexistingFSx', 'FSx default'];
+    const [fsxType, setFsxType] = useState(selectedFsxnType);
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        fsxList?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+        fsxnData?.filesystems?.map((val, idx: number) => {
+            const value = val?.fileSystemName || val?.fileSystemId || '';
+            const data = {
+                fileSystemId: val?.fileSystemId,
+                fileSystemName: val?.fileSystemName
+            }
+            const option = generateOptionType(value, value, '', false, '', data);
             options.push(option);
         });
 
         return options;
-    }, []);
+    }, [fsxnData]);
 
     useEffect(() => {
         dispatch(setExistingFsxnName(generateExistingFsx[0]));
+        dispatch(setFsxNExistingUserName(FSXADMIN));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
+
     //Set the Header text here
     const setHeader = () => {
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
-            if (!inputName || !userName || !password) {
+            if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
             } else {
-                return <Typography variant="Regular_14">{inputName}</Typography>;
+                return <Typography variant="Regular_14">{selectedFsxnName}</Typography>;
             }
         } else {
             //Checking for the existing option
-            if (!selectedExistingFsxnName?.label || !userName || !password) {
+            if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
                 return <ActionRequired />;
             } else {
                 return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
@@ -69,7 +76,7 @@ const FSxNSystem = () => {
     };
     return (
         <div className={styles.fsx}>
-            <AccordionCard
+            <AccordionCard isLoading={fsxnLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
@@ -102,10 +109,9 @@ const FSxNSystem = () => {
                                     label={GENERAL.FSXN_NAME}
                                     error={!isFsxNNameFilled ? 'Action Required' : ''}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        setInputName(e.target.value);
                                         dispatch(setFsxNName(e.target.value));
                                     }}
-                                    value={inputName}
+                                    value={selectedFsxnName ? selectedFsxnName : ''}
                                     className={styles.textField}
                                 />
                             )}
@@ -127,22 +133,20 @@ const FSxNSystem = () => {
                             <TextField
                                 label={GENERAL.USER_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setUserName(e.target.value);
-                                    dispatch(setFsxNUserName(e.target.value));
+                                    dispatch(setFsxNExistingUserName(e.target.value));
                                 }}
-                                value={userName}
+                                value={(fsxType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName) ?  
+                                    selectedFsxnExistingUserName : FSXADMIN}
                                 className={styles.textField}
+                                isDisabled={fsxType === GENERAL.CREATE_NEW_FSXN}
                             />
-                            <TextField
+                            <PasswordField
                                 label={GENERAL.FSX_PASSWORD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));
                                 }}
-                                value={password}
-                                className={styles.textField}
-                                //@ts-ignore
-                                type="password"
+                                value={selectedFsxnPassword}
+                                className={styles.textFieldPassword}
                             />
                         </div>
 
