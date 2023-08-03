@@ -22,3 +22,7 @@ export const DATABASE_TYPE = 'sql'
 
 // Default username for FSxN when creating new
 export const FSXADMIN = 'fsxadmin'
+
+// Add credentials link
+export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
+export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
