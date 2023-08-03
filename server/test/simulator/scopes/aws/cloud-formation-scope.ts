@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { CloudFormationClient, ListStacksCommand, CreateStackCommand } from '@aws-sdk/client-cloudformation';
 import { mockClient } from 'aws-sdk-client-mock';

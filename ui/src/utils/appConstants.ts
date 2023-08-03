@@ -65,6 +65,8 @@ export const GENERAL = {
     //Constants for Op system
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
+    WIN_SERVER_2016_VERSION: '2016',
+    WIN_SERVER_2019_VERSION: '2019',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover Cluster Instances (FCI)',
@@ -72,12 +74,15 @@ export const GENERAL = {
     SINGLE_INSTANCE: 'Single Instance',
     SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
     //Constants for DB Edition
+    SQL_SERVER_STANDARD: 'Standard',
     SQL_SERVER_STANDARD_EDITION: 'SQL Server Standard Edition',
     SQL_SERVER_STANDARD_EDITION_TEXT:
         'Core data management and business intelligence capabilities for mission-critical applications and mixed workloads.',
+    SQL_SERVER_WEB : 'Web',
     SQL_SERVER_WEB_EDITION: 'SQL Server Web Edition',
     SQL_SERVER_WEB_EDITION_TEXT:
         "In accordance with Microsoft's licensing policies, it can only be used to support public and Internet-accessible webpages, websites, web applications, and web services.",
+    SQL_SERVER_ENTERPRISE : 'Enterprise',
     SQL_SERVER_ENTERPRiSE_EDITION: 'SQL Server Enterprise Edition',
     SQL_SERVER_ENTERPRiSE_EDITION_TEXT:
         'Comprehensive high-end capabilities for mission-critical applications with demanding database workloads and business intelligence requirements.',
@@ -85,6 +90,9 @@ export const GENERAL = {
     SQL_SERVER_2019: 'SQL Server 2019',
     SQL_SERVER_2016: 'SQL Server 2016',
     SQL_SERVER_2022: 'SQL Server 2022',
+    SQL_SERVER_2019_VERSION: '2019',
+    SQL_SERVER_2016_VERSION: '2016',
+    SQL_SERVER_2022_VERSION: '2022',
     VERSION: 'Version',
     //Constants for License accordion
     LICENSE_TEXT:
@@ -132,7 +140,7 @@ export const GENERAL = {
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
-    AD_TEXT: 'Lörem ipsum ireliga pakrongen emedan biolavis prelig det dehetist. Selingar pakrosel var. ',
+    AD_TEXT: 'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
     PASSWORD: 'Password',
     //Region VPC accordion
     REGION: 'Region',

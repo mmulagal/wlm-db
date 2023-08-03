@@ -1,66 +1,29 @@
 import { IAMClient, SimulatePrincipalPolicyCommand, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
-import { AWS_RESOURCES_ACTION_MAP } from '../../utils/consts';
 
 const logger = getLogger();
 
-async function getIAM(
-    credentialsId: string,
-    region: string,
-    credentials?: {
-        accessKeyId: string;
-        secretAccessKey: string;
-        sessionToken: string;
-    }
-) {
+async function getIAM(credentialsId: string, region: string) {
     logger.debug('Getting IAM client:', credentialsId, region);
 
-    if (!credentials) {
-        const {
-            credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-        } = await getCredentialDetails(credentialsId);
-        credentials = { accessKeyId, secretAccessKey, sessionToken };
-    }
+    const {
+        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+    } = await getCredentialDetails(credentialsId);
+    const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new IAMClient({ credentials, region });
 }
 
-/**
- *
- * @param credentialsId
- * @param region
- * @param skipResources - array containing the resources where we don't need to check the permissions
- * @returns permissions - array of permissions required
- */
-async function getMissingPermissionsList(credentialsId: string, region: string, skipResources?: Array<string>) {
-    logger.info('Get Permissions List', { credentialsId, region, skipResources });
+async function getPermissionsList(credentialsId: string, region: string, command: SimulatePrincipalPolicyCommandInput) {
+    logger.info('Get missing permissions List', { credentialsId, region, command });
 
-    const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken },
-        extra: { arn }
-    } = await getCredentialDetails(credentialsId);
+    const iamClient = await getIAM(credentialsId, region);
 
-    const iamClient = await getIAM(credentialsId, region, { accessKeyId, secretAccessKey, sessionToken });
+    const response = await iamClient.send(new SimulatePrincipalPolicyCommand(command));
+    logger.debug('getPermissionsList response', response);
 
-    const command: SimulatePrincipalPolicyCommandInput = {
-        PolicySourceArn: arn,
-        ActionNames: Object.keys(AWS_RESOURCES_ACTION_MAP)
-            .filter(key => !skipResources?.includes(key))
-            .map(key => {
-                return AWS_RESOURCES_ACTION_MAP[key as keyof typeof AWS_RESOURCES_ACTION_MAP];
-            })
-            .flat(),
-        MaxItems: 500
-    };
-
-    const { EvaluationResults: results } = await iamClient.send(new SimulatePrincipalPolicyCommand(command));
-    const permissions =
-        results
-            ?.filter(({ EvalDecision }) => EvalDecision === 'implicitDeny')
-            .map(({ EvalActionName }) => EvalActionName as string) || [];
-
-    return { permissions };
+    return response;
 }
 
-export { getMissingPermissionsList };
+export { getPermissionsList };

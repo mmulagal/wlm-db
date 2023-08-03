@@ -1,300 +1,397 @@
 {
-    "vpcs": [
-      {
-        "id": "vpc-7d4a2818",
-        "state": "available",
-        "cidrBlock": [
-          {
-            "AssociationId": "vpc-cidr-assoc-c08773a9",
-            "CidrBlock": "172.30.0.0/20",
-            "CidrBlockState": {
-              "State": "associated"
+  "vpcs": [
+    {
+      "id": "vpc-7d4a2818",
+      "state": "available",
+      "cidrBlock": [
+        {
+          "AssociationId": "vpc-cidr-assoc-c08773a9",
+          "CidrBlock": "172.30.0.0/20",
+          "CidrBlockState": {
+            "State": "associated"
+          }
+        }
+      ],
+      "tags": [
+        {
+          "Key": "Name",
+          "Value": "sathish"
+        }
+      ],
+      "isDefault": false,
+      "name": "sathish",
+      "subnets": [
+        {
+          "id": "subnet-5a37222d",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.16.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "KubernetesCluster",
+              "Value": "netehenfhk"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            },
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-1"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
             }
-          }
-        ],
-        "tags": [
-          {
-            "Key": "Name",
-            "Value": "sathish"
-          }
-        ],
-        "isDefault": false,
-        "name": "sathish",
-        "subnets": [
-          {
-            "id": "subnet-5a37222d",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.16.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "KubernetesCluster",
-                "Value": "netehenfhk"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              },
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-1"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              }
-            ],
-            "name": "HCL-CC-1"
-          },
-          {
-            "id": "subnet-74a1b303",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.17.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-2"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              }
-            ],
-            "name": "HCL-CC-2"
-          }
-        ],
-        "securityGroups": []
-      },
-      {
-        "id": "vpc-d4f1aab1",
-        "state": "available",
-        "cidrBlock": [
-          {
-            "AssociationId": "vpc-cidr-assoc-aa9068c3",
-            "CidrBlock": "192.168.16.0/20",
-            "CidrBlockState": {
-              "State": "associated"
+          ],
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
+        },
+        {
+          "id": "subnet-74a1b303",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.17.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-2"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
             }
-          }
-        ],
-        "tags": [
-          {
-            "Key": "Name",
-            "Value": "HCL-VPCOF-2 - to be deleted"
-          }
-        ],
-        "isDefault": false,
-        "name": "HCL-VPCOF-2 - to be deleted",
-        "subnets": [
-          {
-            "id": "subnet-5a37222d",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.16.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "KubernetesCluster",
-                "Value": "netehenfhk"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              },
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-1"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              }
-            ],
-            "name": "HCL-CC-1"
-          },
-          {
-            "id": "subnet-74a1b303",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.17.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-2"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              }
-            ],
-            "name": "HCL-CC-2"
-          }
-        ],
-        "securityGroups": []
-      },
-      {
-        "id": "vpc-62720a04",
-        "state": "available",
-        "cidrBlock": [
-          {
-            "AssociationId": "vpc-cidr-assoc-17412d7f",
-            "CidrBlock": "10.0.0.0/16",
-            "CidrBlockState": {
-              "State": "associated"
+          ],
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
+        }
+      ],
+      "securityGroups": [
+        {
+          "id": "sg-ad2b38d1",
+          "description": "default VPC security group",
+          "vpcId": "vpc-62720a04",
+          "ipPermissions": [
+            {
+              "FromPort": 22,
+              "IpProtocol": "tcp",
+              "IpRanges": [
+                {
+                  "CidrIp": "0.0.0.0/0"
+                }
+              ],
+              "Ipv6Ranges": [],
+              "PrefixListIds": [],
+              "ToPort": 22,
+              "UserIdGroupPairs": []
             }
+          ],
+          "name": "-"
+        }
+      ]
+    },
+    {
+      "id": "vpc-d4f1aab1",
+      "state": "available",
+      "cidrBlock": [
+        {
+          "AssociationId": "vpc-cidr-assoc-aa9068c3",
+          "CidrBlock": "192.168.16.0/20",
+          "CidrBlockState": {
+            "State": "associated"
           }
-        ],
-        "tags": [
-          {
-            "Key": "Name",
-            "Value": "SGWS"
-          }
-        ],
-        "isDefault": false,
-        "name": "SGWS",
-        "subnets": [
-          {
-            "id": "subnet-5a37222d",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.16.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "KubernetesCluster",
-                "Value": "netehenfhk"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              },
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-1"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              }
-            ],
-            "name": "HCL-CC-1"
-          },
-          {
-            "id": "subnet-74a1b303",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.17.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-2"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              }
-            ],
-            "name": "HCL-CC-2"
-          }
-        ],
-        "securityGroups": []
-      },
-      {
-        "id": "vpc-ba1ed1de",
-        "state": "available",
-        "cidrBlock": [
-          {
-            "AssociationId": "vpc-cidr-assoc-d63dc1bf",
-            "CidrBlock": "192.168.16.0/20",
-            "CidrBlockState": {
-              "State": "associated"
+        }
+      ],
+      "tags": [
+        {
+          "Key": "Name",
+          "Value": "HCL-VPCOF-2 - to be deleted"
+        }
+      ],
+      "isDefault": false,
+      "name": "HCL-VPCOF-2 - to be deleted",
+      "subnets": [
+        {
+          "id": "subnet-5a37222d",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.16.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "KubernetesCluster",
+              "Value": "netehenfhk"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            },
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-1"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
             }
+          ],
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
+        },
+        {
+          "id": "subnet-74a1b303",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.17.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-2"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            }
+          ],
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
+        }
+      ],
+      "securityGroups": [
+        {
+          "id": "sg-ad2b38d1",
+          "description": "default VPC security group",
+          "vpcId": "vpc-62720a04",
+          "ipPermissions": [
+            {
+              "FromPort": 22,
+              "IpProtocol": "tcp",
+              "IpRanges": [
+                {
+                  "CidrIp": "0.0.0.0/0"
+                }
+              ],
+              "Ipv6Ranges": [],
+              "PrefixListIds": [],
+              "ToPort": 22,
+              "UserIdGroupPairs": []
+            }
+          ],
+          "name": "-"
+        }
+      ]
+    },
+    {
+      "id": "vpc-62720a04",
+      "state": "available",
+      "cidrBlock": [
+        {
+          "AssociationId": "vpc-cidr-assoc-17412d7f",
+          "CidrBlock": "10.0.0.0/16",
+          "CidrBlockState": {
+            "State": "associated"
           }
-        ],
-        "tags": [
-          {
-            "Key": "Name",
-            "Value": "HCL-CC"
+        }
+      ],
+      "tags": [
+        {
+          "Key": "Name",
+          "Value": "SGWS"
+        }
+      ],
+      "isDefault": false,
+      "name": "SGWS",
+      "subnets": [
+        {
+          "id": "subnet-5a37222d",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.16.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "KubernetesCluster",
+              "Value": "netehenfhk"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            },
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-1"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
+            }
+          ],
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
+        },
+        {
+          "id": "subnet-74a1b303",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.17.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-2"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            }
+          ],
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
+        }
+      ],
+      "securityGroups": [
+        {
+          "id": "sg-ad2b38d1",
+          "description": "default VPC security group",
+          "vpcId": "vpc-62720a04",
+          "ipPermissions": [
+            {
+              "FromPort": 22,
+              "IpProtocol": "tcp",
+              "IpRanges": [
+                {
+                  "CidrIp": "0.0.0.0/0"
+                }
+              ],
+              "Ipv6Ranges": [],
+              "PrefixListIds": [],
+              "ToPort": 22,
+              "UserIdGroupPairs": []
+            }
+          ],
+          "name": "-"
+        }
+      ]
+    },
+    {
+      "id": "vpc-ba1ed1de",
+      "state": "available",
+      "cidrBlock": [
+        {
+          "AssociationId": "vpc-cidr-assoc-d63dc1bf",
+          "CidrBlock": "192.168.16.0/20",
+          "CidrBlockState": {
+            "State": "associated"
           }
-        ],
-        "isDefault": false,
-        "name": "HCL-CC",
-        "subnets": [
-          {
-            "id": "subnet-5a37222d",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.16.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "KubernetesCluster",
-                "Value": "netehenfhk"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              },
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-1"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              }
-            ],
-            "name": "HCL-CC-1"
-          },
-          {
-            "id": "subnet-74a1b303",
-            "state": "available",
-            "vpcId": "vpc-ba1ed1de",
-            "cidrBlock": "192.168.17.0/24",
-            "availabilityZone": "us-east-1d",
-            "availableIps": 251,
-            "tags": [
-              {
-                "Key": "Name",
-                "Value": "HCL-CC-2"
-              },
-              {
-                "Key": "eco-shared-resource",
-                "Value": "Y"
-              },
-              {
-                "Key": "eco-groupname",
-                "Value": "HCL"
-              }
-            ],
-            "name": "HCL-CC-2"
-          }
-        ],
-        "securityGroups": []
-      }
-    ]
+        }
+      ],
+      "tags": [
+        {
+          "Key": "Name",
+          "Value": "HCL-CC"
+        }
+      ],
+      "isDefault": false,
+      "name": "HCL-CC",
+      "subnets": [
+        {
+          "id": "subnet-5a37222d",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.16.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "KubernetesCluster",
+              "Value": "netehenfhk"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            },
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-1"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
+            }
+          ],
+          "name": "HCL-CC-1",
+          "routeTableId": "rtb-0252de162c006de11"
+        },
+        {
+          "id": "subnet-74a1b303",
+          "state": "available",
+          "vpcId": "vpc-ba1ed1de",
+          "cidrBlock": "192.168.17.0/24",
+          "availabilityZone": "us-east-1d",
+          "availableIps": 251,
+          "tags": [
+            {
+              "Key": "Name",
+              "Value": "HCL-CC-2"
+            },
+            {
+              "Key": "eco-shared-resource",
+              "Value": "Y"
+            },
+            {
+              "Key": "eco-groupname",
+              "Value": "HCL"
+            }
+          ],
+          "name": "HCL-CC-2",
+          "routeTableId": "rtb-0252de162c006de11"
+        }
+      ],
+      "securityGroups": [
+        {
+          "id": "sg-ad2b38d1",
+          "description": "default VPC security group",
+          "vpcId": "vpc-62720a04",
+          "ipPermissions": [
+            {
+              "FromPort": 22,
+              "IpProtocol": "tcp",
+              "IpRanges": [
+                {
+                  "CidrIp": "0.0.0.0/0"
+                }
+              ],
+              "Ipv6Ranges": [],
+              "PrefixListIds": [],
+              "ToPort": 22,
+              "UserIdGroupPairs": []
+            }
+          ],
+          "name": "-"
+        }
+      ]
+    }
+  ],
+  "totalRecords": 4
 }

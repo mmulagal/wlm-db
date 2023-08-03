@@ -14,6 +14,10 @@ const AGENT_ID = 'AGENT_ID';
 const AUDIT_GROUP = 'AUDIT_GROUP';
 const WORKSPACE_ID = 'WORKSPACE_ID';
 
+// Attributes used to determine Amazon FSx for NetApp ONTAP.
+export const FSX_FILESYSTEM_TYPE = 'ONTAP';
+export const FSX_STORAGE_TYPE = 'SSD';
+
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
 
@@ -392,6 +396,21 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['us-west-2', 'US West (Oregon)']
 ]);
 
+const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
+    '.nano',
+    '.micro',
+    '.small',
+    '.large',
+    'gd',
+    'gn',
+    't3a',
+    't3g',
+    'mac',
+    'm7g',
+    'C7g',
+    'Im4gn'
+];
+
 const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = 'sathish-byob';
@@ -464,5 +483,6 @@ export {
     APP_NAME,
     BUCKET_NAME,
     CLOUD_FORMATION_BUCKET_OWNER_KEY,
-    CLOUD_FORMATION_STACK_URL
+    CLOUD_FORMATION_STACK_URL,
+    EC2_INSTANCE_TYPE_EXCLUDE_LIST
 };

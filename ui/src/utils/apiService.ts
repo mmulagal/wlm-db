@@ -23,7 +23,9 @@ const rawBaseQuery = fetchBaseQuery({
 export const buildBaseUrl = (api: BaseQueryApi): string => {
     const {appContext} = api.getState() as RootState;
     const {accountId } = appContext;
-    return `${process.env.REACT_APP_API_URL}/accounts/${accountId}/api/v1`;
+    const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
+    const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
+    return `${apiHost}/wlm-db/accounts/${accountId}/api/v1`;
 };
 
 //Build the baseUrl based on the environment
@@ -49,20 +51,34 @@ export const awsApi = createApi({
                 query: ({credentialId}) => ({url: `credentials/${credentialId}/aws/fsx/regions`})
             }),
             getVPCList: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs`})
+                query: ({credentialId, region, fields}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`})
             }),
             getAdsList: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/ads`})
             }),
             getAmiList: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/amis`})
+                query: ({credentialId, region, osType, osVersion, databaseType, databaseEdition, databaseVersion}) => 
+                ({url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&osVersion=${osVersion}&databaseType=${databaseType}&databaseEdition=${databaseEdition}&databaseVersion=${databaseVersion}`})
             }),
             getSnsTopics: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/snsTopics`})
             }),
+            getKmsKeys: builder.query({
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/kmsKeys`})
+            }),
+            getKeyPairs: builder.query({
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/keypairs`})
+            }),
+            getInstanceTypes: builder.query({
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/instanceTypes`})
+            }),
+            getFsxnList: builder.query({
+                query: ({credentialId, region, vpcId}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs/${vpcId}/fsxs`})
+            })
         }
     }
 });
 
-export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, 
-    useGetAdsListQuery, useGetAmiListQuery, useGetSnsTopicsQuery } = awsApi;
+export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
+    useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
+    useGetFsxnListQuery } = awsApi;

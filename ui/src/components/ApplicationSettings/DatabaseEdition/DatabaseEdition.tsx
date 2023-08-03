@@ -2,16 +2,19 @@ import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@n
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './DatabaseEdition.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { setSelectedDBEdition } from '../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const DatabaseEdition = () => {
-    const dbEdition = useSelector((state: any) => state.mssqlForm.dbEdition);
+
+    // To get selected DB edition 
+    const dbEdition = useAppSelector((state) => state.mssqlForm.dbEdition);
 
     const dispatch = useDispatch();
     //Set the Header text here
     const setHeader = () => {
-        return <Typography variant="Regular_14">{dbEdition}</Typography>;
+        return <Typography variant="Regular_14">{dbEdition?.label}</Typography>;
     };
     return (
         <div className={styles['db-edition']}>
@@ -24,9 +27,10 @@ const DatabaseEdition = () => {
                     <Typography>
                         <div className={styles.genericStyle}>
                             <RadioButton
-                                isChecked={dbEdition === GENERAL.SQL_SERVER_STANDARD_EDITION}
+                                isChecked={dbEdition?.label === GENERAL.SQL_SERVER_STANDARD_EDITION}
                                 onChange={() => {
-                                    dispatch(setSelectedDBEdition(GENERAL.SQL_SERVER_STANDARD_EDITION));
+                                    dispatch(setSelectedDBEdition({label:GENERAL.SQL_SERVER_STANDARD_EDITION, 
+                                        value: GENERAL.SQL_SERVER_STANDARD}));
                                 }}
                                 children={GENERAL.SQL_SERVER_STANDARD_EDITION}
                                 className={styles.radio}
@@ -37,9 +41,10 @@ const DatabaseEdition = () => {
                         </div>
                         <div className={styles.genericStyle}>
                             <RadioButton
-                                isChecked={dbEdition === GENERAL.SQL_SERVER_WEB_EDITION}
+                                isChecked={dbEdition?.label === GENERAL.SQL_SERVER_WEB_EDITION}
                                 onChange={() => {
-                                    dispatch(setSelectedDBEdition(GENERAL.SQL_SERVER_WEB_EDITION));
+                                    dispatch(setSelectedDBEdition({label:GENERAL.SQL_SERVER_WEB_EDITION, 
+                                        value: GENERAL.SQL_SERVER_WEB}));
                                 }}
                                 children={GENERAL.SQL_SERVER_WEB_EDITION}
                                 className={styles.radio}
@@ -50,9 +55,10 @@ const DatabaseEdition = () => {
                         </div>
                         <div className={styles.genericStyle}>
                             <RadioButton
-                                isChecked={dbEdition === GENERAL.SQL_SERVER_ENTERPRiSE_EDITION}
+                                isChecked={dbEdition?.label === GENERAL.SQL_SERVER_ENTERPRiSE_EDITION}
                                 onChange={() => {
-                                    dispatch(setSelectedDBEdition(GENERAL.SQL_SERVER_ENTERPRiSE_EDITION));
+                                    dispatch(setSelectedDBEdition({label: GENERAL.SQL_SERVER_ENTERPRiSE_EDITION, 
+                                        value: GENERAL.SQL_SERVER_ENTERPRISE}));
                                 }}
                                 children={GENERAL.SQL_SERVER_ENTERPRiSE_EDITION}
                                 className={styles.radio}

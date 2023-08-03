@@ -4,34 +4,43 @@ import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './InstanceType.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { formatSize, generateOptionType } from '../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setInstanceType } from '../../../store/mssql/mssqlFormSlice';
 
 const InstanceType = () => {
     const dispatch = useDispatch();
-    const selectedInstanceType = useAppSelector((state: any) => state.mssqlForm.instanceType);
 
-    //Mock data to be removed later
-    const instances = [
-        { label1: 'm5.large', value: 'm5-large', label2: '4vCPU, 16GiB RAM' },
-        { label1: 'm6.large', value: 'm6.large', label2: '4vCPU, 16GiB RAM' }
-    ];
+    //Getting the Data from state
+    const { instanceTypeData, instanceTypeLoading } = useAppSelector(state => state.mssql.getInstanceTypeList);
+    const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        instances?.map((val, idx: number) => {
-            const option = generateOptionType(val.value, val.label1, val.label2, false, '');
+        instanceTypeData?.instanceTypes?.map((val, idx: number) => {
+            const value = val?.instanceType || '';
+            let label2 = '';
+            if(val?.vCpus){
+                label2 += val?.vCpus + 'vCPU, '
+            }
+            if(val?.ramInMib){
+                label2 += formatSize(val?.ramInMib, 'mib') + ' RAM, ';
+            }
+            if(val?.iopsInMbps){
+                label2 += val?.iopsInMbps + 'Mbps'
+            }
+            const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
         });
 
         return options;
-    }, []);
+    }, [instanceTypeData]);
 
     useEffect(() => {
         dispatch(setInstanceType(generateInstances[0]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
 
     //Set the Header text here
@@ -40,7 +49,7 @@ const InstanceType = () => {
     };
     return (
         <div className={styles['instance-type']}>
-            <AccordionCard
+            <AccordionCard isLoading={instanceTypeLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="14"
                 title={<div className={CommonStyles.title}>{GENERAL.INSTANCE_TYPE}</div>}

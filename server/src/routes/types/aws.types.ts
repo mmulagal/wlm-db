@@ -7,6 +7,19 @@ const AwsParams = Type.Object({
     region: Type.String()
 });
 
+// EC2 instance Types response
+const InstanceTypes = Type.Object({
+    instanceTypes: Type.Array(
+        Type.Object({
+            instanceType: Type.Optional(Type.String()),
+            vCpus: Type.Optional(Type.Number()),
+            ramInMib: Type.Optional(Type.Number()),
+            iopsInMbps: Type.Optional(Type.Number())
+        })
+    ),
+    totalRecords: Type.Optional(Type.Number())
+});
+
 // VPC list Request and Response
 const AwsVpcQueryString = Type.Object({
     fields: Type.Optional(Type.String())
@@ -85,10 +98,12 @@ const AmiResponse = Type.Object({
     )
 });
 
+//SNS list topics Response
 const SnsResponse = Type.Object({
     Topics: Type.Array(
         Type.Object({
-            TopicArn: Type.Optional(Type.String())
+            topicName: Type.Optional(Type.String()),
+            topicArn: Type.Optional(Type.String())
         })
     )
 });
@@ -158,9 +173,77 @@ const KeyPairsResponse = Type.Object({
     keyPairs: Type.Array(KeyPairsSchema)
 });
 
+// GET FSx filesystems request parameters
+const FSxFileSystemParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    region: Type.String(),
+    vpcId: Type.String()
+});
+
+// FSx filesystem schema
+const FSxFileSystemSchema = Type.Object({
+    fileSystemId: Type.String(),
+    kmsKeyId: Type.Optional(Type.String()),
+    networkInterfaceIds: Type.Optional(Type.Array(Type.String())),
+    subnetIds: Type.Optional(Type.Array(Type.String())),
+    vpcId: Type.Optional(Type.String()),
+    ontapConfiguration: Type.Optional(
+        Type.Object({
+            deploymentType: Type.Optional(Type.String()),
+            endpointIpAddressRange: Type.Optional(Type.String()),
+            fsxAdminPassword: Type.Optional(Type.String()),
+            preferredSubnetId: Type.Optional(Type.String()),
+            routeTableIds: Type.Optional(Type.Array(Type.String())),
+            throughputCapacity: Type.Optional(Type.Number()),
+            diskIopsConfiguration: Type.Optional(
+                Type.Object({
+                    iops: Type.Optional(Type.Number()),
+                    mode: Type.Optional(Type.String())
+                })
+            ),
+            endpoints: Type.Optional(
+                Type.Object({
+                    intercluster: Type.Optional(
+                        Type.Object({
+                            dnsName: Type.Optional(Type.String()),
+                            ipAddresses: Type.Optional(Type.Array(Type.String()))
+                        })
+                    ),
+                    management: Type.Optional(
+                        Type.Object({
+                            dnsName: Type.Optional(Type.String()),
+                            ipAddresses: Type.Optional(Type.Array(Type.String()))
+                        })
+                    )
+                })
+            )
+        })
+    ),
+    volumes: Type.Optional(
+        Type.Array(
+            Type.Object({
+                volumeId: Type.Optional(Type.String()),
+                volumeType: Type.Optional(Type.String()),
+                securityStyle: Type.Optional(Type.String()),
+                sizeInMegabytes: Type.Optional(Type.Number()),
+                storageEfficiencyEnabled: Type.Optional(Type.Boolean()),
+                storageVirtualMachineId: Type.Optional(Type.String()),
+                ontapVolumeType: Type.Optional(Type.String())
+            })
+        )
+    )
+});
+
+// GET FSx filesystems response
+const FSxFileSystemsResponse = Type.Object({
+    filesystems: Type.Array(FSxFileSystemSchema)
+});
+
 export {
     AwsVpcQueryString,
     AwsParams,
+    InstanceTypes,
     AwsRegionsParams,
     VpcListResponse,
     AmiResponse,
@@ -168,6 +251,9 @@ export {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
+    FSxFileSystemParams,
+    FSxFileSystemSchema,
+    FSxFileSystemsResponse,
     KmsKeysListResponse,
     KeyPairsSchema,
     KeyPairsResponse

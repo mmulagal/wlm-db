@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccordionCard, AccordionCardContent, RadioButton, SelectField, Typography } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    RadioButton,
+    SelectField,
+    Typography,
+    useAccordionContext
+} from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -12,21 +19,33 @@ import { useDispatch } from 'react-redux';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
+    const accordionContext = useAccordionContext()?.setOpenChildren!;
 
     //Getting the Data from state
-    const {regionsData, regionsLoading} = useAppSelector((state) => state.mssql.getRegions);
-    const {vpcData, vpcLoading} = useAppSelector((state) => state.mssql.getVPCList);
-    const selectedRegionData = useAppSelector((state: any) => state.mssqlForm.regionAndVpc.selectedRegion);
-    const selectedVPCData = useAppSelector((state: any) => state.mssqlForm.regionAndVpc.selectedVPC);
+    const { regionsData, regionsLoading } = useAppSelector(state => state.mssql.getRegions);
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+    const { vpcData, vpcLoading } = useAppSelector(state => state.mssql.getVPCList);
+    const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
+    const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
-    
+
+    //To open accordion if default account is present
+    useEffect(() => {
+        if (credentialData && credentialData.length > 0) {
+            accordionContext({
+                2: true
+            });
+        }
+    }, [credentialData]);
+
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         regionsData?.regions?.map((val, idx: number) => {
-            const regionValue = val.regionCode + " | " + val.regionName;
+            const regionValue = val.regionCode + ' | ' + val.regionName;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
         });
@@ -42,13 +61,15 @@ const RegionVpc = () => {
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
-            const vpcValue = val.name + " - " + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
+            const vpcValue = val.name + ' - ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
                 name: val.name,
-                cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : ''
-            }
+                cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '',
+                subnets: val?.subnets,
+                securityGroups: val?.securityGroups
+            };
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
         });
@@ -63,7 +84,7 @@ const RegionVpc = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!selectedRegionData || !selectedVPCData) {
-            return <ActionRequired />;
+            return <ActionRequired error={!isVPCNotFilled ? true : false} />;
         } else {
             return (
                 <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
@@ -77,7 +98,8 @@ const RegionVpc = () => {
     };
     return (
         <div className={styles['region-vpc']}>
-            <AccordionCard isLoading={regionsLoading || vpcLoading} 
+            <AccordionCard
+                isLoading={regionsLoading || vpcLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
                 title={<div className={CommonStyles.title}>{GENERAL.REGION_VPC}</div>}
@@ -87,7 +109,7 @@ const RegionVpc = () => {
                         <SelectField
                             label={GENERAL.REGION}
                             isClearable={false}
-                            defaultValue={selectedRegionData ? [selectedRegionData] :[generateRegionsData[0]]}
+                            defaultValue={selectedRegionData ? [selectedRegionData] : [generateRegionsData[0]]}
                             onChange={(selectedOptions: any): void => {
                                 dispatch(setSelectedRegionData(selectedOptions));
                             }}
@@ -123,7 +145,7 @@ const RegionVpc = () => {
                                 <SelectField
                                     label={GENERAL.VPC}
                                     isClearable={false}
-                                    value={selectedVPCData ? selectedVPCData: null}
+                                    value={selectedVPCData ? selectedVPCData : null}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedVPC(selectedOptions));
                                     }}

@@ -8,8 +8,11 @@ import {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
+    FSxFileSystemParams,
+    FSxFileSystemsResponse,
     KmsKeysListResponse,
     AmiQueryString,
+    InstanceTypes,
     KeyPairsResponse
 } from '../types/aws.types';
 
@@ -48,8 +51,17 @@ const GetAmiSchema = {
     }
 };
 
+// GET EC2 instncetypes
+const GetInstanceTypesSchema = {
+    ...baseRequest,
+    description: 'Get EC2 instnce types in the region',
+    response: {
+        200: InstanceTypes
+    }
+};
+
 // GET SNS Topics
-const GetSnsTopics = {
+const GetSnsTopicsSchema = {
     ...baseRequest,
     description: 'Get SNS Topics in the region',
     response: {
@@ -63,6 +75,15 @@ const GetFSxRegionsSchema = {
     descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse
+    }
+};
+
+const GetFSxFileSystemsSchema = {
+    tags: [RouteTags.AWS],
+    params: FSxFileSystemParams,
+    description: 'List Amazon FSx for NetApp ONTAP filesystems',
+    response: {
+        200: FSxFileSystemsResponse
     }
 };
 
@@ -82,13 +103,14 @@ const GetKeyPairsSchema = {
         200: KeyPairsResponse
     }
 };
-
 export {
     GetVpcsListSchema,
     GetAmiSchema,
     GetAdsSchema,
-    GetSnsTopics,
+    GetSnsTopicsSchema,
     GetFSxRegionsSchema,
     GetKmsKeysListSchema,
-    GetKeyPairsSchema
+    GetInstanceTypesSchema,
+    GetKeyPairsSchema,
+    GetFSxFileSystemsSchema
 };
