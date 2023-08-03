@@ -2,7 +2,7 @@ import { describeFSxFileSystems, describeFSxVolumes } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { Static } from '@sinclair/typebox';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
-import { FSX_FILESYSTEM_TYPE, FSX_STORAGE_TYPE } from '../../utils/consts';
+import { FSX_FILESYSTEM_TYPE, FSX_STORAGE_TYPE, AWS_RESOURCE_NAME_TAG } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -64,8 +64,13 @@ async function getFSxFileSystemsList(
                 }
             );
 
+            // Get the FSx filesystem name, if available.
+            const { Tags: tags } = fs;
+            const tag = tags?.find(({ Key: key }) => key === AWS_RESOURCE_NAME_TAG);
+
             ontapFSxFilesystems.push({
                 fileSystemId: fs.FileSystemId!,
+                name: tag?.Value,
                 kmsKeyId: fs.KmsKeyId,
                 networkInterfaceIds: fs.NetworkInterfaceIds,
                 subnetIds: fs.SubnetIds,
