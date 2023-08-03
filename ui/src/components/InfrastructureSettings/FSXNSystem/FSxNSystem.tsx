@@ -116,7 +116,7 @@ const FSxNSystem = () => {
                             {fsxType === GENERAL.CREATE_NEW_FSXN && (
                                 <TextField
                                     label={GENERAL.FSXN_NAME}
-                                    error={!isFsxNNameFilled && !selectedFsxnName ? 'Action Required' : ''}
+                                    error={!isFsxNNameFilled && !selectedFsxnName ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore
                                     isErrorPrefixHidden
                                     customErrorWarningIcon={

@@ -145,7 +145,7 @@ const RegionVpc = () => {
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.VPC}
-                                    error={!isVPCNotFilled && !selectedVPCData ? 'Action Required' : ''}
+                                    error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore
                                     isErrorPrefixHidden
                                     customErrorWarningIcon={

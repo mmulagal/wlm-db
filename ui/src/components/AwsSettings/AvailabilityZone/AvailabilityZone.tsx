@@ -93,7 +93,7 @@ const AvailabilityZone = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedAzNode1(selectedOptions));
                                 }}
-                                error={!isAZNotFilled && !selectedZone1 ? 'Action Required' : ''}
+                                error={!isAZNotFilled && !selectedZone1 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
@@ -115,7 +115,7 @@ const AvailabilityZone = () => {
                                 label={GENERAL.SUBNET}
                                 placeholder="Select a subnet"
                                 isClearable={false}
-                                error={!isAZNotFilled && !selectedSubnet1 ? 'Action Required' : ''}
+                                error={!isAZNotFilled && !selectedSubnet1 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
@@ -146,7 +146,7 @@ const AvailabilityZone = () => {
                                 placeholder="Select an availability zone"
                                 isClearable={false}
                                 value={selectedZone2 ? selectedZone2 : undefined}
-                                error={!isAZNotFilled && !selectedZone2 ? 'Action Required' : ''}
+                                error={!isAZNotFilled && !selectedZone2 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
@@ -172,7 +172,7 @@ const AvailabilityZone = () => {
                                 placeholder="Select a subnet"
                                 isClearable={false}
                                 value={selectedSubnet2 ? selectedSubnet2 : undefined}
-                                error={!isAZNotFilled && !selectedSubnet2 ? 'Action Required' : ''}
+                                error={!isAZNotFilled && !selectedSubnet2 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
