@@ -49,7 +49,7 @@ const AwsAccount = () => {
     const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
-    const isProperDBName = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
 
     useEffect(() => {
         if (

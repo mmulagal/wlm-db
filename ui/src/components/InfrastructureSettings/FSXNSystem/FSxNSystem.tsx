@@ -1,10 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
 
-import { AccordionCard, AccordionCardContent, PasswordField, RadioButton, TextField, Typography } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    PasswordField,
+    RadioButton,
+    TextField,
+    Typography
+} from '@netapp/design-system';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { generateOptionType } from '../../../utils/utilityFunctions';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
@@ -21,7 +29,7 @@ import { FSXADMIN } from '../../../utils/consts';
 const FSxNSystem = () => {
     const dispatch = useDispatch();
 
-    const {fsxnData, fsxnLoading} = useAppSelector(state => state.mssql.getFsxnList)
+    const { fsxnData, fsxnLoading } = useAppSelector(state => state.mssql.getFsxnList);
     const selectedFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNName);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedFsxnNewUserName = useAppSelector(state => state.mssqlForm.fsxN.fsxNNewUserName);
@@ -42,7 +50,7 @@ const FSxNSystem = () => {
             const data = {
                 fileSystemId: val?.fileSystemId,
                 fileSystemName: val?.fileSystemName
-            }
+            };
             const option = generateOptionType(value, value, '', false, '', data);
             options.push(option);
         });
@@ -53,7 +61,7 @@ const FSxNSystem = () => {
     useEffect(() => {
         dispatch(setExistingFsxnName(generateExistingFsx[0]));
         dispatch(setFsxNExistingUserName(FSXADMIN));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 
     //Set the Header text here
@@ -76,7 +84,8 @@ const FSxNSystem = () => {
     };
     return (
         <div className={styles.fsx}>
-            <AccordionCard isLoading={fsxnLoading}
+            <AccordionCard
+                isLoading={fsxnLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
@@ -107,7 +116,19 @@ const FSxNSystem = () => {
                             {fsxType === GENERAL.CREATE_NEW_FSXN && (
                                 <TextField
                                     label={GENERAL.FSXN_NAME}
-                                    error={!isFsxNNameFilled ? 'Action Required' : ''}
+                                    error={!isFsxNNameFilled && !selectedFsxnName ? 'Action Required' : ''}
+                                    //@ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--error'
+                                            }}
+                                        />
+                                    }
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         dispatch(setFsxNName(e.target.value));
                                     }}
@@ -135,8 +156,11 @@ const FSxNSystem = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setFsxNExistingUserName(e.target.value));
                                 }}
-                                value={(fsxType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName) ?  
-                                    selectedFsxnExistingUserName : FSXADMIN}
+                                value={
+                                    fsxType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName
+                                        ? selectedFsxnExistingUserName
+                                        : FSXADMIN
+                                }
                                 className={styles.textField}
                                 isDisabled={fsxType === GENERAL.CREATE_NEW_FSXN}
                             />

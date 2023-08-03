@@ -3,6 +3,7 @@ import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typograp
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { generateOptionType } from '../../../utils/utilityFunctions';
@@ -131,6 +132,19 @@ const ActiveDirectory = () => {
                             <TextField
                                 label={GENERAL.DNS_ADDRESS}
                                 placeholder="DNS IP addresses"
+                                error={!isADNotFilled && !selectedADDomainAddress ? 'Action Required' : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADDomainAddress(e.target.value));
                                 }}
@@ -141,6 +155,19 @@ const ActiveDirectory = () => {
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
+                                error={!isADNotFilled && !userName ? 'Action Required' : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setUserName(e.target.value);
                                     dispatch(setSelectedADUserName(e.target.value));
@@ -154,6 +181,19 @@ const ActiveDirectory = () => {
                                     setPassword(e.target.value);
                                     dispatch(setSelectedADPassword(e.target.value));
                                 }}
+                                error={!isADNotFilled && !password ? 'Action Required' : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 value={password}
                                 className={styles.textFieldPassword}
                                 //@ts-ignore

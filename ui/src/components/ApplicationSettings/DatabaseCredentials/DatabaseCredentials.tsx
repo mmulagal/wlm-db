@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { useDispatch } from 'react-redux';
@@ -44,6 +45,14 @@ const DatabaseCredentials = () => {
                             <PasswordField
                                 label={GENERAL.PASSWORD}
                                 error={!isDBPasswordFilled ? 'Action Required' : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        //@ts-ignore
+                                        style={{ width: '16px', height: '16px', '--icon-primary-color': 'var(--error' }}
+                                    />
+                                }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setDBCredentialsPassword(e.target.value));
