@@ -25,7 +25,6 @@ const master_template_url = config.get<string>('template-urls.master-template');
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
     region: string,
-    vpcId: string,
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
@@ -35,7 +34,6 @@ async function createCloudFormationTemplateForUserDeployment(
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
         region,
-        vpcId,
         networkConfiguration,
         ec2Configuration,
         adConfiguration,

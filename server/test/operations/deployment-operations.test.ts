@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { createCloudFormationTemplateForUserDeployment } from '../../../src/operations/aws/cloud-formation-operations';
+import { createCloudFormationTemplateForUserDeployment } from '../../src/operations/deployment-operations';
 
 import '../../simulator/scopes/aws/iam-scope';
 import '../../simulator/scopes/aws/secrets-manager-scope';
@@ -13,7 +13,6 @@ describe('Cloud formation operations', () => {
         const resp = await createCloudFormationTemplateForUserDeployment(
             credentialsid,
             'ap-southeast-1',
-            'test-vpc',
             {
                 vpcId: 'vpc-84b3afe6',
                 vpcCidr: '172.31.0.0/16',

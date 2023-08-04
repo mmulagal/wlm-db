@@ -1,4 +1,4 @@
-import { getAllCredentials } from '../../lib/cloud-manager/credentials';
+import { getAllCredentials, getCredentialDetails } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import getLogger from '../../utils/logger';
 
@@ -20,4 +20,9 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
     }));
 }
 
-export { getCredentials };
+async function getRoleName(credentialsId: string) {
+    const data = await getCredentialDetails(credentialsId);
+    return { roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '' };
+}
+
+export { getCredentials, getRoleName };
