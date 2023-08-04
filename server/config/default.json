@@ -33,5 +33,9 @@
     },
     "service-token": {
         "expiration-margin": "10s"
+    },
+    "template-urls": {
+        "master-template": "https://wlmbucket.s3.ap-southeast-1.amazonaws.com/templates/wlm-master.yaml",
+        "cloud-formation": "https://ap-southeast-1.console.aws.amazon.com/cloudformation/home"
     }
 }

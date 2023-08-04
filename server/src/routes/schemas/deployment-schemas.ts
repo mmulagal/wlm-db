@@ -1,7 +1,7 @@
 import { RouteTags } from '../../utils/consts';
+import { AwsParams } from '../types/aws.types';
 import {
     CloudFormationTemplateRequestBody,
-    DeploymentParams,
     CloudFormationTemplateResponse,
     DeployTemplateResponse
 } from '../types/deployment.types';
@@ -9,7 +9,7 @@ import {
 // Base Request for Deployment Routes
 const baseRequest = {
     tags: [RouteTags.DEPLOYMENT],
-    params: DeploymentParams
+    params: AwsParams
 };
 
 // Create cloud formation template for user deployment Schema

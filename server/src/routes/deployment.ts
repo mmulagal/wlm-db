@@ -1,12 +1,9 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
+import { createCloudFormationTemplateForUserDeployment, deploySqlTemplate } from '../operations/deployment-operations';
 import { CreateCloudFormationTemplateSchema, DeployTemplateSchema } from './schemas/deployment-schemas';
-import {
-    createCloudFormationTemplateForUserDeployment,
-    deploySqlTemplate
-} from '../operations/aws/cloud-formation-operations';
 
-const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId';
+const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
 export default function deploymentRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -17,7 +14,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             { schema: CreateCloudFormationTemplateSchema },
             async (request, reply) => {
                 const {
-                    params: { credentialsId, region, vpcId },
+                    params: { credentialsId, region },
                     body: {
                         networkConfiguration,
                         ec2Configuration,
@@ -29,7 +26,6 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 const response = await createCloudFormationTemplateForUserDeployment(
                     credentialsId,
                     region,
-                    vpcId,
                     networkConfiguration,
                     ec2Configuration,
                     adConfiguration,
@@ -41,13 +37,12 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         )
         .post(`${API_PREFIX_PATH}/template/deploy`, { schema: DeployTemplateSchema }, async (request, reply) => {
             const {
-                params: { credentialsId, region, vpcId },
+                params: { credentialsId, region },
                 body: { networkConfiguration, ec2Configuration, adConfiguration, fsxConfiguration, sqlConfiguration }
             } = request;
             const response = await deploySqlTemplate(
                 credentialsId,
                 region,
-                vpcId,
                 networkConfiguration,
                 ec2Configuration,
                 adConfiguration,
