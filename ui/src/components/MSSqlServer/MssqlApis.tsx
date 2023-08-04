@@ -13,6 +13,7 @@ import {
 import { addAdsList, addAmiList, addCredentials, addFsxnList, addInstanceTypeList, addKeyPairList, addKmsKeysList, addRegions, addSnsList, addVpcList } from "../../store/mssql/mssqlSlice";
 import { useEffect, useState } from "react";
 import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from "../../utils/consts";
+import { formatKmsData } from "../../utils/utilityFunctions";
 
 
 const MssqlApis = () => {
@@ -102,7 +103,7 @@ const MssqlApis = () => {
 
     // API call to get KMS Keys list for selected credentials and region 
     const { 
-        data: kmsData,
+        data: kmsList,
         isFetching: kmsLoading,
         isError: kmsError,
     } = useGetKmsKeysQuery({credentialId: selectedCredId, region: selectedRegionCode}, {
@@ -225,9 +226,10 @@ const MssqlApis = () => {
         if(kmsError){
             dispatch(addKmsKeysList({undefined, kmsLoading, kmsError}));
         }else{
+            const kmsData = formatKmsData(kmsList);
             dispatch(addKmsKeysList({kmsData, kmsLoading, kmsError}));
         }
-    }, [dispatch, kmsData , kmsLoading, kmsError]);
+    }, [dispatch, kmsList , kmsLoading, kmsError]);
 
     // To add Key Pair in MssqlEntities
     useEffect(() => {

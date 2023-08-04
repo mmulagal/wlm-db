@@ -22,3 +22,14 @@ export const DATABASE_TYPE = 'sql'
 
 // Default username for FSxN when creating new
 export const FSXADMIN = 'fsxadmin'
+
+// KMS status/state
+export const EXPIRED_STATUS = 'expired'
+export const EXPIRING_STATUS = 'expiring'
+export const ENABLED_STATE = 'Enabled'
+export const DEFAULT_MASTER_KEY = 'aws/fsx'
+
+// Add credentials link
+export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
+export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
+

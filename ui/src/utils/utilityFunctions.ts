@@ -1,6 +1,8 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
+import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
+import { KmsKeys } from './types/mssqlTypes';
 
 // Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
@@ -49,7 +51,7 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
     }
 
     return rows;
-}
+};
 
 export const formatSize = (value: number, passedformat?: string) => {
     let byteVal = 0;
@@ -65,4 +67,22 @@ export const formatSize = (value: number, passedformat?: string) => {
         byteVal = value
     }
     return numeral(byteVal).format('0.[00] ib')
+};
+
+
+export const formatKmsData = (data: {keys?: KmsKeys[]}) => {
+    let newData: KmsKeys[] = [];
+    data?.keys?.filter((key: KmsKeys) => key?.state === ENABLED_STATE) 
+    .map((val: KmsKeys) => {
+        if(val?.expiryStatus === EXPIRED_STATUS){
+            val = {...val, cellProps: {
+                isDisabled: true
+            }}
+        }
+        if(val?.name === DEFAULT_MASTER_KEY){
+            val = {...val, default: true}
+        }
+        newData.push(val);
+    })
+    return newData;
 };
