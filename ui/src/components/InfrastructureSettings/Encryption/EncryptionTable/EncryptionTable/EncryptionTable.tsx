@@ -2,8 +2,6 @@ import { Table, useTable, Typography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { ReactComponent as DefaultTag } from '../../../../../assets/defaultTag.svg';
-// import { ReactComponent as ErrorTag } from '../../../../../assets/Action_required_error.svg';
-// import { ReactComponent as ExpiringTag } from '../../../../../assets/Action_required_error.svg';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './EncryptionTable.module.scss';
 import { useEffect } from 'react';
