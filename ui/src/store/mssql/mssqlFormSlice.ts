@@ -79,7 +79,8 @@ const initialState: any = {
         encryptionType: GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT,
         selectedRow: null,
         encryptionArn: ''
-    }
+    },
+    tags: [{key: '', value:''}]
 };
 
 const mssqlFormSlice = createSlice({
@@ -227,7 +228,10 @@ const mssqlFormSlice = createSlice({
         },
         setEncryptionARN(state, action: PayloadAction<any>) {
             state.encryption.encryptionArn = action.payload;
-        }
+        },
+        setTags(state, action: PayloadAction<any>) {
+            state.tags = action.payload;
+        },
     }
 });
 
@@ -272,6 +276,7 @@ export const {
     setSelectedAzNode2,
     setSelectedSubnetNode2,
     setSelectedKeyPair,
-    setInstanceType
+    setInstanceType,
+    setTags
 } = mssqlFormSlice.actions;
 export default mssqlFormSlice;

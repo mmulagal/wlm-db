@@ -1,0 +1,47 @@
+.dialog-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .dialog-body {
+        .code-box {
+            width: 100%;
+            background-color: var(--grey-10);
+            padding: 24px 16px 8px 32px;
+            display: flex;
+            position: relative;
+
+            height: 392px;
+            overflow-y: auto;
+
+            .code {
+                width: 100%;
+                font-weight: 400;
+                font-size: 14px;
+                line-height: 24px;
+                color: black;
+            }
+
+            .copy {
+                width: 100px;
+                display: flex;
+                justify-content: flex-end;
+                height: 20px;
+                .copy-popover {
+                    width: 140px;
+                    font-size: 13px;
+                    line-height: 20px;
+                    text-align: center;
+                    padding: 2px 2px;
+                }
+
+                svg {
+                    cursor: pointer;
+                    &:hover {
+                        fill: var(--grey-50);
+                    }
+                }
+            }
+        }
+    }
+}

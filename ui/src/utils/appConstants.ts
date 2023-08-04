@@ -36,6 +36,7 @@ export const GENERAL = {
     THROUGHPUT_CAPACITY: 'Throughput capacity',
     ENCRYPTION: 'Encryption',
     TAGS: 'Tags',
+    TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Save form as CloudFormation',
     AWS_SETTINGS: 'AWS settings',
@@ -168,8 +169,15 @@ export const GENERAL = {
     ENCRYPTION_TEXT_FIELD: 'Encryption key ARN',
     ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_SUB_TEXT:
         'AWS is responsible for data encryption and decryption operations. Key management is handled by AWS Key Management Service.',
-    CUSTOMER_MASTER_KEY_NAME: 'Customer master key name',
+    CUSTOMER_MASTER_KEY_NAME: 'Key name',
+    KEY_ID: 'Key ID',
     EXPIRATION_DATE: 'Expiration date',
     ORIGIN: 'Origin',
-    ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.'
+    ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.',
+    TAGS_HEADING_MSG: 'You can add upto 50 tags',
+    ADD_NEW_TAG: '+ Add new tag',
+    TAG_KEY: 'Tag Key',
+    TAG_VALUE: 'Tag Value',
+    TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
+    TAG_VALUE_PLACEHOLDER: 'Up to 255 characters'
 };

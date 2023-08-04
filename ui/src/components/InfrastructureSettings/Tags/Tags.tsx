@@ -1,12 +1,58 @@
-import { AccordionCard, AccordionCardContent } from "@netapp/design-system";
+import { AccordionCard, AccordionCardContent, TextField, Typography, Button } from "@netapp/design-system";
+import { useMemo } from "react";
+import { useDispatch } from "react-redux";
+import { setTags } from "../../../store/mssql/mssqlFormSlice";
+import { useAppSelector } from "../../../store/storeHooks";
 import { GENERAL } from "../../../utils/appConstants";
+import { ReactComponent as CloseIcon } from "../../../assets/close-icon.svg";
 import CommonStyles from "../../../utils/CommonStyles.module.scss";
+import styles from './Tags.module.scss';
+
+type Tag = {
+  key: string,
+  value: string
+}
 
 const Tags = () => {
+  const dispatch = useDispatch();
+  const tags = useAppSelector((state: any) => state.mssqlForm.tags);
+
+  const emptyTagItems = useMemo(() => {
+    return tags.filter((tag: Tag) => !tag.key || !tag.value);
+  }, [tags])
+
   //Set the Header text here
   const setHeader = () => {
-    return ["0 Tags"];
+    const nonEmptyTagCount = tags.length - emptyTagItems.length;
+    return (
+      <Typography variant="Regular_14">
+        {`${nonEmptyTagCount} ${GENERAL.TAG}${nonEmptyTagCount===1 ? '': 's'}`}
+      </Typography>
+    )
   };
+
+  const isAddDisabled = useMemo(() => {
+    if(emptyTagItems.length || tags.length>=50){
+      return true;
+    }
+  }, [tags])
+
+  const handleAddNewTag = () => {
+    dispatch(setTags([...tags, {key: '', value:''}]));
+  }
+
+  const handleChange = (idx: number, prop: string, value: string) => {
+    let updatedTags = [...tags.map((tag: Tag) => {return {key: tag.key, value: tag.value}})];
+    updatedTags[idx][prop] = value;
+    dispatch(setTags(updatedTags));
+  }
+
+  const handleDeleteTag = (idx: number) => {
+    let updatedTags = [...tags];
+    updatedTags.splice(idx,1);
+    dispatch(setTags(updatedTags));
+  }
+
   return (
     <div className={""}>
       <AccordionCard
@@ -17,6 +63,59 @@ const Tags = () => {
         title={<div className={CommonStyles.title}>{GENERAL.TAGS}</div>}
       >
         <AccordionCardContent>Content here</AccordionCardContent>
+        <AccordionCardContent>
+          <Typography>
+            <div className={styles.contentHeadingContainer}>
+              <Typography variant="Regular_14" className={styles.contentHeading}>
+                {GENERAL.TAGS_HEADING_MSG}
+              </Typography>
+              <Button variant={'text'} className={styles.addNewButton} isDisabled={isAddDisabled} onClick={handleAddNewTag} isThin={true}>
+                  {GENERAL.ADD_NEW_TAG}
+              </Button>
+            </div>
+          <div className={styles.keyValueHeading}>
+            <Typography variant="Semibold_14" className={styles.keyText}>{GENERAL.TAG_KEY}</Typography>
+            <Typography variant="Semibold_14" className={styles.keyText}>{GENERAL.TAG_VALUE}</Typography>
+          </div>
+          {tags.map((tagData: Tag, index: number) => {
+            return (
+              <div className={styles.tagItemContainer}>
+                <div className={styles.itemKey}>
+                  <TextField
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      handleChange(index, 'key', e.target.value);
+                    }}
+                    placeholder={GENERAL.TAG_KEY_PLACEHOLDER}
+                    value={tagData.key}
+                    className={styles.keyField}
+                    // @ts-ignore
+                    maxlength={127}
+                  />
+                </div>
+                <div className={styles.seperator}> : </div>
+                <div className={styles.itemValue}>
+                    <TextField
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        handleChange(index, 'value', e.target.value);
+                      }}
+                      placeholder={GENERAL.TAG_VALUE_PLACEHOLDER}
+                      value={tagData.value}
+                      className={styles.keyField}
+                      // @ts-ignore
+                      maxlength={255}
+                    />
+                </div>
+                {tags.length>1 && (
+                  <Button variant='text' onClick={() => handleDeleteTag(index)} className={styles.closeButton}>
+                    <CloseIcon/>
+                  </Button>
+                  )
+                }
+              </div>
+            )
+          })}
+          </Typography>
+        </AccordionCardContent>
       </AccordionCard>
     </div>
   );

@@ -38,11 +38,14 @@ export interface SNS {
 }
 
 export interface KmsKeys {
-    id?: string;
+    id: string;
     name?: string;
     origin?: string;
     state?: string;
     expirationDate?: string;
+    expiryStatus?: string;
+    cellProps?: Object;
+    default?: boolean;
 }
 
 export interface KeyPairs {
@@ -51,17 +54,16 @@ export interface KeyPairs {
 }
 
 export interface InstanceType {
-    instanceType?: string,
-    vCpus?: number,
-    ramInMib?: number,
-    iopsInMbps?: number
+    instanceType?: string;
+    vCpus?: number;
+    ramInMib?: number;
+    iopsInMbps?: number;
 }
 
 export interface FSxN {
-    fileSystemId?: string,
-    fileSystemName?: string
+    fileSystemId?: string;
+    fileSystemName?: string;
 }
-
 
 export interface MssqlEntities {
     getCredentials: {
@@ -70,7 +72,7 @@ export interface MssqlEntities {
         credentialError: null;
     };
     getRegions: {
-        regionsData: { regions?: Regions[] };
+        regionsData: { regions?: Regions[] } | null;
         regionsLoading: false;
         regionsError: null;
     };
@@ -95,7 +97,7 @@ export interface MssqlEntities {
         snsError: null;
     };
     getKmsList: {
-        kmsData: { keys?: KmsKeys[] };
+        kmsData: KmsKeys[];
         kmsLoading: false;
         kmsError: null;
     };

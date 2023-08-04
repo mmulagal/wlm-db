@@ -8,7 +8,7 @@ const initialState: MssqlEntities = {
         credentialError: null
     },
     getRegions: {
-        regionsData: {},
+        regionsData: null,
         regionsLoading: false,
         regionsError: null
     },
@@ -33,7 +33,7 @@ const initialState: MssqlEntities = {
         snsError: null
     },
     getKmsList: {
-        kmsData: {},
+        kmsData: [],
         kmsLoading: false,
         kmsError: null
     },
@@ -51,8 +51,7 @@ const initialState: MssqlEntities = {
         fsxnData: {},
         fsxnLoading: false,
         fsxnError: null
-    },
-
+    }
 };
 
 const mssqlSlice = createSlice({
@@ -81,13 +80,13 @@ const mssqlSlice = createSlice({
             state.getKmsList = action.payload;
         },
         addKeyPairList: (state, action: PayloadAction<any>) => {
-            state.getKeyPairList= action.payload;
+            state.getKeyPairList = action.payload;
         },
         addInstanceTypeList: (state, action: PayloadAction<any>) => {
-            state.getInstanceTypeList= action.payload;
+            state.getInstanceTypeList = action.payload;
         },
         addFsxnList: (state, action: PayloadAction<any>) => {
-            state.getFsxnList= action.payload;
+            state.getFsxnList = action.payload;
         }
     }
 });

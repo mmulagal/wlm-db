@@ -1,29 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './Encryption.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import EncryptionTable from './EncryptionTable/EncryptionTable/EncryptionTable';
 import { useDispatch } from 'react-redux';
-import { setEncryptionARN, setEncryptionType } from '../../../store/mssql/mssqlFormSlice';
+import { setEncryptionARN, setEncryptionRow, setEncryptionType } from '../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 
 const Encryption = () => {
-    const [accountSelected, setAccountSelected] = useState(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT);
+    
     const dispatch = useDispatch();
+
+    const { kmsData, kmsLoading } = useAppSelector(state => state.mssql.getKmsList);
     const selectedRow = useAppSelector((state: any) => state.mssqlForm.encryption.selectedRow);
+
+    const [accountSelected, setAccountSelected] = useState(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT);
     const [input, setInput] = useState('');
+
+    // To select aws/fsx row if present
+    useEffect(()=> {
+        dispatch(setEncryptionRow(kmsData?.filter(key => key?.default)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kmsData]);
+    
     //Set the Header text here
     const setHeader = () => {
-        if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT && input.length > 0) {
+        if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
             return <Typography variant="Regular_14">{input}</Typography>;
         } else {
-            return <Typography variant="Regular_14">{selectedRow && selectedRow[0].key}</Typography>;
+            return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
         }
     };
     return (
         <div className={styles.encryption}>
-            <AccordionCard
+            <AccordionCard isLoading={kmsLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="19"
                 title={<div className={CommonStyles.title}>{GENERAL.ENCRYPTION}</div>}
