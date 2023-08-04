@@ -22,3 +22,9 @@ export const DATABASE_TYPE = 'sql'
 
 // Default username for FSxN when creating new
 export const FSXADMIN = 'fsxadmin'
+
+// KMS status/state
+export const EXPIRED_STATUS = 'expired'
+export const EXPIRING_STATUS = 'expiring'
+export const ENABLED_STATE = 'Enabled'
+export const DEFAULT_MASTER_KEY = 'aws/fsx'

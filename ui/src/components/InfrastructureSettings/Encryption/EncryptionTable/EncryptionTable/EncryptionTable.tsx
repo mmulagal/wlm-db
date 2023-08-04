@@ -2,64 +2,28 @@ import { Table, useTable, Typography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { ReactComponent as DefaultTag } from '../../../../../assets/defaultTag.svg';
+// import { ReactComponent as ErrorTag } from '../../../../../assets/Action_required_error.svg';
+// import { ReactComponent as ExpiringTag } from '../../../../../assets/Action_required_error.svg';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './EncryptionTable.module.scss';
 import { useEffect } from 'react';
 import { getSelectedFromSelectionState } from '../../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setEncryptionRow } from '../../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { DEFAULT_MASTER_KEY, EXPIRED_STATUS, EXPIRING_STATUS } from '../../../../../utils/consts';
 
 const EncryptionTable = () => {
     const dispatch = useDispatch();
-    const selectedRow = useAppSelector((state: any) => state.mssqlForm.encryption.selectedRow);
-    const data: any = [
-        {
-            key: 'aws/fsx',
-            expirationDate: 'None',
-            origin: 'AWS_KMS',
-            id: '1',
-            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
-        },
-        {
-            key: 'key2',
-            expirationDate: 'None',
-            origin: 'AWS_KMS',
-            id: '2',
-            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R',
-            cellProps: {
-                isDisabled: true
-            }
-        },
-        {
-            key: 'about to expire',
-            expirationDate: 'None',
-            origin: 'AWS_KMS',
-            id: '5',
-            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
-        },
-        {
-            key: 'key 4',
-            expirationDate: 'None',
-            origin: 'AWS_KMS',
-            id: '6',
-            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
-        },
-        {
-            key: 'expired',
-            expirationDate: 'None',
-            origin: 'External',
-            cellProps: {
-                isDisabled: true
-            },
-            id: '7',
-            key_id: '0a96542a-f57b-487c-a0fc-4db5d74c0a89R'
-        }
-    ];
+
+    //Getting the Data from state
+    const { kmsData } = useAppSelector(state => state.mssql.getKmsList);
+    const selectedRow = useAppSelector(state => state.mssqlForm.encryption.selectedRow);
 
     const EncryptionColDefs: ColumnProps[] = [
         {
             Header: GENERAL.CUSTOMER_MASTER_KEY_NAME,
-            accessor: 'key',
+            accessor: 'name',
             id: '1',
             isSortable: false,
 
@@ -68,7 +32,7 @@ const EncryptionTable = () => {
                 return (
                     <div className={styles.keyName}>
                         <div className={styles.content}>{cellData}</div>
-                        {cellData === 'aws/fsx' && (
+                        {cellData === DEFAULT_MASTER_KEY && (
                             <div className={styles.tag}>
                                 <DefaultTag />
                             </div>
@@ -78,8 +42,8 @@ const EncryptionTable = () => {
             }
         },
         {
-            Header: GENERAL.ORIGIN,
-            accessor: 'key_id',
+            Header: GENERAL.KEY_ID,
+            accessor: 'id',
             id: '2',
             width: '348px'
         },
@@ -89,9 +53,27 @@ const EncryptionTable = () => {
             id: '3',
             width: '177px',
 
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.expirationDate}>
+                        {rowData?.expiryStatus === EXPIRED_STATUS && (
+                            <div>
+                                <WarningIcon 
+                                style={{
+                                    //@ts-ignore
+                                    '--icon-primary-color': 'var(--error)'
+                                }}/>
+                            </div>
+                        )}
+                        {rowData?.expiryStatus === EXPIRING_STATUS && (
+                            <div>
+                                <WarningIcon 
+                                style={{
+                                    //@ts-ignore 
+                                    '--icon-primary-color': 'var(--warning)'
+                                }}/>
+                            </div>
+                        )}
                         <div className={styles.icon}>{cellData}</div>
                     </div>
                 );
@@ -114,14 +96,15 @@ const EncryptionTable = () => {
         isSorting: false,
         selectionType: 'singular',
         columns: EncryptionColDefs,
-        rows: data,
+        rows: kmsData,
         pageSize: 10
     });
 
     useEffect(() => {
-        const row = getSelectedFromSelectionState(tableProps.selectionState, data);
+        const row = getSelectedFromSelectionState(tableProps.selectionState, kmsData);
         dispatch(setEncryptionRow(row));
-    }, [tableProps.selectionState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tableProps.selectionState, kmsData]);
 
     return (
         <div className={styles.table}>

@@ -33,7 +33,7 @@ const initialState: MssqlEntities = {
         snsError: null
     },
     getKmsList: {
-        kmsData: {},
+        kmsData: [],
         kmsLoading: false,
         kmsError: null
     },

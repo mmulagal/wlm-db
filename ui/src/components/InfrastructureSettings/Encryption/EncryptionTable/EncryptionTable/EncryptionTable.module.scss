@@ -1,7 +1,7 @@
 .table {
     margin-top: 24px;
     width: 983px;
-    height: 445px;
+    //height: 445px;
     box-shadow: 2px 2px 6px #e0e0e0;
     padding: 40px 12px 40px 40px;
     .keyName {
@@ -12,6 +12,18 @@
         svg {
             position: relative;
             top: 5px;
+        }
+    }
+    .expirationDate {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        svg {
+            position: relative;
+            top: 3px;
+            width: 24px;
+            height: 22px;
         }
     }
 
