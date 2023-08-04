@@ -26,7 +26,7 @@ const Encryption = () => {
     
     //Set the Header text here
     const setHeader = () => {
-        if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT && input.length > 0) {
+        if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
             return <Typography variant="Regular_14">{input}</Typography>;
         } else {
             return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
