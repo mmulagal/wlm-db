@@ -10,6 +10,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             filesystems: [
                 {
                     fileSystemId: 'fs-03773e21b2f0e39b4',
+                    name: 'DBSFSX',
                     kmsKeyId: 'arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89',
                     networkInterfaceIds: ['eni-0f21c7486b651ca11', 'eni-01a4d0d5f61d75ee4'],
                     subnetIds: ['subnet-f4484e80', 'subnet-4cdd3b29'],
