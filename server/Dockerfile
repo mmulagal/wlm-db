@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM public.ecr.aws/k3z1v4d2/node:20-alpine
 
 WORKDIR /opt/netapp/wlmdb
 
