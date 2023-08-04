@@ -53,7 +53,8 @@ const CloudFormationTemplateRequestBody = Type.Object({
 });
 
 const CloudFormationTemplateResponse = Type.Object({
-    cloudFormationUrl: Type.String()
+    cloudFormationUrl: Type.String(),
+    warningMessage: Type.Optional(Type.String())
 });
 
 const DeployTemplateResponse = Type.Object({
@@ -65,6 +66,7 @@ type EC2ConfigurationType = Static<typeof EC2Configuration>;
 type ADConfigurationType = Static<typeof ADConfiguration>;
 type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
+type CloudFormationTemplateResponseType = Static<typeof CloudFormationTemplateResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -74,5 +76,6 @@ export {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    DeployTemplateResponse
+    DeployTemplateResponse,
+    CloudFormationTemplateResponseType
 };

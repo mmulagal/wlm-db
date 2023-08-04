@@ -8,7 +8,8 @@ import {
     EC2ConfigurationType,
     ADConfigurationType,
     FSXConfigurationType,
-    SQLConfigurationType
+    SQLConfigurationType,
+    CloudFormationTemplateResponseType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -30,7 +31,7 @@ async function createCloudFormationTemplateForUserDeployment(
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType
-): Promise<{ cloudFormationUrl: string }> {
+): Promise<CloudFormationTemplateResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
         region,
@@ -43,8 +44,10 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
 
+    let errMsg = '';
     if (permissions?.length) {
-        logger.error('Required permissions are not available to create the cloud formation template');
+        errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
+        logger.error(errMsg);
     }
     const derivedParams = await generateFsxParams(fsxConfiguration.databaseSize);
 
@@ -86,9 +89,9 @@ async function createCloudFormationTemplateForUserDeployment(
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
     });
-    logger.info(templateParams);
+
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
-    return { cloudFormationUrl: signedTemplateURL };
+    return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
 async function deploySqlTemplate(
