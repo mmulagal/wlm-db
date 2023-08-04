@@ -18,6 +18,10 @@
     height: 16px;
 }
 
+.text-disabled {
+    color: var(--text-disabled) !important;
+}
+
 .regular {
     font-size: 14px;
     font-style: normal;

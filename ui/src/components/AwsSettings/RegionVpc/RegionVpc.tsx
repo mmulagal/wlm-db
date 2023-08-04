@@ -21,6 +21,7 @@ import { useDispatch } from 'react-redux';
 const RegionVpc = () => {
     const dispatch = useDispatch();
     const accordionContext = useAccordionContext()?.setOpenChildren!;
+    const [isDefaultOpen, setIsDefaultOpen] = useState(false);
 
     //Getting the Data from state
     const { regionsData, regionsLoading } = useAppSelector(state => state.mssql.getRegions);
@@ -51,10 +52,11 @@ const RegionVpc = () => {
 
     //To open accordion if default account is present
     useEffect(() => {
-        if (credentialData && credentialData.length > 0 && regionsData) {
+        if (credentialData && credentialData.length > 0 && regionsData && !isDefaultOpen) {
             accordionContext({
                 2: true
             });
+            setIsDefaultOpen(true);
         }
     }, [credentialData, regionsData]);
 
@@ -84,6 +86,13 @@ const RegionVpc = () => {
 
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
+        }
         if (!selectedRegionData || !selectedVPCData) {
             return <ActionRequired error={!isVPCNotFilled ? true : false} />;
         } else {
@@ -100,6 +109,8 @@ const RegionVpc = () => {
     return (
         <div className={styles['region-vpc']}>
             <AccordionCard
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 isLoading={regionsLoading || vpcLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
