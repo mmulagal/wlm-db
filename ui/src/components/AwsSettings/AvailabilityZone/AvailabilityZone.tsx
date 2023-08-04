@@ -23,6 +23,7 @@ const AvailabilityZone = () => {
     const selectedSubnet1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode1);
     const selectedSubnet2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode2);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
     //Function to generate the options for Select Field for Zones
     const zones = ['us-east-1a', 'us-east-1b'];
@@ -54,6 +55,13 @@ const AvailabilityZone = () => {
 
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
+        }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;
         } else {
@@ -73,6 +81,8 @@ const AvailabilityZone = () => {
     return (
         <div className={styles['availability-zone']}>
             <AccordionCard
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="3"
                 title={<div className={CommonStyles.title}>Availability zones</div>}

@@ -16,20 +16,22 @@ const InstanceType = () => {
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(state => state.mssql.getInstanceTypeList);
     const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
 
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         instanceTypeData?.instanceTypes?.map((val, idx: number) => {
             const value = val?.instanceType || '';
             let label2 = '';
-            if(val?.vCpus){
-                label2 += val?.vCpus + 'vCPU, '
+            if (val?.vCpus) {
+                label2 += val?.vCpus + 'vCPU, ';
             }
-            if(val?.ramInMib){
+            if (val?.ramInMib) {
                 label2 += formatSize(val?.ramInMib, 'mib') + ' RAM, ';
             }
-            if(val?.iopsInMbps){
-                label2 += val?.iopsInMbps + 'Mbps'
+            if (val?.iopsInMbps) {
+                label2 += val?.iopsInMbps + 'Mbps';
             }
             const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
@@ -40,16 +42,26 @@ const InstanceType = () => {
 
     useEffect(() => {
         dispatch(setInstanceType(generateInstances[0]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
 
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
+        }
         return <Typography variant="Regular_14">{selectedInstanceType?.label}</Typography>;
     };
     return (
         <div className={styles['instance-type']}>
-            <AccordionCard isLoading={instanceTypeLoading}
+            <AccordionCard
+                isLoading={instanceTypeLoading}
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="14"
                 title={<div className={CommonStyles.title}>{GENERAL.INSTANCE_TYPE}</div>}

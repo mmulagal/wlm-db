@@ -14,8 +14,10 @@ const KeyPair = () => {
 
     //Getting the Data from state
     const { keyPairData, keyPairLoading } = useAppSelector(state => state.mssql.getKeyPairList);
-    
+
     const selectedKey = useAppSelector((state: any) => state.mssqlForm.keyPair.selectedKeyPair);
+
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
     //Function to generate the options for Select Field
     const generateKey = useMemo<optionType[]>((): optionType[] => {
@@ -31,16 +33,26 @@ const KeyPair = () => {
 
     useEffect(() => {
         dispatch(setSelectedKeyPair(generateKey[0]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateKey]);
 
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
+        }
         return <Typography variant="Regular_14">{selectedKey?.label}</Typography>;
     };
     return (
         <div className={styles.key}>
-            <AccordionCard isLoading={keyPairLoading}
+            <AccordionCard
+                isLoading={keyPairLoading}
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="12"
                 title={<div className={CommonStyles.title}>{GENERAL.KEY_PAIR}</div>}
