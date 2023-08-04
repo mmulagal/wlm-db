@@ -280,7 +280,6 @@ const EC2_ACTION_NAMES = [
 
 const CLOUDFORMATION = 'cloudformation';
 const CLOUDFORMATION_ACTION_NAMES = [
-    'cloudformation',
     'GetTemplateSummary',
     'DescribeStack*',
     'Get*',
@@ -298,15 +297,13 @@ const CLOUDFORMATION_ACTION_NAMES = [
 const IAM = 'iam';
 const IAM_ACTION_NAMES = [
     'CreateInstanceProfile',
-    'DeleteInstanceProfile	',
+    'DeleteInstanceProfile',
     'RemoveRoleFromInstanceProfile',
     'AddRoleToInstanceProfile',
     'GetRole',
-    'GetRolePolicy	',
     'GetUser',
     'GetPolicyVersion',
-    'GetPolicy',
-    'List*'
+    'GetPolicy'
 ].map(action => `${IAM}:${action}`);
 
 const SNS = 'sns';
@@ -323,9 +320,6 @@ const RESOURCE_GROUPS = 'resource-groups';
 const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'DeleteGroup', 'Get*'].map(
     action => `${RESOURCE_GROUPS}:${action}`
 );
-
-const S3 = 's3';
-const S3_ACTION_NAMES = ['CreateBucket', 'PutBucketVersioning', 'DeleteBucket'].map(action => `${S3}:${action}`);
 
 const FSX = 'fsx';
 const FSX_ACTION_NAMES = [
@@ -350,7 +344,6 @@ const AWS_RESOURCES_ACTION_MAP = {
     [IAM]: IAM_ACTION_NAMES,
     [SNS]: SNS_ACTION_NAMES,
     [RESOURCE_GROUPS]: RESOURCE_GROUPS_ACTION_NAMES,
-    [S3]: S3_ACTION_NAMES,
     [FSX]: FSX_ACTION_NAMES,
     [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
 };
@@ -439,6 +432,12 @@ const WLM_ASSETS: Record<string, string> = {
     AssetsS3RegionCode: ASSETS_REGION_CODE
 };
 
+// Template error messages
+const MISSING_PERMISSIONS = (permissions: Array<string>) =>
+    `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
+
+const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -447,8 +446,6 @@ export {
     SERVICE_QUOTAS,
     FSX_ACTION_NAMES,
     FSX,
-    S3_ACTION_NAMES,
-    S3,
     RESOURCE_GROUPS_ACTION_NAMES,
     SNS_ACTION_NAMES,
     SNS,
@@ -509,5 +506,7 @@ export {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
-    EC2_ROLE_NAME
+    EC2_ROLE_NAME,
+    MISSING_PERMISSIONS,
+    CF_QUOTA_REACHED
 };

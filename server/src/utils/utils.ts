@@ -6,10 +6,28 @@ import createError from 'http-errors';
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
-import { SQL_AMI_NAMES, HttpErrorCodes, STACKS_DEPLOYED, WLMDB } from './consts';
+import {
+    SQL_AMI_NAMES,
+    HttpErrorCodes,
+    STACKS_DEPLOYED,
+    WLMDB,
+    EC2_ROLE_NAME,
+    TEMPLATE_CONFIGURATION_MAPPING,
+    WLM_ASSETS
+} from './consts';
 
 import getLogger from './logger';
 import { round } from 'lodash-es';
+import { createSecrets } from '../operations/aws/secrets-manager-operations';
+import {
+    CFNetworkConfigurationType,
+    EC2ConfigurationType,
+    ADConfigurationType,
+    FSXConfigurationType,
+    SQLConfigurationType
+} from '../routes/types/deployment.types';
+import { Parameter } from '@aws-sdk/client-cloudformation';
+import { getRoleName } from '../operations/cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -84,4 +102,69 @@ function generateRandomNumberInRange(min: number, max: number) {
     return Math.floor(min + Math.random() * (max - min + 1));
 }
 
-export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, generateFsxParams };
+async function formatTemplateParameters(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType
+) {
+    const derivedParams = generateFsxParams(fsxConfiguration.databaseSize);
+
+    await createSecrets(credentialsId, region, [
+        {
+            secretName: derivedParams.DomainAdminSecretName,
+            username: adConfiguration.domainUsername,
+            password: adConfiguration.domainPassword
+        },
+        {
+            secretName: derivedParams.FSxAdministratorPasswordSecret,
+            username: fsxConfiguration.fsxUsername,
+            password: fsxConfiguration.fsxPassword
+        },
+        {
+            secretName: derivedParams.SQLServiceAccountSecret,
+            username: sqlConfiguration.serviceAccountName,
+            password: sqlConfiguration.serviceAccountPassword
+        }
+    ]);
+
+    const stackName = derivedParams.StackName;
+    const { roleName } = await getRoleName(credentialsId);
+    const templateParams: Array<Parameter> = [{ ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName }];
+
+    Object.entries(derivedParams).forEach(([key, value]) => {
+        if (key != 'StackName') {
+            templateParams.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
+        }
+    });
+    const clubbedParamList = {
+        ...networkConfiguration,
+        ...adConfiguration,
+        ...fsxConfiguration,
+        ...sqlConfiguration,
+        ...ec2Configuration
+    };
+
+    Object.entries(clubbedParamList).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+            ParameterValue: value.toString()
+        });
+    });
+
+    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
+    });
+
+    return { stackName: stackName, templateParameters: templateParams };
+}
+export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, generateFsxParams, formatTemplateParameters };

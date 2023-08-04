@@ -1,22 +1,13 @@
 import { Type, Static } from '@sinclair/typebox';
-import { AwsParams } from './aws.types';
-
-// Deployment Request Params
-const DeploymentParams = Type.Composite([
-    AwsParams,
-    Type.Object({
-        vpcId: Type.String()
-    })
-]);
 
 const CFNetworkConfiguration = Type.Object({
-    vpcId: Type.String(),
+    vpcId: Type.Optional(Type.String()),
     vpcCidr: Type.String(),
-    privateSubnet1Id: Type.String(),
-    routeTable1Id: Type.String(),
+    privateSubnet1Id: Type.Optional(Type.String()),
+    routeTable1Id: Type.Optional(Type.String()),
     availabilityZone1: Type.String(),
-    privateSubnet2Id: Type.String(),
-    routeTable2Id: Type.String(),
+    privateSubnet2Id: Type.Optional(Type.String()),
+    routeTable2Id: Type.Optional(Type.String()),
     availabilityZone2: Type.String()
 });
 
@@ -35,7 +26,7 @@ const ADConfiguration = Type.Object({
 });
 
 const FSXConfiguration = Type.Object({
-    fsxFileSystemId: Type.String(),
+    fsxFileSystemId: Type.Optional(Type.String()),
     fsxUsername: Type.String(),
     fsxPassword: Type.String(),
     databaseSize: Type.Number(),
@@ -82,6 +73,5 @@ export {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    DeploymentParams,
     DeployTemplateResponse
 };
