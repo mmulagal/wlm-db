@@ -2,33 +2,42 @@
     "keys": [
       {
         "id": "0022459d-e581-45e3-acc5-4fa298d413d2",
-        "name": "alias/nviet-openlab-key6",
+        "name": "aws/fsx",
         "origin": "AWS_KMS",
-        "state": "Enabled"
+        "state": "Enabled",
+        "expiryStatus": ""
       },
       {
         "id": "038e4010-d061-4375-b002-e3bfb5ec194e",
         "name": "alias/nviet-openlab-key6",
         "origin": "AWS_KMS",
-        "state": "Enabled"
+        "state": "Enabled",
+        "expiryStatus": "expiring",
+        "expirationDate": "Aug 23, 2023"
       },
       {
         "id": "0a93acf4-ca6e-4847-8baa-9b0f561567b1",
         "name": "alias/nviet-openlab-key6",
         "origin": "AWS_KMS",
-        "state": "Enabled"
+        "state": "Enabled",
+        "expiryStatus": "expired",
+        "expirationDate": "June 23, 2023"
       },
       {
         "id": "1149596e-3d5c-4207-a2cc-2c0443c07aa4",
         "name": "alias/nviet-openlab-key6",
         "origin": "AWS_KMS",
-        "state": "Enabled"
+        "state": "Disabled",
+        "expiryStatus": "expired",
+        "expirationDate": "June 23, 2023"
       },
       {
         "id": "11b78ef1-7b45-4b2a-ae0e-2c8811094833",
         "name": "alias/nviet-openlab-key6",
         "origin": "AWS_KMS",
-        "state": "Enabled"
+        "state": "Enabled",
+        "expiryStatus": "",
+        "expirationDate": "Dec 23, 2023"
       }
     ],
     "totalRecords": 5
