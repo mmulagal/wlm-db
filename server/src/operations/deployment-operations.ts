@@ -87,7 +87,9 @@ async function createCloudFormationTemplateForUserDeployment(
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
-        templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+        }
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
