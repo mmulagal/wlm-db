@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.global.namespace }}-wlmdb-ingress-rules
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: $1
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: 3m
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 3m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "80"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "80"
+    nginx.ingress.kubernetes.io/limit-rps: "6"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.global.bluexpDomain }}
+    http:
+      paths:
+      - path: /wlmdb(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Values.global.namespace }}-wlmdb
+            port:
+              number: 8085
