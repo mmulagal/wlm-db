@@ -1,4 +1,3 @@
-import config from 'config';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
@@ -15,13 +14,16 @@ import {
     CLOUD_FORMATION_STACK_URL,
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
-    TEMPLATE_CONFIGURATION_MAPPING
+    TEMPLATE_CONFIGURATION_MAPPING,
+    MASTER_TEMPLATE_URL,
+    DISABLE_ROLLBACK,
+    MASTER_STACK_TIMEOUT_MINUTES
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
 import getLogger from '../utils/logger';
+import { getRoleName } from './cloud-manager/credentials-operations';
 
 const logger = getLogger();
-const master_template_url = config.get<string>('template-urls.master-template');
 
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
@@ -50,24 +52,30 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = await generateFsxParams(fsxConfiguration.databaseSize);
+    const { roleArn } = await getRoleName(credentialsId);
 
-    await createSecrets(credentialsId, region, [
-        {
-            secretName: derivedParams.DomainAdminSecretName,
-            username: adConfiguration.domainUsername,
-            password: adConfiguration.domainPassword
-        },
-        {
-            secretName: derivedParams.FSxAdministratorPasswordSecret,
-            username: fsxConfiguration.fsxUsername,
-            password: fsxConfiguration.fsxPassword
-        },
-        {
-            secretName: derivedParams.SQLServiceAccountSecret,
-            username: sqlConfiguration.serviceAccountName,
-            password: sqlConfiguration.serviceAccountPassword
-        }
-    ]);
+    await createSecrets(
+        credentialsId,
+        region,
+        [
+            {
+                secretName: derivedParams.DomainAdminSecretName,
+                username: adConfiguration.domainUsername,
+                password: adConfiguration.domainPassword
+            },
+            {
+                secretName: derivedParams.FSxAdministratorPasswordSecret,
+                username: fsxConfiguration.fsxUsername,
+                password: fsxConfiguration.fsxPassword
+            },
+            {
+                secretName: derivedParams.SQLServiceAccountSecret,
+                username: sqlConfiguration.serviceAccountName,
+                password: sqlConfiguration.serviceAccountPassword
+            }
+        ],
+        roleArn
+    );
 
     const signedURL = await getPreSignedUrl(credentialsId, region);
 
@@ -103,7 +111,8 @@ async function deploySqlTemplate(
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlConfiguration: SQLConfigurationType,
+    topicArn?: string
 ): Promise<{ cloudFormationStackId: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
@@ -131,7 +140,7 @@ async function deploySqlTemplate(
         };
     }
 
-    const details = await formatTemplateParameters(
+    const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
         region,
         networkConfiguration,
@@ -141,17 +150,20 @@ async function deploySqlTemplate(
         sqlConfiguration
     );
 
-    logger.debug(`Stack ${details.stackName} parameters ${JSON.stringify(details.templateParameters)}.`);
+    logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
     const deployStackResponse = await createStack(
         credentialsId,
         region,
-        details.stackName,
-        master_template_url,
-        details.templateParameters
+        stackName,
+        MASTER_TEMPLATE_URL,
+        templateParameters,
+        DISABLE_ROLLBACK,
+        MASTER_STACK_TIMEOUT_MINUTES,
+        topicArn
     );
 
-    logger.info(`Stack ${details.stackName} response ${deployStackResponse}`);
+    logger.info(`Stack ${stackName} response ${deployStackResponse}`);
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 

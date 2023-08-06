@@ -114,27 +114,32 @@ async function formatTemplateParameters(
     sqlConfiguration: SQLConfigurationType
 ) {
     const derivedParams = generateFsxParams(fsxConfiguration.databaseSize);
+    const { roleName, roleArn } = await getRoleName(credentialsId);
 
-    await createSecrets(credentialsId, region, [
-        {
-            secretName: derivedParams.DomainAdminSecretName,
-            username: adConfiguration.domainUsername,
-            password: adConfiguration.domainPassword
-        },
-        {
-            secretName: derivedParams.FSxAdministratorPasswordSecret,
-            username: fsxConfiguration.fsxUsername,
-            password: fsxConfiguration.fsxPassword
-        },
-        {
-            secretName: derivedParams.SQLServiceAccountSecret,
-            username: sqlConfiguration.serviceAccountName,
-            password: sqlConfiguration.serviceAccountPassword
-        }
-    ]);
+    await createSecrets(
+        credentialsId,
+        region,
+        [
+            {
+                secretName: derivedParams.DomainAdminSecretName,
+                username: adConfiguration.domainUsername,
+                password: adConfiguration.domainPassword
+            },
+            {
+                secretName: derivedParams.FSxAdministratorPasswordSecret,
+                username: fsxConfiguration.fsxUsername,
+                password: fsxConfiguration.fsxPassword
+            },
+            {
+                secretName: derivedParams.SQLServiceAccountSecret,
+                username: sqlConfiguration.serviceAccountName,
+                password: sqlConfiguration.serviceAccountPassword
+            }
+        ],
+        roleArn
+    );
 
     const stackName = derivedParams.StackName;
-    const { roleName } = await getRoleName(credentialsId);
     const templateParams: Array<Parameter> = [{ ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName }];
 
     Object.entries(derivedParams).forEach(([key, value]) => {

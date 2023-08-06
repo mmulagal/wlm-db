@@ -15,6 +15,7 @@ async function initiateSimulator() {
     await import('./scopes/aws/service-quota-scope');
     await import('./scopes/aws/secrets-manager-scope');
     await import('./scopes/aws/s3-scope');
+    await import('./scopes/deployment-scope');
     // Load server
     await import('../../src/index');
 }

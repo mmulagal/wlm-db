@@ -49,7 +49,8 @@ const CloudFormationTemplateRequestBody = Type.Object({
     ec2Configuration: EC2Configuration,
     adConfiguration: ADConfiguration,
     fsxConfiguration: FSXConfiguration,
-    sqlConfiguration: SQLConfiguration
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String())
 });
 
 const CloudFormationTemplateResponse = Type.Object({

@@ -37,8 +37,9 @@ async function createStack(
     stackName: string,
     templateUrl: string,
     templateParams: Parameter[],
-    disableRollback: boolean = false,
-    timeoutInMinutes?: number
+    disableRollback: boolean = true,
+    timeoutInMinutes: number,
+    topicArn?: string
 ) {
     logger.info(
         `Create cloudformation stack ${stackName} for template ${templateUrl} with ${timeoutInMinutes} timeoutInMinutes.`
@@ -50,7 +51,8 @@ async function createStack(
         Parameters: templateParams,
         DisableRollback: disableRollback,
         Capabilities: ['CAPABILITY_IAM'],
-        TimeoutInMinutes: timeoutInMinutes
+        TimeoutInMinutes: timeoutInMinutes,
+        NotificationARNs: topicArn ? [topicArn] : []
     };
     const cloudformationClient = await getCloudformationClient(credentialsId, region);
     const resp = await cloudformationClient.send(new CreateStackCommand(createStackInput));

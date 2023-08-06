@@ -403,15 +403,17 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'sathish-wlm';
+const BUCKET_NAME = 'wlmbucket';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
-const ASSETS_REGION_CODE = 'ap-southeast-1';
+const ASSETS_REGION_CODE = 's3.ap-southeast-1';
 const CLOUD_FORMATION_BUCKET_OWNER_KEY = 'wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = 'https://wlmbucket.s3.ap-southeast-1.amazonaws.com/templates/wlm-master.yaml';
+const DISABLE_ROLLBACK = false;
+const MASTER_STACK_TIMEOUT_MINUTES = 120;
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -528,5 +530,7 @@ export {
     MASTER_TEMPLATE_URL,
     EC2_ROLE_NAME,
     MISSING_PERMISSIONS,
-    CF_QUOTA_REACHED
+    CF_QUOTA_REACHED,
+    DISABLE_ROLLBACK,
+    MASTER_STACK_TIMEOUT_MINUTES
 };

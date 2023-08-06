@@ -38,7 +38,14 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         .post(`${API_PREFIX_PATH}/template/deploy`, { schema: DeployTemplateSchema }, async (request, reply) => {
             const {
                 params: { credentialsId, region },
-                body: { networkConfiguration, ec2Configuration, adConfiguration, fsxConfiguration, sqlConfiguration }
+                body: {
+                    networkConfiguration,
+                    ec2Configuration,
+                    adConfiguration,
+                    fsxConfiguration,
+                    sqlConfiguration,
+                    topicArn
+                }
             } = request;
             const response = await deploySqlTemplate(
                 credentialsId,
@@ -47,7 +54,8 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 ec2Configuration,
                 adConfiguration,
                 fsxConfiguration,
-                sqlConfiguration
+                sqlConfiguration,
+                topicArn
             );
             return reply.send(response);
         });
