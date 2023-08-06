@@ -38,8 +38,8 @@ async function createStack(
     templateUrl: string,
     templateParams: Parameter[],
     disableRollback: boolean = true,
-    timeoutInMinutes: number,
-    topicArn?: string
+    timeoutInMinutes: number = 120,
+    topicArn: string = ''
 ) {
     logger.info(
         `Create cloudformation stack ${stackName} for template ${templateUrl} with ${timeoutInMinutes} timeoutInMinutes.`
