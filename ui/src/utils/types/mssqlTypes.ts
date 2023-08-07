@@ -117,3 +117,16 @@ export interface MssqlEntities {
         fsxnError: null;
     };
 }
+
+export interface Subnets {
+    id: string;
+    state: string;
+    cidrBlock: string;
+    availabilityZone: string;
+    availableIps: number;
+    name: string;
+}
+
+export interface AvailabilityZonesObj {
+    [key: string]: Subnets[];
+}

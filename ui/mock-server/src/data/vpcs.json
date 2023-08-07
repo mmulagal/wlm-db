@@ -26,7 +26,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.16.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1a",
           "availableIps": 251,
           "tags": [
             {
@@ -54,7 +54,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.17.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1b",
           "availableIps": 251,
           "tags": [
             {
@@ -124,7 +124,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.16.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1a",
           "availableIps": 251,
           "tags": [
             {
@@ -152,7 +152,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.17.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1b",
           "availableIps": 251,
           "tags": [
             {
@@ -222,7 +222,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.16.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1a",
           "availableIps": 251,
           "tags": [
             {
@@ -250,7 +250,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.17.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1b",
           "availableIps": 251,
           "tags": [
             {
@@ -320,7 +320,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.16.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1a",
           "availableIps": 251,
           "tags": [
             {
@@ -348,7 +348,7 @@
           "state": "available",
           "vpcId": "vpc-ba1ed1de",
           "cidrBlock": "192.168.17.0/24",
-          "availabilityZone": "us-east-1d",
+          "availabilityZone": "us-east-1b",
           "availableIps": 251,
           "tags": [
             {

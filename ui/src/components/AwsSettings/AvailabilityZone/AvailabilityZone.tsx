@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
@@ -15,43 +15,90 @@ import {
     setSelectedSubnetNode1,
     setSelectedSubnetNode2
 } from '../../../store/mssql/mssqlFormSlice';
+import { Subnets } from '../../../utils/types/mssqlTypes';
 
 const AvailabilityZone = () => {
     const dispatch = useDispatch();
-    const selectedZone1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode1);
-    const selectedZone2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode2);
-    const selectedSubnet1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode1);
-    const selectedSubnet2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode2);
+
+    const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
+    const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
+    const selectedSubnet1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode1);
+    const selectedSubnet2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode2);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
-    //Function to generate the options for Select Field for Zones
-    const zones = ['us-east-1a', 'us-east-1b'];
-    const generateZones = useMemo<optionType[]>((): optionType[] => {
+    useEffect(() => {
+        dispatch(setSelectedAzNode1(null));
+        dispatch(setSelectedAzNode2(null));
+        dispatch(setSelectedSubnetNode1(null));
+        dispatch(setSelectedSubnetNode2(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedVPCData]);
+
+    //Function to generate the options for Select Field for Zone 1
+    const generateZones1 = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        zones?.map((val, idx: number) => {
+        const azData = selectedVPCData?.data?.availabilityZones;
+        const zones = azData ? Object.keys(azData) : [];
+        zones?.filter(key => key !== selectedZone2?.value)
+        .map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
         return options;
-    }, []);
+    }, [selectedVPCData, selectedZone2]);
+
+    //Function to generate the options for Select Field for Zone 2
+    const generateZones2 = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        const azData = selectedVPCData?.data?.availabilityZones;
+        const zones = azData ? Object.keys(azData) : [];
+        zones?.filter(key => key !== selectedZone1?.value)
+        .map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '');
+            options.push(option);
+        });
+        return options;
+    }, [selectedVPCData, selectedZone1]);
 
     //Subnet related code
-    const subnets = [
-        { label1: '10.0.1.0/24', value: '10.0.1.0/24', label2: 'subnet-demo-a' },
-        { label1: '10.0.1.1/24', value: '10.0.1.1/24', label2: 'subnet-demo-b' }
-    ];
 
-    //Function to generate the options for Select Field
-    const generateSubnetOptions = useMemo<optionType[]>((): optionType[] => {
+    //Function to generate the options for Select Field subnet 1
+    const generateSubnet1Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        subnets?.map((val, idx: number) => {
-            const option = generateOptionType(val.value, val.label1, val.label2, false, '');
+        const azData = selectedVPCData?.data?.availabilityZones;
+        let subnetsList = [];
+        if(azData && azData.hasOwnProperty(selectedZone1?.value)){
+            subnetsList = azData[selectedZone1?.value];
+        }
+        subnetsList?.map((val: Subnets, idx: number) => {
+            const label2 = val?.id;
+            const value = val?.cidrBlock;
+            const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
         });
 
         return options;
-    }, []);
+    }, [selectedVPCData, selectedZone1]);
+
+    //Function to generate the options for Select Field subnet 2
+    const generateSubnet2Options = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        const azData = selectedVPCData?.data?.availabilityZones;
+        let subnetsList = [];
+        if(azData && azData.hasOwnProperty(selectedZone2?.value)){
+            subnetsList = azData[selectedZone2?.value];
+        }
+        subnetsList?.map((val: Subnets, idx: number) => {
+            const label2 = val?.id;
+            const value = val?.cidrBlock;
+            const option = generateOptionType(value, value, label2, false, '', val);
+            options.push(option);
+        });
+
+        return options;
+    }, [selectedVPCData, selectedZone2]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -116,8 +163,8 @@ const AvailabilityZone = () => {
                                         }}
                                     />
                                 }
-                                isSearchable={generateZones.length > 5}
-                                options={generateZones}
+                                isSearchable={generateZones1.length > 5}
+                                options={generateZones1}
                                 className={styles.selectField}
                             />
 
@@ -142,8 +189,8 @@ const AvailabilityZone = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode1(selectedOptions));
                                 }}
-                                isSearchable={generateSubnetOptions.length > 5}
-                                options={generateSubnetOptions}
+                                isSearchable={generateSubnet1Options.length > 5}
+                                options={generateSubnet1Options}
                                 className={styles.selectField}
                                 variant="two-lines"
                             />
@@ -172,8 +219,8 @@ const AvailabilityZone = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedAzNode2(selectedOptions));
                                 }}
-                                isSearchable={generateZones.length > 5}
-                                options={generateZones}
+                                isSearchable={generateZones2.length > 5}
+                                options={generateZones2}
                                 className={styles.selectField}
                             />
 
@@ -198,8 +245,8 @@ const AvailabilityZone = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode2(selectedOptions));
                                 }}
-                                isSearchable={generateSubnetOptions.length > 5}
-                                options={generateSubnetOptions}
+                                isSearchable={generateSubnet2Options.length > 5}
+                                options={generateSubnet2Options}
                                 className={styles.selectField}
                                 variant="two-lines"
                             />
