@@ -109,8 +109,6 @@ export const CARGO = 'cargo';
 
 export const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
 
-export const KEY_VAULT_URL: string = process.env.KEY_VAULT_URL as string;
-
 export const SECRETS: Record<string, string | undefined> = {
     CLIENT_ID: process.env.CLIENT_ID
         ? process.env.CLIENT_ID
@@ -121,24 +119,12 @@ export const SECRETS: Record<string, string | undefined> = {
         ? process.env.CLIENT_SECRET
         : config.has('service-token.client_secret')
         ? config.get('service-token.client_secret')
-        : undefined,
-    AUDIT_ACCESS_KEY: process.env.AUDIT_ACCESS_KEY
-        ? process.env.AUDIT_ACCESS_KEY
-        : config.has('audit.access-key')
-        ? config.get('audit.access-key')
-        : undefined,
-    AUDIT_SECRET_KEY: process.env.AUDIT_SECRET_KEY
-        ? process.env.AUDIT_SECRET_KEY
-        : config.has('audit.secret-key')
-        ? config.get('audit.secret-key')
         : undefined
 };
 
-export const SECRETS_KEY_VAULT_KEYS: Record<string, string> = {
-    CLIENT_ID: 'WLM-DB-CLIENT-ID',
-    CLIENT_SECRET: 'WLM-DB-CLIENT-SECRET',
-    AUDIT_ACCESS_KEY: 'WLM-DB-AUDIT-ACCESS-KEY',
-    AUDIT_SECRET_KEY: 'WLM-DB-AUDIT-SECRET-KEY'
+export const SECRETS_MANAGER_KEYS: Record<string, string> = {
+    CLIENT_ID: 'CLIENT_ID',
+    CLIENT_SECRET: 'CLIENT_SECRET'
 };
 
 export const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
