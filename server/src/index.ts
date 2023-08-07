@@ -125,6 +125,7 @@ const app = fastify({
                         try {
                             await verifyToken(authorization.replace('Bearer ', ''));
                         } catch (err) {
+                            logger.error('Token verification error', err);
                             reply.unauthorized();
                         }
                     } else {
