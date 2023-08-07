@@ -28,9 +28,6 @@ spec:
       - image: {{ .Values.image.registry }}:{{ .Values.infraversion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: wlmdb
-        volumeMounts:
-        - name: log
-          mountPath: /log
         envFrom:
         - configMapRef:
             name: wlmdb-config
