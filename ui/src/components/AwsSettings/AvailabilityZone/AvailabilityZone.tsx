@@ -20,10 +20,10 @@ const AvailabilityZone = () => {
     const dispatch = useDispatch();
 
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
-    const selectedZone1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode1);
-    const selectedZone2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedAzNode2);
-    const selectedSubnet1 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode1);
-    const selectedSubnet2 = useAppSelector((state: any) => state.mssqlForm.availabilityZones.selectedSubnetNode2);
+    const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
+    const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
+    const selectedSubnet1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode1);
+    const selectedSubnet2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode2);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
