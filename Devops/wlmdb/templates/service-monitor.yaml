@@ -4,9 +4,8 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: monitoring-kube-prometheus
-    release: {{ .Values.global.promrelease | default .Values.promrelease }}  
   name: {{ .Values.global.namespace }}-wlmdb-exporter
-  namespace: monitoring
+  namespace: {{ .Values.global.namespace }}
 spec:
   endpoints:
   - port: http

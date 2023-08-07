@@ -1,10 +1,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.global.namespace }}-wlmdb-ingress-rules
+  name: {{ .Values.global.namespace }}-ingress-rules
   namespace: {{ .Values.global.namespace }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: $1
+#    nginx.ingress.kubernetes.io/rewrite-target: $1
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-body-size: 3m
     nginx.ingress.kubernetes.io/client-body-buffer-size: 3m

@@ -28,16 +28,13 @@ spec:
       - image: {{ .Values.image.registry }}:{{ .Values.infraversion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: wlmdb
-        volumeMounts:
-        - name: log
-          mountPath: /log
         envFrom:
         - configMapRef:
             name: wlmdb-config
         env:
         readinessProbe:
           httpGet:
-            path: /health?liveness
+            path: wlmdb/health
             port: 8085
             scheme: HTTP
           initialDelaySeconds: 10
@@ -46,7 +43,7 @@ spec:
         livenessProbe:
           failureThreshold: 3
           httpGet:
-            path: /health?liveness
+            path: wlmdb/health
             port: 8085
             scheme: HTTP
           initialDelaySeconds: 80
