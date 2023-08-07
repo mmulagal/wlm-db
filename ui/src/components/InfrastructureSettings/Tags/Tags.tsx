@@ -52,7 +52,7 @@ const Tags = () => {
     };
 
     const handleDeleteTag = (idx: number) => {
-        // testing
+        // t esting
         const test = '12';
         console.log('test 1');
         let updatedTags = [...tags];
