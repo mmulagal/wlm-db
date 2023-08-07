@@ -19,6 +19,6 @@ export default function systemRoutes(fastify: FastifyInstance) {
             }
         )
         .get('/health', { schema: GetHealthinessSchema }, (_, reply) => {
-            reply.code(200).send('wlm-db_health 1');
+            reply.code(200).send('wlmdb_health 1');
         });
 }
