@@ -4,7 +4,7 @@ metadata:
   labels:
     run: wlmdb
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"    
-  name: {{ .Values.global.namespace }}-wlmdb
+  name: wlmdb
 spec:
   replicas: 2
   selector:

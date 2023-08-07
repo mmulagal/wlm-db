@@ -21,6 +21,6 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ .Values.global.namespace }}-wlmdb
+            name: wlmdb
             port:
               number: 8085

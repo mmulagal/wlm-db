@@ -4,7 +4,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     prometheus: monitoring-kube-prometheus
-  name: {{ .Values.global.namespace }}-wlmdb-exporter
+  name: wlmdb-exporter
   namespace: {{ .Values.global.namespace }}
 spec:
   endpoints:
