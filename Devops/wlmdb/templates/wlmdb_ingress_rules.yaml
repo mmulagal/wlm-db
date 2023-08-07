@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.global.namespace }}-wlmdb-ingress-rules
+  name: {{ .Values.global.namespace }}-ingress-rules
   namespace: {{ .Values.global.namespace }}
   annotations:
 #    nginx.ingress.kubernetes.io/rewrite-target: $1
