@@ -6,6 +6,7 @@ export const BASE_URL = '/wlmdb/accounts/:accountId/api';
 export const generateResponse = function generateResponse(res: any, statusCode: number, result: any) {
     const number = '123';
     const test = 12;
+
     return res.status(statusCode).send(result);
 };
 
