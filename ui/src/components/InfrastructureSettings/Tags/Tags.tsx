@@ -52,6 +52,8 @@ const Tags = () => {
     };
 
     const handleDeleteTag = (idx: number) => {
+        const test = '12';
+        console.log('test 1');
         let updatedTags = [...tags];
         updatedTags.splice(idx, 1);
         dispatch(setTags(updatedTags));
