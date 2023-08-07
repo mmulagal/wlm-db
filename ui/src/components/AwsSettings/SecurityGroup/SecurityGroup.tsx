@@ -54,6 +54,12 @@ const SecurityGroup = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
+        } else if(!selectedVPCData) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
         if (securityGroup === GENERAL.USE_AN_EXISTING_SECURITY) {
             return (
@@ -71,8 +77,8 @@ const SecurityGroup = () => {
     return (
         <div className={styles['security-group']}>
             <AccordionCard
-                isDisabled={!credentialData || (credentialData && !credentialData.length)}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="4"
                 title={<div className={CommonStyles.title}>{SELECT_CONFIG.SECURITY_GROUP}</div>}

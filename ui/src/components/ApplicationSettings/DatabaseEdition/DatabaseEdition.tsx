@@ -41,20 +41,6 @@ const DatabaseEdition = () => {
                         </div>
                         <div className={styles.genericStyle}>
                             <RadioButton
-                                isChecked={dbEdition?.label === GENERAL.SQL_SERVER_WEB_EDITION}
-                                onChange={() => {
-                                    dispatch(setSelectedDBEdition({label:GENERAL.SQL_SERVER_WEB_EDITION, 
-                                        value: GENERAL.SQL_SERVER_WEB}));
-                                }}
-                                children={GENERAL.SQL_SERVER_WEB_EDITION}
-                                className={styles.radio}
-                            />
-                            <Typography variant="Regular_14" className={styles.textEdition}>
-                                {GENERAL.SQL_SERVER_WEB_EDITION_TEXT}
-                            </Typography>
-                        </div>
-                        <div className={styles.genericStyle}>
-                            <RadioButton
                                 isChecked={dbEdition?.label === GENERAL.SQL_SERVER_ENTERPRiSE_EDITION}
                                 onChange={() => {
                                     dispatch(setSelectedDBEdition({label: GENERAL.SQL_SERVER_ENTERPRiSE_EDITION, 

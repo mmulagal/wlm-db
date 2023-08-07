@@ -25,7 +25,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const {accountId } = appContext;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
-    return `${apiHost}/wlm-db/accounts/${accountId}/api/v1`;
+    return `${apiHost}/wlmdb/accounts/${accountId}/api/v1`;
 };
 
 //Build the baseUrl based on the environment

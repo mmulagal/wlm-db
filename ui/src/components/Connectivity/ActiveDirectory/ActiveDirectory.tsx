@@ -32,6 +32,7 @@ const ActiveDirectory = () => {
 
     const selectedADDomainName = useAppSelector(state => state.mssqlForm.activeDirectory.domainName);
     const selectedADDomainAddress = useAppSelector(state => state.mssqlForm.activeDirectory.domainAddress);
+    const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
 
     const isADNotFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
 
@@ -91,7 +92,14 @@ const ActiveDirectory = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
+        } else if(!selectedVPCData) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
+
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
             return <ActionRequired error={!isADNotFilled ? true : false} />;
         } else {
@@ -110,8 +118,8 @@ const ActiveDirectory = () => {
         <div className={styles.active}>
             <AccordionCard
                 isLoading={adsLoading}
-                isDisabled={!credentialData || (credentialData && !credentialData.length)}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="13"
                 title={<div className={CommonStyles.title}>{GENERAL.ACTIVE_DIRECTORY}</div>}
