@@ -42,7 +42,7 @@ const Tags = () => {
     };
 
     const handleChange = (idx: number, prop: string, value: string) => {
-        let updatedTags = [
+        const updatedTags = [
             ...tags.map((tag: Tag) => {
                 return { key: tag.key, value: tag.value };
             })
@@ -52,10 +52,7 @@ const Tags = () => {
     };
 
     const handleDeleteTag = (idx: number) => {
-        // t es ti ng
-        const test = '12';
-        console.log('test 1');
-        let updatedTags = [...tags];
+        const updatedTags = [...tags];
         updatedTags.splice(idx, 1);
         dispatch(setTags(updatedTags));
     };
