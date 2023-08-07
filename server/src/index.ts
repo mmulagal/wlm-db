@@ -29,6 +29,7 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import initiateSecrets from './utils/secret';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -50,6 +51,8 @@ interface Params {
 interface Headers {
     [HEADERS.AUTHORIZATION]: string;
 }
+
+await initiateSecrets();
 
 const app = fastify({
     trustProxy: true,

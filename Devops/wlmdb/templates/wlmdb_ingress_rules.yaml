@@ -11,6 +11,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "80"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "80"
     nginx.ingress.kubernetes.io/limit-rps: "6"
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
