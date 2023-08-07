@@ -30,6 +30,7 @@ const FSxNSystem = () => {
     const dispatch = useDispatch();
 
     const { fsxnData, fsxnLoading } = useAppSelector(state => state.mssql.getFsxnList);
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const selectedFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNName);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedFsxnNewUserName = useAppSelector(state => state.mssqlForm.fsxN.fsxNNewUserName);
@@ -66,6 +67,13 @@ const FSxNSystem = () => {
 
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
+        }
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
             if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
@@ -86,6 +94,8 @@ const FSxNSystem = () => {
         <div className={styles.fsx}>
             <AccordionCard
                 isLoading={fsxnLoading}
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}

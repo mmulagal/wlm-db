@@ -13,7 +13,9 @@ const SecurityGroup = () => {
     const dispatch = useDispatch();
 
     // Getting selected VPC to get security groups for selected VPC
-    const selectedVPCData = useAppSelector((state) => state.mssqlForm.regionAndVpc.selectedVPC);
+    const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
     // Getting selected security group
     const selectedExistingSecurityGroup = useSelector(
@@ -29,7 +31,7 @@ const SecurityGroup = () => {
     //Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        selectedVPCData?.data?.securityGroups?.map((val:any, idx: number) => {
+        selectedVPCData?.data?.securityGroups?.map((val: any, idx: number) => {
             const sgValue = val?.id;
             const sgLabel = val?.securityGroupName || val?.name;
             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
@@ -42,10 +44,17 @@ const SecurityGroup = () => {
 
     useEffect(() => {
         dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
-    }, [dispatch, generateExistingSecurity])
+    }, [dispatch, generateExistingSecurity]);
 
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
+        }
         if (securityGroup === GENERAL.USE_AN_EXISTING_SECURITY) {
             return (
                 <div className={styles.setHeaderStyle}>
@@ -62,6 +71,8 @@ const SecurityGroup = () => {
     return (
         <div className={styles['security-group']}>
             <AccordionCard
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="4"
                 title={<div className={CommonStyles.title}>{SELECT_CONFIG.SECURITY_GROUP}</div>}

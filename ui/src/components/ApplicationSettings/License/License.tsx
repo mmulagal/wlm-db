@@ -18,11 +18,13 @@ const License = () => {
     const dispatch = useDispatch();
 
     // This is to get license included AMI data
-    const {amiData, amiLoading} = useAppSelector((state) => state.mssql.getAmiList);
+    const { amiData, amiLoading } = useAppSelector(state => state.mssql.getAmiList);
 
-    const licenseType = useAppSelector((state) => state.mssqlForm.license.selectedLicenseType);
-    const selectedLicenseId = useAppSelector((state) => state.mssqlForm.license.selectedLicenseId);
-    const selectedCustomAMI = useAppSelector((state) => state.mssqlForm.license.selectedCustomAMI);
+    const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+
+    const licenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
+    const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
+    const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
     const [licenseSelect, setLicenseSelect] = useState(licenseType);
 
     // Custom AMI list will be blank for as it is not supported in phase 1
@@ -50,13 +52,22 @@ const License = () => {
     }, [amiData]);
 
     useEffect(() => {
-        dispatch(setSelectedLicenseId(null))
+        dispatch(setSelectedLicenseId(null));
     }, [dispatch, generateAMIIdForLicense]);
-    
+
     //Set the Header text here
     const setHeader = () => {
+        if (!credentialData || (credentialData && !credentialData.length)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {'Please select any account'}{' '}
+                </Typography>
+            );
+        }
         if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
-            return <Typography variant="Regular_14">{selectedLicenseId?.value || GENERAL.LICENSE_INCLUDED_AMI}</Typography>;
+            return (
+                <Typography variant="Regular_14">{selectedLicenseId?.value || GENERAL.LICENSE_INCLUDED_AMI}</Typography>
+            );
         }
         if (licenseSelect === GENERAL.USE_CUSTOM_AMI) {
             return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
@@ -64,7 +75,10 @@ const License = () => {
     };
     return (
         <div className={styles.license}>
-            <AccordionCard isLoading={amiLoading}
+            <AccordionCard
+                isLoading={amiLoading}
+                isDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="9"
                 title={<div className={CommonStyles.title}>{GENERAL.LICENSE}</div>}

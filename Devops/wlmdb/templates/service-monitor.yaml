@@ -1,0 +1,23 @@
+{{- if .Values.global.monitoring }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    prometheus: monitoring-kube-prometheus
+    release: {{ .Values.global.promrelease | default .Values.promrelease }}  
+  name: {{ .Values.global.namespace }}-wlmdb-exporter
+  namespace: monitoring
+spec:
+  endpoints:
+  - port: http
+    path: /health
+  namespaceSelector:
+    matchNames:
+    - {{ .Values.global.namespace }}
+  selector:
+    matchExpressions:
+    - key: run
+      operator: In
+      values:
+      - wlmdb
+{{- end }}

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: wlmdb
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"    
+  name: {{ .Values.global.namespace }}-wlmdb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      run: wlmdb
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        run: wlmdb
+        vectorfilter: disabled
+      annotations:  
+{{ toYaml .Values.global.annotations | indent 10 }}          
+    spec:
+      serviceAccountName: wlmdb-secretmanager-sa
+      containers:
+      - image: {{ .Values.image.registry }}:{{ .Values.infraversion }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        name: wlmdb
+        volumeMounts:
+        - name: log
+          mountPath: /log
+        envFrom:
+        - configMapRef:
+            name: wlmdb-config
+        env:
+        readinessProbe:
+          httpGet:
+            path: /health?liveness
+            port: 8085
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health?liveness
+            port: 8085
+            scheme: HTTP
+          initialDelaySeconds: 80
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      # dnsPolicy: ClusterFirst
+      # restartPolicy: Always
+      # securityContext: {}
+      # terminationGracePeriodSeconds: 30

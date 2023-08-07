@@ -184,6 +184,7 @@ const FSxFileSystemParams = Type.Object({
 // FSx filesystem schema
 const FSxFileSystemSchema = Type.Object({
     fileSystemId: Type.String(),
+    name: Type.Optional(Type.String()),
     kmsKeyId: Type.Optional(Type.String()),
     networkInterfaceIds: Type.Optional(Type.Array(Type.String())),
     subnetIds: Type.Optional(Type.Array(Type.String())),

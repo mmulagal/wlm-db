@@ -68,6 +68,8 @@ const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
 
+export const AWS_RESOURCE_NAME_TAG = 'Name';
+
 // Kinesis
 const KINESIS_STREAM_NAME = 'audit-service-staging-stream';
 
