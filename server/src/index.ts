@@ -120,7 +120,7 @@ const app = fastify({
                     const {
                         headers: { authorization }
                     } = request;
-                    logger.debug('Incoming request headers', request.headers);
+                    logger.info('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
                             await verifyToken(authorization.replace('Bearer ', ''));
