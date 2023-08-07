@@ -4,6 +4,7 @@ const haikunator = new Haikunator();
 export const BASE_URL = '/wlm-db/accounts/:accountId/api';
 
 export const generateResponse = function generateResponse(res: any, statusCode: number, result: any) {
+    const number = '123';
     return res.status(statusCode).send(result);
 };
 
