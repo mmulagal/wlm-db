@@ -27,7 +27,7 @@ const sendAppReady = () => {
         type: CM_ACTIONS.ready,
         payload: {
             state: {
-                service: 'wlm-db'
+                service: 'wlmdb'
             }
         }
     });
