@@ -15,6 +15,7 @@ import {
     setSelectedSubnetNode1,
     setSelectedSubnetNode2
 } from '../../../store/mssql/mssqlFormSlice';
+import { Subnets } from '../../../utils/types/mssqlTypes';
 
 const AvailabilityZone = () => {
     const dispatch = useDispatch();
@@ -41,7 +42,7 @@ const AvailabilityZone = () => {
         const azData = selectedVPCData?.data?.availabilityZones;
         const zones = azData ? Object.keys(azData) : [];
         zones?.filter(key => key !== selectedZone2?.value)
-        .map((val:any, idx: number) => {
+        .map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
@@ -54,7 +55,7 @@ const AvailabilityZone = () => {
         const azData = selectedVPCData?.data?.availabilityZones;
         const zones = azData ? Object.keys(azData) : [];
         zones?.filter(key => key !== selectedZone1?.value)
-        .map((val:any, idx: number) => {
+        .map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
             options.push(option);
         });
@@ -71,7 +72,7 @@ const AvailabilityZone = () => {
         if(azData && azData.hasOwnProperty(selectedZone1?.value)){
             subnetsList = azData[selectedZone1?.value];
         }
-        subnetsList?.map((val:any, idx: number) => {
+        subnetsList?.map((val: Subnets, idx: number) => {
             const label2 = val?.id;
             const value = val?.cidrBlock;
             const option = generateOptionType(value, value, label2, false, '', val);
@@ -89,7 +90,7 @@ const AvailabilityZone = () => {
         if(azData && azData.hasOwnProperty(selectedZone2?.value)){
             subnetsList = azData[selectedZone2?.value];
         }
-        subnetsList?.map((val:any, idx: number) => {
+        subnetsList?.map((val: Subnets, idx: number) => {
             const label2 = val?.id;
             const value = val?.cidrBlock;
             const option = generateOptionType(value, value, label2, false, '', val);
