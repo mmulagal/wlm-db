@@ -37,7 +37,7 @@ const { verifyToken } = jwtOperation;
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
-const API_PREFIX_PATH = 'wlm-db/accounts/:accountId/api';
+const API_PREFIX_PATH = 'wlmdb';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -75,16 +75,16 @@ const app = fastify({
             },
             servers: [
                 {
-                    url: 'http://localhost:8085/wlm-db'
+                    url: 'http://localhost:8085/wlmdb'
                 },
                 {
-                    url: 'https://staging.api.bluexp.netapp.com/wlm-db'
+                    url: 'https://staging.api.bluexp.netapp.com/wlmdb'
                 },
                 {
-                    url: 'https://api.bluexp.netapp.com/wlm-db'
+                    url: 'https://api.bluexp.netapp.com/wlmdb'
                 },
                 {
-                    url: 'https://demo-wlm-db.api.bluexp.netapp.com/wlm-db'
+                    url: 'https://demo-wlmdb.api.bluexp.netapp.com/wlmdb'
                 }
             ],
             components: {
@@ -100,14 +100,14 @@ const app = fastify({
         }
     })
     .register(fastifySwaggerUi, {
-        routePrefix: '/wlm-db/documentation'
+        routePrefix: '/wlmdb/documentation'
     })
     .register(
         (instance, _, done) => {
             systemRoutes(instance);
             done();
         },
-        { prefix: API_PREFIX_PATH }
+        { prefix: `${API_PREFIX_PATH}` }
     )
     .register(
         (instance, _, next) => {
@@ -133,7 +133,7 @@ const app = fastify({
             credentialsRoutes(instance);
             next();
         },
-        { prefix: API_PREFIX_PATH }
+        { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
     )
     .addHook(
         'preHandler',
