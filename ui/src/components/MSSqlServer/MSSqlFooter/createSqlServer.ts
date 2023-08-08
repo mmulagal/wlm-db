@@ -11,25 +11,22 @@ import {
 import { GENERAL } from '../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../utils/types/mssqlTypes';
 
-
-const createMssqlPayload = (state:any) => {
+const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
     const licenseId = (() => {
         const licenseType = state.mssqlForm.license?.selectedLicenseType;
-        if(licenseType === GENERAL.LICENSE_INCLUDED_AMI){
+        if (licenseType === GENERAL.LICENSE_INCLUDED_AMI) {
             return state.mssqlForm.license?.selectedLicenseId?.value;
-        }
-        else {
+        } else {
             return state.mssqlForm.license?.selectedCustomAMI;
         }
     })();
 
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
-        if(encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT){
+        if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
             return state.mssqlForm.encryption?.selectedRow[0]?.name;
-        }
-        else {
+        } else {
             return state.mssqlForm.encryption?.encryptionArn;
         }
     })();
@@ -41,12 +38,11 @@ const createMssqlPayload = (state:any) => {
             fsxPassword: ''
         };
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
-        if(fsxnType === GENERAL.CREATE_NEW_FSXN){
+        if (fsxnType === GENERAL.CREATE_NEW_FSXN) {
             fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNName;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
-        }
-        else {
+        } else {
             fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.value;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
@@ -57,7 +53,7 @@ const createMssqlPayload = (state:any) => {
     const databaseSize = (() => {
         let capacity = state.mssqlForm.storageCapacity?.capacity;
         const unit = state.mssqlForm.storageCapacity?.unit?.value;
-        if(unit === 'TiB'){
+        if (unit === 'TiB') {
             capacity = 1024 * capacity;
         }
         return capacity;
@@ -66,28 +62,26 @@ const createMssqlPayload = (state:any) => {
     const fsxVolThroughput = (() => {
         const value = state.mssqlForm.throughput?.value;
         const value1 = value.split(' ');
-        if(value1.length === 2){
-            if(value1[1] === 'GBps'){
+        if (value1.length === 2) {
+            if (value1[1] === 'GBps') {
                 return value1[0] * 1000;
-            }
-            else{
+            } else {
                 return value1[0];
             }
-        }
-        else{
+        } else {
             return value;
         }
     })();
 
     const fsxIOPS = (() => {
         const type = state.mssqlForm.provisionedIOPS.provisionedType;
-        if(type === GENERAL.AUTOMATIC){
-            return 3
-        }else{
+        if (type === GENERAL.AUTOMATIC) {
+            return 3;
+        } else {
             return state.mssqlForm.provisionedIOPS?.IOPSValue;
         }
     })();
-     
+
     payload = {
         networkConfiguration: {
             vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id,
@@ -130,7 +124,7 @@ const createMssqlPayload = (state:any) => {
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
         tags: state.mssqlForm.tags
-    }
+    };
     return payload;
 };
 
@@ -191,11 +185,11 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         state.msSqlAction.fsxNNameSelected
     ) {
         payload = createMssqlPayload(state);
-        console.log('Deploy Payload',payload);
+        console.log('Deploy Payload', payload);
     } else {
         console.log('Action required');
     }
     return payload;
 };
 
-export { createMssqlPayload, handleCreateSQLServer};
+export { createMssqlPayload, handleCreateSQLServer };
