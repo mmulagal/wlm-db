@@ -33,6 +33,18 @@ const sendAppReady = () => {
     });
 };
 
+const cmNavigateTo = (pathname: string, stateParams = {}) => {
+    postCmMessage({
+        type: CM_ACTIONS.navigate,
+        payload: {
+            pathname,
+            state: {
+                ...stateParams
+            }
+        }
+    });
+};
+
 const useHandleCmMessages = (eventHandlers: any) => {
     const eventsHandlersRef = useRef(eventHandlers);
     eventsHandlersRef.current = eventHandlers;
@@ -113,4 +125,4 @@ const useInitialize = () => {
 
 };
 
-export { useInitialize };
+export { useInitialize, cmNavigateTo };

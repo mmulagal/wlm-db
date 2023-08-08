@@ -74,11 +74,25 @@ export const awsApi = createApi({
             }),
             getFsxnList: builder.query({
                 query: ({credentialId, region, vpcId}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs/${vpcId}/fsxs`})
-            })
+            }),
+            createSqlTemplate: builder.mutation({
+                query: ({credentialId, region, body}) => ({
+                    url: `credentials/${credentialId}/regions/${region}/template/create`,
+                    method: 'POST',
+                    body: body,
+                })
+            }),
+            deploySqlTemplate: builder.mutation({
+                query: ({credentialId, region, body}) => ({
+                    url: `credentials/${credentialId}/regions/${region}/template/deploy`,
+                    method: 'POST',
+                    body: body,
+                })
+            }),
         }
     }
 });
 
 export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
     useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
-    useGetFsxnListQuery } = awsApi;
+    useGetFsxnListQuery, useCreateSqlTemplateMutation,  useDeploySqlTemplateMutation } = awsApi;

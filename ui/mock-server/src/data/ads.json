@@ -11,7 +11,8 @@
             "vpcSettings": {
                 "vpcId": "vpc-7d4a2818",
                 "subnetIds": ["subnet-ba0146de", "subnet-bef46bc8"],
-                "availabilityZones": ["us-west-2a", "us-west-2b"]
+                "availabilityZones": ["us-west-2a", "us-west-2b"],
+                "securityGroupId": "sg-123"
             }
         },
         {
@@ -25,7 +26,8 @@
             "vpcSettings": {
                 "vpcId": "vpc-d4f1aab1",
                 "subnetIds": ["subnet-ba0146de", "subnet-bef46bc8"],
-                "availabilityZones": ["us-west-2a", "us-west-2b"]
+                "availabilityZones": ["us-west-2a", "us-west-2b"],
+                "securityGroupId": "sg-456"
             }
         },
         {
@@ -39,7 +41,8 @@
             "vpcSettings": {
                 "vpcId": "vpc-62720a04",
                 "subnetIds": ["subnet-ba0146de", "subnet-bef46bc8"],
-                "availabilityZones": ["us-west-2a", "us-west-2b"]
+                "availabilityZones": ["us-west-2a", "us-west-2b"],
+                "securityGroupId": "sg-789"
             }
         },
         {
@@ -53,7 +56,8 @@
             "vpcSettings": {
                 "vpcId": "vpc-ba1ed1de",
                 "subnetIds": ["subnet-ba0146de", "subnet-bef46bc8"],
-                "availabilityZones": ["us-west-2a", "us-west-2b"]
+                "availabilityZones": ["us-west-2a", "us-west-2b"],
+                "securityGroupId": "sg-123"
             }
         }
     ]

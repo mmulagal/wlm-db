@@ -39,12 +39,14 @@ const ActiveDirectory = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
-    const [versions, setVersions] = useState<{ domainName: string; dnsIpAddress: string }[]>([]);
+    const [versions, setVersions] = useState<{
+        securityGroupId: string; domainName: string; dnsIpAddress: string 
+    }[]>([]);
     const [isCreating, setIsCreating] = useState(false);
 
     const addNewOption = async (option: any) => {
         setIsCreating(true);
-        const newVer = [...versions, { domainName: option, dnsIpAddress: '' }];
+        const newVer = [...versions, { domainName: option, dnsIpAddress: '',  securityGroupId: ''}];
         setVersions(newVer);
         await delay();
         dispatch(setSelectedADDomainAddress(''));
@@ -57,7 +59,8 @@ const ActiveDirectory = () => {
     useEffect(() => {
         const verList: any[] = [];
         adsData?.directories?.map((val: any, ids: number) => {
-            const newItem = { domainName: val?.domainName, dnsIpAddress: val?.dnsIpAddress };
+            const newItem = { domainName: val?.domainName, dnsIpAddress: val?.dnsIpAddress, 
+                securityGroupId: val?.vpcSettings?.securityGroupId };
             verList.push(newItem);
         });
         setVersions(verList);
@@ -70,7 +73,8 @@ const ActiveDirectory = () => {
             const verVal = val?.domainName;
             const data = {
                 domainName: val?.domainName,
-                dnsIpAddress: (val?.dnsIpAddress || '').toString()
+                dnsIpAddress: (val?.dnsIpAddress || '').toString(),
+                securityGroupId: val?.securityGroupId
             };
             const option = generateOptionType(verVal, verVal, '', false, '', data);
             options.push(option);

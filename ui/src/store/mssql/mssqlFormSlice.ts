@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL } from '../../utils/appConstants';
-import { FSXADMIN } from '../../utils/consts';
+import { AWS_MANAGED_AD, FSXADMIN } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -47,6 +47,7 @@ const initialState: any = {
         selectedKeyPair: null
     },
     activeDirectory: {
+        scenarioType: AWS_MANAGED_AD,
         domainName: null,
         domainAddress: '',
         userName: '',

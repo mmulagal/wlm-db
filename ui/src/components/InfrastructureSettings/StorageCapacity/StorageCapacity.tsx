@@ -29,6 +29,7 @@ const StorageCapacity = () => {
 
     useEffect(() => {
         dispatch(setStorageUnit(generateUnitsForStorage[1]));
+        dispatch(setStorageCapacity(input));
     }, [generateUnitsForStorage]);
     //Set the Header text here
     const setHeader = () => {
