@@ -4,8 +4,6 @@
 # Deployment configs
 namespace: "wlmdb"
 
-cloudManagerDomain: staging.cloudmanager.netapp.com
-
 # image (both init and app)
 image:
   registry: "718273455463.dkr.ecr.us-east-1.amazonaws.com/wlmdb"
@@ -29,7 +27,7 @@ resourcesaudit:
     cpu: "100m"
     memory: "100Mi"
 
-infraversion: development-7eab9c8-243
+infraversion: development-9c9fe08-19
 UseExternalIP: true
 
 # monitoring

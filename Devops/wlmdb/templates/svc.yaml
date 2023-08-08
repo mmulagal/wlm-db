@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     run: wlmdb
-  name: {{ .Values.global.namespace }}-wlmdb
+  name: wlmdb
 spec:
   ports:
   - name: http

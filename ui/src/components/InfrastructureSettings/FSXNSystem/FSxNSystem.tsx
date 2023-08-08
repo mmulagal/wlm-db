@@ -38,6 +38,7 @@ const FSxNSystem = () => {
     const selectedFsxnPassword = useAppSelector(state => state.mssqlForm.fsxN.fsxNPassword);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+    const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
@@ -73,7 +74,14 @@ const FSxNSystem = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
+        } else if(!selectedVPCData) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
+
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
             if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
@@ -94,8 +102,8 @@ const FSxNSystem = () => {
         <div className={styles.fsx}>
             <AccordionCard
                 isLoading={fsxnLoading}
-                isDisabled={!credentialData || (credentialData && !credentialData.length)}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
+                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}

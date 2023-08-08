@@ -30,6 +30,7 @@ import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
 import deploymentRoutes from './routes/deployment';
+import initiateSecrets from './utils/secret';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -38,7 +39,7 @@ const { verifyToken } = jwtOperation;
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
-const API_PREFIX_PATH = 'wlm-db/accounts/:accountId/api';
+const API_PREFIX_PATH = 'wlmdb';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -51,6 +52,8 @@ interface Params {
 interface Headers {
     [HEADERS.AUTHORIZATION]: string;
 }
+
+await initiateSecrets();
 
 const app = fastify({
     trustProxy: true,
@@ -76,16 +79,16 @@ const app = fastify({
             },
             servers: [
                 {
-                    url: 'http://localhost:8085/wlm-db'
+                    url: 'http://localhost:8085/wlmdb'
                 },
                 {
-                    url: 'https://staging.api.bluexp.netapp.com/wlm-db'
+                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb'
                 },
                 {
-                    url: 'https://api.bluexp.netapp.com/wlm-db'
+                    url: 'https://api.workloads.bluexp.netapp.com/wlmdb'
                 },
                 {
-                    url: 'https://demo-wlm-db.api.bluexp.netapp.com/wlm-db'
+                    url: 'https://demo-wlmdb.api.workloads.bluexp.netapp.com/wlmdb'
                 }
             ],
             components: {
@@ -101,14 +104,14 @@ const app = fastify({
         }
     })
     .register(fastifySwaggerUi, {
-        routePrefix: '/wlm-db/documentation'
+        routePrefix: '/wlmdb/documentation'
     })
     .register(
         (instance, _, done) => {
             systemRoutes(instance);
             done();
         },
-        { prefix: API_PREFIX_PATH }
+        { prefix: `${API_PREFIX_PATH}` }
     )
     .register(
         (instance, _, next) => {
@@ -118,11 +121,12 @@ const app = fastify({
                     const {
                         headers: { authorization }
                     } = request;
-
+                    logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
                             await verifyToken(authorization.replace('Bearer ', ''));
                         } catch (err) {
+                            logger.error('Token verification error', err);
                             reply.unauthorized();
                         }
                     } else {
@@ -135,7 +139,7 @@ const app = fastify({
             deploymentRoutes(instance);
             next();
         },
-        { prefix: API_PREFIX_PATH }
+        { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
     )
     .addHook(
         'preHandler',

@@ -15,8 +15,8 @@ const AUDIT_GROUP = 'AUDIT_GROUP';
 const WORKSPACE_ID = 'WORKSPACE_ID';
 
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
-export const FSX_FILESYSTEM_TYPE = 'ONTAP';
-export const FSX_STORAGE_TYPE = 'SSD';
+const FSX_FILESYSTEM_TYPE = 'ONTAP';
+const FSX_STORAGE_TYPE = 'SSD';
 
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
@@ -68,7 +68,7 @@ const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
 
-export const AWS_RESOURCE_NAME_TAG = 'Name';
+const AWS_RESOURCE_NAME_TAG = 'Name';
 
 // Kinesis
 const KINESIS_STREAM_NAME = 'audit-service-staging-stream';
@@ -114,8 +114,6 @@ const CARGO = 'cargo';
 
 const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
 
-const KEY_VAULT_URL: string = process.env.KEY_VAULT_URL as string;
-
 const SECRETS: Record<string, string | undefined> = {
     CLIENT_ID: process.env.CLIENT_ID
         ? process.env.CLIENT_ID
@@ -126,24 +124,12 @@ const SECRETS: Record<string, string | undefined> = {
         ? process.env.CLIENT_SECRET
         : config.has('service-token.client_secret')
         ? config.get('service-token.client_secret')
-        : undefined,
-    AUDIT_ACCESS_KEY: process.env.AUDIT_ACCESS_KEY
-        ? process.env.AUDIT_ACCESS_KEY
-        : config.has('audit.access-key')
-        ? config.get('audit.access-key')
-        : undefined,
-    AUDIT_SECRET_KEY: process.env.AUDIT_SECRET_KEY
-        ? process.env.AUDIT_SECRET_KEY
-        : config.has('audit.secret-key')
-        ? config.get('audit.secret-key')
         : undefined
 };
 
-const SECRETS_KEY_VAULT_KEYS: Record<string, string> = {
-    CLIENT_ID: 'WLM-DB-CLIENT-ID',
-    CLIENT_SECRET: 'WLM-DB-CLIENT-SECRET',
-    AUDIT_ACCESS_KEY: 'WLM-DB-AUDIT-ACCESS-KEY',
-    AUDIT_SECRET_KEY: 'WLM-DB-AUDIT-SECRET-KEY'
+const SECRETS_MANAGER_KEYS: Record<string, string> = {
+    CLIENT_ID: 'CLIENT_ID',
+    CLIENT_SECRET: 'CLIENT_SECRET'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
@@ -486,9 +472,7 @@ export {
     SQL_AMI_NAMES,
     SECRET_WORDS,
     DEMO_ACCOUNT_ID,
-    SECRETS_KEY_VAULT_KEYS,
     SECRETS,
-    KEY_VAULT_URL,
     AUTH0_AUDIENCE,
     CARGO,
     AWSServiceNames,
@@ -534,5 +518,9 @@ export {
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     DISABLE_ROLLBACK,
-    MASTER_STACK_TIMEOUT_MINUTES
+    MASTER_STACK_TIMEOUT_MINUTES,
+    SECRETS_MANAGER_KEYS,
+    AWS_RESOURCE_NAME_TAG,
+    FSX_FILESYSTEM_TYPE,
+    FSX_STORAGE_TYPE
 };

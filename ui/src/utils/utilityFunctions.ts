@@ -2,7 +2,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
-import { KmsKeys } from './types/mssqlTypes';
+import { AvailabilityZonesObj, KmsKeys, Subnets } from './types/mssqlTypes';
 
 // Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
@@ -85,4 +85,18 @@ export const formatKmsData = (data: {keys?: KmsKeys[]}) => {
         newData.push(val);
     })
     return newData;
+};
+
+
+export const formatVpcSubnetsData = (data: {subnets: Subnets[]}) => {
+    let azObj:AvailabilityZonesObj = {};
+    data?.subnets?.map((val: Subnets) => {
+        const azName = val?.availabilityZone;
+        if(azName && azObj.hasOwnProperty(azName)){
+            azObj[azName].push(val);
+        } else if(azName && !azObj.hasOwnProperty(azName)){
+            azObj[azName] = [val];
+        }
+    })
+    return azObj;
 };
