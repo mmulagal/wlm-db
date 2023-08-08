@@ -8,11 +8,6 @@
             "eslint",
             "prettier --check",
             "prettier --write"
-        ],
-        "./ui/src/**/*.{ts,tsx}": [
-            "eslint",
-            "prettier --check",
-            "prettier --write"
         ]
     },
     "repository": {
