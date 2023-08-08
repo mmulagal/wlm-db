@@ -29,6 +29,7 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 
 const logger = getLogger();
@@ -135,6 +136,7 @@ const app = fastify({
             );
             awsRoutes(instance);
             credentialsRoutes(instance);
+            deploymentRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }

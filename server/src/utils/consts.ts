@@ -3,29 +3,29 @@ import config from 'config';
 import { join } from 'path';
 
 //General
-export const APP_NAME = 'Workload Manager for DB';
-export const API_TITLE = 'Workload Manager for DB API';
+const APP_NAME = 'Workload Manager for DB';
+const API_TITLE = 'Workload Manager for DB API';
 
 // local storage keys
-export const USER_TOKEN = 'USER_TOKEN';
-export const REQUEST_ID = 'REQUEST_ID';
-export const ACCOUNT_ID = 'ACCOUNT_ID';
-export const AGENT_ID = 'AGENT_ID';
-export const AUDIT_GROUP = 'AUDIT_GROUP';
-export const WORKSPACE_ID = 'WORKSPACE_ID';
+const USER_TOKEN = 'USER_TOKEN';
+const REQUEST_ID = 'REQUEST_ID';
+const ACCOUNT_ID = 'ACCOUNT_ID';
+const AGENT_ID = 'AGENT_ID';
+const AUDIT_GROUP = 'AUDIT_GROUP';
+const WORKSPACE_ID = 'WORKSPACE_ID';
 
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
-export const FSX_FILESYSTEM_TYPE = 'ONTAP';
-export const FSX_STORAGE_TYPE = 'SSD';
+const FSX_FILESYSTEM_TYPE = 'ONTAP';
+const FSX_STORAGE_TYPE = 'SSD';
 
 // version
-export const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
+const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
 
-export const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
+const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
     ? `https://${process.env.AUTH0_ENDPOINT}`
     : config.get<string>('urls.auth0');
 
-export enum HEADERS {
+enum HEADERS {
     AGENT_ID = 'x-agent-id',
     AUTHORIZATION = 'authorization',
     REQUEST_ID = 'x-request-id',
@@ -42,76 +42,79 @@ export enum HEADERS {
     SIMULATOR = 'x-simulator'
 }
 
-export const API_PATH_HEALTH: string = '/health';
+const API_PATH_HEALTH: string = '/health';
 
-export const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
+const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
     ? config.get<string>('urls.local-connector')
     : config.get<string>('urls.cloud-manager');
 
-export const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
+const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
-// Default values used in test routines.
-export const DEFAULT_AWS_REGION = 'us-east-1';
+// Audit
+const DEFAULT_AWS_REGION = 'us-east-1';
 
-export const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
-export const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
-export const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
-export const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
+const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 
-export const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
+const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
+const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
+const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
+const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
 
-export const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
+const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
-export const RESOURCE_CLASS = 'STORAGE_SERVICES';
+const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
-export const AWS_RESOURCE_NAME_TAG = 'Name';
+const RESOURCE_CLASS = 'STORAGE_SERVICES';
+
+const AWS_RESOURCE_NAME_TAG = 'Name';
 
 // Kinesis
-export const KINESIS_STREAM_NAME = 'audit-service-staging-stream';
+const KINESIS_STREAM_NAME = 'audit-service-staging-stream';
 
-export enum CredentialsType {
+enum CredentialsType {
     AWS = 'aws_assume_role',
     AZURE = 'azure_service_principal'
 }
 
-export enum CloudProviders {
+enum CloudProviders {
     AWS = 'AWS',
     AZURE = 'AZURE',
     GCP = 'GCP'
 }
 
-export enum RouteTags {
+enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
-    SYSTEM = 'System'
+    SYSTEM = 'System',
+    DEPLOYMENT = 'Deployment'
 }
 
-export enum HttpErrorCodes {
+enum HttpErrorCodes {
     INTERNAL_SERVER_ERROR = '500',
     NOT_FOUND = '404',
     UNAUTHORIZED = '401',
     FORBIDDEN = '403'
 }
 
-export const VPC_COUNT_QUOTANAME = 'VPCs per Region';
+const VPC_COUNT_QUOTANAME = 'VPCs per Region';
 
-export const CF_STACK_COUNT_QUOTANAME = 'Stack count';
+const CF_STACK_COUNT_QUOTANAME = 'Stack count';
 
 // Carries number of stacks that will be deployed.
-export const STACKS_DEPLOYED = 5;
+const STACKS_DEPLOYED = 5;
 
-export enum AWSServiceNames {
+enum AWSServiceNames {
     VPC = 'vpc',
     CLOUDFORMATION = 'cloudformation'
 }
 
-export const CARGO = 'cargo';
+const CARGO = 'cargo';
 
-export const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
+const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
 
-export const SECRETS: Record<string, string | undefined> = {
+const SECRETS: Record<string, string | undefined> = {
     CLIENT_ID: process.env.CLIENT_ID
         ? process.env.CLIENT_ID
         : config.has('service-token.client_id')
@@ -124,14 +127,14 @@ export const SECRETS: Record<string, string | undefined> = {
         : undefined
 };
 
-export const SECRETS_MANAGER_KEYS: Record<string, string> = {
+const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
     CLIENT_SECRET: 'CLIENT_SECRET'
 };
 
-export const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
+const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
 
-export const SECRET_WORDS = [
+const SECRET_WORDS = [
     'credentials',
     'passphrase',
     'certificateAuthority',
@@ -161,7 +164,7 @@ export const SECRET_WORDS = [
     'username'
 ];
 
-export const SQL_AMI_NAMES = [
+const SQL_AMI_NAMES = [
     'Windows_Server-2016-English-Full-SQL_2017_Enterprise*',
     'Windows_Server-2016-English-Full-SQL_2019_Standard*',
     'Windows_Server-2019-English-Full-SQL_2019_Enterprise*',
@@ -184,31 +187,28 @@ export const SQL_AMI_NAMES = [
     'Windows_Server-2016-English-Full-SQL_2019_Enterprise*'
 ];
 
-export enum AWSQueryFields {
+enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
 }
 
-export const SECRETS_MANAGER = 'secretsmanager';
-export const SECRECTS_MANAGER_ACTION_NAMES = [
+const SECRETS_MANAGER = 'secretsmanager';
+const SECRECTS_MANAGER_ACTION_NAMES = [
     'GetSecretValue',
     'CreateSecret',
-    'GetRandomPassword',
     'DeleteSecret',
-    'ListSecretVersionIds',
     'TagResource',
     'UntagResource',
-    'PutResourcePolicy',
     'DeleteResourcePolicy',
     'GetSecretValue',
     'ListSecrets'
 ].map(action => `${SECRETS_MANAGER}:${action}`);
 
-export const KMS = 'kms';
-export const KMS_ACTION_NAMES = ['ListKeys', 'ListAliases'].map(action => `${KMS}:${action}`);
+const KMS = 'kms';
+const KMS_ACTION_NAMES = ['ListKeys', 'ListAliases'].map(action => `${KMS}:${action}`);
 
-export const EC2 = 'ec2';
-export const EC2_ACTION_NAMES = [
+const EC2 = 'ec2';
+const EC2_ACTION_NAMES = [
     'CreateVpc',
     'AssignPrivateIpAddresses',
     'RunInstances',
@@ -270,9 +270,8 @@ export const EC2_ACTION_NAMES = [
     'Get*'
 ].map(action => `${EC2}:${action}`);
 
-export const CLOUDFORMATION = 'cloudformation';
-export const CLOUDFORMATION_ACTION_NAMES = [
-    'cloudformation',
+const CLOUDFORMATION = 'cloudformation';
+const CLOUDFORMATION_ACTION_NAMES = [
     'GetTemplateSummary',
     'DescribeStack*',
     'Get*',
@@ -287,22 +286,20 @@ export const CLOUDFORMATION_ACTION_NAMES = [
     'CreateStack'
 ].map(action => `${CLOUDFORMATION}:${action}`);
 
-export const IAM = 'iam';
-export const IAM_ACTION_NAMES = [
+const IAM = 'iam';
+const IAM_ACTION_NAMES = [
     'CreateInstanceProfile',
-    'DeleteInstanceProfile	',
+    'DeleteInstanceProfile',
     'RemoveRoleFromInstanceProfile',
     'AddRoleToInstanceProfile',
     'GetRole',
-    'GetRolePolicy	',
     'GetUser',
     'GetPolicyVersion',
-    'GetPolicy',
-    'List*'
+    'GetPolicy'
 ].map(action => `${IAM}:${action}`);
 
-export const SNS = 'sns';
-export const SNS_ACTION_NAMES = [
+const SNS = 'sns';
+const SNS_ACTION_NAMES = [
     'ListSubscriptionsByTopic',
     'Publish',
     'CreateTopic',
@@ -311,16 +308,13 @@ export const SNS_ACTION_NAMES = [
     'Unsubscribe'
 ].map(action => `${SNS}:${action}`);
 
-export const RESOURCE_GROUPS = 'resource-groups';
-export const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'DeleteGroup', 'Get*'].map(
+const RESOURCE_GROUPS = 'resource-groups';
+const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'DeleteGroup', 'Get*'].map(
     action => `${RESOURCE_GROUPS}:${action}`
 );
 
-export const S3 = 's3';
-export const S3_ACTION_NAMES = ['CreateBucket', 'PutBucketVersioning', 'DeleteBucket'].map(action => `${S3}:${action}`);
-
-export const FSX = 'fsx';
-export const FSX_ACTION_NAMES = [
+const FSX = 'fsx';
+const FSX_ACTION_NAMES = [
     'CreateFileSystem',
     'DeleteFileSystem',
     'ListTagsForResource',
@@ -329,12 +323,12 @@ export const FSX_ACTION_NAMES = [
     'DescribeFileSystems'
 ].map(action => `${FSX}:${action}`);
 
-export const SERVICE_QUOTAS = 'servicequotas';
-export const SERVICE_QUOTAS_ACTION_NAMES = ['GetServiceQuota', 'ListServiceQuotas'].map(
+const SERVICE_QUOTAS = 'servicequotas';
+const SERVICE_QUOTAS_ACTION_NAMES = ['GetServiceQuota', 'ListServiceQuotas'].map(
     action => `${SERVICE_QUOTAS}:${action}`
 );
 
-export const AWS_RESOURCES_ACTION_MAP = {
+const AWS_RESOURCES_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
     [KMS]: KMS_ACTION_NAMES,
     [EC2]: EC2_ACTION_NAMES,
@@ -342,13 +336,12 @@ export const AWS_RESOURCES_ACTION_MAP = {
     [IAM]: IAM_ACTION_NAMES,
     [SNS]: SNS_ACTION_NAMES,
     [RESOURCE_GROUPS]: RESOURCE_GROUPS_ACTION_NAMES,
-    [S3]: S3_ACTION_NAMES,
     [FSX]: FSX_ACTION_NAMES,
     [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
 };
 // List of regions having "Amazon FSx for NetApp ONTAP" service.
 // List taken from https://www.aws-services.info/fsx-ontap.html
-export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
+const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     // "Region Code"    "Region Name"
     // -------------    -------------
     ['af-south-1', 'Africa (Cape Town)'],
@@ -381,7 +374,7 @@ export const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['us-west-2', 'US West (Oregon)']
 ]);
 
-export const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
+const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
     '.nano',
     '.micro',
     '.small',
@@ -396,4 +389,143 @@ export const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
     'Im4gn'
 ];
 
-export const WLMDB = 'wlmdb';
+const WLMDB = 'wlmdb';
+
+const BUCKET_NAME = 'wlmbucket';
+const BUCKET_PREFIX = 'templates';
+const EC2_ROLE_NAME = 'Ec2RoleName';
+const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
+const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
+const ASSETS_REGION_CODE = 's3.ap-southeast-1';
+const CLOUD_FORMATION_BUCKET_OWNER_KEY = 'wlm-master.yaml';
+const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
+const MASTER_TEMPLATE_URL = 'https://wlmbucket.s3.ap-southeast-1.amazonaws.com/templates/wlm-master.yaml';
+const DISABLE_ROLLBACK = false;
+const MASTER_STACK_TIMEOUT_MINUTES = 120;
+
+const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
+    vpcId: 'VPCID',
+    vpcCidr: 'VPCCIDR',
+    vpcName: 'VPCName',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id',
+
+    adScenarioType: 'ADScenarioType',
+    domainUsername: 'DomainAdminUser',
+    domainDnsname: 'DomainDNSName',
+    dnsIpaddress: 'DNSIpAddresses',
+    securityGroupId: 'DomainMemberSGID',
+
+    fsxFileSystemId: 'FSxFileSystemId',
+    databaseSize: 'FSxDataLunSize',
+    fsxVolThroughput: 'FSxVolumeThroughputCapacity',
+    fsxIOPS: 'FSxDiskIops',
+    ontapSgGroupId: 'ONTAPSecurityGroupID',
+    encryptionKey: 'FileSystemEncryptionKeyId',
+
+    sqlAmiId: 'SQLAMIID',
+    serviceAccountName: 'SQLServiceAccountName',
+    sqlFciName: 'SqlFSxFCIName',
+
+    workloadInstanceType: 'WorkloadInstanceType',
+    keyPairName: 'KeyPairName'
+};
+
+const WLM_ASSETS: Record<string, string> = {
+    AssetsBucketName: BUCKET_NAME,
+    AssetsS3KeyPrefix: BUCKET_PREFIX,
+    MSSQLMediaBucketName: MSSQL_MEDIA_BUCKET_NAME,
+    MSSQLMediaPathKey: MSSQL_MEDIA_PATH_KEY,
+    AssetsS3RegionCode: ASSETS_REGION_CODE
+};
+
+// Template error messages
+const MISSING_PERMISSIONS = (permissions: Array<string>) =>
+    `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
+
+const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+
+const CAPABILITY_IAM = 'CAPABILITY_IAM';
+const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
+
+export {
+    WLMDB,
+    FSX_SUPPORTED_REGIONS,
+    AWS_RESOURCES_ACTION_MAP,
+    SERVICE_QUOTAS_ACTION_NAMES,
+    SERVICE_QUOTAS,
+    FSX_ACTION_NAMES,
+    FSX,
+    RESOURCE_GROUPS_ACTION_NAMES,
+    SNS_ACTION_NAMES,
+    SNS,
+    IAM_ACTION_NAMES,
+    IAM,
+    CLOUDFORMATION_ACTION_NAMES,
+    CLOUDFORMATION,
+    EC2_ACTION_NAMES,
+    EC2,
+    KMS_ACTION_NAMES,
+    KMS,
+    SECRECTS_MANAGER_ACTION_NAMES,
+    SECRETS_MANAGER,
+    AWSQueryFields,
+    SQL_AMI_NAMES,
+    SECRET_WORDS,
+    DEMO_ACCOUNT_ID,
+    SECRETS,
+    AUTH0_AUDIENCE,
+    CARGO,
+    AWSServiceNames,
+    STACKS_DEPLOYED,
+    CF_STACK_COUNT_QUOTANAME,
+    VPC_COUNT_QUOTANAME,
+    HttpErrorCodes,
+    RouteTags,
+    CloudProviders,
+    CredentialsType,
+    KINESIS_STREAM_NAME,
+    RESOURCE_CLASS,
+    CLOUD_MANAGER_GET_CVO_WE_PREFIX,
+    CREDENTIALS_ENDPOINT,
+    SIGNOZ_ENDPOINT,
+    AGENTS_MANAGEMENT_ENDPOINT,
+    TENANCY_ENDPOINT,
+    CLOUD_MANAGER_ENDPOINT,
+    DEFAULT_AWS_CREDENTIALS_TYPE,
+    DEFAULT_AWS_REGION,
+    CLOUD_MANAGER_SERVER_ADDRESS,
+    CONNECTOR_ENDPOINT,
+    API_PATH_HEALTH,
+    HEADERS,
+    AUTH0_SERVER_ADDRESS,
+    VERSION,
+    USER_TOKEN,
+    REQUEST_ID,
+    ACCOUNT_ID,
+    AGENT_ID,
+    AUDIT_GROUP,
+    WORKSPACE_ID,
+    API_TITLE,
+    APP_NAME,
+    BUCKET_NAME,
+    CLOUD_FORMATION_BUCKET_OWNER_KEY,
+    CLOUD_FORMATION_STACK_URL,
+    EC2_INSTANCE_TYPE_EXCLUDE_LIST,
+    TEMPLATE_CONFIGURATION_MAPPING,
+    WLM_ASSETS,
+    MASTER_TEMPLATE_URL,
+    EC2_ROLE_NAME,
+    MISSING_PERMISSIONS,
+    CF_QUOTA_REACHED,
+    DISABLE_ROLLBACK,
+    MASTER_STACK_TIMEOUT_MINUTES,
+    SECRETS_MANAGER_KEYS,
+    AWS_RESOURCE_NAME_TAG,
+    FSX_FILESYSTEM_TYPE,
+    FSX_STORAGE_TYPE,
+    CAPABILITY_IAM,
+    S3_BUCKET_SIGNED_URL_EXPIRTY
+};

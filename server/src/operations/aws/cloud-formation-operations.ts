@@ -11,4 +11,5 @@ async function currentCfStacksCount(credentialsId: string, region: string) {
 
     return { currentStacksCount: currentStacksCount };
 }
+
 export { currentCfStacksCount };

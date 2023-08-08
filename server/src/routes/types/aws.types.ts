@@ -124,7 +124,8 @@ const AdsResponse = Type.Object({
                 Type.Object({
                     vpcId: Type.Optional(Type.String()),
                     subnetIds: Type.Optional(Type.Array(Type.String())),
-                    availabilityZones: Type.Optional(Type.Array(Type.String()))
+                    availabilityZones: Type.Optional(Type.Array(Type.String())),
+                    securityGroupId: Type.Optional(Type.String())
                 })
             )
         })

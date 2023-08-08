@@ -1,8 +1,22 @@
-import { SecretsManagerClient, CreateSecretCommand } from '@aws-sdk/client-secrets-manager';
+import { SecretsManagerClient, CreateSecretCommand, PutResourcePolicyCommand } from '@aws-sdk/client-secrets-manager';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
+
+const SECRETS_POLICY = (rolearn: string) => `{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "${rolearn}"
+            },
+            "Action": ["secretsmanager:GetSecretValue"],
+            "Resource": "*"
+        }
+    ]
+}`;
 
 async function getSecretsManagerClient(credentialsId: string, region: string) {
     logger.debug('Getting SecretsManager client:', { credentialsId, region });
@@ -14,21 +28,38 @@ async function getSecretsManagerClient(credentialsId: string, region: string) {
     return new SecretsManagerClient({ region: region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
-async function createSecret(
-    secretManagerClient: SecretsManagerClient,
-    secretName: string,
-    username: string,
-    password: string
-) {
-    logger.info('Create Secrets Manager String');
-
-    const secretString = { username: username, password: password };
-    const resp = await secretManagerClient.send(
-        new CreateSecretCommand({ Name: secretName, SecretString: JSON.stringify(secretString) })
+async function putResourcePolicy(credentialsId: string, region: string, secretId: string, roleArn: string) {
+    logger.info(
+        `Create Secrets Manager resource policy for ${secretId} in region ${region} with credentials ${credentialsId}.`
     );
-    logger.debug('Create Secrets Manager response', resp);
-
+    const secretsManagerClient = await getSecretsManagerClient(credentialsId, region);
+    const resp = await secretsManagerClient.send(
+        new PutResourcePolicyCommand({
+            SecretId: secretId,
+            ResourcePolicy: SECRETS_POLICY(roleArn)
+        })
+    );
+    logger.debug('Create Secrets Manager Policy response', resp);
     return resp;
 }
 
-export { getSecretsManagerClient, createSecret };
+async function createSecret(
+    credentialsId: string,
+    region: string,
+    secretName: string,
+    username: string,
+    password: string,
+    roleArn: string
+) {
+    logger.info('Create Secrets Manager String');
+    const secretsManagerClient = await getSecretsManagerClient(credentialsId, region);
+    const secretString = { username: username, password: password };
+    const resp = await secretsManagerClient.send(
+        new CreateSecretCommand({ Name: secretName, SecretString: JSON.stringify(secretString) })
+    );
+    logger.debug('Create Secrets Manager response', resp);
+    await putResourcePolicy(credentialsId, region, resp.ARN!, roleArn);
+    return resp;
+}
+
+export { getSecretsManagerClient, createSecret, putResourcePolicy };
