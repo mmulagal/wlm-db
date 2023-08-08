@@ -15,7 +15,7 @@ const baseRequest = {
 // Create cloud formation template for user deployment Schema
 const CreateCloudFormationTemplateSchema = {
     ...baseRequest,
-    description: 'Create Cloud formation template in a region for existing vpc',
+    description: 'Create Cloud Formation template in a region for existing vpc',
     body: CloudFormationTemplateRequestBody,
     response: {
         200: CloudFormationTemplateResponse
@@ -25,7 +25,7 @@ const CreateCloudFormationTemplateSchema = {
 // Create cloud formation template for user deployment Schema
 const DeployTemplateSchema = {
     ...baseRequest,
-    description: 'Deploy cloud formation template to provision SQL FCI',
+    description: 'Deploy Cloud Formation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
     response: {
         200: DeployTemplateResponse

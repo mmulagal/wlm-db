@@ -10,7 +10,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
 
     server
         .post(
-            `${API_PREFIX_PATH}/template/create`,
+            `${API_PREFIX_PATH}/cloudformation/url`,
             { schema: CreateCloudFormationTemplateSchema },
             async (request, reply) => {
                 const {
@@ -35,7 +35,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .post(`${API_PREFIX_PATH}/template/deploy`, { schema: DeployTemplateSchema }, async (request, reply) => {
+        .post(`${API_PREFIX_PATH}/cloudformation/stack`, { schema: DeployTemplateSchema }, async (request, reply) => {
             const {
                 params: { credentialsId, region },
                 body: {

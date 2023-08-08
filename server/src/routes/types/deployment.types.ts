@@ -31,7 +31,7 @@ const FSXConfiguration = Type.Object({
     fsxPassword: Type.String(),
     databaseSize: Type.Number(),
     ontapSgGroupId: Type.String(),
-    fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1, 2] }),
+    fsxVolThroughput: Type.Number({ enum: [128, 256, 512, 1024, 2048, 3072, 4096] }),
     fsxIOPS: Type.Number(),
     encryptionKey: Type.Optional(Type.String())
 });

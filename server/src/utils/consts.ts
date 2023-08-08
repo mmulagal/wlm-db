@@ -447,6 +447,10 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 
+const CAPABILITY_IAM = 'CAPABILITY_IAM';
+const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
+const CLOUD_FORMATION_STACK_TIMEOUT = 120;
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -522,5 +526,8 @@ export {
     SECRETS_MANAGER_KEYS,
     AWS_RESOURCE_NAME_TAG,
     FSX_FILESYSTEM_TYPE,
-    FSX_STORAGE_TYPE
+    FSX_STORAGE_TYPE,
+    CAPABILITY_IAM,
+    S3_BUCKET_SIGNED_URL_EXPIRTY,
+    CLOUD_FORMATION_STACK_TIMEOUT
 };

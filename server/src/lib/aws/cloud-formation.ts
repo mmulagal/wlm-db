@@ -7,6 +7,7 @@ import {
     Parameter
 } from '@aws-sdk/client-cloudformation';
 import { getCredentialDetails } from '../cloud-manager/credentials';
+import { CAPABILITY_IAM, CLOUD_FORMATION_STACK_TIMEOUT } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -38,7 +39,7 @@ async function createStack(
     templateUrl: string,
     templateParams: Parameter[],
     disableRollback: boolean = true,
-    timeoutInMinutes: number = 120,
+    timeoutInMinutes: number = CLOUD_FORMATION_STACK_TIMEOUT,
     topicArn: string = ''
 ) {
     logger.info(
@@ -50,7 +51,7 @@ async function createStack(
         TemplateURL: templateUrl,
         Parameters: templateParams,
         DisableRollback: disableRollback,
-        Capabilities: ['CAPABILITY_IAM'],
+        Capabilities: [CAPABILITY_IAM],
         TimeoutInMinutes: timeoutInMinutes,
         NotificationARNs: topicArn ? [topicArn] : []
     };
