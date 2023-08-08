@@ -1,6 +1,9 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { createCloudFormationTemplateForUserDeployment, deploySqlTemplate } from '../operations/deployment-operations';
+import {
+    createCloudFormationTemplateForUserDeployment,
+    deployCloudFormationTemplate
+} from '../operations/deployment-operations';
 import { CreateCloudFormationTemplateSchema, DeployTemplateSchema } from './schemas/deployment-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
@@ -47,7 +50,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     topicArn
                 }
             } = request;
-            const response = await deploySqlTemplate(
+            const response = await deployCloudFormationTemplate(
                 credentialsId,
                 region,
                 networkConfiguration,

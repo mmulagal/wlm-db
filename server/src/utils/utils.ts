@@ -93,9 +93,9 @@ function generateFsxParams(FSxDataLunSize: number) {
         SQLigroupname: `${prefix}_sqligroup_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
         NodeNetBIOSNames: [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`],
-        DomainAdminSecretName: `${prefix}-DOMAIN-${suffix}`,
-        FSxAdministratorPasswordSecret: `${prefix}-FSX-${suffix}`,
-        SQLServiceAccountSecret: `${prefix}-SQL-${suffix}`,
+        DomainAdminSecretName: `${prefix}-domain-${suffix}`,
+        FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
+        SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
         FSxStorageCapacity
     };
 }

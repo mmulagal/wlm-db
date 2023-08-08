@@ -104,7 +104,7 @@ async function createCloudFormationTemplateForUserDeployment(
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
-async function deploySqlTemplate(
+async function deployCloudFormationTemplate(
     credentialsId: string,
     region: string,
     networkConfiguration: CFNetworkConfigurationType,
@@ -167,4 +167,4 @@ async function deploySqlTemplate(
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
-export { createCloudFormationTemplateForUserDeployment, deploySqlTemplate };
+export { createCloudFormationTemplateForUserDeployment, deployCloudFormationTemplate };
