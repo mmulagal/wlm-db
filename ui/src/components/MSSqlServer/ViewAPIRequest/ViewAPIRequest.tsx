@@ -1,3 +1,4 @@
+import { Typography } from '@netapp/design-system';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -15,7 +16,9 @@ const ViewAPIRequest = () => {
             <div className={styles['dialog-body']}>
                 <div className={styles['code-box']}>
                     <div className={styles['code']}>
-                        <pre>{data}</pre>
+                        <pre>
+                            <Typography variant="Regular_14">{data}</Typography>
+                        </pre>
                     </div>
                     <div className={styles['copy']}>
                         <Popover
