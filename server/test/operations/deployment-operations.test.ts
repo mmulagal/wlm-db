@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import {
     createCloudFormationTemplateForUserDeployment,
-    deploySqlTemplate
+    deployCloudFormationTemplate
 } from '../../src/operations/deployment-operations';
 
 import '../simulator/scopes/aws/iam-scope';
@@ -34,7 +34,7 @@ describe('Cloud formation operations', () => {
     });
     it('Deploys cloud formation template - missing permissions', async () => {
         try {
-            await deploySqlTemplate(
+            await deployCloudFormationTemplate(
                 credentialsid,
                 DEFAULT_AWS_REGION,
                 NETWORKING_CONFIGURATION,
