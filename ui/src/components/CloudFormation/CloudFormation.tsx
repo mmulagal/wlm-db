@@ -6,6 +6,7 @@ import { createMssqlPayload } from "../MSSqlServer/MSSqlFooter/createSqlServer";
 import { useCreateSqlTemplateMutation } from "../../utils/apiService";
 import { useDispatch } from "react-redux";
 import { setIsLoading } from "../../store/mssql/msSqlActionSlice";
+import { addNotification } from "../../store/notificationSlice";
 
 const CloudFormation = () => {
   const dispatch = useDispatch();
@@ -24,15 +25,22 @@ const CloudFormation = () => {
         .then((data:any) => {
             console.log(data);
             const url = data?.data?.cloudFormationUrl;
-            if(url){
+            const warning = data?.data?.warningMessage;
+            if(warning && !url){
+              dispatch(addNotification({ notificationType: 'warning', message: warning }));
+            } else if(warning && url){
+              dispatch(addNotification({ notificationType: 'warning', message: 
+              <>
+                {warning}. {GENERAL.CLOUD_FORMATION_URL_TEXT} <Button Component="button" variant="text" 
+                onClick={() => window.open(url, '_blank', 'noopener')}>URL</Button>
+              </> 
+              }));
+            } else if(url){
               window.open(url, '_blank', 'noopener');
-            } else{
-              console.log(data?.warningMessage);
             }
             dispatch(setIsLoading(false));
         })
         .catch((error:any) => {
-            console.log(error);
             dispatch(setIsLoading(false));
         })
     }
