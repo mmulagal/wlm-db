@@ -185,7 +185,6 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         state.msSqlAction.fsxNNameSelected
     ) {
         payload = createMssqlPayload(state);
-        // payload = JSON.stringify(createMssqlPayload(state), null, 2);
         console.log('Deploy Payload', payload);
     } else {
         console.log('Action required');
