@@ -187,6 +187,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {
+        payload = undefined;
         console.log('Action required');
     }
     return payload;

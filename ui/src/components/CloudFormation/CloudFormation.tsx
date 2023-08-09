@@ -4,8 +4,11 @@ import { GENERAL } from "../../utils/appConstants";
 import styles from "./CloudFormation.module.scss";
 import { createMssqlPayload } from "../MSSqlServer/MSSqlFooter/createSqlServer";
 import { useCreateSqlTemplateMutation } from "../../utils/apiService";
+import { useDispatch } from "react-redux";
+import { setIsLoading } from "../../store/mssql/msSqlActionSlice";
 
 const CloudFormation = () => {
+  const dispatch = useDispatch();
   const state = useAppSelector(state => state);
 
   const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
@@ -16,6 +19,7 @@ const CloudFormation = () => {
   const handleTemplateView = () => {
     const payload = createMssqlPayload(state);
     if(payload){
+        dispatch(setIsLoading(true));
         createSqlTemplate({credentialId: selectedCredId, region: selectedRegionCode, payload: payload})
         .then((data:any) => {
             console.log(data);
@@ -25,9 +29,11 @@ const CloudFormation = () => {
             } else{
               console.log(data?.warningMessage);
             }
+            dispatch(setIsLoading(false));
         })
         .catch((error:any) => {
             console.log(error);
+            dispatch(setIsLoading(false));
         })
     }
 };
