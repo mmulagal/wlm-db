@@ -102,7 +102,7 @@ const AmiResponse = Type.Object({
 
 //SNS list topics Response
 const SnsResponse = Type.Object({
-    Topics: Type.Array(
+    topics: Type.Array(
         Type.Object({
             topicName: Type.Optional(Type.String()),
             topicArn: Type.Optional(Type.String())

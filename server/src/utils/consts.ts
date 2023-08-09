@@ -397,9 +397,9 @@ const EC2_ROLE_NAME = 'Ec2RoleName';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
-const CLOUD_FORMATION_BUCKET_OWNER_KEY = 'wlm-master.yaml';
+const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
-const MASTER_TEMPLATE_URL = 'https://wlmbucket.s3.ap-southeast-1.amazonaws.com/templates/wlm-master.yaml';
+const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = false;
 const MASTER_STACK_TIMEOUT_MINUTES = 120;
 
@@ -511,7 +511,7 @@ export {
     API_TITLE,
     APP_NAME,
     BUCKET_NAME,
-    CLOUD_FORMATION_BUCKET_OWNER_KEY,
+    MASTER_TEMPLATE_PATH,
     CLOUD_FORMATION_STACK_URL,
     EC2_INSTANCE_TYPE_EXCLUDE_LIST,
     TEMPLATE_CONFIGURATION_MAPPING,

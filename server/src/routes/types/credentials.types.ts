@@ -12,7 +12,7 @@ type CredentialsResponseType = Static<typeof CredentialsResponse>;
 
 const CredentialsListParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
-    credentialsType: Type.String({ minLength: 1 })
+    credentialsType: Type.String({ enum: ['aws_assume_role'] })
 });
 type CredentialsListParamsType = Static<typeof CredentialsListParams>;
 
