@@ -40,7 +40,7 @@ async function getAdsList(credentialsId: string, region: string) {
                 vpcId: perDs.VpcSettings?.VpcId,
                 availabilityZones: perDs.VpcSettings?.AvailabilityZones,
                 subnetIds: perDs.VpcSettings?.SubnetIds,
-                SecurityGroupId: perDs.VpcSettings?.SecurityGroupId
+                securityGroupId: perDs.VpcSettings?.SecurityGroupId
             }
         }));
     }

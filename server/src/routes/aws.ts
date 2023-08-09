@@ -24,6 +24,8 @@ import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
 import { getKmsKeysList } from '../operations/aws/kms-operations';
 
+const REGION_AGNOSTIC_PREFIX_PATH = '/v1/credentials/:credentialsId';
+const FSX_PREFIX_PATH = `${REGION_AGNOSTIC_PREFIX_PATH}/fsx`;
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
 export default function awsRoutes(fastify: FastifyInstance) {
@@ -79,27 +81,27 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
+    server.get(`${FSX_PREFIX_PATH}/regions`, { schema: GetFSxRegionsSchema }, async (request, reply) => {
+        const {
+            params: { credentialsId }
+        } = request;
+
+        const response = await getFSxAvailableRegionsList(credentialsId);
+        return reply.send(response);
+    });
+
     server.get(
-        '/v1/credentials/:credentialsId/aws/fsx/regions',
-        { schema: GetFSxRegionsSchema },
+        `${FSX_PREFIX_PATH}/regions/:region/vpcs/:vpcId/filesystems`,
+        { schema: GetFSxFileSystemsSchema },
         async (request, reply) => {
             const {
-                params: { credentialsId }
+                params: { credentialsId, region, vpcId }
             } = request;
+            const response = await getFSxFileSystemsList(credentialsId, region, vpcId);
 
-            const response = await getFSxAvailableRegionsList(credentialsId);
             return reply.send(response);
         }
     );
-
-    server.get(`${API_PREFIX_PATH}/vpcs/:vpcId/fsxs`, { schema: GetFSxFileSystemsSchema }, async (request, reply) => {
-        const {
-            params: { credentialsId, region, vpcId }
-        } = request;
-        const response = await getFSxFileSystemsList(credentialsId, region, vpcId);
-
-        return reply.send(response);
-    });
 
     server.get(`${API_PREFIX_PATH}/kmsKeys`, { schema: GetKmsKeysListSchema }, async (request, reply) => {
         const {
