@@ -45,6 +45,7 @@ interface SecurityGroup {
     vpcId?: string;
     ipPermissions?: any;
     name?: string;
+    securityGroupName?: string;
 }
 
 interface FSxAvailableRegions {
@@ -182,12 +183,19 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     let securityGroupList: Array<SecurityGroup> = [];
     if (securityGroups?.length) {
         securityGroupList = securityGroups.map(
-            ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
+            ({
+                GroupId: id,
+                GroupName: securityGroupName,
+                Description: description,
+                VpcId: vpcId,
+                IpPermissions: ipPermissions,
+                Tags: tags
+            }) => {
                 let name = '-';
                 if (tags?.length) {
                     name = findNameFromTags(tags);
                 }
-                return { id: id, description: description, vpcId: vpcId, ipPermissions, name };
+                return { id: id, description: description, vpcId: vpcId, ipPermissions, name, securityGroupName };
             }
         );
     }
