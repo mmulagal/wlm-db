@@ -9,7 +9,7 @@ async function getSnsTopics(credentialsId: string, region: string) {
     const { Topics } = await listTopics(credentialsId, region);
 
     if (!Topics) {
-        return { Topics: [] };
+        return { topics: [] };
     }
     const regexPattern = /(?<=:)[^:]+$/;
     const updatedTopics = Topics.map(({ TopicArn }) => ({
@@ -17,7 +17,7 @@ async function getSnsTopics(credentialsId: string, region: string) {
         topicName: TopicArn?.match(regexPattern)?.[0] || '-'
     }));
 
-    return { Topics: updatedTopics };
+    return { topics: updatedTopics };
 }
 
 export { getSnsTopics };
