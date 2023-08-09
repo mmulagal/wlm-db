@@ -1,4 +1,4 @@
-import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { Type, TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 import { FastifyInstance } from 'fastify/types/instance';
 import {
@@ -117,4 +117,16 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const response = await getKeyPairsList(credentialsId, region);
         return reply.send(response);
     });
+
+    server.post(
+        '/v1/credentials/test',
+        {
+            schema: {
+                body: Type.Object({ name: Type.String() })
+            }
+        },
+        async (_request, reply) => {
+            return reply.send({});
+        }
+    );
 }

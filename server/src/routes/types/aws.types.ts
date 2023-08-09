@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { Type } from '@fastify/type-provider-typebox';
 
 // AWS Request Params
 const AwsParams = Type.Object({

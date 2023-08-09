@@ -39,7 +39,8 @@ export enum HEADERS {
     KEY = 'x-key',
     REGION = 'x-region',
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
-    SIMULATOR = 'x-simulator'
+    SIMULATOR = 'x-simulator',
+    REFERER = 'referer'
 }
 
 export const API_PATH_HEALTH: string = '/health';
@@ -411,3 +412,14 @@ export const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 ];
 
 export const WLMDB = 'wlmdb';
+
+// HTTP Request types
+export const HTTP_GET = 'GET';
+export const HTTP_POST = 'POST';
+export const HTTP_DELETE = 'DELETE';
+export const HTTP_PUT = 'PUT';
+export const HTTP_PATCH = 'PATCH';
+
+// Status
+export const SUCCESS_STATUS = 'success';
+export const FAILED_STATUS = 'failed';
