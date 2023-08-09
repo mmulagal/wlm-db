@@ -31,7 +31,7 @@
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
         "build:local": "dotenv -e .env.development react-scripts build",
-        "build:staging": "npm i && dotenv -e .env.staging react-scripts build",
+        "build:staging": "dotenv -e .env.staging react-scripts build",
         "build:production": "dotenv -e .env.production react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
