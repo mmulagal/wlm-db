@@ -15,6 +15,7 @@ interface AdsInterface {
         vpcId?: string;
         subnetIds?: Array<string>;
         availabilityZones?: Array<string>;
+        securityGroupId?: string;
     };
 }
 
@@ -38,7 +39,8 @@ async function getAdsList(credentialsId: string, region: string) {
             vpcSettings: {
                 vpcId: perDs.VpcSettings?.VpcId,
                 availabilityZones: perDs.VpcSettings?.AvailabilityZones,
-                subnetIds: perDs.VpcSettings?.SubnetIds
+                subnetIds: perDs.VpcSettings?.SubnetIds,
+                SecurityGroupId: perDs.VpcSettings?.SecurityGroupId
             }
         }));
     }

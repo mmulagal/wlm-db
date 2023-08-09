@@ -4,7 +4,7 @@ metadata:
   labels:
     run: wlmdb
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"    
-  name: {{ .Values.global.namespace }}-wlmdb
+  name: wlmdb
 spec:
   replicas: 2
   selector:
@@ -28,9 +28,6 @@ spec:
       - image: {{ .Values.image.registry }}:{{ .Values.infraversion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         name: wlmdb
-        volumeMounts:
-        - name: log
-          mountPath: /log
         envFrom:
         - configMapRef:
             name: wlmdb-config

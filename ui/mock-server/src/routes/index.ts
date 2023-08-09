@@ -1,8 +1,10 @@
 import credentials from './credentials';
 import aws from './aws';
+import mssql from './mssql';
 
 const routes = {
     credentials,
-    aws
+    aws,
+    mssql
 };
 export default routes;

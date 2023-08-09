@@ -26,6 +26,9 @@ export interface AD {
     id?: string;
     dnsIpAddress?: Array<string>;
     domainName?: string;
+    vpcSettings?: {
+        securityGroupId?: string;
+    }
 }
 
 export interface Ami {
@@ -130,3 +133,49 @@ export interface Subnets {
 export interface AvailabilityZonesObj {
     [key: string]: Subnets[];
 }
+
+
+export interface MssqlRequestBody {
+    networkConfiguration: {
+        vpcId: string; 
+        vpcCidr: string;
+        availabilityZone1: string;
+        privateSubnet1Id: string;
+        routeTable1Id: string;
+        availabilityZone2: string;
+        privateSubnet2Id: string;
+        routeTable2Id: string;
+    },
+    ec2Configuration: {
+        workloadInstanceType: string;
+        keyPairName: string;
+    },
+    adConfiguration: {
+        adScenarioType: string;
+        domainUsername: string;
+        domainPassword: string;
+        domainDnsname: string;
+        dnsIpaddress: string;
+        securityGroupId: string;
+    },
+    fsxConfiguration: {
+        fsxFileSystemId: string;
+        fsxUsername: string;
+        fsxPassword: string;
+        databaseSize: string;
+        ontapSgGroupId: string;
+        fsxVolThroughput: string;
+        fsxIOPS: string;
+        encryptionKey: string;
+    },
+    sqlConfiguration: {
+        sqlAmiId: string;
+        serviceAccountName: string;
+        serviceAccountPassword: string;
+        sqlFciName: string;
+    }
+    topicArn?: string;
+    enableCloudWatch?: boolean,
+    tags?: Array<Object>
+}
+

@@ -111,7 +111,7 @@ export const GENERAL = {
         'First character should not be a numerical value (0-9), it can be an alphabet (a-z), underscore ‘_’, number sign ‘#’, or ampersand ‘&’. Space and special characters (such as @, ^, *,  ) are not allowed. Instance name should be 16 chars or less in length.',
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
-    CAPACITY: 'capacity',
+    CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         "Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSxN filesystem volumes, as well as LUNs, will be performed according to NetApp's best practices for SQL configuration. You can change the recommended defaults to meet your requirements",

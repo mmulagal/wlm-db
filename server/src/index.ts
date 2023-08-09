@@ -26,11 +26,13 @@ import {
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
-// import errorHandler from './utils/error-handler';
+import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
+import deploymentRoutes from './routes/deployment';
+import initiateSecrets from './utils/secret';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -63,6 +65,8 @@ interface Headers {
     [HEADERS.AUTHORIZATION]: string;
 }
 
+await initiateSecrets();
+
 const app = fastify({
     trustProxy: true,
     genReqId: () => `WLM-DB-${randomize('Aa0', 8)}`,
@@ -90,13 +94,13 @@ const app = fastify({
                     url: 'http://localhost:8085/wlmdb'
                 },
                 {
-                    url: 'https://staging.api.bluexp.netapp.com/wlmdb'
+                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb'
                 },
                 {
-                    url: 'https://api.bluexp.netapp.com/wlmdb'
+                    url: 'https://api.workloads.bluexp.netapp.com/wlmdb'
                 },
                 {
-                    url: 'https://demo-wlmdb.api.bluexp.netapp.com/wlmdb'
+                    url: 'https://demo-wlmdb.api.workloads.bluexp.netapp.com/wlmdb'
                 }
             ],
             components: {
@@ -129,11 +133,12 @@ const app = fastify({
                     const {
                         headers: { authorization }
                     } = request;
-
+                    logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
                             await verifyToken(authorization.replace('Bearer ', ''));
                         } catch (err) {
+                            logger.error('Token verification error', err);
                             reply.unauthorized();
                         }
                     } else {
@@ -143,6 +148,7 @@ const app = fastify({
             );
             awsRoutes(instance);
             credentialsRoutes(instance);
+            deploymentRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
