@@ -111,7 +111,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${API_PREFIX_PATH}/keypairs`, { schema: GetKeyPairsSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/keyPairs`, { schema: GetKeyPairsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
