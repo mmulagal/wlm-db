@@ -48,7 +48,7 @@ export const awsApi = createApi({
                 query: ({credentialsType}) => ({url: `credentials/${credentialsType}`})
             }),
             getRegions: builder.query({
-                query: ({credentialId}) => ({url: `credentials/${credentialId}/aws/fsx/regions`})
+                query: ({credentialId}) => ({url: `credentials/${credentialId}/fsx/regions`})
             }),
             getVPCList: builder.query({
                 query: ({credentialId, region, fields}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`})
@@ -67,26 +67,26 @@ export const awsApi = createApi({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/kmsKeys`})
             }),
             getKeyPairs: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/keypairs`})
+                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/keyPairs`})
             }),
             getInstanceTypes: builder.query({
                 query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/instanceTypes`})
             }),
             getFsxnList: builder.query({
-                query: ({credentialId, region, vpcId}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs/${vpcId}/fsxs`})
+                query: ({credentialId, region, vpcId}) => ({url: `credentials/${credentialId}/fsx/regions/${region}/vpcs/${vpcId}/filesystems`})
             }),
             createSqlTemplate: builder.mutation({
-                query: ({credentialId, region, body}) => ({
-                    url: `credentials/${credentialId}/regions/${region}/template/create`,
+                query: ({credentialId, region, payload}) => ({
+                    url: `credentials/${credentialId}/regions/${region}/cloudformation/url`,
                     method: 'POST',
-                    body: body,
+                    body: payload,
                 })
             }),
             deploySqlTemplate: builder.mutation({
-                query: ({credentialId, region, body}) => ({
-                    url: `credentials/${credentialId}/regions/${region}/template/deploy`,
+                query: ({credentialId, region, payload}) => ({
+                    url: `credentials/${credentialId}/regions/${region}/cloudformation/stack`,
                     method: 'POST',
-                    body: body,
+                    body: payload,
                 })
             }),
         }
