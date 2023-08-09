@@ -41,7 +41,7 @@ const SimpleNotificationService = () => {
     //Function to generate the options for Select Field
     const generateArn = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        snsData?.Topics?.map((val, idx: number) => {
+        snsData?.topics?.map((val, idx: number) => {
             const arnVal = val?.topicArn;
             const option = generateOptionType(arnVal, arnVal, '', false, '');
             options.push(option);
