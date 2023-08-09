@@ -149,7 +149,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
 
     const fsxStateValue = !state.mssqlForm.fsxN.fsxNName;
     //Check for VPC values
-    if (vpcStateValue === null) {
+    if (vpcStateValue) {
         dispatch(setVPCSelectedValue(false));
     } else {
         dispatch(setVPCSelectedValue(true));
