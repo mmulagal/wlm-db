@@ -1,5 +1,6 @@
 import { Button } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../utils/apiService';
 import { cmNavigateTo } from '../../../utils/appConfig';
@@ -19,20 +20,21 @@ const MSSqlFooter = () => {
     const handleCreate = () => {
         const payload = handleCreateSQLServer(state, dispatch);
         if(payload){
+            dispatch(setIsLoading(true));
             deploySqlTemplate({credentialId: selectedCredId, region: selectedRegionCode, payload: payload})
             .then((data:any) => {
-                console.log(data);
+                dispatch(setIsLoading(false));
                 cmNavigateTo('/');
             })
             .catch((error:any) => {
-                console.log(error);
+                dispatch(setIsLoading(false));
             })
         }
     };
 
     return (
         <>
-            <Button variant="secondary" isThin>
+            <Button variant="secondary" isThin onClick={() => cmNavigateTo('/')}>
                 {SELECT_CONFIG.CANCEL}
             </Button>
             <Button isThin onClick={handleCreate}>
