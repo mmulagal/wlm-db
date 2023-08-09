@@ -171,7 +171,6 @@ const app = fastify({
                     id: requestId
                 } = request;
                 logger.debug(url, reply);
-                logger.info({ accountId, requestId });
                 setAsyncLocalStorageResource(REQUEST_ID, requestId);
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
