@@ -131,40 +131,48 @@ const createMssqlPayload = (state: any) => {
 const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     let payload;
     dispatch(setCreatePressed(true));
+
+    const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
+
+    const azStateValue =
+        !state.mssqlForm.availabilityZones.selectedAzNode1 ||
+        !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
+        !state.mssqlForm.availabilityZones.selectedAzNode2 ||
+        !state.mssqlForm.availabilityZones.selectedSubnetNode2;
+
+    const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
+
+    const adStateValue =
+        !state.mssqlForm.activeDirectory.domainAddress ||
+        !state.mssqlForm.activeDirectory.userName ||
+        !state.mssqlForm.activeDirectory.password;
+
+    const fsxStateValue = !state.mssqlForm.fsxN.fsxNName;
     //Check for VPC values
-    if (state.mssqlForm.regionAndVpc.selectedVPC === null) {
+    if (vpcStateValue === null) {
         dispatch(setVPCSelectedValue(false));
     } else {
         dispatch(setVPCSelectedValue(true));
     }
     //Check for AZ values
-    if (
-        !state.mssqlForm.availabilityZones.selectedAzNode1 ||
-        !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
-        !state.mssqlForm.availabilityZones.selectedAzNode2 ||
-        !state.mssqlForm.availabilityZones.selectedSubnetNode2
-    ) {
+    if (azStateValue) {
         dispatch(setAZSelectedValue(false));
     } else {
         dispatch(setAZSelectedValue(true));
     }
 
     //Check for DB cred password
-    dispatch(setDBCredentialPasswordValue(!state.mssqlForm.dbCredentials.password ? false : true));
+    dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
 
     //Check of AD values
-    if (
-        !state.mssqlForm.activeDirectory.domainAddress ||
-        !state.mssqlForm.activeDirectory.userName ||
-        !state.mssqlForm.activeDirectory.password
-    ) {
+    if (adStateValue) {
         dispatch(setActiveDirectoryValue(false));
     } else {
         dispatch(setActiveDirectoryValue(true));
     }
 
     //Check for FsxN Name
-    dispatch(setFSXNNameValue(!state.mssqlForm.fsxN.fsxNName ? false : true));
+    dispatch(setFSXNNameValue(fsxStateValue ? false : true));
 
     //Check for DB Name - InvalidName
     if (state.mssqlForm.dbName.length > 0) {
@@ -177,13 +185,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     }
 
     //Proceed for post call
-    if (
-        state.msSqlAction.vpcSelected &&
-        state.msSqlAction.availabilityZoneSelected &&
-        state.msSqlAction.dbCredentialPasswordSelected &&
-        state.msSqlAction.activeDirectorySelected &&
-        state.msSqlAction.fsxNNameSelected
-    ) {
+    if (!vpcStateValue && !azStateValue && !dbCredStateValue && !adStateValue && !fsxStateValue) {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {
