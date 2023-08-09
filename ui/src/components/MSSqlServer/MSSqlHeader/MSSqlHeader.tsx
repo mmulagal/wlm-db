@@ -1,6 +1,7 @@
 import { Button, Header, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { cmNavigateTo } from '../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import { LoadConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
@@ -24,7 +25,7 @@ const MSSqlHeader = () => {
     return (
         <Header
             closeButtonProps={{
-                onClick: function noRefCheck() {}
+                onClick: function noRefCheck() {cmNavigateTo('/')}
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
         >

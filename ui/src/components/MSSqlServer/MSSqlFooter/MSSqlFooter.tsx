@@ -34,7 +34,7 @@ const MSSqlFooter = () => {
 
     return (
         <>
-            <Button variant="secondary" isThin>
+            <Button variant="secondary" isThin onClick={() => cmNavigateTo('/')}>
                 {SELECT_CONFIG.CANCEL}
             </Button>
             <Button isThin onClick={handleCreate}>
