@@ -156,6 +156,7 @@ const RegionVpc = () => {
                         {selectVPC === GENERAL.SELECT_EXISTING_VPC && (
                             <div className={styles.handleSelect}>
                                 <SelectField
+                                    isLoading={vpcLoading}
                                     label={GENERAL.VPC}
                                     error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore

@@ -24,7 +24,9 @@ const MSSqlFooter = () => {
             deploySqlTemplate({credentialId: selectedCredId, region: selectedRegionCode, payload: payload})
             .then((data:any) => {
                 dispatch(setIsLoading(false));
-                cmNavigateTo('/');
+                if(!data?.error){
+                    cmNavigateTo('/');
+                }
             })
             .catch((error:any) => {
                 dispatch(setIsLoading(false));

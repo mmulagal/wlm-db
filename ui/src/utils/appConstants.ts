@@ -100,6 +100,7 @@ export const GENERAL = {
     LICENSE_TEXT:
         'Use an AWS provided license-included AMI with Windows and SQL Server installed or You can bring your own SQL licenses (BYOL) through your custom AMI or use license included custom AMI. If you use a custom AMI, ensure that it meets all required install parameters.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
+    LICENSE_ID: 'License ID',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
     SELECT_AMI_ID: 'Select AMI ID',
