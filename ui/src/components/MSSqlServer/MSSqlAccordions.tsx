@@ -58,7 +58,12 @@ const MSSqlAccordions = () => {
                     >
                         {GENERAL.AWS_SETTINGS}
                     </Typography>
-                    <Button onClick={handleViewAPIRequest} Component="button" variant="text">
+                    <Button
+                        onClick={handleViewAPIRequest}
+                        Component="button"
+                        variant="text"
+                        className={styles.buttonClass}
+                    >
                         {GENERAL.VIEW_API_REQUEST}
                     </Button>
                 </div>
