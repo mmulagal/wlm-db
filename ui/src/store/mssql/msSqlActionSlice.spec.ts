@@ -6,7 +6,8 @@ import msSqlActionSlice, {
     setDBCredentialPasswordValue,
     setActiveDirectoryValue,
     setFSXNNameValue,
-    setDBNameValue
+    setDBNameValue,
+    setIsLoading
 } from './msSqlActionSlice'; // Update this with the correct file path
 
 describe('msSqlActionSlice', () => {
@@ -70,5 +71,13 @@ describe('msSqlActionSlice', () => {
 
         store.dispatch(setDBNameValue(false));
         expect(store.getState().dbNameSelected).toEqual(false);
+    });
+
+    test('should set isLoading correctly', () => {
+        store.dispatch(setIsLoading(true));
+        expect(store.getState().isLoading).toEqual(true);
+
+        store.dispatch(setIsLoading(false));
+        expect(store.getState().isLoading).toEqual(false);
     });
 });

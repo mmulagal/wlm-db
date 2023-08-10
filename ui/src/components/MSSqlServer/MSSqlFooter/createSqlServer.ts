@@ -147,7 +147,11 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !state.mssqlForm.activeDirectory.userName ||
         !state.mssqlForm.activeDirectory.password;
 
-    const fsxStateValue = !state.mssqlForm.fsxN.fsxNName;
+    const fsxStateValue = 
+        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN &&
+            !state.mssqlForm.fsxN.fsxNName) || 
+        (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX &&
+            !state.mssqlForm.fsxN.fsxNExistingName);
     //Check for VPC values
     if (vpcStateValue) {
         dispatch(setVPCSelectedValue(false));
