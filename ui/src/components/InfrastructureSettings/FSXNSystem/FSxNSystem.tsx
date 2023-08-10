@@ -25,6 +25,7 @@ import {
     setFsxNExistingUserName
 } from '../../../store/mssql/mssqlFormSlice';
 import { FSXADMIN } from '../../../utils/consts';
+import AccordionError from '../../../common/AccordionError/AccordionError';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -88,6 +89,8 @@ const FSxNSystem = () => {
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
             if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
+            } else if (checkForPasswordError()) {
+                return <AccordionError />;
             } else {
                 return <Typography variant="Regular_14">{selectedFsxnName}</Typography>;
             }
@@ -95,6 +98,8 @@ const FSxNSystem = () => {
             //Checking for the existing option
             if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
                 return <ActionRequired />;
+            } else if (checkForPasswordError()) {
+                return <AccordionError />;
             } else {
                 return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
             }

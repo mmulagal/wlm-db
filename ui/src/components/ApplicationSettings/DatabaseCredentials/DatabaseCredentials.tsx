@@ -11,15 +11,20 @@ import { useAppSelector } from '../../../store/storeHooks';
 import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
+import AccordionError from '../../../common/AccordionError/AccordionError';
+
 const DatabaseCredentials = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
+
     const dispatch = useDispatch();
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     //Set the Header text here
     const setHeader = () => {
         if (!userName || !password) {
             return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
+        } else if (checkForErrorPassword()) {
+            return <AccordionError />;
         } else {
             return <Typography variant="Regular_14">{userName}</Typography>;
         }
