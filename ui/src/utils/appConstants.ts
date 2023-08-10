@@ -15,6 +15,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    AWS_CREDENTIALS: 'AWS credentials',
     ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
