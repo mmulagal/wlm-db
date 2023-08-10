@@ -48,8 +48,25 @@ export const GENERAL = {
     CLOSE: 'Close',
     API_REQUEST: 'API request',
     Cancel: 'Cancel',
-    DEFAULT_AWS_ACCOUNT_SUB_TEXT:
-        'No AWS credentials are available to create Microsoft SQL server. In order to continue you have two options:',
+    DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create Microsoft SQL server.',
+    DEFAULT_AWS_ACCOUNT_SECOND_LINE:
+        'Ensure a seamless deployment of your Microsoft SQL Server by configuring your AWS credentials.',
+    DEFAULT_AWS_ACCOUNT_THIRD_LINE:
+        'Follow the steps below to enable us to create the database for you or generate a CloudFormation stack for manual operation.',
+    STEP_ONE: 'Step 1:',
+    STEP_TWO: 'Step 2:',
+    NAVIGATE_TO: 'Navigate to',
+    STEP_TWO_TEXT:
+        'Add the necessary credentials that will enable us to create the Microsoft SQL Server database or generate a CloudFormation code for deployment.',
+    PAGE: 'page',
+    OPTIONS_TEXT: 'You have two distinct options to choose from, depending on your preferences:',
+    OPTION_ONE:
+        'Option 1: Minimum permissions policy Assign a policy with the minimum permissions required to populate AWS resources in the below form.',
+    OPTION_TWO:
+        'Option 2: Full permissions policy for a comprehensive deployment experience, assign a policy with all the permissions necessary to successfully deploy the stack. This option is recommended if you prefer a hands-off approach and want us to handle all deployment aspects.',
+    FOR_MORE_INFO: 'For more information:',
+    NOTE_TEXT:
+        'Note: Please be aware that the deployment process is estimated to take around 2 hours. Plan accordingly to ensure a smooth and uninterrupted deployment experience.',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP. For more information, visit ',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:

@@ -7,16 +7,19 @@ import {
     useAccordionContext
 } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
+import { optionType } from '@netapp/design-system/dist/components/Select';
+import { useDispatch } from 'react-redux';
+
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
-import { optionType } from '@netapp/design-system/dist/components/Select';
-import styles from './AwsAccount.module.scss';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../store/mssql/mssqlFormSlice';
-import { useDispatch } from 'react-redux';
 import { setCreatePressed } from '../../../store/mssql/msSqlActionSlice';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../utils/consts';
+
+import styles from './AwsAccount.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
@@ -111,8 +114,7 @@ const AwsAccount = () => {
 
     // To open new tab with credential page on click of credential link
     const openCredentialTab = () => {
-        const url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? 
-                    CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+        const url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         window.open(url, '_blank', 'noopener');
     };
 
@@ -129,22 +131,53 @@ const AwsAccount = () => {
                         {noAccount ? (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
-                                <ul>
-                                    <li>
-                                        {GENERAL.GO_TO_THE}{' '}
-                                        <span>
-                                            <Button
-                                                Component="button"
-                                                onClick={openCredentialTab}
-                                                variant="text"
-                                            >
-                                                {GENERAL.CREDENTIALS}
-                                            </Button>
-                                        </span>
-                                        &nbsp; {GENERAL.AWS_DEFAULT_LIST_FIRST}
-                                    </li>
-                                    <li>{GENERAL.AWS_ACCOUNT_DEFAULT_LIST_TWO}</li>
-                                </ul>
+                                <Typography variant="Regular_14" className={styles.lineHeight}>
+                                    {GENERAL.DEFAULT_AWS_ACCOUNT_SECOND_LINE}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.thirdLine}>
+                                    {GENERAL.DEFAULT_AWS_ACCOUNT_THIRD_LINE}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.lineHeight}>
+                                    <span className={styles.bold}>{GENERAL.STEP_ONE}</span> {GENERAL.NAVIGATE_TO}{' '}
+                                    <span>
+                                        <Button Component="button" onClick={openCredentialTab} variant="text">
+                                            {GENERAL.CREDENTIALS}
+                                        </Button>
+                                    </span>{' '}
+                                    {GENERAL.PAGE}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.thirdLine}>
+                                    <span className={styles.bold}>{GENERAL.STEP_TWO}</span> {GENERAL.STEP_TWO_TEXT}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.lineHeight}>
+                                    {GENERAL.OPTIONS_TEXT}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.list}>
+                                    <div className={styles.listItem}>
+                                        <Bullet />
+                                        <Typography variant="Regular_14" className={styles.textWidth}>
+                                            {GENERAL.OPTION_ONE}
+                                        </Typography>
+                                    </div>
+                                    <div className={styles.listItem}>
+                                        <Bullet />
+                                        <Typography variant="Regular_14" className={styles.textWidth}>
+                                            {GENERAL.OPTION_TWO}
+                                        </Typography>
+                                    </div>
+                                </Typography>
+
+                                <Typography variant="Regular_14" className={styles.info}>
+                                    {GENERAL.FOR_MORE_INFO}{' '}
+                                    <span>
+                                        <Button Component="button" variant="link">
+                                            {GENERAL.MS_SQL_REQUIRED}
+                                        </Button>
+                                    </span>
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.noteText}>
+                                    {GENERAL.NOTE_TEXT}
+                                </Typography>
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
