@@ -5,26 +5,32 @@
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
-        line-height: 24px; /* 171.429% */
+        line-height: 27px; /* 171.429% */
     }
 
-    ul {
-        color: var(--grey-50);
-        /* Body/14 . Regular */
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 24px; /* 171.429% */
-        padding: 0;
-        padding-left: 16px;
+    .list {
+        display: flex;
+        flex-direction: column;
+        margin-top: 16px;
+        gap: 16px;
 
-        li {
-            width: 519px;
-        }
+        .listItem {
+            display: flex;
+            gap: 16px;
 
-        li:first-child {
-            margin-bottom: 16px;
+            .textWidth {
+                width: 519px;
+            }
         }
+    }
+
+    .info {
+        margin-top: 16px;
+        margin-bottom: 16px;
+    }
+
+    .noteText {
+        width: 709px;
     }
 
     .sub-text {
@@ -35,6 +41,19 @@
         font-weight: 400;
         width: 518px;
         line-height: 24px; /* 171.429% */
+    }
+
+    .thirdLine {
+        width: 709px;
+        line-height: 27px;
+    }
+
+    .lineHeight {
+        line-height: 27px;
+    }
+
+    .bold {
+        font-weight: 600;
     }
 
     .selectField {

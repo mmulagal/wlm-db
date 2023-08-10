@@ -39,14 +39,18 @@ const ActiveDirectory = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
-    const [versions, setVersions] = useState<{
-        securityGroupId: string; domainName: string; dnsIpAddress: string 
-    }[]>([]);
+    const [versions, setVersions] = useState<
+        {
+            securityGroupId: string;
+            domainName: string;
+            dnsIpAddress: string;
+        }[]
+    >([]);
     const [isCreating, setIsCreating] = useState(false);
 
     const addNewOption = async (option: any) => {
         setIsCreating(true);
-        const newVer = [...versions, { domainName: option, dnsIpAddress: '',  securityGroupId: ''}];
+        const newVer = [...versions, { domainName: option, dnsIpAddress: '', securityGroupId: '' }];
         setVersions(newVer);
         await delay();
         dispatch(setSelectedADDomainAddress(''));
@@ -59,8 +63,11 @@ const ActiveDirectory = () => {
     useEffect(() => {
         const verList: any[] = [];
         adsData?.directories?.map((val: any, ids: number) => {
-            const newItem = { domainName: val?.domainName, dnsIpAddress: val?.dnsIpAddress, 
-                securityGroupId: val?.vpcSettings?.securityGroupId };
+            const newItem = {
+                domainName: val?.domainName,
+                dnsIpAddress: val?.dnsIpAddress,
+                securityGroupId: val?.vpcSettings?.securityGroupId
+            };
             verList.push(newItem);
         });
         setVersions(verList);
@@ -96,7 +103,7 @@ const ActiveDirectory = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if(!selectedVPCData) {
+        } else if (!selectedVPCData) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_ANY_VPC}
@@ -219,8 +226,6 @@ const ActiveDirectory = () => {
                                 }
                                 value={password}
                                 className={styles.textFieldPassword}
-                                //@ts-ignore
-                                type="password"
                             />
                         </div>
                     </Typography>
