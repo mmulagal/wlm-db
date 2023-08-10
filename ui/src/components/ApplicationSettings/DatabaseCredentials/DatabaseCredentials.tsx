@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
+import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { useDispatch } from 'react-redux';
@@ -21,6 +22,56 @@ const DatabaseCredentials = () => {
             return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
         } else {
             return <Typography variant="Regular_14">{userName}</Typography>;
+        }
+    };
+
+    const tooltipText = () => {
+        return (
+            <Typography variant="Regular_13" className={styles.infoMsg}>
+                <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_1}</Typography>
+                <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_2}</Typography>
+                <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_3}</Typography>
+                <div className={styles.list}>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_1}</div>
+                    </div>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_2}</div>
+                    </div>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_3}</div>
+                    </div>
+                    <div className={styles.listItem}>
+                        <Bullet />
+                        <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_4}</div>
+                    </div>
+                </div>
+                <Typography variant="Regular_13" className={styles.lastItem}>
+                    {GENERAL.PASSWORD_CRED_4}
+                </Typography>
+            </Typography>
+        );
+    };
+
+    const checkForErrorPassword = () => {
+        if (password.length) {
+            const categories = [
+                /[A-Z]/, // Latin uppercase letters
+                /[a-z]/, // Latin lowercase letters
+                /[0-9]/, // Base 10 digits
+                /[!$#%]/ // Non-alphanumeric characters
+            ];
+
+            const metCategories = categories.filter(category => category.test(password));
+
+            if (password.length >= 8 && metCategories.length >= 3) {
+                return '';
+            } else {
+                return GENERAL.PASSWORD_ERROR_CHECK;
+            }
         }
     };
     return (
@@ -44,7 +95,8 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
-                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : ''}
+                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : '' || checkForErrorPassword()}
+                                info={tooltipText()}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={

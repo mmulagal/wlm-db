@@ -28,6 +28,7 @@ export const GENERAL = {
     DATABASE_CREDENTIALS: 'Database credentials',
     CONNECTIVITY: 'Connectivity',
     KEY_PAIR: 'Key pair',
+    KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
     INSTANCE_TYPE: 'Instance type',
@@ -41,7 +42,7 @@ export const GENERAL = {
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Save form as CloudFormation',
     AWS_SETTINGS: 'AWS settings',
-    VIEW_API_REQUEST: 'View Api request',
+    VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
@@ -158,6 +159,11 @@ export const GENERAL = {
     FSX_PASSWORD: 'FSxN password',
     NOTICE: 'Notice:',
     NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
+    PASSWORD_FSX_1: 'The password must be at least eight characters long.',
+    PASSWORD_FSX_2: 'The password must contain at least one number.',
+    PASSWORD_FSX_3: 'The password must contain at least two alphabetic characters.',
+    PASSWORD_FSX_4:
+        'The password must not contain the Ctrl-c or Ctrl-d key combination or the two-character string ^D.',
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
@@ -178,6 +184,17 @@ export const GENERAL = {
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
+    //DB credential
+    PASSWORD_CRED_1: "The password doesn't contain the account name of the user.",
+    PASSWORD_CRED_2: '- The password is at least eight characters long.',
+    PASSWORD_CRED_3: '- The password contains characters from three of the following four categories:',
+    PASSWORD_CRED_LI_1: 'Latin uppercase letters (A through Z)',
+    PASSWORD_CRED_LI_2: 'Latin lowercase letters (a through z)',
+    PASSWORD_CRED_LI_3: 'o Base 10 digits (0 through 9)',
+    PASSWORD_CRED_LI_4:
+        'Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%).',
+    PASSWORD_CRED_4:
+        'Passwords can be up to 128 characters long. Use passwords that are as long and complex as possible.',
     //Encryption
     ENCRYPTION_TEXT:
         'Key that will be used to protect the key used to encrypt this database storage (FSxN). You can select from master keys in your account or type/paste the ARN of a key from a different account.',
@@ -201,5 +218,6 @@ export const GENERAL = {
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
     SELECT_ANY_ACCOUNT: 'Please select any account',
     SELECT_ANY_VPC: 'Please select any VPC',
-    CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the'
+    CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
+    PASSWORD_ERROR_CHECK: 'Check password criteria'
 };

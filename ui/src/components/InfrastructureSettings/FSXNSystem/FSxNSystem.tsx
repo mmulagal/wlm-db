@@ -44,6 +44,8 @@ const FSxNSystem = () => {
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
 
+    const [password, setPassword] = useState('');
+
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -74,7 +76,7 @@ const FSxNSystem = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if(!selectedVPCData) {
+        } else if (!selectedVPCData) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_ANY_VPC}
@@ -95,6 +97,23 @@ const FSxNSystem = () => {
                 return <ActionRequired />;
             } else {
                 return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
+            }
+        }
+    };
+
+    const checkForPasswordError = () => {
+        if (password.length) {
+            // Criteria checks
+            const isAtLeastEightChars = password.length >= 8;
+            const hasAtLeastOneNumber = /[0-9]/.test(password);
+            const hasAtLeastTwoAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 2;
+            const hasInvalidCombination =
+                !password.includes('Ctrl-c') && !password.includes('Ctrl-d') && !password.includes('^D');
+
+            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastTwoAlphabetic && hasInvalidCombination) {
+                return '';
+            } else {
+                return GENERAL.PASSWORD_ERROR_CHECK;
             }
         }
     };
@@ -184,7 +203,19 @@ const FSxNSystem = () => {
                             />
                             <PasswordField
                                 label={GENERAL.FSX_PASSWORD}
+                                info={
+                                    <Typography variant="Regular_13" className={styles.infoMsg}>
+                                        <ul>
+                                            <li>{GENERAL.PASSWORD_FSX_1}</li>
+                                            <li>{GENERAL.PASSWORD_FSX_2}</li>
+                                            <li>{GENERAL.PASSWORD_FSX_3}</li>
+                                            <li>{GENERAL.PASSWORD_FSX_4}</li>
+                                        </ul>
+                                    </Typography>
+                                }
+                                error={checkForPasswordError()}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));
                                 }}
                                 value={selectedFsxnPassword}
