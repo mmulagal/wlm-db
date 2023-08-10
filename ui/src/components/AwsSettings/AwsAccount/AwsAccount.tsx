@@ -124,7 +124,7 @@ const AwsAccount = () => {
                 isLoading={credentialLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
-                title={<div className={CommonStyles.title}>AWS account</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.AWS_CREDENTIALS}</div>}
             >
                 <AccordionCardContent>
                     <Typography>
