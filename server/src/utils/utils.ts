@@ -109,7 +109,7 @@ function generateRandomNumberInRange(min: number, max: number) {
 }
 
 // Get xAgentId from bearer token
-function getXAgentIdFromBearerToken() {
+function getSubjectFromBearerToken() {
     const token = getAsyncLocalStorageResource<string>(USER_TOKEN);
     const tokenWithoutBearerPrefix = trimStart(token, 'Bearer').trim();
     const tokenWithoutBearerSuffix = trimEnd(tokenWithoutBearerPrefix, 'clients').trim();
@@ -193,6 +193,6 @@ export {
     isCfStackQuotaReached,
     generateFsxParams,
     formatTemplateParameters,
-    getXAgentIdFromBearerToken,
+    getSubjectFromBearerToken,
     hideSecretsValues
 };

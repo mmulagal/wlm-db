@@ -15,7 +15,6 @@ import SwaggerParser from '@apidevtools/swagger-parser';
 import getLogger from './utils/logger';
 import {
     ACCOUNT_ID,
-    AGENT_ID,
     API_PATH_HEALTH,
     API_TITLE,
     HEADERS,
@@ -166,7 +165,7 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID]: workspaceId, [HEADERS.AGENT_ID]: agentId },
+                    headers: { authorization, [HEADERS.WORKSPACE_ID]: workspaceId },
                     params: { accountId },
                     id: requestId
                 } = request;
@@ -175,7 +174,6 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
-                setAsyncLocalStorageResource(AGENT_ID, agentId);
                 createAuditGroup(request, reply);
                 done();
             });

@@ -26,7 +26,6 @@ const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
     : config.get<string>('urls.auth0');
 
 enum HEADERS {
-    AGENT_ID = 'x-agent-id',
     AUTHORIZATION = 'authorization',
     REQUEST_ID = 'x-request-id',
     SERVICE_REQUEST_ID = 'x-service-request-id',

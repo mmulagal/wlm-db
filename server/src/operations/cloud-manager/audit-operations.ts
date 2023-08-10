@@ -1,6 +1,6 @@
 import getLogger from '../../utils/logger';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { getXAgentIdFromBearerToken, hideSecretsValues } from '../../utils/utils';
+import { getSubjectFromBearerToken, hideSecretsValues } from '../../utils/utils';
 import { AUDIT_GROUP, HTTP_DELETE, HTTP_POST, HTTP_PUT, REQUEST_ID, VERSION, WLMDB } from '../../utils/consts';
 import { cloneDeep } from 'lodash-es';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
@@ -28,7 +28,6 @@ interface RequestHeaders {
     host: string;
     authorization: string;
     'user-agent': string;
-    'x-agent-id'?: string;
     'x-workspace-id'?: string;
 }
 
@@ -47,9 +46,9 @@ function extractAuditHeaders(headers: RequestHeaders) {
     const { host, authorization } = headers;
     return {
         host,
+        referer: WLMDB,
         authorization,
         userAgent: headers['user-agent'],
-        agentId: headers['x-agent-id'],
         workspaceId: headers['x-workspace-id']
     };
 }
@@ -77,7 +76,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
 
         const clonedData = cloneDeep(actionParameters);
 
-        logger.info(clonedData);
+        logger.debug(clonedData);
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
         const { context } = reply;
@@ -95,7 +94,7 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
             referrer: url as string,
             version: VERSION,
             actionParameters: secureActionParameters,
-            principalId: getXAgentIdFromBearerToken() as string
+            principalId: getSubjectFromBearerToken() as string
         };
 
         validateSchema(auditGroup, createAuditGroupSchema);
