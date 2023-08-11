@@ -59,6 +59,13 @@ const StorageCapacity = () => {
             return GENERAL.ERROR_CAPACITY;
         }
     };
+
+    const tooltipMessage = () => {
+        return (
+            <Typography variant="Regular_13" className={styles.infoMsg}>{GENERAL.CAPACITY_TOOLTIP}</Typography>
+        )
+    };
+
     return (
         <div className={styles['storage-capacity']}>
             <AccordionCard
@@ -71,7 +78,7 @@ const StorageCapacity = () => {
                         <div className={styles.container}>
                             <TextField
                                 label={GENERAL.CAPACITY}
-                                info={<div>{GENERAL.CAPACITY_TOOLTIP}</div>}
+                                info={tooltipMessage()}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     handleChange(e);
                                 }}
