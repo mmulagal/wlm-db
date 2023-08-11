@@ -1,9 +1,6 @@
-// import { initiateTracer } from './utils/tracer';
-
-// await initiateTracer();
-
 import config from 'config';
 import randomize from 'randomatic';
+import './utils/tracer';
 import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import compress from '@fastify/compress';
