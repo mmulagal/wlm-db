@@ -161,7 +161,9 @@ const KmsKeysListResponse = Type.Object({
             name: Type.Optional(Type.String()),
             origin: Type.Optional(Type.String()),
             state: Type.Optional(Type.String()),
-            expirationDate: Type.Optional(Type.String())
+            expirationDate: Type.Optional(Type.String()),
+            isDefault: Type.Optional(Type.Boolean()),
+            formattedDate: Type.Optional(Type.String())
         })
     ),
     totalRecords: Type.Optional(Type.Number())
@@ -244,7 +246,8 @@ const FSxFileSystemSchema = Type.Object({
 
 // GET FSx filesystems response
 const FSxFileSystemsResponse = Type.Object({
-    filesystems: Type.Array(FSxFileSystemSchema)
+    filesystems: Type.Array(FSxFileSystemSchema),
+    totalRecords: Type.Optional(Type.Number())
 });
 
 export {

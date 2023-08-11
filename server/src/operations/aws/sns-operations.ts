@@ -16,8 +16,9 @@ async function getSnsTopics(credentialsId: string, region: string) {
         topicArn: TopicArn,
         topicName: TopicArn?.match(regexPattern)?.[0] || '-'
     }));
+    const totalRecords = updatedTopics?.length;
 
-    return { topics: updatedTopics };
+    return { topics: updatedTopics, totalRecords };
 }
 
 export { getSnsTopics };

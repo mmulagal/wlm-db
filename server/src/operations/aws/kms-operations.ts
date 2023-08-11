@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { KeyListEntry } from '@aws-sdk/client-kms';
 import { listKeys, describeKey, listAliases } from '../../lib/aws/kms';
 import getLogger from '../../utils/logger';
@@ -10,6 +11,8 @@ interface KMS {
     origin?: string;
     state?: string;
     expirationDate?: any;
+    isDefault?: boolean;
+    formattedDate?: string;
 }
 
 async function getKmsKeysList(credentialsId: string, region: string): Promise<{ keys: KMS[]; totalRecords: number }> {
@@ -18,6 +21,7 @@ async function getKmsKeysList(credentialsId: string, region: string): Promise<{ 
     const kmsKeysList = (await listKeys(credentialsId, region)) || [];
     const keyData = await getKmsKeyDetails(credentialsId, region, kmsKeysList);
     const totalRecords = keyData?.length;
+
     return { keys: keyData, totalRecords };
 }
 
@@ -40,7 +44,23 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
                             KeyId: id
                         })) || [];
                     const aliasName = name?.replace('alias/', '');
-                    keyData.push({ id, name: aliasName, origin, expirationDate, state });
+                    let isDefault = false;
+                    if (aliasName === 'aws/fsx') {
+                        isDefault = true;
+                    }
+                    let formattedDate = '';
+                    if (expirationDate) {
+                        formattedDate = moment(expirationDate).format('MMMM DD,YYYY');
+                    }
+                    keyData.push({
+                        id,
+                        name: aliasName,
+                        origin,
+                        expirationDate,
+                        state,
+                        isDefault,
+                        formattedDate
+                    });
                 } catch (err: any) {
                     logger.error('Failed to get the kms key details', { key, err });
                 }

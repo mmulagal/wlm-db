@@ -266,7 +266,8 @@ async function getAmiList(
             new Date(a.name.substring(a.name.length - 10)).getTime()
     );
 
-    return { amis: response };
+    const totalRecords = response?.length;
+    return { amis: response, totalRecords: totalRecords };
 }
 
 function findNameFromTags(tags: Tag[]) {
@@ -275,7 +276,9 @@ function findNameFromTags(tags: Tag[]) {
     return name ? name : '-';
 }
 
-async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
+async function getFSxAvailableRegionsList(
+    credentialsId: string
+): Promise<{ regions: FSxAvailableRegions[]; totalRecords: number }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const input = {
@@ -300,8 +303,9 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
             }
         });
     }
+    const totalRecords = fsxRegionsList.length;
 
-    return { regions: fsxRegionsList };
+    return { regions: fsxRegionsList, totalRecords };
 }
 
 async function getInstanceTypes(credentialsId: string, region: string) {
@@ -329,7 +333,10 @@ async function getInstanceTypes(credentialsId: string, region: string) {
     return { instanceTypes: filteredInstances, totalRecords };
 }
 
-async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
+async function getKeyPairsList(
+    credentialsId: string,
+    region: string
+): Promise<{ keyPairs: KeyPairType[]; totalRecords: number }> {
     logger.info('List key-pairs:', { credentialsId, region });
 
     let kpList: Array<KeyPairType> = [];
@@ -340,8 +347,9 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
             return { id, name };
         });
     }
+    const totalRecords = kpList.length;
 
-    return { keyPairs: kpList };
+    return { keyPairs: kpList, totalRecords };
 }
 
 export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstanceTypes };
