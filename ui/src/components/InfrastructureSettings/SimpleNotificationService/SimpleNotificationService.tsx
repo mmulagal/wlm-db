@@ -27,7 +27,7 @@ const SimpleNotificationService = () => {
                 <div className={CommonStyles.setHeaderStyle}>
                     <div>Enabled</div>
                     <div className={CommonStyles.separator} />
-                    <div>{selectedARNValue?.label}</div>
+                    <div className={styles.headingValue}>{selectedARNValue?.label}</div>
                 </div>
             );
         }
