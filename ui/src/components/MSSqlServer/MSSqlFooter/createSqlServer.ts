@@ -10,6 +10,7 @@ import {
 } from '../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../utils/types/mssqlTypes';
+import { dbPassVal, fsxPassVal } from '../../../utils/utilityFunctions';
 
 const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
@@ -189,7 +190,9 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     }
 
     //Proceed for post call
-    if (!vpcStateValue && !azStateValue && !dbCredStateValue && !adStateValue && !fsxStateValue) {
+    if (!vpcStateValue && !azStateValue && !dbCredStateValue && !adStateValue 
+        && !fsxStateValue && !dbPassVal(state.mssqlForm.dbCredentials?.password)
+        && !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)) {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {

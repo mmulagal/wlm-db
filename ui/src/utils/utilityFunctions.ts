@@ -1,6 +1,7 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
+import { GENERAL } from './appConstants';
 import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Subnets } from './types/mssqlTypes';
 
@@ -99,4 +100,46 @@ export const formatVpcSubnetsData = (data: {subnets: Subnets[]}) => {
         }
     })
     return azObj;
+};
+
+
+export const dbPassVal = (password: string) => {
+    if (password.length) {
+        const categories = [
+            /[A-Z]/, // Latin uppercase letters
+            /[a-z]/, // Latin lowercase letters
+            /[0-9]/, // Base 10 digits
+            /[!$#%]/ // Non-alphanumeric characters
+        ];
+
+        const metCategories = categories.filter(category => category.test(password));
+
+        if (password.length >= 8 && metCategories.length >= 3) {
+            return '';
+        } else {
+            return GENERAL.PASSWORD_ERROR_CHECK;
+        }
+    } else {
+        return '';
+    }
+};
+
+
+export const fsxPassVal = (password: string) => {
+    if (password.length) {
+        // Criteria checks
+        const isAtLeastEightChars = password.length >= 8;
+        const hasAtLeastOneNumber = /[0-9]/.test(password);
+        const hasAtLeastTwoAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 2;
+        const hasInvalidCombination =
+            !password.includes('Ctrl-c') && !password.includes('Ctrl-d') && !password.includes('^D');
+
+        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastTwoAlphabetic && hasInvalidCombination) {
+            return '';
+        } else {
+            return GENERAL.PASSWORD_ERROR_CHECK;
+        }
+    } else {
+        return '';
+    }
 };
