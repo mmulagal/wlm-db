@@ -2,11 +2,11 @@ import { Button } from "@netapp/design-system";
 import { useAppSelector } from "../../store/storeHooks";
 import { GENERAL } from "../../utils/appConstants";
 import styles from "./CloudFormation.module.scss";
-import { createMssqlPayload } from "../MSSqlServer/MSSqlFooter/createSqlServer";
+import { handleCreateSQLServer } from "../MSSqlServer/MSSqlFooter/createSqlServer";
 import { useCreateSqlTemplateMutation } from "../../utils/apiService";
 import { useDispatch } from "react-redux";
 import { setIsLoading } from "../../store/mssql/msSqlActionSlice";
-import { addNotification } from "../../store/notificationSlice";
+import { addNotification, NOTIFICATION_TYPES } from "../../store/notificationSlice";
 
 const CloudFormation = () => {
   const dispatch = useDispatch();
@@ -18,7 +18,7 @@ const CloudFormation = () => {
   const [createSqlTemplate] = useCreateSqlTemplateMutation();
 
   const handleTemplateView = () => {
-    const payload = createMssqlPayload(state);
+    const payload = handleCreateSQLServer(state, dispatch);
     if(payload){
         dispatch(setIsLoading(true));
         createSqlTemplate({credentialId: selectedCredId, region: selectedRegionCode, payload: payload})
@@ -27,9 +27,9 @@ const CloudFormation = () => {
             const url = data?.data?.cloudFormationUrl;
             const warning = data?.data?.warningMessage;
             if(warning && !url){
-              dispatch(addNotification({ notificationType: 'warning', message: warning }));
+              dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: warning }));
             } else if(warning && url){
-              dispatch(addNotification({ notificationType: 'warning', message: 
+              dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: 
               <>
                 {warning}. {GENERAL.CLOUD_FORMATION_URL_TEXT} <Button Component="button" variant="text" 
                 onClick={() => window.open(url, '_blank', 'noopener')}>URL</Button>
