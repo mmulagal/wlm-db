@@ -59,8 +59,10 @@ function initialize() {
     log4js.configure(configuration);
 }
 
+initialize();
+
 export default function getLogger(category: 'server' | 'got' | 'simulator' | 'access' = 'server') {
     return log4js.getLogger(category);
 }
 
-initialize();
+export { hideSecretsValues };

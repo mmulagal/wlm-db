@@ -7,4 +7,11 @@
         width: 396px;
         margin-top: 32px;
     }
+
+    .headingValue {
+        width: 550px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }

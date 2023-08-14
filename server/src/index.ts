@@ -1,9 +1,6 @@
-// import { initiateTracer } from './utils/tracer';
-
-// await initiateTracer();
-
 import config from 'config';
 import randomize from 'randomatic';
+import './utils/tracer';
 import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import compress from '@fastify/compress';
@@ -11,10 +8,10 @@ import helmet from '@fastify/helmet';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import sensible from '@fastify/sensible';
+import SwaggerParser from '@apidevtools/swagger-parser';
 import getLogger from './utils/logger';
 import {
     ACCOUNT_ID,
-    AGENT_ID,
     API_PATH_HEALTH,
     API_TITLE,
     HEADERS,
@@ -29,6 +26,7 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 
@@ -44,6 +42,16 @@ const API_PREFIX_PATH = 'wlmdb';
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
 process.on('uncaughtException', err => logger.error('Uncaught exception was thrown', err.message));
+
+async function validateSchema() {
+    logger.info('Validating schema');
+    try {
+        await SwaggerParser.validate(`http://${host}:${port}/${API_PREFIX_PATH}/documentation/yaml`);
+        logger.info('Schema is valid!!!');
+    } catch (err) {
+        logger.error(err);
+    }
+}
 
 interface Params {
     accountId: string;
@@ -154,7 +162,7 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID]: workspaceId, [HEADERS.AGENT_ID]: agentId },
+                    headers: { authorization, [HEADERS.WORKSPACE_ID]: workspaceId },
                     params: { accountId },
                     id: requestId
                 } = request;
@@ -163,7 +171,7 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
-                setAsyncLocalStorageResource(AGENT_ID, agentId);
+                createAuditGroup(request, reply);
                 done();
             });
         }
@@ -177,10 +185,9 @@ const app = fastify({
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
     .addHook('onSend', async (request, reply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
-        // TO add audit logging
-        // if (shouldCreateOrUpdateAudit(request.url, request.method)) {
-        //     updateAuditGroup(reply, payload);
-        // }
+        if (reply.statusCode !== 202) {
+            updateAuditGroup(request, payload);
+        }
         return payload;
     });
 
@@ -191,4 +198,5 @@ app.listen({ port, host }, err => {
     }
     logger.info(`Server listening on ${host}:${port}`);
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
+    validateSchema();
 });
