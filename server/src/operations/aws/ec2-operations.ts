@@ -13,7 +13,7 @@ import {
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { Static } from '@sinclair/typebox';
+import { Static } from '@fastify/type-provider-typebox';
 import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();

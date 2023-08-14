@@ -5,7 +5,7 @@ const logger = getLogger();
 interface AdsInterface {
     id?: string;
     dnsIpAddress?: Array<string>;
-    launchTime?: Date;
+    launchTime?: number;
     domainName?: string;
     shortName?: string;
     ssoEnabled?: boolean;
@@ -30,7 +30,7 @@ async function getAdsList(credentialsId: string, region: string) {
         directories = directoryDesc.map(perDs => ({
             id: perDs.DirectoryId,
             dnsIpAddress: perDs.DnsIpAddrs,
-            launchTime: perDs.LaunchTime,
+            launchTime: perDs.LaunchTime?.getTime(),
             domainName: perDs.Name,
             shortName: perDs.ShortName,
             ssoEnabled: perDs.SsoEnabled,

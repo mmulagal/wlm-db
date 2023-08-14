@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { Type } from '@fastify/type-provider-typebox';
 
 // AWS Request Params
 const AwsParams = Type.Object({
@@ -117,7 +117,7 @@ const AdsResponse = Type.Object({
         Type.Object({
             id: Type.Optional(Type.String()),
             dnsIpAddress: Type.Optional(Type.Array(Type.String())),
-            launchTime: Type.Optional(Type.Date()),
+            launchTime: Type.Optional(Type.Number()),
             domainName: Type.Optional(Type.String()),
             shortName: Type.Optional(Type.String()),
             ssoEnabled: Type.Optional(Type.Boolean()),

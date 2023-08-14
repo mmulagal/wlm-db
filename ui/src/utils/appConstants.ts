@@ -15,6 +15,7 @@ export const SELECT_CONFIG = {
 };
 
 export const GENERAL = {
+    AWS_CREDENTIALS: 'AWS credentials',
     ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
@@ -27,6 +28,7 @@ export const GENERAL = {
     DATABASE_CREDENTIALS: 'Database credentials',
     CONNECTIVITY: 'Connectivity',
     KEY_PAIR: 'Key pair',
+    KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
     INSTANCE_TYPE: 'Instance type',
@@ -40,7 +42,7 @@ export const GENERAL = {
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Save form as CloudFormation',
     AWS_SETTINGS: 'AWS settings',
-    VIEW_API_REQUEST: 'View Api request',
+    VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
@@ -48,8 +50,25 @@ export const GENERAL = {
     CLOSE: 'Close',
     API_REQUEST: 'API request',
     Cancel: 'Cancel',
-    DEFAULT_AWS_ACCOUNT_SUB_TEXT:
-        'No AWS credentials are available to create Microsoft SQL server. In order to continue you have two options:',
+    DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create Microsoft SQL server.',
+    DEFAULT_AWS_ACCOUNT_SECOND_LINE:
+        'Ensure a seamless deployment of your Microsoft SQL Server by configuring your AWS credentials.',
+    DEFAULT_AWS_ACCOUNT_THIRD_LINE:
+        'Follow the steps below to enable us to create the database for you or generate a CloudFormation stack for manual operation.',
+    STEP_ONE: 'Step 1:',
+    STEP_TWO: 'Step 2:',
+    NAVIGATE_TO: 'Navigate to',
+    STEP_TWO_TEXT:
+        'Add the necessary credentials that will enable us to create the Microsoft SQL Server database or generate a CloudFormation code for deployment.',
+    PAGE: 'page',
+    OPTIONS_TEXT: 'You have two distinct options to choose from, depending on your preferences:',
+    OPTION_ONE:
+        'Option 1: Minimum permissions policy Assign a policy with the minimum permissions required to populate AWS resources in the below form.',
+    OPTION_TWO:
+        'Option 2: Full permissions policy for a comprehensive deployment experience, assign a policy with all the permissions necessary to successfully deploy the stack. This option is recommended if you prefer a hands-off approach and want us to handle all deployment aspects.',
+    FOR_MORE_INFO: 'For more information:',
+    NOTE_TEXT:
+        'Note: Please be aware that the deployment process is estimated to take around 2 hours. Plan accordingly to ensure a smooth and uninterrupted deployment experience.',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP. For more information, visit ',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
@@ -60,6 +79,7 @@ export const GENERAL = {
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials',
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
+    MULTI_AZ_CHECK_MESSAGE: 'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Generated security group',
@@ -100,6 +120,7 @@ export const GENERAL = {
     LICENSE_TEXT:
         'Use an AWS provided license-included AMI with Windows and SQL Server installed or You can bring your own SQL licenses (BYOL) through your custom AMI or use license included custom AMI. If you use a custom AMI, ensure that it meets all required install parameters.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
+    LICENSE_ID: 'License ID',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
     SELECT_AMI_ID: 'Select AMI ID',
@@ -139,6 +160,11 @@ export const GENERAL = {
     FSX_PASSWORD: 'FSxN password',
     NOTICE: 'Notice:',
     NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
+    PASSWORD_FSX_1: 'The password must be at least eight characters long.',
+    PASSWORD_FSX_2: 'The password must contain at least one number.',
+    PASSWORD_FSX_3: 'The password must contain at least two alphabetic characters.',
+    PASSWORD_FSX_4:
+        'The password must not contain the Ctrl-c or Ctrl-d key combination or the two-character string ^D.',
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
@@ -159,6 +185,17 @@ export const GENERAL = {
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
+    //DB credential
+    PASSWORD_CRED_1: "The password doesn't contain the account name of the user.",
+    PASSWORD_CRED_2: '- The password is at least eight characters long.',
+    PASSWORD_CRED_3: '- The password contains characters from three of the following four categories:',
+    PASSWORD_CRED_LI_1: 'Latin uppercase letters (A through Z)',
+    PASSWORD_CRED_LI_2: 'Latin lowercase letters (a through z)',
+    PASSWORD_CRED_LI_3: 'o Base 10 digits (0 through 9)',
+    PASSWORD_CRED_LI_4:
+        'Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%).',
+    PASSWORD_CRED_4:
+        'Passwords can be up to 128 characters long. Use passwords that are as long and complex as possible.',
     //Encryption
     ENCRYPTION_TEXT:
         'Key that will be used to protect the key used to encrypt this database storage (FSxN). You can select from master keys in your account or type/paste the ARN of a key from a different account.',
@@ -181,5 +218,7 @@ export const GENERAL = {
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
     SELECT_ANY_ACCOUNT: 'Please select any account',
-    SELECT_ANY_VPC: 'Please select any VPC'
+    SELECT_ANY_VPC: 'Please select any VPC',
+    CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
+    PASSWORD_ERROR_CHECK: 'Check password criteria'
 };

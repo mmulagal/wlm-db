@@ -7,16 +7,19 @@ import {
     useAccordionContext
 } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
-import { generateOptionType } from '../../../utils/utilityFunctions';
-import { GENERAL } from '../../../utils/appConstants';
 import { optionType } from '@netapp/design-system/dist/components/Select';
-import styles from './AwsAccount.module.scss';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useDispatch } from 'react-redux';
+
+import { dbPassVal, fsxPassVal, generateOptionType } from '../../../utils/utilityFunctions';
+import { GENERAL } from '../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../store/mssql/mssqlFormSlice';
-import { useDispatch } from 'react-redux';
 import { setCreatePressed } from '../../../store/mssql/msSqlActionSlice';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../utils/consts';
+
+import styles from './AwsAccount.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
@@ -51,23 +54,29 @@ const AwsAccount = () => {
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
+    const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
+    const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
 
     useEffect(() => {
+        const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
+        const fsxPasswordValPass = !fsxPassVal(fsxCredPassword) ? true : false;
         if (
             isCreatePresed &&
             (!isVPCNotFilled ||
                 !isAZNotFilled ||
-                !isDBCredPassword ||
+                !isDBCredPassword || 
+                !dbPasswordValPass ||
                 !isActiveDirectoryFilled ||
                 !isFsxNNameFilled ||
+                !fsxPasswordValPass ||
                 !isProperDBName)
         ) {
             accordionContext({
                 2: !isVPCNotFilled ? true : false,
                 3: !isAZNotFilled ? true : false,
-                11: !isDBCredPassword ? true : false,
+                11: !isDBCredPassword || !dbPasswordValPass ? true : false,
                 13: !isActiveDirectoryFilled ? true : false,
-                15: !isFsxNNameFilled ? true : false,
+                15: !isFsxNNameFilled || !fsxPasswordValPass ? true : false,
                 10: !isProperDBName ? true : false
             });
             dispatch(setCreatePressed(false));
@@ -81,7 +90,9 @@ const AwsAccount = () => {
         isAZNotFilled,
         isActiveDirectoryFilled,
         isFsxNNameFilled,
-        isProperDBName
+        isProperDBName,
+        dbCredPassword,
+        fsxCredPassword
     ]);
 
     //Function to generate the options for Select Field
@@ -111,8 +122,7 @@ const AwsAccount = () => {
 
     // To open new tab with credential page on click of credential link
     const openCredentialTab = () => {
-        const url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? 
-                    CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+        const url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         window.open(url, '_blank', 'noopener');
     };
 
@@ -122,29 +132,60 @@ const AwsAccount = () => {
                 isLoading={credentialLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="1"
-                title={<div className={CommonStyles.title}>AWS account</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.AWS_CREDENTIALS}</div>}
             >
                 <AccordionCardContent>
                     <Typography>
                         {noAccount ? (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
-                                <ul>
-                                    <li>
-                                        {GENERAL.GO_TO_THE}{' '}
-                                        <span>
-                                            <Button
-                                                Component="button"
-                                                onClick={openCredentialTab}
-                                                variant="text"
-                                            >
-                                                {GENERAL.CREDENTIALS}
-                                            </Button>
-                                        </span>
-                                        &nbsp; {GENERAL.AWS_DEFAULT_LIST_FIRST}
-                                    </li>
-                                    <li>{GENERAL.AWS_ACCOUNT_DEFAULT_LIST_TWO}</li>
-                                </ul>
+                                <Typography variant="Regular_14" className={styles.lineHeight}>
+                                    {GENERAL.DEFAULT_AWS_ACCOUNT_SECOND_LINE}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.thirdLine}>
+                                    {GENERAL.DEFAULT_AWS_ACCOUNT_THIRD_LINE}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.lineHeight}>
+                                    <span className={styles.bold}>{GENERAL.STEP_ONE}</span> {GENERAL.NAVIGATE_TO}{' '}
+                                    <span>
+                                        <Button Component="button" onClick={openCredentialTab} variant="text">
+                                            {GENERAL.CREDENTIALS}
+                                        </Button>
+                                    </span>{' '}
+                                    {GENERAL.PAGE}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.thirdLine}>
+                                    <span className={styles.bold}>{GENERAL.STEP_TWO}</span> {GENERAL.STEP_TWO_TEXT}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.lineHeight}>
+                                    {GENERAL.OPTIONS_TEXT}
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.list}>
+                                    <div className={styles.listItem}>
+                                        <Bullet />
+                                        <Typography variant="Regular_14" className={styles.textWidth}>
+                                            {GENERAL.OPTION_ONE}
+                                        </Typography>
+                                    </div>
+                                    <div className={styles.listItem}>
+                                        <Bullet />
+                                        <Typography variant="Regular_14" className={styles.textWidth}>
+                                            {GENERAL.OPTION_TWO}
+                                        </Typography>
+                                    </div>
+                                </Typography>
+
+                                <Typography variant="Regular_14" className={styles.info}>
+                                    {GENERAL.FOR_MORE_INFO}{' '}
+                                    <span>
+                                        <Button Component="button" variant="link">
+                                            {GENERAL.MS_SQL_REQUIRED}
+                                        </Button>
+                                    </span>
+                                </Typography>
+                                <Typography variant="Regular_14" className={styles.noteText}>
+                                    {GENERAL.NOTE_TEXT}
+                                </Typography>
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>

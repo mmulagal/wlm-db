@@ -75,7 +75,7 @@ export interface AmisRes {
 }
 
 export interface SnsTopicsRes {
-    Topics: [
+    topics: [
         {
             topicArn: string;
         }

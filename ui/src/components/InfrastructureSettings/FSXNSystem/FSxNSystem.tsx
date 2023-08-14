@@ -11,7 +11,7 @@ import {
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { fsxPassVal, generateOptionType } from '../../../utils/utilityFunctions';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -25,6 +25,7 @@ import {
     setFsxNExistingUserName
 } from '../../../store/mssql/mssqlFormSlice';
 import { FSXADMIN } from '../../../utils/consts';
+import AccordionError from '../../../common/AccordionError/AccordionError';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -43,6 +44,8 @@ const FSxNSystem = () => {
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
+
+    const [password, setPassword] = useState('');
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
@@ -74,7 +77,7 @@ const FSxNSystem = () => {
                     {GENERAL.SELECT_ANY_ACCOUNT}
                 </Typography>
             );
-        } else if(!selectedVPCData) {
+        } else if (!selectedVPCData) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_ANY_VPC}
@@ -86,6 +89,8 @@ const FSxNSystem = () => {
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
             if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
+            } else if (fsxPassVal(password)) {
+                return <AccordionError />;
             } else {
                 return <Typography variant="Regular_14">{selectedFsxnName}</Typography>;
             }
@@ -93,11 +98,14 @@ const FSxNSystem = () => {
             //Checking for the existing option
             if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
                 return <ActionRequired />;
+            } else if (fsxPassVal(password)) {
+                return <AccordionError />;
             } else {
                 return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
             }
         }
     };
+    
     return (
         <div className={styles.fsx}>
             <AccordionCard
@@ -184,7 +192,19 @@ const FSxNSystem = () => {
                             />
                             <PasswordField
                                 label={GENERAL.FSX_PASSWORD}
+                                info={
+                                    <Typography variant="Regular_13" className={styles.infoMsg}>
+                                        <ul>
+                                            <li>{GENERAL.PASSWORD_FSX_1}</li>
+                                            <li>{GENERAL.PASSWORD_FSX_2}</li>
+                                            <li>{GENERAL.PASSWORD_FSX_3}</li>
+                                            <li>{GENERAL.PASSWORD_FSX_4}</li>
+                                        </ul>
+                                    </Typography>
+                                }
+                                error={fsxPassVal(password)}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));
                                 }}
                                 value={selectedFsxnPassword}

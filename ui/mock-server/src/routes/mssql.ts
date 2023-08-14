@@ -4,15 +4,15 @@ import { CreateMssqlTemplateRes, DeployMssqlTemplate } from '../types/mssqlTypes
 const router = require('express').Router();
 
 //Get Mssql post API mock response
-router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/template/create`, async (req: {}, res: CreateMssqlTemplateRes) => {
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/cloudformation/url`, async (req: {}, res: CreateMssqlTemplateRes) => {
     const resData = {
         cloudFormationUrl: 'cloud_formation_url',
-        warningMessage: 'warning_message'
+        warningMessage: 'Required IAM permissions are not available to create the cloud formation template'
     }
     generateResponse(res, 200, resData);
 });
 
-router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/template/deploy`, async (req: {}, res: DeployMssqlTemplate) => {
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/cloudformation/stack`, async (req: {}, res: DeployMssqlTemplate) => {
     const resData = {
         cloudFormationStackId: 'stack-123'
     }
