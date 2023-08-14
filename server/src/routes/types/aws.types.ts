@@ -114,7 +114,7 @@ const AdsResponse = Type.Object({
         Type.Object({
             id: Type.Optional(Type.String()),
             dnsIpAddress: Type.Optional(Type.Array(Type.String())),
-            launchTime: Type.Optional(Type.String()),
+            launchTime: Type.Optional(Type.Number()),
             domainName: Type.Optional(Type.String()),
             shortName: Type.Optional(Type.String()),
             ssoEnabled: Type.Optional(Type.Boolean()),
