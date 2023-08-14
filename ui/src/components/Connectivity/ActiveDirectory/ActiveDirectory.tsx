@@ -157,6 +157,19 @@ const ActiveDirectory = () => {
                                 isSearchable={true}
                                 options={generateActiveDirectories}
                                 className={styles.textField}
+                                error={!isADNotFilled && !selectedADDomainName ? GENERAL.ACTION_REQUIRED : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                             />
 
                             <TextField

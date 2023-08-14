@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './License.module.scss';
@@ -25,6 +26,8 @@ const License = () => {
     const licenseType = useAppSelector(state => state.mssqlForm.license.selectedLicenseType);
     const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
+
+    const isLicenseFilled = useAppSelector(state => state.msSqlAction.licenseIdSelected);
     const [licenseSelect, setLicenseSelect] = useState(licenseType);
 
     // Custom AMI list will be blank for as it is not supported in phase 1
@@ -114,6 +117,20 @@ const License = () => {
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     label={GENERAL.LICENSE_ID}
+                                    error={!isLicenseFilled ? GENERAL.ACTION_REQUIRED : ''}
+                                    //@ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            //@ts-ignore
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--error'
+                                            }}
+                                        />
+                                    }
                                     placeholder={GENERAL.SELECT_AMI_ID}
                                     isClearable={false}
                                     defaultValue={selectedLicenseId}
