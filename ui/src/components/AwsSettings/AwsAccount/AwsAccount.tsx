@@ -74,9 +74,9 @@ const AwsAccount = () => {
             accordionContext({
                 2: !isVPCNotFilled ? true : false,
                 3: !isAZNotFilled ? true : false,
-                11: (!isDBCredPassword ? true : false) || (!dbPasswordValPass ? true : false),
+                11: !isDBCredPassword || !dbPasswordValPass ? true : false,
                 13: !isActiveDirectoryFilled ? true : false,
-                15: (!isFsxNNameFilled ? true : false) || (!fsxPasswordValPass ? true : false),
+                15: !isFsxNNameFilled || !fsxPasswordValPass ? true : false,
                 10: !isProperDBName ? true : false
             });
             dispatch(setCreatePressed(false));
