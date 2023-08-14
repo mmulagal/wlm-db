@@ -8,6 +8,7 @@ const initialState: any = {
     activeDirectorySelected: true,
     fsxNNameSelected: true,
     dbNameSelected: true,
+    licenseIdSelected: true,
     isLoading: false
 };
 
@@ -38,6 +39,9 @@ const msSqlActionSlice = createSlice({
         },
         setIsLoading(state, action: PayloadAction<any>) {
             state.isLoading = action.payload;
+        },
+        setLicenseIdValue(state, action: PayloadAction<any>) {
+            state.licenseIdSelected = action.payload;
         }
     }
 });
@@ -50,6 +54,7 @@ export const {
     setActiveDirectoryValue,
     setFSXNNameValue,
     setDBNameValue,
-    setIsLoading
+    setIsLoading,
+    setLicenseIdValue
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;
