@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useDispatch } from 'react-redux';
 
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, generateOptionType } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -54,23 +54,29 @@ const AwsAccount = () => {
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
+    const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
+    const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
 
     useEffect(() => {
+        const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
+        const fsxPasswordValPass = !fsxPassVal(fsxCredPassword) ? true : false;
         if (
             isCreatePresed &&
             (!isVPCNotFilled ||
                 !isAZNotFilled ||
-                !isDBCredPassword ||
+                !isDBCredPassword || 
+                !dbPasswordValPass ||
                 !isActiveDirectoryFilled ||
                 !isFsxNNameFilled ||
+                !fsxPasswordValPass ||
                 !isProperDBName)
         ) {
             accordionContext({
                 2: !isVPCNotFilled ? true : false,
                 3: !isAZNotFilled ? true : false,
-                11: !isDBCredPassword ? true : false,
+                11: (!isDBCredPassword ? true : false) || (!dbPasswordValPass ? true : false),
                 13: !isActiveDirectoryFilled ? true : false,
-                15: !isFsxNNameFilled ? true : false,
+                15: (!isFsxNNameFilled ? true : false) || (!fsxPasswordValPass ? true : false),
                 10: !isProperDBName ? true : false
             });
             dispatch(setCreatePressed(false));
@@ -84,7 +90,9 @@ const AwsAccount = () => {
         isAZNotFilled,
         isActiveDirectoryFilled,
         isFsxNNameFilled,
-        isProperDBName
+        isProperDBName,
+        dbCredPassword,
+        fsxCredPassword
     ]);
 
     //Function to generate the options for Select Field
