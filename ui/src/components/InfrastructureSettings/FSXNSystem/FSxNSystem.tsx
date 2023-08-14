@@ -11,7 +11,7 @@ import {
 import ActionRequired from '../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { fsxPassVal, generateOptionType } from '../../../utils/utilityFunctions';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -89,7 +89,7 @@ const FSxNSystem = () => {
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
             if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
-            } else if (checkForPasswordError()) {
+            } else if (fsxPassVal(password)) {
                 return <AccordionError />;
             } else {
                 return <Typography variant="Regular_14">{selectedFsxnName}</Typography>;
@@ -98,30 +98,14 @@ const FSxNSystem = () => {
             //Checking for the existing option
             if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
                 return <ActionRequired />;
-            } else if (checkForPasswordError()) {
+            } else if (fsxPassVal(password)) {
                 return <AccordionError />;
             } else {
                 return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
             }
         }
     };
-
-    const checkForPasswordError = () => {
-        if (password.length) {
-            // Criteria checks
-            const isAtLeastEightChars = password.length >= 8;
-            const hasAtLeastOneNumber = /[0-9]/.test(password);
-            const hasAtLeastTwoAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 2;
-            const hasInvalidCombination =
-                !password.includes('Ctrl-c') && !password.includes('Ctrl-d') && !password.includes('^D');
-
-            if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastTwoAlphabetic && hasInvalidCombination) {
-                return '';
-            } else {
-                return GENERAL.PASSWORD_ERROR_CHECK;
-            }
-        }
-    };
+    
     return (
         <div className={styles.fsx}>
             <AccordionCard
@@ -218,7 +202,7 @@ const FSxNSystem = () => {
                                         </ul>
                                     </Typography>
                                 }
-                                error={checkForPasswordError()}
+                                error={fsxPassVal(password)}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));

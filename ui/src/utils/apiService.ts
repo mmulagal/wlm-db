@@ -30,19 +30,15 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
 };
 
 //Build the baseUrl based on the environment
-const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = retry(async (args, api, extraOptions) => {
+const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (args, api, extraOptions) => {
     const baseUrl = buildBaseUrl(api);
     const url = typeof args === 'string' ? args : args.url;
     const adjustedUrl = `${baseUrl}/${url}`;
     const adjustedArgs =
         typeof args === 'string' ? adjustedUrl : {...args, url: adjustedUrl};
     // provide the amended url and other params to the raw base query
-    const result = await rawBaseQuery(adjustedArgs, api, extraOptions)
-    if (result.error?.status !== 504) {
-        retry.fail(result.error)
-    }
-    return result
-}, {maxRetries: API_MAX_RETRIES});
+    return rawBaseQuery(adjustedArgs, api, extraOptions);
+};
 
 
 export const awsApi = createApi({
