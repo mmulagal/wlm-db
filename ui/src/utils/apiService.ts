@@ -1,6 +1,7 @@
-import {BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError} from '@reduxjs/toolkit/query/react';
+import {BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError, retry} from '@reduxjs/toolkit/query/react';
 import {BaseQueryApi} from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { RootState } from '../store/store';
+import { API_MAX_RETRIES } from './consts';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -29,15 +30,20 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
 };
 
 //Build the baseUrl based on the environment
-const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (args, api, extraOptions) => {
+const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = retry(async (args, api, extraOptions) => {
     const baseUrl = buildBaseUrl(api);
     const url = typeof args === 'string' ? args : args.url;
     const adjustedUrl = `${baseUrl}/${url}`;
     const adjustedArgs =
         typeof args === 'string' ? adjustedUrl : {...args, url: adjustedUrl};
     // provide the amended url and other params to the raw base query
-    return rawBaseQuery(adjustedArgs, api, extraOptions);
-};
+    const result = await rawBaseQuery(adjustedArgs, api, extraOptions)
+    if (result.error?.status !== 504) {
+        retry.fail(result.error)
+    }
+    return result
+}, {maxRetries: API_MAX_RETRIES});
+
 
 export const awsApi = createApi({
     reducerPath: 'aws',
