@@ -119,9 +119,7 @@ export const dbPassVal = (password: string) => {
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
         }
-    } else {
-        return '';
-    }
+    } 
 };
 
 
@@ -139,7 +137,5 @@ export const fsxPassVal = (password: string) => {
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
         }
-    } else {
-        return '';
-    }
+    } 
 };
