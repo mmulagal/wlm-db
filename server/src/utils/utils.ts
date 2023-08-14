@@ -3,6 +3,10 @@
  * These functions can be re-used at different places and act as helper functions
  */
 import createError from 'http-errors';
+import { getAsyncLocalStorageResource } from './async-local-storage';
+import { trimEnd, trimStart, round } from 'lodash-es';
+import jwt from 'jsonwebtoken';
+
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
@@ -13,11 +17,11 @@ import {
     WLMDB,
     EC2_ROLE_NAME,
     TEMPLATE_CONFIGURATION_MAPPING,
-    WLM_ASSETS
+    WLM_ASSETS,
+    USER_TOKEN
 } from './consts';
 
-import getLogger from './logger';
-import { round } from 'lodash-es';
+import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -104,6 +108,15 @@ function generateRandomNumberInRange(min: number, max: number) {
     return Math.floor(min + Math.random() * (max - min + 1));
 }
 
+// Get xAgentId from bearer token
+function getSubjectFromBearerToken() {
+    const token = getAsyncLocalStorageResource<string>(USER_TOKEN);
+    const tokenWithoutBearerPrefix = trimStart(token, 'Bearer').trim();
+    const tokenWithoutBearerSuffix = trimEnd(tokenWithoutBearerPrefix, 'clients').trim();
+    const decodedToken = jwt.decode(tokenWithoutBearerSuffix, { complete: true });
+    return decodedToken?.payload.sub;
+}
+
 async function formatTemplateParameters(
     credentialsId: string,
     region: string,
@@ -174,4 +187,12 @@ async function formatTemplateParameters(
 
     return { stackName: stackName, templateParameters: templateParams };
 }
-export { filterSqlAmis, isVpcQuotaReached, isCfStackQuotaReached, generateFsxParams, formatTemplateParameters };
+export {
+    filterSqlAmis,
+    isVpcQuotaReached,
+    isCfStackQuotaReached,
+    generateFsxParams,
+    formatTemplateParameters,
+    getSubjectFromBearerToken,
+    hideSecretsValues
+};

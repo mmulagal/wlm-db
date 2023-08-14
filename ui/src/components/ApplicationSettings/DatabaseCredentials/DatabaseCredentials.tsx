@@ -12,6 +12,7 @@ import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 import AccordionError from '../../../common/AccordionError/AccordionError';
+import { dbPassVal } from '../../../utils/utilityFunctions';
 
 const DatabaseCredentials = () => {
     const [userName, setUserName] = useState('');
@@ -23,7 +24,7 @@ const DatabaseCredentials = () => {
     const setHeader = () => {
         if (!userName || !password) {
             return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
-        } else if (checkForErrorPassword()) {
+        } else if (dbPassVal(password)) {
             return <AccordionError />;
         } else {
             return <Typography variant="Regular_14">{userName}</Typography>;
@@ -61,24 +62,6 @@ const DatabaseCredentials = () => {
         );
     };
 
-    const checkForErrorPassword = () => {
-        if (password.length) {
-            const categories = [
-                /[A-Z]/, // Latin uppercase letters
-                /[a-z]/, // Latin lowercase letters
-                /[0-9]/, // Base 10 digits
-                /[!$#%]/ // Non-alphanumeric characters
-            ];
-
-            const metCategories = categories.filter(category => category.test(password));
-
-            if (password.length >= 8 && metCategories.length >= 3) {
-                return '';
-            } else {
-                return GENERAL.PASSWORD_ERROR_CHECK;
-            }
-        }
-    };
     return (
         <div className={styles.credentials}>
             <AccordionCard
@@ -100,7 +83,7 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
-                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : '' || checkForErrorPassword()}
+                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : '' || dbPassVal(password)}
                                 info={tooltipText()}
                                 //@ts-ignore
                                 isErrorPrefixHidden

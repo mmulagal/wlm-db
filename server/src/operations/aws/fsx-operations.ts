@@ -1,6 +1,6 @@
 import { describeFSxFileSystems, describeFSxVolumes } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
-import { Static } from '@sinclair/typebox';
+import { Static } from '@fastify/type-provider-typebox';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
 import { FSX_FILESYSTEM_TYPE, FSX_STORAGE_TYPE, AWS_RESOURCE_NAME_TAG } from '../../utils/consts';
 
