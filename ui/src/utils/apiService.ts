@@ -1,6 +1,7 @@
 import {BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError, retry} from '@reduxjs/toolkit/query/react';
 import {BaseQueryApi} from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { RootState } from '../store/store';
+import { API_MAX_RETRIES } from './consts';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -41,7 +42,7 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
         retry.fail(result.error)
     }
     return result
-}, {maxRetries: 2});
+}, {maxRetries: API_MAX_RETRIES});
 
 
 export const awsApi = createApi({
