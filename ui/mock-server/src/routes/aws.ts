@@ -15,7 +15,7 @@ import fsxnData from '../data/fsxn.json';
 const router = require('express').Router();
 
 //Get regions mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/aws/fsx/regions`, async (req: {}, res: RegionRes) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/fsx/regions`, async (req: {}, res: RegionRes) => {
     const retData = regionsData;
     generateResponse(res, 200, retData);
 });
@@ -51,7 +51,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/kmsKeys`, 
 });
 
 // Get Key Pair mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/keypairs`, async (req: {}, res: KeyPairRes) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/keyPairs`, async (req: {}, res: KeyPairRes) => {
     const retData = keyPairData;
     generateResponse(res, 200, retData);
 });
@@ -63,7 +63,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instanceTy
 });
 
 // Get FSxN mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/vpcs/:vpcId/fsxs`, async (req: {}, res: FsxnRes) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/fsx/regions/:region/vpcs/:vpcId/filesystems`, async (req: {}, res: FsxnRes) => {
     const retData = fsxnData;
     generateResponse(res, 200, retData);
 });

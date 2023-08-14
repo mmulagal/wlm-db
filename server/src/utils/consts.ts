@@ -26,7 +26,6 @@ const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
     : config.get<string>('urls.auth0');
 
 enum HEADERS {
-    AGENT_ID = 'x-agent-id',
     AUTHORIZATION = 'authorization',
     REQUEST_ID = 'x-request-id',
     SERVICE_REQUEST_ID = 'x-service-request-id',
@@ -39,7 +38,8 @@ enum HEADERS {
     KEY = 'x-key',
     REGION = 'x-region',
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
-    SIMULATOR = 'x-simulator'
+    SIMULATOR = 'x-simulator',
+    REFERER = 'referer'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -450,6 +450,13 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
 
+// HTTP Request types
+const HTTP_GET = 'GET';
+const HTTP_POST = 'POST';
+const HTTP_DELETE = 'DELETE';
+const HTTP_PUT = 'PUT';
+const HTTP_PATCH = 'PATCH';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -527,5 +534,10 @@ export {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
-    S3_BUCKET_SIGNED_URL_EXPIRTY
+    S3_BUCKET_SIGNED_URL_EXPIRTY,
+    HTTP_GET,
+    HTTP_POST,
+    HTTP_DELETE,
+    HTTP_PUT,
+    HTTP_PATCH
 };

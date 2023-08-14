@@ -44,8 +44,9 @@ const License = () => {
     const generateAMIIdForLicense = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         amiData?.amis?.map((val, idx: number) => {
-            const amiVal = val.imageId;
-            const option = generateOptionType(amiVal, amiVal, '', false, '');
+            const amiVal = val?.imageId;
+            const amiName = val?.name;
+            const option = generateOptionType(amiVal, amiVal, amiName, false, '');
             options.push(option);
         });
         return options;
@@ -112,7 +113,7 @@ const License = () => {
                         {licenseSelect === GENERAL.LICENSE_INCLUDED_AMI && (
                             <div className={styles.handleSelect}>
                                 <SelectField
-                                    label={'License ID'}
+                                    label={GENERAL.LICENSE_ID}
                                     placeholder={GENERAL.SELECT_AMI_ID}
                                     isClearable={false}
                                     defaultValue={selectedLicenseId}
@@ -120,6 +121,7 @@ const License = () => {
                                         dispatch(setSelectedLicenseId(selectedOptions));
                                     }}
                                     isSearchable={generateAMIIdForLicense.length > 5}
+                                    variant="two-lines"
                                     options={generateAMIIdForLicense}
                                 />
                             </div>

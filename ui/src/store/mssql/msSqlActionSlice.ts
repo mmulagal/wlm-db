@@ -7,7 +7,8 @@ const initialState: any = {
     dbCredentialPasswordSelected: true,
     activeDirectorySelected: true,
     fsxNNameSelected: true,
-    dbNameSelected: true
+    dbNameSelected: true,
+    isLoading: false
 };
 
 const msSqlActionSlice = createSlice({
@@ -34,6 +35,9 @@ const msSqlActionSlice = createSlice({
         },
         setDBNameValue(state, action: PayloadAction<any>) {
             state.dbNameSelected = action.payload;
+        },
+        setIsLoading(state, action: PayloadAction<any>) {
+            state.isLoading = action.payload;
         }
     }
 });
@@ -45,6 +49,7 @@ export const {
     setDBCredentialPasswordValue,
     setActiveDirectoryValue,
     setFSXNNameValue,
-    setDBNameValue
+    setDBNameValue,
+    setIsLoading
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;

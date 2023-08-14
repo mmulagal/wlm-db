@@ -1,5 +1,5 @@
 {
-    "Topics": [
+    "topics": [
         {
             "topicArn": "arn:aws:sns:ap-southeast-1:464262061435:LaunchWizardEventForwarder-DO_NOT_MODIFY",
             "topicName": "LaunchWizardEventForwarder-DO_NOT_MODIFY"

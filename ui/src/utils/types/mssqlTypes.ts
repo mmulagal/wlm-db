@@ -95,7 +95,7 @@ export interface MssqlEntities {
         amiError: null;
     };
     getSnsList: {
-        snsData: { Topics?: SNS[] };
+        snsData: { topics?: SNS[] };
         snsLoading: false;
         snsError: null;
     };

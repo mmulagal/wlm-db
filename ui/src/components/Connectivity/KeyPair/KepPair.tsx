@@ -59,6 +59,7 @@ const KeyPair = () => {
             >
                 <AccordionCardContent>
                     <Typography>
+                        <Typography variant="Regular_14">{GENERAL.KEY_PAIR_TEXT}</Typography>
                         <div className={styles.selectField}>
                             <SelectField
                                 label={GENERAL.KEY_PAIR_NAME}

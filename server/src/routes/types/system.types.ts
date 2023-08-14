@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Type, Static } from '@fastify/type-provider-typebox';
 
 const HealthResponse = Type.String();
 
