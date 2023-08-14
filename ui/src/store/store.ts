@@ -1,5 +1,5 @@
 import { configureStore, combineReducers, MiddlewareAPI, isRejectedWithValue, Middleware } from '@reduxjs/toolkit';
-import notificationSlice, { addNotification } from './notificationSlice';
+import notificationSlice, { addNotification, NOTIFICATION_TYPES } from './notificationSlice';
 import { awsApi } from '../utils/apiService';
 import authSlice from './authSlice';
 import appContextSlice from './appContextSlice';
@@ -21,7 +21,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         const errorMsg = action.payload.error || action.payload.data?.message;
-        api.dispatch(addNotification({ notificationType: 'ERROR', message: errorMsg }));
+        api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: errorMsg }));
     }
 
     return next(action);
