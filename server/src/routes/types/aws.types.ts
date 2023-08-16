@@ -60,8 +60,7 @@ const VpcListResponse = Type.Object({
                         description: Type.Optional(Type.String()),
                         vpcId: Type.Optional(Type.String()),
                         ipPermissions: Type.Optional(Type.Any()),
-                        name: Type.Optional(Type.String()),
-                        securityGroupName: Type.Optional(Type.String())
+                        name: Type.Optional(Type.String())
                     })
                 )
             )
@@ -96,8 +95,7 @@ const AmiResponse = Type.Object({
             state: Type.Optional(Type.String()),
             hypervisor: Type.Optional(Type.String())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 //SNS list topics Response
@@ -107,8 +105,7 @@ const SnsResponse = Type.Object({
             topicName: Type.Optional(Type.String()),
             topicArn: Type.Optional(Type.String())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // Active Directory Response
@@ -132,8 +129,7 @@ const AdsResponse = Type.Object({
                 })
             )
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // Regions Request Params
@@ -149,8 +145,7 @@ const FSxRegionsResponse = Type.Object({
             regionCode: Type.String(),
             regionName: Type.String()
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // KMS Keys List Request and Response
@@ -175,8 +170,7 @@ const KeyPairsSchema = Type.Object({
 
 // GET keyPairs schema
 const KeyPairsResponse = Type.Object({
-    keyPairs: Type.Array(KeyPairsSchema),
-    totalRecords: Type.Optional(Type.Number())
+    keyPairs: Type.Array(KeyPairsSchema)
 });
 
 // GET FSx filesystems request parameters
