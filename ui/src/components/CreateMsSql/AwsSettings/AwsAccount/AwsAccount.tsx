@@ -182,7 +182,7 @@ const AwsAccount = () => {
                                 <Typography variant="Regular_14" className={styles.info}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
-                                        <Button Component="button" variant="link">
+                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
                                             {GENERAL.MS_SQL_REQUIRED}
                                         </Button>
                                     </span>
@@ -194,7 +194,7 @@ const AwsAccount = () => {
                         ) : (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
-                                <Button Component="button" variant="link">
+                                <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
                                     {GENERAL.MS_SQL_REQUIRED}
                                 </Button>
                                 <div className={styles.selectField}>
