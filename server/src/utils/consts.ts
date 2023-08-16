@@ -92,10 +92,10 @@ enum RouteTags {
 }
 
 enum HttpErrorCodes {
-    INTERNAL_SERVER_ERROR = '500',
-    NOT_FOUND = '404',
-    UNAUTHORIZED = '401',
-    FORBIDDEN = '403'
+    INTERNAL_SERVER_ERROR = 500,
+    NOT_FOUND = 404,
+    UNAUTHORIZED = 401,
+    FORBIDDEN = 403
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -457,6 +457,10 @@ const HTTP_DELETE = 'DELETE';
 const HTTP_PUT = 'PUT';
 const HTTP_PATCH = 'PATCH';
 
+// Custom error messages
+const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
+const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -539,5 +543,7 @@ export {
     HTTP_POST,
     HTTP_DELETE,
     HTTP_PUT,
-    HTTP_PATCH
+    HTTP_PATCH,
+    INVALID_REGION_AWS,
+    INVALID_REGION_MESSAGE
 };
