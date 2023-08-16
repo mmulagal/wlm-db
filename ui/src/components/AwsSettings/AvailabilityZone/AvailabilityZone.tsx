@@ -33,7 +33,7 @@ const AvailabilityZone = () => {
         dispatch(setSelectedAzNode2(null));
         dispatch(setSelectedSubnetNode1(null));
         dispatch(setSelectedSubnetNode2(null));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
 
     //Function to generate the options for Select Field for Zone 1
@@ -41,11 +41,12 @@ const AvailabilityZone = () => {
         const options: optionType[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
         const zones = azData ? Object.keys(azData) : [];
-        zones?.filter(key => key !== selectedZone2?.value)
-        .map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
-            options.push(option);
-        });
+        zones
+            ?.filter(key => key !== selectedZone2?.value)
+            .map((val, idx: number) => {
+                const option = generateOptionType(val, val, '', false, '');
+                options.push(option);
+            });
         return options;
     }, [selectedVPCData, selectedZone2]);
 
@@ -54,11 +55,12 @@ const AvailabilityZone = () => {
         const options: optionType[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
         const zones = azData ? Object.keys(azData) : [];
-        zones?.filter(key => key !== selectedZone1?.value)
-        .map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
-            options.push(option);
-        });
+        zones
+            ?.filter(key => key !== selectedZone1?.value)
+            .map((val, idx: number) => {
+                const option = generateOptionType(val, val, '', false, '');
+                options.push(option);
+            });
         return options;
     }, [selectedVPCData, selectedZone1]);
 
@@ -69,7 +71,7 @@ const AvailabilityZone = () => {
         const options: optionType[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
         let subnetsList = [];
-        if(azData && azData.hasOwnProperty(selectedZone1?.value)){
+        if (azData && azData.hasOwnProperty(selectedZone1?.value)) {
             subnetsList = azData[selectedZone1?.value];
         }
         subnetsList?.map((val: Subnets, idx: number) => {
@@ -87,7 +89,7 @@ const AvailabilityZone = () => {
         const options: optionType[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
         let subnetsList = [];
-        if(azData && azData.hasOwnProperty(selectedZone2?.value)){
+        if (azData && azData.hasOwnProperty(selectedZone2?.value)) {
             subnetsList = azData[selectedZone2?.value];
         }
         subnetsList?.map((val: Subnets, idx: number) => {
@@ -103,17 +105,9 @@ const AvailabilityZone = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
-            );
-        } else if(!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return '';
+        } else if (!selectedVPCData) {
+            return '';
         }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;
