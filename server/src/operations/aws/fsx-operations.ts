@@ -16,7 +16,7 @@ async function getFSxFileSystemsList(
     credentialsId: string,
     region: string,
     vpcId: string
-): Promise<{ filesystems: FSxFileSystemType[]; totalRecords: number }> {
+): Promise<{ filesystems: FSxFileSystemType[] }> {
     logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
 
     let { FileSystems: allFSxFilesystems } = await describeFSxFileSystems(credentialsId, region);
@@ -102,9 +102,7 @@ async function getFSxFileSystemsList(
         }
     }
 
-    const totalRecords = ontapFSxFilesystems.length;
-
-    return { filesystems: ontapFSxFilesystems, totalRecords };
+    return { filesystems: ontapFSxFilesystems };
 }
 
 export { getFSxFileSystemsList };

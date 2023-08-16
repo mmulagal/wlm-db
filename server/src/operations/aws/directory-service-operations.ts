@@ -46,9 +46,7 @@ async function getAdsList(credentialsId: string, region: string) {
     }
     logger.debug('Active Directories list', directories);
 
-    const totalRecords = directories.length;
-
-    return { directories, totalRecords };
+    return { directories };
 }
 
 export { getAdsList };

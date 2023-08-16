@@ -79,8 +79,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 return { id, state, tags, cidrBlock, isDefault, name };
             }
         );
-        const totalRecords = vpcs?.length;
-        return { vpcs: vpcs, totalRecords };
+
+        return { vpcs: vpcs };
     }
 
     if (Vpcs?.length) {
@@ -138,8 +138,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
             })
         );
     }
-    const totalRecords = vpcs?.length;
-    return { vpcs: vpcs, totalRecords };
+
+    return { vpcs };
 }
 
 async function getSubnetsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
@@ -266,8 +266,7 @@ async function getAmiList(
             new Date(a.name.substring(a.name.length - 10)).getTime()
     );
 
-    const totalRecords = response?.length;
-    return { amis: response, totalRecords: totalRecords };
+    return { amis: response };
 }
 
 function findNameFromTags(tags: Tag[]) {
@@ -276,9 +275,7 @@ function findNameFromTags(tags: Tag[]) {
     return name ? name : '-';
 }
 
-async function getFSxAvailableRegionsList(
-    credentialsId: string
-): Promise<{ regions: FSxAvailableRegions[]; totalRecords: number }> {
+async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
     const input = {
@@ -303,9 +300,8 @@ async function getFSxAvailableRegionsList(
             }
         });
     }
-    const totalRecords = fsxRegionsList.length;
 
-    return { regions: fsxRegionsList, totalRecords };
+    return { regions: fsxRegionsList };
 }
 
 async function getInstanceTypes(credentialsId: string, region: string) {
@@ -329,14 +325,11 @@ async function getInstanceTypes(credentialsId: string, region: string) {
             vCpus: VCpuInfo?.DefaultVCpus,
             ramInMib: MemoryInfo?.SizeInMiB
         }));
-    const totalRecords = filteredInstances?.length;
-    return { instanceTypes: filteredInstances, totalRecords };
+
+    return { instanceTypes: filteredInstances };
 }
 
-async function getKeyPairsList(
-    credentialsId: string,
-    region: string
-): Promise<{ keyPairs: KeyPairType[]; totalRecords: number }> {
+async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
     logger.info('List key-pairs:', { credentialsId, region });
 
     let kpList: Array<KeyPairType> = [];
@@ -347,9 +340,8 @@ async function getKeyPairsList(
             return { id, name };
         });
     }
-    const totalRecords = kpList.length;
 
-    return { keyPairs: kpList, totalRecords };
+    return { keyPairs: kpList };
 }
 
 export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstanceTypes };

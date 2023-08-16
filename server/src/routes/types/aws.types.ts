@@ -16,8 +16,7 @@ const InstanceTypes = Type.Object({
             ramInMib: Type.Optional(Type.Number()),
             iopsInMbps: Type.Optional(Type.Number())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // VPC list Request and Response
@@ -66,8 +65,7 @@ const VpcListResponse = Type.Object({
                 )
             )
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // AMI Request and Response
@@ -96,8 +94,7 @@ const AmiResponse = Type.Object({
             state: Type.Optional(Type.String()),
             hypervisor: Type.Optional(Type.String())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 //SNS list topics Response
@@ -107,8 +104,7 @@ const SnsResponse = Type.Object({
             topicName: Type.Optional(Type.String()),
             topicArn: Type.Optional(Type.String())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // Active Directory Response
@@ -132,8 +128,7 @@ const AdsResponse = Type.Object({
                 })
             )
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // Regions Request Params
@@ -149,8 +144,7 @@ const FSxRegionsResponse = Type.Object({
             regionCode: Type.String(),
             regionName: Type.String()
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // KMS Keys List Request and Response
@@ -165,8 +159,7 @@ const KmsKeysListResponse = Type.Object({
             isDefault: Type.Optional(Type.Boolean()),
             formattedDate: Type.Optional(Type.String())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // Keypair schema
@@ -177,8 +170,7 @@ const KeyPairsSchema = Type.Object({
 
 // GET keyPairs schema
 const KeyPairsResponse = Type.Object({
-    keyPairs: Type.Array(KeyPairsSchema),
-    totalRecords: Type.Optional(Type.Number())
+    keyPairs: Type.Array(KeyPairsSchema)
 });
 
 // GET FSx filesystems request parameters
@@ -246,8 +238,7 @@ const FSxFileSystemSchema = Type.Object({
 
 // GET FSx filesystems response
 const FSxFileSystemsResponse = Type.Object({
-    filesystems: Type.Array(FSxFileSystemSchema),
-    totalRecords: Type.Optional(Type.Number())
+    filesystems: Type.Array(FSxFileSystemSchema)
 });
 
 export {

@@ -15,14 +15,13 @@ interface KMS {
     formattedDate?: string;
 }
 
-async function getKmsKeysList(credentialsId: string, region: string): Promise<{ keys: KMS[]; totalRecords: number }> {
+async function getKmsKeysList(credentialsId: string, region: string): Promise<{ keys: KMS[] }> {
     logger.info('List Kms keys in a region', { credentialsId, region });
 
     const kmsKeysList = (await listKeys(credentialsId, region)) || [];
     const keyData = await getKmsKeyDetails(credentialsId, region, kmsKeysList);
-    const totalRecords = keyData?.length;
 
-    return { keys: keyData, totalRecords };
+    return { keys: keyData };
 }
 
 async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysList: KeyListEntry[]): Promise<KMS[]> {
