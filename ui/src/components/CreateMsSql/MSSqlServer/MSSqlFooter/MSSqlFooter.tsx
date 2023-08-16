@@ -1,10 +1,13 @@
 import { Button } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../../utils/apiService';
 import { cmNavigateTo } from '../../../../utils/appConfig';
-import { SELECT_CONFIG } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
+
 import { handleCreateSQLServer } from './createSqlServer';
 
 const MSSqlFooter = () => {
@@ -20,16 +23,23 @@ const MSSqlFooter = () => {
         const payload = handleCreateSQLServer(state, dispatch);
         if (payload) {
             dispatch(setIsLoading(true));
-            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
-                .then((data: any) => {
-                    dispatch(setIsLoading(false));
-                    if (!data?.error) {
-                        cmNavigateTo('/');
-                    }
-                })
-                .catch((error: any) => {
-                    dispatch(setIsLoading(false));
-                });
+            deploySqlTemplate({credentialId: selectedCredId, region: selectedRegionCode, payload: payload})
+            .then((data:any) => {
+                dispatch(setIsLoading(false));
+                if(!data?.error){
+                    const timelineUrl = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
+                    const message = 
+                        (<>{GENERAL.CREATE_INFO_MESSAGE[0]}
+                            <Button Component="button" variant="text" onClick={() => window.open(timelineUrl, '_blank', 'noopener')}>{GENERAL.CREATE_INFO_MESSAGE[1]}</Button>
+                            {GENERAL.CREATE_INFO_MESSAGE[2]}
+                        </>);
+                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
+                    setTimeout(() => { cmNavigateTo('/') }, 3000)
+                }
+            })
+            .catch((error:any) => {
+                dispatch(setIsLoading(false));
+            })
         }
     };
 
