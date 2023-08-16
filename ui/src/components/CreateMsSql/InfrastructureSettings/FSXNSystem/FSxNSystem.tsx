@@ -51,7 +51,7 @@ const FSxNSystem = () => {
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            const value = val?.name + ' | ' + val?.fileSystemId;
+            const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
             const data = {
                 fileSystemId: val?.fileSystemId,
                 fileSystemName: val?.name
