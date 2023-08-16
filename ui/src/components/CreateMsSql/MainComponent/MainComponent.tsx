@@ -21,9 +21,12 @@ const MainComponent = () => {
                 <MSSqlFooter />
             </WizardFooter>
             {loading && (
-                <div className={styles.loaderoverlay}>
-                    <Spinner isLarge />
-                </div>
+                <>
+                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.spinnerPlacement}>
+                        <Spinner isLarge />
+                    </div>
+                </>
             )}
         </StepLayout>
     );
