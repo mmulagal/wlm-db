@@ -51,7 +51,10 @@ async function createCloudFormationTemplateForUserDeployment(
         errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
         logger.error(errMsg);
     }
-    const derivedParams = await generateFsxParams(fsxConfiguration.databaseSize);
+    const derivedParams = fsxConfiguration.fsxFileSystemId
+        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
+        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+
     const { roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
@@ -91,7 +94,8 @@ async function createCloudFormationTemplateForUserDeployment(
         ...adConfiguration,
         ...networkConfiguration,
         ...sqlConfiguration,
-        ...ec2Configuration
+        ...ec2Configuration,
+        ...fsxConfiguration
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
