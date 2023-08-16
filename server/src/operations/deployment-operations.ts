@@ -17,7 +17,8 @@ import {
     TEMPLATE_CONFIGURATION_MAPPING,
     MASTER_TEMPLATE_URL,
     DISABLE_ROLLBACK,
-    MASTER_STACK_TIMEOUT_MINUTES
+    MASTER_STACK_TIMEOUT_MINUTES,
+    HttpErrorCodes
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -132,7 +133,7 @@ async function deployCloudFormationTemplate(
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
     if (permissions?.length) {
         throw {
-            statusCode: 422,
+            statusCode: HttpErrorCodes.VALIDATION_ERROR,
             message: MISSING_PERMISSIONS(permissions)
         };
     }
@@ -140,7 +141,7 @@ async function deployCloudFormationTemplate(
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
     if (cfStackQuotaReached) {
         throw {
-            statusCode: 422,
+            statusCode: HttpErrorCodes.VALIDATION_ERROR,
             message: CF_QUOTA_REACHED
         };
     }

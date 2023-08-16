@@ -95,7 +95,8 @@ enum HttpErrorCodes {
     INTERNAL_SERVER_ERROR = '500',
     NOT_FOUND = '404',
     UNAUTHORIZED = '401',
-    FORBIDDEN = '403'
+    FORBIDDEN = '403',
+    VALIDATION_ERROR = '422'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
