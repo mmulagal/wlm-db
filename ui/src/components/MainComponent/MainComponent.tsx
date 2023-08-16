@@ -13,7 +13,7 @@ const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
 
     return (
-        <StepLayout className={styles.header}> 
+        <StepLayout className={`${styles.header}`}> 
             <MSSqlHeader />
             <WizardContent className={styles.content}>
                 <MSSqlServer />
