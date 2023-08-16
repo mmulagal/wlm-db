@@ -8,10 +8,12 @@ export const SELECT_CONFIG = {
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
+    PREVIOUS: 'Previous',
     WIZARD_HEADING: 'Create new Microsoft SQL server',
     LOAD_CONFIG: 'Load configuration',
     SAVE_CONFIG: 'Save configuration',
-    SECURITY_GROUP: 'Security group'
+    SECURITY_GROUP: 'Security group',
+    DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server'
 };
 
 export const GENERAL = {
@@ -79,7 +81,8 @@ export const GENERAL = {
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials',
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
-    MULTI_AZ_CHECK_MESSAGE: 'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
+    MULTI_AZ_CHECK_MESSAGE:
+        'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
     //Constants for Security group
@@ -223,7 +226,14 @@ export const GENERAL = {
     SELECT_ANY_VPC: 'Please select any VPC',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
+<<<<<<< HEAD
     CREATE_INFO_MESSAGE: ['Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
     'Timeline', 
     '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'],
+=======
+    IP_DOMAIN: 'SQL Server IP address or domain name',
+    AUTHENTICATION_TYPE: 'Authentication type',
+    DISCOVER_FORM_HEADING:
+        'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector'
+>>>>>>> a0975568b374090a5dc054c5f373b8a520657534
 };
