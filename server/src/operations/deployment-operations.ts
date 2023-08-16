@@ -18,7 +18,8 @@ import {
     MASTER_TEMPLATE_URL,
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
-    HttpErrorCodes
+    HttpErrorCodes,
+    WLM_ASSETS
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -107,6 +108,10 @@ async function createCloudFormationTemplateForUserDeployment(
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
         }
+    });
+
+    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
+        templateParams += `&param_${key}=${value}`;
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
