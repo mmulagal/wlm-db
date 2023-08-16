@@ -50,7 +50,8 @@ const CloudFormationTemplateRequestBody = Type.Object({
     adConfiguration: ADConfiguration,
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
-    topicArn: Type.Optional(Type.String())
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: false }))
 });
 
 const CloudFormationTemplateResponse = Type.Object({

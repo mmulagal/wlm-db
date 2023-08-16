@@ -124,7 +124,9 @@ async function formatTemplateParameters(
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean
 ) {
     const derivedParams = generateFsxParams(fsxConfiguration.databaseSize);
     const { roleName, roleArn } = await getRoleName(credentialsId);
@@ -168,14 +170,18 @@ async function formatTemplateParameters(
         ...adConfiguration,
         ...fsxConfiguration,
         ...sqlConfiguration,
-        ...ec2Configuration
+        ...ec2Configuration,
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
-        templateParams.push({
-            ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-            ParameterValue: value.toString()
-        });
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            templateParams.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
+        }
     });
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {

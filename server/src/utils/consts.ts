@@ -430,7 +430,10 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlFciName: 'SqlFSxFCIName',
 
     workloadInstanceType: 'WorkloadInstanceType',
-    keyPairName: 'KeyPairName'
+    keyPairName: 'KeyPairName',
+
+    topicArn: 'NotificationARN',
+    enableCloudWatch: 'EnableCloudWatchLogFeature'
 };
 
 const WLM_ASSETS: Record<string, string> = {

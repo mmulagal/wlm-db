@@ -32,7 +32,9 @@ async function createCloudFormationTemplateForUserDeployment(
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false
 ): Promise<CloudFormationTemplateResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
@@ -91,7 +93,9 @@ async function createCloudFormationTemplateForUserDeployment(
         ...adConfiguration,
         ...networkConfiguration,
         ...sqlConfiguration,
-        ...ec2Configuration
+        ...ec2Configuration,
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
@@ -112,7 +116,8 @@ async function deployCloudFormationTemplate(
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
-    topicArn?: string
+    topicArn: string = '',
+    enableCloudWatch: boolean = false
 ): Promise<{ cloudFormationStackId: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
@@ -127,7 +132,7 @@ async function deployCloudFormationTemplate(
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
     if (permissions?.length) {
         throw {
-            statusCode: 409,
+            statusCode: 422,
             message: MISSING_PERMISSIONS(permissions)
         };
     }
@@ -135,7 +140,7 @@ async function deployCloudFormationTemplate(
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
     if (cfStackQuotaReached) {
         throw {
-            statusCode: 409,
+            statusCode: 422,
             message: CF_QUOTA_REACHED
         };
     }
@@ -147,7 +152,9 @@ async function deployCloudFormationTemplate(
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
-        sqlConfiguration
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -159,8 +166,7 @@ async function deployCloudFormationTemplate(
         MASTER_TEMPLATE_URL,
         templateParameters,
         DISABLE_ROLLBACK,
-        MASTER_STACK_TIMEOUT_MINUTES,
-        topicArn
+        MASTER_STACK_TIMEOUT_MINUTES
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
