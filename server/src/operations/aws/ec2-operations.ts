@@ -271,7 +271,8 @@ async function getAmiList(
 
 function findNameFromTags(tags: Tag[]) {
     logger.debug('Find name from the tags', { tags });
-    const { Value: name } = tags?.find(tag => tag.Key?.toLowerCase() === 'name') || {};
+    // AWS follows the patter of having 'Name' as they key which considered to be the resource name so following the same here
+    const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
     return name ? name : '-';
 }
 
