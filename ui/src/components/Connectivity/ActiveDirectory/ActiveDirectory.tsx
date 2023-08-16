@@ -98,17 +98,9 @@ const ActiveDirectory = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
-            );
+            return '';
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return '';
         }
 
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
@@ -157,6 +149,19 @@ const ActiveDirectory = () => {
                                 isSearchable={true}
                                 options={generateActiveDirectories}
                                 className={styles.textField}
+                                error={!isADNotFilled && !selectedADDomainName ? GENERAL.ACTION_REQUIRED : ''}
+                                //@ts-ignore
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                             />
 
                             <TextField

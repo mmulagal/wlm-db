@@ -6,6 +6,7 @@ import appContextSlice from './appContextSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
+import { GENERAL } from '../utils/appConstants';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -21,7 +22,12 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         const errorMsg = action.payload.error || action.payload.data?.message;
-        api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: errorMsg }));
+        if(errorMsg && errorMsg.length > 250) {
+            api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.QUERY_ERROR, 
+                additionalText: errorMsg }));
+        } else {
+            api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: errorMsg }));
+        }
     }
 
     return next(action);

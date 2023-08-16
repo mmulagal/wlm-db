@@ -7,6 +7,7 @@ import { useCreateSqlTemplateMutation } from "../../utils/apiService";
 import { useDispatch } from "react-redux";
 import { setIsLoading } from "../../store/mssql/msSqlActionSlice";
 import { addNotification, NOTIFICATION_TYPES } from "../../store/notificationSlice";
+import { JSX } from "react/jsx-runtime";
 
 const CloudFormation = () => {
   const dispatch = useDispatch();
@@ -17,6 +18,24 @@ const CloudFormation = () => {
 
   const [createSqlTemplate] = useCreateSqlTemplateMutation();
 
+  const sfNotification = (warning: string, url: string) => {
+    let message: string | JSX.Element = '';
+    if(warning && !url){
+      message = warning;
+    } else if(warning && url){
+      message = (<>
+        {warning}. {GENERAL.CLOUD_FORMATION_URL_TEXT} <Button Component="button" variant="text" 
+        onClick={() => window.open(url, '_blank', 'noopener')}>URL</Button>
+      </>);
+    }
+    if(warning && warning.length > 250){
+      dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: GENERAL.PERMISSION_REQUIRED, 
+        additionalText: message }));
+    } else {
+      dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: message }));
+    }
+  };
+
   const handleTemplateView = () => {
     const payload = handleCreateSQLServer(state, dispatch);
     if(payload){
@@ -26,15 +45,8 @@ const CloudFormation = () => {
             console.log(data);
             const url = data?.data?.cloudFormationUrl;
             const warning = data?.data?.warningMessage;
-            if(warning && !url){
-              dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: warning }));
-            } else if(warning && url){
-              dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: 
-              <>
-                {warning}. {GENERAL.CLOUD_FORMATION_URL_TEXT} <Button Component="button" variant="text" 
-                onClick={() => window.open(url, '_blank', 'noopener')}>URL</Button>
-              </> 
-              }));
+            if(warning){
+              sfNotification(warning, url);
             } else if(url){
               window.open(url, '_blank', 'noopener');
             }

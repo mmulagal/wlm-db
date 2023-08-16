@@ -80,6 +80,8 @@ export const GENERAL = {
     CREDENTIALS: 'Credentials',
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
     MULTI_AZ_CHECK_MESSAGE: 'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
+    QUERY_ERROR: 'Query error',
+    PERMISSION_REQUIRED: 'Permissions required',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Generated security group',

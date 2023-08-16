@@ -9,49 +9,49 @@
         {
             "EvalActionName": "secretsmanager:GetSecretValue",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         },
         {
             "EvalActionName": "secretsmanager:CreateSecret",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         },
         {
             "EvalActionName": "secretsmanager:GetRandomPassword",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         },
         {
             "EvalActionName": "secretsmanager:DeleteSecret",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         },
         {
             "EvalActionName": "secretsmanager:ListSecretVersionIds",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         },
         {
             "EvalActionName": "secretsmanager:TagResource",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         },
         {
             "EvalActionName": "secretsmanager:UntagResource",
             "EvalResourceName": "*",
-            "EvalDecision": "implicitDeny",
+            "EvalDecision": "allow",
             "MatchedStatements": [],
             "MissingContextValues": []
         }

@@ -6,6 +6,7 @@ import {
     setDBCredentialPasswordValue,
     setDBNameValue,
     setFSXNNameValue,
+    setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../utils/appConstants';
@@ -145,14 +146,15 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
 
     const adStateValue =
         !state.mssqlForm.activeDirectory.domainAddress ||
+        !state.mssqlForm.activeDirectory.domainName ||
         !state.mssqlForm.activeDirectory.userName ||
         !state.mssqlForm.activeDirectory.password;
 
-    const fsxStateValue = 
-        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN &&
-            !state.mssqlForm.fsxN.fsxNName) || 
-        (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX &&
-            !state.mssqlForm.fsxN.fsxNExistingName);
+    const fsxStateValue =
+        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNName) ||
+        (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !state.mssqlForm.fsxN.fsxNExistingName);
+
+    const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
     //Check for VPC values
     if (vpcStateValue) {
         dispatch(setVPCSelectedValue(false));
@@ -180,19 +182,34 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     dispatch(setFSXNNameValue(fsxStateValue ? false : true));
 
     //Check for DB Name - InvalidName
-    if (state.mssqlForm.dbName.length > 0) {
-        const input = state.mssqlForm.dbName;
-        if (input.length > 16 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input)) {
-            dispatch(setDBNameValue(false));
-        } else {
-            dispatch(setDBNameValue(true));
-        }
+    const input = state.mssqlForm.dbName;
+    const dataBaseNameValue =
+        input.length > 16 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input);
+    if (input.length > 0 && dataBaseNameValue) {
+        dispatch(setDBNameValue(false));
+    } else {
+        dispatch(setDBNameValue(true));
+    }
+
+    //Check for License ID
+    if (licenseIdCheck) {
+        dispatch(setLicenseIdValue(false));
+    } else {
+        dispatch(setLicenseIdValue(true));
     }
 
     //Proceed for post call
-    if (!vpcStateValue && !azStateValue && !dbCredStateValue && !adStateValue 
-        && !fsxStateValue && !dbPassVal(state.mssqlForm.dbCredentials?.password)
-        && !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)) {
+    if (
+        !vpcStateValue &&
+        !azStateValue &&
+        !dbCredStateValue &&
+        !adStateValue &&
+        !fsxStateValue &&
+        !dataBaseNameValue &&
+        !licenseIdCheck &&
+        !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
+        !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
+    ) {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {

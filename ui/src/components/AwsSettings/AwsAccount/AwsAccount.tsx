@@ -56,6 +56,7 @@ const AwsAccount = () => {
     const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
     const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
+    const licenseIdSelectedCheck = useAppSelector(state => state.msSqlAction.licenseIdSelected);
 
     useEffect(() => {
         const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
@@ -64,11 +65,12 @@ const AwsAccount = () => {
             isCreatePresed &&
             (!isVPCNotFilled ||
                 !isAZNotFilled ||
-                !isDBCredPassword || 
+                !isDBCredPassword ||
                 !dbPasswordValPass ||
                 !isActiveDirectoryFilled ||
                 !isFsxNNameFilled ||
                 !fsxPasswordValPass ||
+                !licenseIdSelectedCheck ||
                 !isProperDBName)
         ) {
             accordionContext({
@@ -77,6 +79,7 @@ const AwsAccount = () => {
                 11: !isDBCredPassword || !dbPasswordValPass ? true : false,
                 13: !isActiveDirectoryFilled ? true : false,
                 15: !isFsxNNameFilled || !fsxPasswordValPass ? true : false,
+                9: !licenseIdSelectedCheck ? true : false,
                 10: !isProperDBName ? true : false
             });
             dispatch(setCreatePressed(false));
@@ -92,7 +95,8 @@ const AwsAccount = () => {
         isFsxNNameFilled,
         isProperDBName,
         dbCredPassword,
-        fsxCredPassword
+        fsxCredPassword,
+        licenseIdSelectedCheck
     ]);
 
     //Function to generate the options for Select Field
