@@ -69,7 +69,7 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-function generateFsxParams(FSxDataLunSize: number) {
+function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
@@ -85,7 +85,7 @@ function generateFsxParams(FSxDataLunSize: number) {
         StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
         //VpcName: `${prefix}-vpc-${suffix}`,
         SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
-        FSxFileSystemName: `${prefix}-fsx-${suffix}`,
+        FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
         FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
         FSxDataVolumeSize,
         FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
@@ -129,7 +129,10 @@ async function formatTemplateParameters(
     topicArn: string,
     enableCloudWatch: boolean
 ) {
-    const derivedParams = generateFsxParams(fsxConfiguration.databaseSize);
+    const derivedParams = fsxConfiguration.fsxFileSystemId
+        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
+        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
@@ -187,7 +190,7 @@ async function formatTemplateParameters(
     });
 
     Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
-        if (!(key in Object.entries(clubbedParamList))) {
+        if (!(key in clubbedParamList)) {
             templateParams.push({
                 ParameterKey: value,
                 ParameterValue: ''

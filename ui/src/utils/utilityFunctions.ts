@@ -52,56 +52,57 @@ export function getSelectedFromSelectionState<T extends { id: string }>(
     }
 
     return rows;
-};
+}
 
 export const formatSize = (value: number, passedformat?: string) => {
     let byteVal = 0;
-    if(passedformat === 'kib'){
+    if (passedformat === 'kib') {
         byteVal = value * 1024;
-    } else if(passedformat === 'mib'){
-        byteVal = value * 1024 * 1024
-    } else if(passedformat === 'gib'){
-        byteVal = value * 1024 * 1024 * 1024
-    } else if(passedformat === 'tib'){
-        byteVal = value * 1024 * 1024 * 1024 * 1024
+    } else if (passedformat === 'mib') {
+        byteVal = value * 1024 * 1024;
+    } else if (passedformat === 'gib') {
+        byteVal = value * 1024 * 1024 * 1024;
+    } else if (passedformat === 'tib') {
+        byteVal = value * 1024 * 1024 * 1024 * 1024;
     } else {
-        byteVal = value
+        byteVal = value;
     }
-    return numeral(byteVal).format('0.[00] ib')
+    return numeral(byteVal).format('0.[00] ib');
 };
 
-
-export const formatKmsData = (data: {keys?: KmsKeys[]}) => {
+export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
     let newData: KmsKeys[] = [];
-    data?.keys?.filter((key: KmsKeys) => key?.state === ENABLED_STATE) 
-    .map((val: KmsKeys) => {
-        if(val?.expiryStatus === EXPIRED_STATUS){
-            val = {...val, cellProps: {
-                isDisabled: true
-            }}
-        }
-        if(val?.name === DEFAULT_MASTER_KEY){
-            val = {...val, default: true}
-        }
-        newData.push(val);
-    })
+    data?.keys
+        ?.filter((key: KmsKeys) => key?.state === ENABLED_STATE)
+        .map((val: KmsKeys) => {
+            if (val?.expiryStatus === EXPIRED_STATUS) {
+                val = {
+                    ...val,
+                    cellProps: {
+                        isDisabled: true
+                    }
+                };
+            }
+            if (val?.name === DEFAULT_MASTER_KEY) {
+                val = { ...val, default: true };
+            }
+            newData.push(val);
+        });
     return newData;
 };
 
-
-export const formatVpcSubnetsData = (data: {subnets: Subnets[]}) => {
-    let azObj:AvailabilityZonesObj = {};
+export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
+    let azObj: AvailabilityZonesObj = {};
     data?.subnets?.map((val: Subnets) => {
         const azName = val?.availabilityZone;
-        if(azName && azObj.hasOwnProperty(azName)){
+        if (azName && azObj.hasOwnProperty(azName)) {
             azObj[azName].push(val);
-        } else if(azName && !azObj.hasOwnProperty(azName)){
+        } else if (azName && !azObj.hasOwnProperty(azName)) {
             azObj[azName] = [val];
         }
-    })
+    });
     return azObj;
 };
-
 
 export const dbPassVal = (password: string) => {
     if (password.length) {
@@ -119,9 +120,8 @@ export const dbPassVal = (password: string) => {
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
         }
-    } 
+    }
 };
-
 
 export const fsxPassVal = (password: string) => {
     if (password.length) {
@@ -137,5 +137,19 @@ export const fsxPassVal = (password: string) => {
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
         }
-    } 
+    }
+};
+
+export const encodeAll = (text: string | (string | null)[] | null) => {
+    if (text && typeof text === 'string') {
+        const internalEncoding = text
+            .replace(/%/g, '%25')
+            .replace(/\//g, '%2F')
+            .replace(/\./g, '%2E')
+            .replace(/-/g, '%2D')
+            .replace(/\(/g, '%2C');
+        const encodedComponent = encodeURIComponent(internalEncoding);
+        return encodedComponent.replace(/%/g, '---'); //replacing the precent to prevent the default encoding on the way back which ruined the url
+    }
+    return text;
 };
