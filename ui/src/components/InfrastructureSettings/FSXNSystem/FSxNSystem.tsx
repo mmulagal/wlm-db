@@ -72,17 +72,9 @@ const FSxNSystem = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
-            );
+            return '';
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return '';
         }
 
         //Checking for the create new option
@@ -105,7 +97,7 @@ const FSxNSystem = () => {
             }
         }
     };
-    
+
     return (
         <div className={styles.fsx}>
             <AccordionCard
