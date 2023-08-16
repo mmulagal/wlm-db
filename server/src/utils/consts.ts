@@ -437,6 +437,15 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     enableCloudWatch: 'EnableCloudWatchLogFeature'
 };
 
+const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    securityGroupId: 'DomainMemberSGID',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id'
+};
+
 const WLM_ASSETS: Record<string, string> = {
     AssetsBucketName: BUCKET_NAME,
     AssetsS3KeyPrefix: BUCKET_PREFIX,
@@ -543,5 +552,6 @@ export {
     HTTP_POST,
     HTTP_DELETE,
     HTTP_PUT,
-    HTTP_PATCH
+    HTTP_PATCH,
+    TEMPLATE_OPTIONAL_PARAMETERS
 };

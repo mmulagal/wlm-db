@@ -18,7 +18,8 @@ import {
     EC2_ROLE_NAME,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
-    USER_TOKEN
+    USER_TOKEN,
+    TEMPLATE_OPTIONAL_PARAMETERS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -165,6 +166,7 @@ async function formatTemplateParameters(
             });
         }
     });
+
     const clubbedParamList = {
         ...networkConfiguration,
         ...adConfiguration,
@@ -180,6 +182,15 @@ async function formatTemplateParameters(
             templateParams.push({
                 ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
                 ParameterValue: value.toString()
+            });
+        }
+    });
+
+    Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
+        if (!(key in Object.entries(clubbedParamList))) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: ''
             });
         }
     });

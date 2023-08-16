@@ -22,7 +22,7 @@ const ADConfiguration = Type.Object({
     domainPassword: Type.String(),
     domainDnsname: Type.String(),
     dnsIpaddress: Type.String(),
-    securityGroupId: Type.String()
+    securityGroupId: Type.Optional(Type.String())
 });
 
 const FSXConfiguration = Type.Object({
