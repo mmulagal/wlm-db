@@ -222,5 +222,8 @@ export const GENERAL = {
     SELECT_ANY_ACCOUNT: 'Please select any account',
     SELECT_ANY_VPC: 'Please select any VPC',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
-    PASSWORD_ERROR_CHECK: 'Check password criteria'
+    PASSWORD_ERROR_CHECK: 'Check password criteria',
+    CREATE_INFO_MESSAGE: ['Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
+    'Timeline', 
+    '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'],
 };

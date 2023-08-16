@@ -36,5 +36,9 @@ export const DEFAULT_MASTER_KEY = 'aws/fsx'
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
 export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
 
+// Add timeline link
+export const TIMELINE_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/timeline';
+export const TIMELINE_PROD_LINK = 'https://cloudmanager.netapp.com/timeline';
+
 //Retry API on gateway timeout
 export const API_MAX_RETRIES = 2;
