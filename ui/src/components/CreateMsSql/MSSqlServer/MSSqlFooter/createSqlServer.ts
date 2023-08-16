@@ -45,7 +45,7 @@ const createMssqlPayload = (state: any) => {
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         } else {
-            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.value;
+            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.data?.fileSystemId;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         }
