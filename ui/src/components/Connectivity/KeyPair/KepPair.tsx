@@ -39,11 +39,7 @@ const KeyPair = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
-            );
+            return '';
         }
         return <Typography variant="Regular_14">{selectedKey?.label}</Typography>;
     };

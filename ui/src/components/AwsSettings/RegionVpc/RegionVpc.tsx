@@ -84,10 +84,12 @@ const RegionVpc = () => {
     // On VPC selection needs to check if 2 availability zones are available or not
     useEffect(() => {
         const azData = selectedVPCData?.data?.availabilityZones;
-        if(azData && Object.keys(azData).length < 2){
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.MULTI_AZ_CHECK_MESSAGE }));
+        if (azData && Object.keys(azData).length < 2) {
+            dispatch(
+                addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.MULTI_AZ_CHECK_MESSAGE })
+            );
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
 
     //Update selected VPC in form data store
@@ -98,11 +100,7 @@ const RegionVpc = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
-            );
+            return '';
         }
         if (!selectedRegionData || !selectedVPCData) {
             return <ActionRequired error={!isVPCNotFilled ? true : false} />;
