@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
-import MainComponent from './components/MainComponent/MainComponent';
+import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
+import DiscoverPage from './components/Discover/DiscoverPage';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
@@ -18,7 +19,11 @@ const Home = () => {
     return (
         <div className={styles['app-layout']}>
             <Routes>
-                <Route path={`/`} element={<MainComponent />} />
+                <Route path={`add-working-environment/database-services/:storage/create`} element={<MainComponent />} />
+                <Route
+                    path={`add-working-environment/database-services/:storage/discover`}
+                    element={<DiscoverPage />}
+                />
                 <Route path="*" element={<MainComponent />} />
             </Routes>
 

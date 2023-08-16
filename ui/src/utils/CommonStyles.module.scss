@@ -37,6 +37,12 @@
     line-height: none !important;
 }
 
+.buttonClass {
+    span {
+        text-transform: none !important;
+    }
+}
+
 @media screen and (max-width: 1350px) {
     .accordion-group {
         width: 1032px;
