@@ -80,7 +80,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
             }
         );
 
-        return { vpcs: vpcs };
+        return { vpcs };
     }
 
     if (Vpcs?.length) {
