@@ -105,7 +105,7 @@ const createMssqlPayload = (state: any) => {
             domainPassword: state.mssqlForm.activeDirectory?.password,
             domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value,
             dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress,
-            securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId
+            securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
         },
         fsxConfiguration: {
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
