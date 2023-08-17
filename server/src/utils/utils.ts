@@ -4,7 +4,7 @@
  */
 import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
-import { trimEnd, trimStart, round } from 'lodash-es';
+import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 
 import { getVpcsList } from '../operations/aws/ec2-operations';
@@ -74,11 +74,18 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
 
-    const FSxDataVolumeSize = round(1.1 * FSxDataLunSize); // FSxDataLunSize + 10% of FSxDataLunSize
-    const FSxLogVolumeSize = round(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    const FSxTempDbVolumeSize = round(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    const FSxDataLunSizeInMib = FSxDataLunSize * 1024;
+
+    // All these in MiB
+    const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
+    const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+    const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
     const FSxQuorumVolumeSize = 10000; // 10GB
-    const FSxStorageCapacity = round(FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize);
+
+    // StorageCapacity in GiB
+    const FSxStorageCapacity = Math.ceil(
+        (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
+    );
 
     return {
         UniqueID: suffix,
