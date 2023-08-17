@@ -62,7 +62,7 @@ const License = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return GENERAL.SELECT_ANY_ACCOUNT;
         }
         if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
             return (
