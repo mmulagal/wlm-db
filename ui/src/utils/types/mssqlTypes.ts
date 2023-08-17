@@ -65,7 +65,7 @@ export interface InstanceType {
 
 export interface FSxN {
     fileSystemId?: string;
-    fileSystemName?: string;
+    name?: string;
 }
 
 export interface MssqlEntities {

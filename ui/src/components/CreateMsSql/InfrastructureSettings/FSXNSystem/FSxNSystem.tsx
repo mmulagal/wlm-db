@@ -51,10 +51,10 @@ const FSxNSystem = () => {
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            const value = val?.fileSystemName || val?.fileSystemId || '';
+            const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
             const data = {
                 fileSystemId: val?.fileSystemId,
-                fileSystemName: val?.fileSystemName
+                fileSystemName: val?.name
             };
             const option = generateOptionType(value, value, '', false, '', data);
             options.push(option);
