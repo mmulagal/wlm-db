@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { JSX } from 'react/jsx-runtime';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const CloudFormation = () => {
     const dispatch = useDispatch();
@@ -70,7 +71,12 @@ const CloudFormation = () => {
     return (
         <div className={styles['cloud-formation']}>
             <div className={styles.inner}>
-                <Button Component="button" variant="link" onClick={handleTemplateView}>
+                <Button
+                    Component="button"
+                    variant="link"
+                    onClick={handleTemplateView}
+                    className={CommonStyles.buttonClass}
+                >
                     {GENERAL.SAVE_FORM_AS_CLOUD}
                 </Button>
             </div>
