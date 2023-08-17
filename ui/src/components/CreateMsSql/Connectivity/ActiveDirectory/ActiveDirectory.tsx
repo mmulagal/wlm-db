@@ -98,9 +98,9 @@ const ActiveDirectory = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return GENERAL.SELECT_ANY_ACCOUNT;
         } else if (!selectedVPCData) {
-            return '';
+            return GENERAL.SELECT_ANY_VPC;
         }
 
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {

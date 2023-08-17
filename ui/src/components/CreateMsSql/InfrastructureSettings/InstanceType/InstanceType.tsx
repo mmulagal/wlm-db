@@ -48,7 +48,7 @@ const InstanceType = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return GENERAL.SELECT_ANY_ACCOUNT;
         }
         return <Typography variant="Regular_14">{selectedInstanceType?.label}</Typography>;
     };

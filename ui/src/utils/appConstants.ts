@@ -222,13 +222,15 @@ export const GENERAL = {
     TAG_VALUE: 'Tag Value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
-    SELECT_ANY_ACCOUNT: 'Please select any account',
-    SELECT_ANY_VPC: 'Please select any VPC',
+    SELECT_ANY_ACCOUNT: 'Select an account',
+    SELECT_ANY_VPC: 'Select a VPC',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
-    CREATE_INFO_MESSAGE: ['Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
-    'Timeline', 
-    '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'],
+    CREATE_INFO_MESSAGE: [
+        'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
+        'Timeline',
+        '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
+    ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:

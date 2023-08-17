@@ -105,9 +105,9 @@ const AvailabilityZone = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return GENERAL.SELECT_ANY_ACCOUNT;
         } else if (!selectedVPCData) {
-            return '';
+            return GENERAL.SELECT_ANY_VPC;
         }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;

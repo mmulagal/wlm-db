@@ -72,9 +72,9 @@ const FSxNSystem = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return GENERAL.SELECT_ANY_ACCOUNT;
         } else if (!selectedVPCData) {
-            return '';
+            return GENERAL.SELECT_ANY_VPC;
         }
 
         //Checking for the create new option
