@@ -62,7 +62,11 @@ const License = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return GENERAL.SELECT_ANY_ACCOUNT;
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
         }
         if (licenseSelect === GENERAL.LICENSE_INCLUDED_AMI) {
             return (
