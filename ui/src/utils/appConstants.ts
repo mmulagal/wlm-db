@@ -232,5 +232,6 @@ export const GENERAL = {
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
-        'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector'
+        'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector',
+    IS_REQUIRED_MSG: ' is required'
 };
