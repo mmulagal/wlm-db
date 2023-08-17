@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { isArray } from 'lodash-es';
 import { isHTTPError, isTimeoutError } from './got';
+import { INVALID_REGION_AWS, INVALID_REGION_MESSAGE, HttpErrorCodes } from './consts';
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -14,6 +15,11 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         handleValidationError(statusCode, reply, validation, message, request);
     } else if (error.$metadata) {
         // error from aws sdk
+        if (error.message.includes(INVALID_REGION_AWS)) {
+            const errCode = HttpErrorCodes.NOT_FOUND;
+            const errMessage = `${INVALID_REGION_MESSAGE} ${error.message}`;
+            return reply.status(errCode).send({ message: errMessage });
+        }
         const errCode = error.$metadata.httpStatusCode ? error.$metadata.httpStatusCode : statusCode;
         reply.status(errCode).send({ message: error.message });
     } else if (isHTTPError(error)) {
