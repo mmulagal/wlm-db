@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { KeyListEntry } from '@aws-sdk/client-kms';
 import { listKeys, describeKey, listAliases } from '../../lib/aws/kms';
+import { AWS_FSX } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -43,22 +44,17 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
                             KeyId: id
                         })) || [];
                     const aliasName = name?.replace('alias/', '');
-                    let isDefault = false;
-                    if (aliasName === 'aws/fsx') {
-                        isDefault = true;
-                    }
-                    let formattedDate = '';
-                    if (expirationDate) {
-                        formattedDate = moment(expirationDate).format('MMMM DD,YYYY');
-                    }
+                    // kms key state can be in enabled | disabled | pending deletion. If its in pending deletion means keys are set to expire in aws console. By using that state we can say its gonna expire soon. To know what is the date its going to expire,
+                    // we have the expirationDate in date format & formatted date in human readable format to understand.
+                    // We dont have to do any calculation to find out the keys are expiring or not since any days between 7 to 30 can be set as deletion date in aws console noted as the state of pending deletion.
                     keyData.push({
                         id,
                         name: aliasName,
                         origin,
                         expirationDate,
                         state,
-                        isDefault,
-                        formattedDate
+                        isDefault: aliasName === AWS_FSX ? true : false,
+                        ...(expirationDate && { formattedDate: moment(expirationDate).format('MMMM DD,YYYY') })
                     });
                 } catch (err: any) {
                     logger.error('Failed to get the kms key details', { key, err });

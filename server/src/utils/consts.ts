@@ -457,6 +457,8 @@ const HTTP_DELETE = 'DELETE';
 const HTTP_PUT = 'PUT';
 const HTTP_PATCH = 'PATCH';
 
+const AWS_FSX = 'aws/fsx';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -539,5 +541,6 @@ export {
     HTTP_POST,
     HTTP_DELETE,
     HTTP_PUT,
-    HTTP_PATCH
+    HTTP_PATCH,
+    AWS_FSX
 };
