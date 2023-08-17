@@ -41,7 +41,6 @@ const createMssqlPayload = (state: any) => {
         };
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (fsxnType === GENERAL.CREATE_NEW_FSXN) {
-            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNName;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         } else {
