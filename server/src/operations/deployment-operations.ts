@@ -19,9 +19,10 @@ import {
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
-    WLM_ASSETS
+    WLM_ASSETS,
+    SAME_ROUTETABLE
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
+import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 
@@ -47,6 +48,14 @@ async function createCloudFormationTemplateForUserDeployment(
         fsxConfiguration,
         sqlConfiguration
     });
+
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw {
+            statusCode: HttpErrorCodes.VALIDATION_ERROR,
+            message: SAME_ROUTETABLE
+        };
+    }
 
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
 
@@ -138,6 +147,14 @@ async function deployCloudFormationTemplate(
         fsxConfiguration,
         sqlConfiguration
     });
+
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw {
+            statusCode: HttpErrorCodes.VALIDATION_ERROR,
+            message: SAME_ROUTETABLE
+        };
+    }
 
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
     if (permissions?.length) {

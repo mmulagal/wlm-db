@@ -214,6 +214,10 @@ async function formatTemplateParameters(
 
     return { stackName: stackName, templateParameters: templateParams };
 }
+
+function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
+    return networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id;
+}
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -221,5 +225,6 @@ export {
     generateFsxParams,
     formatTemplateParameters,
     getSubjectFromBearerToken,
-    hideSecretsValues
+    hideSecretsValues,
+    isSameRoutetables
 };

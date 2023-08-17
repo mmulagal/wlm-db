@@ -459,6 +459,7 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+const SAME_ROUTETABLE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
@@ -559,5 +560,6 @@ export {
     HTTP_PATCH,
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
-    INVALID_REGION_MESSAGE
+    INVALID_REGION_MESSAGE,
+    SAME_ROUTETABLE
 };
