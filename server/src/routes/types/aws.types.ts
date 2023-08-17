@@ -59,8 +59,7 @@ const VpcListResponse = Type.Object({
                         description: Type.Optional(Type.String()),
                         vpcId: Type.Optional(Type.String()),
                         ipPermissions: Type.Optional(Type.Any()),
-                        name: Type.Optional(Type.String()),
-                        securityGroupName: Type.Optional(Type.String())
+                        name: Type.Optional(Type.String())
                     })
                 )
             )

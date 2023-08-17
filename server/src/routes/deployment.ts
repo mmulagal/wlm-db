@@ -23,7 +23,9 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                         ec2Configuration,
                         adConfiguration,
                         fsxConfiguration,
-                        sqlConfiguration
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch
                     }
                 } = request;
                 const response = await createCloudFormationTemplateForUserDeployment(
@@ -33,7 +35,9 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     ec2Configuration,
                     adConfiguration,
                     fsxConfiguration,
-                    sqlConfiguration
+                    sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch
                 );
                 return reply.send(response);
             }
@@ -47,7 +51,8 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     adConfiguration,
                     fsxConfiguration,
                     sqlConfiguration,
-                    topicArn
+                    topicArn,
+                    enableCloudWatch
                 }
             } = request;
             const response = await deployCloudFormationTemplate(
@@ -58,7 +63,8 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 adConfiguration,
                 fsxConfiguration,
                 sqlConfiguration,
-                topicArn
+                topicArn,
+                enableCloudWatch
             );
             return reply.send(response);
         });

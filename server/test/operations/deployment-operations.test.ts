@@ -8,6 +8,7 @@ import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import '../simulator/scopes/aws/cloud-formation-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../simulator/scopes/aws/service-quota-scope';
 import {
     DEFAULT_AWS_REGION,
     SQL_CONFIGURATION,
@@ -32,23 +33,16 @@ describe('Cloud formation operations', () => {
         );
         expect(resp).toBeDefined();
     });
-    it('Deploys cloud formation template - missing permissions', async () => {
-        try {
-            await deployCloudFormationTemplate(
-                credentialsid,
-                DEFAULT_AWS_REGION,
-                NETWORKING_CONFIGURATION,
-                EC2_CONFIGURATION,
-                AD_CONFIGURATION,
-                FSX_CONFIGURATION,
-                SQL_CONFIGURATION
-            );
-        } catch (error: any) {
-            expect(
-                error.message.includes(
-                    'Required permissions are not available to deploy cloud formation template. Missing permissions'
-                )
-            ).toBeTruthy();
-        }
+    it('Deploy cloud formation template', async () => {
+        const resp = await deployCloudFormationTemplate(
+            credentialsid,
+            DEFAULT_AWS_REGION,
+            NETWORKING_CONFIGURATION,
+            EC2_CONFIGURATION,
+            AD_CONFIGURATION,
+            FSX_CONFIGURATION,
+            SQL_CONFIGURATION
+        );
+        expect(resp).toBeDefined();
     });
 });
