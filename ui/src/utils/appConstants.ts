@@ -222,7 +222,7 @@ export const GENERAL = {
     TAG_VALUE: 'Tag Value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
-    SELECT_ANY_ACCOUNT: 'Select an account',
+    SELECT_ANY_ACCOUNT: 'Select a credential',
     SELECT_ANY_VPC: 'Select a VPC',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
