@@ -4,6 +4,7 @@ import numeral from 'numeral';
 import { GENERAL } from './appConstants';
 import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Subnets } from './types/mssqlTypes';
+import store from '../store/store';
 
 // Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
@@ -106,6 +107,8 @@ export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
 
 export const dbPassVal = (password: string) => {
     if (password.length) {
+        const state = store.getState();
+        const userName = state.mssqlForm.dbCredentials.name;
         const categories = [
             /[A-Z]/, // uppercase letters
             /[a-z]/, // lowercase letters
@@ -115,7 +118,7 @@ export const dbPassVal = (password: string) => {
 
         const metCategories = categories.filter(category => category.test(password));
 
-        if (password.length >= 8 && metCategories.length >= 3) {
+        if (password.length >= 8 && metCategories.length >= 3 && !password.includes(userName)) {
             return '';
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
