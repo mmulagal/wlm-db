@@ -71,11 +71,12 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
     if (Vpcs?.length && fieldsValues.length === 0) {
         vpcs = Vpcs.map(
             ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
+                const resourceName = findResourceNameFromTags(tags);
+                if (resourceName) {
+                    return { id, state, tags, cidrBlock, isDefault, name: resourceName };
+                } else {
+                    return { id, state, tags, cidrBlock, isDefault };
                 }
-                return { id, state, tags, cidrBlock, isDefault, name };
             }
         );
         const totalRecords = vpcs?.length;
@@ -92,11 +93,6 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     CidrBlockAssociationSet: cidrBlock,
                     IsDefault: isDefault
                 } = vpc;
-
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
-                }
 
                 const subnetParams: DescribeSubnetsRequest = {
                     Filters: [
@@ -124,16 +120,30 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 if (fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)) {
                     securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
                 }
-                vpcs.push({
-                    id,
-                    state,
-                    tags,
-                    cidrBlock,
-                    isDefault,
-                    subnets: subnetsList,
-                    securityGroups: securityGroupList,
-                    name
-                });
+
+                const resourceName = findResourceNameFromTags(tags);
+                if (resourceName) {
+                    vpcs.push({
+                        id,
+                        state,
+                        tags,
+                        cidrBlock,
+                        isDefault,
+                        subnets: subnetsList,
+                        securityGroups: securityGroupList,
+                        name: resourceName
+                    });
+                } else {
+                    vpcs.push({
+                        id,
+                        state,
+                        tags,
+                        cidrBlock,
+                        isDefault,
+                        subnets: subnetsList,
+                        securityGroups: securityGroupList
+                    });
+                }
             })
         );
     }
@@ -158,18 +168,29 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 AvailableIpAddressCount: availableIps
             } = subnet;
 
-            let name = '-';
-            if (tags?.length) {
-                name = findNameFromTags(tags);
-            }
-
             const params = {
                 Filters: [{ Name: 'association.subnet-id', Values: [id as string] }]
             };
             const { RouteTables: [{ RouteTableId: routeTableId } = { RouteTableId: undefined }] = [] } =
                 await describeRouteTable(credentialsId, region, params);
 
-            subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name, routeTableId });
+            const resourceName = findResourceNameFromTags(tags);
+
+            if (resourceName) {
+                subnetsList.push({
+                    id,
+                    state,
+                    vpcId,
+                    tags,
+                    cidrBlock,
+                    availabilityZone,
+                    availableIps,
+                    name: resourceName,
+                    routeTableId
+                });
+            } else {
+                subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, routeTableId });
+            }
         }
     }
     return subnetsList;
@@ -183,11 +204,12 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     if (securityGroups?.length) {
         securityGroupList = securityGroups.map(
             ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
+                const resourceName = findResourceNameFromTags(tags);
+                if (resourceName) {
+                    return { id: id, description: description, vpcId: vpcId, ipPermissions, name: resourceName };
+                } else {
+                    return { id: id, description: description, vpcId: vpcId, ipPermissions };
                 }
-                return { id: id, description: description, vpcId: vpcId, ipPermissions, name };
             }
         );
     }
@@ -261,11 +283,22 @@ async function getAmiList(
     return { amis: response };
 }
 
-function findNameFromTags(tags: Tag[]) {
-    logger.debug('Find name from the tags', { tags });
-    // AWS follows the patter of having 'Name' as they key which considered to be the resource name so following the same here
-    const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
-    return name ? name : '-';
+/*
+ * AWS considers the value of tag 'Name' as the resource name.
+ * If tag 'Name' is present, return its corresponding Value.
+ * Otherwise, returns undefined.
+ */
+function findResourceNameFromTags(tags?: Tag[]) {
+    logger.debug('Find resource name from the tags', { tags });
+
+    let tagValue = undefined;
+
+    const tagRecord = tags?.find(tag => tag?.Key === 'Name');
+    if (tagRecord?.Key) {
+        tagValue = tagRecord.Value;
+    }
+
+    return tagValue;
 }
 
 async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
