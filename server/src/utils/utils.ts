@@ -18,7 +18,8 @@ import {
     EC2_ROLE_NAME,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
-    USER_TOKEN
+    USER_TOKEN,
+    TEMPLATE_OPTIONAL_PARAMETERS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -124,7 +125,9 @@ async function formatTemplateParameters(
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? await generateFsxParams(fsxConfiguration.databaseSize, true)
@@ -166,19 +169,33 @@ async function formatTemplateParameters(
             });
         }
     });
+
     const clubbedParamList = {
         ...networkConfiguration,
         ...adConfiguration,
         ...fsxConfiguration,
         ...sqlConfiguration,
-        ...ec2Configuration
+        ...ec2Configuration,
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
-        templateParams.push({
-            ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-            ParameterValue: value.toString()
-        });
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            templateParams.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
+        if (!(key in clubbedParamList)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: ''
+            });
+        }
     });
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {

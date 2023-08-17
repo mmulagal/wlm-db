@@ -45,5 +45,4 @@ describe('Cloud formation operations', () => {
         );
         expect(resp).toBeDefined();
     });
-   
 });

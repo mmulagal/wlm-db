@@ -95,7 +95,8 @@ enum HttpErrorCodes {
     INTERNAL_SERVER_ERROR = 500,
     NOT_FOUND = 404,
     UNAUTHORIZED = 401,
-    FORBIDDEN = 403
+    FORBIDDEN = 403,
+    VALIDATION_ERROR = 422
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -430,7 +431,19 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlFciName: 'SqlFSxFCIName',
 
     workloadInstanceType: 'WorkloadInstanceType',
-    keyPairName: 'KeyPairName'
+    keyPairName: 'KeyPairName',
+
+    topicArn: 'NotificationARN',
+    enableCloudWatch: 'EnableCloudWatchLogFeature'
+};
+
+const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    securityGroupId: 'DomainMemberSGID',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id'
 };
 
 const WLM_ASSETS: Record<string, string> = {
@@ -544,6 +557,7 @@ export {
     HTTP_DELETE,
     HTTP_PUT,
     HTTP_PATCH,
+    TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE
 };

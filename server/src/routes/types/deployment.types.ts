@@ -22,7 +22,7 @@ const ADConfiguration = Type.Object({
     domainPassword: Type.String(),
     domainDnsname: Type.String(),
     dnsIpaddress: Type.String(),
-    securityGroupId: Type.String()
+    securityGroupId: Type.Optional(Type.String())
 });
 
 const FSXConfiguration = Type.Object({
@@ -50,7 +50,8 @@ const CloudFormationTemplateRequestBody = Type.Object({
     adConfiguration: ADConfiguration,
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
-    topicArn: Type.Optional(Type.String())
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: false }))
 });
 
 const CloudFormationTemplateResponse = Type.Object({
