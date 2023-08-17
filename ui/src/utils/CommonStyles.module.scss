@@ -16,6 +16,8 @@
 .separator {
     border-right: 1px solid var(--grey-15);
     height: 16px;
+    position: relative;
+    top: 4px;
 }
 
 .text-disabled {

@@ -34,7 +34,7 @@ export const GENERAL = {
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
     INSTANCE_TYPE: 'Instance type',
-    FSXN_SYSTEM: 'FSxN system',
+    FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
     PROVISIONED_IOPS: 'Provisioned IOPS',
     THROUGHPUT_CAPACITY: 'Throughput capacity',
@@ -96,8 +96,8 @@ export const GENERAL = {
     WIN_SERVER_2019_VERSION: '2019',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
-    FAILOVER_CLUSTER: 'Failover Cluster Instances (FCI)',
-    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across Multiple Availability Zones',
+    FAILOVER_CLUSTER: 'Failover cluster instances (FCI)',
+    FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
     SINGLE_INSTANCE: 'Single Instance',
     SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
     //Constants for DB Edition
@@ -140,7 +140,7 @@ export const GENERAL = {
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
-        "Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSxN filesystem volumes, as well as LUNs, will be performed according to NetApp's best practices for SQL configuration. You can change the recommended defaults to meet your requirements",
+        "Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSxN filesystem volumes, as well as LUNs, will be performed according to NetApp's best practices for SQL configuration. You can change the recommended defaults to meet your requirements.",
     ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
@@ -151,7 +151,7 @@ export const GENERAL = {
     THROUGHPUT: 'Throughput',
     //SIMPLE NOTIFICATION SERVICES
     SNS: 'Simple Notification Service (SNS) topic ARN',
-    SNS_TEXT: 'Enter an SNS topic for Workload Manager to send notifications and alerts.',
+    SNS_TEXT: 'Enter an SNS topic for Microsoft SQL Server to send notifications and alerts.',
     ARN: 'ARN',
     //Cloud watch
     CLOUD_WATCH_MONITORING: 'CloudWatch monitoring',
@@ -168,8 +168,7 @@ export const GENERAL = {
     PASSWORD_FSX_1: 'The password must be at least eight characters long.',
     PASSWORD_FSX_2: 'The password must contain at least one number.',
     PASSWORD_FSX_3: 'The password must contain at least two alphabetic characters.',
-    PASSWORD_FSX_4:
-        'The password must not contain the Ctrl-c or Ctrl-d key combination or the two-character string ^D.',
+    PASSWORD_FSX_4: 'The password must not contain the Ctrl-c or Ctrl-d key combination or the two-character string.',
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
@@ -191,16 +190,14 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
-    PASSWORD_CRED_1: "The password doesn't contain the account name of the user.",
-    PASSWORD_CRED_2: '- The password is at least eight characters long.',
-    PASSWORD_CRED_3: '- The password contains characters from three of the following four categories:',
-    PASSWORD_CRED_LI_1: 'Latin uppercase letters (A through Z)',
-    PASSWORD_CRED_LI_2: 'Latin lowercase letters (a through z)',
-    PASSWORD_CRED_LI_3: 'o Base 10 digits (0 through 9)',
+    PASSWORD_CRED_1:
+        'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
+    PASSWORD_CRED_LI_1: '- Uppercase letters (A-Z)',
+    PASSWORD_CRED_LI_2: '- Lowercase letters (a-z)',
+    PASSWORD_CRED_LI_3: '- Base 10 digits (0 through 9)',
     PASSWORD_CRED_LI_4:
-        'Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%).',
-    PASSWORD_CRED_4:
-        'Passwords can be up to 128 characters long. Use passwords that are as long and complex as possible.',
+        '- Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%)',
+    PASSWORD_CRED_4: "Password doesn't contain the user name",
     //Encryption
     ENCRYPTION_TEXT:
         'Key that will be used to protect the key used to encrypt this database storage (FSxN). You can select from master keys in your account or type/paste the ARN of a key from a different account.',

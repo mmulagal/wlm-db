@@ -107,8 +107,8 @@ export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
 export const dbPassVal = (password: string) => {
     if (password.length) {
         const categories = [
-            /[A-Z]/, // Latin uppercase letters
-            /[a-z]/, // Latin lowercase letters
+            /[A-Z]/, // uppercase letters
+            /[a-z]/, // lowercase letters
             /[0-9]/, // Base 10 digits
             /[!$#%]/ // Non-alphanumeric characters
         ];
