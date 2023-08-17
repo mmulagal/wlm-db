@@ -112,17 +112,9 @@ const AvailabilityZone = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
-            );
+            return '';
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return '';
         }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;
