@@ -198,7 +198,6 @@ const FSxNSystem = () => {
                                             <li>{GENERAL.PASSWORD_FSX_1}</li>
                                             <li>{GENERAL.PASSWORD_FSX_2}</li>
                                             <li>{GENERAL.PASSWORD_FSX_3}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_4}</li>
                                         </ul>
                                     </Typography>
                                 }

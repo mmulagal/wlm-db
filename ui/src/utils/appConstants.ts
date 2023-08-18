@@ -167,9 +167,8 @@ export const GENERAL = {
     NOTICE: 'Notice:',
     NOTICE_FSX_TEXT: 'New filesystem provisioning adds another 30 minutes to the total installation time.',
     PASSWORD_FSX_1: 'The password must be at least eight characters long.',
-    PASSWORD_FSX_2: 'The password must contain at least one number.',
-    PASSWORD_FSX_3: 'The password must contain at least two alphabetic characters.',
-    PASSWORD_FSX_4: 'The password must not contain the Ctrl-c or Ctrl-d key combination or the two-character string.',
+    PASSWORD_FSX_2: 'The password must contain at least one letter and one number.',
+    PASSWORD_FSX_3: 'The password cannot contain the user name.',
     //Active Directory
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
@@ -193,12 +192,12 @@ export const GENERAL = {
     //DB credential
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
-    PASSWORD_CRED_LI_1: '- Uppercase letters (A-Z)',
-    PASSWORD_CRED_LI_2: '- Lowercase letters (a-z)',
-    PASSWORD_CRED_LI_3: '- Base 10 digits (0 through 9)',
+    PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',
+    PASSWORD_CRED_LI_2: 'Lowercase letters (a-z)',
+    PASSWORD_CRED_LI_3: 'Base 10 digits (0 through 9)',
     PASSWORD_CRED_LI_4:
-        '- Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%)',
-    PASSWORD_CRED_4: "Password doesn't contain the user name",
+        'Non-alphanumeric characters such as: exclamation point (!), dollar sign ($), number sign (#), or percent (%)',
+    PASSWORD_CRED_4: "The password can't contain the user name.",
     //Encryption
     ENCRYPTION_TEXT:
         'Key that will be used to protect the key used to encrypt this database storage (FSxN). You can select from master keys in your account or type/paste the ARN of a key from a different account.',
