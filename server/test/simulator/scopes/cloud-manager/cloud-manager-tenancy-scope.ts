@@ -1,8 +1,14 @@
+import { faker } from '@faker-js/faker';
 import nock from 'nock';
 import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts.js';
 import registerServiceResponse from '../../responses/cloud-manager/register-service-resource-tenancy.json';
-import serviceTokenResponse from '../../responses/cloud-manager/service-token.json';
 import getTenancyResourceResponse from '../../responses/cloud-manager/get-tenancy-resources-by-type.json';
+
+const serviceTokenResponse = {
+    access_token: `${faker.string.alphanumeric(20)}`,
+    expires_in: 86400,
+    token_type: 'Bearer'
+};
 
 nock(`${CLOUD_MANAGER_ENDPOINT}`)
     .persist(true)
