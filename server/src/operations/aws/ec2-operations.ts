@@ -72,11 +72,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
         vpcs = Vpcs.map(
             ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
                 const resourceName = findResourceNameFromTags(tags);
-                if (resourceName) {
-                    return { id, state, tags, cidrBlock, isDefault, name: resourceName };
-                } else {
-                    return { id, state, tags, cidrBlock, isDefault };
-                }
+                return { id, state, tags, cidrBlock, isDefault, ...(resourceName && { name: resourceName }) };
             }
         );
         const totalRecords = vpcs?.length;
@@ -122,28 +118,16 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 }
 
                 const resourceName = findResourceNameFromTags(tags);
-                if (resourceName) {
-                    vpcs.push({
-                        id,
-                        state,
-                        tags,
-                        cidrBlock,
-                        isDefault,
-                        subnets: subnetsList,
-                        securityGroups: securityGroupList,
-                        name: resourceName
-                    });
-                } else {
-                    vpcs.push({
-                        id,
-                        state,
-                        tags,
-                        cidrBlock,
-                        isDefault,
-                        subnets: subnetsList,
-                        securityGroups: securityGroupList
-                    });
-                }
+                vpcs.push({
+                    id,
+                    state,
+                    tags,
+                    cidrBlock,
+                    isDefault,
+                    subnets: subnetsList,
+                    securityGroups: securityGroupList,
+                    ...(resourceName && { name: resourceName })
+                });
             })
         );
     }
@@ -176,21 +160,17 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
 
             const resourceName = findResourceNameFromTags(tags);
 
-            if (resourceName) {
-                subnetsList.push({
-                    id,
-                    state,
-                    vpcId,
-                    tags,
-                    cidrBlock,
-                    availabilityZone,
-                    availableIps,
-                    name: resourceName,
-                    routeTableId
-                });
-            } else {
-                subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, routeTableId });
-            }
+            subnetsList.push({
+                id,
+                state,
+                vpcId,
+                tags,
+                cidrBlock,
+                availabilityZone,
+                availableIps,
+                routeTableId,
+                ...(resourceName && { name: resourceName })
+            });
         }
     }
     return subnetsList;
@@ -205,11 +185,13 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
         securityGroupList = securityGroups.map(
             ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
                 const resourceName = findResourceNameFromTags(tags);
-                if (resourceName) {
-                    return { id: id, description: description, vpcId: vpcId, ipPermissions, name: resourceName };
-                } else {
-                    return { id: id, description: description, vpcId: vpcId, ipPermissions };
-                }
+                return {
+                    id: id,
+                    description: description,
+                    vpcId: vpcId,
+                    ipPermissions,
+                    ...(resourceName && { name: resourceName })
+                };
             }
         );
     }
@@ -291,14 +273,9 @@ async function getAmiList(
 function findResourceNameFromTags(tags?: Tag[]) {
     logger.debug('Find resource name from the tags', { tags });
 
-    let tagValue = undefined;
+    const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
 
-    const tagRecord = tags?.find(tag => tag?.Key === 'Name');
-    if (tagRecord?.Key) {
-        tagValue = tagRecord.Value;
-    }
-
-    return tagValue;
+    return name;
 }
 
 async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
