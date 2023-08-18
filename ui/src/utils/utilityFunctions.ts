@@ -128,14 +128,19 @@ export const dbPassVal = (password: string) => {
 
 export const fsxPassVal = (password: string) => {
     if (password.length) {
+        const state = store.getState();
+        let fsxUserName = '';
+        if (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX) {
+            fsxUserName = state.mssqlForm.fsxN.fsxNExistingUserName;
+        } else {
+            fsxUserName = state.mssqlForm.fsxN.fsxNNewUserName;
+        }
         // Criteria checks
         const isAtLeastEightChars = password.length >= 8;
         const hasAtLeastOneNumber = /[0-9]/.test(password);
-        const hasAtLeastTwoAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 2;
-        const hasInvalidCombination =
-            !password.includes('Ctrl-c') && !password.includes('Ctrl-d') && !password.includes('^D');
+        const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
 
-        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastTwoAlphabetic && hasInvalidCombination) {
+        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
             return '';
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
@@ -161,7 +166,7 @@ export const requiredFieldError = (inputString: string) => {
     const regex = /'([^']+)'/;
     const match = inputString.match(regex);
     const subStr = 'must have required property';
-    if(match && match.length >= 2 && inputString.includes(subStr)){
+    if (match && match.length >= 2 && inputString.includes(subStr)) {
         return match[1];
     } else {
         return null;

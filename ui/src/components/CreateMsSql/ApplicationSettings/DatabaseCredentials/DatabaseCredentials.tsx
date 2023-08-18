@@ -37,15 +37,19 @@ const DatabaseCredentials = () => {
                 <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_1}</Typography>
                 <div className={styles.list}>
                     <div className={styles.listItem}>
+                        <Bullet />
                         <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_1}</div>
                     </div>
                     <div className={styles.listItem}>
+                        <Bullet />
                         <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_2}</div>
                     </div>
                     <div className={styles.listItem}>
+                        <Bullet />
                         <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_3}</div>
                     </div>
                     <div className={styles.listItem}>
+                        <Bullet />
                         <div className={styles.textWidth}>{GENERAL.PASSWORD_CRED_LI_4}</div>
                     </div>
                 </div>
