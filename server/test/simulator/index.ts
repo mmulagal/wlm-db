@@ -6,6 +6,7 @@ async function initiateSimulator() {
 
     await import('./scopes/jwt-scope');
     await import('./scopes/cloud-manager/cloud-manager-credentials-scope');
+    await import('./scopes/cloud-manager/cloud-manager-tenancy-scope');
     await import('./scopes/aws/ec2-scope');
     await import('./scopes/aws/directory-service-scope');
     await import('./scopes/aws/kms-scope');
