@@ -18,6 +18,18 @@ const WORKSPACE_ID = 'WORKSPACE_ID';
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
 
+enum FSxDeploymentStatus {
+    INITIALIZING = 'Initializing',
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
+
+enum MsSqlServerDeploymentStatus {
+    INITIALIZING = 'Initializing',
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
+
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
 
@@ -562,5 +574,7 @@ export {
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
-    AWS_FSX
+    AWS_FSX,
+    FSxDeploymentStatus,
+    MsSqlServerDeploymentStatus
 };

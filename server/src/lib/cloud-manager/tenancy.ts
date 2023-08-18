@@ -89,4 +89,4 @@ async function removeResource(resourceIdentifier: string) {
     });
 }
 
-export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken };
+export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken, ServiceResourceRequest };
