@@ -216,7 +216,11 @@ async function formatTemplateParameters(
 }
 
 function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
-    return networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id;
+    return (
+        'routeTable1Id' in networkConfiguration &&
+        'routeTable2Id' in networkConfiguration &&
+        networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
+    );
 }
 export {
     filterSqlAmis,

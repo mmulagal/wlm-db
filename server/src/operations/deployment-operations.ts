@@ -20,7 +20,7 @@ import {
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
     WLM_ASSETS,
-    SAME_ROUTETABLE
+    SAME_ROUTETABLE_MESSAGE
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -53,7 +53,7 @@ async function createCloudFormationTemplateForUserDeployment(
     if (sameRoutes) {
         throw {
             statusCode: HttpErrorCodes.VALIDATION_ERROR,
-            message: SAME_ROUTETABLE
+            message: SAME_ROUTETABLE_MESSAGE
         };
     }
 
@@ -152,7 +152,7 @@ async function deployCloudFormationTemplate(
     if (sameRoutes) {
         throw {
             statusCode: HttpErrorCodes.VALIDATION_ERROR,
-            message: SAME_ROUTETABLE
+            message: SAME_ROUTETABLE_MESSAGE
         };
     }
 
