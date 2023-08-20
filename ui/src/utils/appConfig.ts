@@ -115,7 +115,7 @@ const useInitialize = () => {
             // });
         }
 
-        if (pathname?.includes('add-working-environment')) {
+        if (pathname) {
             navigate(`${pathname}`, { replace: true });
         }
 

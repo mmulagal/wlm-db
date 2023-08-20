@@ -1,0 +1,24 @@
+.overviewContainer {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    padding-top: 60px;
+    background-color: var(--main-background);
+    justify-content: center;
+    overflow-y: auto;
+    min-height: 0px;
+
+    .leftPane {
+        display: flex;
+        flex-direction: column;
+
+        .infoCards {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+        }
+    }
+}
