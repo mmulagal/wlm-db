@@ -75,8 +75,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 return { id, state, tags, cidrBlock, isDefault, ...(resourceName && { name: resourceName }) };
             }
         );
-        const totalRecords = vpcs?.length;
-        return { vpcs: vpcs, totalRecords };
+
+        return { vpcs };
     }
 
     if (Vpcs?.length) {
@@ -131,8 +131,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
             })
         );
     }
-    const totalRecords = vpcs?.length;
-    return { vpcs: vpcs, totalRecords };
+
+    return { vpcs };
 }
 
 async function getSubnetsList(credentialsId: string, region: string, params: DescribeSubnetsRequest) {
@@ -328,8 +328,8 @@ async function getInstanceTypes(credentialsId: string, region: string) {
             vCpus: VCpuInfo?.DefaultVCpus,
             ramInMib: MemoryInfo?.SizeInMiB
         }));
-    const totalRecords = filteredInstances?.length;
-    return { instanceTypes: filteredInstances, totalRecords };
+
+    return { instanceTypes: filteredInstances };
 }
 
 async function getKeyPairsList(credentialsId: string, region: string): Promise<{ keyPairs: KeyPairType[] }> {
