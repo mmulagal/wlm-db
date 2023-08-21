@@ -3,13 +3,18 @@ import { gotInstanceForInternalRequest } from '../../utils/got.js';
 import { getServiceToken } from './tenancy.js';
 
 import getLogger from '../../utils/logger.js';
+import {
+    AuditRecordSchemaType,
+    CreateAuditGroupSchemaType,
+    UpdateAuditGroupSchemaType
+} from '../../routes/schemas/audit-schema.js';
 
 const logger = getLogger();
 
-interface AuditGroup {}
-
-export default async function sendAudit(auditObject: AuditGroup) {
-    logger.debug('Sending Audit:', auditObject);
+export default async function sendAudit(
+    auditGroup: CreateAuditGroupSchemaType | UpdateAuditGroupSchemaType | AuditRecordSchemaType
+) {
+    logger.debug('Sending Audit:', auditGroup);
 
     try {
         const { token } = await getServiceToken();
@@ -17,7 +22,7 @@ export default async function sendAudit(auditObject: AuditGroup) {
             headers: {
                 [HEADERS.AUTHORIZATION]: token
             },
-            json: auditObject
+            json: { auditGroup }
         });
     } catch (error) {
         logger.error('Failed to send audit to audit service', error);
