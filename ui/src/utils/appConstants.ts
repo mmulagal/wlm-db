@@ -48,8 +48,13 @@ export const GENERAL = {
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
+    SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    SAVE_CONFIG_CONTENT:
+        'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+    CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    SAVE: 'Save',
     API_REQUEST: 'API request',
     Cancel: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
