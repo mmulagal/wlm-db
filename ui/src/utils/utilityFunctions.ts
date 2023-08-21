@@ -5,6 +5,7 @@ import { GENERAL } from './appConstants';
 import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
+const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
@@ -128,14 +129,19 @@ export const dbPassVal = (password: string) => {
 
 export const fsxPassVal = (password: string) => {
     if (password.length) {
+        const state = store.getState();
+        let fsxUserName = '';
+        if (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX) {
+            fsxUserName = state.mssqlForm.fsxN.fsxNExistingUserName;
+        } else {
+            fsxUserName = state.mssqlForm.fsxN.fsxNNewUserName;
+        }
         // Criteria checks
         const isAtLeastEightChars = password.length >= 8;
         const hasAtLeastOneNumber = /[0-9]/.test(password);
-        const hasAtLeastTwoAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 2;
-        const hasInvalidCombination =
-            !password.includes('Ctrl-c') && !password.includes('Ctrl-d') && !password.includes('^D');
+        const hasAtLeastOneAlphabetic = (password.match(/[a-zA-Z]/g) || []).length >= 1;
 
-        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastTwoAlphabetic && hasInvalidCombination) {
+        if (isAtLeastEightChars && hasAtLeastOneNumber && hasAtLeastOneAlphabetic && !password.includes(fsxUserName)) {
             return '';
         } else {
             return GENERAL.PASSWORD_ERROR_CHECK;
@@ -161,9 +167,32 @@ export const requiredFieldError = (inputString: string) => {
     const regex = /'([^']+)'/;
     const match = inputString.match(regex);
     const subStr = 'must have required property';
-    if(match && match.length >= 2 && inputString.includes(subStr)){
+    if (match && match.length >= 2 && inputString.includes(subStr)) {
         return match[1];
     } else {
         return null;
+    }
+};
+
+export const getCssVariableValue = (variableName: string) =>
+    getComputedStyle(document.body).getPropertyValue(variableName);
+
+export const formatDate = (date: string | number) => {
+    return moment(new Date(date)).format('LL');
+};
+
+export const isNotNumberOrNA = (value: string | number) => {
+    if (!value) {
+        return false;
+    } else {
+        return isNaN(parseFloat(String(value))) && value !== 'N/A';
+    }
+};
+
+export const formatSizeOrString = (value: number) => {
+    if (!isNaN(parseFloat(value.toString()))) {
+        return formatSize(value);
+    } else {
+        return value;
     }
 };
