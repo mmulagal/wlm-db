@@ -66,6 +66,9 @@ export interface InstanceType {
 export interface FSxN {
     fileSystemId?: string;
     name?: string;
+    ontapConfiguration?: {
+        deploymentType?: string;
+    }
 }
 
 export interface MssqlEntities {
