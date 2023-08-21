@@ -130,7 +130,7 @@ export interface Subnets {
     cidrBlock: string;
     availabilityZone: string;
     availableIps: number;
-    name: string;
+    name?: string;
 }
 
 export interface AvailabilityZonesObj {
