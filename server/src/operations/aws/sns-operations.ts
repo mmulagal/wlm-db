@@ -1,6 +1,6 @@
 import { describeRegions } from '../../lib/aws/ec2';
-import { createTopic, deleteTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
-import { createQueue, deleteQueue } from '../../lib/aws/sqs';
+import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
+import { createQueue } from '../../lib/aws/sqs';
 import { DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
@@ -21,28 +21,6 @@ async function getSnsTopics(credentialsId: string, region: string) {
     }));
 
     return { topics: updatedTopics };
-}
-
-//DO NOT USE: FOR INTERNAL TESTING
-async function deleteQueueResources() {
-    const queueName = WLMDB;
-    const { Regions: regions } = await describeRegions(undefined, {});
-    try {
-        await deleteQueue(DEFAULT_AWS_REGION, {
-            QueueUrl: `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/464262061435/${queueName}`
-        });
-        regions?.forEach(async ({ RegionName: code }) => {
-            if (code) {
-                const queueName = WLMDB;
-                await deleteTopic(code, queueName);
-                await deleteQueue(code, {
-                    QueueUrl: `https://sqs.${code}.amazonaws.com/464262061435/${queueName}`
-                });
-            }
-        });
-    } catch (error) {
-        logger.error('Failed to delete SNS-SQS resources', error);
-    }
 }
 
 async function createAndSubscribeToSnsTopicInAllRegions() {
@@ -73,4 +51,4 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
     }
 }
 
-export { getSnsTopics, deleteQueueResources, createAndSubscribeToSnsTopicInAllRegions };
+export { getSnsTopics, createAndSubscribeToSnsTopicInAllRegions };
