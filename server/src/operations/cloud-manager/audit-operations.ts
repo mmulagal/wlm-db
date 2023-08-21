@@ -105,12 +105,13 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
 }
 
 async function updateAuditGroup(request: FastifyRequest, payload?: any) {
-    logger.info('Updating audit group');
+    logger.debug('Updating audit group');
 
     if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
         const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as AuditRecord;
 
         try {
+            auditGroup.endDate = Date.now();
             if (payload) {
                 auditGroup.responseData = payload;
             }
@@ -124,13 +125,13 @@ async function updateAuditGroup(request: FastifyRequest, payload?: any) {
             } else {
                 auditGroup.status = AUDIT_SUCCESS_STATUS;
 
-                // validateSchema(auditGroup, updateAuditGroupSchema);
+                validateSchema(auditGroup, updateAuditGroupSchema);
                 sendAudit({ json: { auditGroup } });
             }
         } catch (error) {
             auditGroup.status = AUDIT_SUCCESS_STATUS;
 
-            // validateSchema(auditGroup, updateAuditGroupSchema);
+            validateSchema(auditGroup, updateAuditGroupSchema);
             sendAudit({ json: { auditGroup } });
         }
     }
