@@ -2,9 +2,6 @@ import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
 import { createSecrets } from './aws/secrets-manager-operations';
-import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { registerServiceResource, ServiceResourceRequest } from '../lib/cloud-manager/tenancy';
-import sha1 from 'js-sha1';
 import {
     CFNetworkConfigurationType,
     EC2ConfigurationType,
@@ -22,13 +19,14 @@ import {
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
-    WLM_ASSETS,
-    ACCOUNT_ID,
-    WORKSPACE_ID,
-    FSxDeploymentStatus,
-    MsSqlServerDeploymentStatus
+    WLM_ASSETS
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
+import {
+    formatTemplateParameters,
+    generateFsxParams,
+    isCfStackQuotaReached,
+    saveFSxAndSqlServerDetailsInTenancy
+} from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 
@@ -188,50 +186,7 @@ async function deployCloudFormationTemplate(
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
-    logger.info('DEBUG_RR: Updating tenancy with FSx and MS-SQL-Server details');
-
-    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const resourceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
-
-    const FSxResourceDetails: ServiceResourceRequest = {
-        name: `FSx_${stackName}`,
-        resourceIdentifier: fsxConfiguration?.fsxFileSystemId || `FSx_${stackName}`,
-        resourceType: 'FSX_ONTAP',
-        workspacePublicId: resourceId,
-        accountPublicId: accountId,
-        resourceClass: 'AWS', // FSx is available only on AWS
-        metadata: {
-            propertyName: 'more-details',
-            propertyValue: JSON.stringify({
-                location: 'AWS', // FSx is available only on AWS
-                state: FSxDeploymentStatus.SUCCESS,
-                deploymentType: 'MULTI_AZ_1' // FSx is always deployed MULTI_AZ_1 for now
-            })
-        }
-    };
-
-    let response = await registerServiceResource(FSxResourceDetails);
-    logger.debug('FSx resource resource tenancy registration status:', response);
-
-    const MsSqlServerDetails: ServiceResourceRequest = {
-        name: `MSSQLServer_${stackName}`,
-        resourceIdentifier: sha1(`${stackName}`),
-        resourceType: 'MSSQL',
-        workspacePublicId: resourceId,
-        accountPublicId: accountId,
-        resourceClass: 'WLMDB',
-        metadata: {
-            propertyName: 'more-details',
-            propertyValue: JSON.stringify({
-                location: 'AWS',
-                state: MsSqlServerDeploymentStatus.INITIALIZING,
-                deploymentType: 'MULTI_AZ_1' // FSx is always deployed MULTI_AZ_1 for now
-            })
-        }
-    };
-
-    response = await registerServiceResource(MsSqlServerDetails);
-    logger.debug('MS SQL Server resource tenancy registration status:', response);
+    saveFSxAndSqlServerDetailsInTenancy(stackName, fsxConfiguration, sqlConfiguration);
 
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
