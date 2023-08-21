@@ -1,0 +1,11 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "7091cfd8-c00c-5cc6-a728-92848bf89d63",
+        "extendedRequestId": "undefined",
+        "cfId": "undefined",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "TopicArn": "arn:aws:sns:us-east-1:464262061435:WLMDB"
+}

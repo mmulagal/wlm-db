@@ -1,4 +1,13 @@
-import { SNSClient, ListTopicsCommand } from '@aws-sdk/client-sns';
+import {
+    SNSClient,
+    ListTopicsCommand,
+    CreateTopicCommand,
+    SubscribeCommand,
+    SubscribeCommandInput,
+    ConfirmSubscriptionCommand,
+    ConfirmSubscriptionCommandInput,
+    DeleteTopicCommand
+} from '@aws-sdk/client-sns';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -25,4 +34,50 @@ async function listTopics(credentialsId: string, region: string) {
     return resp;
 }
 
-export { listTopics };
+//Topic Creted in WLMDB account
+async function createTopic(region: string, topicName: string) {
+    logger.info('Create SNS topic', { region });
+
+    const sns = new SNSClient({ region });
+    const resp = await sns.send(new CreateTopicCommand({ Name: topicName }));
+    logger.info('Create topic command response', resp);
+
+    return resp;
+}
+
+//DO NOT USE: ONLY FOR TESTING; Topic Deleted in WLMDB account
+async function deleteTopic(region: string, topicName: string) {
+    logger.info('Delete SNS topic', { region });
+
+    const sns = new SNSClient({ region });
+    const resp = await sns.send(
+        new DeleteTopicCommand({ TopicArn: `arn:aws:sns:${region}:464262061435:${topicName}` })
+    );
+    logger.debug('Delete topic command response', resp);
+
+    return resp;
+}
+
+//Subscribe topic in WLMDB account
+async function subscribeTopic(region: string, input: SubscribeCommandInput) {
+    logger.info('Subscribe to  SNS topic', { region, input });
+
+    const sns = new SNSClient({ region });
+    const resp = await sns.send(new SubscribeCommand(input));
+    logger.debug('Subscribe to topic command response', resp);
+
+    return resp;
+}
+
+//Configm subscription in WLMDB account
+async function confirmSubscription(region: string, input: ConfirmSubscriptionCommandInput) {
+    logger.info('Confirm subscription to  SNS topic', { region, input });
+
+    const sns = new SNSClient({ region });
+    const resp = await sns.send(new ConfirmSubscriptionCommand(input));
+    logger.debug('Confirm subscription to topic command response', resp);
+
+    return resp;
+}
+
+export { listTopics, createTopic, subscribeTopic, confirmSubscription, deleteTopic };

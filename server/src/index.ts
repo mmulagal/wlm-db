@@ -8,7 +8,6 @@ import helmet from '@fastify/helmet';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import sensible from '@fastify/sensible';
-import SwaggerParser from '@apidevtools/swagger-parser';
 import getLogger from './utils/logger';
 import {
     ACCOUNT_ID,
@@ -29,6 +28,8 @@ import awsRoutes from './routes/aws';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
+import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
+import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -42,17 +43,6 @@ const API_PREFIX_PATH = 'wlmdb';
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
 process.on('uncaughtException', err => logger.error('Uncaught exception was thrown', err.message));
-
-async function validateSchema() {
-    logger.info('Validating schema');
-    try {
-        await SwaggerParser.validate(`http://${host}:${port}/${API_PREFIX_PATH}/documentation/yaml`);
-        logger.info('Schema is valid!!!');
-    } catch (err) {
-        logger.error(err);
-    }
-}
-
 interface Params {
     accountId: string;
 }
@@ -198,5 +188,6 @@ app.listen({ port, host }, err => {
     }
     logger.info(`Server listening on ${host}:${port}`);
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
-    validateSchema();
+    createAndSubscribeToSnsTopicInAllRegions();
+    processCloudFormationMessages();
 });

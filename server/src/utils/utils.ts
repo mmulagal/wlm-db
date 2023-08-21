@@ -222,6 +222,18 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
+function isValidJsonString(str: string | undefined) {
+    try {
+        if (str) {
+            JSON.parse(str);
+            return true;
+        }
+        return false;
+    } catch (err) {
+        return false;
+    }
+}
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -230,5 +242,6 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    isSameRoutetables
+    isSameRoutetables,
+    isValidJsonString
 };

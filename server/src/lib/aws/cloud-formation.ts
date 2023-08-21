@@ -9,6 +9,7 @@ import {
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import { CAPABILITY_IAM, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
 import getLogger from '../../utils/logger';
+import { gotInstanceForExternalRequest } from '../../utils/got';
 
 const logger = getLogger();
 
@@ -62,4 +63,14 @@ async function createStack(
     return resp;
 }
 
-export { getCloudformationClient, listStacks, createStack };
+async function sendCfnResponse(signedUrl: string, data: object) {
+    logger.info('Sending cloud formation acknowledgement ', signedUrl, data);
+
+    return gotInstanceForExternalRequest
+        .put(signedUrl, {
+            json: data
+        })
+        .json();
+}
+
+export { getCloudformationClient, listStacks, createStack, sendCfnResponse };

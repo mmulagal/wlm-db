@@ -1,4 +1,7 @@
-import { listTopics } from '../../lib/aws/sns';
+import { describeRegions } from '../../lib/aws/ec2';
+import { createTopic, deleteTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
+import { createQueue, deleteQueue } from '../../lib/aws/sqs';
+import { DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -20,4 +23,54 @@ async function getSnsTopics(credentialsId: string, region: string) {
     return { topics: updatedTopics };
 }
 
-export { getSnsTopics };
+//DO NOT USE: FOR INTERNAL TESTING
+async function deleteQueueResources() {
+    const queueName = WLMDB;
+    const { Regions: regions } = await describeRegions(undefined, {});
+    try {
+        await deleteQueue(DEFAULT_AWS_REGION, {
+            QueueUrl: `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/464262061435/${queueName}`
+        });
+        regions?.forEach(async ({ RegionName: code }) => {
+            if (code) {
+                const queueName = WLMDB;
+                await deleteTopic(code, queueName);
+                await deleteQueue(code, {
+                    QueueUrl: `https://sqs.${code}.amazonaws.com/464262061435/${queueName}`
+                });
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to delete SNS-SQS resources', error);
+    }
+}
+
+async function createAndSubscribeToSnsTopicInAllRegions() {
+    logger.info('Create and subscribe to SNS topics in all region');
+
+    const { Regions: regions } = await describeRegions(undefined, {});
+    try {
+        regions?.forEach(async ({ RegionName: code }) => {
+            if (code) {
+                const queueName = WLMDB;
+                let QueueUrl;
+                if (code === DEFAULT_AWS_REGION) {
+                    ({ QueueUrl } = await createQueue(code, { QueueName: queueName }));
+                }
+                const { TopicArn } = await createTopic(code, queueName);
+                const accountId = QueueUrl?.split('/')[3];
+                const queueArn = `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+
+                await subscribeTopic(code, {
+                    Protocol: 'sqs',
+                    TopicArn,
+                    Endpoint: queueArn
+                });
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to create and subscribe to SNS topics', error);
+    }
+}
+
+export { getSnsTopics, deleteQueueResources, createAndSubscribeToSnsTopicInAllRegions };

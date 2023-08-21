@@ -33,5 +33,6 @@
     },
     "service-token": {
         "expiration-margin": "10s"
-    }
+    },
+    "sqs-poll-interval": "30s"
 }

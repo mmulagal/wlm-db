@@ -1,0 +1,12 @@
+{
+    "Type": "Notification",
+    "MessageId": "9bd6f17d-5648-51b4-9c26-ac201e236e88",
+    "TopicArn": "arn:aws:sns:ap-southeast-1:464262061435:wlmdb",
+    "Subject": "AWS CloudFormation custom resource request",
+    "Message": "{\"RequestType\":\"Create\",\"ServiceToken\":\"arn:aws:sns:ap-southeast-1:464262061435:wlmdb\",\"ResponseURL\":\"https://cloudformation-custom-resource-response-apsoutheast1.s3-ap-southeast-1.amazonaws.com/arn%3Aaws%3Acloudformation%3Aap-southeast-1%3A464262061435%3Astack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de%7CMyCustomResource%7C97167856-a9a1-4658-a331-129a88bdfbaa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230821T111035Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIAXKFFXMS35QA6I5SI%2F20230821%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Signature=7519418858cd6d60c27638ec159077345b543413ffb30e4d57d921b3b5200ba8\",\"StackId\":\"arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de\",\"RequestId\":\"97167856-a9a1-4658-a331-129a88bdfbaa\",\"LogicalResourceId\":\"MyCustomResource\",\"ResourceType\":\"Custom::MyCustomResource\",\"ResourceProperties\":{\"ServiceToken\":\"arn:aws:sns:ap-southeast-1:464262061435:wlmdb\",\"Ec2InstanceId\":\"i-045f7739717b2b681\"}}",
+    "Timestamp": "2023-08-21T11:10:35.875Z",
+    "SignatureVersion": "1",
+    "Signature": "N4M/tt7pysDkNwdO2hhbbfFB9qRT1ytxdqkhwFCkssxINlJG/0lle1dPXpwhP9Zmv6O1NPHz8q3TrVjm4f/eh/kkSY/3+DTj7vOHIDDUa481E84C0TVjCiHNbCBIT4UhhOAvLOqUQ8/1BPDZIRcRy0CK5Q9xaDXEGS/SjLaNQfUx42brjKokcsDySLvrEeDWNlQJrKTCXW0fXPEioIcXFndAMOPr5noh0Q2fJyCFggIDlqE1vVZr4UjQRGnCWS50Dk6iXQ1n/HUlYVCbPuDZsOM0YRF+ZLUdHU0PnUFcinHYWCACxQAScgFyDKlswUfTyLDEfbqRh7WSbkyIub3Pdg==",
+    "SigningCertURL": "https://sns.ap-southeast-1.amazonaws.com/SimpleNotificationService-01d088a6f77103d0fe307c0069e40ed6.pem",
+    "UnsubscribeURL": "https://sns.ap-southeast-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:ap-southeast-1:464262061435:wlmdb:1a7be5d3-aec4-4402-9344-f694f9652b31"
+}

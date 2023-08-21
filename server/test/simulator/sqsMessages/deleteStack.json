@@ -1,0 +1,12 @@
+{
+    "Type": "Notification",
+    "MessageId": "6879ce75-3b51-570e-90c4-93286ddd453b",
+    "TopicArn": "arn:aws:sns:ap-southeast-1:464262061435:wlmdb",
+    "Subject": "AWS CloudFormation custom resource request",
+    "Message": "{\"RequestType\":\"Delete\",\"ServiceToken\":\"arn:aws:sns:ap-southeast-1:464262061435:wlmdb\",\"ResponseURL\":\"https://cloudformation-custom-resource-response-apsoutheast1.s3-ap-southeast-1.amazonaws.com/arn%3Aaws%3Acloudformation%3Aap-southeast-1%3A464262061435%3Astack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de%7CMyCustomResource%7C8ed27086-fbf9-4ca2-b4b6-440d37118227?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230821T121052Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIAXKFFXMS35QA6I5SI%2F20230821%2Fap-southeast-1%2Fs3%2Faws4_request&X-Amz-Signature=b8ee6ff5c480cc7a1e0ca73592021624fc4bf57dc26529c09b0c3f45cdbdf727\",\"StackId\":\"arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de\",\"RequestId\":\"8ed27086-fbf9-4ca2-b4b6-440d37118227\",\"LogicalResourceId\":\"MyCustomResource\",\"PhysicalResourceId\":\"TESTSTACK-MyCustomResource-8YIELW14YTBE\",\"ResourceType\":\"Custom::MyCustomResource\",\"ResourceProperties\":{\"ServiceToken\":\"arn:aws:sns:ap-southeast-1:464262061435:wlmdb\",\"Ec2InstanceId\":\"i-045f7739717b2b681\"}}",
+    "Timestamp": "2023-08-21T12:10:52.158Z",
+    "SignatureVersion": "1",
+    "Signature": "URJLhBXiDm79Sde3g4LCdD7XHSbxy3RuKE8cAMpNOLRZx8/uNPbeJ2f2V39Kiq/V+h3MCg6M5C57VjF4RgD8gyASh6t3KmNf26qxspmPdZKhkNiJGkt7NCihRGmKOz6rY1YriBnEdGmV9kXIWpHl0uie/wTMouqNTj5gWW0SXnXhfCsHvUkzESAsYPXVqMIXl2C2wLsgGCwlTyG8+/GigOsYsnfYl39zr4/SVCrUrEKKdDSn5yXZRtgqI3yhoFZ+XpvqbulHI01hzlZDOK0wAswmv6TAjnSOLNko2nxSJLNmeABsmHRqAEHA0Xqo6h9hrGsL+Jm3LOVzrm2n7MHSLQ==",
+    "SigningCertURL": "https://sns.ap-southeast-1.amazonaws.com/SimpleNotificationService-01d088a6f77103d0fe307c0069e40ed6.pem",
+    "UnsubscribeURL": "https://sns.ap-southeast-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:ap-southeast-1:464262061435:wlmdb:1a7be5d3-aec4-4402-9344-f694f9652b31"
+}
