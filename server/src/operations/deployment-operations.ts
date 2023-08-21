@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
@@ -19,9 +20,10 @@ import {
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
-    WLM_ASSETS
+    WLM_ASSETS,
+    SAME_ROUTETABLE_MESSAGE
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
+import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 
@@ -47,6 +49,11 @@ async function createCloudFormationTemplateForUserDeployment(
         fsxConfiguration,
         sqlConfiguration
     });
+
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    }
 
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
 
@@ -139,20 +146,19 @@ async function deployCloudFormationTemplate(
         sqlConfiguration
     });
 
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    }
+
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
     if (permissions?.length) {
-        throw {
-            statusCode: HttpErrorCodes.VALIDATION_ERROR,
-            message: MISSING_PERMISSIONS(permissions)
-        };
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
     if (cfStackQuotaReached) {
-        throw {
-            statusCode: HttpErrorCodes.VALIDATION_ERROR,
-            message: CF_QUOTA_REACHED
-        };
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
     const { stackName, templateParameters } = await formatTemplateParameters(
