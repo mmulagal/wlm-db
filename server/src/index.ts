@@ -26,6 +26,7 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import workingEnvironmentRoutes from './routes/working-environment';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
@@ -145,6 +146,7 @@ const app = fastify({
             awsRoutes(instance);
             credentialsRoutes(instance);
             deploymentRoutes(instance);
+            workingEnvironmentRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
