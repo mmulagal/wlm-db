@@ -7,9 +7,10 @@ type DialogProps = {
     primaryButton: string;
     secondaryButton?: string;
     callback?: any;
+    closeCallback?: any;
 };
 
-const DialogComponent = ({ header, content, primaryButton, secondaryButton, callback }: DialogProps) => {
+const DialogComponent = ({ header, content, primaryButton, secondaryButton, callback, closeCallback }: DialogProps) => {
     const { closeDialog } = useDialog();
 
     return (
@@ -29,7 +30,14 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     {primaryButton}
                 </Button>
                 {secondaryButton && (
-                    <Button variant={'secondary'} isThin={true} onClick={() => closeDialog(null)}>
+                    <Button
+                        variant={'secondary'}
+                        isThin={true}
+                        onClick={() => {
+                            closeCallback();
+                            closeDialog(null);
+                        }}
+                    >
                         {secondaryButton}
                     </Button>
                 )}

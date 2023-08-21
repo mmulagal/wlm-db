@@ -184,6 +184,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
         input.length > 16 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input);
+    const isDBValueValid = (input.length > 0 && dataBaseNameValue) ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));
     } else {
@@ -204,7 +205,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !dbCredStateValue &&
         !adStateValue &&
         !fsxStateValue &&
-        !dataBaseNameValue &&
+        !isDBValueValid &&
         !licenseIdCheck &&
         !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
         !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)

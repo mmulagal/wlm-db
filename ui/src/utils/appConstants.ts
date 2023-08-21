@@ -33,7 +33,7 @@ export const GENERAL = {
     KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
-    INSTANCE_TYPE: 'Instance type',
+    INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
     PROVISIONED_IOPS: 'Provisioned IOPS',
@@ -48,47 +48,45 @@ export const GENERAL = {
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
+    SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    SAVE_CONFIG_CONTENT:
+        'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+    CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    SAVE: 'Save',
     API_REQUEST: 'API request',
     Cancel: 'Cancel',
-    DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create Microsoft SQL server.',
-    DEFAULT_AWS_ACCOUNT_SECOND_LINE:
-        'Ensure a seamless deployment of your Microsoft SQL Server by configuring your AWS credentials.',
-    DEFAULT_AWS_ACCOUNT_THIRD_LINE:
-        'Follow the steps below to enable us to create the database for you or generate a CloudFormation stack for manual operation.',
+    DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',
     STEP_TWO: 'Step 2:',
-    NAVIGATE_TO: 'Navigate to',
-    STEP_TWO_TEXT:
-        'Add the necessary credentials that will enable us to create the Microsoft SQL Server database or generate a CloudFormation code for deployment.',
-    PAGE: 'page',
-    OPTIONS_TEXT: 'You have two distinct options to choose from, depending on your preferences:',
-    OPTION_ONE:
-        'Option 1: Minimum permissions policy Assign a policy with the minimum permissions required to populate AWS resources in the below form.',
-    OPTION_TWO:
-        'Option 2: Full permissions policy for a comprehensive deployment experience, assign a policy with all the permissions necessary to successfully deploy the stack. This option is recommended if you prefer a hands-off approach and want us to handle all deployment aspects.',
-    FOR_MORE_INFO: 'For more information:',
-    NOTE_TEXT:
-        'Note: Please be aware that the deployment process is estimated to take around 2 hours. Plan accordingly to ensure a smooth and uninterrupted deployment experience.',
+    NAVIGATE_TO: 'Go to the',
+    STEP_TWO_TEXT: 'Add the credentials required for deployment:',
+    OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
+    OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
+    FOR_MORE_INFO: 'Learn more about the',
     AWS_ACCOUNT_SUB_TEXT:
-        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP. For more information, visit ',
+        'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
         "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
     GO_TO_THE: 'Go to the',
+    REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
-    CREDENTIALS: 'Credentials',
+    CREDENTIALS: 'Credentials page.',
+    CREDENTIAL: 'Credentials.',
+    CREDENTIAL_WITHOUT_DOT: 'Credentials',
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
     MULTI_AZ_CHECK_MESSAGE:
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
+    CLOUDFORMATION_TEMPLATE_URL: 'CloudFormation template URL',
     SAME_ROUTE_SUBNET_ERROR: 'AWS FSx requires route tables to be different for subnets in multi-zone deployment.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
-    GENERATED_SECURITY_GROUP: 'Generated security group',
+    GENERATED_SECURITY_GROUP: 'Create a new security group',
     EXISTING_SECURITY_GROUP: 'Existing security group',
     //Constants for Op system
     WIN_SERVER_2016: 'Windows server 2016',
@@ -97,7 +95,7 @@ export const GENERAL = {
     WIN_SERVER_2019_VERSION: '2019',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     //Constants for DB Deployment
-    FAILOVER_CLUSTER: 'Failover cluster instances (FCI)',
+    FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
     FAILOVER_CLUSTER_TEXT: 'Deploy your SQL Server Always On application across multiple Availability Zones',
     SINGLE_INSTANCE: 'Single Instance',
     SINGLE_INSTANCE_TEXT: 'Deploy your SQL Server on a single node.',
@@ -133,15 +131,15 @@ export const GENERAL = {
     SELECT_AMI_NAME: 'Select AMI Name',
 
     //Constants for DB name accordion
-    DATABASE_INSTANCE_NAME: 'Database instance name',
+    DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        'First character should not be a numerical value (0-9), it can be an alphabet (a-z), underscore ‘_’, number sign ‘#’, or ampersand ‘&’. Space and special characters (such as @, ^, *,  ) are not allowed. Instance name should be 16 chars or less in length.',
+        "The instance name must be 16 characters or less in length. The first character must be an alphabetic character (a-z), an underscore `_`, a number sign `#`, or an ampersand `&`. The first character can't be a numerical value (0-9). Spaces and special characters (such as @, ^, *, ) are not supported.",
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
-        "Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSxN filesystem volumes, as well as LUNs, will be performed according to NetApp's best practices for SQL configuration. You can change the recommended defaults to meet your requirements.",
+        'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
     ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
@@ -151,7 +149,7 @@ export const GENERAL = {
     PLACEHOLDER_PROVISIONED: '3072 - 160000 IOPS',
     THROUGHPUT: 'Throughput',
     //SIMPLE NOTIFICATION SERVICES
-    SNS: 'Simple Notification Service (SNS) topic ARN',
+    SNS: 'Enable the Simple Notification Service (SNS) for this configuration',
     SNS_TEXT: 'Enter an SNS topic for Microsoft SQL Server to send notifications and alerts.',
     ARN: 'ARN',
     //Cloud watch
@@ -184,7 +182,7 @@ export const GENERAL = {
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
     //Availability zone
-    AZ_TEXT: 'Choose Availability Zones and corresponding private subnets for a minimum of two Availability Zones.',
+    AZ_TEXT: 'Select an Availability Zone and subnet for each node.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
@@ -200,11 +198,11 @@ export const GENERAL = {
     PASSWORD_CRED_4: "The password can't contain the user name.",
     //Encryption
     ENCRYPTION_TEXT:
-        'Key that will be used to protect the key used to encrypt this database storage (FSxN). You can select from master keys in your account or type/paste the ARN of a key from a different account.',
+        'Select the key to encrypt this database storage (FSx for ONTAP). You can select from master keys in your account or enter the ARN of a key from a different account.',
     ENCRYPTION_SELECT_FROM_ACCOUNT: 'Select a key from your account',
     ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT: 'Select a key from another account',
     ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_TEXT:
-        'If needed, you can select a customer managed key from another AWS account by entering the Amazon Resource Name (ARN) of that key. You can find the ARN from the Amazon Key Management Service console. Key ARN starts with ‘arn:aws:kms’ or ‘arn:aws-us-gov:kms’.',
+        'If needed, you can select a customer-managed key from another AWS account by entering the Amazon Resource Name (ARN) of that key. You can find the ARN from the Amazon Key Management Service console. Key ARN starts with ‘arn:aws:kms’ or ‘arn:aws-us-gov:kms’.',
     ENCRYPTION_TEXT_FIELD: 'Encryption key ARN',
     ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT_SUB_TEXT:
         'AWS is responsible for data encryption and decryption operations. Key management is handled by AWS Key Management Service.',
@@ -215,8 +213,8 @@ export const GENERAL = {
     ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.',
     TAGS_HEADING_MSG: 'You can add upto 50 tags',
     ADD_NEW_TAG: '+ Add new tag',
-    TAG_KEY: 'Tag Key',
-    TAG_VALUE: 'Tag Value',
+    TAG_KEY: 'Tag key',
+    TAG_VALUE: 'Tag value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
     SELECT_ANY_ACCOUNT: 'Select a credential',

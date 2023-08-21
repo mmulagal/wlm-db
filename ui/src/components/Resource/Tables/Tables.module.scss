@@ -1,0 +1,13 @@
+.tablesContainer {
+    width: 100%;
+    height: 100vh;
+    background-color: var(--main-background);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .table {
+        width: 1600px;
+        margin-top: 30px;
+    }
+}

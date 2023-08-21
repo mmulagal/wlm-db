@@ -58,7 +58,14 @@ const CloudFormation = () => {
                     if (warning) {
                         sfNotification(warning, url);
                     } else if (url) {
-                        window.open(url, '_blank', 'noopener');
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.INFO,
+                                message: GENERAL.CLOUDFORMATION_TEMPLATE_URL,
+                                additionalText: url
+                            })
+                        );
+                        setTimeout(() => { window.open(url, '_blank', 'noopener') }, 3000);
                     }
                     dispatch(setIsLoading(false));
                 })
