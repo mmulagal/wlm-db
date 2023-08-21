@@ -16,8 +16,7 @@ const InstanceTypes = Type.Object({
             ramInMib: Type.Optional(Type.Number()),
             iopsInMbps: Type.Optional(Type.Number())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // VPC list Request and Response
@@ -65,8 +64,7 @@ const VpcListResponse = Type.Object({
                 )
             )
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // AMI Request and Response
@@ -156,10 +154,11 @@ const KmsKeysListResponse = Type.Object({
             name: Type.Optional(Type.String()),
             origin: Type.Optional(Type.String()),
             state: Type.Optional(Type.String()),
-            expirationDate: Type.Optional(Type.String())
+            expirationDate: Type.Optional(Type.String()),
+            isDefault: Type.Optional(Type.Boolean()),
+            formattedDate: Type.Optional(Type.String())
         })
-    ),
-    totalRecords: Type.Optional(Type.Number())
+    )
 });
 
 // Keypair schema

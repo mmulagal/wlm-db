@@ -4,6 +4,10 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
+import Databases from './components/Resource/Databases/Databases';
+import MsSqlOverview from './components/Resource/MsSqlOverview/MsSqlOverview';
+import ResourcePage from './components/Resource/ResourcePage';
+import Tables from './components/Resource/Tables/Tables';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
@@ -24,6 +28,11 @@ const Home = () => {
                     path={`add-working-environment/database-services/:storage/discover`}
                     element={<DiscoverPage />}
                 />
+                <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                    <Route path={'overview'} element={<MsSqlOverview />} />
+                    <Route path={'databases'} element={<Databases />} />
+                    <Route path={'tables'} element={<Tables />} />
+                </Route>
                 <Route path="*" element={<MainComponent />} />
             </Routes>
 

@@ -475,6 +475,8 @@ const HTTP_PATCH = 'PATCH';
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
+const AWS_FSX = 'aws/fsx';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -561,5 +563,6 @@ export {
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
-    SAME_ROUTETABLE_MESSAGE
+    SAME_ROUTETABLE_MESSAGE,
+    AWS_FSX
 };

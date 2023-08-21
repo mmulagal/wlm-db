@@ -27,7 +27,7 @@ const createMssqlPayload = (state: any) => {
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
-            return state.mssqlForm.encryption?.selectedRow[0]?.name;
+            return state.mssqlForm.encryption?.selectedRow[0]?.id;
         } else {
             return state.mssqlForm.encryption?.encryptionArn;
         }
@@ -41,7 +41,6 @@ const createMssqlPayload = (state: any) => {
         };
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (fsxnType === GENERAL.CREATE_NEW_FSXN) {
-            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNName;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         } else {
