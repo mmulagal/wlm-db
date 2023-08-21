@@ -23,6 +23,9 @@ export const DATABASE_TYPE = 'sql'
 // Default username for FSxN when creating new
 export const FSXADMIN = 'fsxadmin'
 
+// Default database name
+export const SQL_DATABASE = 'sqldatabase_1'
+
 // Active Directory scenario type
 export const AWS_MANAGED_AD= 'AWS_MANAGED_AD'
 
