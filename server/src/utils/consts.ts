@@ -401,7 +401,7 @@ const ASSETS_REGION_CODE = 's3.ap-southeast-1';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
-const DISABLE_ROLLBACK = false;
+const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 120;
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
