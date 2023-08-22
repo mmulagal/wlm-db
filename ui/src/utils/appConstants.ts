@@ -231,5 +231,14 @@ export const GENERAL = {
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
         'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector',
-    IS_REQUIRED_MSG: ' is required'
+    IS_REQUIRED_MSG: ' is required',
+    DATABASES_SUMMARY: 'Databases summary',
+    DATABASES: 'Databases',
+    TOTAL_SIZE: 'Total size',
+    INFORMATION: 'Information',
+    RESOURCE_DISTRIBUTION: 'Resources Distribution',
+    TIMELINE: 'Timeline',
+    REMOVE_FROM_WORKSPACE: 'Remove from workspace',
+    TABLES_SUMMARY: 'Tables summary',
+    TABLES: 'Tables'
 };
