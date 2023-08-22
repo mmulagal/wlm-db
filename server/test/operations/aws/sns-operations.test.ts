@@ -5,7 +5,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/sns-scope';
 
 const opsresponse = {
-    Topics: [
+    topics: [
         {
             topicArn: 'arn:aws:sns:ap-southeast-1:464262061435:LaunchWizardEventForwarder-DO_NOT_MODIFY',
             topicName: 'LaunchWizardEventForwarder-DO_NOT_MODIFY'

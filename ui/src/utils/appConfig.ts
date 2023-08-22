@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
-import { useAppDispatch } from "../store/storeHooks";
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch } from '../store/storeHooks';
 import queryString from 'query-string';
-import { setAppContext } from "../store/appContextSlice";
-import { updateAuthFailed, updateAuthSuccess } from "../store/authSlice";
-import { LOCAL } from "./consts";
+import { setAppContext } from '../store/appContextSlice';
+import { updateAuthFailed, updateAuthSuccess } from '../store/authSlice';
+import { LOCAL } from './consts';
 import Auth, { refreshSso } from './auth';
+import { encodeAll } from './utilityFunctions';
 
 const AUTH_0_OPTIONS = {
     clientID: process.env.REACT_APP_AUTH_CLIENT,
@@ -15,7 +17,7 @@ const AUTH_0_OPTIONS = {
 const CM_ACTIONS = {
     ready: 'SERVICE:READY',
     navigate: 'SERVICE:NAVIGATE',
-    onTokenUpdate: 'SERVICE:TOKEN-UPDATE',
+    onTokenUpdate: 'SERVICE:TOKEN-UPDATE'
 };
 
 const postCmMessage = ({ type, payload }: any) => {
@@ -51,9 +53,7 @@ const useHandleCmMessages = (eventHandlers: any) => {
 
     useEffect(() => {
         const messageHandler = (event: any) => {
-            const {
-                onTokenUpdate,
-            } = eventsHandlersRef.current;
+            const { onTokenUpdate } = eventsHandlersRef.current;
             const { type, payload } = event.data;
             switch (type) {
                 case CM_ACTIONS.onTokenUpdate:
@@ -64,13 +64,13 @@ const useHandleCmMessages = (eventHandlers: any) => {
             }
         };
         window.addEventListener('message', messageHandler, false);
-        return () =>
-            window.removeEventListener('message', messageHandler, false);
+        return () => window.removeEventListener('message', messageHandler, false);
     }, []);
 };
 
 const useInitialize = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     useHandleCmMessages({
         onTokenUpdate: (payload: any) => dispatch(updateAuthSuccess(payload))
@@ -78,13 +78,9 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken } = search;
-        const accountIdAsString = Array.isArray(accountId)
-            ? accountId[0]
-            : accountId;
-        const accessTokenAsString = Array.isArray(accessToken)
-            ? accessToken[0]
-            : accessToken;
+        const { accountId, accessToken, storage, pathname } = search;
+        const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
+        const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const environment = process.env.REACT_APP_ENVIRONMENT ?? null;
 
         const handleAuthSuccess = (payload: any) => {
@@ -102,9 +98,9 @@ const useInitialize = () => {
             };
             dispatch(setAppContext(appContext));
         }
-        
+
         handleAuthSuccess({
-            accessToken: accessTokenAsString || '',
+            accessToken: accessTokenAsString || ''
         });
 
         if (environment === LOCAL) {
@@ -118,11 +114,13 @@ const useInitialize = () => {
             //     handleAuthFailed
             // });
         }
-        
+
+        if (pathname?.includes('add-working-environment')) {
+            navigate(`${pathname}`, { replace: true });
+        }
+
         sendAppReady();
-
-    }, [dispatch])
-
+    }, [dispatch]);
 };
 
 export { useInitialize, cmNavigateTo };

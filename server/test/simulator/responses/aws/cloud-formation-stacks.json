@@ -1,5 +1,5 @@
 {
-    "stacks": [
+    "StackSummaries": [
         {
             "StackId": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/VSStack/1020ad00-2ed6-11ee-b05a-06207a136082",
             "StackName": "VSStack",
