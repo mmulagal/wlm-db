@@ -73,6 +73,7 @@ export const GENERAL = {
         "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
     GO_TO_THE: 'Go to the',
     REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'required permissions',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials page.',
     CREDENTIAL: 'Credentials.',
