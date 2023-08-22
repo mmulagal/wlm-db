@@ -1,10 +1,12 @@
 .databasesContainer {
     width: 100%;
-    height: 100vh;
+    height: fit-content;
+    min-height: calc(100% - 56px);
     background-color: var(--main-background);
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding-bottom: 100px;
 
     .table {
         width: 1600px;

@@ -5,6 +5,7 @@ import { ReactComponent as MenuIcon } from '../../../assets/menu-icon.svg';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button, Typography, ButtonWithDropdown } from '@netapp/design-system';
 import { useMemo } from 'react';
+import { GENERAL } from '../../../utils/appConstants';
 
 type ResourceHeaderProps = {
     name?: string;
@@ -53,7 +54,7 @@ const ResourceHeader = ({ name }: ResourceHeaderProps) => {
                     }}
                     className={styles.timelineButton}
                 >
-                    Timeline
+                    {GENERAL.TIMELINE}
                 </Button>
                 <Button
                     variant="icon"
@@ -74,7 +75,7 @@ const ResourceHeader = ({ name }: ResourceHeaderProps) => {
                                         console.log('remove workspace clicked');
                                     }}
                                 >
-                                    <Typography variant="Regular_14">Remove from workspace</Typography>
+                                    <Typography variant="Regular_14">{GENERAL.REMOVE_FROM_WORKSPACE}</Typography>
                                 </div>
                             )
                         }
