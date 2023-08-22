@@ -56,7 +56,7 @@ const License = () => {
     }, [amiData]);
 
     useEffect(() => {
-        dispatch(setSelectedLicenseId(null));
+        dispatch(setSelectedLicenseId(generateAMIIdForLicense[0]));
     }, [dispatch, generateAMIIdForLicense]);
 
     //Set the Header text here
