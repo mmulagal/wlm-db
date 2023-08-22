@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './DatabaseName.module.scss';
@@ -6,10 +6,15 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
+import { SQL_DATABASE } from '../../../../utils/consts';
 
 const DatabaseName = () => {
-    const [input, setInput] = useState('');
+    const [input, setInput] = useState(SQL_DATABASE);
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(setDBName(input));
+    });
 
     function isValidDBName() {
         const firstChar = input.charAt(0);
@@ -17,7 +22,7 @@ const DatabaseName = () => {
 
         if (
             input.length > 0 &&
-            (input.length > 16 || !/^[a-zA-Z_#&]/.test(firstChar) || !/^[a-zA-Z0-9_#&]+$/.test(input))
+            (input.length > 15 || !/^[a-zA-Z_#&]/.test(firstChar) || !/^[a-zA-Z0-9_#&]+$/.test(input))
         ) {
             return GENERAL.DB_NAME_TOOLTIP;
         }

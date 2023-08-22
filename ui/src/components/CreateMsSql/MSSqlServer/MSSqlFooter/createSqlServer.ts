@@ -27,7 +27,7 @@ const createMssqlPayload = (state: any) => {
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
-            return state.mssqlForm.encryption?.selectedRow[0]?.name;
+            return state.mssqlForm.encryption?.selectedRow[0]?.id;
         } else {
             return state.mssqlForm.encryption?.encryptionArn;
         }
@@ -41,11 +41,10 @@ const createMssqlPayload = (state: any) => {
         };
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (fsxnType === GENERAL.CREATE_NEW_FSXN) {
-            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNName;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         } else {
-            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.value;
+            fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.data?.fileSystemId;
             fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
             fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
         }
@@ -105,7 +104,7 @@ const createMssqlPayload = (state: any) => {
             domainPassword: state.mssqlForm.activeDirectory?.password,
             domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value,
             dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress,
-            securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId
+            securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
         },
         fsxConfiguration: {
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
@@ -184,7 +183,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     //Check for DB Name - InvalidName
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
-        input.length > 16 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input);
+        input.length > 15 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input);
+    const isDBValueValid = (input.length > 0 && dataBaseNameValue) ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));
     } else {
@@ -205,7 +205,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !dbCredStateValue &&
         !adStateValue &&
         !fsxStateValue &&
-        !dataBaseNameValue &&
+        !isDBValueValid &&
         !licenseIdCheck &&
         !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
         !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)

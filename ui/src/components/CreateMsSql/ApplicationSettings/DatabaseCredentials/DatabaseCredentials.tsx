@@ -35,8 +35,6 @@ const DatabaseCredentials = () => {
         return (
             <Typography variant="Regular_13" className={styles.infoMsg}>
                 <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_1}</Typography>
-                <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_2}</Typography>
-                <Typography variant="Regular_13">{GENERAL.PASSWORD_CRED_3}</Typography>
                 <div className={styles.list}>
                     <div className={styles.listItem}>
                         <Bullet />

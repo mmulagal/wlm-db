@@ -4,31 +4,36 @@
     "homepage": "./",
     "private": true,
     "dependencies": {
-        "@netapp/design-system": "0.4.21",
-        "@netapp/icons": "^1.0.5",
-        "@reduxjs/toolkit": "1.8.6",
+        "@netapp/design-system": "0.4.27",
+        "@netapp/icons": "^1.0.7",
+        "@reduxjs/toolkit": "1.9.5",
         "@testing-library/jest-dom": "^5.16.5",
         "@testing-library/react": "^13.4.0",
         "@testing-library/user-event": "^13.5.0",
-        "@types/jest": "^27.5.2",
-        "@types/node": "^16.18.38",
-        "@types/react": "^18.2.15",
+        "@types/jest": "^29.5.3",
+        "@types/node": "^20.5.0",
+        "@types/react": "^18.2.20",
         "@types/react-dom": "^18.2.7",
         "auth0-js": "^9.22.1",
+<<<<<<< HEAD
         "axios": "^0.21.1",
         "json2csv": "^6.0.0-alpha.2",
+=======
+        "axios": "^1.4.0",
+>>>>>>> a5d48ca7930b04e121f9f2467c108ed74018bd26
         "lodash": "^4.17.21",
+        "moment": "^2.29.4",
         "numeral": "^2.0.6",
         "query-string": "^8.1.0",
         "react": "^18.2.0",
         "react-copy-to-clipboard": "^5.0.4",
         "react-dom": "^18.2.0",
-        "react-redux": "^8.0.5",
-        "react-router-dom": "^6.10.0",
+        "react-redux": "^8.1.2",
+        "react-router-dom": "^6.15.0",
         "react-scripts": "5.0.1",
         "redux-mock-store": "^1.5.4",
         "typescript": "^4.9.5",
-        "web-vitals": "^2.1.4"
+        "web-vitals": "^3.4.0"
     },
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
@@ -66,9 +71,13 @@
         "dotenv-cli": "^4.0.0",
         "jest-teamcity-reporter": "^0.9.0",
         "react-scripts": "5.0.1",
+<<<<<<< HEAD
         "sass": "^1.34.1"
     },
     "jest": {
         "transformIgnorePatterns": []
+=======
+        "sass": "^1.66.0"
+>>>>>>> a5d48ca7930b04e121f9f2467c108ed74018bd26
     }
 }

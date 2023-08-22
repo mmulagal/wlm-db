@@ -49,6 +49,7 @@
         "@opentelemetry/instrumentation-fastify": "^0.32.1",
         "@opentelemetry/instrumentation-http": "^0.41.2",
         "@opentelemetry/sdk-node": "^0.41.2",
+        "@sinclair/typebox": "^0.27.8",
         "async": "^3.2.4",
         "config": "^3.3.9",
         "fastify": "^4.19.2",
@@ -57,6 +58,7 @@
         "jwks-rsa": "^3.0.1",
         "lodash-es": "^4.17.21",
         "log4js": "^6.9.1",
+        "moment": "^2.29.4",
         "nanoid": "^4.0.2",
         "randomatic": "^3.1.1"
     },

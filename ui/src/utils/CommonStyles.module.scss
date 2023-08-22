@@ -16,6 +16,8 @@
 .separator {
     border-right: 1px solid var(--grey-15);
     height: 16px;
+    position: relative;
+    top: 4px;
 }
 
 .text-disabled {
@@ -35,6 +37,12 @@
     font-size: 14px;
     color: var(--grey-50);
     line-height: none !important;
+}
+
+.buttonClass {
+    span {
+        text-transform: none !important;
+    }
 }
 
 @media screen and (max-width: 1350px) {

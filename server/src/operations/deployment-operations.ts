@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
@@ -17,9 +18,12 @@ import {
     TEMPLATE_CONFIGURATION_MAPPING,
     MASTER_TEMPLATE_URL,
     DISABLE_ROLLBACK,
-    MASTER_STACK_TIMEOUT_MINUTES
+    MASTER_STACK_TIMEOUT_MINUTES,
+    HttpErrorCodes,
+    WLM_ASSETS,
+    SAME_ROUTETABLE_MESSAGE
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
+import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 
@@ -32,7 +36,9 @@ async function createCloudFormationTemplateForUserDeployment(
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false
 ): Promise<CloudFormationTemplateResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
@@ -44,6 +50,11 @@ async function createCloudFormationTemplateForUserDeployment(
         sqlConfiguration
     });
 
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    }
+
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
 
     let errMsg = '';
@@ -51,7 +62,10 @@ async function createCloudFormationTemplateForUserDeployment(
         errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
         logger.error(errMsg);
     }
-    const derivedParams = await generateFsxParams(fsxConfiguration.databaseSize);
+    const derivedParams = fsxConfiguration.fsxFileSystemId
+        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
+        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+
     const { roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
@@ -91,13 +105,20 @@ async function createCloudFormationTemplateForUserDeployment(
         ...adConfiguration,
         ...networkConfiguration,
         ...sqlConfiguration,
-        ...ec2Configuration
+        ...ec2Configuration,
+        ...fsxConfiguration,
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
         }
+    });
+
+    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
+        templateParams += `&param_${key}=${value}`;
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
@@ -112,7 +133,8 @@ async function deployCloudFormationTemplate(
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
-    topicArn?: string
+    topicArn: string = '',
+    enableCloudWatch: boolean = false
 ): Promise<{ cloudFormationStackId: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
@@ -124,20 +146,19 @@ async function deployCloudFormationTemplate(
         sqlConfiguration
     });
 
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    }
+
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
     if (permissions?.length) {
-        throw {
-            statusCode: 409,
-            message: MISSING_PERMISSIONS(permissions)
-        };
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
     if (cfStackQuotaReached) {
-        throw {
-            statusCode: 409,
-            message: CF_QUOTA_REACHED
-        };
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
     const { stackName, templateParameters } = await formatTemplateParameters(
@@ -147,7 +168,9 @@ async function deployCloudFormationTemplate(
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
-        sqlConfiguration
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -159,8 +182,7 @@ async function deployCloudFormationTemplate(
         MASTER_TEMPLATE_URL,
         templateParameters,
         DISABLE_ROLLBACK,
-        MASTER_STACK_TIMEOUT_MINUTES,
-        topicArn
+        MASTER_STACK_TIMEOUT_MINUTES
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);

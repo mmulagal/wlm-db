@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
@@ -16,6 +16,7 @@ import {
     setSelectedSubnetNode2
 } from '../../../../store/mssql/mssqlFormSlice';
 import { Subnets } from '../../../../utils/types/mssqlTypes';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const AvailabilityZone = () => {
     const dispatch = useDispatch();
@@ -28,11 +29,17 @@ const AvailabilityZone = () => {
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
+    const [routeTable1, setRouteTable1] = useState(undefined);
+    const [routeTable2, setRouteTable2] = useState(undefined);
+
     useEffect(() => {
         dispatch(setSelectedAzNode1(null));
         dispatch(setSelectedAzNode2(null));
         dispatch(setSelectedSubnetNode1(null));
         dispatch(setSelectedSubnetNode2(null));
+        setRouteTable1(undefined);
+        setRouteTable2(undefined);
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
 
@@ -105,9 +112,17 @@ const AvailabilityZone = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
         } else if (!selectedVPCData) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;
@@ -125,6 +140,13 @@ const AvailabilityZone = () => {
             );
         }
     };
+
+    useEffect(() => {
+        if(routeTable1 && routeTable2 && routeTable1 === routeTable2){
+            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.SAME_ROUTE_SUBNET_ERROR }));
+        }
+    },[routeTable1, routeTable2]);
+
     return (
         <div className={styles['availability-zone']}>
             <AccordionCard
@@ -188,6 +210,7 @@ const AvailabilityZone = () => {
                                 value={selectedSubnet1 ? selectedSubnet1 : undefined}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode1(selectedOptions));
+                                    setRouteTable1(selectedOptions?.data?.routeTableId);
                                 }}
                                 isSearchable={generateSubnet1Options.length > 5}
                                 options={generateSubnet1Options}
@@ -244,6 +267,7 @@ const AvailabilityZone = () => {
                                 }
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode2(selectedOptions));
+                                    setRouteTable2(selectedOptions?.data?.routeTableId);
                                 }}
                                 isSearchable={generateSubnet2Options.length > 5}
                                 options={generateSubnet2Options}

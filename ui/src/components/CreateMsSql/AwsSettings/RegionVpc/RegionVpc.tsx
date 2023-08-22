@@ -10,7 +10,7 @@ import {
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { generateOptionType, formatVpcSubnetsData } from '../../../../utils/utilityFunctions';
+import { generateOptionType, formatVpcSubnetsData, regionsSort } from '../../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -35,7 +35,8 @@ const RegionVpc = () => {
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        regionsData?.regions?.map((val, idx: number) => {
+        const sortedRegionsData = regionsSort(regionsData?.regions || []);
+        sortedRegionsData?.map((val, idx: number) => {
             const regionValue = val.regionCode + ' | ' + val.regionName;
             const option = generateOptionType(regionValue, regionValue, '', false, '', val);
             options.push(option);
@@ -65,7 +66,7 @@ const RegionVpc = () => {
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
-            const vpcValue = val.name + ' - ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
+            const vpcValue = (val.name || '-') + ' - ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
@@ -100,7 +101,11 @@ const RegionVpc = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
         }
         if (!selectedRegionData || !selectedVPCData) {
             return <ActionRequired error={!isVPCNotFilled ? true : false} />;

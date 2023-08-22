@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { JSX } from 'react/jsx-runtime';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const CloudFormation = () => {
     const dispatch = useDispatch();
@@ -57,7 +58,14 @@ const CloudFormation = () => {
                     if (warning) {
                         sfNotification(warning, url);
                     } else if (url) {
-                        window.open(url, '_blank', 'noopener');
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.INFO,
+                                message: GENERAL.CLOUDFORMATION_TEMPLATE_URL,
+                                additionalText: url
+                            })
+                        );
+                        setTimeout(() => { window.open(url, '_blank', 'noopener') }, 3000);
                     }
                     dispatch(setIsLoading(false));
                 })
@@ -70,7 +78,12 @@ const CloudFormation = () => {
     return (
         <div className={styles['cloud-formation']}>
             <div className={styles.inner}>
-                <Button Component="button" variant="link" onClick={handleTemplateView}>
+                <Button
+                    Component="button"
+                    variant="link"
+                    onClick={handleTemplateView}
+                    className={CommonStyles.buttonClass}
+                >
                     {GENERAL.SAVE_FORM_AS_CLOUD}
                 </Button>
             </div>

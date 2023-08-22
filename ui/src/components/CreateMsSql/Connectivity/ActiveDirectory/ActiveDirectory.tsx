@@ -92,15 +92,25 @@ const ActiveDirectory = () => {
     useEffect(() => {
         dispatch(setSelectedADDomainName(null));
         dispatch(setSelectedADDomainAddress(''));
+        setUserName('');
+        setPassword('');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateActiveDirectories]);
 
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
         } else if (!selectedVPCData) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
 
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {

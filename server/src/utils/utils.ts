@@ -4,7 +4,7 @@
  */
 import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
-import { trimEnd, trimStart, round } from 'lodash-es';
+import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 
 import { getVpcsList } from '../operations/aws/ec2-operations';
@@ -18,7 +18,8 @@ import {
     EC2_ROLE_NAME,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
-    USER_TOKEN
+    USER_TOKEN,
+    TEMPLATE_OPTIONAL_PARAMETERS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -68,23 +69,30 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-function generateFsxParams(FSxDataLunSize: number) {
+function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
 
-    const FSxDataVolumeSize = round(1.1 * FSxDataLunSize); // FSxDataLunSize + 10% of FSxDataLunSize
-    const FSxLogVolumeSize = round(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    const FSxTempDbVolumeSize = round(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    const FSxDataLunSizeInMib = FSxDataLunSize * 1024;
+
+    // All these in MiB
+    const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
+    const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+    const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
     const FSxQuorumVolumeSize = 10000; // 10GB
-    const FSxStorageCapacity = round(FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize);
+
+    // StorageCapacity in GiB
+    const FSxStorageCapacity = Math.ceil(
+        (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
+    );
 
     return {
         UniqueID: suffix,
         StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
         //VpcName: `${prefix}-vpc-${suffix}`,
         SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
-        FSxFileSystemName: `${prefix}-fsx-${suffix}`,
+        FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
         FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
         FSxDataVolumeSize,
         FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
@@ -124,9 +132,14 @@ async function formatTemplateParameters(
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean
 ) {
-    const derivedParams = generateFsxParams(fsxConfiguration.databaseSize);
+    const derivedParams = fsxConfiguration.fsxFileSystemId
+        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
+        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
@@ -163,19 +176,33 @@ async function formatTemplateParameters(
             });
         }
     });
+
     const clubbedParamList = {
         ...networkConfiguration,
         ...adConfiguration,
         ...fsxConfiguration,
         ...sqlConfiguration,
-        ...ec2Configuration
+        ...ec2Configuration,
+        topicArn,
+        enableCloudWatch
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
-        templateParams.push({
-            ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-            ParameterValue: value.toString()
-        });
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            templateParams.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
+        if (!(key in clubbedParamList)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: ''
+            });
+        }
     });
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
@@ -187,6 +214,14 @@ async function formatTemplateParameters(
 
     return { stackName: stackName, templateParameters: templateParams };
 }
+
+function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
+    return (
+        'routeTable1Id' in networkConfiguration &&
+        'routeTable2Id' in networkConfiguration &&
+        networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
+    );
+}
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -194,5 +229,6 @@ export {
     generateFsxParams,
     formatTemplateParameters,
     getSubjectFromBearerToken,
-    hideSecretsValues
+    hideSecretsValues,
+    isSameRoutetables
 };

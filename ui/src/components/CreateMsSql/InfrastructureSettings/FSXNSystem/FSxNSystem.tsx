@@ -49,15 +49,20 @@ const FSxNSystem = () => {
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
+        //  MSSQL deployment is supported for Multi Availability Zone
+        const supportedFsxType = 'MULTI_AZ_1';
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            const value = val?.fileSystemName || val?.fileSystemId || '';
-            const data = {
-                fileSystemId: val?.fileSystemId,
-                fileSystemName: val?.fileSystemName
+            const fsxType = val?.ontapConfiguration?.deploymentType;
+            if(fsxType && fsxType === supportedFsxType){
+                const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
+                const data = {
+                    fileSystemId: val?.fileSystemId,
+                    fileSystemName: val?.name
+                };
+                const option = generateOptionType(value, value, '', false, '', data);
+                options.push(option);
             };
-            const option = generateOptionType(value, value, '', false, '', data);
-            options.push(option);
         });
 
         return options;
@@ -72,9 +77,17 @@ const FSxNSystem = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
         } else if (!selectedVPCData) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
 
         //Checking for the create new option
@@ -190,7 +203,6 @@ const FSxNSystem = () => {
                                             <li>{GENERAL.PASSWORD_FSX_1}</li>
                                             <li>{GENERAL.PASSWORD_FSX_2}</li>
                                             <li>{GENERAL.PASSWORD_FSX_3}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_4}</li>
                                         </ul>
                                     </Typography>
                                 }

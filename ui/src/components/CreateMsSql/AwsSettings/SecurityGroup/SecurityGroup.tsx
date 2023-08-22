@@ -33,7 +33,7 @@ const SecurityGroup = () => {
         const options: optionType[] = [];
         selectedVPCData?.data?.securityGroups?.map((val: any, idx: number) => {
             const sgValue = val?.id;
-            const sgLabel = val?.securityGroupName || val?.name;
+            const sgLabel = val?.securityGroupName || val?.name || '-';
             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
             options.push(option);
         });
@@ -49,9 +49,17 @@ const SecurityGroup = () => {
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_ACCOUNT}
+                </Typography>
+            );
         } else if (!selectedVPCData) {
-            return '';
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_ANY_VPC}
+                </Typography>
+            );
         }
         if (securityGroup === GENERAL.USE_AN_EXISTING_SECURITY) {
             return (

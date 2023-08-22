@@ -92,10 +92,11 @@ enum RouteTags {
 }
 
 enum HttpErrorCodes {
-    INTERNAL_SERVER_ERROR = '500',
-    NOT_FOUND = '404',
-    UNAUTHORIZED = '401',
-    FORBIDDEN = '403'
+    INTERNAL_SERVER_ERROR = 500,
+    NOT_FOUND = 404,
+    UNAUTHORIZED = 401,
+    FORBIDDEN = 403,
+    VALIDATION_ERROR = 422
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -400,7 +401,7 @@ const ASSETS_REGION_CODE = 's3.ap-southeast-1';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
-const DISABLE_ROLLBACK = false;
+const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 120;
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
@@ -430,7 +431,19 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlFciName: 'SqlFSxFCIName',
 
     workloadInstanceType: 'WorkloadInstanceType',
-    keyPairName: 'KeyPairName'
+    keyPairName: 'KeyPairName',
+
+    topicArn: 'NotificationARN',
+    enableCloudWatch: 'EnableCloudWatchLogFeature'
+};
+
+const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
+    encryptionKey: 'FileSystemEncryptionKeyId',
+    securityGroupId: 'DomainMemberSGID',
+    privateSubnet1Id: 'PrivateSubnet1ID',
+    routeTable1Id: 'RouteTable1Id',
+    privateSubnet2Id: 'PrivateSubnet2ID',
+    routeTable2Id: 'RouteTable2Id'
 };
 
 const WLM_ASSETS: Record<string, string> = {
@@ -446,6 +459,7 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
@@ -456,6 +470,12 @@ const HTTP_POST = 'POST';
 const HTTP_DELETE = 'DELETE';
 const HTTP_PUT = 'PUT';
 const HTTP_PATCH = 'PATCH';
+
+// Custom error messages
+const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
+const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
+
+const AWS_FSX = 'aws/fsx';
 
 export {
     WLMDB,
@@ -539,5 +559,10 @@ export {
     HTTP_POST,
     HTTP_DELETE,
     HTTP_PUT,
-    HTTP_PATCH
+    HTTP_PATCH,
+    TEMPLATE_OPTIONAL_PARAMETERS,
+    INVALID_REGION_AWS,
+    INVALID_REGION_MESSAGE,
+    SAME_ROUTETABLE_MESSAGE,
+    AWS_FSX
 };

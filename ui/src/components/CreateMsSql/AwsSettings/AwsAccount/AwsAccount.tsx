@@ -143,27 +143,19 @@ const AwsAccount = () => {
                         {noAccount ? (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
-                                <Typography variant="Regular_14" className={styles.lineHeight}>
-                                    {GENERAL.DEFAULT_AWS_ACCOUNT_SECOND_LINE}
-                                </Typography>
-                                <Typography variant="Regular_14" className={styles.thirdLine}>
-                                    {GENERAL.DEFAULT_AWS_ACCOUNT_THIRD_LINE}
-                                </Typography>
-                                <Typography variant="Regular_14" className={styles.lineHeight}>
+
+                                <Typography variant="Regular_14" className={styles.steps}>
                                     <span className={styles.bold}>{GENERAL.STEP_ONE}</span> {GENERAL.NAVIGATE_TO}{' '}
                                     <span>
                                         <Button Component="button" onClick={openCredentialTab} variant="text">
                                             {GENERAL.CREDENTIALS}
                                         </Button>
-                                    </span>{' '}
-                                    {GENERAL.PAGE}
+                                    </span>
                                 </Typography>
-                                <Typography variant="Regular_14" className={styles.thirdLine}>
+                                <Typography variant="Regular_14" className={styles.steps}>
                                     <span className={styles.bold}>{GENERAL.STEP_TWO}</span> {GENERAL.STEP_TWO_TEXT}
                                 </Typography>
-                                <Typography variant="Regular_14" className={styles.lineHeight}>
-                                    {GENERAL.OPTIONS_TEXT}
-                                </Typography>
+
                                 <Typography variant="Regular_14" className={styles.list}>
                                     <div className={styles.listItem}>
                                         <Bullet />
@@ -182,24 +174,27 @@ const AwsAccount = () => {
                                 <Typography variant="Regular_14" className={styles.info}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
-                                        <Button Component="button" variant="link">
-                                            {GENERAL.MS_SQL_REQUIRED}
+                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
+                                            {GENERAL.REQUIRED_PERMISSION_LINK}
                                         </Button>
                                     </span>
-                                </Typography>
-                                <Typography variant="Regular_14" className={styles.noteText}>
-                                    {GENERAL.NOTE_TEXT}
                                 </Typography>
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
-                                <Button Component="button" variant="link">
-                                    {GENERAL.MS_SQL_REQUIRED}
-                                </Button>
+                                <Typography variant="Regular_14" className={styles.buttonStyle}>
+                                    {GENERAL.FOR_MORE_INFO}{' '}
+                                    <span>
+                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
+                                            {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                        </Button>
+                                    </span>
+                                </Typography>
+
                                 <div className={styles.selectField}>
                                     <SelectField
-                                        label={GENERAL.CREDENTIALS}
+                                        label={GENERAL.CREDENTIAL_WITHOUT_DOT}
                                         isClearable={false}
                                         defaultValue={
                                             selectedCredential ? [selectedCredential] : [generateAWSAccounts[0]]
@@ -214,9 +209,8 @@ const AwsAccount = () => {
                                 <div className={styles.bottomText}>
                                     {GENERAL.ADD_NEW_CREDENTIALS}{' '}
                                     <Button Component="button" onClick={openCredentialTab} variant="text">
-                                        {GENERAL.CREDENTIALS}
+                                        {GENERAL.CREDENTIAL}
                                     </Button>
-                                    .
                                 </div>
                             </div>
                         )}
