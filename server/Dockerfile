@@ -1,7 +1,7 @@
 FROM public.ecr.aws/k3z1v4d2/node:20-alpine
 
 # Create a new user "netappuser" with UID 1000 and group name "netappgroup"
-RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1000 netappuser
+RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
 
 WORKDIR /opt/netapp/wlmdb
 
