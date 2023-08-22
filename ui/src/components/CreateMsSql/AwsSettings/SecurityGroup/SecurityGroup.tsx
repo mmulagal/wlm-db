@@ -33,7 +33,7 @@ const SecurityGroup = () => {
         const options: optionType[] = [];
         selectedVPCData?.data?.securityGroups?.map((val: any, idx: number) => {
             const sgValue = val?.id;
-            const sgLabel = val?.securityGroupName || val?.name;
+            const sgLabel = val?.securityGroupName || val?.name || '-';
             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
             options.push(option);
         });
