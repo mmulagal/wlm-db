@@ -225,8 +225,7 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
 function isValidJsonString(str: string | undefined) {
     try {
         if (str) {
-            JSON.parse(str);
-            return true;
+            return { isValid: true, message: JSON.parse(str) };
         }
         return false;
     } catch (err) {

@@ -7,9 +7,7 @@ import {
     ReceiveMessageCommandInput,
     paginateListQueues,
     DeleteMessageCommand,
-    DeleteMessageCommandInput,
-    DeleteQueueCommand,
-    DeleteQueueCommandInput
+    DeleteMessageCommandInput
 } from '@aws-sdk/client-sqs';
 import getLogger from '../../utils/logger';
 
@@ -22,17 +20,6 @@ async function createQueue(region: string, input: CreateQueueCommandInput) {
     const sqs = new SQSClient({ region });
     const resp = await sqs.send(new CreateQueueCommand(input));
     logger.info('Create queue command response', resp);
-
-    return resp;
-}
-
-//DO NOT USE: ONLY FOR TESTING; Queue Deleted in WLMDB account
-async function deleteQueue(region: string, input: DeleteQueueCommandInput) {
-    logger.info('Delete SQS queue', { region, input });
-
-    const sqs = new SQSClient({ region });
-    const resp = await sqs.send(new DeleteQueueCommand(input));
-    logger.info('Delete queue command response', resp);
 
     return resp;
 }
@@ -74,4 +61,4 @@ async function deleteMessage(region: string, input: DeleteMessageCommandInput) {
 
     return resp;
 }
-export { createQueue, listQueues, receiveMessage, deleteMessage, deleteQueue };
+export { createQueue, listQueues, receiveMessage, deleteMessage };

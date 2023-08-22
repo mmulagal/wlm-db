@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import { describeRegions } from '../../lib/aws/ec2';
 import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
@@ -28,24 +29,29 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
 
     const { Regions: regions } = await describeRegions(undefined, {});
     try {
-        regions?.forEach(async ({ RegionName: code }) => {
-            if (code) {
-                const queueName = WLMDB;
-                let QueueUrl;
-                if (code === DEFAULT_AWS_REGION) {
-                    ({ QueueUrl } = await createQueue(code, { QueueName: queueName }));
-                }
-                const { TopicArn } = await createTopic(code, queueName);
-                const accountId = QueueUrl?.split('/')[3];
-                const queueArn = `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+        if (regions)
+            await Promise.map(
+                regions,
+                async ({ RegionName: code }) => {
+                    if (code) {
+                        const queueName = WLMDB;
+                        let QueueUrl;
+                        if (code === DEFAULT_AWS_REGION) {
+                            ({ QueueUrl } = await createQueue(code, { QueueName: queueName }));
+                        }
+                        const { TopicArn } = await createTopic(code, queueName);
+                        const accountId = QueueUrl?.split('/')[3];
+                        const queueArn = `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
 
-                await subscribeTopic(code, {
-                    Protocol: 'sqs',
-                    TopicArn,
-                    Endpoint: queueArn
-                });
-            }
-        });
+                        await subscribeTopic(code, {
+                            Protocol: 'sqs',
+                            TopicArn,
+                            Endpoint: queueArn
+                        });
+                    }
+                },
+                { concurrency: 3 }
+            );
     } catch (error) {
         logger.error('Failed to create and subscribe to SNS topics', error);
     }

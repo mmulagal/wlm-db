@@ -43,10 +43,11 @@ async function processCloudFormationMessages() {
         await Promise.map(
             sqsMessages,
             async message => {
-                const { Message = undefined } =
-                    message?.Body && isValidJsonString(message.Body) ? JSON.parse(message.Body) : {};
-                if (isValidJsonString(Message)) {
-                    const jsonMessage = JSON.parse(Message);
+                const {
+                    message: { Message = undefined }
+                } = isValidJsonString(message?.Body) || {};
+                const { message: jsonMessage } = isValidJsonString(Message) || {};
+                if (jsonMessage) {
                     const { RequestType, ResponseURL } = jsonMessage;
                     if (['Create', 'Update', 'Delete'].includes(RequestType)) {
                         //a cloud formation notification will have either of the above request types, so considering only those messages;

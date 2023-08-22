@@ -5,8 +5,7 @@ import {
     SubscribeCommand,
     SubscribeCommandInput,
     ConfirmSubscriptionCommand,
-    ConfirmSubscriptionCommandInput,
-    DeleteTopicCommand
+    ConfirmSubscriptionCommandInput
 } from '@aws-sdk/client-sns';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -45,19 +44,6 @@ async function createTopic(region: string, topicName: string) {
     return resp;
 }
 
-//DO NOT USE: ONLY FOR TESTING; Topic Deleted in WLMDB account
-async function deleteTopic(region: string, topicName: string) {
-    logger.info('Delete SNS topic', { region });
-
-    const sns = new SNSClient({ region });
-    const resp = await sns.send(
-        new DeleteTopicCommand({ TopicArn: `arn:aws:sns:${region}:464262061435:${topicName}` })
-    );
-    logger.debug('Delete topic command response', resp);
-
-    return resp;
-}
-
 //Subscribe topic in WLMDB account
 async function subscribeTopic(region: string, input: SubscribeCommandInput) {
     logger.info('Subscribe to  SNS topic', { region, input });
@@ -80,4 +66,4 @@ async function confirmSubscription(region: string, input: ConfirmSubscriptionCom
     return resp;
 }
 
-export { listTopics, createTopic, subscribeTopic, confirmSubscription, deleteTopic };
+export { listTopics, createTopic, subscribeTopic, confirmSubscription };
