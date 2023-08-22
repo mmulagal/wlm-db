@@ -29,16 +29,13 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
 
     const { Regions: regions } = await describeRegions(undefined, {});
     try {
-        if (regions)
+        const queueName = WLMDB;
+        const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, { QueueName: queueName });
+        if (regions && QueueUrl)
             await Promise.map(
                 regions,
                 async ({ RegionName: code }) => {
                     if (code) {
-                        const queueName = WLMDB;
-                        let QueueUrl;
-                        if (code === DEFAULT_AWS_REGION) {
-                            ({ QueueUrl } = await createQueue(code, { QueueName: queueName }));
-                        }
                         const { TopicArn } = await createTopic(code, queueName);
                         const accountId = QueueUrl?.split('/')[3];
                         const queueArn = `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
