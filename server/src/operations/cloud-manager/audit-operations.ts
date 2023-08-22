@@ -102,18 +102,18 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
             serviceName: WLMDB,
             referrer: url as string,
             version: VERSION,
-            actionParameters: secureActionParameters,
+            requestData: secureActionParameters,
             principalId: getSubjectFromBearerToken() as string
         };
 
         validateSchema(auditGroup, CreateAuditGroupSchema);
 
         setAsyncLocalStorageResource(AUDIT_GROUP, auditGroup);
-        sendAudit(auditGroup);
+        sendAudit({ json: { auditGroup } });
     }
 }
 
-async function updateAuditGroup(request: FastifyRequest, payload?: any) {
+async function updateAuditGroup(request: FastifyRequest, reply: FastifyReply, payload?: any) {
     logger.debug('Updating audit group');
 
     if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
@@ -121,27 +121,27 @@ async function updateAuditGroup(request: FastifyRequest, payload?: any) {
 
         try {
             auditGroup.endTime = Date.now();
-            if (payload) {
-                auditGroup.responseData = payload;
-            }
-            const { error, message } = JSON.parse(payload);
-            if (error) {
+
+            const { statusCode } = reply;
+            const { message } = JSON.parse(payload);
+            if (statusCode >= 400) {
                 auditGroup.status = AUDIT_FAILED_STATUS;
-                auditGroup.errorMessage = message;
+                auditGroup.errors = [message];
 
                 validateSchema(auditGroup, UpdateAuditGroupSchema);
-                sendAudit(auditGroup);
+                sendAudit({ json: { auditGroup } });
             } else {
+                auditGroup.responseData = payload;
                 auditGroup.status = AUDIT_SUCCESS_STATUS;
 
                 validateSchema(auditGroup, UpdateAuditGroupSchema);
-                sendAudit(auditGroup);
+                sendAudit({ json: { auditGroup } });
             }
         } catch (error) {
             auditGroup.status = AUDIT_SUCCESS_STATUS;
 
             validateSchema(auditGroup, UpdateAuditGroupSchema);
-            sendAudit(auditGroup);
+            sendAudit({ json: { auditGroup } });
         }
     }
 }
@@ -151,7 +151,7 @@ async function createAuditRecord(
     actionName: string,
     status: AUDIT_STATUS,
     actionParameters: any,
-    errorMessage: string
+    errorMessage?: string
 ) {
     logger.debug('Sending audit record');
 
@@ -160,21 +160,21 @@ async function createAuditRecord(
         const secureActionParameters = JSON.stringify(hideSecretsValues(clonedData));
 
         const auditRecord: AuditRecordSchemaType = {
-            startTime: Date.now(),
+            creationTime: Date.now(),
             actionName,
             status,
             recordId: parseInt(randomize('0', 2), 10),
             requestId: getAsyncLocalStorageResource(REQUEST_ID) || 'system',
             serviceName: WLMDB,
-            actionParameters: secureActionParameters
+            data: secureActionParameters
         };
 
         if (errorMessage) {
-            auditRecord.errorMessage = errorMessage;
+            auditRecord.errors = [errorMessage];
         }
 
         validateSchema(auditRecord, AuditRecordSchema);
-        sendAudit(auditRecord);
+        sendAudit({ json: { auditRecord } });
     }
 }
 

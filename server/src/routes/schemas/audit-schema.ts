@@ -16,10 +16,10 @@ const CreateAuditGroupSchema = Type.Object({
     serviceName: Type.Literal(WLMDB),
     referrer: Type.String(),
     version: Type.String(),
-    actionParameters: Type.String(),
+    requestData: Type.String(),
     principalId: Type.String(),
     resourceId: Type.Optional(Type.String()),
-    errorMessage: Type.Optional(Type.String())
+    errors: Type.Optional(Type.Array(Type.String()))
 });
 
 const UpdateAuditGroupSchema = Type.Object({
@@ -31,22 +31,21 @@ const UpdateAuditGroupSchema = Type.Object({
     serviceName: Type.Literal(WLMDB),
     referrer: Type.String(),
     version: Type.String(),
-    actionParameters: Type.String(),
     principalId: Type.String(),
     resourceId: Type.Optional(Type.String()),
     responseData: Type.Optional(Type.String()),
-    errorMessage: Type.Optional(Type.String())
+    errors: Type.Optional(Type.Array(Type.String()))
 });
 
 const AuditRecordSchema = Type.Object({
     recordId: Type.Number(),
     actionName: Type.String(),
-    startTime: Type.Number(),
+    creationTime: Type.Number(),
     status: STATUS_TYPES,
     requestId: Type.String(),
     serviceName: Type.Literal(WLMDB),
-    actionParameters: Type.String(),
-    errorMessage: Type.Optional(Type.String())
+    data: Type.String(),
+    errors: Type.Optional(Type.Array(Type.String()))
 });
 
 type CreateAuditGroupSchemaType = Static<typeof CreateAuditGroupSchema>;
