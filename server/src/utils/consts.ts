@@ -108,7 +108,8 @@ enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment'
+    DEPLOYMENT = 'Deployment',
+    WORKING_ENVIRONMENT = 'Working Environment'
 }
 
 enum HttpErrorCodes {
@@ -211,6 +212,10 @@ const SQL_AMI_NAMES = [
 enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
+}
+
+enum RESOURCESTYPE {
+    MSSQL = 'MSSQL'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -588,5 +593,6 @@ export {
     MSSQL_RESOURCE_TYPE,
     WLMDB_RESOURCE_CLASS,
     FileSystemDeploymentType,
-    FSX_RESOURCE_TYPE
+    FSX_RESOURCE_TYPE,
+    RESOURCESTYPE
 };

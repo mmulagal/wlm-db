@@ -78,6 +78,20 @@ async function getTenancyResourcesByType(resourceType: string) {
         >();
 }
 
+async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: string) {
+    const resource = (await getTenancyResourcesByType(resourceType)).find(
+        resource => resource.resourceIdentifier === resourceId
+    );
+    if (resource) {
+        if (resource?.metadata?.length) {
+            resource.metadata = JSON.parse(resource.metadata);
+        } else {
+            resource.metadata = '';
+        }
+    }
+    return resource;
+}
+
 async function removeResource(resourceIdentifier: string) {
     logger.info('Removing resource from tenancy', { resourceIdentifier });
 
@@ -89,4 +103,11 @@ async function removeResource(resourceIdentifier: string) {
     });
 }
 
-export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken, ServiceResourceRequest };
+export {
+    registerServiceResource,
+    getTenancyResourcesByType,
+    getTenancyResourcesByTypeAndId,
+    removeResource,
+    getServiceToken,
+    ServiceResourceRequest
+};
