@@ -188,7 +188,7 @@ const app = fastify({
     .addHook('onSend', async (request, reply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
         if (reply.statusCode !== 202) {
-            updateAuditGroup(request, payload);
+            updateAuditGroup(request, reply, payload);
         }
         return payload;
     });

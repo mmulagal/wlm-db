@@ -1,7 +1,7 @@
 import got, { Hooks, HTTPError, RequestError, TimeoutError } from 'got';
 import ms from 'ms';
 import config from 'config';
-import getLogger from './logger';
+import getLogger, { getActiveTraceId } from './logger';
 import { HEADERS, WLMDB } from './consts';
 
 const logger = getLogger('got');
@@ -68,7 +68,12 @@ export const hooks: Hooks = {
     ],
     init: [],
     beforeRedirect: [],
-    beforeRequest: []
+    beforeRequest: [
+        options => {
+            options.headers[HEADERS.REFERER] = WLMDB;
+            options.headers[HEADERS.ACTIVE_TRACE_ID] = getActiveTraceId();
+        }
+    ]
 };
 
 export function isHTTPError(error: Error): error is HTTPError {
@@ -115,12 +120,5 @@ export const gotInstanceForExternalRequest = got.extend({
     },
     resolveBodyOnly: true,
     responseType: 'json',
-    hooks: {
-        ...hooks,
-        beforeRequest: [
-            options => {
-                options.headers[HEADERS.REFERER] = WLMDB;
-            }
-        ]
-    }
+    hooks
 });

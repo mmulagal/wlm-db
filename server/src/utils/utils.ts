@@ -278,6 +278,13 @@ async function saveFSxAndSqlServerDetailsInTenancy(
     logger.info('Status of SQL Server resource registration in tenancy:', response);
 }
 
+function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
+    return (
+        'routeTable1Id' in networkConfiguration &&
+        'routeTable2Id' in networkConfiguration &&
+        networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
+    );
+}
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -286,5 +293,6 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    saveFSxAndSqlServerDetailsInTenancy
+    saveFSxAndSqlServerDetailsInTenancy,
+    isSameRoutetables
 };

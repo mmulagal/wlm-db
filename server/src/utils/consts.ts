@@ -57,7 +57,8 @@ enum HEADERS {
     REGION = 'x-region',
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
     SIMULATOR = 'x-simulator',
-    REFERER = 'referer'
+    REFERER = 'referer',
+    ACTIVE_TRACE_ID = 'active-trace-id'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -183,7 +184,10 @@ const SECRET_WORDS = [
     'SessionToken',
     'AccessKeyId',
     'SecretAccessKey',
-    'username'
+    'username',
+    'domainPassword',
+    'fsxPassword',
+    'serviceAccountPassword'
 ];
 
 const SQL_AMI_NAMES = [
@@ -484,6 +488,7 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
@@ -587,6 +592,7 @@ export {
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
+    SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
     DeploymentStatus,
     MsSqlServerDeploymentStatus,

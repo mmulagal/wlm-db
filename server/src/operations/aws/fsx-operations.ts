@@ -72,6 +72,7 @@ async function getFSxFileSystemsList(
                 fileSystemId: fs.FileSystemId!,
                 name: tag?.Value,
                 kmsKeyId: fs.KmsKeyId,
+                lifecycle: fs.Lifecycle!,
                 networkInterfaceIds: fs.NetworkInterfaceIds,
                 subnetIds: fs.SubnetIds,
                 vpcId: fs.VpcId,
