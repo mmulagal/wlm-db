@@ -9,6 +9,7 @@ import {
     DeleteMessageCommand,
     DeleteMessageCommandInput
 } from '@aws-sdk/client-sqs';
+import { compact } from 'lodash-es';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -33,7 +34,7 @@ async function listQueues(region: string, input: ListQueuesCommandInput) {
 
     const urls = [];
     for await (const page of paginatedListQueues) {
-        const nextUrls = page?.QueueUrls?.filter(qurl => !!qurl) || [];
+        const nextUrls = compact(page?.QueueUrls) || [];
         urls.push(...nextUrls);
     }
 
