@@ -19,7 +19,8 @@ import {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     USER_TOKEN,
-    TEMPLATE_OPTIONAL_PARAMETERS
+    TEMPLATE_OPTIONAL_PARAMETERS,
+    SQL_TEMPLATES_ASSETS
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -33,6 +34,7 @@ import {
 } from '../routes/types/deployment.types';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
+import { getPreSignedUrl } from '../lib/aws/s3';
 
 const logger = getLogger();
 
@@ -212,8 +214,36 @@ async function formatTemplateParameters(
         });
     });
 
-    return { stackName: stackName, templateParameters: templateParams };
+    const signedUrls: Array<Parameter> = await generateSignedUrls(region, credentialsId);
+    return { stackName: stackName, templateParameters: [...templateParams, ...signedUrls] };
 }
+
+async function generateSignedUrls(region: string, credentialsId: string) {
+    let signedUrl: string = '';
+    const signedUrls: Array<Parameter> = [];
+    if (SQL_TEMPLATES_ASSETS?.length) {
+        await Promise.all(
+            SQL_TEMPLATES_ASSETS.map(async template => {
+                logger.info(
+                    `Creating signed url for ${template.url} secret in region ${region} with credentials ${credentialsId}.`
+                );
+                try {
+                    signedUrl = await getPreSignedUrl(credentialsId, region, template.url);
+                    signedUrls.push({
+                        ParameterKey: template.name,
+                        ParameterValue: signedUrl
+                    });
+                } catch (error) {
+                    logger.error(
+                        `Error creating signed url for ${template.url} secret in region ${region} with credentials ${credentialsId}.`
+                    );
+                }
+            })
+        );
+    }
+    return signedUrls;
+}
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -221,5 +251,6 @@ export {
     generateFsxParams,
     formatTemplateParameters,
     getSubjectFromBearerToken,
-    hideSecretsValues
+    hideSecretsValues,
+    generateSignedUrls
 };

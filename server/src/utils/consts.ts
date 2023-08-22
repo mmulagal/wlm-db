@@ -392,13 +392,13 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'wlmbucket';
+const BUCKET_NAME = 'bucketkrithi';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
-const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
+const MASTER_TEMPLATE_PATH = 'wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = false;
@@ -475,6 +475,36 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
+
+const SQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-ad-validation.yaml'
+    },
+
+    {
+        name: 'SQLTemplate',
+        url: 'templates/sql-windows-fci-config.json'
+    },
+    {
+        name: 'SQLInstallersScripts',
+        url: 'sql-assets.zip'
+    },
+    {
+        name: 'ExtractScript',
+        url: 'Unzip-Archive.ps1'
+    }
+];
 
 export {
     WLMDB,
@@ -562,5 +592,6 @@ export {
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
-    AWS_FSX
+    AWS_FSX,
+    SQL_TEMPLATES_ASSETS
 };

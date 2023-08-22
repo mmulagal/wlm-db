@@ -21,9 +21,10 @@ import {
     HttpErrorCodes,
     WLM_ASSETS
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached } from '../utils/utils';
+import { formatTemplateParameters, generateFsxParams, generateSignedUrls, isCfStackQuotaReached } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
+import { Parameter } from '@aws-sdk/client-cloudformation';
 
 const logger = getLogger();
 
@@ -112,6 +113,11 @@ async function createCloudFormationTemplateForUserDeployment(
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
         templateParams += `&param_${key}=${value}`;
+    });
+
+    const signedUrls: Array<Parameter> = await generateSignedUrls(region, credentialsId);
+    signedUrls.forEach(url => {
+        templateParams += `&param_${url.ParameterKey}=${url.ParameterValue}`;
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
