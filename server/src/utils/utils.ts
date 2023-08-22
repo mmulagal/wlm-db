@@ -227,9 +227,9 @@ function isValidJsonString(str: string | undefined) {
         if (str) {
             return { isValid: true, message: JSON.parse(str) };
         }
-        return false;
+        return { isValid: false };
     } catch (err) {
-        return false;
+        return { isValid: false };
     }
 }
 
