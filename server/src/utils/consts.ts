@@ -17,8 +17,9 @@ const WORKSPACE_ID = 'WORKSPACE_ID';
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
+const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
 
-enum FSxDeploymentStatus {
+enum DeploymentStatus {
     INITIALIZING = 'Initializing',
     FAILED = 'Failed',
     SUCCESS = 'Success'
@@ -28,6 +29,11 @@ enum MsSqlServerDeploymentStatus {
     INITIALIZING = 'Initializing',
     FAILED = 'Failed',
     SUCCESS = 'Success'
+}
+
+enum FileSystemDeploymentType {
+    SINGLE_AZ_1,
+    MULTI_AZ_1
 }
 
 // version
@@ -79,6 +85,8 @@ const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
+const MSSQL_RESOURCE_TYPE = 'MSSQL';
+const WLMDB_RESOURCE_CLASS = 'WLMDB';
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
@@ -575,6 +583,10 @@ export {
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
     AWS_FSX,
-    FSxDeploymentStatus,
-    MsSqlServerDeploymentStatus
+    DeploymentStatus,
+    MsSqlServerDeploymentStatus,
+    MSSQL_RESOURCE_TYPE,
+    WLMDB_RESOURCE_CLASS,
+    FileSystemDeploymentType,
+    FSX_RESOURCE_TYPE
 };

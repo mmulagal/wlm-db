@@ -186,7 +186,7 @@ async function deployCloudFormationTemplate(
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
-    saveFSxAndSqlServerDetailsInTenancy(stackName, fsxConfiguration, sqlConfiguration);
+    await saveFSxAndSqlServerDetailsInTenancy(stackName, fsxConfiguration, sqlConfiguration);
 
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
