@@ -1,5 +1,6 @@
 import { Typography } from '@netapp/design-system';
 import { ReactComponent as TablesIcon } from '../../../../assets/tables-icon.svg';
+import { GENERAL } from '../../../../utils/appConstants';
 import styles from './TablesSummary.module.scss';
 
 type TablesSummaryProps = {
@@ -15,7 +16,7 @@ const TablesSummary = ({ summaryData }: TablesSummaryProps) => {
         <div className={styles.databaseSummary}>
             <div className={styles.card}>
                 <Typography className={styles.summaryTitle} variant="Semibold_14">
-                    Tables summary
+                    {GENERAL.TABLES_SUMMARY}
                 </Typography>
             </div>
             <div className={styles.card}>
@@ -27,7 +28,7 @@ const TablesSummary = ({ summaryData }: TablesSummaryProps) => {
                         {summaryData.count}
                     </Typography>
                     <Typography className={styles.dataLabel} variant="Regular_14">
-                        Tables
+                        {GENERAL.TABLES}
                     </Typography>
                 </div>
             </div>
@@ -41,7 +42,7 @@ const TablesSummary = ({ summaryData }: TablesSummaryProps) => {
                     </Typography>
                 </div>
                 <Typography className={styles.dataLabel} variant="Regular_14">
-                    Total size
+                    {GENERAL.TOTAL_SIZE}
                 </Typography>
             </div>
         </div>
