@@ -1,13 +1,6 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { readSecretFromSecretManager } from '../../utils/secret';
-import {
-    CLOUD_MANAGER_ENDPOINT,
-    HEADERS,
-    AUTH0_AUDIENCE,
-    OAUTH_KEY_NAME,
-    OAUTH_KEY_REGION_CODE
-} from '../../utils/consts';
+import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -31,19 +24,13 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
     logger.info('Getting service token:');
 
     try {
-        const { CLIENT_ID, CLIENT_SECRET } = await readSecretFromSecretManager(
-            '',
-            OAUTH_KEY_NAME,
-            OAUTH_KEY_REGION_CODE
-        );
-
         const data: { access_token: string; expires_in: number; token_type: string } =
             await gotInstanceForInternalRequest
                 .post(`${CLOUD_MANAGER_ENDPOINT}/auth/oauth/token`, {
                     json: {
                         audience: AUTH0_AUDIENCE,
-                        client_id: CLIENT_ID,
-                        client_secret: CLIENT_SECRET,
+                        client_id: SECRETS.CLIENT_ID,
+                        client_secret: SECRETS.CLIENT_SECRET,
                         grant_type: 'client_credentials'
                     }
                 })

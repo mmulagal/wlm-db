@@ -29,7 +29,9 @@ import {
     MSSQL_RESOURCE_TYPE,
     WLMDB_RESOURCE_CLASS,
     FSX_RESOURCE_TYPE,
-    FileSystemDeploymentType
+    FileSystemDeploymentType,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -89,12 +91,15 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
     const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    const FSxQuorumVolumeSize = 10000; // 10GB
+    const FSxQuorumVolumeSize = 12000; // 12GB
 
     // StorageCapacity in GiB
-    const FSxStorageCapacity = Math.ceil(
+    let FSxStorageCapacity = Math.ceil(
         (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
     );
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
     return {
         UniqueID: suffix,
@@ -117,7 +122,8 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
         DomainAdminSecretName: `${prefix}-domain-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
         SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
-        FSxStorageCapacity
+        FSxStorageCapacity,
+        FSxDataLunSize: FSxDataLunSizeInMib
     };
 }
 
