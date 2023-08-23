@@ -19,7 +19,7 @@ async function readSecretFromSecretManager(name: string) {
             })
         );
 
-        logger.info('Fetched secret values from secret manager', response);
+        logger.debug('Fetched secret values from secret manager');
 
         const secrets = JSON.parse(response.SecretString || '{}');
         return secrets[name];
@@ -36,7 +36,7 @@ export default async function initiateSecrets() {
         Object.keys(SECRETS_MANAGER_KEYS).map(async (secretName: string) => {
             if (!SECRETS[secretName]) {
                 const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName]);
-                SECRETS[secretName] = secret?.value;
+                SECRETS[secretName] = secret;
             }
         })
     );
