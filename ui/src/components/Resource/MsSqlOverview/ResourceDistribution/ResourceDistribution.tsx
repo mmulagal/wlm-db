@@ -1,4 +1,5 @@
 import { DoughnutChart, Typography } from '@netapp/design-system';
+import { GENERAL } from '../../../../utils/appConstants';
 import { getCssVariableValue } from '../../../../utils/utilityFunctions';
 import styles from './ResourceDistribution.module.scss';
 
@@ -45,7 +46,7 @@ const ResourceDistribution = () => {
         <div className={styles.resourceDistributionContainer}>
             <div className={styles.resourceDistributionTitle}>
                 <Typography variant="Regular_16" className={styles.titleText}>
-                    Resources Distribution
+                    {GENERAL.RESOURCE_DISTRIBUTION}
                 </Typography>
             </div>
             <div className={styles.doughnutContainer}>
