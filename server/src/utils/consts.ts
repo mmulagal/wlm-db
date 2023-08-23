@@ -39,7 +39,8 @@ enum HEADERS {
     REGION = 'x-region',
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
     SIMULATOR = 'x-simulator',
-    REFERER = 'referer'
+    REFERER = 'referer',
+    ACTIVE_TRACE_ID = 'active-trace-id'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -162,7 +163,10 @@ const SECRET_WORDS = [
     'SessionToken',
     'AccessKeyId',
     'SecretAccessKey',
-    'username'
+    'username',
+    'domainPassword',
+    'fsxPassword',
+    'serviceAccountPassword'
 ];
 
 const SQL_AMI_NAMES = [
@@ -476,6 +480,8 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
+const OAUTH_KEY_REGION_CODE = 'ap-southeast-1';
+const OAUTH_KEY_NAME = 'wlmdb-oauth-secret';
 
 export {
     WLMDB,
@@ -564,5 +570,7 @@ export {
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
-    AWS_FSX
+    AWS_FSX,
+    OAUTH_KEY_REGION_CODE,
+    OAUTH_KEY_NAME
 };

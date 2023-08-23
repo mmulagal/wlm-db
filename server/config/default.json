@@ -33,5 +33,9 @@
     },
     "service-token": {
         "expiration-margin": "10s"
+    },
+    "wlmdb-client": {
+        "id": "3Sdstv1J0nIBIFinhic2uOF6Yr6qRMj7",
+        "secret": "2fbQV4RarcrCweRERZRGJEZ8RmuTQ9iFQkoy1gBGUmQc5WShqAIdKuFAjMGO0M3D"
     }
 }
