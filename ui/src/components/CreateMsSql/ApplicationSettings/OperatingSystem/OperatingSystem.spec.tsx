@@ -14,7 +14,7 @@ jest.mock('@json2csv/plainjs', () => {
 });
 
 
-describe('Operating System test', () => {
+describe('Operating System accordion test', () => {
 
     const wrapper = () =>{
         const store = mockStore({ mssqlForm: {operatingSystem: {label:"Windows server 2016", value:"2016"}} });
@@ -30,19 +30,7 @@ describe('Operating System test', () => {
 
     it('Render data', () => {
         const { container } = wrapper();
-        console.log(prettyDOM(container));
-        // expect(OperatingSystem).toBeDefined();
-        // expect(container).toHaveTextContent('something');
-        // expect(container).toHaveClass('first');
-        // const radioButton = screen.getByRole('radio');
-        // expect(radioButton).toBeInTheDocument();
-
-        // eslint-disable-next-line testing-library/prefer-screen-queries
-        // const radioButton1 = screen.getByTestId('2019');
-        // fireEvent.click(radioButton1);
-        // const radioButton1 = screen.getByText('Windows server 2016');
-
-        // Select the first radio button
-        // fireEvent.click(radioButton1);
+        expect(OperatingSystem).toBeDefined();
+        expect(container).toHaveTextContent('Windows server 2016');
     });
 })
