@@ -33,7 +33,6 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
     try {
         const { CLIENT_ID, CLIENT_SECRET } = await readSecretFromSecretManager(
             '',
-            false,
             OAUTH_KEY_NAME,
             OAUTH_KEY_REGION_CODE
         );

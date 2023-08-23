@@ -4,8 +4,8 @@ import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
-async function readSecretFromSecretManager(name?: string, isDefault?: boolean, secretId?: string, region?: string) {
-    logger.info('Getting secret from secret manager for: ', { name, isDefault, secretId, region });
+async function readSecretFromSecretManager(name?: string, secretId?: string, region?: string) {
+    logger.info('Getting secret from secret manager for: ', { name, secretId, region });
 
     const client = new SecretsManagerClient({
         region: region || process.env.REGION
@@ -33,7 +33,7 @@ async function initiateSecrets() {
     await Promise.all(
         Object.keys(SECRETS_MANAGER_KEYS).map(async (secretName: string) => {
             if (!SECRETS[secretName]) {
-                const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName], true);
+                const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName]);
                 SECRETS[secretName] = secret;
             }
         })
