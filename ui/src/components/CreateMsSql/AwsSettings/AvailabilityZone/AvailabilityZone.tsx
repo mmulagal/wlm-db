@@ -118,11 +118,7 @@ const AvailabilityZone = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;
@@ -142,10 +138,15 @@ const AvailabilityZone = () => {
     };
 
     useEffect(() => {
-        if(routeTable1 && routeTable2 && routeTable1 === routeTable2){
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.SAME_ROUTE_SUBNET_ERROR }));
+        if (routeTable1 && routeTable2 && routeTable1 === routeTable2) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: GENERAL.SAME_ROUTE_SUBNET_ERROR
+                })
+            );
         }
-    },[routeTable1, routeTable2]);
+    }, [routeTable1, routeTable2]);
 
     return (
         <div className={styles['availability-zone']}>

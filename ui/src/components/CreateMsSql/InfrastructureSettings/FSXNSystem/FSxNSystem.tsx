@@ -54,7 +54,7 @@ const FSxNSystem = () => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
             const fsxType = val?.ontapConfiguration?.deploymentType;
-            if(fsxType && fsxType === supportedFsxType){
+            if (fsxType && fsxType === supportedFsxType) {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
@@ -62,7 +62,7 @@ const FSxNSystem = () => {
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);
-            };
+            }
         });
 
         return options;
@@ -83,11 +83,7 @@ const FSxNSystem = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
 
         //Checking for the create new option

@@ -123,8 +123,9 @@ export const GENERAL = {
     VERSION: 'Version',
     //Constants for License accordion
     LICENSE_TEXT:
-        'Use an AWS provided license-included AMI with Windows and SQL Server installed or You can bring your own SQL licenses (BYOL) through your custom AMI or use license included custom AMI. If you use a custom AMI, ensure that it meets all required install parameters.',
+        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI. If you use a custom AMI, ensure that it meets all required installation parameters.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
+    VIEW_THE_REQ: 'View the requirements',
     LICENSE_ID: 'License ID',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
@@ -189,6 +190,8 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
+    USERNAME_TOOLTIP:
+        'The user name must be 5 characters minimum. Only alphanumeric characters allowed and should not contain the word "admin/".',
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
     PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',
@@ -219,7 +222,7 @@ export const GENERAL = {
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
     SELECT_ANY_ACCOUNT: 'Disabled - Need AWS credentials',
-    SELECT_ANY_VPC: 'Select a VPC',
+    SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
@@ -231,5 +234,14 @@ export const GENERAL = {
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
         'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector',
-    IS_REQUIRED_MSG: ' is required'
+    IS_REQUIRED_MSG: ' is required',
+    DATABASES_SUMMARY: 'Databases summary',
+    DATABASES: 'Databases',
+    TOTAL_SIZE: 'Total size',
+    INFORMATION: 'Information',
+    RESOURCE_DISTRIBUTION: 'Resources Distribution',
+    TIMELINE: 'Timeline',
+    REMOVE_FROM_WORKSPACE: 'Remove from workspace',
+    TABLES_SUMMARY: 'Tables summary',
+    TABLES: 'Tables'
 };
