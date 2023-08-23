@@ -481,8 +481,6 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
-const OAUTH_KEY_REGION_CODE = 'ap-southeast-1';
-const OAUTH_KEY_NAME = 'wlmdb-oauth-secret';
 
 export {
     WLMDB,
@@ -572,8 +570,6 @@ export {
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
-    OAUTH_KEY_REGION_CODE,
-    OAUTH_KEY_NAME,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE
 };
