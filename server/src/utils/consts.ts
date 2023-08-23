@@ -407,6 +407,8 @@ const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 120;
+const FSX_SSD_MIN_SIZE = 1024; // in GiB
+const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -424,7 +426,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     securityGroupId: 'DomainMemberSGID',
 
     fsxFileSystemId: 'FSxFileSystemId',
-    databaseSize: 'FSxDataLunSize',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
@@ -568,5 +569,7 @@ export {
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
-    AWS_FSX
+    AWS_FSX,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE
 };
