@@ -1,6 +1,5 @@
 import { RouteTags } from '../../utils/consts';
-import {mssqlparams, DatabasesResponseBody } from '../types/mssql.types'
- 
+import { mssqlparams, DatabasesResponseBody } from '../types/mssql.types';
 
 const GetDatabasesSchema = {
     tags: [RouteTags.MSSQL],
@@ -11,4 +10,4 @@ const GetDatabasesSchema = {
     }
 };
 
-export {GetDatabasesSchema};
+export { GetDatabasesSchema };

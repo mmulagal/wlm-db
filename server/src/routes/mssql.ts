@@ -7,9 +7,9 @@ const MSSQL_DATA_API_PATH: string = '/v1/workspacePublicId/:workspacePublicId/ms
 
 export default function mssqlRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema}, async (request, reply) => {
+    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
         const {
-            params: { resourceId },
+            params: { resourceId }
         } = request;
         const response = await getDataBasesSummary(resourceId);
         return reply.send(response);

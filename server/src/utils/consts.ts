@@ -477,7 +477,7 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
-const DB_ROWS_COUNT =75;
+const DB_ROWS_COUNT = 75;
 
 export {
     WLMDB,

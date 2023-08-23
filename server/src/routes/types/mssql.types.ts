@@ -4,7 +4,7 @@ const mssqlparams = Type.Object({
     accountId: Type.String(),
     workspacePublicId: Type.String(),
     resourceId: Type.String()
-})
+});
 
 const DatabasesResponseBody = Type.Object({
     databases: Type.Array(
@@ -13,8 +13,8 @@ const DatabasesResponseBody = Type.Object({
             databaseName: Type.String(),
             creationDate: Type.Optional(Type.String()),
             databaseStatus: Type.Optional(Type.String()),
-            databaseSize: Type.String(),
+            databaseSize: Type.String()
         })
     )
-}); 
-export {mssqlparams, DatabasesResponseBody}
+});
+export { mssqlparams, DatabasesResponseBody };
