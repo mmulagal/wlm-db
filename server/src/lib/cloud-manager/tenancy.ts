@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { gotInstanceForInternalRequest } from '../../utils/got';
+import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
 import { readSecretFromSecretManager } from '../../utils/secret';
 import {
     CLOUD_MANAGER_ENDPOINT,
@@ -110,14 +110,11 @@ async function removeResource(resourceIdentifier: string) {
     const { token } = await getServiceToken();
 
     try {
-        return gotInstanceForInternalRequest.delete(
-            `${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`,
-            {
-                headers: {
-                    [HEADERS.AUTHORIZATION]: token
-                }
+        return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
+            headers: {
+                [HEADERS.AUTHORIZATION]: token
             }
-        );
+        });
     } catch (err) {
         throw createError(500, `Error occured while deleting resoureces, ${err}`);
     }
