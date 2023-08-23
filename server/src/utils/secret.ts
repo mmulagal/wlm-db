@@ -4,40 +4,40 @@ import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
-async function readSecretFromSecretManager(name: string) {
-    logger.info('Getting secret from secret manager for: ', { name });
+async function readSecretFromSecretManager(name?: string, isDefault?: boolean, secretId?: string, region?: string) {
+    logger.info('Getting secret from secret manager for: ', { name, isDefault, secretId, region });
 
     const client = new SecretsManagerClient({
-        region: process.env.REGION
+        region: region || process.env.REGION
     });
 
     try {
         const response = await client.send(
             new GetSecretValueCommand({
-                SecretId: process.env.SECRET_NAME,
+                SecretId: secretId || process.env.SECRET_NAME,
                 VersionStage: 'AWSCURRENT' // VersionStage defaults to AWSCURRENT if unspecified
             })
         );
 
-        logger.debug('Fetched secret values from secret manager');
-
+        logger.debug('Fetched secret values from secret manager', response);
         const secrets = JSON.parse(response.SecretString || '{}');
-        return secrets[name];
+        return secrets;
     } catch (error) {
         logger.error('Failed to read secrets from secret manager', error);
         return undefined;
     }
 }
 
-export default async function initiateSecrets() {
+async function initiateSecrets() {
     logger.info('Initiate secrets:');
-
     await Promise.all(
         Object.keys(SECRETS_MANAGER_KEYS).map(async (secretName: string) => {
             if (!SECRETS[secretName]) {
-                const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName]);
-                SECRETS[secretName] = secret?.value;
+                const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName], true);
+                SECRETS[secretName] = secret;
             }
         })
     );
 }
+
+export { initiateSecrets, readSecretFromSecretManager };

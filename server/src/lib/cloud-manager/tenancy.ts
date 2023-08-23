@@ -1,6 +1,13 @@
-import config from 'config';
+import createError from 'http-errors';
 import { gotInstanceForInternalRequest } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE } from '../../utils/consts';
+import { readSecretFromSecretManager } from '../../utils/secret';
+import {
+    CLOUD_MANAGER_ENDPOINT,
+    HEADERS,
+    AUTH0_AUDIENCE,
+    OAUTH_KEY_NAME,
+    OAUTH_KEY_REGION_CODE
+} from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -23,70 +30,97 @@ interface MetaData {
 async function getServiceToken(): Promise<{ token: string; expiresIn: number }> {
     logger.info('Getting service token:');
 
-    const CLIENT_ID = process.env.CLIENT_ID || config.get('wlmdb-client.id');
-    const CLIENT_SECRET = process.env.CLIENT_SECRET || config.get('wlmdb-client.secret');
+    try {
+        const { CLIENT_ID, CLIENT_SECRET } = await readSecretFromSecretManager(
+            '',
+            false,
+            OAUTH_KEY_NAME,
+            OAUTH_KEY_REGION_CODE
+        );
 
-    const data: { access_token: string; expires_in: number; token_type: string } = await gotInstanceForInternalRequest
-        .post(`${CLOUD_MANAGER_ENDPOINT}/auth/oauth/token`, {
-            json: {
-                audience: AUTH0_AUDIENCE,
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                grant_type: 'client_credentials'
-            }
-        })
-        .json();
-    logger.debug('service token response', data);
-    return { token: `${data.token_type} ${data.access_token}`, expiresIn: data.expires_in };
+        const data: { access_token: string; expires_in: number; token_type: string } =
+            await gotInstanceForInternalRequest
+                .post(`${CLOUD_MANAGER_ENDPOINT}/auth/oauth/token`, {
+                    json: {
+                        audience: AUTH0_AUDIENCE,
+                        client_id: CLIENT_ID,
+                        client_secret: CLIENT_SECRET,
+                        grant_type: 'client_credentials'
+                    }
+                })
+                .json();
+        logger.debug('service token response', data);
+        return { token: `${data.token_type} ${data.access_token}`, expiresIn: data.expires_in };
+    } catch (err) {
+        throw createError(500, `Error occured while getting service token, ${err}`);
+    }
 }
 
 async function registerServiceResource(resource: ServiceResourceRequest) {
     logger.info('Registering service resource in tenancy');
 
     const { token } = await getServiceToken();
-    return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
-        headers: {
-            [HEADERS.AUTHORIZATION]: token
-        },
-        json: resource
-    });
+
+    try {
+        return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
+            headers: {
+                [HEADERS.AUTHORIZATION]: token
+            },
+            json: resource
+        });
+    } catch (err) {
+        throw createError(500, `Error occured while register service resource, ${err}`);
+    }
 }
 
 async function getTenancyResourcesByType(resourceType: string) {
     logger.info('Get tenancy resources by type', resourceType);
 
     const { token } = await getServiceToken();
-    return gotInstanceForInternalRequest
-        .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
-            searchParams: {
-                resourceType
-            },
-            headers: {
-                [HEADERS.AUTHORIZATION]: token
-            }
-        })
-        .json<
-            {
-                resourceIdentifier: string;
-                account: string;
-                resourceType: string;
-                resourceClass: string;
-                name: string;
-                agentIds: string[];
-                metadata: string;
-            }[]
-        >();
+
+    try {
+        return gotInstanceForInternalRequest
+            .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
+                searchParams: {
+                    resourceType
+                },
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token
+                }
+            })
+            .json<
+                {
+                    resourceIdentifier: string;
+                    account: string;
+                    resourceType: string;
+                    resourceClass: string;
+                    name: string;
+                    agentIds: string[];
+                    metadata: string;
+                }[]
+            >();
+    } catch (err) {
+        throw createError(500, `Error occured while getting resoureces, ${err}`);
+    }
 }
 
 async function removeResource(resourceIdentifier: string) {
     logger.info('Removing resource from tenancy', { resourceIdentifier });
 
     const { token } = await getServiceToken();
-    return gotInstanceForInternalRequest.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
-        headers: {
-            [HEADERS.AUTHORIZATION]: token
-        }
-    });
+
+    try {
+        return gotInstanceForInternalRequest.delete(
+            `${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`,
+            {
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token
+                }
+            }
+        );
+    } catch (err) {
+        throw createError(500, `Error occured while deleting resoureces, ${err}`);
+    }
 }
 
 export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken };
