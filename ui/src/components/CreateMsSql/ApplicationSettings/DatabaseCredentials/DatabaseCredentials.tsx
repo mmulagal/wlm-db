@@ -60,6 +60,12 @@ const DatabaseCredentials = () => {
         );
     };
 
+    const isValidUserName = () => {
+        if (userName.length && (userName.length < 5 || !/^[a-zA-Z0-9]+$/.test(userName))) {
+            return GENERAL.USERNAME_TOOLTIP;
+        }
+    };
+
     return (
         <div className={styles.credentials}>
             <AccordionCard
@@ -72,6 +78,8 @@ const DatabaseCredentials = () => {
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
+                                info={GENERAL.USERNAME_TOOLTIP}
+                                error={isValidUserName()}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setUserName(e.target.value);
                                     dispatch(setDBCredentialsName(e.target.value));

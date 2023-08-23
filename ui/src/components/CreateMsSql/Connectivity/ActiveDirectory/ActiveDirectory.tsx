@@ -106,11 +106,7 @@ const ActiveDirectory = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
 
         if (!selectedADDomainName?.label || !selectedADDomainAddress || !userName || !password) {
