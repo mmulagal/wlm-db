@@ -122,3 +122,17 @@ export const gotInstanceForExternalRequest = got.extend({
     responseType: 'json',
     hooks
 });
+
+export const gotInstanceForTextResponse = got.extend({
+    retry: {
+        limit: config.get<number>('got.external.retry-count')
+    },
+    timeout: {
+        lookup: ms(config.get<string>('got.external.lookup-timeout')),
+        connect: ms(config.get<string>('got.external.connect-timeout')),
+        response: ms(config.get<string>('got.external.response-timeout'))
+    },
+    resolveBodyOnly: true,
+    responseType: 'text',
+    hooks
+});

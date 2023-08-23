@@ -29,7 +29,7 @@ import awsRoutes from './routes/aws';
 import workingEnvironmentRoutes from './routes/working-environment';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
-import initiateSecrets from './utils/secret';
+import { initiateSecrets } from './utils/secret';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');

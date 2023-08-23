@@ -1,5 +1,6 @@
 import { Typography } from '@netapp/design-system';
 import { ReactComponent as DatabasesIcon } from '../../../../assets/databases-icon.svg';
+import { GENERAL } from '../../../../utils/appConstants';
 import styles from './DatabasesSummary.module.scss';
 
 type DatabasesSummaryProps = {
@@ -15,7 +16,7 @@ const DatabaseSummary = ({ summaryData }: DatabasesSummaryProps) => {
         <div className={styles.databaseSummary}>
             <div className={styles.card}>
                 <Typography className={styles.summaryTitle} variant="Semibold_14">
-                    Databases summary
+                    {GENERAL.DATABASES_SUMMARY}
                 </Typography>
             </div>
             <div className={styles.card}>
@@ -27,7 +28,7 @@ const DatabaseSummary = ({ summaryData }: DatabasesSummaryProps) => {
                         {summaryData.count}
                     </Typography>
                     <Typography className={styles.dataLabel} variant="Regular_14">
-                        Databases
+                        {GENERAL.DATABASES}
                     </Typography>
                 </div>
             </div>
@@ -41,7 +42,7 @@ const DatabaseSummary = ({ summaryData }: DatabasesSummaryProps) => {
                     </Typography>
                 </div>
                 <Typography className={styles.dataLabel} variant="Regular_14">
-                    Total size
+                    {GENERAL.TOTAL_SIZE}
                 </Typography>
             </div>
         </div>

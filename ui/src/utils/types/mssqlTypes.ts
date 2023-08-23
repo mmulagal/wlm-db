@@ -66,6 +66,9 @@ export interface InstanceType {
 export interface FSxN {
     fileSystemId?: string;
     name?: string;
+    ontapConfiguration?: {
+        deploymentType?: string;
+    }
 }
 
 export interface MssqlEntities {
@@ -127,7 +130,7 @@ export interface Subnets {
     cidrBlock: string;
     availabilityZone: string;
     availableIps: number;
-    name: string;
+    name?: string;
 }
 
 export interface AvailabilityZonesObj {
