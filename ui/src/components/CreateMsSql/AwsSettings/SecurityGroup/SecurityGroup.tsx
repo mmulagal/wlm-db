@@ -8,6 +8,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedExistingSecurityGroup, setSelectedSecurityGroup } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 
 const SecurityGroup = () => {
     const dispatch = useDispatch();
@@ -33,7 +34,7 @@ const SecurityGroup = () => {
         const options: optionType[] = [];
         selectedVPCData?.data?.securityGroups?.map((val: any, idx: number) => {
             const sgValue = val?.id;
-            const sgLabel = val?.securityGroupName || val?.name;
+            const sgLabel = val?.securityGroupName || val?.name || '-';
             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
             options.push(option);
         });
@@ -55,11 +56,7 @@ const SecurityGroup = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
         if (securityGroup === GENERAL.USE_AN_EXISTING_SECURITY) {
             return (

@@ -2,9 +2,10 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
-import { AvailabilityZonesObj, KmsKeys, Subnets } from './types/mssqlTypes';
+import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS, REGIONS_CODE_LIST } from './consts';
+import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
+const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
 interface OptionsWithData extends optionType {
@@ -171,4 +172,49 @@ export const requiredFieldError = (inputString: string) => {
     } else {
         return null;
     }
+};
+
+export const getCssVariableValue = (variableName: string) =>
+    getComputedStyle(document.body).getPropertyValue(variableName);
+
+export const formatDate = (date: string | number) => {
+    return moment(new Date(date)).format('LL');
+};
+
+export const isNotNumberOrNA = (value: string | number) => {
+    if (!value) {
+        return false;
+    } else {
+        return isNaN(parseFloat(String(value))) && value !== 'N/A';
+    }
+};
+
+export const formatSizeOrString = (value: number) => {
+    if (!isNaN(parseFloat(value.toString()))) {
+        return formatSize(value);
+    } else {
+        return value;
+    }
+};
+
+export const regionsSort = (regions: Array<Regions>) => {
+    if(!regions || regions.length < 2){
+        return regions;
+    }
+
+    const newRegionList = regions.slice().sort((a, b) => {
+        const indexA = REGIONS_CODE_LIST.indexOf(a.regionCode || '');
+        const indexB = REGIONS_CODE_LIST.indexOf(b.regionCode || '');
+        if (indexA !== -1 && indexB !== -1) {
+          return indexA - indexB;
+        };
+        if (indexA !== -1) {
+          return -1;
+        }
+        if (indexB !== -1) {
+          return 1;
+        }
+        return 0;
+    });
+    return newRegionList;
 };

@@ -1,0 +1,46 @@
+.status-component {
+    display: flex;
+    gap: 8px;
+    .icon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.optimal,
+        &.online {
+            background-color: var(--success);
+        }
+        &.failed,
+        &.active,
+        &.off,
+        &.offline {
+            background-color: var(--error);
+        }
+        &.degraded {
+            background-color: var(--warning);
+        }
+        &.silenced {
+            background-color: var(--chart-disabled);
+        }
+        &.on {
+            background-color: #90c44b;
+        }
+    }
+    .svg-icon {
+        width: 20px;
+        height: 20px;
+        align-self: center;
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+        &.mandatory {
+            path {
+                fill: var(--error);
+            }
+        }
+    }
+}

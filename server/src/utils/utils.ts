@@ -23,8 +23,15 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     ACCOUNT_ID,
     WORKSPACE_ID,
-    FSxDeploymentStatus,
-    MsSqlServerDeploymentStatus
+    DeploymentStatus,
+    MsSqlServerDeploymentStatus,
+    CloudProviders,
+    MSSQL_RESOURCE_TYPE,
+    WLMDB_RESOURCE_CLASS,
+    FSX_RESOURCE_TYPE,
+    FileSystemDeploymentType,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -84,12 +91,15 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
     const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    const FSxQuorumVolumeSize = 10000; // 10GB
+    const FSxQuorumVolumeSize = 12000; // 12GB
 
     // StorageCapacity in GiB
-    const FSxStorageCapacity = Math.ceil(
+    let FSxStorageCapacity = Math.ceil(
         (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
     );
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
     return {
         UniqueID: suffix,
@@ -112,7 +122,8 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
         DomainAdminSecretName: `${prefix}-domain-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
         SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
-        FSxStorageCapacity
+        FSxStorageCapacity,
+        FSxDataLunSize: FSxDataLunSizeInMib
     };
 }
 
@@ -237,16 +248,16 @@ async function saveFSxAndSqlServerDetailsInTenancy(
     const FSxResourceTenancyDetails: ServiceResourceRequest = {
         name: `FSx_${stackName}`,
         resourceIdentifier: fsxConfiguration?.fsxFileSystemId || `FSx_${stackName}`,
-        resourceType: 'FSX_ONTAP',
+        resourceType: FSX_RESOURCE_TYPE,
         workspacePublicId: resourceId,
         accountPublicId: accountId,
-        resourceClass: 'WLMDB', // FSx is available only on AWS
+        resourceClass: WLMDB_RESOURCE_CLASS,
         metadata: {
             propertyName: 'fsx-details',
             propertyValue: JSON.stringify({
-                location: 'AWS', // FSx is available only on AWS
-                state: FSxDeploymentStatus.SUCCESS,
-                deploymentType: 'MULTI_AZ_1' // FSx is always deployed MULTI_AZ_1 for now
+                location: CloudProviders.AWS, // FSx is available only on AWS
+                state: DeploymentStatus.SUCCESS,
+                deploymentType: FileSystemDeploymentType.MULTI_AZ_1 // FSx is always deployed MULTI_AZ_1 for now
             })
         }
     };
@@ -256,16 +267,16 @@ async function saveFSxAndSqlServerDetailsInTenancy(
     const MsSqlServerTenancyDetails: ServiceResourceRequest = {
         name: `MsSqlServer_${stackName}`,
         resourceIdentifier: sha1(`${stackName}`),
-        resourceType: 'MSSQL',
+        resourceType: MSSQL_RESOURCE_TYPE,
         workspacePublicId: resourceId,
         accountPublicId: accountId,
-        resourceClass: 'WLMDB',
+        resourceClass: WLMDB_RESOURCE_CLASS,
         metadata: {
-            propertyName: 'more-details',
+            propertyName: 'sqlserver-details',
             propertyValue: JSON.stringify({
-                location: 'AWS',
+                location: CloudProviders.AWS,
                 state: MsSqlServerDeploymentStatus.INITIALIZING,
-                deploymentType: 'MULTI_AZ_1' // FSx is always deployed as MULTI_AZ_1 for now
+                deploymentType: FileSystemDeploymentType.MULTI_AZ_1 // FSx is always deployed as MULTI_AZ_1 for now
             })
         }
     };
@@ -273,6 +284,13 @@ async function saveFSxAndSqlServerDetailsInTenancy(
     logger.info('Status of SQL Server resource registration in tenancy:', response);
 }
 
+function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
+    return (
+        'routeTable1Id' in networkConfiguration &&
+        'routeTable2Id' in networkConfiguration &&
+        networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
+    );
+}
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -281,5 +299,6 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    saveFSxAndSqlServerDetailsInTenancy
+    saveFSxAndSqlServerDetailsInTenancy,
+    isSameRoutetables
 };
