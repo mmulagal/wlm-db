@@ -89,7 +89,8 @@ enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment'
+    DEPLOYMENT = 'Deployment',
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
