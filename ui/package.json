@@ -15,12 +15,8 @@
         "@types/react": "^18.2.20",
         "@types/react-dom": "^18.2.7",
         "auth0-js": "^9.22.1",
-<<<<<<< HEAD
-        "axios": "^0.21.1",
         "json2csv": "^6.0.0-alpha.2",
-=======
         "axios": "^1.4.0",
->>>>>>> a5d48ca7930b04e121f9f2467c108ed74018bd26
         "lodash": "^4.17.21",
         "moment": "^2.29.4",
         "numeral": "^2.0.6",
@@ -71,13 +67,9 @@
         "dotenv-cli": "^4.0.0",
         "jest-teamcity-reporter": "^0.9.0",
         "react-scripts": "5.0.1",
-<<<<<<< HEAD
         "sass": "^1.34.1"
     },
     "jest": {
         "transformIgnorePatterns": []
-=======
-        "sass": "^1.66.0"
->>>>>>> a5d48ca7930b04e121f9f2467c108ed74018bd26
     }
 }

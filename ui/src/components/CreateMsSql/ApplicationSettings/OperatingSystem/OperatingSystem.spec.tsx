@@ -1,4 +1,4 @@
-import { prettyDOM, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import OperatingSystem from '../OperatingSystem/OperatingSystem';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
