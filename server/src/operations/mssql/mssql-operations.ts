@@ -1,17 +1,21 @@
-import { getDBSummary } from '../../lib/mssql/mssql';
-import { DB_ROWS_COUNT } from '../../utils/consts';
+import { getDBSummary, serverResourceUtilisation } from '../../lib/mssql/mssql';
+import { DB_ROWS_COUNT } from '../../lib/mssql/const';
+import getLogger from '../../utils/logger';
+
+const logger = getLogger();
 
 function getResourceDetailsFromTenancy(resourceId: string) {
-    console.log(`got instanceid from ${resourceId}`);
-    const instanceId = 'i-0880a21327284f67c';
-    const credentialsId = '936c652f-8ee5-4de8-9938-b7975d24bdce';
-    const region = 'ap-southeast-1';
+    logger.info('Getting details of resource :', resourceId);
+    const instanceId = '';
+    const credentialsId = '';
+    const region = '';
     return [instanceId, credentialsId, region];
     //since resources are not yet registered in tenancy hardcoding values
     //method will be replaced once tenancy methods are implemented
 }
 
 async function getDataBasesSummary(resourceId: string) {
+    logger.info('Get databases summary for resource:', resourceId);
     const [instanceId, credentialsId, region] = getResourceDetailsFromTenancy(resourceId);
     const dbCount = 251; //since resources are not yet registered in tenancy harcoding values
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
@@ -25,4 +29,9 @@ async function getDataBasesSummary(resourceId: string) {
     return { databases: finaldb };
 }
 
-export { getDataBasesSummary };
+async function getResourceUtilisation(resourceId: string, resourceType: string) {
+    logger.info(`Get ${resourceType} resource utilization for resource: `, resourceId);
+    const [instanceId, credentialsId, region] = getResourceDetailsFromTenancy(resourceId);
+    return serverResourceUtilisation(instanceId, credentialsId, region, resourceType);
+}
+export { getDataBasesSummary, getResourceUtilisation };

@@ -89,7 +89,7 @@ enum RouteTags {
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
-    MSSQL = 'MSSQL'
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
@@ -477,7 +477,6 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
-const DB_ROWS_COUNT = 75;
 
 export {
     WLMDB,
@@ -566,6 +565,5 @@ export {
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
-    AWS_FSX,
-    DB_ROWS_COUNT
+    AWS_FSX
 };

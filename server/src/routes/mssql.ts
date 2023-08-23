@@ -1,9 +1,9 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { GetDatabasesSchema } from './schemas/mssql-schemas';
-import { getDataBasesSummary } from '../operations/mssql/mssql-operations';
+import { GetDatabasesSchema, DatabaseUtilisationResponseSchema } from './schemas/database-schemas';
+import { getDataBasesSummary, getResourceUtilisation } from '../operations/mssql/mssql-operations';
 
-const MSSQL_DATA_API_PATH: string = '/v1/workspacePublicId/:workspacePublicId/mssql/:resourceId';
+const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function mssqlRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -14,4 +14,16 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
         const response = await getDataBasesSummary(resourceId);
         return reply.send(response);
     });
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/cpu`,
+        { schema: DatabaseUtilisationResponseSchema },
+        async (request, reply) => {
+            const {
+                params: { resourceId }
+            } = request;
+            const response = await getResourceUtilisation(resourceId, 'cpu');
+            return reply.send(response);
+        }
+    );
 }

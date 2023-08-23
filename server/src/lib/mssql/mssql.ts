@@ -1,9 +1,10 @@
-import { CPU_UTILIZATION, DATABASES, DOCUMENTNAME, PSSCRIPT } from './const';
+import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT } from './const';
 import { executeSsmDocument } from '../aws/ssm';
 
 async function callSsmExecution(credentialsId: string, instanceId: string, region: string, commands: Array<string>) {
     const params = {
-        DocumentName: DOCUMENTNAME,
+        DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+        Documentversion: '1',
         InstanceIds: [instanceId],
         Parameters: {
             commands: commands
@@ -13,7 +14,7 @@ async function callSsmExecution(credentialsId: string, instanceId: string, regio
     if (response.StandardErrorContent) {
         throw new Error(response.StandardErrorContent);
     }
-    const resp = JSON.parse(response.StandardOutputContent);
+    const resp = JSON.parse(response.StandardOutputContent!);
     return resp;
 }
 
@@ -35,7 +36,6 @@ async function serverResourceUtilisation(
     resourceType: string
 ) {
     let commands: string[] = [];
-    const tes = 123;
     if (resourceType === 'cpu') {
         commands = [`${PSSCRIPT} -Query "${CPU_UTILIZATION}"`];
     }

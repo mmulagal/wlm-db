@@ -1,8 +1,7 @@
 import { Type } from '@fastify/type-provider-typebox';
 
-const mssqlparams = Type.Object({
+const databaseParams = Type.Object({
     accountId: Type.String(),
-    workspacePublicId: Type.String(),
     resourceId: Type.String()
 });
 
@@ -17,4 +16,12 @@ const DatabasesResponseBody = Type.Object({
         })
     )
 });
-export { mssqlparams, DatabasesResponseBody };
+
+const UtilisationResponseBody = Type.Object({
+    percentUsed: Type.String(),
+    used: Type.String(),
+    total: Type.String(),
+    remaining: Type.String()
+});
+
+export { databaseParams, DatabasesResponseBody, UtilisationResponseBody };
