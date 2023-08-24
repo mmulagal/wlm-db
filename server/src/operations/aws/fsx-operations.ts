@@ -63,7 +63,7 @@ async function getFSxFileSystemsList(
             };
 
             const networkInterfacesList = await getNetworkInterfacesList(credentialsId, region, enetInterfaces);
-            const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups).flat());
+            const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
 
             fsxVolumes?.forEach(
                 ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => {
