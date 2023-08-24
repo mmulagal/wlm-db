@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
 import {
     AccordionCard,
@@ -13,9 +14,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
-import styles from './FSxNSystem.module.scss';
-import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
@@ -26,6 +25,10 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { FSXADMIN } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
+
+import styles from './FSxNSystem.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -195,14 +198,21 @@ const FSxNSystem = () => {
                                 label={GENERAL.FSX_PASSWORD}
                                 info={
                                     <Typography variant="Regular_13" className={styles.infoMsg}>
-                                        <ul>
-                                            <li>{GENERAL.PASSWORD_FSX_1}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_2}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_3}</li>
-                                        </ul>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_1}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_2}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_3}</Typography>
+                                        </div>
                                     </Typography>
                                 }
-                                error={fsxPassVal(password)}
+                                error={useDelayedError(fsxPassVal(password))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));
