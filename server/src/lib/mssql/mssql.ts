@@ -1,5 +1,8 @@
 import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT } from './const';
 import { executeSsmDocument } from '../aws/ssm';
+import { getLogger } from 'log4js';
+
+const logger = getLogger();
 
 async function callSsmExecution(credentialsId: string, instanceId: string, region: string, commands: Array<string>) {
     const params = {
@@ -14,19 +17,25 @@ async function callSsmExecution(credentialsId: string, instanceId: string, regio
     if (response.StandardErrorContent) {
         throw new Error(response.StandardErrorContent);
     }
-    const resp = JSON.parse(response.StandardOutputContent!);
-    return resp;
+
+    return JSON.parse(response.StandardOutputContent!);
 }
 
-async function getDBSummary(
+async function getDatabasesSummary(
     credentialsId: string,
     region: string,
     instanceId: string,
     offset: number,
     rowscount: number
 ) {
+    logger.info('Fetching databases ', credentialsId, region, instanceId, offset, rowscount);
+
     const commands = [`${PSSCRIPT} -Query "${DATABASES(offset, rowscount)}"`];
-    return callSsmExecution(credentialsId, instanceId, region, commands);
+    const response = await callSsmExecution(credentialsId, instanceId, region, commands);
+
+    logger.debug('Fetching databases response', response);
+
+    return response;
 }
 
 async function serverResourceUtilisation(
@@ -41,4 +50,4 @@ async function serverResourceUtilisation(
     }
     return callSsmExecution(credentialsId, instanceId, region, commands);
 }
-export { getDBSummary, serverResourceUtilisation };
+export { getDatabasesSummary, serverResourceUtilisation };
