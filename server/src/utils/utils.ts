@@ -6,7 +6,6 @@ import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import { ServiceResourceRequest, registerServiceResource } from '../lib/cloud-manager/tenancy';
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
@@ -21,9 +20,7 @@ import {
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE,
-    ACCOUNT_ID,
-    WORKSPACE_ID
+    FSX_SSD_MAX_SIZE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -231,42 +228,6 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     );
 }
 
-async function saveResourceInTenancy(
-    resourceName: string,
-    resourceId: string,
-    resourceType: string,
-    resourceClass: string,
-    resourceProperties: object
-) {
-    logger.info('Save resource in tenancy:', {
-        resourceName,
-        resourceId,
-        resourceType,
-        resourceClass,
-        resourceProperties
-    });
-
-    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
-
-    const params: ServiceResourceRequest = {
-        name: resourceName,
-        resourceIdentifier: resourceId,
-        resourceType: resourceType,
-        workspacePublicId: workspaceId,
-        accountPublicId: accountId,
-        resourceClass: resourceClass,
-        metadata: {
-            propertyName: 'properties',
-            propertyValue: JSON.stringify(resourceProperties)
-        }
-    };
-
-    const response = await registerServiceResource(params);
-    logger.info('Status of saving resource in tenancy:', response);
-    return response;
-}
-
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -275,6 +236,5 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    isSameRoutetables,
-    saveResourceInTenancy
+    isSameRoutetables
 };
