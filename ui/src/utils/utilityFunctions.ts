@@ -230,3 +230,12 @@ export const isValidUserName = (userName: string) => {
         return GENERAL.USERNAME_TOOLTIP;
     }
 };
+
+
+export const sortListOfDict = (dataList: any, field: string) => {
+    if(dataList && dataList.length < 2){
+        return dataList;
+    };
+    dataList.sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    return dataList;
+};
