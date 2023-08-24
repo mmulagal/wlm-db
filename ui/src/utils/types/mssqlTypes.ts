@@ -66,6 +66,7 @@ export interface InstanceType {
 export interface FSxN {
     fileSystemId?: string;
     name?: string;
+    lifecycle?: string;
     ontapConfiguration?: {
         deploymentType?: string;
     }
@@ -130,7 +131,7 @@ export interface Subnets {
     cidrBlock: string;
     availabilityZone: string;
     availableIps: number;
-    name: string;
+    name?: string;
 }
 
 export interface AvailabilityZonesObj {

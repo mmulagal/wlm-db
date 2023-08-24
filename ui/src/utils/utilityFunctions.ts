@@ -2,8 +2,8 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS } from './consts';
-import { AvailabilityZonesObj, KmsKeys, Subnets } from './types/mssqlTypes';
+import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS, REGIONS_CODE_LIST } from './consts';
+import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
 
@@ -87,8 +87,10 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
             }
             if (val?.name === DEFAULT_MASTER_KEY) {
                 val = { ...val, default: true };
+                newData.unshift(val);
+            } else{
+                newData.push(val);
             }
-            newData.push(val);
         });
     return newData;
 };
@@ -195,4 +197,47 @@ export const formatSizeOrString = (value: number) => {
     } else {
         return value;
     }
+};
+
+export const regionsSort = (regions: Array<Regions>) => {
+    if (!regions || regions.length < 2) {
+        return regions;
+    }
+
+    const newRegionList = regions.slice().sort((a, b) => {
+        const indexA = REGIONS_CODE_LIST.indexOf(a.regionCode || '');
+        const indexB = REGIONS_CODE_LIST.indexOf(b.regionCode || '');
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+        if (indexA !== -1) {
+            return -1;
+        }
+        if (indexB !== -1) {
+            return 1;
+        }
+        return 0;
+    });
+    return newRegionList;
+};
+
+export const isValidUserName = (userName: string) => {
+    if (
+        userName.length &&
+        (userName.length < 5 ||
+            !/^[a-zA-Z0-9]+$/.test(userName) ||
+            userName === 'admin' ||
+            userName === 'administrator')
+    ) {
+        return GENERAL.USERNAME_TOOLTIP;
+    }
+};
+
+
+export const sortListOfDict = (dataList: any, field: string) => {
+    if(dataList && dataList.length < 2){
+        return dataList;
+    };
+    dataList.sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    return dataList;
 };

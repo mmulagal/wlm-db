@@ -3,6 +3,7 @@ import styles from './InformationPane.module.scss';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type InformationDataType = {
     label: string;
@@ -12,10 +13,13 @@ type InformationDataType = {
 
 const InformationPane = () => {
     const informationData = [
-        { label: 'SQL Server version', value: 'SQL2022', showCopy: true },
-        { label: 'Edition', value: 'Standard', showCopy: true },
-        { label: 'Engine', value: 'SQL Server express edition', showCopy: true },
+        { label: 'Deployment model', value: 'Always-On FCI', showCopy: true },
+        { label: 'SQL Server edition', value: 'Standard', showCopy: true },
+        { label: 'SQL Server version', value: '2019', showCopy: true },
         { label: 'Status', value: 'Healthy', showCopy: true },
+        { label: 'Cluster name', value: 'sqldatabase-cluster', showCopy: true },
+        { label: 'Node 1 name (active)', value: 'sqldatabase-node-1', showCopy: true },
+        { label: 'Node 2 name', value: 'sqldatabase-node-2', showCopy: true },
         { label: 'ID', value: '625489731245678', showCopy: true },
         { label: 'Connections', value: '2', showCopy: false }
     ];
@@ -24,7 +28,7 @@ const InformationPane = () => {
         <div className={styles.informationPane}>
             <div className={styles.informationTitle}>
                 <Typography className={styles.informationTitleText} variant="Semibold_14">
-                    Information
+                    {GENERAL.INFORMATION}
                 </Typography>
             </div>
             <div className={styles.titleTag}>
