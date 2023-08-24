@@ -233,6 +233,7 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,

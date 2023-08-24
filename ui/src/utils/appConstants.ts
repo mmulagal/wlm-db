@@ -1,8 +1,7 @@
 export const SELECT_CONFIG = {
     STANDARD_CREATE: `Standard create`,
     EASY_CREATE: `Easy create`,
-    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including ones for
-    availability, security, backups, and maintenance.`,
+    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
         'Use a recommended est-practice configuration. You can change most configuration options after database is created.',
     COMING_SOON: 'Coming soon',
@@ -18,6 +17,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     AWS_CREDENTIALS: 'AWS credentials',
+    NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
@@ -33,6 +33,7 @@ export const GENERAL = {
     KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
+    COST: 'Cost',
     INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
@@ -123,7 +124,7 @@ export const GENERAL = {
     VERSION: 'Version',
     //Constants for License accordion
     LICENSE_TEXT:
-        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI. If you use a custom AMI, ensure that it meets all required installation parameters.',
+        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
     VIEW_THE_REQ: 'View the requirements',
     LICENSE_ID: 'License ID',
@@ -135,7 +136,7 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The instance name must be 15 characters or less in length. The first character must be an alphabetic character (a-z), an underscore `_`, a number sign `#`, or an ampersand `&`. The first character can't be a numerical value (0-9). Spaces and special characters (such as @, ^, *, ) are not supported.",
+        "The instance name must be 15 characters or less in length. The first character must be an alphabetic character (a-z). The first character can't be a numerical value (0-9), or an hyphen `-`. Spaces and special characters (such as @, ^, *, ) are not supported.",
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
@@ -191,7 +192,7 @@ export const GENERAL = {
     SUBNET: 'Subnet',
     //DB credential
     USERNAME_TOOLTIP:
-        'The user name must be 5 characters minimum. Only alphanumeric characters allowed and should not contain the word "admin/".',
+        'The user name must be 5 characters minimum. Only alphanumeric characters allowed and should not contain the word "admin/administrator".',
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
     PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',
@@ -221,7 +222,7 @@ export const GENERAL = {
     TAG_VALUE: 'Tag value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
-    SELECT_ANY_ACCOUNT: 'Disabled - Need AWS credentials',
+    SELECT_ANY_ACCOUNT: 'Select your AWS credentials first',
     SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
@@ -243,5 +244,19 @@ export const GENERAL = {
     TIMELINE: 'Timeline',
     REMOVE_FROM_WORKSPACE: 'Remove from workspace',
     TABLES_SUMMARY: 'Tables summary',
-    TABLES: 'Tables'
+    TABLES: 'Tables',
+    //Estimation cost
+    ESTIMATED_COST: 'Estimated cost',
+    ESTIMATED_SUBTEXT: 'Estimate of charges incurred to deploy the following resources.',
+    RESOURCES: 'Resources',
+    AMOUNT_IN_USD: 'Amount in USD (monthly)',
+    COMPUTE: 'Compute',
+    INSTANCE_TYPE_EC: 'Instance type',
+    QUANTITY: 'Quantity',
+    STORAGE: 'Storage',
+    TYPE: 'Type',
+    SIZE: 'Size',
+    ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
+    EC_NOTE:
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.'
 };
