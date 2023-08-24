@@ -81,7 +81,8 @@ const initialState: any = {
         selectedRow: null,
         encryptionArn: ''
     },
-    tags: [{key: '', value:''}]
+    tags: [{ key: '', value: '' }],
+    saveConfigName: ''
 };
 
 const mssqlFormSlice = createSlice({
@@ -233,10 +234,15 @@ const mssqlFormSlice = createSlice({
         setTags(state, action: PayloadAction<any>) {
             state.tags = action.payload;
         },
+        //Save Config
+        setSaveConfigName(state, action: PayloadAction<any>) {
+            state.saveConfigName = action.payload;
+        }
     }
 });
 
 export const {
+    setSaveConfigName,
     setSelectedADDomainName,
     setSelectedADDomainAddress,
     setSelectedADUserName,

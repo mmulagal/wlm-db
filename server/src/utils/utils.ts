@@ -6,7 +6,6 @@ import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
@@ -20,7 +19,9 @@ import {
     WLM_ASSETS,
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    SQL_TEMPLATES_ASSETS
+    SQL_TEMPLATES_ASSETS,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -90,12 +91,15 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
     const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    const FSxQuorumVolumeSize = 10000; // 10GB
+    const FSxQuorumVolumeSize = 12000; // 12GB
 
     // StorageCapacity in GiB
-    const FSxStorageCapacity = Math.ceil(
+    let FSxStorageCapacity = Math.ceil(
         (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
     );
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
     return {
         UniqueID: suffix,
@@ -118,7 +122,8 @@ function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
         DomainAdminSecretName: `${prefix}-domain-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
         SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
-        FSxStorageCapacity
+        FSxStorageCapacity,
+        FSxDataLunSize: FSxDataLunSizeInMib
     };
 }
 
@@ -294,6 +299,14 @@ async function updateTemplateUrls(templateFileName: string, signedUrls: Map<stri
     }
 }
 
+function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
+    return (
+        'routeTable1Id' in networkConfiguration &&
+        'routeTable2Id' in networkConfiguration &&
+        networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
+    );
+}
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -303,5 +316,6 @@ export {
     getSubjectFromBearerToken,
     hideSecretsValues,
     generateSignedUrls,
-    updateTemplateUrls
+    updateTemplateUrls,
+    isSameRoutetables
 };

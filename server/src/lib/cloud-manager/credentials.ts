@@ -25,7 +25,7 @@ interface AllCredentials extends Credentials {
  * @param credentialsType
  * @returns Array of credentials added to BlueXP
  */
-async function getAllCredentials(credentialsType: string) {
+async function getAllCredentials(credentialsType: string): Promise<Array<AllCredentials>> {
     logger.info('Getting all credentials for credentials type ', credentialsType);
 
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);

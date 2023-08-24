@@ -39,7 +39,8 @@ enum HEADERS {
     REGION = 'x-region',
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
     SIMULATOR = 'x-simulator',
-    REFERER = 'referer'
+    REFERER = 'referer',
+    ACTIVE_TRACE_ID = 'active-trace-id'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -67,6 +68,10 @@ const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
+const WLMDB_RESOURCE_CLASS = 'WLMDB';
+enum DatabaseTypes {
+    MS_SQL_SERVER = 'MSSQL'
+}
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
@@ -162,7 +167,10 @@ const SECRET_WORDS = [
     'SessionToken',
     'AccessKeyId',
     'SecretAccessKey',
-    'username'
+    'username',
+    'domainPassword',
+    'fsxPassword',
+    'serviceAccountPassword'
 ];
 
 const SQL_AMI_NAMES = [
@@ -401,8 +409,10 @@ const ASSETS_REGION_CODE = 's3.ap-southeast-1';
 const MASTER_TEMPLATE_PATH = 'wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
-const DISABLE_ROLLBACK = false;
+const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 120;
+const FSX_SSD_MIN_SIZE = 1024; // in GiB
+const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -420,7 +430,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     securityGroupId: 'DomainMemberSGID',
 
     fsxFileSystemId: 'FSxFileSystemId',
-    databaseSize: 'FSxDataLunSize',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
@@ -459,6 +468,7 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
@@ -665,5 +675,10 @@ export {
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
     AWS_FSX,
-    SQL_TEMPLATES_ASSETS
+    SQL_TEMPLATES_ASSETS,
+    SAME_ROUTETABLE_MESSAGE,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE,
+    DatabaseTypes,
+    WLMDB_RESOURCE_CLASS
 };

@@ -1,5 +1,10 @@
 import createError from 'http-errors';
-import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
+import {
+    DescribeSubnetsRequest,
+    DescribeSecurityGroupsRequest,
+    Tag,
+    DescribeNetworkInterfacesCommandInput
+} from '@aws-sdk/client-ec2';
 import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
@@ -9,7 +14,8 @@ import {
     getAmis,
     describeRouteTable,
     describeKeyPairs,
-    describeInstanceTypes
+    describeInstanceTypes,
+    describeNetworkInterfaces
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -47,6 +53,15 @@ interface SecurityGroup {
     name?: string;
 }
 
+interface NetworkInterface {
+    id?: string;
+    description?: string;
+    vpcId?: string;
+    subnetId?: string;
+    securityGroups?: Array<string>;
+    availabilityZone?: string;
+}
+
 interface FSxAvailableRegions {
     regionCode: string;
     regionName: string;
@@ -71,11 +86,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
     if (Vpcs?.length && fieldsValues.length === 0) {
         vpcs = Vpcs.map(
             ({ VpcId: id, State: state, Tags: tags, CidrBlockAssociationSet: cidrBlock, IsDefault: isDefault }) => {
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
-                }
-                return { id, state, tags, cidrBlock, isDefault, name };
+                const resourceName = findResourceNameFromTags(tags);
+                return { id, state, tags, cidrBlock, isDefault, ...(resourceName && { name: resourceName }) };
             }
         );
 
@@ -92,11 +104,6 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     CidrBlockAssociationSet: cidrBlock,
                     IsDefault: isDefault
                 } = vpc;
-
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
-                }
 
                 const subnetParams: DescribeSubnetsRequest = {
                     Filters: [
@@ -124,6 +131,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 if (fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)) {
                     securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
                 }
+
+                const resourceName = findResourceNameFromTags(tags);
                 vpcs.push({
                     id,
                     state,
@@ -132,7 +141,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     isDefault,
                     subnets: subnetsList,
                     securityGroups: securityGroupList,
-                    name
+                    ...(resourceName && { name: resourceName })
                 });
             })
         );
@@ -158,18 +167,35 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 AvailableIpAddressCount: availableIps
             } = subnet;
 
-            let name = '-';
-            if (tags?.length) {
-                name = findNameFromTags(tags);
-            }
-
             const params = {
-                Filters: [{ Name: 'association.subnet-id', Values: [id as string] }]
+                Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
             };
-            const { RouteTables: [{ RouteTableId: routeTableId } = { RouteTableId: undefined }] = [] } =
-                await describeRouteTable(credentialsId, region, params);
 
-            subnetsList.push({ id, state, vpcId, tags, cidrBlock, availabilityZone, availableIps, name, routeTableId });
+            const { RouteTables } = await describeRouteTable(credentialsId, region, params);
+
+            let routeTableId;
+            // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
+            RouteTables?.forEach(routeTable => {
+                routeTable.Associations?.forEach(association => {
+                    if (association.Main || association.SubnetId === id) {
+                        routeTableId = association.RouteTableId;
+                    }
+                });
+            });
+
+            const resourceName = findResourceNameFromTags(tags);
+
+            subnetsList.push({
+                id,
+                state,
+                vpcId,
+                tags,
+                cidrBlock,
+                availabilityZone,
+                availableIps,
+                routeTableId,
+                ...(resourceName && { name: resourceName })
+            });
         }
     }
     return subnetsList;
@@ -183,15 +209,53 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     if (securityGroups?.length) {
         securityGroupList = securityGroups.map(
             ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
-                let name = '-';
-                if (tags?.length) {
-                    name = findNameFromTags(tags);
-                }
-                return { id: id, description: description, vpcId: vpcId, ipPermissions, name };
+                const resourceName = findResourceNameFromTags(tags);
+                return {
+                    id: id,
+                    description: description,
+                    vpcId: vpcId,
+                    ipPermissions,
+                    ...(resourceName && { name: resourceName })
+                };
             }
         );
     }
     return securityGroupList;
+}
+
+async function getNetworkInterfacesList(
+    credentialsId: string,
+    region: string,
+    params: DescribeNetworkInterfacesCommandInput
+) {
+    logger.info('List Network Interfaces in a region', { credentialsId, region, params });
+
+    const { NetworkInterfaces: networkInterfaces } = await describeNetworkInterfaces(credentialsId, region, params);
+    let networkInterfacesList: Array<NetworkInterface> = [];
+    if (networkInterfaces?.length) {
+        networkInterfacesList = networkInterfaces.map(
+            ({
+                Groups: securityGroups,
+                AvailabilityZone: availabilityZone,
+                NetworkInterfaceId: id,
+                Description: description,
+                SubnetId: subnetId,
+                VpcId: vpcId
+            }) => {
+                return {
+                    id: id,
+                    description: description,
+                    vpcId: vpcId,
+                    securityGroups: securityGroups
+                        ?.filter(sg => sg.GroupId !== undefined)
+                        .map(sg => sg.GroupId as string),
+                    availabilityZone: availabilityZone,
+                    subnetId: subnetId
+                };
+            }
+        );
+    }
+    return networkInterfacesList;
 }
 
 async function getAmiList(
@@ -261,11 +325,17 @@ async function getAmiList(
     return { amis: response };
 }
 
-function findNameFromTags(tags: Tag[]) {
-    logger.debug('Find name from the tags', { tags });
-    // AWS follows the patter of having 'Name' as they key which considered to be the resource name so following the same here
+/*
+ * AWS considers the value of tag 'Name' as the resource name.
+ * If tag 'Name' is present, return its corresponding Value.
+ * Otherwise, returns undefined.
+ */
+function findResourceNameFromTags(tags?: Tag[]) {
+    logger.debug('Find resource name from the tags', { tags });
+
     const { Value: name } = tags?.find(tag => tag?.Key === 'Name') || {};
-    return name ? name : '-';
+
+    return name;
 }
 
 async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
@@ -337,4 +407,12 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     return { keyPairs: kpList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstanceTypes };
+export {
+    getVpcsList,
+    getFSxAvailableRegionsList,
+    getAmiList,
+    getKeyPairsList,
+    getInstanceTypes,
+    getSecurityGroupsList,
+    getNetworkInterfacesList
+};

@@ -66,6 +66,11 @@ export interface InstanceType {
 export interface FSxN {
     fileSystemId?: string;
     name?: string;
+    lifecycle?: string;
+    securityGroups?: Array<string>;
+    ontapConfiguration?: {
+        deploymentType?: string;
+    }
 }
 
 export interface MssqlEntities {
@@ -127,7 +132,7 @@ export interface Subnets {
     cidrBlock: string;
     availabilityZone: string;
     availableIps: number;
-    name: string;
+    name?: string;
 }
 
 export interface AvailabilityZonesObj {
@@ -163,7 +168,7 @@ export interface MssqlRequestBody {
         fsxUsername: string;
         fsxPassword: string;
         databaseSize: string;
-        ontapSgGroupId: string;
+        ontapSgGroupId: Array<string>;
         fsxVolThroughput: string;
         fsxIOPS: string;
         encryptionKey: string;

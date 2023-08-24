@@ -1,5 +1,7 @@
+import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import { getFSxFileSystemsList } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
@@ -12,6 +14,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
                     fileSystemId: 'fs-03773e21b2f0e39b4',
                     name: 'DBSFSX',
                     kmsKeyId: 'arn:aws:kms:ap-southeast-1:464262061435:key/0a96542a-f57b-487c-a0fc-4db5d74c0a89',
+                    lifecycle: 'AVAILABLE',
                     networkInterfaceIds: ['eni-0f21c7486b651ca11', 'eni-01a4d0d5f61d75ee4'],
                     subnetIds: ['subnet-f4484e80', 'subnet-4cdd3b29'],
                     vpcId: 'vpc-84b3afe6',
@@ -56,7 +59,8 @@ describe('Testcases for Amazon FSx resources operations', () => {
                             storageVirtualMachineId: 'svm-03985e26ffd55441d',
                             ontapVolumeType: 'RW'
                         }
-                    ]
+                    ],
+                    securityGroups: ['sg-05f4939d6670b405f', 'sg-3924c15c']
                 }
             ]
         };

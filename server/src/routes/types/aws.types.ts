@@ -185,9 +185,13 @@ const FSxFileSystemSchema = Type.Object({
     fileSystemId: Type.String(),
     name: Type.Optional(Type.String()),
     kmsKeyId: Type.Optional(Type.String()),
+    lifecycle: Type.String({
+        enum: ['AVAILABLE', 'CREATING', 'DELETING', 'FAILED', 'MISCONFIGURED', 'MISCONFIGURED_UNAVAILABLE', 'UPDATING']
+    }),
     networkInterfaceIds: Type.Optional(Type.Array(Type.String())),
     subnetIds: Type.Optional(Type.Array(Type.String())),
     vpcId: Type.Optional(Type.String()),
+    securityGroups: Type.Optional(Type.Array(Type.String())),
     ontapConfiguration: Type.Optional(
         Type.Object({
             deploymentType: Type.Optional(Type.String()),

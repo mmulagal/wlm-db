@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
@@ -19,14 +20,17 @@ import {
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
-    WLM_ASSETS
+    WLM_ASSETS,
+    SAME_ROUTETABLE_MESSAGE,
+    EC2_ROLE_NAME
 } from '../utils/consts';
 import {
     formatTemplateParameters,
     generateFsxParams,
     generateSignedUrls,
     isCfStackQuotaReached,
-    updateTemplateUrls
+    updateTemplateUrls,
+    isSameRoutetables
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
@@ -54,6 +58,11 @@ async function createCloudFormationTemplateForUserDeployment(
         sqlConfiguration
     });
 
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    }
+
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
 
     let errMsg = '';
@@ -65,7 +74,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ? await generateFsxParams(fsxConfiguration.databaseSize, true)
         : await generateFsxParams(fsxConfiguration.databaseSize, false);
 
-    const { roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -118,7 +127,7 @@ async function createCloudFormationTemplateForUserDeployment(
     );
     const signedURL = await getPreSignedUrl(credentialsId, region);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}`;
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
@@ -171,20 +180,19 @@ async function deployCloudFormationTemplate(
         sqlConfiguration
     });
 
+    const sameRoutes = isSameRoutetables(networkConfiguration);
+    if (sameRoutes) {
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    }
+
     const { permissions } = await getMissingPermissionsList(credentialsId, region);
     if (permissions?.length) {
-        throw {
-            statusCode: HttpErrorCodes.VALIDATION_ERROR,
-            message: MISSING_PERMISSIONS(permissions)
-        };
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
     if (cfStackQuotaReached) {
-        throw {
-            statusCode: HttpErrorCodes.VALIDATION_ERROR,
-            message: CF_QUOTA_REACHED
-        };
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
     const { stackName, templateParameters } = await formatTemplateParameters(

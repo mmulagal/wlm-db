@@ -1,16 +1,17 @@
+import { TypeCompiler } from '@sinclair/typebox/compiler';
+// import { createAuditGroupSchema } from '../routes/schemas/audit-schema.js';
 import getLogger from './logger.js';
 
 const logger = getLogger();
 
 // TODO: TS - Fix Any
-export default function validateSchema(data: any, schema: any, allowUnknown = false) {
+export default function validateSchema(data: any, schema: any) {
     logger.debug('Validating schema:', data);
+    const compiledSchema = TypeCompiler.Compile(schema);
+    const isValid = compiledSchema.Check(data);
 
-    const result = schema.validate(data, { allowUnknown });
-
-    if (result.error) {
-        logger.error('Schema Validation error:', result.error);
-
-        throw result.error;
+    if (!isValid) {
+        logger.error('Schema Validation error:', [...compiledSchema.Errors(data)]);
+        throw new Error('Audit schema validation failed');
     }
 }

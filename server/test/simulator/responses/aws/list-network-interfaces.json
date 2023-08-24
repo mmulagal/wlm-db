@@ -1,0 +1,205 @@
+{
+    "NetworkInterfaces": [
+        {
+            "Attachment": {
+                "AttachTime": "2023-08-24T07:11:40+00:00",
+                "AttachmentId": "eni-attach-0fed358b433d47784",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 3,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "237036677077",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "ap-southeast-1a",
+            "Description": "[Do not detach or untag] Amazon FSx network interface for fs-0f3b8ed8a601288ae",
+            "Groups": [
+                {
+                    "GroupName": "default",
+                    "GroupId": "sg-05f4939d6670b405f"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "06:76:fd:86:ba:50",
+            "NetworkInterfaceId": "eni-0f536a2c38e431a6a",
+            "OwnerId": "464262061435",
+            "PrivateDnsName": "ip-10-0-7-240.ap-southeast-1.compute.internal",
+            "PrivateIpAddress": "10.0.7.240",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-10-0-7-240.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "10.0.7.240"
+                },
+                {
+                    "Primary": false,
+                    "PrivateDnsName": "ip-10-0-10-51.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "10.0.10.51"
+                },
+                {
+                    "Primary": false,
+                    "PrivateDnsName": "ip-10-0-0-246.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "10.0.0.246"
+                }
+            ],
+            "RequesterId": "585914325877",
+            "RequesterManaged": false,
+            "SourceDestCheck": false,
+            "Status": "in-use",
+            "SubnetId": "subnet-03dc0032136f7e0f5",
+            "TagSet": [
+                {
+                    "Key": "AmazonFSx.FileSystemId",
+                    "Value": "fs-0f3b8ed8a601288ae"
+                }
+            ],
+            "VpcId": "vpc-046f7e26255458373"
+        },
+        {
+            "Attachment": {
+                "AttachTime": "2023-08-21T03:39:10+00:00",
+                "AttachmentId": "eni-attach-0daae1466dcfb1201",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 3,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "161453452670",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "ap-southeast-1b",
+            "Description": "[Do not detach or untag] Amazon FSx network interface for fs-061ed5de76a2bd0ee",
+            "Groups": [
+                {
+                    "GroupName": "default",
+                    "GroupId": "sg-3924c15c"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "02:75:0d:fa:9d:ec",
+            "NetworkInterfaceId": "eni-02ae1e3993e0af642",
+            "OwnerId": "464262061435",
+            "PrivateDnsName": "ip-172-31-6-218.ap-southeast-1.compute.internal",
+            "PrivateIpAddress": "172.31.6.218",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-172-31-6-218.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "172.31.6.218"
+                },
+                {
+                    "Primary": false,
+                    "PrivateDnsName": "ip-172-31-13-153.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "172.31.13.153"
+                },
+                {
+                    "Primary": false,
+                    "PrivateDnsName": "ip-172-31-6-118.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "172.31.6.118"
+                }
+            ],
+            "RequesterId": "585914325877",
+            "RequesterManaged": false,
+            "SourceDestCheck": false,
+            "Status": "in-use",
+            "SubnetId": "subnet-4cdd3b29",
+            "TagSet": [
+                {
+                    "Key": "AmazonFSx.FileSystemId",
+                    "Value": "fs-061ed5de76a2bd0ee"
+                }
+            ],
+            "VpcId": "vpc-84b3afe6"
+        },
+        {
+            "Attachment": {
+                "AttachTime": "2023-05-19T04:52:26+00:00",
+                "AttachmentId": "eni-attach-067a0dcb0682d7048",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "amazon-rds",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "ap-southeast-1c",
+            "Description": "RDSNetworkInterface",
+            "Groups": [
+                {
+                    "GroupName": "default",
+                    "GroupId": "sg-3924c15c"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "0a:54:5b:58:5f:e4",
+            "NetworkInterfaceId": "eni-05cdea65907589a1a",
+            "OwnerId": "464262061435",
+            "PrivateDnsName": "ip-172-31-46-114.ap-southeast-1.compute.internal",
+            "PrivateIpAddress": "172.31.46.114",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-172-31-46-114.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "172.31.46.114"
+                }
+            ],
+            "RequesterId": "amazon-rds",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-adda86eb",
+            "TagSet": [],
+            "VpcId": "vpc-84b3afe6",
+            "DenyAllIgwTraffic": true
+        },
+        {
+            "Association": {
+                "IpOwnerId": "amazon",
+                "PublicDnsName": "ec2-54-169-165-12.ap-southeast-1.compute.amazonaws.com",
+                "PublicIp": "54.169.165.12"
+            },
+            "Attachment": {
+                "AttachTime": "2023-08-24T13:20:13+00:00",
+                "AttachmentId": "eni-attach-0e8ff56271b024a9e",
+                "DeleteOnTermination": true,
+                "DeviceIndex": 0,
+                "NetworkCardIndex": 0,
+                "InstanceId": "i-01bb0bd511b80a68d",
+                "InstanceOwnerId": "464262061435",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "ap-southeast-1b",
+            "Description": "",
+            "Groups": [
+                {
+                    "GroupName": "default",
+                    "GroupId": "sg-3924c15c"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "02:c6:c2:f5:64:c8",
+            "NetworkInterfaceId": "eni-05575be9028fe5626",
+            "OwnerId": "464262061435",
+            "PrivateDnsName": "ip-172-31-9-31.ap-southeast-1.compute.internal",
+            "PrivateIpAddress": "172.31.9.31",
+            "PrivateIpAddresses": [
+                {
+                    "Association": {
+                        "IpOwnerId": "amazon",
+                        "PublicDnsName": "ec2-54-169-165-12.ap-southeast-1.compute.amazonaws.com",
+                        "PublicIp": "54.169.165.12"
+                    },
+                    "Primary": true,
+                    "PrivateDnsName": "ip-172-31-9-31.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "172.31.9.31"
+                }
+            ],
+            "RequesterManaged": false,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-4cdd3b29",
+            "TagSet": [],
+            "VpcId": "vpc-84b3afe6"
+        }
+    ]
+}

@@ -1,8 +1,7 @@
 export const SELECT_CONFIG = {
     STANDARD_CREATE: `Standard create`,
     EASY_CREATE: `Easy create`,
-    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including ones for
-    availability, security, backups, and maintenance.`,
+    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
         'Use a recommended est-practice configuration. You can change most configuration options after database is created.',
     COMING_SOON: 'Coming soon',
@@ -18,6 +17,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     AWS_CREDENTIALS: 'AWS credentials',
+    NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
@@ -33,6 +33,7 @@ export const GENERAL = {
     KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
+    COST: 'Cost',
     INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
@@ -48,8 +49,13 @@ export const GENERAL = {
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
+    SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    SAVE_CONFIG_CONTENT:
+        'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+    CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    SAVE: 'Save',
     API_REQUEST: 'API request',
     Cancel: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
@@ -68,6 +74,7 @@ export const GENERAL = {
         "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
     GO_TO_THE: 'Go to the',
     REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'required permissions',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials page.',
     CREDENTIAL: 'Credentials.',
@@ -77,6 +84,7 @@ export const GENERAL = {
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
+    CLOUDFORMATION_TEMPLATE_URL: 'CloudFormation template URL',
     SAME_ROUTE_SUBNET_ERROR: 'AWS FSx requires route tables to be different for subnets in multi-zone deployment.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
@@ -116,8 +124,9 @@ export const GENERAL = {
     VERSION: 'Version',
     //Constants for License accordion
     LICENSE_TEXT:
-        'Use an AWS provided license-included AMI with Windows and SQL Server installed or You can bring your own SQL licenses (BYOL) through your custom AMI or use license included custom AMI. If you use a custom AMI, ensure that it meets all required install parameters.',
+        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
+    VIEW_THE_REQ: 'View the requirements',
     LICENSE_ID: 'License ID',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
@@ -125,9 +134,9 @@ export const GENERAL = {
     SELECT_AMI_NAME: 'Select AMI Name',
 
     //Constants for DB name accordion
-    DATABASE_INSTANCE_NAME: 'Database instance name',
+    DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The instance name must be 16 characters or less in length. The first character must be an alphabetic character (a-z), an underscore `_`, a number sign `#`, or an ampersand `&`. The first character can't be a numerical value (0-9). Spaces and special characters (such as @, ^, *, ) are not supported.",
+        "The instance name must be 15 characters or less in length. The first character must be an alphabetic character (a-z). The first character can't be a numerical value (0-9), or an hyphen `-`. Spaces and special characters (such as @, ^, *, ) are not supported.",
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
@@ -182,6 +191,9 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
+    DATABASE_CREDENTIAL_TEXT: 'Create a new service account for SQL Server.',
+    USERNAME_TOOLTIP:
+        'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
     PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',
@@ -211,8 +223,8 @@ export const GENERAL = {
     TAG_VALUE: 'Tag value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
-    SELECT_ANY_ACCOUNT: 'Select a credential',
-    SELECT_ANY_VPC: 'Select a VPC',
+    SELECT_ANY_ACCOUNT: 'Select your AWS credentials first',
+    SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
@@ -224,5 +236,28 @@ export const GENERAL = {
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
         'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector',
-    IS_REQUIRED_MSG: ' is required'
+    IS_REQUIRED_MSG: ' is required',
+    DATABASES_SUMMARY: 'Databases summary',
+    DATABASES: 'Databases',
+    TOTAL_SIZE: 'Total size',
+    INFORMATION: 'Information',
+    RESOURCE_DISTRIBUTION: 'Resources Distribution',
+    TIMELINE: 'Timeline',
+    REMOVE_FROM_WORKSPACE: 'Remove from workspace',
+    TABLES_SUMMARY: 'Tables summary',
+    TABLES: 'Tables',
+    //Estimation cost
+    ESTIMATED_COST: 'Estimated cost',
+    ESTIMATED_SUBTEXT: 'Estimate of charges incurred to deploy the following resources.',
+    RESOURCES: 'Resources',
+    AMOUNT_IN_USD: 'Amount in USD (monthly)',
+    COMPUTE: 'Compute',
+    INSTANCE_TYPE_EC: 'Instance type',
+    QUANTITY: 'Quantity',
+    STORAGE: 'Storage',
+    TYPE: 'Type',
+    SIZE: 'Size',
+    ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
+    EC_NOTE:
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.'
 };

@@ -91,6 +91,11 @@ const AvailabilityZone = () => {
         return options;
     }, [selectedVPCData, selectedZone1]);
 
+    useEffect(() => {
+        dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateSubnet1Options]);
+
     //Function to generate the options for Select Field subnet 2
     const generateSubnet2Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -109,6 +114,11 @@ const AvailabilityZone = () => {
         return options;
     }, [selectedVPCData, selectedZone2]);
 
+    useEffect(() => {
+        dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateSubnet2Options]);
+
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
@@ -118,11 +128,7 @@ const AvailabilityZone = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
         if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
             return <ActionRequired error={!isAZNotFilled ? true : false} />;
@@ -142,10 +148,15 @@ const AvailabilityZone = () => {
     };
 
     useEffect(() => {
-        if(routeTable1 && routeTable2 && routeTable1 === routeTable2){
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.SAME_ROUTE_SUBNET_ERROR }));
+        if (routeTable1 && routeTable2 && routeTable1 === routeTable2) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.ERROR,
+                    message: GENERAL.SAME_ROUTE_SUBNET_ERROR
+                })
+            );
         }
-    },[routeTable1, routeTable2]);
+    }, [routeTable1, routeTable2]);
 
     return (
         <div className={styles['availability-zone']}>

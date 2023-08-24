@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
 import {
     AccordionCard,
@@ -13,9 +14,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
-import styles from './FSxNSystem.module.scss';
-import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
@@ -26,6 +25,10 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { FSXADMIN } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
+
+import styles from './FSxNSystem.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -49,15 +52,22 @@ const FSxNSystem = () => {
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
+        //  MSSQL deployment is supported for Multi Availability Zone
+        const supportedFsxType = 'MULTI_AZ_1';
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
-            const data = {
-                fileSystemId: val?.fileSystemId,
-                fileSystemName: val?.name
-            };
-            const option = generateOptionType(value, value, '', false, '', data);
-            options.push(option);
+            const fsxType = val?.ontapConfiguration?.deploymentType;
+            const lifecycle = val?.lifecycle;
+            if (fsxType && fsxType === supportedFsxType && lifecycle && lifecycle === 'AVAILABLE') {
+                const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
+                const data = {
+                    fileSystemId: val?.fileSystemId,
+                    fileSystemName: val?.name,
+                    securityGroups: val?.securityGroups
+                };
+                const option = generateOptionType(value, value, '', false, '', data);
+                options.push(option);
+            }
         });
 
         return options;
@@ -78,11 +88,7 @@ const FSxNSystem = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
 
         //Checking for the create new option
@@ -194,14 +200,21 @@ const FSxNSystem = () => {
                                 label={GENERAL.FSX_PASSWORD}
                                 info={
                                     <Typography variant="Regular_13" className={styles.infoMsg}>
-                                        <ul>
-                                            <li>{GENERAL.PASSWORD_FSX_1}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_2}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_3}</li>
-                                        </ul>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_1}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_2}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_3}</Typography>
+                                        </div>
                                     </Typography>
                                 }
-                                error={fsxPassVal(password)}
+                                error={useDelayedError(fsxPassVal(password))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));

@@ -10,7 +10,7 @@ const NETWORKING_CONFIGURATION = {
     routeTable1Id: 'rtb-65aeb107',
     availabilityZone1: 'string',
     privateSubnet2Id: 'subnet-4cdd3b29',
-    routeTable2Id: 'rtb-65aeb107',
+    routeTable2Id: 'rtb-65aeb108',
     availabilityZone2: 'string'
 };
 const EC2_CONFIGURATION = {
@@ -35,7 +35,7 @@ const FSX_CONFIGURATION = {
     fsxVolThroughput: 128,
     fsxIOPS: 3072,
     encryptionKey: '',
-    ontapSgGroupId: 'sg-3924c15c'
+    ontapSgGroupId: ['sg-3924c15c']
 };
 
 const SQL_CONFIGURATION = {

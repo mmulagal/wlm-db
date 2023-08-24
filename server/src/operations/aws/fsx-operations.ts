@@ -3,6 +3,8 @@ import getLogger from '../../utils/logger';
 import { Static } from '@fastify/type-provider-typebox';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
 import { FSX_FILESYSTEM_TYPE, FSX_STORAGE_TYPE, AWS_RESOURCE_NAME_TAG } from '../../utils/consts';
+import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
+import { getNetworkInterfacesList } from '../../operations/aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -46,9 +48,22 @@ async function getFSxFileSystemsList(
 
     if (allFSxFilesystems?.length) {
         for (const fs of allFSxFilesystems) {
+            const enetInterfaceIds = fs.NetworkInterfaceIds;
             const volumesList: FSxFileSystemType['volumes'] = [];
 
             const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, fs.FileSystemId!);
+
+            const enetInterfaces: DescribeNetworkInterfacesRequest = {
+                Filters: [
+                    {
+                        Name: 'network-interface-id',
+                        Values: enetInterfaceIds
+                    }
+                ]
+            };
+
+            const networkInterfacesList = await getNetworkInterfacesList(credentialsId, region, enetInterfaces);
+            const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
 
             fsxVolumes?.forEach(
                 ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => {
@@ -72,6 +87,7 @@ async function getFSxFileSystemsList(
                 fileSystemId: fs.FileSystemId!,
                 name: tag?.Value,
                 kmsKeyId: fs.KmsKeyId,
+                lifecycle: fs.Lifecycle!,
                 networkInterfaceIds: fs.NetworkInterfaceIds,
                 subnetIds: fs.SubnetIds,
                 vpcId: fs.VpcId,
@@ -97,7 +113,8 @@ async function getFSxFileSystemsList(
                         }
                     }
                 },
-                volumes: volumesList
+                volumes: volumesList,
+                securityGroups: Array.from(sgs)
             });
         }
     }
