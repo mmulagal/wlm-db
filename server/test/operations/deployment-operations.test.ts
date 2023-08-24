@@ -3,12 +3,13 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate
 } from '../../src/operations/deployment-operations';
-
+import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import '../simulator/scopes/aws/cloud-formation-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/aws/service-quota-scope';
+import '../simulator/scopes/opentelemetry-scope';
 import {
     DEFAULT_AWS_REGION,
     SQL_CONFIGURATION,

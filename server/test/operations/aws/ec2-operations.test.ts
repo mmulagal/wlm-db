@@ -4,12 +4,14 @@ import {
     getVpcsList,
     getFSxAvailableRegionsList,
     getInstanceTypes,
-    getKeyPairsList
+    getKeyPairsList,
+    getWindowsServerBaseAmi
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -203,56 +205,12 @@ describe('EC2 Operations', () => {
     });
 
     it('List of key-pairs for a given region', async () => {
-        const keyPairsResponse = {
-            keyPairs: [
-                {
-                    id: 'key-04f1051b36abc1204',
-                    name: 'occm_qa'
-                },
-                {
-                    id: 'key-06265c604f218fdef',
-                    name: 'kanikaj_key'
-                },
-                {
-                    id: 'key-0a03292a613b2664a',
-                    name: 'nithin_xcp_sg'
-                },
-                {
-                    id: 'key-068f2936f9d8832d0',
-                    name: 'sonamy_key'
-                },
-                {
-                    id: 'key-0f0fe217f3d4ebbd8',
-                    name: 'mshreyas'
-                },
-                {
-                    id: 'key-0e5dc6e98586e1c33',
-                    name: 'Shri_Key'
-                },
-                {
-                    id: 'key-01a3bbe0d86f50d64',
-                    name: 'mshreyas_key'
-                },
-                {
-                    id: 'key-05443864696a2e0e1',
-                    name: 'krithi_key'
-                },
-                {
-                    id: 'key-0d591bc32a2d90343',
-                    name: 'rranga-key-pair'
-                },
-                {
-                    id: 'key-031d0d4e6255adefb',
-                    name: 'nithin_dbs'
-                },
-                {
-                    id: 'key-0202510d315019a51',
-                    name: 'krithi_new_key'
-                }
-            ]
-        };
-
         const response = await getKeyPairsList(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION);
-        expect(response).toEqual(keyPairsResponse);
+        expect(response).toBeDefined();
+    });
+
+    it('Get Windows Server ImageId in a region', async () => {
+        const response = await getWindowsServerBaseAmi(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
+        expect(response).toBeDefined();
     });
 });

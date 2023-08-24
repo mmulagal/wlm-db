@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/sns-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 import snsTopics from '../../simulator/responses/aws/sns-topics.json';
 
 describe('List SNS topics', () => {

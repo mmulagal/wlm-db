@@ -23,7 +23,8 @@ import {
     WLM_ASSETS,
     SAME_ROUTETABLE_MESSAGE,
     VALIDATION_AMI,
-    ASSETS_BUCKET_REGION
+    ASSETS_BUCKET_REGION,
+    EC2_ROLE_NAME
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -69,7 +70,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ? await generateFsxParams(fsxConfiguration.databaseSize, true)
         : await generateFsxParams(fsxConfiguration.databaseSize, false);
 
-    const { roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -98,7 +99,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
