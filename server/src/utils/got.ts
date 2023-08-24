@@ -71,7 +71,10 @@ export const hooks: Hooks = {
     beforeRequest: [
         options => {
             options.headers[HEADERS.REFERER] = WLMDB;
-            options.headers[HEADERS.ACTIVE_TRACE_ID] = getActiveTraceId();
+            const traceId = getActiveTraceId();
+            if (traceId) {
+                options.headers[HEADERS.ACTIVE_TRACE_ID] = getActiveTraceId();
+            }
         }
     ]
 };
