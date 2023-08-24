@@ -192,7 +192,7 @@ export const GENERAL = {
     SUBNET: 'Subnet',
     //DB credential
     USERNAME_TOOLTIP:
-        'The user name must be 5 characters minimum. Only alphanumeric characters allowed and should not contain the word "admin/administrator".',
+        'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
     PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',
