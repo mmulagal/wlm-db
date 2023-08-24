@@ -9,9 +9,13 @@
     }
 
     .headingValue {
-        width: 550px;
+        width: 318px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    [class*='separator'] {
+        top: 0px;
     }
 }

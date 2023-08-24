@@ -1,8 +1,7 @@
 export const SELECT_CONFIG = {
     STANDARD_CREATE: `Standard create`,
     EASY_CREATE: `Easy create`,
-    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including ones for
-    availability, security, backups, and maintenance.`,
+    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
         'Use a recommended est-practice configuration. You can change most configuration options after database is created.',
     COMING_SOON: 'Coming soon',
@@ -18,6 +17,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     AWS_CREDENTIALS: 'AWS credentials',
+    NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
@@ -123,7 +123,7 @@ export const GENERAL = {
     VERSION: 'Version',
     //Constants for License accordion
     LICENSE_TEXT:
-        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI. If you use a custom AMI, ensure that it meets all required installation parameters.',
+        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
     VIEW_THE_REQ: 'View the requirements',
     LICENSE_ID: 'License ID',
@@ -221,7 +221,7 @@ export const GENERAL = {
     TAG_VALUE: 'Tag value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
-    SELECT_ANY_ACCOUNT: 'Disabled - Need AWS credentials',
+    SELECT_ANY_ACCOUNT: 'Select your AWS credentials first',
     SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
