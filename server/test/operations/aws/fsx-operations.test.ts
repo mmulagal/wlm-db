@@ -1,3 +1,4 @@
+import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
@@ -58,7 +59,8 @@ describe('Testcases for Amazon FSx resources operations', () => {
                             storageVirtualMachineId: 'svm-03985e26ffd55441d',
                             ontapVolumeType: 'RW'
                         }
-                    ]
+                    ],
+                    securityGroups: ['sg-05f4939d6670b405f', 'sg-3924c15c']
                 }
             ]
         };
