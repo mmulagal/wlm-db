@@ -11,7 +11,7 @@ import {
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
-import { dbPassVal, fsxPassVal } from '../../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
 const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
@@ -169,6 +169,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
 
     //Check for DB cred password
     dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
+    const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
 
     //Check of AD values
     if (adStateValue) {
@@ -184,7 +185,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
         input.length > 15 || !/^[a-zA-Z]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-    const isDBValueValid = (input.length > 0 && dataBaseNameValue) ? true : false;
+    const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));
     } else {
@@ -207,6 +208,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !fsxStateValue &&
         !isDBValueValid &&
         !licenseIdCheck &&
+        !checkForUserName &&
         !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
         !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
     ) {
