@@ -87,8 +87,10 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
             }
             if (val?.name === DEFAULT_MASTER_KEY) {
                 val = { ...val, default: true };
+                newData.unshift(val);
+            } else{
+                newData.push(val);
             }
-            newData.push(val);
         });
     return newData;
 };
