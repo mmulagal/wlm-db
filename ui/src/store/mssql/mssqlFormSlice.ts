@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GENERAL } from '../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
 import { AWS_MANAGED_AD, FSXADMIN } from '../../utils/consts';
 
 const initialState: any = {
@@ -82,7 +82,8 @@ const initialState: any = {
         encryptionArn: ''
     },
     tags: [{ key: '', value: '' }],
-    saveConfigName: ''
+    saveConfigName: '',
+    selectConfig: SELECT_CONFIG.STANDARD_CREATE
 };
 
 const mssqlFormSlice = createSlice({
@@ -237,11 +238,16 @@ const mssqlFormSlice = createSlice({
         //Save Config
         setSaveConfigName(state, action: PayloadAction<any>) {
             state.saveConfigName = action.payload;
+        },
+        //Select config
+        setSelectConfig(state, action: PayloadAction<any>) {
+            state.selectConfig = action.payload;
         }
     }
 });
 
 export const {
+    setSelectConfig,
     setSaveConfigName,
     setSelectedADDomainName,
     setSelectedADDomainAddress,

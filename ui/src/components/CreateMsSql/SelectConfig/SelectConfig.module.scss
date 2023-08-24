@@ -7,7 +7,6 @@
         height: 136px;
         padding: 24px 0 24px 24px;
         background-color: var(--white);
-        border: 1px solid var(--light-selectors-selector-on-bg, var(--blue-70));
 
         .standard-create-content {
             display: flex;
@@ -32,10 +31,14 @@
                 text-align: left;
             }
         }
+    }
 
-        .tick-placement {
-            padding-left: 60px;
-        }
+    .add-border {
+        border: 1px solid var(--light-selectors-selector-on-bg, var(--blue-70));
+    }
+
+    .tick-placement {
+        padding-left: 60px;
     }
 
     .easy-create {
@@ -56,7 +59,7 @@
                 font-weight: 590;
                 line-height: 28px;
                 text-align: left;
-                color: var(--grey-30);
+                color: var(--grey-50);
             }
 
             .easy-create-content-text {
@@ -65,7 +68,7 @@
                 font-weight: 400;
                 width: 328px;
                 text-align: left;
-                color: var(--grey-30);
+                color: var(--grey-50);
             }
         }
 

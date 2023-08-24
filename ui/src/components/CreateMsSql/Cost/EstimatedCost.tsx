@@ -12,7 +12,7 @@ const EstimatedCost = () => {
         <div className={styles['estimated-cost']}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="14"
+                id="22"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
             >
                 <AccordionCardContent>
