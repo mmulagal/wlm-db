@@ -6,7 +6,6 @@ import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
@@ -228,6 +227,7 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
