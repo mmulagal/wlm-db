@@ -62,7 +62,8 @@ const FSxNSystem = () => {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
-                    fileSystemName: val?.name
+                    fileSystemName: val?.name,
+                    securityGroups: val?.securityGroups
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);
