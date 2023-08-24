@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+import { faker } from '@faker-js/faker';
 import {
     EC2Client,
     DescribeVpcsCommand,
@@ -20,8 +21,39 @@ import ec2ImagesResponse from '../../responses/aws/ec2-images.json';
 import fsxRegionsResponse from '../../responses/aws/list-fsx-regions.json';
 import ec2InstanaceTypes from '../../responses/aws/ec2-instance-types.json';
 import routeTablesResponse from '../../responses/aws/list-route-tables.json';
-import keyPairsResponse from '../../responses/aws/list-key-pairs.json';
 import networkInterfaceResponse from '../../responses/aws/list-network-interfaces.json';
+
+const KeyPairId = `${faker.string.alphanumeric(20)}`;
+const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
+
+const keyPairsResponse = {
+    KeyPairs: [
+        {
+            KeyPairId: KeyPairId,
+            KeyFingerprint: KeyFingerprint,
+            KeyName: 'occm_qa',
+            KeyType: 'rsa',
+            Tags: [],
+            CreateTime: '2022-01-09T21:45:04.000Z'
+        },
+        {
+            KeyPairId: KeyPairId,
+            KeyFingerprint: KeyFingerprint,
+            KeyName: 'kanikaj_key',
+            KeyType: 'rsa',
+            Tags: [],
+            CreateTime: '2023-02-14T06:29:16.874Z'
+        },
+        {
+            KeyPairId: KeyPairId,
+            KeyFingerprint: KeyFingerprint,
+            KeyName: 'nithin_xcp_sg',
+            KeyType: 'rsa',
+            Tags: [],
+            CreateTime: '2023-02-14T07:06:02.860Z'
+        }
+    ]
+};
 
 const ec2Mock = mockClient(EC2Client);
 

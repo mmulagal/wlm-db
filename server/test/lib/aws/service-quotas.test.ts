@@ -3,6 +3,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import { DEFAULT_AWS_REGION, AWSServiceNames } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/aws/service-quota-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 
