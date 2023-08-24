@@ -1,5 +1,5 @@
 
-import { getDBSummary, serverResourceUtilisation, getTablesList } from '../../lib/mssql/mssql';
+import { getDatabasesSummary, serverResourceUtilisation, getTablesList } from '../../lib/mssql/mssql';
 import { DB_ROWS_COUNT } from '../../lib/mssql/const';
 import getLogger from '../../utils/logger';
 
@@ -23,7 +23,7 @@ async function getDataBasesSummary(resourceId: string) {
     const finaldb = [];
     let offset = 0;
     for (let i = 0; i < rowscount; i++) {
-        const resp = await getDBSummary(credentialsId, region, instanceId, offset, DB_ROWS_COUNT);
+        const resp = await getDatabasesSummary(credentialsId, region, instanceId, offset, DB_ROWS_COUNT);
         finaldb.push(...resp);
         offset += DB_ROWS_COUNT;
     }
