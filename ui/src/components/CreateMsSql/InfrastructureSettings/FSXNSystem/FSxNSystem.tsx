@@ -57,7 +57,8 @@ const FSxNSystem = () => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
             const fsxType = val?.ontapConfiguration?.deploymentType;
-            if (fsxType && fsxType === supportedFsxType) {
+            const lifecycle = val?.lifecycle;
+            if (fsxType && fsxType === supportedFsxType && lifecycle && lifecycle === 'AVAILABLE') {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
