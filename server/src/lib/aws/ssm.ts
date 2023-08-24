@@ -25,20 +25,27 @@ async function getSSMClient(region: string, credentialsId: string) {
 
 async function sendSSMCommand(ssmClient: SSMClient, params: SendCommandCommandInput) {
     logger.info('Send SSM Command', params);
+
     const sendCommand = new SendCommandCommand(params);
     const response = await ssmClient.send(sendCommand);
-    const commandId = response.Command?.CommandId;
-    return commandId;
+
+    logger.debug('SSM Command response', response);
+    return response.Command?.CommandId;
 }
 
 async function pollCommandStatus(
     ssmClient: SSMClient,
     pollParams: GetCommandInvocationCommandInput
 ): Promise<GetCommandInvocationCommandOutput> {
+    // logger.info('Polling SSM command execution', JSON.stringify(GetCommandInvocationCommandInput));
+
     try {
         const response: GetCommandInvocationCommandOutput = await ssmClient.send(
             new GetCommandInvocationCommand(pollParams)
         );
+
+        logger.debug('Polling SSM command execution response', response);
+
         const status = response.Status;
 
         if (status === 'Success') {
@@ -61,15 +68,18 @@ async function pollCommandStatus(
 
 async function executeSsmDocument(credentialsId: string, region: string, params: SendCommandCommandInput) {
     logger.info('Execute SSM document', { credentialsId, region, params });
+
     const ssmClient = await getSSMClient(region, credentialsId);
     const commandId = await sendSSMCommand(ssmClient, params);
-    const instanceIds = params?.InstanceIds ?? [];
+    const [instanceIds] = params?.InstanceIds ?? [];
     const pollParams = {
         CommandId: commandId,
-        InstanceId: instanceIds[0]
+        InstanceId: instanceIds
     };
     const response = await pollCommandStatus(ssmClient, pollParams);
+
     logger.debug('SSM command Response:', response);
+
     return response;
 }
 export { executeSsmDocument };

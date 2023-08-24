@@ -147,7 +147,8 @@ const RegionVpc = () => {
                             {GENERAL.REGION_VPC_TEXT}
                         </Typography>
 
-                        <div className={styles.handleRadio}>
+                        {/* To do- Commenting it until Create new vpc flow implemented */}
+                        {/* <div className={styles.handleRadio}>
                             <RadioButton
                                 isChecked={selectVPC === GENERAL.SELECT_EXISTING_VPC}
                                 onChange={() => {
@@ -165,7 +166,7 @@ const RegionVpc = () => {
                                 className=""
                                 isDisabled
                             />
-                        </div>
+                        </div> */}
                         {selectVPC === GENERAL.SELECT_EXISTING_VPC && (
                             <div className={styles.handleSelect}>
                                 <SelectField

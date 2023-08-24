@@ -14,7 +14,6 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
         const response = await getDataBasesSummary(resourceId);
         return reply.send(response);
     });
-    
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseUtilisationResponseSchema },
@@ -26,7 +25,6 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         }
     );
-
     server.get(
         `${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`, 
         { schema: GetTablesSchema }, 
@@ -38,5 +36,4 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         }
     );
-
 }

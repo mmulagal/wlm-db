@@ -12,7 +12,8 @@ import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 import AccordionError from '../../../../common/AccordionError/AccordionError';
-import { dbPassVal } from '../../../../utils/utilityFunctions';
+import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const DatabaseCredentials = () => {
     const [userName, setUserName] = useState('');
@@ -24,7 +25,7 @@ const DatabaseCredentials = () => {
     const setHeader = () => {
         if (!userName || !password) {
             return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
-        } else if (dbPassVal(password)) {
+        } else if (dbPassVal(password) || isValidUserName(userName)) {
             return <AccordionError />;
         } else {
             return <Typography variant="Regular_14">{userName}</Typography>;
@@ -72,6 +73,8 @@ const DatabaseCredentials = () => {
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
+                                info={GENERAL.USERNAME_TOOLTIP}
+                                error={useDelayedError(isValidUserName(userName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setUserName(e.target.value);
                                     dispatch(setDBCredentialsName(e.target.value));
@@ -81,7 +84,12 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
-                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : '' || dbPassVal(password)}
+                                error={
+                                    !isDBPasswordFilled
+                                        ? GENERAL.ACTION_REQUIRED
+                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
+                                          '' || dbPassVal(password)
+                                }
                                 info={tooltipText()}
                                 //@ts-ignore
                                 isErrorPrefixHidden

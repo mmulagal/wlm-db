@@ -65,4 +65,4 @@ export default function getLogger(category: 'server' | 'got' | 'simulator' | 'ac
     return log4js.getLogger(category);
 }
 
-export { hideSecretsValues };
+export { hideSecretsValues, getActiveTraceId };

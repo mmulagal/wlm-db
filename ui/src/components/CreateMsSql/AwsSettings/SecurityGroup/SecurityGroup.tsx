@@ -8,6 +8,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedExistingSecurityGroup, setSelectedSecurityGroup } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 
 const SecurityGroup = () => {
     const dispatch = useDispatch();
@@ -55,11 +56,7 @@ const SecurityGroup = () => {
                 </Typography>
             );
         } else if (!selectedVPCData) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.SELECT_ANY_VPC}
-                </Typography>
-            );
+            return <ActionRequired disabled />;
         }
         if (securityGroup === GENERAL.USE_AN_EXISTING_SECURITY) {
             return (
@@ -126,6 +123,8 @@ const SecurityGroup = () => {
                                 />
                             </div>
                         )}
+
+                        {securityGroup === GENERAL.GENERATED_SECURITY_GROUP && <div className={styles.createNew} />}
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

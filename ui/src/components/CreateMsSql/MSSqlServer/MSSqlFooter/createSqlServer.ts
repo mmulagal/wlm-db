@@ -11,7 +11,7 @@ import {
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
-import { dbPassVal, fsxPassVal } from '../../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
 const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
@@ -85,25 +85,25 @@ const createMssqlPayload = (state: any) => {
 
     payload = {
         networkConfiguration: {
-            vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id,
-            vpcCidr: state.mssqlForm.regionAndVpc.selectedVPC?.data?.cidrBlock,
-            availabilityZone1: state.mssqlForm.availabilityZones.selectedAzNode1?.value,
-            privateSubnet1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.id,
-            routeTable1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.routeTableId,
-            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value,
-            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id,
-            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId
+            vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id || '',
+            vpcCidr: state.mssqlForm.regionAndVpc.selectedVPC?.data?.cidrBlock || '',
+            availabilityZone1: state.mssqlForm.availabilityZones.selectedAzNode1?.value || '',
+            privateSubnet1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.id || '',
+            routeTable1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.routeTableId || '',
+            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value || '',
+            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id || '',
+            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId || ''
         },
         ec2Configuration: {
-            workloadInstanceType: state.mssqlForm.instanceType?.value,
-            keyPairName: state.mssqlForm.keyPair.selectedKeyPair?.value
+            workloadInstanceType: state.mssqlForm.instanceType?.value || '',
+            keyPairName: state.mssqlForm.keyPair.selectedKeyPair?.value || ''
         },
         adConfiguration: {
-            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType,
-            domainUsername: state.mssqlForm.activeDirectory?.userName,
-            domainPassword: state.mssqlForm.activeDirectory?.password,
-            domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value,
-            dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress,
+            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || '',
+            domainUsername: state.mssqlForm.activeDirectory?.userName || '',
+            domainPassword: state.mssqlForm.activeDirectory?.password || '',
+            domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value || '',
+            dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress || '',
             securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
         },
         fsxConfiguration: {
@@ -111,16 +111,16 @@ const createMssqlPayload = (state: any) => {
             fsxUsername: fileSystem?.fsxUsername,
             fsxPassword: fileSystem?.fsxPassword,
             databaseSize: databaseSize,
-            ontapSgGroupId: state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value,
+            ontapSgGroupId: state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value || '',
             fsxVolThroughput: fsxVolThroughput,
             fsxIOPS: fsxIOPS,
-            encryptionKey: encryptionKey
+            encryptionKey: encryptionKey || ''
         },
         sqlConfiguration: {
-            sqlAmiId: licenseId,
-            serviceAccountName: state.mssqlForm.dbCredentials?.name,
-            serviceAccountPassword: state.mssqlForm.dbCredentials?.password,
-            sqlFciName: state.mssqlForm.dbName
+            sqlAmiId: licenseId || '',
+            serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
+            serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
+            sqlFciName: state.mssqlForm.dbName || ''
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
@@ -169,6 +169,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
 
     //Check for DB cred password
     dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
+    const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
 
     //Check of AD values
     if (adStateValue) {
@@ -183,8 +184,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     //Check for DB Name - InvalidName
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input);
-    const isDBValueValid = (input.length > 0 && dataBaseNameValue) ? true : false;
+        input.length > 15 || !/^[a-zA-Z]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
+    const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));
     } else {
@@ -207,6 +208,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !fsxStateValue &&
         !isDBValueValid &&
         !licenseIdCheck &&
+        !checkForUserName &&
         !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
         !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
     ) {

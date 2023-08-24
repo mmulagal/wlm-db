@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, Button, RadioButton, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -13,6 +13,7 @@ import {
     setSelectedLicenseId,
     setSelectedLicenseType
 } from '../../../../store/mssql/mssqlFormSlice';
+import { LICENSE_URL } from '../../../../utils/consts';
 
 const License = () => {
     //Store related Data
@@ -77,6 +78,12 @@ const License = () => {
             return <Typography variant="Regular_14">{selectedCustomAMI?.value || GENERAL.USE_CUSTOM_AMI}</Typography>;
         }
     };
+
+    // To open new tab with credential page on click of credential link
+    const openCredentialTab = () => {
+        const url = LICENSE_URL;
+        window.open(url, '_blank', 'noopener');
+    };
     return (
         <div className={styles.license}>
             <AccordionCard
@@ -90,6 +97,14 @@ const License = () => {
                 <AccordionCardContent>
                     <Typography>
                         <div className={styles.licenseText}>{GENERAL.LICENSE_TEXT}</div>
+                        <Button
+                            Component="button"
+                            variant="link"
+                            className={CommonStyles.buttonClass}
+                            onClick={openCredentialTab}
+                        >
+                            {GENERAL.VIEW_THE_REQ}
+                        </Button>
                         <div className={styles['radio-container']}>
                             <RadioButton
                                 isChecked={licenseSelect === GENERAL.LICENSE_INCLUDED_AMI}
