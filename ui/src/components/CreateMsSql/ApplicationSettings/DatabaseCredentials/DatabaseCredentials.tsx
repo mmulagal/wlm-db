@@ -76,7 +76,7 @@ const DatabaseCredentials = () => {
             >
                 <AccordionCardContent>
                     <Typography>
-                        <Typography variant="Regular_14" className={styles.subtext}>{GENERAL.KEY_PAIR_TEXT}</Typography>
+                        <Typography variant="Regular_14" className={styles.subtext}>{GENERAL.DATABASE_CREDENTIAL_TEXT}</Typography>
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}

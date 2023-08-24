@@ -191,6 +191,7 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
+    DATABASE_CREDENTIAL_TEXT: 'Create a new service account for SQL Server.',
     USERNAME_TOOLTIP:
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     PASSWORD_CRED_1:
