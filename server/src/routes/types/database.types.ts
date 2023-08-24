@@ -1,8 +1,8 @@
 import { Type } from '@fastify/type-provider-typebox';
 
 const databaseParams = Type.Object({
-    accountId: Type.String(),
-    resourceId: Type.String()
+    accountId: Type.String({ minLength: 1 }),
+    resourceId: Type.String({ minLength: 1 })
 });
 
 const DatabasesResponseBody = Type.Object({

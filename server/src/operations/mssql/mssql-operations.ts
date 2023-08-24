@@ -1,6 +1,7 @@
 import { getDBSummary, serverResourceUtilisation } from '../../lib/mssql/mssql';
 import { DB_ROWS_COUNT } from '../../lib/mssql/const';
 import getLogger from '../../utils/logger';
+import { removeResource } from '../../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
 
@@ -34,4 +35,20 @@ async function getResourceUtilisation(resourceId: string, resourceType: string) 
     const [instanceId, credentialsId, region] = getResourceDetailsFromTenancy(resourceId);
     return serverResourceUtilisation(instanceId, credentialsId, region, resourceType);
 }
-export { getDataBasesSummary, getResourceUtilisation };
+
+async function removeMsSqlServerResourceFromTenancy(resourceId: string) {
+    logger.info('Remove MS SQL Server resource:', { resourceId });
+
+    try {
+        const response = await removeResource(resourceId);
+        logger.info('Remove resource response:', response);
+
+        return 204; // Successfully deleted
+    } catch (error) {
+        logger.error('Failed to remove resource. Reason:', error);
+    }
+
+    return 404; // Either resource not found or some other error
+}
+
+export { getDataBasesSummary, getResourceUtilisation, removeMsSqlServerResourceFromTenancy };
