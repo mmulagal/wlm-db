@@ -7,7 +7,7 @@ import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 
-import { getVpcsList } from '../operations/aws/ec2-operations';
+import { getVpcsList, getWindowsServerBaseAmi } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
 import {
@@ -21,7 +21,8 @@ import {
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE
+    FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -172,7 +173,11 @@ async function formatTemplateParameters(
     );
 
     const stackName = derivedParams.StackName;
-    const templateParams: Array<Parameter> = [{ ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName }];
+    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const templateParams: Array<Parameter> = [
+        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+    ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key != 'StackName') {

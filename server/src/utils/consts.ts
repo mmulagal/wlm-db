@@ -396,9 +396,11 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'wlmbucket';
+const BUCKET_NAME = 'bucketkrithi';
+const BUCKET_REGION = 'ap-southeast-1';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
+const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
@@ -571,5 +573,7 @@ export {
     SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE
+    FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI,
+    BUCKET_REGION
 };

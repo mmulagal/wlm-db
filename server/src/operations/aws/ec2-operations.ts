@@ -356,7 +356,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
             { Name: 'owner-alias', Values: ['amazon'] }
         ]
     });
-    const filteredInstances =
+    const [filteredInstances] =
         amis.Images?.filter(
             ({ Name, UsageOperation }) =>
                 UsageOperation?.includes('RunInstances:0002') &&
@@ -364,8 +364,8 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
                 Name?.includes('English-Full-Base') &&
                 !Name?.includes('SQL')
         ) || [];
-
-    return filteredInstances[0].ImageId;
+    logger.debug('Windows_Server AMI Image in region ', { region, filteredInstances });
+    return filteredInstances.ImageId;
 }
 export {
     getVpcsList,
