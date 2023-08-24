@@ -1,5 +1,10 @@
 import createError from 'http-errors';
-import { DescribeSubnetsRequest, DescribeSecurityGroupsRequest, Tag } from '@aws-sdk/client-ec2';
+import {
+    DescribeSubnetsRequest,
+    DescribeSecurityGroupsRequest,
+    Tag,
+    DescribeNetworkInterfacesCommandInput
+} from '@aws-sdk/client-ec2';
 import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
@@ -9,7 +14,8 @@ import {
     getAmis,
     describeRouteTable,
     describeKeyPairs,
-    describeInstanceTypes
+    describeInstanceTypes,
+    describeNetworkInterfaces
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -45,6 +51,15 @@ interface SecurityGroup {
     vpcId?: string;
     ipPermissions?: any;
     name?: string;
+}
+
+interface NetworkInterface {
+    id?: string;
+    description?: string;
+    vpcId?: string;
+    subnetId?: string;
+    securityGroups?: Array<string>;
+    availabilityZone?: string;
 }
 
 interface FSxAvailableRegions {
@@ -208,6 +223,41 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     return securityGroupList;
 }
 
+async function getNetworkInterfacesList(
+    credentialsId: string,
+    region: string,
+    params: DescribeNetworkInterfacesCommandInput
+) {
+    logger.info('List Network Interfaces in a region', { credentialsId, region, params });
+
+    const { NetworkInterfaces: networkInterfaces } = await describeNetworkInterfaces(credentialsId, region, params);
+    let networkInterfacesList: Array<NetworkInterface> = [];
+    if (networkInterfaces?.length) {
+        networkInterfacesList = networkInterfaces.map(
+            ({
+                Groups: securityGroups,
+                AvailabilityZone: availabilityZone,
+                NetworkInterfaceId: id,
+                Description: description,
+                SubnetId: subnetId,
+                VpcId: vpcId
+            }) => {
+                return {
+                    id: id,
+                    description: description,
+                    vpcId: vpcId,
+                    securityGroups: securityGroups
+                        ?.filter(sg => sg.GroupId !== undefined)
+                        .map(sg => sg.GroupId as string),
+                    availabilityZone: availabilityZone,
+                    subnetId: subnetId
+                };
+            }
+        );
+    }
+    return networkInterfacesList;
+}
+
 async function getAmiList(
     credentialsId: string,
     region: string,
@@ -357,4 +407,12 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     return { keyPairs: kpList };
 }
 
-export { getVpcsList, getFSxAvailableRegionsList, getAmiList, getKeyPairsList, getInstanceTypes };
+export {
+    getVpcsList,
+    getFSxAvailableRegionsList,
+    getAmiList,
+    getKeyPairsList,
+    getInstanceTypes,
+    getSecurityGroupsList,
+    getNetworkInterfacesList
+};

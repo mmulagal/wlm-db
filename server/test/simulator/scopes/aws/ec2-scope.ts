@@ -10,7 +10,8 @@ import {
     DescribeRegionsCommand,
     DescribeRouteTablesCommand,
     DescribeKeyPairsCommand,
-    DescribeInstanceTypesCommand
+    DescribeInstanceTypesCommand,
+    DescribeNetworkInterfacesCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -20,6 +21,7 @@ import ec2ImagesResponse from '../../responses/aws/ec2-images.json';
 import fsxRegionsResponse from '../../responses/aws/list-fsx-regions.json';
 import ec2InstanaceTypes from '../../responses/aws/ec2-instance-types.json';
 import routeTablesResponse from '../../responses/aws/list-route-tables.json';
+import networkInterfaceResponse from '../../responses/aws/list-network-interfaces.json';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -70,3 +72,5 @@ ec2Mock.on(DescribeInstanceTypesCommand).resolves(ec2InstanaceTypes);
 ec2Mock.on(DescribeRouteTablesCommand).resolves(routeTablesResponse);
 
 ec2Mock.on(DescribeKeyPairsCommand).resolves(keyPairsResponse);
+
+ec2Mock.on(DescribeNetworkInterfacesCommand).resolves(networkInterfaceResponse);
