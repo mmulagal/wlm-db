@@ -83,6 +83,23 @@ const createMssqlPayload = (state: any) => {
         }
     })();
 
+    const ontapSgGroupIdsList = (() => {
+        let ontapSgGroupList = [];
+        const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
+        if(vpcsg){
+            ontapSgGroupList.push(vpcsg);
+        }
+
+        const fsxnType = state.mssqlForm.fsxN?.fsxNType;
+        if (fsxnType === GENERAL.SELECT_EXISTING_FSX) {
+            const fsxsg = state.mssqlForm.fsxN?.fsxNExistingName?.data?.securityGroups || [];
+            fsxsg.map((val: string) => {
+                ontapSgGroupList.push(val);
+            });
+        }
+        return ontapSgGroupList;
+    })();
+
     payload = {
         networkConfiguration: {
             vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id || '',
@@ -111,7 +128,7 @@ const createMssqlPayload = (state: any) => {
             fsxUsername: fileSystem?.fsxUsername,
             fsxPassword: fileSystem?.fsxPassword,
             databaseSize: databaseSize,
-            ontapSgGroupId: state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value || '',
+            ontapSgGroupId: ontapSgGroupIdsList,
             fsxVolThroughput: fsxVolThroughput,
             fsxIOPS: fsxIOPS,
             encryptionKey: encryptionKey || ''
