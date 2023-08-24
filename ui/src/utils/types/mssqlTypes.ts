@@ -66,6 +66,7 @@ export interface InstanceType {
 export interface FSxN {
     fileSystemId?: string;
     name?: string;
+    lifecycle?: string;
     ontapConfiguration?: {
         deploymentType?: string;
     }
