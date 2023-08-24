@@ -5,7 +5,6 @@ async function initiateSimulator() {
     nock.enableNetConnect('0.0.0.0');
 
     await import('./scopes/jwt-scope');
-    await import('./scopes/opentelemetry-scope');
     await import('./scopes/cloud-manager/cloud-manager-credentials-scope');
     await import('./scopes/cloud-manager/cloud-manager-tenancy-scope');
     await import('./scopes/cloud-manager/cloud-manager-audit-scope');
