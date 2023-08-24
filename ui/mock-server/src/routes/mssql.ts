@@ -7,7 +7,7 @@ const router = require('express').Router();
 router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/cloudformation/url`, async (req: {}, res: CreateMssqlTemplateRes) => {
     const resData = {
         cloudFormationUrl: 'cloud_formation_url',
-        warningMessage: 'Required IAM permissions are not available to create the cloud formation template'
+        warningMessage: 'Required IAM permissions are not available to deploy the cloud formation template'
     }
     generateResponse(res, 200, resData);
 });

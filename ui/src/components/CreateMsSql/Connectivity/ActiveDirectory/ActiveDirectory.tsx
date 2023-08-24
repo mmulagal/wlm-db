@@ -6,7 +6,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
@@ -51,7 +51,7 @@ const ActiveDirectory = () => {
     const addNewOption = async (option: any) => {
         setIsCreating(true);
         const newVer = [...versions, { domainName: option, dnsIpAddress: '', securityGroupId: '' }];
-        setVersions(newVer);
+        setVersions(sortListOfDict(newVer, 'domainName'));
         await delay();
         dispatch(setSelectedADDomainAddress(''));
         setIsCreating(false);
@@ -70,7 +70,7 @@ const ActiveDirectory = () => {
             };
             verList.push(newItem);
         });
-        setVersions(verList);
+        setVersions(sortListOfDict(verList, 'domainName'));
     }, [adsData]);
 
     //Function to generate the options for Select Field
