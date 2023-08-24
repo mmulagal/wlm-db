@@ -23,7 +23,7 @@ export const DATABASE_TYPE = 'sql';
 export const FSXADMIN = 'fsxadmin';
 
 // Default database name
-export const SQL_DATABASE = 'sqldatabase_1';
+export const SQL_DATABASE = 'sqldatabase1';
 
 // Active Directory scenario type
 export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';

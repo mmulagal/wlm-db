@@ -183,7 +183,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     //Check for DB Name - InvalidName
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z_#&]/.test(input.charAt(0)) || !/^[a-zA-Z0-9_#&]+$/.test(input);
+        input.length > 15 || !/^[a-zA-Z]/.test(input.charAt(0)) || !/^[a-zA-Z0-9-]+$/.test(input);
     const isDBValueValid = (input.length > 0 && dataBaseNameValue) ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));
