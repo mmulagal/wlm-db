@@ -63,8 +63,10 @@ const FSxNSystem = () => {
             const fsxSubnets = val?.subnetIds || [];
             const node1SubnetsList = selectedZone1?.data?.subnets;
             const node2SubnetsList = selectedZone2?.data?.subnets;
-            const subnetVal = !node1SubnetsList || !node2SubnetsList || (node1SubnetsList.length >0 && node1SubnetsList.length >0 && 
-            fsxSubnets.every((val:string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val)));
+            const subnetVal = !node1SubnetsList || !node2SubnetsList || 
+                            (node1SubnetsList.length >0 && node1SubnetsList.length >0 && 
+                            fsxSubnets.every((val:string) => 
+                            node1SubnetsList.includes(val) || node2SubnetsList.includes(val)));
             if (fsxType && fsxType === supportedFsxType && 
                 lifecycle && lifecycle === 'AVAILABLE' && subnetVal) {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
