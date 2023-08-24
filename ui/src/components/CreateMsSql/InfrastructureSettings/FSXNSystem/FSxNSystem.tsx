@@ -43,6 +43,8 @@ const FSxNSystem = () => {
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
+    const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
@@ -58,7 +60,13 @@ const FSxNSystem = () => {
         fsxnData?.filesystems?.map((val, idx: number) => {
             const fsxType = val?.ontapConfiguration?.deploymentType;
             const lifecycle = val?.lifecycle;
-            if (fsxType && fsxType === supportedFsxType && lifecycle && lifecycle === 'AVAILABLE') {
+            const fsxSubnets = val?.subnetIds || [];
+            const node1SubnetsList = selectedZone1?.data?.subnets;
+            const node2SubnetsList = selectedZone2?.data?.subnets;
+            const subnetVal = !node1SubnetsList || !node2SubnetsList || (node1SubnetsList.length >0 && node1SubnetsList.length >0 && 
+            fsxSubnets.every((val:string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val)));
+            if (fsxType && fsxType === supportedFsxType && 
+                lifecycle && lifecycle === 'AVAILABLE' && subnetVal) {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
@@ -71,7 +79,7 @@ const FSxNSystem = () => {
         });
 
         return options;
-    }, [fsxnData]);
+    }, [fsxnData, selectedZone1, selectedZone2]);
 
     useEffect(() => {
         dispatch(setExistingFsxnName(generateExistingFsx[0]));
