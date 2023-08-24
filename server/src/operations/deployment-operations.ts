@@ -125,7 +125,7 @@ async function createCloudFormationTemplateForUserDeployment(
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
         templateParams += `&param_${key}=${value}`;
     });
-    await getWindowsServerBaseAmi(credentialsId, region);
+
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
