@@ -1,5 +1,6 @@
 import { getCredentials } from '../../../src/operations/cloud-manager/credentials-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 
 const aws_credentialsType = 'aws_assume_role';
 

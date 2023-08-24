@@ -8,6 +8,7 @@ import {
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
