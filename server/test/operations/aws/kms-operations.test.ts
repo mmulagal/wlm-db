@@ -4,6 +4,7 @@ import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/kms-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 
 describe('KMS Operations', () => {
     it('list of Kms Keys', async () => {
