@@ -497,12 +497,84 @@ const SQL_TEMPLATES_ASSETS = [
         url: 'templates/sql-windows-fci-config.json'
     },
     {
-        name: 'SQLInstallersScripts',
-        url: 'sql-assets.zip'
+        name: 'DSC',
+        url: 'DSC.zip'
     },
     {
-        name: 'ExtractScript',
-        url: 'Unzip-Archive.ps1'
+        name: 'DSCSignature',
+        url: 'DSC.zip.sig'
+    },
+    {
+        name: 'PowerShell',
+        url: 'Installer/powershell.zip'
+    },
+    {
+        name: 'PowerShellSignature',
+        url: 'Installer/powershell.zip.sig'
+    },
+    {
+        name: 'Sqlspcu',
+        url: 'Installer/sqlspcu.zip'
+    },
+    {
+        name: 'SqlspcuSignature',
+        url: 'Installer/sqlspcu.zip.sig'
+    },
+    {
+        name: 'AmazonFailoverCluster',
+        url: 'modules/AmznFailoverCluster.zip'
+    },
+    {
+        name: 'AmazonFailoverClusterSignature',
+        url: 'modules/AmznFailoverCluster.zip.sig'
+    },
+    {
+        name: 'AmazonLaunchWizardForCFN',
+        url: 'modules/AWSLaunchWizardForCFN.zip'
+    },
+    {
+        name: 'AmazonLaunchWizardForCFNSignature',
+        url: 'modules/AWSLaunchWizardForCFN.zip.sig'
+    },
+    {
+        name: 'AmazonLaunchWizardForSSM',
+        url: 'modules/AWSLaunchWizardForSSM.zip'
+    },
+    {
+        name: 'AmazonLaunchWizardForSSMSignature',
+        url: 'modules/AWSLaunchWizardForSSM.zip.sig'
+    },
+    {
+        name: 'ScriptVerifySignature',
+        url: 'scripts/Verify-Signature.ps1'
+    },
+    {
+        name: 'ScriptUnzipArchive',
+        url: 'scripts/Unzip-Archive.ps1'
+    },
+    {
+        name: 'ScriptCommon',
+        url: 'scripts/common.zip'
+    },
+    {
+        name: 'ScriptCommonSignature',
+        url: 'scripts/common.zip.sig'
+    },
+    {
+        name: 'ScriptSQLFCI',
+        url: 'scripts/sqlfci.zip'
+    },
+    {
+        name: 'ScriptSQLFCISignature',
+        url: 'scripts/sqlfci.zip.sig'
+    },
+    {
+        name: 'ScriptSQLONTAP',
+        url: 'scripts/sqlontap.zip'
+    },
+    {
+        name: 'ScriptSQLONTAPSignature',
+        url: 'scripts/sqlontap.zip.sig'
     }
 ];
 

@@ -35,8 +35,16 @@ import {
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
+import Handlebars from 'handlebars';
+import * as fs from 'fs';
 
 const logger = getLogger();
+
+interface Template {
+    name: string;
+    url: string;
+    location: string;
+}
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -214,34 +222,76 @@ async function formatTemplateParameters(
         });
     });
 
-    const signedUrls: Array<Parameter> = await generateSignedUrls(region, credentialsId);
-    return { stackName: stackName, templateParameters: [...templateParams, ...signedUrls] };
+    return { stackName: stackName, templateParameters: templateParams };
 }
 
 async function generateSignedUrls(region: string, credentialsId: string) {
     let signedUrl: string = '';
-    const signedUrls: Array<Parameter> = [];
+    const signedUrls: Map<string, Template> = new Map();
     if (SQL_TEMPLATES_ASSETS?.length) {
         await Promise.all(
             SQL_TEMPLATES_ASSETS.map(async template => {
                 logger.info(
-                    `Creating signed url for ${template.url} secret in region ${region} with credentials ${credentialsId}.`
+                    `Creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}.`
                 );
                 try {
                     signedUrl = await getPreSignedUrl(credentialsId, region, template.url);
-                    signedUrls.push({
-                        ParameterKey: template.name,
-                        ParameterValue: signedUrl
-                    });
+                    signedUrls.set(template.name, { name: template.name, url: signedUrl, location: template.url });
                 } catch (error) {
                     logger.error(
-                        `Error creating signed url for ${template.url} secret in region ${region} with credentials ${credentialsId}.`
+                        `Error creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}. ${error}`
                     );
                 }
             })
         );
     }
     return signedUrls;
+}
+
+async function updateTemplateUrls(templateFileName: string, signedUrls: Map<string, Template>, templateType: string) {
+    const source = fs.readFileSync(templateFileName).toString();
+    const template = Handlebars.compile(source);
+    if (templateType == 'master') {
+        const contents = template({
+            ValidationTemplate: signedUrls.get('ValidationTemplate')?.url,
+            FSXNewTemplate: signedUrls.get('FSXNewTemplate')?.url,
+            FSXExistingTemplate: signedUrls.get('FSXExistingTemplate')?.url,
+            SQLTemplate: signedUrls.get('SQLTemplate')?.url
+        });
+        fs.writeFileSync('/Users/krithib/WLM/wlmdb/server/src/templates/mssql/wlm-master_latest.yaml', contents);
+    }
+    if (templateType == 'sqlstack') {
+        const contents = template({
+            DSC: signedUrls.get('DSC')?.url,
+            DSCSignature: signedUrls.get('DSCSignature')?.url,
+            PowerShell: signedUrls.get('PowerShell')?.url,
+            PowerShellSignature: signedUrls.get('PowerShellSignature')?.url,
+
+            Sqlspcu: signedUrls.get('Sqlspcu')?.url,
+            SqlspcuSignature: signedUrls.get('SqlspcuSignature')?.url,
+            AmazonFailoverCluster: signedUrls.get('AmazonFailoverCluster')?.url,
+            AmazonFailoverClusterSignature: signedUrls.get('AmazonFailoverClusterSignature')?.url,
+
+            AmazonLaunchWizardForCFN: signedUrls.get('AmazonLaunchWizardForCFN')?.url,
+            AmazonLaunchWizardForCFNSignature: signedUrls.get('AmazonLaunchWizardForCFNSignature')?.url,
+            AmazonLaunchWizardForSSM: signedUrls.get('AmazonLaunchWizardForSSM')?.url,
+            AmazonLaunchWizardForSSMSignature: signedUrls.get('AmazonLaunchWizardForSSMSignature')?.url,
+
+            ScriptVerifySignature: signedUrls.get('ScriptVerifySignature')?.url,
+            ScriptUnzipArchive: signedUrls.get('ScriptUnzipArchive')?.url,
+            ScriptCommon: signedUrls.get('ScriptCommon')?.url,
+            ScriptCommonSignature: signedUrls.get('ScriptCommonSignature')?.url,
+
+            ScriptSQLFCI: signedUrls.get('ScriptSQLFCI')?.url,
+            ScriptSQLFCISignature: signedUrls.get('ScriptSQLFCISignature')?.url,
+            ScriptSQLONTAP: signedUrls.get('ScriptSQLONTAP')?.url,
+            ScriptSQLONTAPSignature: signedUrls.get('ScriptSQLONTAPSignature')?.url
+        });
+        fs.writeFileSync(
+            '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal_latest.yaml',
+            contents
+        );
+    }
 }
 
 export {
@@ -252,5 +302,6 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    generateSignedUrls
+    generateSignedUrls,
+    updateTemplateUrls
 };

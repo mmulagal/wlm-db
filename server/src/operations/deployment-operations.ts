@@ -1,6 +1,6 @@
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getPreSignedUrl } from '../lib/aws/s3';
+import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -21,10 +21,15 @@ import {
     HttpErrorCodes,
     WLM_ASSETS
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, generateSignedUrls, isCfStackQuotaReached } from '../utils/utils';
+import {
+    formatTemplateParameters,
+    generateFsxParams,
+    generateSignedUrls,
+    isCfStackQuotaReached,
+    updateTemplateUrls
+} from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
-import { Parameter } from '@aws-sdk/client-cloudformation';
 
 const logger = getLogger();
 
@@ -85,6 +90,32 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
+    const signedUrls = await generateSignedUrls(region, credentialsId);
+
+    await updateTemplateUrls(
+        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/wlm-master.yaml',
+        signedUrls,
+        'master'
+    );
+    await updateTemplateUrls(
+        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal.yaml',
+        signedUrls,
+        'sqlstack'
+    );
+    await putObjectBucket(
+        credentialsId,
+        region,
+        'bucketkrithi',
+        'template/wlm-master.yaml',
+        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/wlm-master_latest.yaml'
+    );
+    await putObjectBucket(
+        credentialsId,
+        region,
+        'bucketkrithi',
+        'template/sql-windows-fci-config_nosignal.yaml',
+        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal_latest.yaml'
+    );
     const signedURL = await getPreSignedUrl(credentialsId, region);
 
     let templateParams: string = `stackName=${derivedParams.StackName}`;
@@ -113,11 +144,6 @@ async function createCloudFormationTemplateForUserDeployment(
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
         templateParams += `&param_${key}=${value}`;
-    });
-
-    const signedUrls: Array<Parameter> = await generateSignedUrls(region, credentialsId);
-    signedUrls.forEach(url => {
-        templateParams += `&param_${url.ParameterKey}=${url.ParameterValue}`;
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
