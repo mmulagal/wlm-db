@@ -1,6 +1,6 @@
 import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT } from './const';
 import { executeSsmDocument } from '../aws/ssm';
-import { getLogger } from 'log4js';
+import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 

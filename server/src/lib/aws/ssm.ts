@@ -37,7 +37,7 @@ async function pollCommandStatus(
     ssmClient: SSMClient,
     pollParams: GetCommandInvocationCommandInput
 ): Promise<GetCommandInvocationCommandOutput> {
-    logger.info('Polling SSM command execution', JSON.stringify(GetCommandInvocationCommandInput));
+    logger.info('Polling SSM command execution', JSON.stringify(pollParams));
 
     try {
         const response: GetCommandInvocationCommandOutput = await ssmClient.send(
