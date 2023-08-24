@@ -23,7 +23,7 @@ import {
     WLM_ASSETS,
     SAME_ROUTETABLE_MESSAGE,
     VALIDATION_AMI,
-    BUCKET_REGION
+    ASSETS_BUCKET_REGION
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -94,11 +94,9 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    const signedURL = await getPreSignedUrl(credentialsId, BUCKET_REGION);
+    const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
-    logger.info('$$$$$$$$$$$$$$$$$$$$$$$$$$$');
-    logger.info(validationAmiImage);
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
     Object.entries(derivedParams).forEach(([key, value]) => {
