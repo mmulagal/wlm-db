@@ -3,7 +3,7 @@ import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
 import { ReactComponent as EasyCreate } from '../../../assets/easy-create.svg';
 
 import styles from './SelectConfig.module.scss';
-import { Tag, Typography } from '@netapp/design-system';
+import { Tag } from '@netapp/design-system';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 const SelectConfig = () => {
     return (
