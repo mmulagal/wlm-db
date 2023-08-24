@@ -33,6 +33,7 @@ export const GENERAL = {
     KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
+    COST: 'Cost',
     INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
@@ -243,5 +244,19 @@ export const GENERAL = {
     TIMELINE: 'Timeline',
     REMOVE_FROM_WORKSPACE: 'Remove from workspace',
     TABLES_SUMMARY: 'Tables summary',
-    TABLES: 'Tables'
+    TABLES: 'Tables',
+    //Estimation cost
+    ESTIMATED_COST: 'Estimated cost',
+    ESTIMATED_SUBTEXT: 'Estimate of charges incurred to deploy the following resources.',
+    RESOURCES: 'Resources',
+    AMOUNT_IN_USD: 'Amount in USD (monthly)',
+    COMPUTE: 'Compute',
+    INSTANCE_TYPE_EC: 'Instance type',
+    QUANTITY: 'Quantity',
+    STORAGE: 'Storage',
+    TYPE: 'Type',
+    SIZE: 'Size',
+    ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
+    EC_NOTE:
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.'
 };
