@@ -168,10 +168,20 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
             } = subnet;
 
             const params = {
-                Filters: [{ Name: 'association.subnet-id', Values: [id as string] }]
+                Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
             };
-            const { RouteTables: [{ RouteTableId: routeTableId } = { RouteTableId: undefined }] = [] } =
-                await describeRouteTable(credentialsId, region, params);
+
+            const { RouteTables } = await describeRouteTable(credentialsId, region, params);
+
+            let routeTableId;
+            // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
+            RouteTables?.forEach(routeTable => {
+                routeTable.Associations?.forEach(association => {
+                    if (association.Main || association.SubnetId === id) {
+                        routeTableId = association.RouteTableId;
+                    }
+                });
+            });
 
             const resourceName = findResourceNameFromTags(tags);
 

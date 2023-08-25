@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -14,13 +14,19 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
+import { SQL_USERNAME } from '../../../../utils/consts';
 
 const DatabaseCredentials = () => {
-    const [userName, setUserName] = useState('');
+    const [userName, setUserName] = useState(SQL_USERNAME);
     const [password, setPassword] = useState('');
 
     const dispatch = useDispatch();
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
+
+    useEffect(() => {
+        dispatch(setDBCredentialsName(userName));
+    });
+    
     //Set the Header text here
     const setHeader = () => {
         if (!userName || !password) {
@@ -70,6 +76,7 @@ const DatabaseCredentials = () => {
             >
                 <AccordionCardContent>
                     <Typography>
+                        <Typography variant="Regular_14" className={styles.subtext}>{GENERAL.DATABASE_CREDENTIAL_TEXT}</Typography>
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
