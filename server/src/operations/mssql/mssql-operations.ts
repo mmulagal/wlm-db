@@ -28,9 +28,10 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     const resourceProperties = JSON.parse(resourceDetails?.metadata.propertyValue);
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
-    const instanceId = resourceProperties?.instanceId || '';
+    const activeInstanceId = resourceProperties?.activeInstanceId || '';
+    const standbyInstanceId = resourceProperties?.standbyInstanceId || '';
 
-    return serverResourceUtilisation(credentialsId, region, instanceId, metricType);
+    return serverResourceUtilisation(credentialsId, region, activeInstanceId, standbyInstanceId, metricType);
 }
 
 export { getResourceUtilisation };

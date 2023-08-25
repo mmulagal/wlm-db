@@ -62,16 +62,25 @@ function resourceUtilisationQuery(metricType: string) {
 async function serverResourceUtilisation(
     credentialsId: string,
     region: string,
-    instanceId: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
     metricType: string
 ) {
-    logger.info('Fetching  utilization', credentialsId, region, instanceId, metricType);
+    logger.info('Fetching utilization from primary', credentialsId, region, activeInstanceId, metricType);
 
     let commands: string[] = [];
+    let response = [];
 
     const metricQuery = resourceUtilisationQuery(metricType);
     commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
-    const response = callSsmExecution(credentialsId, instanceId, region, commands);
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching utilization from primary node failed', activeInstanceId, error);
+        logger.info('Fetching utilization from secondary', credentialsId, region, standbyInstanceId, metricType);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
 
     logger.debug('Fetching  utilization', response);
 
