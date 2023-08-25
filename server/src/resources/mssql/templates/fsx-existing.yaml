@@ -1,279 +1,255 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: "CloudFormation template for FSx for ONTAP deployment. **WARNING**: This template creates a FSx for ONTAP file system, which incurs cost."
+Description: 'CloudFormation template for FSx for ONTAP deployment. **WARNING**: This template creates a FSx for ONTAP file system, which incurs cost.'
 
 Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: SQL Server volumes' configuration for Amazon FSx for NetApp ONTAP file system
-        Parameters:
-          - FSxFileSystemId
-          - FSxSvmName
-          - FSxDataVolumeName
-          - FSxDataVolumeSize
-          - FSxLogVolumeName
-          - FSxLogVolumeSize
-          - FSxTempDbVolumeName
-          - FSxTempDbVolumeSize
-          - FSxClusterQuorumVolumeName
-          - FSxClusterQuorumVolumeSize
-    ParameterLabels:
-      FSxSvmName:
-        default: Storage virtual machine name
-      FSxDataVolumeName:
-        default: Data volume name
-      FSxDataVolumeSize:
-        default: Data volume size
-      FSxLogVolumeName:
-        default: Log volume name
-      FSxLogVolumeSize:
-        default: Log volume size
-      FSxTempDbVolumeName:
-        default: TempDB volume name
-      FSxTempDbVolumeSize:
-        default: TempDB volume size
-      FSxClusterQuorumVolumeName:
-        default: Cluster quorum volume name
-      FSxClusterQuorumVolumeSize:
-        default: Cluster quorum volume size
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            - Label:
+                  default: SQL Server volumes' configuration for Amazon FSx for NetApp ONTAP file system
+              Parameters:
+                  - FSxFileSystemId
+                  - FSxSvmName
+                  - FSxDataVolumeName
+                  - FSxDataVolumeSize
+                  - FSxLogVolumeName
+                  - FSxLogVolumeSize
+                  - FSxTempDbVolumeName
+                  - FSxTempDbVolumeSize
+                  - FSxClusterQuorumVolumeName
+                  - FSxClusterQuorumVolumeSize
+        ParameterLabels:
+            FSxSvmName:
+                default: Storage virtual machine name
+            FSxDataVolumeName:
+                default: Data volume name
+            FSxDataVolumeSize:
+                default: Data volume size
+            FSxLogVolumeName:
+                default: Log volume name
+            FSxLogVolumeSize:
+                default: Log volume size
+            FSxTempDbVolumeName:
+                default: TempDB volume name
+            FSxTempDbVolumeSize:
+                default: TempDB volume size
+            FSxClusterQuorumVolumeName:
+                default: Cluster quorum volume name
+            FSxClusterQuorumVolumeSize:
+                default: Cluster quorum volume size
 
 Parameters:
-  FSxFileSystemId:
-    Description: FSx Filesystem ID
-    Type: String
+    FSxFileSystemId:
+        Description: FSx Filesystem ID
+        Type: String
 
-  FSxSvmName:
-    Type: String
-    MinLength: 1
-    MaxLength: 47
+    FSxSvmName:
+        Type: String
+        MinLength: 1
+        MaxLength: 47
 
-  FSxDataVolumeName:
-    Description: The name of volume for SQL Server data.
-    Type: String
-    Default: wlmdb_fsx_data_volume
+    FSxDataVolumeName:
+        Description: The name of volume for SQL Server data.
+        Type: String
+        Default: wlmdb_fsx_data_volume
 
-  FSxDataVolumeSize:
-    Description: Size of the data volume, in megabytes (MiB).
-    Type: Number
-    Default: 200
+    FSxDataVolumeSize:
+        Description: Size of the data volume, in megabytes (MiB).
+        Type: Number
+        Default: 200
 
-  FSxLogVolumeName:
-    Description: The name of volume for SQL Server log.
-    Type: String
-    Default: wlmdb_fsx_log_volume
+    FSxLogVolumeName:
+        Description: The name of volume for SQL Server log.
+        Type: String
+        Default: wlmdb_fsx_log_volume
 
-  FSxLogVolumeSize:
-    Description: Size of the log volume, in megabytes (MiB).
-    Type: Number
-    Default: 100
+    FSxLogVolumeSize:
+        Description: Size of the log volume, in megabytes (MiB).
+        Type: Number
+        Default: 100
 
-  FSxTempDbVolumeName:
-    Description: The name of volume for SQL Server TempDB.
-    Type: String
-    Default: wlmdb_fsx_tempdb_volume
+    FSxTempDbVolumeName:
+        Description: The name of volume for SQL Server TempDB.
+        Type: String
+        Default: wlmdb_fsx_tempdb_volume
 
-  FSxTempDbVolumeSize:
-    Description: Size of the tempDB volume, in megabytes (MiB).
-    Type: Number
-    Default: 200
+    FSxTempDbVolumeSize:
+        Description: Size of the tempDB volume, in megabytes (MiB).
+        Type: Number
+        Default: 200
 
-  FSxClusterQuorumVolumeName:
-    Description: The name of volume for cluster quorum.
-    Type: String
-    Default: wlmdb_fsx_cluster_quorum_volume
+    FSxClusterQuorumVolumeName:
+        Description: The name of volume for cluster quorum.
+        Type: String
+        Default: wlmdb_fsx_cluster_quorum_volume
 
-  FSxClusterQuorumVolumeSize:
-    Description: Size of the cluster quorum volume, in megabytes (MiB).
-    Type: Number
-    Default: 2048
+    FSxClusterQuorumVolumeSize:
+        Description: Size of the cluster quorum volume, in megabytes (MiB).
+        Type: Number
+        Default: 2048
 
 Resources:
-  FSxSvmConfiguration:
-    Type: AWS::FSx::StorageVirtualMachine
-    Properties:
-      #      ActiveDirectoryConfiguration: !Ref FSxADConfiguration
-      Name: !Ref FSxSvmName
-      FileSystemId: !Ref FSxFileSystemId
-      RootVolumeSecurityStyle: NTFS
-      Tags:
-        - Key: Owner
-          Value: DBS Team
-        - Key: Name
-          Value: FSX SVM
-  FSxDataVolumeConfiguration:
-    Type: AWS::FSx::Volume
-    Properties:
-      Name: !Ref FSxDataVolumeName
-      VolumeType: ONTAP
-      OntapConfiguration:
-        SecurityStyle: NTFS
-        SizeInMegabytes: !Ref FSxDataVolumeSize
-        StorageVirtualMachineId: !Ref FSxSvmConfiguration
-        JunctionPath: !Join ["", [/, !Ref FSxDataVolumeName]]
-        OntapVolumeType: RW
-        SnapshotPolicy: default
-        StorageEfficiencyEnabled: No
-        TieringPolicy:
-          Name: AUTO
-          CoolingPeriod: 2
-      Tags:
-        - Key: Owner
-          Value: WLMDB Team
-        - Key: Name
-          Value: SQLServerDataVolume
+    FSxSvmConfiguration:
+        Type: AWS::FSx::StorageVirtualMachine
+        Properties:
+            #      ActiveDirectoryConfiguration: !Ref FSxADConfiguration
+            Name: !Ref FSxSvmName
+            FileSystemId: !Ref FSxFileSystemId
+            RootVolumeSecurityStyle: NTFS
 
-  FSxLogVolumeConfiguration:
-    Type: AWS::FSx::Volume
-    Properties:
-      Name: !Ref FSxLogVolumeName
-      VolumeType: ONTAP
-      OntapConfiguration:
-        SecurityStyle: NTFS
-        SizeInMegabytes: !Ref FSxLogVolumeSize
-        StorageVirtualMachineId: !Ref FSxSvmConfiguration
-        JunctionPath: !Join ["", [/, !Ref FSxLogVolumeName]]
-        OntapVolumeType: RW
-        SnapshotPolicy: default
-        StorageEfficiencyEnabled: No
-        TieringPolicy:
-          Name: AUTO
-          CoolingPeriod: 2
-      Tags:
-        - Key: Owner
-          Value: WLMDB Team
-        - Key: Name
-          Value: SQLServerLogVolume
+    FSxDataVolumeConfiguration:
+        Type: AWS::FSx::Volume
+        Properties:
+            Name: !Ref FSxDataVolumeName
+            VolumeType: ONTAP
+            OntapConfiguration:
+                SecurityStyle: NTFS
+                SizeInMegabytes: !Ref FSxDataVolumeSize
+                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
+                OntapVolumeType: RW
+                SnapshotPolicy: default
+                StorageEfficiencyEnabled: No
+                TieringPolicy:
+                    Name: AUTO
+                    CoolingPeriod: 2
 
-  FSxTempDbVolumeConfiguration:
-    Type: AWS::FSx::Volume
-    Properties:
-      Name: !Ref FSxTempDbVolumeName
-      VolumeType: ONTAP
-      OntapConfiguration:
-        SecurityStyle: NTFS
-        SizeInMegabytes: !Ref FSxTempDbVolumeSize
-        StorageVirtualMachineId: !Ref FSxSvmConfiguration
-        JunctionPath: !Join ["", [/, !Ref FSxTempDbVolumeName]]
-        OntapVolumeType: RW
-        SnapshotPolicy: default
-        StorageEfficiencyEnabled: No
-        TieringPolicy:
-          Name: AUTO
-          CoolingPeriod: 2
-      Tags:
-        - Key: Owner
-          Value: WLMDB Team
-        - Key: Name
-          Value: SQLServerTempDbVolume
+    FSxLogVolumeConfiguration:
+        Type: AWS::FSx::Volume
+        Properties:
+            Name: !Ref FSxLogVolumeName
+            VolumeType: ONTAP
+            OntapConfiguration:
+                SecurityStyle: NTFS
+                SizeInMegabytes: !Ref FSxLogVolumeSize
+                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
+                OntapVolumeType: RW
+                SnapshotPolicy: default
+                StorageEfficiencyEnabled: No
+                TieringPolicy:
+                    Name: AUTO
+                    CoolingPeriod: 2
 
-  FSxClusterQuorumVolumeConfiguration:
-    Type: AWS::FSx::Volume
-    Properties:
-      Name: !Ref FSxClusterQuorumVolumeName
-      VolumeType: ONTAP
-      OntapConfiguration:
-        SecurityStyle: NTFS
-        SizeInMegabytes: !Ref FSxClusterQuorumVolumeSize
-        StorageVirtualMachineId: !Ref FSxSvmConfiguration
-        JunctionPath: !Join ["", [/, !Ref FSxClusterQuorumVolumeName]]
-        OntapVolumeType: RW
-        SnapshotPolicy: default
-        StorageEfficiencyEnabled: No
-        TieringPolicy:
-          Name: AUTO
-          CoolingPeriod: 2
-      Tags:
-        - Key: Owner
-          Value: WLMDB Team
-        - Key: Name
-          Value: ClusterQuorumVolume
+    FSxTempDbVolumeConfiguration:
+        Type: AWS::FSx::Volume
+        Properties:
+            Name: !Ref FSxTempDbVolumeName
+            VolumeType: ONTAP
+            OntapConfiguration:
+                SecurityStyle: NTFS
+                SizeInMegabytes: !Ref FSxTempDbVolumeSize
+                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
+                OntapVolumeType: RW
+                SnapshotPolicy: default
+                StorageEfficiencyEnabled: No
+                TieringPolicy:
+                    Name: AUTO
+                    CoolingPeriod: 2
+
+    FSxClusterQuorumVolumeConfiguration:
+        Type: AWS::FSx::Volume
+        Properties:
+            Name: !Ref FSxClusterQuorumVolumeName
+            VolumeType: ONTAP
+            OntapConfiguration:
+                SecurityStyle: NTFS
+                SizeInMegabytes: !Ref FSxClusterQuorumVolumeSize
+                StorageVirtualMachineId: !Ref FSxSvmConfiguration
+                JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]
+                OntapVolumeType: RW
+                SnapshotPolicy: default
+                StorageEfficiencyEnabled: No
+                TieringPolicy:
+                    Name: AUTO
+                    CoolingPeriod: 2
 
 Outputs:
-  FSxFileSystemId:
-    Description: FSx file system ID
-    Value: !Ref FSxFileSystemId
-  FSxDataVolumeLogicalId:
-    Description: FSx data volume logical ID
-    Value: !Ref FSxDataVolumeConfiguration
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxDataVolumeLogicalId
-  FSxDataVolumeArn:
-    Description: ARN of FSx data volume
-    Value: !GetAtt FSxDataVolumeConfiguration.ResourceARN
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxDataVolumeArn
-  FSxDataVolumeId:
-    Description: System generated ID of volume
-    Value: !GetAtt FSxDataVolumeConfiguration.VolumeId
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxDataVolumeId
-  FSxDataVolumeUuid:
-    Description: System generated UUID of volume
-    Value: !GetAtt FSxDataVolumeConfiguration.UUID
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxDataVolumeUuid
+    FSxFileSystemId:
+        Description: FSx file system ID
+        Value: !Ref FSxFileSystemId
+    FSxDataVolumeLogicalId:
+        Description: FSx data volume logical ID
+        Value: !Ref FSxDataVolumeConfiguration
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxDataVolumeLogicalId
+    FSxDataVolumeArn:
+        Description: ARN of FSx data volume
+        Value: !GetAtt FSxDataVolumeConfiguration.ResourceARN
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxDataVolumeArn
+    FSxDataVolumeId:
+        Description: System generated ID of volume
+        Value: !GetAtt FSxDataVolumeConfiguration.VolumeId
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxDataVolumeId
+    FSxDataVolumeUuid:
+        Description: System generated UUID of volume
+        Value: !GetAtt FSxDataVolumeConfiguration.UUID
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxDataVolumeUuid
 
-  FSxLogVolumeLogicalId:
-    Description: FSx log volume logical ID
-    Value: !Ref FSxLogVolumeConfiguration
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxLogVolumeLogicalId
-  FSxLogVolumeArn:
-    Description: ARN of FSx data volume
-    Value: !GetAtt FSxLogVolumeConfiguration.ResourceARN
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxLogVolumeArn
-  FSxLogVolumeId:
-    Description: System generated ID of volume
-    Value: !GetAtt FSxLogVolumeConfiguration.VolumeId
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxLogVolumeId
-  FSxLogVolumeUuid:
-    Description: System generated UUID of volume
-    Value: !GetAtt FSxLogVolumeConfiguration.UUID
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxLogVolumeUuid
+    FSxLogVolumeLogicalId:
+        Description: FSx log volume logical ID
+        Value: !Ref FSxLogVolumeConfiguration
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxLogVolumeLogicalId
+    FSxLogVolumeArn:
+        Description: ARN of FSx data volume
+        Value: !GetAtt FSxLogVolumeConfiguration.ResourceARN
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxLogVolumeArn
+    FSxLogVolumeId:
+        Description: System generated ID of volume
+        Value: !GetAtt FSxLogVolumeConfiguration.VolumeId
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxLogVolumeId
+    FSxLogVolumeUuid:
+        Description: System generated UUID of volume
+        Value: !GetAtt FSxLogVolumeConfiguration.UUID
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxLogVolumeUuid
 
-  FSxTempDbVolumeLogicalId:
-    Description: FSx tempDb volume logical ID
-    Value: !Ref FSxTempDbVolumeConfiguration
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxTempDbVolumeLogicalId
-  FSxTempDbVolumeArn:
-    Description: ARN of FSx data volume
-    Value: !GetAtt FSxTempDbVolumeConfiguration.ResourceARN
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxTempDbVolumeArn
-  FSxTempDbVolumeId:
-    Description: System generated ID of volume
-    Value: !GetAtt FSxTempDbVolumeConfiguration.VolumeId
-    Export:
-      Name: !Sub ${AWS::StackName}--FSxTempDbVolumeId
-  FSxTempDbVolumeUuid:
-    Description: System generated UUID of volume
-    Value: !GetAtt FSxTempDbVolumeConfiguration.UUID
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxTempDbVolumeUuid
+    FSxTempDbVolumeLogicalId:
+        Description: FSx tempDb volume logical ID
+        Value: !Ref FSxTempDbVolumeConfiguration
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxTempDbVolumeLogicalId
+    FSxTempDbVolumeArn:
+        Description: ARN of FSx data volume
+        Value: !GetAtt FSxTempDbVolumeConfiguration.ResourceARN
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxTempDbVolumeArn
+    FSxTempDbVolumeId:
+        Description: System generated ID of volume
+        Value: !GetAtt FSxTempDbVolumeConfiguration.VolumeId
+        Export:
+            Name: !Sub ${AWS::StackName}--FSxTempDbVolumeId
+    FSxTempDbVolumeUuid:
+        Description: System generated UUID of volume
+        Value: !GetAtt FSxTempDbVolumeConfiguration.UUID
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxTempDbVolumeUuid
 
-  FSxClusterQuorumVolumeLogicalId:
-    Description: FSx cluster quorum volume logical ID
-    Value: !Ref FSxClusterQuorumVolumeConfiguration
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeLogicalId
-  FSxClusterQuorumVolumeArn:
-    Description: ARN of FSx data volume
-    Value: !GetAtt FSxClusterQuorumVolumeConfiguration.ResourceARN
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeArn
-  FSxClusterQuorumVolumeId:
-    Description: System generated ID of volume
-    Value: !GetAtt FSxClusterQuorumVolumeConfiguration.VolumeId
-    Export:
-      Name: !Sub ${AWS::StackName}--FSxClusterQuorumVolumeId
-  FSxClusterQuorumVolumeUuid:
-    Description: System generated UUID of volume
-    Value: !GetAtt FSxClusterQuorumVolumeConfiguration.UUID
-    Export:
-      Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeUuid
+    FSxClusterQuorumVolumeLogicalId:
+        Description: FSx cluster quorum volume logical ID
+        Value: !Ref FSxClusterQuorumVolumeConfiguration
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeLogicalId
+    FSxClusterQuorumVolumeArn:
+        Description: ARN of FSx data volume
+        Value: !GetAtt FSxClusterQuorumVolumeConfiguration.ResourceARN
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeArn
+    FSxClusterQuorumVolumeId:
+        Description: System generated ID of volume
+        Value: !GetAtt FSxClusterQuorumVolumeConfiguration.VolumeId
+        Export:
+            Name: !Sub ${AWS::StackName}--FSxClusterQuorumVolumeId
+    FSxClusterQuorumVolumeUuid:
+        Description: System generated UUID of volume
+        Value: !GetAtt FSxClusterQuorumVolumeConfiguration.UUID
+        Export:
+            Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeUuid
