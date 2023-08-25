@@ -1,4 +1,3 @@
-
 import { getDatabasesSummary, serverResourceUtilisation, getTablesList } from '../../lib/mssql/mssql';
 import { DB_ROWS_COUNT } from '../../lib/mssql/const';
 import getLogger from '../../utils/logger';
