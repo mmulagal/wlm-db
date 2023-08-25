@@ -1,4 +1,8 @@
-import { ServiceResourceRequest, registerServiceResource } from '../lib/cloud-manager/tenancy';
+import {
+    ServiceResourceRequest,
+    registerServiceResource,
+    getTenancyResourcesByType
+} from '../lib/cloud-manager/tenancy';
 import { ACCOUNT_ID, WORKSPACE_ID } from '../utils/consts';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import getLogger from '../utils/logger';
@@ -37,8 +41,36 @@ async function saveResourceInTenancy(
     };
 
     const response = await registerServiceResource(params);
-    logger.info('Status of saving resource in tenancy:', response);
+
+    logger.debug('Status of saving resource in tenancy:', response);
+
     return response;
 }
 
-export { saveResourceInTenancy };
+async function getTenancyResource(resourceType: string, resourceId: string) {
+    logger.info('Fetching tenancy resource ', resourceType, resourceId);
+
+    const resourceDetails = (await getTenancyResourcesByType(resourceType)).find(
+        resource => resource.resourceIdentifier === resourceId
+    );
+
+    const details: ServiceResourceRequest = {
+        name: resourceDetails?.name || '',
+        resourceIdentifier: resourceDetails?.resourceIdentifier || '',
+        resourceType: resourceDetails?.resourceType || '',
+        workspacePublicId: '',
+        accountPublicId: '',
+        resourceClass: resourceDetails?.resourceClass || '',
+        metadata: { propertyName: '', propertyValue: '' }
+    };
+
+    if (resourceDetails) {
+        details.metadata = JSON.parse(resourceDetails.metadata);
+    }
+
+    logger.debug('Tenancy resource details', resourceDetails);
+
+    return details;
+}
+
+export { saveResourceInTenancy, getTenancyResource };

@@ -487,6 +487,12 @@ const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
 
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -578,5 +584,6 @@ export {
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     DatabaseTypes,
-    WLMDB_RESOURCE_CLASS
+    WLMDB_RESOURCE_CLASS,
+    DATABASE_METRIC_TYPE
 };

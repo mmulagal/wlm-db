@@ -1,6 +1,14 @@
-import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT } from './const';
+import {
+    CPU_UTILISATION,
+    DISK_UTILISATION,
+    MEMORY_UTILISATION,
+    DATABASES,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    PSSCRIPT
+} from './const';
 import { executeSsmDocument } from '../aws/ssm';
 import getLogger from '../../utils/logger';
+import { DATABASE_METRIC_TYPE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -38,16 +46,36 @@ async function getDatabasesSummary(
     return response;
 }
 
+function resourceUtilisationQuery(metricType: string) {
+    switch (metricType) {
+        case DATABASE_METRIC_TYPE.CPU:
+            return CPU_UTILISATION;
+        case DATABASE_METRIC_TYPE.DISK:
+            return DISK_UTILISATION;
+        case DATABASE_METRIC_TYPE.MEMORY:
+            return MEMORY_UTILISATION;
+        default:
+            return '';
+    }
+}
+
 async function serverResourceUtilisation(
-    instanceId: string,
     credentialsId: string,
     region: string,
-    resourceType: string
+    instanceId: string,
+    metricType: string
 ) {
+    logger.info('Fetching  utilization', credentialsId, region, instanceId, metricType);
+
     let commands: string[] = [];
-    if (resourceType === 'cpu') {
-        commands = [`${PSSCRIPT} -Query "${CPU_UTILIZATION}"`];
-    }
-    return callSsmExecution(credentialsId, instanceId, region, commands);
+
+    const metricQuery = resourceUtilisationQuery(metricType);
+    commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
+    const response = callSsmExecution(credentialsId, instanceId, region, commands);
+
+    logger.debug('Fetching  utilization', response);
+
+    return response;
 }
+
 export { getDatabasesSummary, serverResourceUtilisation };
