@@ -172,7 +172,7 @@ Resources:
       AWS::CloudFormation::Authentication:
         S3AccessCreds:
           type: S3
-          roleName: AmazonEC2RoleKrithi
+          roleName: !Ref "Ec2RoleName"
           buckets:
             - !Ref "AssetsBucketName"
       AWS::CloudFormation::Init:
@@ -274,7 +274,7 @@ Resources:
       AWS::CloudFormation::Authentication:
         S3AccessCreds:
           type: S3
-          roleName: AmazonEC2RoleKrithi
+          roleName: !Ref "Ec2RoleName"
           buckets:
             - !Ref "AssetsBucketName"
       AWS::CloudFormation::Init:
