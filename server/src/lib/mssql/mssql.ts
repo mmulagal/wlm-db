@@ -4,7 +4,8 @@ import {
     MEMORY_UTILISATION,
     DATABASES,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
-    PSSCRIPT
+    PSSCRIPT,
+    DATABASES_COUNT
 } from './const';
 import getLogger from '../../utils/logger';
 import { DATABASE_METRIC_TYPE } from '../../utils/consts';
@@ -32,19 +33,53 @@ async function callSsmExecution(credentialsId: string, instanceId: string, regio
 async function getDatabasesSummary(
     credentialsId: string,
     region: string,
-    instanceId: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
     offset: number,
     rowscount: number
 ) {
-    logger.info('Fetching databases ', credentialsId, region, instanceId, offset, rowscount);
+    logger.info('Fetching databases ', credentialsId, region, activeInstanceId, offset, rowscount);
 
     const commands = [`${PSSCRIPT} -Query "${DATABASES(offset, rowscount)}"`];
-    const response = await callSsmExecution(credentialsId, instanceId, region, commands);
+    let response = [];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching database summary from primary node failed', activeInstanceId, error);
+        logger.info('Fetching database summary from secondary', credentialsId, region, standbyInstanceId);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
 
     logger.debug('Fetching databases response', response);
 
     return response;
 }
+
+async function getDatabasesCount(
+    credentialsId: string,
+    region: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
+) {
+    logger.info('Fetching databases total count ', credentialsId, region, activeInstanceId);
+
+    const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
+    let response = [];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching database count from primary node failed', activeInstanceId, error);
+        logger.info('Fetching database count from secondary', credentialsId, region, standbyInstanceId);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
+
+    logger.debug('Fetching databases count response', response);
+
+    return response;
+}
+
 
 function resourceUtilisationQuery(metricType: string) {
     switch (metricType) {
@@ -87,4 +122,4 @@ async function serverResourceUtilisation(
     return response;
 }
 
-export { getDatabasesSummary, serverResourceUtilisation };
+export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation };
