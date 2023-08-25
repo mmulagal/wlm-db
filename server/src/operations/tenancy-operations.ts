@@ -9,6 +9,16 @@ import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
+interface ServiceResourceResponse {
+    name: string;
+    resourceIdentifier: string;
+    resourceType: string;
+    workspacePublicId: string;
+    accountPublicId: string;
+    resourceClass: string;
+    metadata: { [key: string]: string };
+}
+
 async function saveResourceInTenancy(
     resourceName: string,
     resourceId: string,
@@ -54,14 +64,14 @@ async function getTenancyResource(resourceType: string, resourceId: string) {
         resource => resource.resourceIdentifier === resourceId
     );
 
-    const details: ServiceResourceRequest = {
+    const details: ServiceResourceResponse = {
         name: resourceDetails?.name || '',
         resourceIdentifier: resourceDetails?.resourceIdentifier || '',
         resourceType: resourceDetails?.resourceType || '',
         workspacePublicId: '',
         accountPublicId: '',
         resourceClass: resourceDetails?.resourceClass || '',
-        metadata: { propertyName: '', propertyValue: '' }
+        metadata: {}
     };
 
     if (resourceDetails) {

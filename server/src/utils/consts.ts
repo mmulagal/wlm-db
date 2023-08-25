@@ -493,6 +493,11 @@ enum DATABASE_METRIC_TYPE {
     MEMORY = 'memory'
 }
 
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -585,5 +590,6 @@ export {
     FSX_SSD_MAX_SIZE,
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
-    DATABASE_METRIC_TYPE
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS
 };

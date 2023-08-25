@@ -6,9 +6,9 @@ import {
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
     PSSCRIPT
 } from './const';
-import { executeSsmDocument } from '../aws/ssm';
 import getLogger from '../../utils/logger';
 import { DATABASE_METRIC_TYPE } from '../../utils/consts';
+import { executeSsmDocument } from '../../operations/aws/ssm-operations';
 
 const logger = getLogger();
 

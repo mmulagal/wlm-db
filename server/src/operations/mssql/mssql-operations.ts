@@ -25,7 +25,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     logger.info(`Get ${metricType} resource utilization for resource: `, resourceId);
 
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
-    const resourceProperties = JSON.parse(resourceDetails?.metadata.propertyValue);
+    const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
     const activeInstanceId = resourceProperties?.activeInstanceId || '';
