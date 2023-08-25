@@ -19,18 +19,6 @@ const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
 const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
 
-enum DeploymentStatus {
-    INITIALIZING = 'Initializing',
-    FAILED = 'Failed',
-    SUCCESS = 'Success'
-}
-
-enum MsSqlServerDeploymentStatus {
-    INITIALIZING = 'Initializing',
-    FAILED = 'Failed',
-    SUCCESS = 'Success'
-}
-
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
     MULTI_AZ_1
@@ -86,8 +74,10 @@ const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
-const MSSQL_RESOURCE_TYPE = 'MSSQL';
 const WLMDB_RESOURCE_CLASS = 'WLMDB';
+enum DatabaseTypes {
+    MS_SQL_SERVER = 'MSSQL'
+}
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
@@ -595,13 +585,11 @@ export {
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
-    DeploymentStatus,
-    MsSqlServerDeploymentStatus,
-    MSSQL_RESOURCE_TYPE,
-    WLMDB_RESOURCE_CLASS,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
     RESOURCESTYPE,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE
+    FSX_SSD_MAX_SIZE,
+    DatabaseTypes,
+    WLMDB_RESOURCE_CLASS
 };

@@ -6,8 +6,6 @@ import createError from 'http-errors';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import sha1 from 'js-sha1';
-import { ServiceResourceRequest, registerServiceResource } from '../lib/cloud-manager/tenancy';
 import { getVpcsList } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
@@ -21,15 +19,6 @@ import {
     WLM_ASSETS,
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    ACCOUNT_ID,
-    WORKSPACE_ID,
-    DeploymentStatus,
-    MsSqlServerDeploymentStatus,
-    CloudProviders,
-    MSSQL_RESOURCE_TYPE,
-    WLMDB_RESOURCE_CLASS,
-    FSX_RESOURCE_TYPE,
-    FileSystemDeploymentType,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE
 } from './consts';
@@ -230,60 +219,6 @@ async function formatTemplateParameters(
     return { stackName: stackName, templateParameters: templateParams };
 }
 
-// Save the FSx filesystem and SQL Server CF deployment details in tenancy.
-async function saveFSxAndSqlServerDetailsInTenancy(
-    stackName: string,
-    fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType
-) {
-    logger.info('Registering FSx and SQL Server details in tenancy:', {
-        stackName,
-        fsxConfiguration,
-        sqlConfiguration
-    });
-
-    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const resourceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
-
-    const FSxResourceTenancyDetails: ServiceResourceRequest = {
-        name: `FSx_${stackName}`,
-        resourceIdentifier: fsxConfiguration?.fsxFileSystemId || `FSx_${stackName}`,
-        resourceType: FSX_RESOURCE_TYPE,
-        workspacePublicId: resourceId,
-        accountPublicId: accountId,
-        resourceClass: WLMDB_RESOURCE_CLASS,
-        metadata: {
-            propertyName: 'fsx-details',
-            propertyValue: JSON.stringify({
-                location: CloudProviders.AWS, // FSx is available only on AWS
-                state: DeploymentStatus.SUCCESS,
-                deploymentType: FileSystemDeploymentType.MULTI_AZ_1 // FSx is always deployed MULTI_AZ_1 for now
-            })
-        }
-    };
-    let response = await registerServiceResource(FSxResourceTenancyDetails);
-    logger.info('Status of FSx resource registration in tenancy:', response);
-
-    const MsSqlServerTenancyDetails: ServiceResourceRequest = {
-        name: `MsSqlServer_${stackName}`,
-        resourceIdentifier: sha1(`${stackName}`),
-        resourceType: MSSQL_RESOURCE_TYPE,
-        workspacePublicId: resourceId,
-        accountPublicId: accountId,
-        resourceClass: WLMDB_RESOURCE_CLASS,
-        metadata: {
-            propertyName: 'sqlserver-details',
-            propertyValue: JSON.stringify({
-                location: CloudProviders.AWS,
-                state: MsSqlServerDeploymentStatus.INITIALIZING,
-                deploymentType: FileSystemDeploymentType.MULTI_AZ_1 // FSx is always deployed as MULTI_AZ_1 for now
-            })
-        }
-    };
-    response = await registerServiceResource(MsSqlServerTenancyDetails);
-    logger.info('Status of SQL Server resource registration in tenancy:', response);
-}
-
 function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     return (
         'routeTable1Id' in networkConfiguration &&
@@ -291,6 +226,7 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -299,6 +235,5 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    saveFSxAndSqlServerDetailsInTenancy,
     isSameRoutetables
 };

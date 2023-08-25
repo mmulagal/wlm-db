@@ -6,8 +6,8 @@
         width: 520px;
         height: 136px;
         padding: 24px 0 24px 24px;
-        background-color: #fff;
-        border: 1px solid var(--light-selectors-selector-on-bg, #0067c5);
+        background-color: var(--white);
+        border: 1px solid var(--light-selectors-selector-on-bg, var(--blue-70));
 
         .standard-create-content {
             display: flex;
@@ -26,6 +26,8 @@
                 font-size: 13px;
                 font-style: normal;
                 font-weight: 400;
+                color: var(--grey-50);
+                font-family: -apple-system, 'system-ui';
                 width: 328px;
                 text-align: left;
             }
@@ -41,7 +43,7 @@
         width: 520px;
         height: 136px;
         padding: 24px 0 24px 24px;
-        background-color: #fff;
+        background-color: var(--white);
 
         .easy-create-content {
             display: flex;
@@ -54,7 +56,7 @@
                 font-weight: 590;
                 line-height: 28px;
                 text-align: left;
-                color: #a7a7a7;
+                color: var(--grey-30);
             }
 
             .easy-create-content-text {
@@ -63,7 +65,7 @@
                 font-weight: 400;
                 width: 328px;
                 text-align: left;
-                color: #a7a7a7;
+                color: var(--grey-30);
             }
         }
 

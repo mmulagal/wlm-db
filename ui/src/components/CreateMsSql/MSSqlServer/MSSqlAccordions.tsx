@@ -29,6 +29,7 @@ import MssqlApis from './MssqlApis';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
 import ViewAPIRequest from './ViewAPIRequest/ViewAPIRequest';
+import EstimatedCost from '../Cost/EstimatedCost';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
@@ -131,6 +132,18 @@ const MSSqlAccordions = () => {
                 <SimpleNotificationService />
                 <CloudWatch />
                 {/* Ends here */}
+
+                {/* Cost */}
+                {/* <Typography
+                    style={{
+                        padding: '0 0 8px'
+                    }}
+                    variant="Semibold_16"
+                    className={styles.adjustMargin}
+                >
+                    {GENERAL.COST}
+                </Typography>
+                <EstimatedCost /> */}
             </AccordionController>
         </div>
     );
