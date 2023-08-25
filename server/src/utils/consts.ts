@@ -68,6 +68,10 @@ const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
+const WLMDB_RESOURCE_CLASS = 'WLMDB';
+enum DatabaseTypes {
+    MS_SQL_SERVER = 'MSSQL'
+}
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
@@ -483,6 +487,17 @@ const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
 
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -572,5 +587,9 @@ export {
     SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE
+    FSX_SSD_MAX_SIZE,
+    DatabaseTypes,
+    WLMDB_RESOURCE_CLASS,
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS
 };

@@ -66,7 +66,7 @@ const RegionVpc = () => {
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
-            const vpcValue = (val.name || '-') + ' - ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
+            const vpcValue = (val.name || '-') + ' | ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
@@ -125,7 +125,7 @@ const RegionVpc = () => {
             <AccordionCard
                 isDisabled={!credentialData || (credentialData && !credentialData.length)}
                 isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
-                isLoading={regionsLoading || vpcLoading}
+                isLoading={regionsLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
                 title={<div className={CommonStyles.title}>{GENERAL.REGION_VPC}</div>}
@@ -147,7 +147,8 @@ const RegionVpc = () => {
                             {GENERAL.REGION_VPC_TEXT}
                         </Typography>
 
-                        <div className={styles.handleRadio}>
+                        {/* To do- Commenting it until Create new vpc flow implemented */}
+                        {/* <div className={styles.handleRadio}>
                             <RadioButton
                                 isChecked={selectVPC === GENERAL.SELECT_EXISTING_VPC}
                                 onChange={() => {
@@ -165,7 +166,7 @@ const RegionVpc = () => {
                                 className=""
                                 isDisabled
                             />
-                        </div>
+                        </div> */}
                         {selectVPC === GENERAL.SELECT_EXISTING_VPC && (
                             <div className={styles.handleSelect}>
                                 <SelectField

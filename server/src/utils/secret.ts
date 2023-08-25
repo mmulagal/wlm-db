@@ -36,7 +36,7 @@ export default async function initiateSecrets() {
         Object.keys(SECRETS_MANAGER_KEYS).map(async (secretName: string) => {
             if (!SECRETS[secretName]) {
                 const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName]);
-                SECRETS[secretName] = secret?.value;
+                SECRETS[secretName] = secret;
             }
         })
     );

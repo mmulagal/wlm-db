@@ -91,6 +91,11 @@ const AvailabilityZone = () => {
         return options;
     }, [selectedVPCData, selectedZone1]);
 
+    useEffect(() => {
+        dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateSubnet1Options]);
+
     //Function to generate the options for Select Field subnet 2
     const generateSubnet2Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -108,6 +113,11 @@ const AvailabilityZone = () => {
 
         return options;
     }, [selectedVPCData, selectedZone2]);
+
+    useEffect(() => {
+        dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateSubnet2Options]);
 
     //Set the Header text here
     const setHeader = () => {
