@@ -4,13 +4,14 @@ import {
     getVpcsList,
     getFSxAvailableRegionsList,
     getInstanceTypes,
-    getKeyPairsList
+    getKeyPairsList,
+    getWindowsServerBaseAmi
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../../server/src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -205,6 +206,11 @@ describe('EC2 Operations', () => {
 
     it('List of key-pairs for a given region', async () => {
         const response = await getKeyPairsList(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION);
+        expect(response).toBeDefined();
+    });
+
+    it('Get Windows Server ImageId in a region', async () => {
+        const response = await getWindowsServerBaseAmi(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         expect(response).toBeDefined();
     });
 });
