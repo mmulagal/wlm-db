@@ -4,6 +4,7 @@ import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/secrets-manager-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 import secretManagerResponse from '../../simulator/responses/aws/secrets-manager-create.json';
 import secretManagerPolicyResponse from '../../simulator/responses/aws/secrets-manager-create-policy.json';
 

@@ -87,8 +87,10 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
             }
             if (val?.name === DEFAULT_MASTER_KEY) {
                 val = { ...val, default: true };
+                newData.unshift(val);
+            } else{
+                newData.push(val);
             }
-            newData.push(val);
         });
     return newData;
 };
@@ -198,7 +200,7 @@ export const formatSizeOrString = (value: number) => {
 };
 
 export const regionsSort = (regions: Array<Regions>) => {
-    if(!regions || regions.length < 2){
+    if (!regions || regions.length < 2) {
         return regions;
     }
 
@@ -206,15 +208,36 @@ export const regionsSort = (regions: Array<Regions>) => {
         const indexA = REGIONS_CODE_LIST.indexOf(a.regionCode || '');
         const indexB = REGIONS_CODE_LIST.indexOf(b.regionCode || '');
         if (indexA !== -1 && indexB !== -1) {
-          return indexA - indexB;
-        };
+            return indexA - indexB;
+        }
         if (indexA !== -1) {
-          return -1;
+            return -1;
         }
         if (indexB !== -1) {
-          return 1;
+            return 1;
         }
         return 0;
     });
     return newRegionList;
+};
+
+export const isValidUserName = (userName: string) => {
+    if (
+        userName.length &&
+        (userName.length < 5 ||
+            !/^[a-zA-Z0-9]+$/.test(userName) ||
+            userName === 'admin' ||
+            userName === 'administrator')
+    ) {
+        return GENERAL.USERNAME_TOOLTIP;
+    }
+};
+
+
+export const sortListOfDict = (dataList: any, field: string) => {
+    if(dataList && dataList.length < 2){
+        return dataList;
+    };
+    dataList.sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    return dataList;
 };

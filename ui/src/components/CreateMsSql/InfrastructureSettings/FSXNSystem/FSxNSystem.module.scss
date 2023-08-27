@@ -24,9 +24,13 @@
     }
 
     .infoMsg {
-        width: 416px;
-        margin-left: -32px;
-        margin-top: -10px;
+        width: 452px;
+        margin-left: -12px;
+        // margin-top: -10px;
+        .bulletContainer {
+            display: flex;
+            gap: 12px;
+        }
 
         ul {
             li:first-child {
@@ -36,5 +40,9 @@
                 margin-top: 8px;
             }
         }
+    }
+
+    [class*='tooltip-base'] {
+        max-width: 452px !important;
     }
 }

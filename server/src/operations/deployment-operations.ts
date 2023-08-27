@@ -21,7 +21,8 @@ import {
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
     WLM_ASSETS,
-    SAME_ROUTETABLE_MESSAGE
+    SAME_ROUTETABLE_MESSAGE,
+    EC2_ROLE_NAME
 } from '../utils/consts';
 import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -66,7 +67,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ? await generateFsxParams(fsxConfiguration.databaseSize, true)
         : await generateFsxParams(fsxConfiguration.databaseSize, false);
 
-    const { roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -93,7 +94,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const signedURL = await getPreSignedUrl(credentialsId, region);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}`;
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
