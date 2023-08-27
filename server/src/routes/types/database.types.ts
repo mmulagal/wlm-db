@@ -17,6 +17,17 @@ const DatabasesResponseBody = Type.Object({
     )
 });
 
+const ServerSummaryResponse = Type.Object({
+    serverId: Type.String(),
+    serverVersion: Type.String(),
+    serverEdition: Type.String(),
+    serverEngine: Type.String(),
+    serverStatus: Type.String(),
+    activeConnections: Type.Integer(),
+    databasesCount: Type.Integer(),
+    databaseTotalSize: Type.String()
+});
+
 const UtilisationResponseBody = Type.Object({
     percentUsed: Type.String(),
     used: Type.String(),
@@ -24,4 +35,4 @@ const UtilisationResponseBody = Type.Object({
     remaining: Type.String()
 });
 
-export { databaseParams, DatabasesResponseBody, UtilisationResponseBody };
+export { databaseParams, DatabasesResponseBody, UtilisationResponseBody, ServerSummaryResponse };

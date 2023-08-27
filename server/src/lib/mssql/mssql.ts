@@ -5,7 +5,12 @@ import {
     DATABASES,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
     PSSCRIPT,
-    DATABASES_COUNT
+    DATABASES_COUNT,
+    SERVER_DETAILS,
+    DATABASE_SIZE,
+    NUMBER_OF_CONNECTIONS,
+    NUMBER_OF_DATABASES,
+    HEALTHY
 } from './const';
 import getLogger from '../../utils/logger';
 import { DATABASE_METRIC_TYPE } from '../../utils/consts';
@@ -14,6 +19,7 @@ import { executeSsmDocument } from '../../operations/aws/ssm-operations';
 const logger = getLogger();
 
 async function callSsmExecution(credentialsId: string, instanceId: string, region: string, commands: Array<string>) {
+    logger.info('Call SSSM execution:', { credentialsId, instanceId, region, commands });
     const params = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
@@ -60,7 +66,7 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeInstanceId: string,
-    standbyInstanceId: string,
+    standbyInstanceId: string
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeInstanceId);
 
@@ -79,7 +85,6 @@ async function getDatabasesCount(
 
     return response;
 }
-
 
 function resourceUtilisationQuery(metricType: string) {
     switch (metricType) {
@@ -122,4 +127,40 @@ async function serverResourceUtilisation(
     return response;
 }
 
-export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation };
+async function getServerSummary(
+    credentialsId: string,
+    region: string,
+    instanceId: string
+): Promise<{
+    serverVersion: string;
+    serverEdition: string;
+    serverEngine: string;
+    serverStatus: string;
+    activeConnections: number;
+    databasesCount: number;
+    databaseTotalSize: string;
+}> {
+    logger.info('Get details of SQL Server database:', { credentialsId, region, instanceId });
+
+    const [serverDetails, numberOfConnections, databaseSize, numberOfDatabases] = await Promise.all([
+        callSsmExecution(credentialsId, instanceId, region, [`${PSSCRIPT} -Query "${SERVER_DETAILS}"`]),
+        callSsmExecution(credentialsId, instanceId, region, [`${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`]),
+        callSsmExecution(credentialsId, instanceId, region, [`${PSSCRIPT} -Query "${DATABASE_SIZE}"`]),
+        callSsmExecution(credentialsId, instanceId, region, [`${PSSCRIPT} -Query "${NUMBER_OF_DATABASES}"`])
+    ]);
+
+    const serverInfo = serverDetails.serverDetails.split('\n');
+    const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
+
+    return {
+        serverVersion: version ? version[0] : ' ',
+        serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
+        serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
+        serverStatus: HEALTHY,
+        activeConnections: numberOfConnections.numberOfConnections,
+        databasesCount: numberOfDatabases.numberOfDatabases,
+        databaseTotalSize: databaseSize.databaseSize
+    };
+}
+
+export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation, getServerSummary };

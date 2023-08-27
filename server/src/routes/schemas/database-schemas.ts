@@ -1,5 +1,10 @@
 import { RouteTags } from '../../utils/consts';
-import { databaseParams, DatabasesResponseBody, UtilisationResponseBody } from '../types/database.types';
+import {
+    databaseParams,
+    DatabasesResponseBody,
+    UtilisationResponseBody,
+    ServerSummaryResponse
+} from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
 const baseRequest = {
@@ -16,6 +21,14 @@ const GetDatabasesSchema = {
     }
 };
 
+const GetServerSummarySchema = {
+    ...baseRequest,
+    description: 'Summary of database',
+    response: {
+        200: ServerSummaryResponse
+    }
+};
+
 const DatabaseUtilisationResponseSchema = {
     ...baseRequest,
     description: 'Database Resource(CPU, Storage, Memory) Utilisation',
@@ -23,4 +36,5 @@ const DatabaseUtilisationResponseSchema = {
         200: UtilisationResponseBody
     }
 };
-export { GetDatabasesSchema, DatabaseUtilisationResponseSchema };
+
+export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, GetServerSummarySchema };
