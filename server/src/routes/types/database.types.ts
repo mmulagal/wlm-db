@@ -5,7 +5,7 @@ const databaseParams = Type.Object({
     resourceId: Type.String()
 });
 
-const mssqlTablesparams = Type.Object({
+const tablesparams = Type.Object({
     accountId: Type.String(),
     resourceId: Type.String(),
     databaseName: Type.String()
@@ -42,4 +42,4 @@ const TablesResponseBody = Type.Object({
     )
 });
 
-export { databaseParams, DatabasesResponseBody, UtilisationResponseBody, mssqlTablesparams, TablesResponseBody };
+export { databaseParams, DatabasesResponseBody, UtilisationResponseBody, tablesparams, TablesResponseBody };

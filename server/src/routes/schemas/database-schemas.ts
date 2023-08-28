@@ -1,7 +1,7 @@
 import { RouteTags } from '../../utils/consts';
 import {
     databaseParams,
-    mssqlTablesparams,
+    tablesparams,
     DatabasesResponseBody,
     TablesResponseBody,
     UtilisationResponseBody
@@ -32,7 +32,7 @@ const DatabaseUtilisationResponseSchema = {
 
 const GetTablesSchema = {
     ...baseRequest,
-    params: mssqlTablesparams,
+    params: tablesparams,
     description: 'List of tables in a database',
     response: {
         200: TablesResponseBody
