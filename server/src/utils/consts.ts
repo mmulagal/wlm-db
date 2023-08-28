@@ -402,8 +402,10 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = 'wlmbucket';
+const ASSETS_BUCKET_REGION = 'ap-southeast-1';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
+const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
@@ -588,6 +590,8 @@ export {
     AWS_FSX,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI,
+    ASSETS_BUCKET_REGION,
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
     DATABASE_METRIC_TYPE,

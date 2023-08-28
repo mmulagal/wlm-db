@@ -120,6 +120,29 @@
             "SriovNetSupport": "simple",
             "VirtualizationType": "hvm",
             "DeprecationTime": "2025-07-12T08:47:01.000Z"
+        },
+        {
+            "Architecture": "x86_64",
+            "CreationDate": "2023-07-12T08:47:01.000Z",
+            "ImageId": "ami-0fc838ee72f5b11fb",
+            "ImageLocation": "amazon/Windows_Server-2016-English-Full_2017_Standard-2023.07.12",
+            "ImageType": "machine",
+            "Public": true,
+            "OwnerId": "801119661308",
+            "Platform": "windows",
+            "PlatformDetails": "Windows with  Server Standard",
+            "UsageOperation": "RunInstances:0002",
+            "State": "available",
+            "Description": "Microsoft Windows Server 2016 Locale English with Standard 2017 AMI provided by Amazon",
+            "EnaSupport": true,
+            "Hypervisor": "xen",
+            "ImageOwnerAlias": "amazon",
+            "Name": "Windows_Server-2016-English-Full-Base_2017_Standard-2023.07.12",
+            "RootDeviceName": "/dev/sda1",
+            "RootDeviceType": "ebs",
+            "SriovNetSupport": "simple",
+            "VirtualizationType": "hvm",
+            "DeprecationTime": "2025-07-12T08:47:01.000Z"
         }
     ]
 }

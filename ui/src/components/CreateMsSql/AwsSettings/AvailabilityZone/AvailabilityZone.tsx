@@ -51,7 +51,13 @@ const AvailabilityZone = () => {
         zones
             ?.filter(key => key !== selectedZone2?.value)
             .map((val, idx: number) => {
-                const option = generateOptionType(val, val, '', false, '');
+                const subnetsList:Array<string> = [];
+                azData[val].map((per:any) => per?.id ? subnetsList.push(per.id) : '');
+                const data = {
+                    availabilityZone: val,
+                    subnets: subnetsList
+                }
+                const option = generateOptionType(val, val, '', false, '', data);
                 options.push(option);
             });
         return options;
@@ -65,7 +71,13 @@ const AvailabilityZone = () => {
         zones
             ?.filter(key => key !== selectedZone1?.value)
             .map((val, idx: number) => {
-                const option = generateOptionType(val, val, '', false, '');
+                const subnetsList:Array<string> = [];
+                azData[val].map((per:any) => per?.id ? subnetsList.push(per.id) : '');
+                const data = {
+                    availabilityZone: val,
+                    subnets: subnetsList
+                }
+                const option = generateOptionType(val, val, '', false, '', data);
                 options.push(option);
             });
         return options;
@@ -87,7 +99,6 @@ const AvailabilityZone = () => {
             const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
         });
-
         return options;
     }, [selectedVPCData, selectedZone1]);
 
@@ -110,7 +121,6 @@ const AvailabilityZone = () => {
             const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
         });
-
         return options;
     }, [selectedVPCData, selectedZone2]);
 
