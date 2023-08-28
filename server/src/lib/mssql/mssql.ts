@@ -26,8 +26,12 @@ async function callSsmExecution(credentialsId: string, instanceId: string, regio
     if (response.StandardErrorContent) {
         throw new Error(response.StandardErrorContent);
     }
-
-    return JSON.parse(response.StandardOutputContent!);
+    try {
+        return JSON.parse(response.StandardOutputContent!);
+    } catch (error) {
+        logger.error('Error parsing response for command:', commands, error);
+        return {};
+    }
 }
 
 async function getDatabasesSummary(
@@ -60,7 +64,7 @@ async function getDatabasesCount(
     credentialsId: string,
     region: string,
     activeInstanceId: string,
-    standbyInstanceId: string,
+    standbyInstanceId: string
 ) {
     logger.info('Fetching databases total count ', credentialsId, region, activeInstanceId);
 
@@ -79,7 +83,6 @@ async function getDatabasesCount(
 
     return response;
 }
-
 
 function resourceUtilisationQuery(metricType: string) {
     switch (metricType) {

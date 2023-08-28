@@ -5,10 +5,9 @@ const DB_ROWS_COUNT = 75;
 
 const DATABASES = (offset: number, rowscount: number) =>
     `SELECT databaseId = d.database_id, databaseName = d.name, creationDate = d.create_date, databaseStatus = d.state_desc, databaseSize = t.databaseSize FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name offset ${offset} rows fetch next ${rowscount} rows only`;
-    
-const DATABASES_COUNT = () =>
-    `SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id`;
 
+const DATABASES_COUNT = () =>
+    'SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id';
 
 const CPU_UTILISATION = `DECLARE @ts BIGINT;
                                 DECLARE @lastNmin TINYINT;
@@ -40,7 +39,7 @@ const DISK_UTILISATION = `WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.p
                                 FROM roundtwo mf
                                 CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs`;
 
-export const MEMORY_UTILISATION = `SELECT
+const MEMORY_UTILISATION = `SELECT
                                 (processmem.physical_memory_in_use_kb * 1024) AS used,
                                 (sysmem.total_physical_memory_kb * 1024) AS total,
                                 ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,
@@ -56,5 +55,6 @@ export {
     PSSCRIPT,
     CPU_UTILISATION,
     DISK_UTILISATION,
-    DB_SIZE
+    DB_SIZE,
+    MEMORY_UTILISATION
 };

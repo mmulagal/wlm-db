@@ -19,15 +19,11 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         }
     );
-    server.get(
-        `${MSSQL_DATA_API_PATH}/databases`, 
-        { schema: GetDatabasesSchema }, 
-        async (request, reply) => {
-            const {
-                params: { resourceId }
-            } = request;
-            const response = await getDataBasesSummary(resourceId);
-            return reply.send(response);
-        }
-    );
+    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
+        const {
+            params: { resourceId }
+        } = request;
+        const response = await getDataBasesSummary(resourceId);
+        return reply.send(response);
+    });
 }
