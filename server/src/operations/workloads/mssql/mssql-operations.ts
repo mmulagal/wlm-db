@@ -26,7 +26,7 @@ async function getResourceDetails(resourceId: string) {
             ? JSON.parse(resourceDetails?.metadata?.properties)
             : {};
     } catch (error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error occured while getting service token, ${error}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
     }
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
