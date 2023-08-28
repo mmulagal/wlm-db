@@ -19,6 +19,19 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         }
     );
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/memory`,
+        { schema: DatabaseUtilisationResponseSchema },
+        async (request, reply) => {
+            const {
+                params: { resourceId }
+            } = request;
+            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
+            return reply.send(response);
+        }
+    );
+
     server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
         const {
             params: { resourceId }
