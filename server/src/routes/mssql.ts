@@ -1,8 +1,8 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    GetDatabasesSchema,
     DatabaseUtilisationResponseSchema,
+    GetDatabasesSchema,
     DeleteMsSqlServerSchema
 } from './schemas/database-schemas';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../operations/mssql/mssql-operations';
 
 const MSSQL_DELETE_API_PATH: string = '/v1/mssql/:resourceId';
+import { DATABASE_METRIC_TYPE } from '../utils/consts';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
@@ -27,14 +28,6 @@ function msSqlServerRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
-        const {
-            params: { resourceId }
-        } = request;
-        const response = await getDataBasesSummary(resourceId);
-        return reply.send(response);
-    });
-
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseUtilisationResponseSchema },
@@ -42,10 +35,17 @@ function msSqlServerRoutes(fastify: FastifyInstance) {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, 'cpu');
+            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
             return reply.send(response);
         }
     );
+    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
+        const {
+            params: { resourceId }
+        } = request;
+        const response = await getDataBasesSummary(resourceId);
+        return reply.send(response);
+    });
 }
 
 export { msSqlServerRoutes };

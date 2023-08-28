@@ -1,39 +1,57 @@
-import { getDBSummary, serverResourceUtilisation } from '../../lib/mssql/mssql';
-import { DB_ROWS_COUNT } from '../../lib/mssql/const';
+import { getDatabasesCount, getDatabasesSummary, serverResourceUtilisation } from '../../lib/mssql/mssql';
 import getLogger from '../../utils/logger';
+import { getTenancyResource } from '../tenancy-operations';
+import { DatabaseTypes } from '../../utils/consts';
+import { DB_ROWS_COUNT } from '../../lib/mssql/const';
 import { removeResource } from '../../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
 
-function getResourceDetailsFromTenancy(resourceId: string) {
-    logger.info('Getting details of resource :', resourceId);
-    const instanceId = '';
-    const credentialsId = '';
-    const region = '';
-    return [instanceId, credentialsId, region];
-    //since resources are not yet registered in tenancy hardcoding values
-    //method will be replaced once tenancy methods are implemented
-}
-
 async function getDataBasesSummary(resourceId: string) {
     logger.info('Get databases summary for resource:', resourceId);
-    const [instanceId, credentialsId, region] = getResourceDetailsFromTenancy(resourceId);
-    const dbCount = 251; //since resources are not yet registered in tenancy harcoding values
+
+    const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
+    const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
+
+    const credentialsId = resourceProperties?.credentialsId || '';
+    const region = resourceProperties?.region || '';
+    const activeInstanceId = resourceProperties?.activeInstanceId || '';
+    const standbyInstanceId = resourceProperties?.standbyInstanceId || '';
+
+    let dbCount = await getDatabasesCount(credentialsId, region, activeInstanceId, standbyInstanceId);
+    dbCount = dbCount?.totalCount || 0;
+
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
+
     const finaldb = [];
     let offset = 0;
     for (let i = 0; i < rowscount; i++) {
-        const resp = await getDBSummary(credentialsId, region, instanceId, offset, DB_ROWS_COUNT);
+        const resp = await getDatabasesSummary(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT
+        );
         finaldb.push(...resp);
         offset += DB_ROWS_COUNT;
     }
+
     return { databases: finaldb };
 }
 
-async function getResourceUtilisation(resourceId: string, resourceType: string) {
-    logger.info(`Get ${resourceType} resource utilization for resource: `, resourceId);
-    const [instanceId, credentialsId, region] = getResourceDetailsFromTenancy(resourceId);
-    return serverResourceUtilisation(instanceId, credentialsId, region, resourceType);
+async function getResourceUtilisation(resourceId: string, metricType: string) {
+    logger.info(`Get ${metricType} resource utilization for resource: `, resourceId);
+
+    const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
+    const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
+    const credentialsId = resourceProperties?.credentialsId || '';
+    const region = resourceProperties?.region || '';
+    const activeInstanceId = resourceProperties?.activeInstanceId || '';
+    const standbyInstanceId = resourceProperties?.standbyInstanceId || '';
+
+    return serverResourceUtilisation(credentialsId, region, activeInstanceId, standbyInstanceId, metricType);
 }
 
 async function removeMsSqlServerResourceFromTenancy(resourceId: string) {
@@ -51,4 +69,4 @@ async function removeMsSqlServerResourceFromTenancy(resourceId: string) {
     return 404; // Either resource not found or some other error
 }
 
-export { getDataBasesSummary, getResourceUtilisation, removeMsSqlServerResourceFromTenancy };
+export { getResourceUtilisation, removeMsSqlServerResourceFromTenancy, getDataBasesSummary };

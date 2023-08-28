@@ -66,6 +66,9 @@ export interface InstanceType {
 export interface FSxN {
     fileSystemId?: string;
     name?: string;
+    lifecycle?: string;
+    securityGroups?: Array<string>;
+    subnetIds?: Array<string>;
     ontapConfiguration?: {
         deploymentType?: string;
     }
@@ -166,7 +169,7 @@ export interface MssqlRequestBody {
         fsxUsername: string;
         fsxPassword: string;
         databaseSize: string;
-        ontapSgGroupId: string;
+        ontapSgGroupId: Array<string>;
         fsxVolThroughput: string;
         fsxIOPS: string;
         encryptionKey: string;

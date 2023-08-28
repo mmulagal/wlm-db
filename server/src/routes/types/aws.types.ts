@@ -191,6 +191,7 @@ const FSxFileSystemSchema = Type.Object({
     networkInterfaceIds: Type.Optional(Type.Array(Type.String())),
     subnetIds: Type.Optional(Type.Array(Type.String())),
     vpcId: Type.Optional(Type.String()),
+    securityGroups: Type.Optional(Type.Array(Type.String())),
     ontapConfiguration: Type.Optional(
         Type.Object({
             deploymentType: Type.Optional(Type.String()),

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -6,7 +6,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
@@ -35,9 +35,16 @@ const ActiveDirectory = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
 
     const isADNotFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
+
+    //Refs
+    const domainNameRef = useRef(null);
+    const DNSAddressRef = useRef(null);
+    const userNameRef = useRef(null);
+    const passwordRefAD = useRef(null);
 
     const [versions, setVersions] = useState<
         {
@@ -51,7 +58,7 @@ const ActiveDirectory = () => {
     const addNewOption = async (option: any) => {
         setIsCreating(true);
         const newVer = [...versions, { domainName: option, dnsIpAddress: '', securityGroupId: '' }];
-        setVersions(newVer);
+        setVersions(sortListOfDict(newVer, 'domainName'));
         await delay();
         dispatch(setSelectedADDomainAddress(''));
         setIsCreating(false);
@@ -70,7 +77,7 @@ const ActiveDirectory = () => {
             };
             verList.push(newItem);
         });
-        setVersions(verList);
+        setVersions(sortListOfDict(verList, 'domainName'));
     }, [adsData]);
 
     //Function to generate the options for Select Field
@@ -96,6 +103,38 @@ const ActiveDirectory = () => {
         setPassword('');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateActiveDirectories]);
+
+    //Refs to highlight required field
+    useEffect(() => {
+        if (isCreateHit) {
+            if (!isADNotFilled && !selectedADDomainName) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    domainNameRef?.current?.focus();
+                }, 50);
+            }
+
+            if (!isADNotFilled && !selectedADDomainAddress) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    DNSAddressRef?.current?.focus();
+                }, 40);
+            }
+
+            if (!isADNotFilled && !userName) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    userName?.current?.focus();
+                }, 30);
+            }
+            if (!isADNotFilled && !password) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    passwordRefAD?.current?.focus();
+                }, 20);
+            }
+        }
+    }, [isADNotFilled, selectedADDomainName, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -141,6 +180,7 @@ const ActiveDirectory = () => {
                         <div className={styles.firstContainer}>
                             <SelectField
                                 label={GENERAL.DOMAIN_NAME}
+                                ref={domainNameRef}
                                 isClearable={false}
                                 isCreatingOption={isCreating}
                                 isOptionsAddingEnabled
@@ -173,6 +213,7 @@ const ActiveDirectory = () => {
                             <TextField
                                 label={GENERAL.DNS_ADDRESS}
                                 placeholder="DNS IP addresses"
+                                ref={DNSAddressRef}
                                 error={!isADNotFilled && !selectedADDomainAddress ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
                                 isErrorPrefixHidden
@@ -197,6 +238,7 @@ const ActiveDirectory = () => {
                             <TextField
                                 label={GENERAL.USER_NAME}
                                 error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
+                                ref={userNameRef}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={
@@ -218,6 +260,7 @@ const ActiveDirectory = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
+                                ref={passwordRefAD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setSelectedADPassword(e.target.value));

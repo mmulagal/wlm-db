@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 
 import {
     AccordionCard,
@@ -13,9 +14,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
-import styles from './FSxNSystem.module.scss';
-import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDispatch } from 'react-redux';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
@@ -26,6 +25,10 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { FSXADMIN } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
+
+import styles from './FSxNSystem.module.scss';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -40,12 +43,17 @@ const FSxNSystem = () => {
     const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
+    const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
 
     const [password, setPassword] = useState('');
+
+    const fsxNameRef = useRef(null);
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
@@ -54,11 +62,22 @@ const FSxNSystem = () => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
             const fsxType = val?.ontapConfiguration?.deploymentType;
-            if (fsxType && fsxType === supportedFsxType) {
+            const lifecycle = val?.lifecycle;
+            const fsxSubnets = val?.subnetIds || [];
+            const node1SubnetsList = selectedZone1?.data?.subnets || [];
+            const node2SubnetsList = selectedZone2?.data?.subnets || [];
+            if (
+                fsxType &&
+                fsxType === supportedFsxType &&
+                lifecycle &&
+                lifecycle === 'AVAILABLE' &&
+                fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
+            ) {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
-                    fileSystemName: val?.name
+                    fileSystemName: val?.name,
+                    securityGroups: val?.securityGroups
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);
@@ -66,13 +85,23 @@ const FSxNSystem = () => {
         });
 
         return options;
-    }, [fsxnData]);
+    }, [fsxnData, selectedZone1, selectedZone2]);
 
     useEffect(() => {
         dispatch(setExistingFsxnName(generateExistingFsx[0]));
         dispatch(setFsxNExistingUserName(FSXADMIN));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
+
+    //FSX Name check to highlight the field
+    useEffect(() => {
+        if (!isFsxNNameFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                fsxNameRef?.current?.focus();
+            }, 10);
+        }
+    }, [isFsxNNameFilled, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -143,6 +172,7 @@ const FSxNSystem = () => {
                             {fsxType === GENERAL.CREATE_NEW_FSXN && (
                                 <TextField
                                     label={GENERAL.FSXN_NAME}
+                                    ref={fsxNameRef}
                                     error={!isFsxNNameFilled && !selectedFsxnName ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore
                                     isErrorPrefixHidden
@@ -195,14 +225,21 @@ const FSxNSystem = () => {
                                 label={GENERAL.FSX_PASSWORD}
                                 info={
                                     <Typography variant="Regular_13" className={styles.infoMsg}>
-                                        <ul>
-                                            <li>{GENERAL.PASSWORD_FSX_1}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_2}</li>
-                                            <li>{GENERAL.PASSWORD_FSX_3}</li>
-                                        </ul>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_1}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_2}</Typography>
+                                        </div>
+                                        <div className={styles.bulletContainer}>
+                                            <Bullet />
+                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_3}</Typography>
+                                        </div>
                                     </Typography>
                                 }
-                                error={fsxPassVal(password)}
+                                error={useDelayedError(fsxPassVal(password))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));

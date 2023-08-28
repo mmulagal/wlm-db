@@ -118,7 +118,7 @@ const AwsAccount = () => {
     //Set the Header text here
     const setHeader = () => {
         if (noAccount) {
-            return <Typography variant="Regular_14">No account</Typography>;
+            return <Typography variant="Regular_14">{GENERAL.NO_CREDENTIALS}</Typography>;
         } else {
             return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
         }
