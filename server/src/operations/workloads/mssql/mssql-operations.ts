@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
@@ -18,13 +19,14 @@ const logger = getLogger();
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
+    logger.debug('Resource details for resource id:', resourceId, resourceDetails);
     let resourceProperties;
     try {
         resourceProperties = resourceDetails?.metadata?.properties
             ? JSON.parse(resourceDetails?.metadata?.properties)
             : {};
     } catch (error) {
-        logger.error('Error parsing resource properties', error);
+        throw createError(500, `Error occured while getting service token, ${error}`);
     }
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
@@ -66,9 +68,11 @@ async function callSsmExecution(
         response = await executeSSMDocument(credentialsId, region, params);
     }
     if (response.StandardErrorContent) {
+        logger.debug('Error:', response.StandardErrorContent);
         throw new Error(response.StandardErrorContent);
     }
     try {
+        logger.debug('Output:', response.StandardOutputContent);
         return JSON.parse(response.StandardOutputContent!);
     } catch (error) {
         logger.error('Error parsing response for command:', commands, error);
