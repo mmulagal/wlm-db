@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useAppDispatch } from '../store/storeHooks';
 import queryString from 'query-string';
 import { setAppContext } from '../store/appContextSlice';
@@ -43,6 +44,15 @@ const cmNavigateTo = (pathname: string, stateParams = {}) => {
             state: {
                 ...stateParams
             }
+        }
+    });
+};
+
+const navigateToCanvas = () => {
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: '/'
         }
     });
 };
@@ -123,4 +133,4 @@ const useInitialize = () => {
     }, [dispatch]);
 };
 
-export { useInitialize, cmNavigateTo };
+export { useInitialize, cmNavigateTo, navigateToCanvas };
