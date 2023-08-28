@@ -27,7 +27,7 @@ import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
 import genericRoutes from './routes/generic';
-import { msSqlServerRoutes } from './routes/mssql';
+import msSqlServerRoutes from './routes/mssql';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
