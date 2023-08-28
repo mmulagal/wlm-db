@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { DatabaseUtilisationResponseSchema, GetDatabasesSchema } from './schemas/database-schemas';
-import { getDataBasesSummary, getResourceUtilisation } from '../operations/workloads/mssql-operations';
+import { getDataBasesSummary, getResourceUtilisation } from '../operations/workloads/mssql/mssql-operations';
 import { DATABASE_METRIC_TYPE } from '../utils/consts';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';

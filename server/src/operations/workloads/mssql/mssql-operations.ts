@@ -5,13 +5,34 @@ import {
     DATABASES,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
     PSSCRIPT,
-    DATABASES_COUNT
+    DATABASES_COUNT,
+    DB_ROWS_COUNT
 } from './const';
-import getLogger from '../../utils/logger';
-import { DATABASE_METRIC_TYPE } from '../../utils/consts';
-import { executeSSMDocument } from '../../operations/aws/ssm-operations';
+import { executeSSMDocument } from '../../aws/ssm-operations';
+import getLogger from '../../../utils/logger';
+import { getTenancyResource } from '../../tenancy-operations';
+import { DatabaseTypes, DATABASE_METRIC_TYPE } from '../../../utils/consts';
 
 const logger = getLogger();
+
+async function getResourceDetails(resourceId: string) {
+    logger.info('Gettng resource details of resource', resourceId);
+    const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
+    let resourceProperties;
+    try {
+        resourceProperties = resourceDetails?.metadata?.properties
+            ? JSON.parse(resourceDetails?.metadata?.properties)
+            : {};
+    } catch (error) {
+        logger.error('Error parsing resource properties', error);
+    }
+    const credentialsId = resourceProperties?.credentialsId || '';
+    const region = resourceProperties?.region || '';
+    const activeInstanceId = resourceProperties?.activeInstanceId || '';
+    const standbyInstanceId = resourceProperties?.standbyInstanceId || '';
+
+    return [credentialsId, region, activeInstanceId, standbyInstanceId];
+}
 
 async function callSsmExecution(
     credentialsId: string,
@@ -25,7 +46,6 @@ async function callSsmExecution(
     const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
-        InstanceIds: [activeInstanceId],
         Parameters: {
             commands: commands
         }
@@ -56,7 +76,7 @@ async function callSsmExecution(
     }
 }
 
-async function getDatabasesSummary(
+async function getDBSummary(
     credentialsId: string,
     region: string,
     activeInstanceId: string,
@@ -88,6 +108,33 @@ async function getDatabasesCount(
     return response;
 }
 
+async function getDataBasesSummary(resourceId: string) {
+    logger.info('Get databases summary for resource:', resourceId);
+    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+
+    let dbCount = await getDatabasesCount(credentialsId, region, activeInstanceId, standbyInstanceId);
+    dbCount = dbCount?.totalCount || 0;
+
+    const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
+
+    const finaldb = [];
+    let offset = 0;
+    for (let i = 0; i < rowscount; i++) {
+        const resp = await getDBSummary(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT
+        );
+        finaldb.push(...resp);
+        offset += DB_ROWS_COUNT;
+    }
+
+    return { databases: finaldb };
+}
+
 function resourceUtilisationQuery(metricType: string) {
     switch (metricType) {
         case DATABASE_METRIC_TYPE.CPU:
@@ -100,14 +147,10 @@ function resourceUtilisationQuery(metricType: string) {
             return '';
     }
 }
+async function getResourceUtilisation(resourceId: string, metricType: string) {
+    logger.info(`Get ${metricType} resource utilization for resource: `, resourceId);
 
-async function serverResourceUtilisation(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
-    metricType: string
-) {
+    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
     logger.info('Fetching utilization from primary', credentialsId, region, activeInstanceId, metricType);
 
     let commands: string[] = [];
@@ -119,4 +162,4 @@ async function serverResourceUtilisation(
     return response;
 }
 
-export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation };
+export { getResourceUtilisation, getDataBasesSummary };
