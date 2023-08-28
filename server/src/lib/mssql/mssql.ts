@@ -20,6 +20,7 @@ async function callSsmExecution(
     region: string,
     commands: Array<string>
 ) {
+    logger.info('Calling SSM command execution', credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     let response;
     const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -51,7 +52,7 @@ async function callSsmExecution(
         return JSON.parse(response.StandardOutputContent!);
     } catch (error) {
         logger.error('Error parsing response for command:', commands, error);
-        return {};
+        throw new Error('Error parsing response for command:');
     }
 }
 
