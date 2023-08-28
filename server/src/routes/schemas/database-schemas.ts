@@ -8,16 +8,6 @@ const baseRequest = {
     params: databaseParams
 };
 
-const DeleteMsSqlServerSchema = {
-    params: databaseParams,
-    tags: [RouteTags.DATABASE],
-    description: 'Remove Microsoft SQL Server by resource ID',
-    response: {
-        204: { type: 'number', description: 'Resource deleted successfully.' },
-        404: { type: 'number', description: 'Failed to delete the resource.' }
-    }
-};
-
 const GetDatabasesSchema = {
     ...baseRequest,
     description: 'List of Databases',
@@ -33,4 +23,4 @@ const DatabaseUtilisationResponseSchema = {
         200: UtilisationResponseBody
     }
 };
-export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, DeleteMsSqlServerSchema };
+export { GetDatabasesSchema, DatabaseUtilisationResponseSchema };

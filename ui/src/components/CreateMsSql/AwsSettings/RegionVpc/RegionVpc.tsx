@@ -10,7 +10,7 @@ import {
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { generateOptionType, formatVpcSubnetsData, regionsSort } from '../../../../utils/utilityFunctions';
+import { generateOptionType, formatVpcSubnetsData, regionsSort, sortListOfDict } from '../../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -91,7 +91,7 @@ const RegionVpc = () => {
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
         });
-        return options;
+        return sortListOfDict(options, 'value');
     }, [vpcData]);
 
     // On VPC selection needs to check if 2 availability zones are available or not

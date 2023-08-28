@@ -11,4 +11,21 @@ const AccountIdParams = Type.Object({
 });
 type AccountIdParamsType = Static<typeof AccountIdParams>;
 
-export { GenericHeaders, GenericHeadersType, AccountIdParams, AccountIdParamsType };
+const DeleteResourceParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    resourceId: Type.String({ minLength: 1 })
+});
+
+const DeleteResponse = Type.Object({
+    status: Type.Integer(),
+    reason: Type.String()
+});
+
+export {
+    GenericHeaders,
+    GenericHeadersType,
+    AccountIdParams,
+    AccountIdParamsType,
+    DeleteResourceParams,
+    DeleteResponse
+};
