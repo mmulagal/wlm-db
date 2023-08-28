@@ -32,8 +32,12 @@ async function callSsmExecution(credentialsId: string, instanceId: string, regio
     if (response.StandardErrorContent) {
         throw new Error(response.StandardErrorContent);
     }
-
-    return JSON.parse(response.StandardOutputContent!);
+    try {
+        return JSON.parse(response.StandardOutputContent!);
+    } catch (error) {
+        logger.error('Error parsing response for command:', commands, error);
+        return {};
+    }
 }
 
 async function getDatabasesSummary(

@@ -37,7 +37,7 @@ const DISK_UTILISATION = `WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.p
                                 FROM roundtwo mf
                                 CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs`;
 
-export const MEMORY_UTILISATION = `SELECT
+const MEMORY_UTILISATION = `SELECT
                                 (processmem.physical_memory_in_use_kb * 1024) AS used,
                                 (sysmem.total_physical_memory_kb * 1024) AS total,
                                 ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,
@@ -64,5 +64,6 @@ export {
     DATABASE_SIZE,
     NUMBER_OF_DATABASES,
     NUMBER_OF_CONNECTIONS,
-    HEALTHY
+    HEALTHY,
+    MEMORY_UTILISATION
 };

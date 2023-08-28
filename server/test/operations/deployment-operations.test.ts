@@ -3,7 +3,7 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate
 } from '../../src/operations/deployment-operations';
-
+import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import '../simulator/scopes/aws/cloud-formation-scope';

@@ -1,4 +1,4 @@
-import { Button, Header, useDialog } from '@netapp/design-system';
+import { Button, Header, useDialog, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
@@ -12,6 +12,15 @@ import styles from './MSSqlHeader.module.scss';
 const MSSqlHeader = () => {
     const { setDialog } = useDialog();
     const dispatch = useDispatch();
+
+    const navigateToCanvas = () => {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: '/'
+            }
+        });
+    };
 
     const handleLoadConfiguration = () => {
         setDialog(
@@ -41,7 +50,7 @@ const MSSqlHeader = () => {
         <Header
             closeButtonProps={{
                 onClick: function noRefCheck() {
-                    cmNavigateTo('/');
+                    navigateToCanvas();
                 }
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
