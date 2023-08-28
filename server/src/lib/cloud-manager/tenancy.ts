@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS } from '../../utils/consts';
+import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS, HttpErrorCodes } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -101,8 +101,11 @@ async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: 
         } else {
             resource.metadata = '';
         }
+
+        return resource;
+    } else {
+        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
-    return resource;
 }
 
 async function removeResource(resourceIdentifier: string) {
