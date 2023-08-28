@@ -71,17 +71,9 @@ const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) =
 const TABLES_COUNT_QUERY = (databaseName: string) =>
     `use ${databaseName}
                         SELECT 
-                            COUNT(DISTINCT t.name) AS totalCount
+                            COUNT(DISTINCT name) AS totalCount
                         FROM 
-                            sys.tables t
-                        INNER JOIN      
-                            sys.indexes i ON t.OBJECT_ID = i.object_id
-                        INNER JOIN 
-                            sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
-                        INNER JOIN 
-                            sys.allocation_units a ON p.partition_id = a.container_id
-                        LEFT OUTER JOIN 
-                            sys.schemas s ON t.schema_id = s.schema_id`;
+                            sys.tables`;
 
 export {
     DB_ROWS_COUNT,
