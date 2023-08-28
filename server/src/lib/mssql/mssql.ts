@@ -1,6 +1,17 @@
-import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, TABLES_QUERY, TABLES_COUNT_QUERY } from './const';
-import { executeSsmDocument } from '../aws/ssm';
+import {
+    CPU_UTILISATION,
+    DISK_UTILISATION,
+    MEMORY_UTILISATION,
+    DATABASES,
+    SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    PSSCRIPT,
+    DATABASES_COUNT,
+    TABLES_QUERY,
+    TABLES_COUNT_QUERY
+} from './const';
 import getLogger from '../../utils/logger';
+import { DATABASE_METRIC_TYPE } from '../../utils/consts';
+import { executeSsmDocument } from '../../operations/aws/ssm-operations';
 
 const logger = getLogger();
 
@@ -17,66 +28,155 @@ async function callSsmExecution(credentialsId: string, instanceId: string, regio
     if (response.StandardErrorContent) {
         throw new Error(response.StandardErrorContent);
     }
-    return JSON.parse(response.StandardOutputContent!);
+    try {
+        return JSON.parse(response.StandardOutputContent!);
+    } catch (error) {
+        logger.error('Error parsing response for command:', commands, error);
+        return {};
+    }
 }
 
 async function getDatabasesSummary(
     credentialsId: string,
     region: string,
-    instanceId: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
     offset: number,
     rowscount: number
 ) {
-    logger.info('Fetching databases ', credentialsId, region, instanceId, offset, rowscount);
+    logger.info('Fetching databases ', credentialsId, region, activeInstanceId, offset, rowscount);
 
     const commands = [`${PSSCRIPT} -Query "${DATABASES(offset, rowscount)}"`];
-    const response = await callSsmExecution(credentialsId, instanceId, region, commands);
+    let response = [];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching database summary from primary node failed', activeInstanceId, error);
+        logger.info('Fetching database summary from secondary', credentialsId, region, standbyInstanceId);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
 
     logger.debug('Fetching databases response', response);
 
     return response;
 }
 
-async function serverResourceUtilisation(
-    instanceId: string,
+async function getDatabasesCount(
     credentialsId: string,
     region: string,
-    resourceType: string
+    activeInstanceId: string,
+    standbyInstanceId: string
 ) {
-    let commands: string[] = [];
-    if (resourceType === 'cpu') {
-        commands = [`${PSSCRIPT} -Query "${CPU_UTILIZATION}"`];
+    logger.info('Fetching databases total count ', credentialsId, region, activeInstanceId);
+
+    const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
+    let response = [];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching database count from primary node failed', activeInstanceId, error);
+        logger.info('Fetching database count from secondary', credentialsId, region, standbyInstanceId);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
     }
-    return callSsmExecution(credentialsId, instanceId, region, commands);
+
+    logger.debug('Fetching databases count response', response);
+
+    return response;
 }
 
+function resourceUtilisationQuery(metricType: string) {
+    switch (metricType) {
+        case DATABASE_METRIC_TYPE.CPU:
+            return CPU_UTILISATION;
+        case DATABASE_METRIC_TYPE.DISK:
+            return DISK_UTILISATION;
+        case DATABASE_METRIC_TYPE.MEMORY:
+            return MEMORY_UTILISATION;
+        default:
+            return '';
+    }
+}
+
+async function serverResourceUtilisation(
+    credentialsId: string,
+    region: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
+    metricType: string
+) {
+    logger.info('Fetching utilization from primary', credentialsId, region, activeInstanceId, metricType);
+
+    let commands: string[] = [];
+    let response = [];
+
+    const metricQuery = resourceUtilisationQuery(metricType);
+    commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching utilization from primary node failed', activeInstanceId, error);
+        logger.info('Fetching utilization from secondary', credentialsId, region, standbyInstanceId, metricType);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
+
+    logger.debug('Fetching  utilization', response);
+
+    return response;
+}
 
 async function getTablesCount(
     credentialsId: string,
     region: string,
-    instanceId: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
     databaseName: string
 ) {
+    logger.info('Fetching tables total count ', credentialsId, region, activeInstanceId, databaseName);
+
     const commands = [`${PSSCRIPT} -Query "${TABLES_COUNT_QUERY(databaseName)}"`];
-    return callSsmExecution(credentialsId, instanceId, region, commands);
+    let response = [];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching tables count from primary node failed', activeInstanceId, error);
+        logger.info('Fetching tables count from secondary', credentialsId, region, standbyInstanceId);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
+
+    logger.debug('Fetching tables count response', response);
+
+    return response;
 }
 
 async function getTablesList(
     credentialsId: string,
     region: string,
-    instanceId: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
     offset: number,
     rowscount: number,
     databaseName: string
 ) {
-    logger.info('Fetching databases ', credentialsId, region, instanceId, offset, rowscount, databaseName);
+    logger.info('Fetching tables ', credentialsId, region, activeInstanceId, offset, rowscount, databaseName);
 
     const commands = [`${PSSCRIPT} -Query "${TABLES_QUERY(databaseName, offset, rowscount)}"`];
-    const response = callSsmExecution(credentialsId, instanceId, region, commands);
+    let response = [];
+
+    try {
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    } catch (error) {
+        logger.error('Fetching tables summary from primary node failed', activeInstanceId, error);
+        logger.info('Fetching tables summary from secondary', credentialsId, region, standbyInstanceId);
+        response = await callSsmExecution(credentialsId, activeInstanceId, region, commands);
+    }
 
     logger.debug('Fetching tables response', response);
 
     return response;
 }
 
-export { getDatabasesSummary, serverResourceUtilisation, getTablesCount, getTablesList };
+export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation, getTablesCount, getTablesList };
