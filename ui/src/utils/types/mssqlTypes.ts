@@ -26,6 +26,7 @@ export interface AD {
     id?: string;
     dnsIpAddress?: Array<string>;
     domainName?: string;
+    status?: string;
     vpcSettings?: {
         securityGroupId?: string;
     }

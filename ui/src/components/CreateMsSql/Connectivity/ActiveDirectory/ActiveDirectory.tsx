@@ -69,13 +69,16 @@ const ActiveDirectory = () => {
     // Initial versions list
     useEffect(() => {
         const verList: any[] = [];
-        adsData?.directories?.map((val: any, ids: number) => {
-            const newItem = {
-                domainName: val?.domainName,
-                dnsIpAddress: val?.dnsIpAddress,
-                securityGroupId: val?.vpcSettings?.securityGroupId
-            };
-            verList.push(newItem);
+        adsData?.directories?.map((val, ids: number) => {
+            const adState = val?.status;
+            if(adState && adState === 'Active') {
+                const newItem = {
+                    domainName: val?.domainName,
+                    dnsIpAddress: val?.dnsIpAddress,
+                    securityGroupId: val?.vpcSettings?.securityGroupId
+                };
+                verList.push(newItem);
+            }
         });
         setVersions(sortListOfDict(verList, 'domainName'));
     }, [adsData]);
