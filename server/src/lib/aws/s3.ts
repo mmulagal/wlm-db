@@ -35,7 +35,7 @@ async function putObjectBucket(
     objectName: string,
     objectData: string
 ) {
-    logger.info('Uploading to bucket ', { credentialId, region, bucketName, objectName, objectData });
+    logger.info('Uploading to bucket ', { credentialId, region, bucketName, objectName });
 
     const s3 = new S3Client({ region });
     const command = new PutObjectCommand({
@@ -43,8 +43,12 @@ async function putObjectBucket(
         Key: objectName,
         Body: objectData
     });
-    const { VersionId: versionId } = await s3.send(command);
-    logger.debug('putObjectBucket response:', versionId);
+
+    const response = await s3.send(command);
+
+    logger.info('putObjectBucket response:', JSON.stringify(response));
+
+    return response;
 }
 
 export { getPreSignedUrl, putObjectBucket };

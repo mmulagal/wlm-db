@@ -23,7 +23,11 @@ import {
     SQL_TEMPLATES_ASSETS,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
-    VALIDATION_AMI
+    VALIDATION_AMI,
+    TemplateTypes,
+    DatabaseTypes,
+    BUCKET_NAME,
+    SQL_TEMPLATES_DISTRIBUTION
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -37,7 +41,7 @@ import {
 } from '../routes/types/deployment.types';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
-import { getPreSignedUrl } from '../lib/aws/s3';
+import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import Handlebars from 'handlebars';
 import * as fs from 'fs';
 
@@ -82,7 +86,7 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
+function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
@@ -154,8 +158,8 @@ async function formatTemplateParameters(
     enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
-        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
@@ -236,10 +240,18 @@ async function formatTemplateParameters(
     return { stackName: stackName, templateParameters: templateParams };
 }
 
-async function generateSignedUrls(region: string, credentialsId: string) {
+async function generateSignedUrls(credentialsId: string, region: string, resourceType: DatabaseTypes) {
+    logger.info('Generating signed urls ', credentialsId, region, resourceType);
+
     let signedUrl: string = '';
     const signedUrls: Map<string, Template> = new Map();
-    if (SQL_TEMPLATES_ASSETS?.length) {
+
+    let assets = [];
+    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
+        assets = SQL_TEMPLATES_ASSETS;
+    }
+
+    if (assets?.length) {
         await Promise.all(
             SQL_TEMPLATES_ASSETS.map(async template => {
                 logger.info(
@@ -256,22 +268,32 @@ async function generateSignedUrls(region: string, credentialsId: string) {
             })
         );
     }
+
+    logger.debug('Signed urls', signedUrls);
+
     return signedUrls;
 }
 
-async function updateTemplateUrls(templateFileName: string, signedUrls: Map<string, Template>, templateType: string) {
-    const source = fs.readFileSync(templateFileName).toString();
+async function updateTemplateUrls(
+    credentialsId: string,
+    region: string,
+    templateFilepath: string,
+    signedUrls: Map<string, Template>,
+    templateType: string
+) {
+    logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
+
+    const source = fs.readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source);
-    if (templateType == 'master') {
+    if (templateType == TemplateTypes.MASTER) {
         const contents = template({
             ValidationTemplate: signedUrls.get('ValidationTemplate')?.url,
             FSXNewTemplate: signedUrls.get('FSXNewTemplate')?.url,
             FSXExistingTemplate: signedUrls.get('FSXExistingTemplate')?.url,
             SQLTemplate: signedUrls.get('SQLTemplate')?.url
         });
-        fs.writeFileSync('/Users/krithib/WLM/wlmdb/server/src/templates/mssql/wlm-master_latest.yaml', contents);
-    }
-    if (templateType == 'sqlstack') {
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'template/wlm-master.yaml', contents);
+    } else if (templateType == TemplateTypes.SQLSTACK) {
         const contents = template({
             DSC: signedUrls.get('DSC')?.url,
             DSCSignature: signedUrls.get('DSCSignature')?.url,
@@ -298,9 +320,53 @@ async function updateTemplateUrls(templateFileName: string, signedUrls: Map<stri
             ScriptSQLONTAP: signedUrls.get('ScriptSQLONTAP')?.url,
             ScriptSQLONTAPSignature: signedUrls.get('ScriptSQLONTAPSignature')?.url
         });
-        fs.writeFileSync(
-            '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal_latest.yaml',
+        await putObjectBucket(
+            credentialsId,
+            region,
+            BUCKET_NAME,
+            'template/sql-windows-fci-config_nosignal.yaml',
             contents
+        );
+    } else if (templateType == TemplateTypes.VALIDATION) {
+        const contents = template({
+            AmazonLaunchWizardForCFN: signedUrls.get('AmazonLaunchWizardForCFN')?.url,
+            AmazonLaunchWizardForCFNSignature: signedUrls.get('AmazonLaunchWizardForCFNSignature')?.url,
+
+            ScriptVerifySignature: signedUrls.get('ScriptVerifySignature')?.url,
+            ScriptVpcCheck: signedUrls.get('ScriptVpcCheck')?.url,
+            ScriptUpdateDnsServers: signedUrls.get('ScriptUpdateDnsServers')?.url,
+            ScriptRenameComputer: signedUrls.get('ScriptRenameComputer')?.url,
+            ScriptRestartComputer: signedUrls.get('ScriptRestartComputer')?.url
+        });
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'template/vpc-ad-validation.yaml', contents);
+    }
+}
+
+async function uploadTemplates(credentialsId: string, region: string, resourceType: DatabaseTypes) {
+    logger.info('Uploading templates ', credentialsId, region, resourceType);
+
+    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
+        const signedUrls = await generateSignedUrls(credentialsId, region, resourceType);
+        await updateTemplateUrls(
+            credentialsId,
+            region,
+            SQL_TEMPLATES_DISTRIBUTION.VALIDATION,
+            signedUrls,
+            TemplateTypes.VALIDATION
+        );
+        await updateTemplateUrls(
+            credentialsId,
+            region,
+            SQL_TEMPLATES_DISTRIBUTION.SQLSTACK,
+            signedUrls,
+            TemplateTypes.SQLSTACK
+        );
+        await updateTemplateUrls(
+            credentialsId,
+            region,
+            SQL_TEMPLATES_DISTRIBUTION.MASTER,
+            signedUrls,
+            TemplateTypes.MASTER
         );
     }
 }
@@ -317,11 +383,12 @@ export {
     filterSqlAmis,
     isVpcQuotaReached,
     isCfStackQuotaReached,
-    generateFsxParams,
+    generateDeploymentParams,
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
     generateSignedUrls,
     updateTemplateUrls,
-    isSameRoutetables
+    isSameRoutetables,
+    uploadTemplates
 };

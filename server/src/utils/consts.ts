@@ -590,6 +590,18 @@ const SQL_TEMPLATES_ASSETS = [
     }
 ];
 
+const SQL_TEMPLATES_DISTRIBUTION = {
+    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
+    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
+    MASTER: './resources/mssql/templates/wlm-master.yaml'
+};
+
+enum TemplateTypes {
+    MASTER = 'master',
+    SQLSTACK = 'sqlstack',
+    VALIDATION = 'validation'
+}
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -684,5 +696,7 @@ export {
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
     DatabaseTypes,
-    WLMDB_RESOURCE_CLASS
+    WLMDB_RESOURCE_CLASS,
+    TemplateTypes,
+    SQL_TEMPLATES_DISTRIBUTION
 };

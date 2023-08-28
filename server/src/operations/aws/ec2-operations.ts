@@ -423,7 +423,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
             { Name: 'owner-alias', Values: ['amazon'] }
         ]
     });
-    logger.info(amis);
+
     const [filteredInstances] =
         amis.Images?.filter(
             ({ Name, UsageOperation }) =>

@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
+import { getPreSignedUrl } from '../lib/aws/s3';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -24,15 +24,15 @@ import {
     SAME_ROUTETABLE_MESSAGE,
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
-    EC2_ROLE_NAME
+    EC2_ROLE_NAME,
+    DatabaseTypes
 } from '../utils/consts';
 import {
     formatTemplateParameters,
-    generateFsxParams,
-    generateSignedUrls,
+    generateDeploymentParams,
     isCfStackQuotaReached,
-    updateTemplateUrls,
-    isSameRoutetables
+    isSameRoutetables,
+    uploadTemplates
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
@@ -74,8 +74,8 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
-        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
@@ -102,32 +102,8 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    const signedUrls = await generateSignedUrls(region, credentialsId);
+    await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
 
-    await updateTemplateUrls(
-        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/wlm-master.yaml',
-        signedUrls,
-        'master'
-    );
-    await updateTemplateUrls(
-        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal.yaml',
-        signedUrls,
-        'sqlstack'
-    );
-    await putObjectBucket(
-        credentialsId,
-        region,
-        'bucketkrithi',
-        'template/wlm-master.yaml',
-        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/wlm-master_latest.yaml'
-    );
-    await putObjectBucket(
-        credentialsId,
-        region,
-        'bucketkrithi',
-        'template/sql-windows-fci-config_nosignal.yaml',
-        '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal_latest.yaml'
-    );
     const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
