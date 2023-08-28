@@ -22,6 +22,8 @@ import {
     HttpErrorCodes,
     WLM_ASSETS,
     SAME_ROUTETABLE_MESSAGE,
+    VALIDATION_AMI,
+    ASSETS_BUCKET_REGION,
     EC2_ROLE_NAME
 } from '../utils/consts';
 import {
@@ -34,6 +36,7 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
+import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -125,9 +128,11 @@ async function createCloudFormationTemplateForUserDeployment(
         'template/sql-windows-fci-config_nosignal.yaml',
         '/Users/krithib/WLM/wlmdb/server/src/templates/mssql/sql-windows-fci-config_nosignal_latest.yaml'
     );
-    const signedURL = await getPreSignedUrl(credentialsId, region);
+    const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}`;
+    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
