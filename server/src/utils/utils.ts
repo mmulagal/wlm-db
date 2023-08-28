@@ -233,6 +233,10 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     );
 }
 
+async function waitFor(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -241,5 +245,6 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    isSameRoutetables
+    isSameRoutetables,
+    waitFor
 };
