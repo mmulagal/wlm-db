@@ -238,6 +238,6 @@ export const sortListOfDict = (dataList: any, field: string) => {
     if(dataList && dataList.length < 2){
         return dataList;
     };
-    dataList.sort((a:any, b:any) => a[field].localeCompare(b[field]));
-    return dataList;
+    const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    return newDBList;
 };
