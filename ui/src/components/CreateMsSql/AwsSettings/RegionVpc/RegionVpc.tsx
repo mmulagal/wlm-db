@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AccordionCard,
     AccordionCardContent,
@@ -24,6 +24,8 @@ const RegionVpc = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const [isDefaultOpen, setIsDefaultOpen] = useState(false);
 
+    const vpcRef = useRef(null);
+
     //Getting the Data from state
     const { regionsData, regionsLoading } = useAppSelector(state => state.mssql.getRegions);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
@@ -31,6 +33,7 @@ const RegionVpc = () => {
     const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
@@ -48,6 +51,15 @@ const RegionVpc = () => {
     useEffect(() => {
         dispatch(setSelectedRegionData(generateRegionsData[0]));
     }, [dispatch, generateRegionsData]);
+
+    useEffect(() => {
+        if (!isVPCNotFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                vpcRef?.current?.focus();
+            }, 110);
+        }
+    }, [isVPCNotFilled, isCreateHit]);
 
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
@@ -171,6 +183,7 @@ const RegionVpc = () => {
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     isLoading={vpcLoading}
+                                    ref={vpcRef}
                                     label={GENERAL.VPC}
                                     error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore

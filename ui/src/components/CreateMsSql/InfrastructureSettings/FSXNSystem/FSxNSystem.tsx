@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -45,12 +45,15 @@ const FSxNSystem = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
 
     const [password, setPassword] = useState('');
+
+    const fsxNameRef = useRef(null);
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
@@ -63,9 +66,13 @@ const FSxNSystem = () => {
             const fsxSubnets = val?.subnetIds || [];
             const node1SubnetsList = selectedZone1?.data?.subnets || [];
             const node2SubnetsList = selectedZone2?.data?.subnets || [];
-            if (fsxType && fsxType === supportedFsxType && 
-                lifecycle && lifecycle === 'AVAILABLE' && fsxSubnets.every((val:string) => 
-                node1SubnetsList.includes(val) || node2SubnetsList.includes(val))) {
+            if (
+                fsxType &&
+                fsxType === supportedFsxType &&
+                lifecycle &&
+                lifecycle === 'AVAILABLE' &&
+                fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
+            ) {
                 const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
@@ -85,6 +92,16 @@ const FSxNSystem = () => {
         dispatch(setFsxNExistingUserName(FSXADMIN));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
+
+    //FSX Name check to highlight the field
+    useEffect(() => {
+        if (!isFsxNNameFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                fsxNameRef?.current?.focus();
+            }, 10);
+        }
+    }, [isFsxNNameFilled, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -155,6 +172,7 @@ const FSxNSystem = () => {
                             {fsxType === GENERAL.CREATE_NEW_FSXN && (
                                 <TextField
                                     label={GENERAL.FSXN_NAME}
+                                    ref={fsxNameRef}
                                     error={!isFsxNNameFilled && !selectedFsxnName ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore
                                     isErrorPrefixHidden
