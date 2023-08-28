@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -20,12 +20,24 @@ const DatabaseCredentials = () => {
     const [userName, setUserName] = useState(SQL_USERNAME);
     const [password, setPassword] = useState('');
 
+    const passwordRef = useRef(null);
+
     const dispatch = useDispatch();
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     useEffect(() => {
         dispatch(setDBCredentialsName(userName));
     });
+
+    useEffect(() => {
+        if (!isDBPasswordFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                passwordRef?.current?.focus();
+            }, 60);
+        }
+    }, [!isDBPasswordFilled, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -106,6 +118,7 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
+                                ref={passwordRef}
                                 error={
                                     !isDBPasswordFilled
                                         ? GENERAL.ACTION_REQUIRED

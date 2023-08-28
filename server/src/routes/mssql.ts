@@ -1,7 +1,11 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { DatabaseUtilisationResponseSchema, GetDatabasesSchema, PostSqlServerSchema } from './schemas/database-schemas';
-import { getDataBasesSummary, getResourceUtilisation, discoverMsSqlServer } from '../operations/mssql/mssql-operations';
+import {
+    getDataBasesSummary,
+    getResourceUtilisation,
+    discoverMsSqlServer
+} from '../operations/workloads/mssql/mssql-operations';
 import { DATABASE_METRIC_TYPE, DatabaseTypes } from '../utils/consts';
 
 const MSSQL_DISCOVER_API_PATH: string =
@@ -21,6 +25,7 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
             credentialsId,
             regionId,
             ec2InstanceId,
+            ec2InstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
             DatabaseTypes.MS_SQL_SERVER
         );
         return reply.send(response);
@@ -34,6 +39,18 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
                 params: { resourceId }
             } = request;
             const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
+            return reply.send(response);
+        }
+    );
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/memory`,
+        { schema: DatabaseUtilisationResponseSchema },
+        async (request, reply) => {
+            const {
+                params: { resourceId }
+            } = request;
+            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
             return reply.send(response);
         }
     );

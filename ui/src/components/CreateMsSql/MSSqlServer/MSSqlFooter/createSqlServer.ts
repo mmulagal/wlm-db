@@ -2,6 +2,7 @@ import { Dispatch } from '@reduxjs/toolkit';
 import {
     setActiveDirectoryValue,
     setAZSelectedValue,
+    setCreateHit,
     setCreatePressed,
     setDBCredentialPasswordValue,
     setDBNameValue,
@@ -86,7 +87,7 @@ const createMssqlPayload = (state: any) => {
     const ontapSgGroupIdsList = (() => {
         let ontapSgGroupList = [];
         const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
-        if(vpcsg){
+        if (vpcsg) {
             ontapSgGroupList.push(vpcsg);
         }
 
@@ -149,6 +150,7 @@ const createMssqlPayload = (state: any) => {
 const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     let payload;
     dispatch(setCreatePressed(true));
+    dispatch(setCreateHit(Math.random()));
 
     const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
 
