@@ -13,8 +13,10 @@ import {
     setSelectedADDomainAddress,
     setSelectedADDomainName,
     setSelectedADPassword,
+    setSelectedADScenarioType,
     setSelectedADUserName
 } from '../../../../store/mssql/mssqlFormSlice';
+import { AWS_MANAGED_AD, USER_MANAGED_AD } from '../../../../utils/consts';
 
 const delay = () => {
     return new Promise(resolve => {
@@ -51,16 +53,18 @@ const ActiveDirectory = () => {
             securityGroupId: string;
             domainName: string;
             dnsIpAddress: string;
+            adScenarioType: string;
         }[]
     >([]);
     const [isCreating, setIsCreating] = useState(false);
 
     const addNewOption = async (option: any) => {
         setIsCreating(true);
-        const newVer = [...versions, { domainName: option, dnsIpAddress: '', securityGroupId: '' }];
+        const newVer = [...versions, { domainName: option, dnsIpAddress: '', securityGroupId: '', adScenarioType: USER_MANAGED_AD }];
         setVersions(sortListOfDict(newVer, 'domainName'));
         await delay();
         dispatch(setSelectedADDomainAddress(''));
+        dispatch(setSelectedADScenarioType(USER_MANAGED_AD));
         setIsCreating(false);
 
         return generateOptionType(option, option, '', false, '');
@@ -69,13 +73,17 @@ const ActiveDirectory = () => {
     // Initial versions list
     useEffect(() => {
         const verList: any[] = [];
-        adsData?.directories?.map((val: any, ids: number) => {
-            const newItem = {
-                domainName: val?.domainName,
-                dnsIpAddress: val?.dnsIpAddress,
-                securityGroupId: val?.vpcSettings?.securityGroupId
-            };
-            verList.push(newItem);
+        adsData?.directories?.map((val, ids: number) => {
+            const adState = val?.status;
+            if(adState && adState === 'Active') {
+                const newItem = {
+                    domainName: val?.domainName,
+                    dnsIpAddress: val?.dnsIpAddress,
+                    securityGroupId: val?.vpcSettings?.securityGroupId,
+                    adScenarioType: AWS_MANAGED_AD
+                };
+                verList.push(newItem);
+            }
         });
         setVersions(sortListOfDict(verList, 'domainName'));
     }, [adsData]);
@@ -88,7 +96,8 @@ const ActiveDirectory = () => {
             const data = {
                 domainName: val?.domainName,
                 dnsIpAddress: (val?.dnsIpAddress || '').toString(),
-                securityGroupId: val?.securityGroupId
+                securityGroupId: val?.securityGroupId,
+                adScenarioType: val?.adScenarioType
             };
             const option = generateOptionType(verVal, verVal, '', false, '', data);
             options.push(option);
@@ -99,6 +108,7 @@ const ActiveDirectory = () => {
     useEffect(() => {
         dispatch(setSelectedADDomainName(null));
         dispatch(setSelectedADDomainAddress(''));
+        dispatch(setSelectedADScenarioType(''));
         setUserName('');
         setPassword('');
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -190,6 +200,7 @@ const ActiveDirectory = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedADDomainName(selectedOptions));
                                     dispatch(setSelectedADDomainAddress(selectedOptions?.data?.dnsIpAddress));
+                                    dispatch(setSelectedADScenarioType(selectedOptions?.data?.adScenarioType || USER_MANAGED_AD));
                                 }}
                                 placeholder="example.com"
                                 isSearchable={true}
