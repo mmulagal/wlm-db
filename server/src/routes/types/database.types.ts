@@ -37,7 +37,7 @@ const TablesResponseBody = Type.Object({
             databaseName: Type.String(),
             tableType: Type.String(),
             tableSchema: Type.String(),
-            tableSize: Type.String()
+            tableSize: Type.Number()
         })
     )
 });

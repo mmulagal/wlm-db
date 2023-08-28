@@ -60,7 +60,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
 }
 
 async function getTablesSummary(resourceId: string, databaseName: string) {
-    logger.info('Get tables list for resource:', resourceId);
+    logger.info('Get tables list for resource:', resourceId, databaseName);
 
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
     const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
