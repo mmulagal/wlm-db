@@ -46,6 +46,12 @@ const MEMORY_UTILISATION = `SELECT
                                  ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
                                  FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;`;
 
+const SERVER_GUID = `SELECT service_broker_guid AS serverGuid
+                     FROM sys.databases
+                     WHERE name = 'msdb'`;
+
+const SERVER_NAME = 'SELECT @@SERVERNAME as serverName;';
+
 export {
     DB_ROWS_COUNT,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -56,5 +62,7 @@ export {
     CPU_UTILISATION,
     DISK_UTILISATION,
     DB_SIZE,
-    MEMORY_UTILISATION
+    MEMORY_UTILISATION,
+    SERVER_GUID,
+    SERVER_NAME
 };

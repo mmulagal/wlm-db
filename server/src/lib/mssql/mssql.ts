@@ -5,7 +5,9 @@ import {
     DATABASES,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
     PSSCRIPT,
-    DATABASES_COUNT
+    DATABASES_COUNT,
+    SERVER_GUID,
+    SERVER_NAME
 } from './const';
 import getLogger from '../../utils/logger';
 import { DATABASE_METRIC_TYPE } from '../../utils/consts';
@@ -125,4 +127,24 @@ async function serverResourceUtilisation(
     return response;
 }
 
-export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation };
+async function getSqlServerGuid(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Get SQL Server GUID:', { credentialsId, region, instanceId });
+
+    const { serverGuid } = await callSsmExecution(credentialsId, instanceId, region, [
+        `${PSSCRIPT} -Query "${SERVER_GUID}"`
+    ]);
+    logger.debug('SQL Server GUID:', serverGuid);
+    return serverGuid;
+}
+
+async function getSqlServerName(credentialsId: string, region: string, instanceId: string) {
+    logger.info('Get SQL Server name:', { credentialsId, region, instanceId });
+
+    const { serverName } = await callSsmExecution(credentialsId, instanceId, region, [
+        `${PSSCRIPT} -Query "${SERVER_NAME}"`
+    ]);
+    logger.debug('SQL Server host name:', serverName);
+    return serverName;
+}
+
+export { getDatabasesSummary, getDatabasesCount, serverResourceUtilisation, getSqlServerGuid, getSqlServerName };

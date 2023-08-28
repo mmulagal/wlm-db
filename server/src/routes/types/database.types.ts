@@ -5,6 +5,18 @@ const databaseParams = Type.Object({
     resourceId: Type.String()
 });
 
+const msSqlServerDiscoveryParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    regionId: Type.String(),
+    ec2InstanceId: Type.String()
+});
+
+const msSqlServerDiscoveryResponse = Type.Object({
+    resourceId: Type.String(),
+    resourceName: Type.String()
+});
+
 const DatabasesResponseBody = Type.Object({
     databases: Type.Array(
         Type.Object({
@@ -24,4 +36,10 @@ const UtilisationResponseBody = Type.Object({
     remaining: Type.String()
 });
 
-export { databaseParams, DatabasesResponseBody, UtilisationResponseBody };
+export {
+    databaseParams,
+    DatabasesResponseBody,
+    UtilisationResponseBody,
+    msSqlServerDiscoveryParams,
+    msSqlServerDiscoveryResponse
+};

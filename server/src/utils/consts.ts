@@ -89,6 +89,12 @@ enum CloudProviders {
     GCP = 'GCP'
 }
 
+enum DeploymentState {
+    INITIALIZING = 'Initializing',
+    SUCCESS = 'Success',
+    FAILED = 'Failed'
+}
+
 enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
@@ -595,5 +601,6 @@ export {
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
     DATABASE_METRIC_TYPE,
-    SSM_QUERY_EXECUTION_STATUS
+    SSM_QUERY_EXECUTION_STATUS,
+    DeploymentState
 };

@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS } from '../../utils/consts';
+import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -29,8 +29,8 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
                 .post(`${CLOUD_MANAGER_ENDPOINT}/auth/oauth/token`, {
                     json: {
                         audience: AUTH0_AUDIENCE,
-                        client_id: SECRETS.CLIENT_ID,
-                        client_secret: SECRETS.CLIENT_SECRET,
+                        client_id: '3Sdstv1J0nIBIFinhic2uOF6Yr6qRMj7',
+                        client_secret: '2fbQV4RarcrCweRERZRGJEZ8RmuTQ9iFQkoy1gBGUmQc5WShqAIdKuFAjMGO0M3D',
                         grant_type: 'client_credentials'
                     }
                 })
@@ -106,11 +106,4 @@ async function removeResource(resourceIdentifier: string) {
     }
 }
 
-export {
-    registerServiceResource,
-    getTenancyResourcesByType,
-    removeResource,
-    getServiceToken,
-    ServiceResourceRequest,
-    MetaData
-};
+export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken, ServiceResourceRequest };

@@ -1,11 +1,26 @@
 import { RouteTags } from '../../utils/consts';
-import { databaseParams, DatabasesResponseBody, UtilisationResponseBody } from '../types/database.types';
+import {
+    databaseParams,
+    DatabasesResponseBody,
+    UtilisationResponseBody,
+    msSqlServerDiscoveryParams,
+    msSqlServerDiscoveryResponse
+} from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
 const baseRequest = {
     Headers: GenericHeaders,
     tags: [RouteTags.DATABASE],
     params: databaseParams
+};
+
+const PostSqlServerSchema = {
+    tags: [RouteTags.DATABASE],
+    params: msSqlServerDiscoveryParams,
+    description: 'Discover Microsoft SQL Server',
+    response: {
+        200: msSqlServerDiscoveryResponse
+    }
 };
 
 const GetDatabasesSchema = {
@@ -23,4 +38,4 @@ const DatabaseUtilisationResponseSchema = {
         200: UtilisationResponseBody
     }
 };
-export { GetDatabasesSchema, DatabaseUtilisationResponseSchema };
+export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, PostSqlServerSchema };
