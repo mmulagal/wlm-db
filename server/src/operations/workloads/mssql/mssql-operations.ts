@@ -206,11 +206,11 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     let tablesCount = await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName);
     tablesCount = tablesCount?.totalCount || 0;
 
-    const rowscount = Math.ceil(tablesCount / DB_ROWS_COUNT);
+    const batchcount = Math.ceil(tablesCount / DB_ROWS_COUNT);
 
     const tablesList = [];
     let offset = 0;
-    for (let i = 0; i < rowscount; i++) {
+    for (let i = 0; i < batchcount; i++) {
         const resp = await getTablesList(
             credentialsId,
             region,
