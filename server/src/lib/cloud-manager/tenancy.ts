@@ -91,6 +91,7 @@ async function getTenancyResourcesByType(resourceType: string) {
 }
 
 async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: string) {
+    logger.info('Getting tenancy resource details for resource:', resourceType, resourceId);
     const resource = (await getTenancyResourcesByType(resourceType)).find(
         resource => resource.resourceIdentifier === resourceId
     );
@@ -120,4 +121,12 @@ async function removeResource(resourceIdentifier: string) {
     }
 }
 
-export { registerServiceResource, getTenancyResourcesByType, getTenancyResourcesByTypeAndId, MetaData, removeResource };
+export {
+    registerServiceResource,
+    getTenancyResourcesByType,
+    getTenancyResourcesByTypeAndId,
+    removeResource,
+    getServiceToken,
+    ServiceResourceRequest,
+    MetaData
+};

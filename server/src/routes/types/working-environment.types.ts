@@ -20,7 +20,7 @@ const WorkingEnvironmentResponse = Type.Optional(
         databasesCount: Type.Optional(Type.Number()),
         domain: Type.Optional(Type.String()),
         location: Type.Optional(Type.String()),
-        state: Type.Optional(Type.String())
+        deploymentState: Type.Optional(Type.String())
     })
 );
 

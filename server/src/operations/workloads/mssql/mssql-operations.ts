@@ -162,4 +162,4 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     return response;
 }
 
-export { getResourceUtilisation, getDataBasesSummary };
+export { getResourceUtilisation, getDataBasesSummary, getResourceDetails, getDatabasesCount };

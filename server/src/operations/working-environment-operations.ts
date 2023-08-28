@@ -1,12 +1,15 @@
-import { RESOURCESTYPE } from '../utils/consts';
+import createError from 'http-errors';
+import { RESOURCESTYPE, HttpErrorCodes } from '../utils/consts';
 import { getTenancyResourcesByType, getTenancyResourcesByTypeAndId } from '../lib/cloud-manager/tenancy';
 import getLogger from '../utils/logger';
+import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 async function getWorkingEnvironments() {
+    logger.info('Getting working environment list');
     const workingEnvironments: { id: string; provider: string; name?: string; state: string }[] = [];
     const mssqlCredentials = await getTenancyResourcesByType(RESOURCESTYPE.MSSQL);
-    mssqlCredentials.forEach((credentials: any) => {
+    mssqlCredentials.map((credentials: any) => {
         let state = '';
         try {
             state =
@@ -24,21 +27,39 @@ async function getWorkingEnvironments() {
             state
         });
     });
-    return workingEnvironments;
+    return workingEnvironments ? workingEnvironments : [];
+}
+
+async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
+    logger.info('Getting MSSQL working environment data for resource:', resourceId);
+    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+    const dbCount = await getDatabasesCount(credentialsId, region, activeInstanceId, standbyInstanceId);
+    const serverName = tenancyResource?.name;
+    try {
+        tenancyResource = tenancyResource?.metadata?.properties
+            ? JSON.parse(tenancyResource?.metadata?.properties)
+            : {};
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
+    }
+    const location = tenancyResource?.activeInstanceId || '';
+    const deploymentState = tenancyResource?.deploymentState || '';
+    return {
+        id: resourceId,
+        serverName,
+        location,
+        deploymentState,
+        databasesCount: dbCount.totalCount,
+        domain: ''
+    };
 }
 
 async function getWorkingEnvironment(id: string) {
+    logger.info('Getting MSSQL working environment data for resource:', id);
     const tenancyResource = await getTenancyResourcesByTypeAndId(RESOURCESTYPE.MSSQL, id);
+
     if (tenancyResource) {
-        switch (tenancyResource.resourceType) {
-            case RESOURCESTYPE.MSSQL:
-                return {
-                    id: id,
-                    serverName: '',
-                    databasesCount: 0,
-                    state: 'initializing'
-                };
-        }
+        return getMSSQLEnvData(tenancyResource, id);
     }
 }
 
