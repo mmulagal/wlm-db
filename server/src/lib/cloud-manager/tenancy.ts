@@ -106,4 +106,11 @@ async function removeResource(resourceIdentifier: string) {
     }
 }
 
-export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken, ServiceResourceRequest };
+export {
+    registerServiceResource,
+    getTenancyResourcesByType,
+    removeResource,
+    getServiceToken,
+    ServiceResourceRequest,
+    MetaData
+};

@@ -93,7 +93,8 @@ enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment'
+    DEPLOYMENT = 'Deployment',
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
@@ -488,6 +489,17 @@ const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
 
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -581,5 +593,7 @@ export {
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
     DatabaseTypes,
-    WLMDB_RESOURCE_CLASS
+    WLMDB_RESOURCE_CLASS,
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS
 };
