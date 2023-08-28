@@ -7,16 +7,16 @@ import {
     PSSCRIPT,
     DATABASES_COUNT,
     DB_ROWS_COUNT,
-    SERVER_DETAILS,
-    DATABASE_SIZE,
+    SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
-    NUMBER_OF_DATABASES,
-    HEALTHY
+    SERVER_STATE,
+    IS_SERVER_CLUSTERED,
+    SERVER_NODES
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { DatabaseTypes, DATABASE_METRIC_TYPE } from '../../../utils/consts';
+import { DatabaseTypes, DATABASE_METRIC_TYPE, SqlServerDeploymentModel } from '../../../utils/consts';
 
 const logger = getLogger();
 
@@ -174,25 +174,29 @@ async function getServerSummary(resourceId: string): Promise<{
     serverEngine: string;
     serverStatus: string;
     activeConnections: number;
-    databasesCount: number;
-    databaseTotalSize: string;
+    deploymentModel: string;
+    activeNode: string;
+    standbyNode: string;
 }> {
     logger.info('Get details of SQL Server database:', { resourceId });
 
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
 
-    const [serverDetails, numberOfConnections, databaseSize, numberOfDatabases] = await Promise.all([
+    const [serverDetails, connections, state, isClustered, nodes] = await Promise.all([
         callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_DETAILS}"`
+            `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
         ]),
         callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
             `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
         ]),
         callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${DATABASE_SIZE}"`
+            `${PSSCRIPT} -Query "${SERVER_STATE}"`
         ]),
         callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${NUMBER_OF_DATABASES}"`
+            `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_NODES}"`
         ])
     ]);
 
@@ -204,10 +208,13 @@ async function getServerSummary(resourceId: string): Promise<{
         serverVersion: version ? version[0] : ' ',
         serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
         serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-        serverStatus: HEALTHY,
-        activeConnections: numberOfConnections.numberOfConnections,
-        databasesCount: numberOfDatabases.numberOfDatabases,
-        databaseTotalSize: databaseSize.databaseSize
+        serverStatus: state['Current Service State'],
+        activeConnections: connections.numberOfConnections,
+        deploymentModel: isClustered.isClustered
+            ? SqlServerDeploymentModel.SQL_FCI
+            : SqlServerDeploymentModel.SQL_STANDALONE,
+        activeNode: nodes.activeNode,
+        standbyNode: nodes.standbyNode
     };
 }
 

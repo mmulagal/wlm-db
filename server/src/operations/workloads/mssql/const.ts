@@ -44,12 +44,17 @@ const MEMORY_UTILISATION = `SELECT
                                  ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
                                  FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;`;
 
-const SERVER_DETAILS = 'SELECT @@version AS serverDetails';
+const SERVER_VERSION_DETAILS = 'SELECT @@version AS serverDetails';
+const SERVER_STATE = `EXEC
+                        master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
+const IS_SERVER_CLUSTERED = `SELECT
+                                SERVERPROPERTY('IsClustered') as isClustered`;
+const SERVER_NODES = `SELECT
+                        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode,
+                        SERVERPROPERTY('MachineName') as standbyNode`;
+
 const NUMBER_OF_CONNECTIONS =
     'SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL';
-const DATABASE_SIZE =
-    'SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS databaseSize FROM sys.master_files';
-const NUMBER_OF_DATABASES = 'SELECT COUNT(1) AS numberOfDatabases from sys.databases';
 
 export {
     DB_ROWS_COUNT,
@@ -60,10 +65,11 @@ export {
     PSSCRIPT,
     CPU_UTILISATION,
     DISK_UTILISATION,
-    SERVER_DETAILS,
-    DATABASE_SIZE,
-    NUMBER_OF_DATABASES,
+    SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     HEALTHY,
-    MEMORY_UTILISATION
+    MEMORY_UTILISATION,
+    SERVER_STATE,
+    IS_SERVER_CLUSTERED,
+    SERVER_NODES
 };

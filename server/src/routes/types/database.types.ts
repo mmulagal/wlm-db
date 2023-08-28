@@ -24,8 +24,9 @@ const ServerSummaryResponse = Type.Object({
     serverEngine: Type.String(),
     serverStatus: Type.String(),
     activeConnections: Type.Integer(),
-    databasesCount: Type.Integer(),
-    databaseTotalSize: Type.String()
+    deploymentModel: Type.String(),
+    activeNode: Type.String(),
+    standbyNode: Type.String()
 });
 
 const UtilisationResponseBody = Type.Object({
