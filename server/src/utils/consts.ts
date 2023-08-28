@@ -100,7 +100,8 @@ enum RouteTags {
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
-    WORKING_ENVIRONMENT = 'Working Environment'
+    WORKING_ENVIRONMENT = 'Working Environment',
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
@@ -412,8 +413,10 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = 'wlmbucket';
+const ASSETS_BUCKET_REGION = 'ap-southeast-1';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
+const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
@@ -496,6 +499,17 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
+
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
 
 export {
     WLMDB,
@@ -590,6 +604,10 @@ export {
     RESOURCESTYPE,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI,
+    ASSETS_BUCKET_REGION,
     DatabaseTypes,
-    WLMDB_RESOURCE_CLASS
+    WLMDB_RESOURCE_CLASS,
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS
 };
