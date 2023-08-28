@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 const initialState: any = {
     isCreatePressed: false,
+    isCreateHit: 0,
     vpcSelected: true,
     availabilityZoneSelected: true,
     dbCredentialPasswordSelected: true,
@@ -42,11 +43,15 @@ const msSqlActionSlice = createSlice({
         },
         setLicenseIdValue(state, action: PayloadAction<any>) {
             state.licenseIdSelected = action.payload;
+        },
+        setCreateHit(state, action: PayloadAction<any>) {
+            state.isCreateHit = action.payload;
         }
     }
 });
 
 export const {
+    setCreateHit,
     setCreatePressed,
     setVPCSelectedValue,
     setAZSelectedValue,

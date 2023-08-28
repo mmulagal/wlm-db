@@ -28,6 +28,7 @@ export const SQL_USERNAME = 'sqlsa';
 
 // Active Directory scenario type
 export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
+export const USER_MANAGED_AD = 'USER_MANAGED_AD';
 
 // KMS status/state
 export const EXPIRED_STATUS = 'expired';

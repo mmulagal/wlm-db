@@ -1,8 +1,8 @@
-import { Button, Header, useDialog, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
+import { Button, Header, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
-import { cmNavigateTo } from '../../../../utils/appConfig';
+import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { LoadConfiguration, SaveConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
@@ -12,15 +12,6 @@ import styles from './MSSqlHeader.module.scss';
 const MSSqlHeader = () => {
     const { setDialog } = useDialog();
     const dispatch = useDispatch();
-
-    const navigateToCanvas = () => {
-        postBlueXPMessage({
-            type: BlueXPListeners.navigate,
-            payload: {
-                pathname: '/'
-            }
-        });
-    };
 
     const handleLoadConfiguration = () => {
         setDialog(

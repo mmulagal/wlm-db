@@ -5,7 +5,11 @@ import {
     GetDatabasesSchema,
     GetServerSummarySchema
 } from './schemas/database-schemas';
-import { getDataBasesSummary, getResourceUtilisation, serverSummary } from '../operations/mssql/mssql-operations';
+import {
+    getDataBasesSummary,
+    getResourceUtilisation,
+    getServerSummary
+} from '../operations/workloads/mssql/mssql-operations';
 import { DATABASE_METRIC_TYPE } from '../utils/consts';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
@@ -23,6 +27,19 @@ function msSqlServerRoutes(fastify: FastifyInstance) {
             return reply.send(response);
         }
     );
+
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/memory`,
+        { schema: DatabaseUtilisationResponseSchema },
+        async (request, reply) => {
+            const {
+                params: { resourceId }
+            } = request;
+            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
+            return reply.send(response);
+        }
+    );
+
     server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
         const {
             params: { resourceId }
@@ -36,7 +53,7 @@ function msSqlServerRoutes(fastify: FastifyInstance) {
             params: { resourceId }
         } = request;
 
-        const response = await serverSummary(resourceId);
+        const response = await getServerSummary(resourceId);
         return reply.send(response);
     });
 }
