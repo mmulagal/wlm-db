@@ -59,7 +59,7 @@ async function getWorkingEnvironment(id: string) {
     const tenancyResource = await getTenancyResourcesByTypeAndId(RESOURCESTYPE.MSSQL, id);
 
     if (tenancyResource) {
-        const response = getMSSQLEnvData(tenancyResource, id);
+        const response = await getMSSQLEnvData(tenancyResource, id);
         if (response) {
             return response;
         } else {
