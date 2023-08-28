@@ -12,7 +12,7 @@ import {
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { DatabaseTypes, DATABASE_METRIC_TYPE } from '../../../utils/consts';
+import { DatabaseTypes, DATABASE_METRIC_TYPE, HttpErrorCodes } from '../../../utils/consts';
 
 const logger = getLogger();
 
@@ -26,7 +26,7 @@ async function getResourceDetails(resourceId: string) {
             ? JSON.parse(resourceDetails?.metadata?.properties)
             : {};
     } catch (error) {
-        throw createError(500, `Error occured while getting service token, ${error}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error occured while getting service token, ${error}`);
     }
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
