@@ -6,6 +6,9 @@ const DB_ROWS_COUNT = 75;
 const DATABASES = (offset: number, rowscount: number) =>
     `SELECT databaseId = d.database_id, databaseName = d.name, creationDate = d.create_date, databaseStatus = d.state_desc, databaseSize = t.databaseSize FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name offset ${offset} rows fetch next ${rowscount} rows only`;
 
+const DATABASES_COUNT = () =>
+    `SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name`;
+
 const CPU_UTILIZATION = `DECLARE @ts BIGINT; DECLARE @lastNmin TINYINT; SET @lastNmin = 1; SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); SELECT TOP(@lastNmin) SQLProcessUtilization AS [percentUsed], SQLProcessUtilization AS [used], SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],  100-SQLProcessUtilization AS [remaining] FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle],  record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], [timestamp] FROM (SELECT[timestamp], convert(xml, record) AS [record]  FROM sys.dm_os_ring_buffers WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y  ORDER BY record_id DESC`;
 const DB_SIZE = `SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files`;
 
@@ -40,6 +43,20 @@ GROUP BY
 ORDER BY 
     t.Name offset ${offset} rows fetch next ${rowscount} rows only`
 
+const TABLES_COUNT_QUERY = (databaseName: string) => `use ${databaseName}
+    SELECT 
+        COUNT(DISTINCT t.name) AS totalCount
+    FROM 
+        sys.tables t
+    INNER JOIN      
+        sys.indexes i ON t.OBJECT_ID = i.object_id
+    INNER JOIN 
+        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+    INNER JOIN 
+        sys.allocation_units a ON p.partition_id = a.container_id
+    LEFT OUTER JOIN 
+        sys.schemas s ON t.schema_id = s.schema_id`
+
 export {
     DB_ROWS_COUNT,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -49,5 +66,6 @@ export {
     CPU_UTILIZATION,
     DB_SIZE,
     DISK_UTILISATION,
-    TABLES_QUERY
+    TABLES_QUERY,
+    TABLES_COUNT_QUERY
 };

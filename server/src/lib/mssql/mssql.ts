@@ -1,4 +1,4 @@
-import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, TABLES_QUERY } from './const';
+import { CPU_UTILIZATION, DATABASES, SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, TABLES_QUERY, TABLES_COUNT_QUERY } from './const';
 import { executeSsmDocument } from '../aws/ssm';
 import getLogger from '../../utils/logger';
 
@@ -50,6 +50,17 @@ async function serverResourceUtilisation(
     return callSsmExecution(credentialsId, instanceId, region, commands);
 }
 
+
+async function getTablesCount(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    databaseName: string
+) {
+    const commands = [`${PSSCRIPT} -Query "${TABLES_COUNT_QUERY(databaseName)}"`];
+    return callSsmExecution(credentialsId, instanceId, region, commands);
+}
+
 async function getTablesList(
     credentialsId: string,
     region: string,
@@ -58,8 +69,14 @@ async function getTablesList(
     rowscount: number,
     databaseName: string
 ) {
+    logger.info('Fetching databases ', credentialsId, region, instanceId, offset, rowscount, databaseName);
+
     const commands = [`${PSSCRIPT} -Query "${TABLES_QUERY(databaseName, offset, rowscount)}"`];
-    return callSsmExecution(credentialsId, instanceId, region, commands);
+    const response = callSsmExecution(credentialsId, instanceId, region, commands);
+
+    logger.debug('Fetching tables response', response);
+
+    return response;
 }
 
-export { getDatabasesSummary, serverResourceUtilisation, getTablesList };
+export { getDatabasesSummary, serverResourceUtilisation, getTablesCount, getTablesList };

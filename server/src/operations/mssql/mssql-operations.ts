@@ -1,4 +1,4 @@
-import { getDatabasesSummary, serverResourceUtilisation, getTablesList } from '../../lib/mssql/mssql';
+import { getDatabasesSummary, serverResourceUtilisation, getTablesList, getTablesCount } from '../../lib/mssql/mssql';
 import { DB_ROWS_COUNT } from '../../lib/mssql/const';
 import getLogger from '../../utils/logger';
 
@@ -38,15 +38,17 @@ async function getResourceUtilisation(resourceId: string, resourceType: string) 
 async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId);
     const [instanceId, credentialsId, region] = getResourceDetailsFromTenancy(resourceId);
-    const tablesCount = 1; //since resources are not yet registered in tenancy harcoding values
+    let tablesCount = await getTablesCount(credentialsId, region, instanceId, databaseName);
+    tablesCount = tablesCount ? tablesCount.totalCount: 0;
     const rowscount = Math.ceil(tablesCount / DB_ROWS_COUNT);
     const tablesList = [];
     let offset = 0;
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < rowscount; i++) {
         const resp = await getTablesList(credentialsId, region, instanceId, offset, DB_ROWS_COUNT, databaseName);
         tablesList.push(...resp);
         offset += DB_ROWS_COUNT;
     }
+    tablesList.map(result => result.databaseName = databaseName);
     return { tables: tablesList };
 }
 
