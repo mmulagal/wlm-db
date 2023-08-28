@@ -6,6 +6,7 @@ import {
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
 import { getSSMClient, sendSSMCommand, getCommandInvocation } from '../../lib/aws/ssm';
+import { waitFor } from '../../utils/utils';
 import { SSM_QUERY_EXECUTION_STATUS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
@@ -27,13 +28,13 @@ async function pollCommandStatus(
         if (status === SSM_QUERY_EXECUTION_STATUS.SUCCESS || status == SSM_QUERY_EXECUTION_STATUS.FAILED) {
             return response;
         } else {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await waitFor(100);
             return await pollCommandStatus(ssmClient, pollParams);
         }
     } catch (error) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await waitFor(100);
             return await pollCommandStatus(ssmClient, pollParams);
         } else {
             logger.error('Error fetching command status:', error);
@@ -42,7 +43,7 @@ async function pollCommandStatus(
     }
 }
 
-async function executeSsmDocument(credentialsId: string, region: string, params: SendCommandCommandInput) {
+async function executeSSMDocument(credentialsId: string, region: string, params: SendCommandCommandInput) {
     logger.info('Execute SSM document', { credentialsId, region, params });
 
     const ssmClient = await getSSMClient(region, credentialsId);
@@ -59,4 +60,4 @@ async function executeSsmDocument(credentialsId: string, region: string, params:
     return response;
 }
 
-export { executeSsmDocument };
+export { executeSSMDocument };

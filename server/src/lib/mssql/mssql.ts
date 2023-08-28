@@ -9,7 +9,7 @@ import {
 } from './const';
 import getLogger from '../../utils/logger';
 import { DATABASE_METRIC_TYPE } from '../../utils/consts';
-import { executeSsmDocument } from '../../operations/aws/ssm-operations';
+import { executeSSMDocument } from '../../operations/aws/ssm-operations';
 
 const logger = getLogger();
 
@@ -21,7 +21,7 @@ async function callSsmExecution(
     commands: Array<string>
 ) {
     let response;
-    const default_params = {
+    const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
         InstanceIds: [activeInstanceId],
@@ -30,19 +30,19 @@ async function callSsmExecution(
         }
     };
     let params = {
-        ...default_params,
+        ...defaultParams,
         InstanceIds: [activeInstanceId]
     };
     try {
-        response = await executeSsmDocument(credentialsId, region, params);
+        response = await executeSSMDocument(credentialsId, region, params);
     } catch (error) {
         logger.error('Fetching database summary from primary node failed', activeInstanceId, error);
         logger.info('Fetching database summary from secondary', credentialsId, region, standbyInstanceId);
         params = {
-            ...default_params,
+            ...defaultParams,
             InstanceIds: [standbyInstanceId]
         };
-        response = await executeSsmDocument(credentialsId, region, params);
+        response = await executeSSMDocument(credentialsId, region, params);
     }
     if (response.StandardErrorContent) {
         throw new Error(response.StandardErrorContent);
@@ -66,8 +66,7 @@ async function getDatabasesSummary(
     logger.info('Fetching databases ', credentialsId, region, activeInstanceId, offset, rowscount);
 
     const commands = [`${PSSCRIPT} -Query "${DATABASES(offset, rowscount)}"`];
-    let response = [];
-    response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching databases response', response);
 
     return response;
@@ -82,8 +81,7 @@ async function getDatabasesCount(
     logger.info('Fetching databases total count ', credentialsId, region, activeInstanceId);
 
     const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
-    let response = [];
-    response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching databases count response', response);
 
     return response;
@@ -112,11 +110,9 @@ async function serverResourceUtilisation(
     logger.info('Fetching utilization from primary', credentialsId, region, activeInstanceId, metricType);
 
     let commands: string[] = [];
-    let response = [];
-
     const metricQuery = resourceUtilisationQuery(metricType);
     commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
-    response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching  utilization', response);
 
     return response;

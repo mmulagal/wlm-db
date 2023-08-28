@@ -11,7 +11,9 @@ async function getResourceDetails(resourceId: string) {
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
     let resourceProperties;
     try {
-        resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
+        resourceProperties = resourceDetails?.metadata?.properties
+            ? JSON.parse(resourceDetails?.metadata?.properties)
+            : {};
     } catch (error) {
         logger.error('Error parsing resource properties', error);
     }
