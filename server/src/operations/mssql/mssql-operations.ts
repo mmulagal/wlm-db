@@ -1,4 +1,10 @@
-import { getDatabasesCount, getDatabasesSummary, serverResourceUtilisation, getTablesList, getTablesCount } from '../../lib/mssql/mssql';
+import {
+    getDatabasesCount,
+    getDatabasesSummary,
+    serverResourceUtilisation,
+    getTablesList,
+    getTablesCount
+} from '../../lib/mssql/mssql';
 import getLogger from '../../utils/logger';
 import { getTenancyResource } from '../tenancy-operations';
 import { DatabaseTypes } from '../../utils/consts';
@@ -11,7 +17,7 @@ async function getDataBasesSummary(resourceId: string) {
 
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
     const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
-    
+
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
     const activeInstanceId = resourceProperties?.activeInstanceId || '';
@@ -21,15 +27,22 @@ async function getDataBasesSummary(resourceId: string) {
     dbCount = dbCount?.totalCount || 0;
 
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-    
+
     const finaldb = [];
     let offset = 0;
     for (let i = 0; i < rowscount; i++) {
-        const resp = await getDatabasesSummary(credentialsId, region, activeInstanceId, standbyInstanceId, offset, DB_ROWS_COUNT);
+        const resp = await getDatabasesSummary(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT
+        );
         finaldb.push(...resp);
         offset += DB_ROWS_COUNT;
     }
-    
+
     return { databases: finaldb };
 }
 
@@ -51,7 +64,7 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
     const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
-    
+
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
     const activeInstanceId = resourceProperties?.activeInstanceId || '';
@@ -65,12 +78,20 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     const tablesList = [];
     let offset = 0;
     for (let i = 0; i < rowscount; i++) {
-        const resp = await getTablesList(credentialsId, region, activeInstanceId, standbyInstanceId, offset, DB_ROWS_COUNT, databaseName);
+        const resp = await getTablesList(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT,
+            databaseName
+        );
         tablesList.push(...resp);
         offset += DB_ROWS_COUNT;
     }
-    tablesList.map(result => result.databaseName = databaseName);
-    
+    tablesList.map(result => (result.databaseName = databaseName));
+
     return { tables: tablesList };
 }
 

@@ -27,8 +27,8 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
     server.get(
-        `${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`, 
-        { schema: GetTablesSchema }, 
+        `${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`,
+        { schema: GetTablesSchema },
         async (request, reply) => {
             const {
                 params: { resourceId, databaseName }

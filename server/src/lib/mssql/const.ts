@@ -46,8 +46,8 @@ const MEMORY_UTILISATION = `SELECT
                                  ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
                                  FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;`;
 
-const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) => 
-                    `use ${databaseName}
+const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) =>
+    `use ${databaseName}
                     SELECT 
                         t.NAME AS tableName,
                         t.type_desc AS tableType,
@@ -66,10 +66,10 @@ const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) =
                     GROUP BY 
                         t.Name, s.Name, p.Rows, t.type_desc
                     ORDER BY 
-                        t.Name offset ${offset} rows fetch next ${rowscount} rows only`
+                        t.Name offset ${offset} rows fetch next ${rowscount} rows only`;
 
-const TABLES_COUNT_QUERY = (databaseName: string) => 
-                        `use ${databaseName}
+const TABLES_COUNT_QUERY = (databaseName: string) =>
+    `use ${databaseName}
                         SELECT 
                             COUNT(DISTINCT t.name) AS totalCount
                         FROM 
@@ -81,7 +81,7 @@ const TABLES_COUNT_QUERY = (databaseName: string) =>
                         INNER JOIN 
                             sys.allocation_units a ON p.partition_id = a.container_id
                         LEFT OUTER JOIN 
-                            sys.schemas s ON t.schema_id = s.schema_id`
+                            sys.schemas s ON t.schema_id = s.schema_id`;
 
 export {
     DB_ROWS_COUNT,
