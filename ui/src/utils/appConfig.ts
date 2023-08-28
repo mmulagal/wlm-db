@@ -10,7 +10,7 @@ import Auth, { refreshSso } from './auth';
 import { encodeAll } from './utilityFunctions';
 
 const AUTH_0_OPTIONS = {
-    clientID: process.env.REACT_APP_AUTH_CLIENT,
+    clientID: 'test-client-id',
     domain: process.env.REACT_APP_AUTH_DOMAIN,
     audience: process.env.REACT_APP_AUTH_AUDIENCE
 };
