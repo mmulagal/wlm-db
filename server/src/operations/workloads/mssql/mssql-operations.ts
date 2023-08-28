@@ -65,7 +65,12 @@ async function callSsmExecution(
             ...defaultParams,
             InstanceIds: [standbyInstanceId]
         };
-        response = await executeSSMDocument(credentialsId, region, params);
+        try {
+            response = await executeSSMDocument(credentialsId, region, params);
+        } catch (secondError) {
+            logger.error('Fetching database summary from secondary node failed', standbyInstanceId, secondError);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${secondError}`);
+        }
     }
     if (response.StandardErrorContent) {
         logger.debug('Error:', response.StandardErrorContent);
