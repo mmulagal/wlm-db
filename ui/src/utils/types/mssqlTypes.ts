@@ -68,6 +68,7 @@ export interface FSxN {
     name?: string;
     lifecycle?: string;
     securityGroups?: Array<string>;
+    subnetIds?: Array<string>;
     ontapConfiguration?: {
         deploymentType?: string;
     }

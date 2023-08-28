@@ -173,15 +173,21 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
 
             const { RouteTables } = await describeRouteTable(credentialsId, region, params);
 
-            let routeTableId;
+            let mainTable, subnetTable;
             // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
             RouteTables?.forEach(routeTable => {
                 routeTable.Associations?.forEach(association => {
-                    if (association.Main || association.SubnetId === id) {
-                        routeTableId = association.RouteTableId;
+                    if (association.Main) {
+                        mainTable = association.RouteTableId;
+                    }
+
+                    if (association.SubnetId === id) {
+                        subnetTable = association.RouteTableId;
                     }
                 });
             });
+
+            const routeTableId = subnetTable || mainTable;
 
             const resourceName = findResourceNameFromTags(tags);
 
@@ -407,12 +413,37 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     return { keyPairs: kpList };
 }
 
+async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
+    logger.info('Get Windows Server Base AMI from region', { region, credentialsId });
+
+    const amis = await getAmis(credentialsId, region, {
+        Filters: [
+            { Name: 'platform', Values: ['windows'] },
+            { Name: 'is-public', Values: ['true'] },
+            { Name: 'owner-alias', Values: ['amazon'] }
+        ]
+    });
+    logger.info(amis);
+    const [filteredInstances] =
+        amis.Images?.filter(
+            ({ Name, UsageOperation }) =>
+                UsageOperation?.includes('RunInstances:0002') &&
+                Name?.startsWith('Windows_Server') &&
+                Name?.includes('English-Full-Base') &&
+                !Name?.includes('SQL')
+        ) || [];
+
+    logger.debug('Windows_Server AMI Image in region ', { region, filteredInstances });
+
+    return filteredInstances.ImageId;
+}
 export {
     getVpcsList,
     getFSxAvailableRegionsList,
     getAmiList,
     getKeyPairsList,
     getInstanceTypes,
+    getWindowsServerBaseAmi,
     getSecurityGroupsList,
     getNetworkInterfacesList
 };

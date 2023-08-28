@@ -26,7 +26,7 @@ const DatabaseCredentials = () => {
     useEffect(() => {
         dispatch(setDBCredentialsName(userName));
     });
-    
+
     //Set the Header text here
     const setHeader = () => {
         if (!userName || !password) {
@@ -76,11 +76,26 @@ const DatabaseCredentials = () => {
             >
                 <AccordionCardContent>
                     <Typography>
-                        <Typography variant="Regular_14" className={styles.subtext}>{GENERAL.DATABASE_CREDENTIAL_TEXT}</Typography>
+                        <Typography variant="Regular_14" className={styles.subtext}>
+                            {GENERAL.DATABASE_CREDENTIAL_TEXT}
+                        </Typography>
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
-                                info={GENERAL.USERNAME_TOOLTIP}
+                                info={
+                                    <div className={styles.userNameTooltip}>
+                                        <div className={styles.list}>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                                 error={useDelayedError(isValidUserName(userName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setUserName(e.target.value);
