@@ -1,4 +1,11 @@
-import { SSMClient, SendCommandCommand, SendCommandCommandInput } from '@aws-sdk/client-ssm';
+import {
+    SSMClient,
+    SendCommandCommand,
+    SendCommandCommandInput,
+    GetCommandInvocationCommandInput,
+    GetCommandInvocationCommandOutput,
+    GetCommandInvocationCommand
+} from '@aws-sdk/client-ssm';
 
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -26,4 +33,11 @@ async function sendSSMCommand(ssmClient: SSMClient, params: SendCommandCommandIn
     return response.Command?.CommandId;
 }
 
-export { getSSMClient, sendSSMCommand };
+async function getCommandInvocation(ssmClient: SSMClient, params: GetCommandInvocationCommandInput) {
+    logger.info('Getting command invocation details for command', params);
+    const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
+    logger.debug('SSM Command response', response);
+    return response;
+}
+
+export { getSSMClient, sendSSMCommand, getCommandInvocation };
