@@ -6,9 +6,8 @@ import { DATABASE_METRIC_TYPE } from '../utils/consts';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
-export default function msSqlServerRoutes(fastify: FastifyInstance) {
+export default function mssqlRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
-
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseUtilisationResponseSchema },
