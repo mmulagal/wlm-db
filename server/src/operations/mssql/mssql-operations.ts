@@ -11,7 +11,7 @@ async function getDataBasesSummary(resourceId: string) {
 
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
     const resourceProperties = JSON.parse(resourceDetails?.metadata?.properties) || {};
-    
+
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
     const activeInstanceId = resourceProperties?.activeInstanceId || '';
@@ -21,15 +21,22 @@ async function getDataBasesSummary(resourceId: string) {
     dbCount = dbCount?.totalCount || 0;
 
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-    
+
     const finaldb = [];
     let offset = 0;
     for (let i = 0; i < rowscount; i++) {
-        const resp = await getDatabasesSummary(credentialsId, region, activeInstanceId, standbyInstanceId, offset, DB_ROWS_COUNT);
+        const resp = await getDatabasesSummary(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT
+        );
         finaldb.push(...resp);
         offset += DB_ROWS_COUNT;
     }
-    
+
     return { databases: finaldb };
 }
 
