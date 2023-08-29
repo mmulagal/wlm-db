@@ -14,8 +14,7 @@ async function getWorkingEnvironments() {
             let deploymentState = '';
             try {
                 if (metadata) {
-                    const parsedMetadata = JSON.parse(metadata);
-                    const { properties } = parsedMetadata || {};
+                    const { properties } = JSON.parse(metadata) || {};
                     const parsedProperties = JSON.parse(properties);
                     deploymentState = parsedProperties.deploymentState || '';
                 }
