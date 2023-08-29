@@ -11,10 +11,11 @@ async function getWorkingEnvironments() {
     const workingEnvironments: { id: string; provider: string; name?: string; deploymentState: string }[] =
         mssqlCredentials.map((credentials: any) => {
             const { metadata } = credentials || {};
-            const { properties } = metadata || {};
             let deploymentState = '';
             try {
-                if (properties) {
+                if (metadata) {
+                    const parsedMetadata = JSON.parse(metadata);
+                    const { properties } = parsedMetadata || {};
                     const parsedProperties = JSON.parse(properties);
                     deploymentState = parsedProperties.deploymentState || '';
                 }
