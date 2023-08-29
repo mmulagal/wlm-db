@@ -212,8 +212,8 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId, databaseName);
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
 
-    let tablesCount = await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName);
-    tablesCount = tablesCount?.totalCount || 0;
+    const { totalCount: tablesCount = 0 } =
+        (await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName)) || {};
 
     const batchcount = Math.ceil(tablesCount / DB_ROWS_COUNT);
 

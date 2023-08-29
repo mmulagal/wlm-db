@@ -1,11 +1,11 @@
 import { Type } from '@fastify/type-provider-typebox';
 
-const databaseParams = Type.Object({
+const DatabaseParams = Type.Object({
     accountId: Type.String(),
     resourceId: Type.String()
 });
 
-const tablesparams = Type.Object({
+const Tablesparams = Type.Object({
     accountId: Type.String(),
     resourceId: Type.String(),
     databaseName: Type.String()
@@ -42,4 +42,4 @@ const TablesResponseBody = Type.Object({
     )
 });
 
-export { databaseParams, DatabasesResponseBody, UtilisationResponseBody, tablesparams, TablesResponseBody };
+export { DatabaseParams, DatabasesResponseBody, UtilisationResponseBody, Tablesparams, TablesResponseBody };

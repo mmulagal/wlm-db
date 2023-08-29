@@ -1,7 +1,7 @@
 import { RouteTags } from '../../utils/consts';
 import {
-    databaseParams,
-    tablesparams,
+    DatabaseParams,
+    Tablesparams,
     DatabasesResponseBody,
     TablesResponseBody,
     UtilisationResponseBody
@@ -11,7 +11,7 @@ import { GenericHeaders } from '../types/generic.types';
 const baseRequest = {
     Headers: GenericHeaders,
     tags: [RouteTags.DATABASE],
-    params: databaseParams
+    params: DatabaseParams
 };
 
 const GetDatabasesSchema = {
@@ -32,7 +32,7 @@ const DatabaseUtilisationResponseSchema = {
 
 const GetTablesSchema = {
     ...baseRequest,
-    params: tablesparams,
+    params: Tablesparams,
     description: 'List of tables in a database',
     response: {
         200: TablesResponseBody
