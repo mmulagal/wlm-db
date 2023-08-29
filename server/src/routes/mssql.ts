@@ -4,7 +4,8 @@ import {
     DatabaseUtilisationResponseSchema,
     GetDatabasesSchema,
     GetServerSummarySchema,
-    GetTablesSchema
+    GetTablesSchema,
+    DeleteDatabaseSchema
 } from './schemas/database-schemas';
 import {
     getDataBasesSummary,
@@ -13,11 +14,13 @@ import {
     getTablesSummary
 } from '../operations/workloads/mssql/mssql-operations';
 import { DATABASE_METRIC_TYPE } from '../utils/consts';
+import { removeTenancyResource } from '../operations/tenancy-operations';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
+
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseUtilisationResponseSchema },
@@ -47,6 +50,15 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             params: { resourceId }
         } = request;
         const response = await getDataBasesSummary(resourceId);
+        return reply.send(response);
+    });
+
+    server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async (request, reply) => {
+        const {
+            params: { resourceId }
+        } = request;
+
+        const response = await removeTenancyResource(resourceId);
         return reply.send(response);
     });
 
