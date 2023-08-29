@@ -174,23 +174,20 @@ describe('formatKmsData', () => {
                     id: '0022459d-e581-45e3-acc5-4fa298d413d2',
                     name: 'aws/fsx',
                     origin: 'AWS_KMS',
-                    state: 'Enabled',
-                    expiryStatus: ''
+                    state: 'Enabled'
                 },
                 {
                     id: '038e4010-d061-4375-b002-e3bfb5ec194e',
                     name: 'alias/nviet-openlab-key6',
                     origin: 'AWS_KMS',
-                    state: 'Enabled',
-                    expiryStatus: 'expiring',
+                    state: 'PendingDeletion',
                     expirationDate: 'Aug 23, 2023'
                 },
                 {
                     id: '0a93acf4-ca6e-4847-8baa-9b0f561567b1',
                     name: 'alias/nviet-openlab-key6',
                     origin: 'AWS_KMS',
-                    state: 'Enabled',
-                    expiryStatus: 'expired',
+                    state: 'Disabled',
                     expirationDate: 'June 23, 2023'
                 },
                 {
@@ -198,7 +195,6 @@ describe('formatKmsData', () => {
                     name: 'alias/nviet-openlab-key6',
                     origin: 'AWS_KMS',
                     state: 'Disabled',
-                    expiryStatus: 'expired',
                     expirationDate: 'June 23, 2023'
                 },
                 {
@@ -206,7 +202,6 @@ describe('formatKmsData', () => {
                     name: 'alias/nviet-openlab-key6',
                     origin: 'AWS_KMS',
                     state: 'Enabled',
-                    expiryStatus: '',
                     expirationDate: 'Dec 23, 2023'
                 }
             ]
@@ -218,34 +213,20 @@ describe('formatKmsData', () => {
                 name: 'aws/fsx',
                 origin: 'AWS_KMS',
                 state: 'Enabled',
-                expiryStatus: '',
                 default: true
             },
             {
                 id: '038e4010-d061-4375-b002-e3bfb5ec194e',
                 name: 'alias/nviet-openlab-key6',
                 origin: 'AWS_KMS',
-                state: 'Enabled',
-                expiryStatus: 'expiring',
+                state: 'PendingDeletion',
                 expirationDate: 'Aug 23, 2023'
-            },
-            {
-                id: '0a93acf4-ca6e-4847-8baa-9b0f561567b1',
-                name: 'alias/nviet-openlab-key6',
-                origin: 'AWS_KMS',
-                state: 'Enabled',
-                expiryStatus: 'expired',
-                expirationDate: 'June 23, 2023',
-                cellProps: {
-                    isDisabled: true
-                }
             },
             {
                 id: '11b78ef1-7b45-4b2a-ae0e-2c8811094833',
                 name: 'alias/nviet-openlab-key6',
                 origin: 'AWS_KMS',
                 state: 'Enabled',
-                expiryStatus: '',
                 expirationDate: 'Dec 23, 2023'
             }
         ];

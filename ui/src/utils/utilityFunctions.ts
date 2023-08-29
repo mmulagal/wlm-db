@@ -2,7 +2,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS, REGIONS_CODE_LIST } from './consts';
+import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
@@ -75,9 +75,9 @@ export const formatSize = (value: number, passedformat?: string) => {
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
     let newData: KmsKeys[] = [];
     data?.keys
-        ?.filter((key: KmsKeys) => key?.state === ENABLED_STATE)
+        ?.filter((key: KmsKeys) => (key?.state === ENABLED_STATE || key?.state === PENDING_DELETION))
         .map((val: KmsKeys) => {
-            if (val?.expiryStatus === EXPIRED_STATUS) {
+            if (val?.state === DISABLED_STATE) {
                 val = {
                     ...val,
                     cellProps: {
