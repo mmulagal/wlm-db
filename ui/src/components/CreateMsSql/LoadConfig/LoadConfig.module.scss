@@ -1,9 +1,26 @@
 .load-config {
+    max-height: 336px;
     .content {
-        color: var(--light-text-text-primary, #404040);
+        color: var(--light-text-text-primary, var(--grey-50));
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
         line-height: 24px; /* 171.429% */
+    }
+
+    .radioContainer {
+        margin-top: 16px;
+    }
+
+    .item {
+        width: 712px;
+        height: 48px;
+
+        border-bottom: 1px solid var(--grey-15);
+        padding: 12px 16px;
+    }
+
+    .firstItem {
+        border-top: 1px solid var(--grey-15);
     }
 }

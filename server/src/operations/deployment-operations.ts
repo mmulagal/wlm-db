@@ -205,6 +205,7 @@ async function deployCloudFormationTemplate(
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 

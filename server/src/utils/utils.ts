@@ -24,7 +24,6 @@ import {
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI
 } from './consts';
-
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
 import {
@@ -234,6 +233,10 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     );
 }
 
+async function waitFor(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export {
     filterSqlAmis,
     isVpcQuotaReached,
@@ -242,5 +245,6 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    isSameRoutetables
+    isSameRoutetables,
+    waitFor
 };

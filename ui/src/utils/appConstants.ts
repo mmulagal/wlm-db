@@ -161,6 +161,7 @@ export const GENERAL = {
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
     SELECT_EXISTING_FSX: 'Select an existing FSxN ',
     FSXN_NAME: 'FSxN name',
     USER_NAME: 'User name',
@@ -174,7 +175,7 @@ export const GENERAL = {
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
     AD_TEXT:
-        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
+        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain. Ensure that you have connection between the Active Directory and the VPC.',
     PASSWORD: 'Password',
     //Region VPC accordion
     REGION: 'Region',

@@ -17,6 +17,12 @@ const WORKSPACE_ID = 'WORKSPACE_ID';
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
+const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
+
+enum FileSystemDeploymentType {
+    SINGLE_AZ_1,
+    MULTI_AZ_1
+}
 
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
@@ -93,7 +99,9 @@ enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment'
+    DEPLOYMENT = 'Deployment',
+    WORKING_ENVIRONMENT = 'Working Environment',
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
@@ -102,6 +110,11 @@ enum HttpErrorCodes {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     VALIDATION_ERROR = 422
+}
+
+enum SqlServerDeploymentModel {
+    SQL_STANDALONE = 'Non-clustered',
+    SQL_FCI = 'Always On Failover Cluster Instance'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -199,6 +212,10 @@ const SQL_AMI_NAMES = [
 enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
+}
+
+enum RESOURCESTYPE {
+    MSSQL = 'MSSQL'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -618,6 +635,17 @@ enum TemplateTypes {
     VALIDATION = 'validation'
 }
 
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -707,6 +735,9 @@ export {
     AWS_FSX,
     SQL_TEMPLATES_ASSETS,
     SAME_ROUTETABLE_MESSAGE,
+    FileSystemDeploymentType,
+    FSX_RESOURCE_TYPE,
+    RESOURCESTYPE,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI,
@@ -714,5 +745,8 @@ export {
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
     TemplateTypes,
-    SQL_TEMPLATES_DISTRIBUTION
+    SQL_TEMPLATES_DISTRIBUTION,
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS,
+    SqlServerDeploymentModel
 };

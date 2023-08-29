@@ -51,6 +51,7 @@ interface SecurityGroup {
     vpcId?: string;
     ipPermissions?: any;
     name?: string;
+    securityGroupName?: string;
 }
 
 interface NetworkInterface {
@@ -214,14 +215,22 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
     let securityGroupList: Array<SecurityGroup> = [];
     if (securityGroups?.length) {
         securityGroupList = securityGroups.map(
-            ({ GroupId: id, Description: description, VpcId: vpcId, IpPermissions: ipPermissions, Tags: tags }) => {
+            ({
+                GroupId: id,
+                Description: description,
+                VpcId: vpcId,
+                IpPermissions: ipPermissions,
+                Tags: tags,
+                GroupName: securityGroupName
+            }) => {
                 const resourceName = findResourceNameFromTags(tags);
                 return {
                     id: id,
                     description: description,
                     vpcId: vpcId,
                     ipPermissions,
-                    ...(resourceName && { name: resourceName })
+                    ...(resourceName && { name: resourceName }),
+                    securityGroupName
                 };
             }
         );
@@ -423,7 +432,6 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
             { Name: 'owner-alias', Values: ['amazon'] }
         ]
     });
-
     const [filteredInstances] =
         amis.Images?.filter(
             ({ Name, UsageOperation }) =>
