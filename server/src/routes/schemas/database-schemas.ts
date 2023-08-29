@@ -2,8 +2,11 @@ import { RouteTags } from '../../utils/consts';
 import {
     DatabaseParams,
     DatabaseHeaders,
+    Tablesparams,
     DatabasesResponseBody,
+    TablesResponseBody,
     UtilisationResponseBody,
+    ServerSummaryResponse,
     DatabaseDeleteResponseBody
 } from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
@@ -32,6 +35,14 @@ const DeleteDatabaseSchema = {
     }
 };
 
+const GetServerSummarySchema = {
+    ...baseRequest,
+    description: 'Summary of database',
+    response: {
+        200: ServerSummaryResponse
+    }
+};
+
 const DatabaseUtilisationResponseSchema = {
     ...baseRequest,
     description: 'Database Resource(CPU, Storage, Memory) Utilisation',
@@ -40,4 +51,19 @@ const DatabaseUtilisationResponseSchema = {
     }
 };
 
-export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, DeleteDatabaseSchema };
+const GetTablesSchema = {
+    ...baseRequest,
+    params: Tablesparams,
+    description: 'List of tables in a database',
+    response: {
+        200: TablesResponseBody
+    }
+};
+
+export {
+    GetDatabasesSchema,
+    DatabaseUtilisationResponseSchema,
+    DeleteDatabaseSchema,
+    GetServerSummarySchema,
+    GetTablesSchema
+};

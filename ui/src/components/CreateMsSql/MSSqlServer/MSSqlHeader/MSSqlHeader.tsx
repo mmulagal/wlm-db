@@ -21,6 +21,7 @@ const MSSqlHeader = () => {
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.Cancel}
                 callback={() => LoadConfiguration(dispatch)}
+                closeCallback={() => {}}
             />
         );
     };

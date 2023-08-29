@@ -7,12 +7,19 @@ import {
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
     PSSCRIPT,
     DATABASES_COUNT,
-    DB_ROWS_COUNT
+    DB_ROWS_COUNT,
+    SERVER_VERSION_DETAILS,
+    NUMBER_OF_CONNECTIONS,
+    SERVER_STATE,
+    IS_SERVER_CLUSTERED,
+    SERVER_NODES,
+    TABLES_COUNT_QUERY,
+    TABLES_QUERY
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { DatabaseTypes, DATABASE_METRIC_TYPE, HttpErrorCodes } from '../../../utils/consts';
+import { DatabaseTypes, DATABASE_METRIC_TYPE, SqlServerDeploymentModel, HttpErrorCodes } from '../../../utils/consts';
 
 const logger = getLogger();
 
@@ -171,4 +178,126 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     return response;
 }
 
-export { getResourceUtilisation, getDataBasesSummary, getResourceDetails, getDatabasesCount };
+async function getTablesCount(
+    credentialsId: string,
+    region: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
+    databaseName: string
+) {
+    logger.info('Fetching tables total count ', credentialsId, region, activeInstanceId, databaseName);
+
+    const commands = [`${PSSCRIPT} -Query "${TABLES_COUNT_QUERY(databaseName)}"`];
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    logger.debug('Fetching tables count response', response);
+
+    return response;
+}
+
+async function getTablesList(
+    credentialsId: string,
+    region: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
+    offset: number,
+    rowscount: number,
+    databaseName: string
+) {
+    logger.info('Fetching tables ', credentialsId, region, activeInstanceId, offset, rowscount, databaseName);
+
+    const commands = [`${PSSCRIPT} -Query "${TABLES_QUERY(databaseName, offset, rowscount)}"`];
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+
+    logger.debug('Fetching tables response', response);
+
+    return response;
+}
+
+async function getTablesSummary(resourceId: string, databaseName: string) {
+    logger.info('Get tables list for resource:', resourceId, databaseName);
+    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+
+    const { totalCount: tablesCount = 0 } =
+        (await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName)) || {};
+
+    const batchcount = Math.ceil(tablesCount / DB_ROWS_COUNT);
+
+    const tablesList = [];
+    let offset = 0;
+    for (let i = 0; i < batchcount; i++) {
+        const resp = await getTablesList(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT,
+            databaseName
+        );
+        tablesList.push(...resp);
+        offset += DB_ROWS_COUNT;
+    }
+    tablesList.map(result => (result.databaseName = databaseName));
+
+    return { tables: tablesList };
+}
+
+async function getServerSummary(resourceId: string): Promise<{
+    serverId: string;
+    serverVersion: string;
+    serverEdition: string;
+    serverEngine: string;
+    serverStatus: string;
+    activeConnections: number;
+    deploymentModel: string;
+    activeNode: string;
+    standbyNode: string;
+}> {
+    logger.info('Get details of SQL Server database:', { resourceId });
+
+    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+
+    const [serverDetails, connections, state, isClustered, nodes] = await Promise.all([
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_STATE}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_NODES}"`
+        ])
+    ]);
+
+    const serverInfo = serverDetails?.serverDetails?.split('\n');
+    const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
+
+    return {
+        serverId: resourceId,
+        serverVersion: version ? version[0] : ' ',
+        serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
+        serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
+        serverStatus: state['Current Service State'],
+        activeConnections: connections.numberOfConnections,
+        deploymentModel: isClustered.isClustered
+            ? SqlServerDeploymentModel.SQL_FCI
+            : SqlServerDeploymentModel.SQL_STANDALONE,
+        activeNode: nodes.activeNode,
+        standbyNode: nodes.standbyNode
+    };
+}
+
+export {
+    getResourceUtilisation,
+    getDataBasesSummary,
+    getServerSummary,
+    getResourceDetails,
+    getDatabasesCount,
+    getTablesSummary
+};

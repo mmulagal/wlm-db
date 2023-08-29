@@ -84,16 +84,16 @@ async function getTenancyResource(resourceType: string, resourceId: string) {
     return details;
 }
 
-async function removeTenancyResource(resourceId: string): Promise<{ status: number; reason: string }> {
+async function removeTenancyResource(resourceId: string): Promise<{ status: number; message: string }> {
     logger.info('Remove resouce from tenancy:', { resourceId });
 
     try {
         const response = await removeResource(resourceId);
         logger.info('Remove resource response:', response);
-        return { status: 204, reason: 'Ok' }; // Successfully deleted
+        return { status: 204, message: 'Ok' }; // Successfully deleted
     } catch (error) {
         logger.error('Failed to remove resource. Reason:', error);
-        return { status: 404, reason: error as string };
+        return { status: 404, message: error as string };
     }
 }
 

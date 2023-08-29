@@ -10,6 +10,12 @@ const DatabaseParams = Type.Object({
     resourceId: Type.String({ minLength: 1 })
 });
 
+const Tablesparams = Type.Object({
+    accountId: Type.String(),
+    resourceId: Type.String(),
+    databaseName: Type.String()
+});
+
 const DatabasesResponseBody = Type.Object({
     databases: Type.Array(
         Type.Object({
@@ -24,7 +30,19 @@ const DatabasesResponseBody = Type.Object({
 
 const DatabaseDeleteResponseBody = Type.Object({
     status: Type.Integer(),
-    reason: Type.Optional(Type.String())
+    message: Type.Optional(Type.String())
+});
+
+const ServerSummaryResponse = Type.Object({
+    serverId: Type.String(),
+    serverVersion: Type.String(),
+    serverEdition: Type.String(),
+    serverEngine: Type.String(),
+    serverStatus: Type.String(),
+    activeConnections: Type.Integer(),
+    deploymentModel: Type.String(),
+    activeNode: Type.String(),
+    standbyNode: Type.String()
 });
 
 const UtilisationResponseBody = Type.Object({
@@ -34,4 +52,25 @@ const UtilisationResponseBody = Type.Object({
     remaining: Type.String()
 });
 
-export { DatabaseParams, DatabasesResponseBody, UtilisationResponseBody, DatabaseDeleteResponseBody, DatabaseHeaders };
+const TablesResponseBody = Type.Object({
+    tables: Type.Array(
+        Type.Object({
+            tableName: Type.String(),
+            databaseName: Type.String(),
+            tableType: Type.String(),
+            tableSchema: Type.String(),
+            tableSize: Type.Number()
+        })
+    )
+});
+
+export {
+    DatabaseParams,
+    DatabasesResponseBody,
+    UtilisationResponseBody,
+    ServerSummaryResponse,
+    Tablesparams,
+    TablesResponseBody,
+    DatabaseDeleteResponseBody,
+    DatabaseHeaders
+};
