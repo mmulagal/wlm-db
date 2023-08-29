@@ -169,7 +169,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !state.mssqlForm.activeDirectory.password;
 
     const fsxStateValue =
-        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNName) ||
+        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNPassword) ||
         (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !state.mssqlForm.fsxN.fsxNExistingName);
 
     const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
