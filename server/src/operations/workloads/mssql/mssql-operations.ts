@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
@@ -13,20 +14,21 @@ import {
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { DatabaseTypes, DATABASE_METRIC_TYPE } from '../../../utils/consts';
+import { DatabaseTypes, DATABASE_METRIC_TYPE, HttpErrorCodes } from '../../../utils/consts';
 
 const logger = getLogger();
 
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
     const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
+    logger.debug('Resource details for resource id:', resourceId, resourceDetails);
     let resourceProperties;
     try {
         resourceProperties = resourceDetails?.metadata?.properties
             ? JSON.parse(resourceDetails?.metadata?.properties)
             : {};
     } catch (error) {
-        logger.error('Error parsing resource properties', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
     }
     const credentialsId = resourceProperties?.credentialsId || '';
     const region = resourceProperties?.region || '';
@@ -65,12 +67,19 @@ async function callSsmExecution(
             ...defaultParams,
             InstanceIds: [standbyInstanceId]
         };
-        response = await executeSSMDocument(credentialsId, region, params);
+        try {
+            response = await executeSSMDocument(credentialsId, region, params);
+        } catch (secondError) {
+            logger.error('Fetching database summary from secondary node failed', standbyInstanceId, secondError);
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${secondError}`);
+        }
     }
     if (response.StandardErrorContent) {
+        logger.debug('Error:', response.StandardErrorContent);
         throw new Error(response.StandardErrorContent);
     }
     try {
+        logger.debug('Output:', response.StandardOutputContent);
         return JSON.parse(response.StandardOutputContent!);
     } catch (error) {
         logger.error('Error parsing response for command:', commands, error);
