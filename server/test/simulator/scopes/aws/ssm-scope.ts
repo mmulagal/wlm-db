@@ -8,7 +8,4 @@ import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommans-
 
 const ssmMock = mockClient(SSMClient);
 
-
 ssmMock.on(SendCommandCommand).resolves(listSendCommandCommandResponse);
-
-
