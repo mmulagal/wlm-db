@@ -112,6 +112,11 @@ enum HttpErrorCodes {
     VALIDATION_ERROR = 422
 }
 
+enum SqlServerDeploymentModel {
+    SQL_STANDALONE = 'Non-clustered',
+    SQL_FCI = 'Always On Failover Cluster Instance'
+}
+
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
 
 const CF_STACK_COUNT_QUOTANAME = 'Stack count';
@@ -609,5 +614,6 @@ export {
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
     DATABASE_METRIC_TYPE,
-    SSM_QUERY_EXECUTION_STATUS
+    SSM_QUERY_EXECUTION_STATUS,
+    SqlServerDeploymentModel
 };
