@@ -31,9 +31,9 @@ export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 export const USER_MANAGED_AD = 'USER_MANAGED_AD';
 
 // KMS status/state
-export const EXPIRED_STATUS = 'expired';
-export const EXPIRING_STATUS = 'expiring';
 export const ENABLED_STATE = 'Enabled';
+export const DISABLED_STATE = 'Disabled';
+export const PENDING_DELETION = 'PendingDeletion';
 export const DEFAULT_MASTER_KEY = 'aws/fsx';
 
 // Add credentials link
