@@ -31,12 +31,12 @@ import {
     formatTemplateParameters,
     generateDeploymentParams,
     isCfStackQuotaReached,
-    isSameRoutetables,
-    uploadTemplates
+    isSameRoutetables
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
+import { uploadTemplates } from './template-operations';
 
 const logger = getLogger();
 
@@ -102,6 +102,7 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
+    //Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
 
     const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
@@ -175,6 +176,9 @@ async function deployCloudFormationTemplate(
     if (cfStackQuotaReached) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
+
+    //Generate Signed-url and upload to bucket
+    await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,

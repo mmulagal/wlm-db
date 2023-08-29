@@ -6,7 +6,7 @@
     "private": true,
     "main": "index.ts",
     "scripts": {
-        "build": "rimraf dist && copyfiles -u 1 src/**/*.yaml dist/src && tsc",
+        "build": "rimraf dist && tsc",
         "start": "node --loader @esbuild-kit/esm-loader dist/src/index.js",
         "dev": "node --loader @esbuild-kit/esm-loader --inspect --watch src/index.ts",
         "simulator": "cross-env NODE_ENV=simulator node --loader @esbuild-kit/esm-loader --inspect --watch test/simulator/index.ts",

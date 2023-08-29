@@ -20,14 +20,9 @@ import {
     WLM_ASSETS,
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    SQL_TEMPLATES_ASSETS,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
-    VALIDATION_AMI,
-    TemplateTypes,
-    DatabaseTypes,
-    BUCKET_NAME,
-    SQL_TEMPLATES_DISTRIBUTION
+    VALIDATION_AMI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -41,17 +36,8 @@ import {
 } from '../routes/types/deployment.types';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
-import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
-import Handlebars from 'handlebars';
-import * as fs from 'fs';
 
 const logger = getLogger();
-
-interface Template {
-    name: string;
-    url: string;
-    location: string;
-}
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -240,137 +226,6 @@ async function formatTemplateParameters(
     return { stackName: stackName, templateParameters: templateParams };
 }
 
-async function generateSignedUrls(credentialsId: string, region: string, resourceType: DatabaseTypes) {
-    logger.info('Generating signed urls ', credentialsId, region, resourceType);
-
-    let signedUrl: string = '';
-    const signedUrls: Map<string, Template> = new Map();
-
-    let assets = [];
-    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
-        assets = SQL_TEMPLATES_ASSETS;
-    }
-
-    if (assets?.length) {
-        await Promise.all(
-            SQL_TEMPLATES_ASSETS.map(async template => {
-                logger.info(
-                    `Creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}.`
-                );
-                try {
-                    signedUrl = await getPreSignedUrl(credentialsId, region, template.url);
-                    signedUrls.set(template.name, { name: template.name, url: signedUrl, location: template.url });
-                } catch (error) {
-                    logger.error(
-                        `Error creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}. ${error}`
-                    );
-                }
-            })
-        );
-    }
-
-    logger.debug('Signed urls', signedUrls);
-
-    return signedUrls;
-}
-
-async function updateTemplateUrls(
-    credentialsId: string,
-    region: string,
-    templateFilepath: string,
-    signedUrls: Map<string, Template>,
-    templateType: string
-) {
-    logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
-
-    const source = fs.readFileSync(templateFilepath).toString();
-    const template = Handlebars.compile(source);
-    if (templateType == TemplateTypes.MASTER) {
-        const contents = template({
-            ValidationTemplate: signedUrls.get('ValidationTemplate')?.url,
-            FSXNewTemplate: signedUrls.get('FSXNewTemplate')?.url,
-            FSXExistingTemplate: signedUrls.get('FSXExistingTemplate')?.url,
-            SQLTemplate: signedUrls.get('SQLTemplate')?.url
-        });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'template/wlm-master.yaml', contents);
-    } else if (templateType == TemplateTypes.SQLSTACK) {
-        const contents = template({
-            DSC: signedUrls.get('DSC')?.url,
-            DSCSignature: signedUrls.get('DSCSignature')?.url,
-            PowerShell: signedUrls.get('PowerShell')?.url,
-            PowerShellSignature: signedUrls.get('PowerShellSignature')?.url,
-
-            Sqlspcu: signedUrls.get('Sqlspcu')?.url,
-            SqlspcuSignature: signedUrls.get('SqlspcuSignature')?.url,
-            AmazonFailoverCluster: signedUrls.get('AmazonFailoverCluster')?.url,
-            AmazonFailoverClusterSignature: signedUrls.get('AmazonFailoverClusterSignature')?.url,
-
-            AmazonLaunchWizardForCFN: signedUrls.get('AmazonLaunchWizardForCFN')?.url,
-            AmazonLaunchWizardForCFNSignature: signedUrls.get('AmazonLaunchWizardForCFNSignature')?.url,
-            AmazonLaunchWizardForSSM: signedUrls.get('AmazonLaunchWizardForSSM')?.url,
-            AmazonLaunchWizardForSSMSignature: signedUrls.get('AmazonLaunchWizardForSSMSignature')?.url,
-
-            ScriptVerifySignature: signedUrls.get('ScriptVerifySignature')?.url,
-            ScriptUnzipArchive: signedUrls.get('ScriptUnzipArchive')?.url,
-            ScriptCommon: signedUrls.get('ScriptCommon')?.url,
-            ScriptCommonSignature: signedUrls.get('ScriptCommonSignature')?.url,
-
-            ScriptSQLFCI: signedUrls.get('ScriptSQLFCI')?.url,
-            ScriptSQLFCISignature: signedUrls.get('ScriptSQLFCISignature')?.url,
-            ScriptSQLONTAP: signedUrls.get('ScriptSQLONTAP')?.url,
-            ScriptSQLONTAPSignature: signedUrls.get('ScriptSQLONTAPSignature')?.url
-        });
-        await putObjectBucket(
-            credentialsId,
-            region,
-            BUCKET_NAME,
-            'template/sql-windows-fci-config_nosignal.yaml',
-            contents
-        );
-    } else if (templateType == TemplateTypes.VALIDATION) {
-        const contents = template({
-            AmazonLaunchWizardForCFN: signedUrls.get('AmazonLaunchWizardForCFN')?.url,
-            AmazonLaunchWizardForCFNSignature: signedUrls.get('AmazonLaunchWizardForCFNSignature')?.url,
-
-            ScriptVerifySignature: signedUrls.get('ScriptVerifySignature')?.url,
-            ScriptVpcCheck: signedUrls.get('ScriptVpcCheck')?.url,
-            ScriptUpdateDnsServers: signedUrls.get('ScriptUpdateDnsServers')?.url,
-            ScriptRenameComputer: signedUrls.get('ScriptRenameComputer')?.url,
-            ScriptRestartComputer: signedUrls.get('ScriptRestartComputer')?.url
-        });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'template/vpc-ad-validation.yaml', contents);
-    }
-}
-
-async function uploadTemplates(credentialsId: string, region: string, resourceType: DatabaseTypes) {
-    logger.info('Uploading templates ', credentialsId, region, resourceType);
-
-    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
-        const signedUrls = await generateSignedUrls(credentialsId, region, resourceType);
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.VALIDATION,
-            signedUrls,
-            TemplateTypes.VALIDATION
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.SQLSTACK,
-            signedUrls,
-            TemplateTypes.SQLSTACK
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.MASTER,
-            signedUrls,
-            TemplateTypes.MASTER
-        );
-    }
-}
-
 function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     return (
         'routeTable1Id' in networkConfiguration &&
@@ -387,8 +242,5 @@ export {
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    generateSignedUrls,
-    updateTemplateUrls,
-    isSameRoutetables,
-    uploadTemplates
+    isSameRoutetables
 };

@@ -408,7 +408,7 @@ const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
-const MASTER_TEMPLATE_PATH = 'wlm-master.yaml';
+const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = true;
@@ -506,7 +506,7 @@ const SQL_TEMPLATES_ASSETS = [
 
     {
         name: 'SQLTemplate',
-        url: 'templates/sql-windows-fci-config.json'
+        url: 'templates/sql-windows-fci-config_nosignal.yaml'
     },
     {
         name: 'DSC',
@@ -587,13 +587,29 @@ const SQL_TEMPLATES_ASSETS = [
     {
         name: 'ScriptSQLONTAPSignature',
         url: 'scripts/sqlontap.zip.sig'
+    },
+    {
+        name: 'ScriptVpcCheck',
+        url: 'validation/Validate-VPCConnectivity.ps1'
+    },
+    {
+        name: 'ScriptUpdateDnsServers',
+        url: 'validation/Update-DNSServers.ps1'
+    },
+    {
+        name: 'ScriptRenameComputer',
+        url: 'validation/Rename-Computer.ps1'
+    },
+    {
+        name: 'ScriptRestartComputer',
+        url: 'validation/Restart-Computer.ps1'
     }
 ];
 
 const SQL_TEMPLATES_DISTRIBUTION = {
-    VALIDATION: './src/resources/mssql/templates/vpc-ad-validation.yaml',
-    SQLSTACK: './src/resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './src/resources/mssql/templates/wlm-master.yaml'
+    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
+    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
+    MASTER: './resources/mssql/templates/wlm-master.yaml'
 };
 
 enum TemplateTypes {
