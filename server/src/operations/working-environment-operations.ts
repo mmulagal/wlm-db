@@ -23,7 +23,7 @@ async function getWorkingEnvironments() {
             }
             return {
                 id: credentials.resourceIdentifier,
-                provider: RESOURCESTYPE.MSSQL,
+                provider: credentials.resourceType,
                 name: credentials.name,
                 deploymentState
             };

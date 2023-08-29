@@ -210,7 +210,7 @@ enum AWSQueryFields {
 }
 
 enum RESOURCESTYPE {
-    MSSQL = 'MSSQL'
+    MSSQL = 'mssql'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
