@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -14,6 +14,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
@@ -44,10 +45,13 @@ const FSxNSystem = () => {
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
 
     const [password, setPassword] = useState('');
+
+    const fsxNameRef = useRef(null);
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
@@ -86,6 +90,16 @@ const FSxNSystem = () => {
         dispatch(setFsxNExistingUserName(FSXADMIN));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
+
+    //FSX Name check to highlight the field
+    useEffect(() => {
+        if (!isFsxNotFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                fsxNameRef?.current?.focus();
+            }, 10);
+        }
+    }, [isFsxNotFilled, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -206,7 +220,23 @@ const FSxNSystem = () => {
                                         </div>
                                     </Typography>
                                 }
-                                error={useDelayedError(fsxPassVal(password))}
+                                error={
+                                    !isFsxNotFilled && !selectedFsxnPassword
+                                        ? GENERAL.ACTION_REQUIRED
+                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
+                                          '' || fsxPassVal(password)
+                                }
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));
