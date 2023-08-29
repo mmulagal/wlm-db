@@ -164,12 +164,6 @@ Resources:
                 Count: '1'
                 Timeout: PT30M
         Metadata:
-            AWS::CloudFormation::Authentication:
-                S3AccessCreds:
-                    type: S3
-                    roleName: !Ref 'Ec2RoleName'
-                    buckets:
-                        - !Ref 'AssetsBucketName'
             AWS::CloudFormation::Init:
                 configSets:
                     config:
@@ -264,12 +258,6 @@ Resources:
                 Count: '1'
                 Timeout: PT15M
         Metadata:
-            AWS::CloudFormation::Authentication:
-                S3AccessCreds:
-                    type: S3
-                    roleName: !Ref 'Ec2RoleName'
-                    buckets:
-                        - !Ref 'AssetsBucketName'
             AWS::CloudFormation::Init:
                 configSets:
                     config:

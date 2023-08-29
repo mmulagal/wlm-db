@@ -373,11 +373,19 @@ Resources:
             SubnetId: !Ref 'PrivateSubnet1ID'
             GroupSet: !If
                 - ADSGNotSelected
-                - - !Ref 'WorkloadSecurityGroup'
-                  - !Ref 'ONTAPSecurityGroupID'
-                - - !Ref 'DomainMemberSGID'
-                  - !Ref 'WorkloadSecurityGroup'
-                  - !Ref 'ONTAPSecurityGroupID'
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                          - !Ref 'DomainMemberSGID'
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName1'
@@ -388,11 +396,19 @@ Resources:
             SubnetId: !Ref 'PrivateSubnet2ID'
             GroupSet: !If
                 - ADSGNotSelected
-                - - !Ref 'WorkloadSecurityGroup'
-                  - !Ref 'ONTAPSecurityGroupID'
-                - - !Ref 'DomainMemberSGID'
-                  - !Ref 'WorkloadSecurityGroup'
-                  - !Ref 'ONTAPSecurityGroupID'
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                          - !Ref 'DomainMemberSGID'
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName2'
@@ -403,12 +419,6 @@ Resources:
                 Count: '1'
                 Timeout: PT180M
         Metadata:
-            AWS::CloudFormation::Authentication:
-                S3AccessCreds:
-                    type: S3
-                    roleName: !Ref 'Ec2RoleName'
-                    buckets:
-                        - !Ref 'AssetsBucketName'
             AWS::CloudFormation::Init:
                 configSets:
                     config:
@@ -938,12 +948,6 @@ Resources:
                 Count: '1'
                 Timeout: PT120M
         Metadata:
-            AWS::CloudFormation::Authentication:
-                S3AccessCreds:
-                    type: S3
-                    roleName: !Ref 'Ec2RoleName'
-                    buckets:
-                        - !Ref 'AssetsBucketName'
             AWS::CloudFormation::Init:
                 configSets:
                     config:

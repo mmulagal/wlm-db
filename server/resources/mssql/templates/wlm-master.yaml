@@ -25,6 +25,7 @@ Metadata:
           - WorkloadInstanceType
           - NodeNetBIOSNames
           - KeyPairName
+          - ValidationAmi
       - Label:
           default: Microsoft Active Directory Configuration
         Parameters:
@@ -142,6 +143,8 @@ Metadata:
         default: (optional) Enable monitoring by CloudWatch Logging
       NotificationARN:
         default: (optional) Notification ARN
+      ValidationAmi:
+       default: Validation node AMI image id
 Parameters: 
   Ec2RoleName:
     Description: EC2 instance role name
@@ -404,6 +407,11 @@ Parameters:
   NotificationARN:
     Description: (optional) Amazon SNS topic ARNs to publish stack related events
     Type: String
+  
+  ValidationAmi:
+    Description: Validation node AMI image id
+    Type: String
+
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -444,6 +452,8 @@ Resources:
           Ref: AssetsS3KeyPrefix
         AssetsS3RegionCode:
           Ref: AssetsS3RegionCode
+        AMI:
+          Ref: ValidationAmi
       NotificationARNs:
         Fn::If:
           - IncludeNotification
@@ -477,6 +487,8 @@ Resources:
           Ref: AssetsS3KeyPrefix
         AssetsS3RegionCode:
           Ref: AssetsS3RegionCode
+        AMI:
+          Ref: ValidationAmi
       NotificationARNs:
         Fn::If:
           - IncludeNotification
@@ -499,7 +511,7 @@ Resources:
       - ValidationStack1
       - ValidationStack2
     Properties:
-      TemplateURL: {{FSXNewTemplate}}
+      TemplateURL: {{ FSXNewTemplate }}
       Parameters:
         FSxFileSystemName:
           Ref: FSxFileSystemName

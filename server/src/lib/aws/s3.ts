@@ -46,7 +46,7 @@ async function putObjectBucket(
 
     const response = await s3.send(command);
 
-    logger.info('putObjectBucket response:', JSON.stringify(response));
+    logger.debug('putObjectBucket response:', response);
 
     return response;
 }

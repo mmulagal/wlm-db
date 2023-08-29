@@ -8,7 +8,7 @@ import {
     SQL_TEMPLATES_DISTRIBUTION
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import * as fs from 'fs';
+import { readFileSync } from 'fs';
 
 interface TemplateDetails {
     name: string;
@@ -61,7 +61,7 @@ async function updateTemplateUrls(
 ) {
     logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
 
-    const source = fs.readFileSync(templateFilepath).toString();
+    const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
     if (templateType == TemplateTypes.MASTER) {
         const contents = template({
