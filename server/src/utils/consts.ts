@@ -417,7 +417,7 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'wlmbucket';
+const BUCKET_NAME = 'bucketkrithi';
 const ASSETS_BUCKET_REGION = 'ap-southeast-1';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
