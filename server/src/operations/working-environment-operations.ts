@@ -7,43 +7,45 @@ import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-o
 const logger = getLogger();
 async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
-    const workingEnvironments: { id: string; provider: string; name?: string; state: string }[] = [];
     const mssqlCredentials = await getTenancyResourcesByType(RESOURCESTYPE.MSSQL);
-    mssqlCredentials.map((credentials: any) => {
-        let state = '';
-        try {
-            state =
-                typeof credentials.metadata === 'string' && credentials.metadata.includes('state')
-                    ? JSON.parse(credentials.metadata)
-                    : 'initializing';
-        } catch (error) {
-            logger.error('Unable to parse JSON', error);
-            state = 'initializing';
+    const workingEnvironments: { id: string; provider: string; name?: string; state: string }[] = mssqlCredentials.map(
+        (credentials: any) => {
+            let state = 'initializing';
+            try {
+                if (typeof credentials.metadata === 'string' && credentials.metadata.includes('state')) {
+                    state = JSON.parse(credentials.metadata);
+                }
+            } catch (error) {
+                logger.error('Unable to parse JSON', error);
+            }
+            return {
+                id: credentials.resourceIdentifier,
+                provider: RESOURCESTYPE.MSSQL,
+                name: credentials.name,
+                state
+            };
         }
-        workingEnvironments.push({
-            id: credentials.resourceIdentifier,
-            provider: RESOURCESTYPE.MSSQL,
-            name: credentials.name,
-            state
-        });
-    });
-    return workingEnvironments ? workingEnvironments : [];
+    );
+    return workingEnvironments || [];
 }
 
 async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
     logger.info('Getting MSSQL working environment data for resource:', resourceId);
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
     const dbCount = await getDatabasesCount(credentialsId, region, activeInstanceId, standbyInstanceId);
-    const serverName = tenancyResource?.name;
+    const { name: serverName, metadata } = tenancyResource || {};
+    const { properties } = metadata || {};
+    let location = '';
+    let deploymentState = '';
     try {
-        tenancyResource = tenancyResource?.metadata?.properties
-            ? JSON.parse(tenancyResource?.metadata?.properties)
-            : {};
+        if (properties) {
+            const parsedProperties = JSON.parse(properties);
+            location = parsedProperties.location || '';
+            deploymentState = parsedProperties.deploymentState || '';
+        }
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
     }
-    const location = tenancyResource?.activeInstanceId || '';
-    const deploymentState = tenancyResource?.deploymentState || '';
     return {
         id: resourceId,
         serverName,

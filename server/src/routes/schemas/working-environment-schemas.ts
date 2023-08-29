@@ -15,7 +15,7 @@ const AccountIdAndWorkingEnvironmentIdParams = Type.Object({
     workingEnvironmentId: Type.String({ minLength: 1 })
 });
 
-const getWorkingEnvironmentsSchema = {
+const GetWorkingEnvironmentsSchema = {
     tags: [RouteTags.WORKING_ENVIRONMENT],
     description: 'Get working environments',
     headers: GenericHeaders,
@@ -25,7 +25,7 @@ const getWorkingEnvironmentsSchema = {
     }
 };
 
-const getWorkingEnvironmentSchema = {
+const GetWorkingEnvironmentSchema = {
     tags: [RouteTags.WORKING_ENVIRONMENT],
     description: 'Get working environments',
     headers: GenericHeaders,
@@ -35,4 +35,4 @@ const getWorkingEnvironmentSchema = {
     }
 };
 
-export { getWorkingEnvironmentsSchema, getWorkingEnvironmentSchema };
+export { GetWorkingEnvironmentsSchema, GetWorkingEnvironmentSchema };
