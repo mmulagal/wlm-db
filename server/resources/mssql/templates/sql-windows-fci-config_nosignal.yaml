@@ -498,7 +498,7 @@ Resources:
                             source: {{ ScriptUnzipArchive }}
                         C:\cfn\scripts\common.zip:
                             source: {{ ScriptCommon }}
-                        C:\cfn\script{\common.zip.sig:
+                        C:\cfn\scripts\common.zip.sig:
                             source: {{ ScriptCommonSignature }}
                         C:\cfn\scripts\sqlfci.zip:
                             source: {{ ScriptSQLFCI }}
