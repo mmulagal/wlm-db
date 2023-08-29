@@ -33,7 +33,7 @@
         "resourceClass": "STORAGE_SERVICES",
         "name": "EC2AMAZ-A57OD4J",
         "agentIds": [],
-        "metadata": "{\"location\": \"AWS\"}"
+        "metadata": "{\"properties\": \"{\\\"credentialsId\\\":\\\"f6082f35-c1db-4619-bb5c-84bcb5bf3286\\\",\\\"region\\\":\\\"ap-southeast-1\\\",\\\"activeInstanceId\\\":\\\"i-0880a21327284f67c\\\",\\\"standbyInstanceId\\\":\\\"i-07e76a4b916548dc0\\\"}\"}"
     },
     {
         "resourceIdentifier": "5C791AE7-0E86-486B-8DC2-BAFEF485B875",

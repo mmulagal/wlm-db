@@ -29,14 +29,14 @@ async function sendSSMCommand(ssmClient: SSMClient, params: SendCommandCommandIn
     const sendCommand = new SendCommandCommand(params);
     const response = await ssmClient.send(sendCommand);
 
-    logger.debug('SSM Command response', response);
+    logger.info('SSM Command response', response);
     return response.Command?.CommandId;
 }
 
 async function getCommandInvocation(ssmClient: SSMClient, params: GetCommandInvocationCommandInput) {
     logger.info('Getting command invocation details for command', params);
     const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
-    logger.debug('SSM Command response', response);
+    logger.info('SSM Command response', response);
     return response;
 }
 

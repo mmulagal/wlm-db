@@ -157,7 +157,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     const metricQuery = resourceUtilisationQuery(metricType);
     commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
-    logger.debug('Fetching  utilization', response);
+    logger.info('Fetching  utilization', response);
 
     return response;
 }
