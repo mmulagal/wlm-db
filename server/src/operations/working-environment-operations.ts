@@ -11,10 +11,10 @@ async function getWorkingEnvironments() {
     const workingEnvironments: { id: string; provider: string; name?: string; deploymentState: string }[] =
         mssqlCredentials.map((credentials: any) => {
             const { metadata } = credentials || {};
-            const { properties } = metadata || {};
             let deploymentState = '';
             try {
-                if (properties) {
+                if (metadata) {
+                    const { properties } = JSON.parse(metadata) || {};
                     const parsedProperties = JSON.parse(properties);
                     deploymentState = parsedProperties.deploymentState || '';
                 }
@@ -23,7 +23,7 @@ async function getWorkingEnvironments() {
             }
             return {
                 id: credentials.resourceIdentifier,
-                provider: RESOURCESTYPE.MSSQL,
+                provider: credentials.resourceType,
                 name: credentials.name,
                 deploymentState
             };
