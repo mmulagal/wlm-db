@@ -15,10 +15,10 @@ snsMock.on(ListTopicsCommand).resolves({
     },
     Topics: [
         {
-            TopicArn: `arn:aws:sns:${faker.string(10)}:${faker.number(12)}:${faker.string(50)}`
+            TopicArn: `arn:aws:sns:${faker.string.alpha(10)}:${faker.number.int(12)}:${faker.string.alpha(50)}`
         },
         {
-            TopicArn: `arn:aws:sns:${faker.string(10)}:${faker.number(12)}:${faker.string(50)}`
+            TopicArn: `arn:aws:sns:${faker.string.alpha(10)}:${faker.number.int(12)}:${faker.string.alpha(50)}`
         }
     ]
 });
@@ -31,7 +31,7 @@ snsMock.on(CreateTopicCommand).resolves({
         attempts: 1,
         totalRetryDelay: 0
     },
-    TopicArn: `arn:aws:sns:${faker.string(10)}:${faker.number(12)}:${faker.string(10)}`
+    TopicArn: `arn:aws:sns:${faker.string.alpha(10)}:${faker.number.int(12)}:${faker.string.alpha(10)}`
 });
 snsMock.on(SubscribeCommand).resolves({
     $metadata: {
@@ -42,5 +42,7 @@ snsMock.on(SubscribeCommand).resolves({
         attempts: 1,
         totalRetryDelay: 0
     },
-    SubscriptionArn: `arn:aws:sns:${faker.string(10)}:${faker.number(12)}:${faker.string(10)}:${faker.string.uuid()}`
+    SubscriptionArn: `arn:aws:sns:${faker.string.alpha(10)}:${faker.number.int(12)}:${faker.string.alpha(
+        10
+    )}:${faker.string.uuid()}`
 });
