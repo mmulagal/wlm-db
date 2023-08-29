@@ -3,7 +3,7 @@ export const SELECT_CONFIG = {
     EASY_CREATE: `Easy create`,
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
-        'Use a recommended est-practice configuration. You can change most configuration options after database is created.',
+        'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
@@ -161,6 +161,7 @@ export const GENERAL = {
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
     SELECT_EXISTING_FSX: 'Select an existing FSxN ',
     FSXN_NAME: 'FSxN name',
     USER_NAME: 'User name',
@@ -174,7 +175,7 @@ export const GENERAL = {
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
     AD_TEXT:
-        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
+        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain. Ensure that you have connection between the Active Directory and the VPC.',
     PASSWORD: 'Password',
     //Region VPC accordion
     REGION: 'Region',
@@ -191,8 +192,12 @@ export const GENERAL = {
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
+    DATABASE_CREDENTIAL_TEXT: 'Create a new service account for SQL Server.',
     USERNAME_TOOLTIP:
-        'The user name must be 5 characters minimum. Only alphanumeric characters allowed and should not contain the word "admin/administrator".',
+        'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
+    USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
+    USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
+
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
     PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',

@@ -5,7 +5,7 @@ import config from 'config';
 import { isObject, cloneDeep, isArray, isPlainObject } from 'lodash-es';
 import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
-import opentelemetryApi from '@opentelemetry/api';
+import { context, trace } from '@opentelemetry/api';
 
 function isPatternLayout(layout: Layout): layout is PatternLayout {
     return (layout as PatternLayout).pattern !== undefined;
@@ -27,8 +27,8 @@ function hideSecretsValues(obj: any) {
 }
 
 function getActiveTraceId() {
-    const activeCtx = opentelemetryApi.context.active();
-    const span = opentelemetryApi.trace.getSpan(activeCtx);
+    const activeCtx = context.active();
+    const span = trace.getSpan(activeCtx);
     return span?.spanContext().traceId;
 }
 

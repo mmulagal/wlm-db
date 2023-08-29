@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AccordionCard,
     AccordionCardContent,
@@ -10,7 +10,7 @@ import {
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { generateOptionType, formatVpcSubnetsData, regionsSort } from '../../../../utils/utilityFunctions';
+import { generateOptionType, formatVpcSubnetsData, regionsSort, sortListOfDict } from '../../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -24,6 +24,8 @@ const RegionVpc = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const [isDefaultOpen, setIsDefaultOpen] = useState(false);
 
+    const vpcRef = useRef(null);
+
     //Getting the Data from state
     const { regionsData, regionsLoading } = useAppSelector(state => state.mssql.getRegions);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
@@ -31,6 +33,7 @@ const RegionVpc = () => {
     const selectedRegionData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
@@ -49,6 +52,15 @@ const RegionVpc = () => {
         dispatch(setSelectedRegionData(generateRegionsData[0]));
     }, [dispatch, generateRegionsData]);
 
+    useEffect(() => {
+        if (!isVPCNotFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                vpcRef?.current?.focus();
+            }, 110);
+        }
+    }, [isVPCNotFilled, isCreateHit]);
+
     //Setup for radio buttons
     const [selectVPC, setSelectVPC] = useState(GENERAL.SELECT_EXISTING_VPC);
 
@@ -66,7 +78,7 @@ const RegionVpc = () => {
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
-            const vpcValue = (val.name || '-') + ' - ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
+            const vpcValue = (val.name || '-') + ' | ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
@@ -79,7 +91,7 @@ const RegionVpc = () => {
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
         });
-        return options;
+        return sortListOfDict(options, 'value');
     }, [vpcData]);
 
     // On VPC selection needs to check if 2 availability zones are available or not
@@ -125,7 +137,7 @@ const RegionVpc = () => {
             <AccordionCard
                 isDisabled={!credentialData || (credentialData && !credentialData.length)}
                 isExpandDisabled={!credentialData || (credentialData && !credentialData.length)}
-                isLoading={regionsLoading || vpcLoading}
+                isLoading={regionsLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="2"
                 title={<div className={CommonStyles.title}>{GENERAL.REGION_VPC}</div>}
@@ -171,6 +183,7 @@ const RegionVpc = () => {
                             <div className={styles.handleSelect}>
                                 <SelectField
                                     isLoading={vpcLoading}
+                                    ref={vpcRef}
                                     label={GENERAL.VPC}
                                     error={!isVPCNotFilled && !selectedVPCData ? GENERAL.ACTION_REQUIRED : ''}
                                     //@ts-ignore

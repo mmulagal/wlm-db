@@ -5,6 +5,7 @@ import {
     cloudManagerAwsCredentials,
     credentialsId
 } from '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 
 const account_id = 'account-' + `${faker.string.alpha(6)}`;
 

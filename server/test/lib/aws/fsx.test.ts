@@ -1,5 +1,6 @@
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/opentelemetry-scope';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';

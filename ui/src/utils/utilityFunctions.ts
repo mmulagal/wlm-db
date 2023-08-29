@@ -87,8 +87,10 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
             }
             if (val?.name === DEFAULT_MASTER_KEY) {
                 val = { ...val, default: true };
+                newData.unshift(val);
+            } else{
+                newData.push(val);
             }
-            newData.push(val);
         });
     return newData;
 };
@@ -229,4 +231,13 @@ export const isValidUserName = (userName: string) => {
     ) {
         return GENERAL.USERNAME_TOOLTIP;
     }
+};
+
+
+export const sortListOfDict = (dataList: any, field: string) => {
+    if(dataList && dataList.length < 2){
+        return dataList;
+    };
+    const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    return newDBList;
 };
