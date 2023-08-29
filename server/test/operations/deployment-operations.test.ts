@@ -19,15 +19,11 @@ import {
     EC2_CONFIGURATION,
     NETWORKING_CONFIGURATION
 } from '../utils/consts';
-import { mockClient } from 'aws-sdk-client-mock';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;
 
 describe('Cloud formation operations', () => {
     it('Create the cloud formation template url for user deployment', async () => {
-        const s3Client = mockClient(S3Client);
-        s3Client.on(PutObjectCommand).resolves({});
         const resp = await createCloudFormationTemplateForUserDeployment(
             credentialsid,
             DEFAULT_AWS_REGION,
