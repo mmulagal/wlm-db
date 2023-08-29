@@ -12,7 +12,9 @@ import {
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
-    SERVER_NODES
+    SERVER_NODES,
+    TABLES_COUNT_QUERY,
+    TABLES_QUERY
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -176,6 +178,70 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     return response;
 }
 
+async function getTablesCount(
+    credentialsId: string,
+    region: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
+    databaseName: string
+) {
+    logger.info('Fetching tables total count ', credentialsId, region, activeInstanceId, databaseName);
+
+    const commands = [`${PSSCRIPT} -Query "${TABLES_COUNT_QUERY(databaseName)}"`];
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    logger.debug('Fetching tables count response', response);
+
+    return response;
+}
+
+async function getTablesList(
+    credentialsId: string,
+    region: string,
+    activeInstanceId: string,
+    standbyInstanceId: string,
+    offset: number,
+    rowscount: number,
+    databaseName: string
+) {
+    logger.info('Fetching tables ', credentialsId, region, activeInstanceId, offset, rowscount, databaseName);
+
+    const commands = [`${PSSCRIPT} -Query "${TABLES_QUERY(databaseName, offset, rowscount)}"`];
+    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+
+    logger.debug('Fetching tables response', response);
+
+    return response;
+}
+
+async function getTablesSummary(resourceId: string, databaseName: string) {
+    logger.info('Get tables list for resource:', resourceId, databaseName);
+    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+
+    const { totalCount: tablesCount = 0 } =
+        (await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName)) || {};
+
+    const batchcount = Math.ceil(tablesCount / DB_ROWS_COUNT);
+
+    const tablesList = [];
+    let offset = 0;
+    for (let i = 0; i < batchcount; i++) {
+        const resp = await getTablesList(
+            credentialsId,
+            region,
+            activeInstanceId,
+            standbyInstanceId,
+            offset,
+            DB_ROWS_COUNT,
+            databaseName
+        );
+        tablesList.push(...resp);
+        offset += DB_ROWS_COUNT;
+    }
+    tablesList.map(result => (result.databaseName = databaseName));
+
+    return { tables: tablesList };
+}
+
 async function getServerSummary(resourceId: string): Promise<{
     serverId: string;
     serverVersion: string;
@@ -209,7 +275,7 @@ async function getServerSummary(resourceId: string): Promise<{
         ])
     ]);
 
-    const serverInfo = serverDetails.serverDetails.split('\n');
+    const serverInfo = serverDetails?.serverDetails?.split('\n');
     const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
 
     return {
@@ -227,4 +293,11 @@ async function getServerSummary(resourceId: string): Promise<{
     };
 }
 
-export { getResourceUtilisation, getDataBasesSummary, getServerSummary };
+export {
+    getResourceUtilisation,
+    getDataBasesSummary,
+    getServerSummary,
+    getResourceDetails,
+    getDatabasesCount,
+    getTablesSummary
+};

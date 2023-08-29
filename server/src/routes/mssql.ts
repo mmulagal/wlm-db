@@ -3,18 +3,20 @@ import { FastifyInstance } from 'fastify/types/instance';
 import {
     DatabaseUtilisationResponseSchema,
     GetDatabasesSchema,
-    GetServerSummarySchema
+    GetServerSummarySchema,
+    GetTablesSchema
 } from './schemas/database-schemas';
 import {
     getDataBasesSummary,
     getResourceUtilisation,
-    getServerSummary
+    getServerSummary,
+    getTablesSummary
 } from '../operations/workloads/mssql/mssql-operations';
 import { DATABASE_METRIC_TYPE } from '../utils/consts';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
-function msSqlServerRoutes(fastify: FastifyInstance) {
+export default function msSqlServerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
@@ -56,6 +58,15 @@ function msSqlServerRoutes(fastify: FastifyInstance) {
         const response = await getServerSummary(resourceId);
         return reply.send(response);
     });
+    server.get(
+        `${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`,
+        { schema: GetTablesSchema },
+        async (request, reply) => {
+            const {
+                params: { resourceId, databaseName }
+            } = request;
+            const response = await getTablesSummary(resourceId, databaseName);
+            return reply.send(response);
+        }
+    );
 }
-
-export { msSqlServerRoutes };

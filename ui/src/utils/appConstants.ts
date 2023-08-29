@@ -161,6 +161,7 @@ export const GENERAL = {
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
     SELECT_EXISTING_FSX: 'Select an existing FSxN ',
     FSXN_NAME: 'FSxN name',
     USER_NAME: 'User name',

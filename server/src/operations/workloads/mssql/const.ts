@@ -56,6 +56,35 @@ const SERVER_NODES = `SELECT
 const NUMBER_OF_CONNECTIONS =
     'SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL';
 
+const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) =>
+    `use ${databaseName}
+                    SELECT 
+                        t.NAME AS tableName,
+                        t.type_desc AS tableType,
+                        s.Name AS tableSchema,
+                        SUM(a.total_pages) * 8 * 1024 AS tableSize
+                    FROM 
+                        sys.tables t
+                    INNER JOIN      
+                        sys.indexes i ON t.OBJECT_ID = i.object_id
+                    INNER JOIN 
+                        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+                    INNER JOIN 
+                        sys.allocation_units a ON p.partition_id = a.container_id
+                    LEFT OUTER JOIN 
+                        sys.schemas s ON t.schema_id = s.schema_id
+                    GROUP BY 
+                        t.Name, s.Name, p.Rows, t.type_desc
+                    ORDER BY 
+                        t.Name offset ${offset} rows fetch next ${rowscount} rows only`;
+
+const TABLES_COUNT_QUERY = (databaseName: string) =>
+    `use ${databaseName}
+                        SELECT 
+                            COUNT(DISTINCT name) AS totalCount
+                        FROM 
+                            sys.tables`;
+
 export {
     DB_ROWS_COUNT,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -68,6 +97,8 @@ export {
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     HEALTHY,
+    TABLES_QUERY,
+    TABLES_COUNT_QUERY,
     MEMORY_UTILISATION,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
