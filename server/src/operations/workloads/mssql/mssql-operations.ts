@@ -237,4 +237,4 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     return { tables: tablesList };
 }
 
-export { getResourceUtilisation, getDataBasesSummary, getTablesSummary };
+export { getResourceUtilisation, getDataBasesSummary, getResourceDetails, getDatabasesCount, getTablesSummary };

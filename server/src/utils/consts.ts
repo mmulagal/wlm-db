@@ -17,6 +17,12 @@ const WORKSPACE_ID = 'WORKSPACE_ID';
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
+const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
+
+enum FileSystemDeploymentType {
+    SINGLE_AZ_1,
+    MULTI_AZ_1
+}
 
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
@@ -94,6 +100,7 @@ enum RouteTags {
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
+    WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'DATABASE'
 }
 
@@ -200,6 +207,10 @@ const SQL_AMI_NAMES = [
 enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
+}
+
+enum RESOURCESTYPE {
+    MSSQL = 'MSSQL'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -588,6 +599,9 @@ export {
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
+    FileSystemDeploymentType,
+    FSX_RESOURCE_TYPE,
+    RESOURCESTYPE,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI,
