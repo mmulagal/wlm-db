@@ -8,24 +8,26 @@ const logger = getLogger();
 async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
     const mssqlCredentials = await getTenancyResourcesByType(RESOURCESTYPE.MSSQL);
-    const workingEnvironments: { id: string; provider: string; name?: string; state: string }[] = mssqlCredentials.map(
-        (credentials: any) => {
-            let state = 'initializing';
+    const workingEnvironments: { id: string; provider: string; name?: string; deploymentState: string }[] =
+        mssqlCredentials.map((credentials: any) => {
+            const { metadata } = credentials || {};
+            const { properties } = metadata || {};
+            let deploymentState = '';
             try {
-                if (typeof credentials.metadata === 'string' && credentials.metadata.includes('state')) {
-                    state = JSON.parse(credentials.metadata);
+                if (properties) {
+                    const parsedProperties = JSON.parse(properties);
+                    deploymentState = parsedProperties.deploymentState || '';
                 }
             } catch (error) {
-                logger.error('Unable to parse JSON', error);
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
             }
             return {
                 id: credentials.resourceIdentifier,
                 provider: RESOURCESTYPE.MSSQL,
                 name: credentials.name,
-                state
+                deploymentState
             };
-        }
-    );
+        });
     return workingEnvironments || [];
 }
 
