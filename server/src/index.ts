@@ -26,11 +26,14 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import formConfigRoutes from './routes/form-config';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
+import { execute, initializeDatabase } from './utils/utils';
+import { JwtPayload } from 'jsonwebtoken';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -134,7 +137,10 @@ const app = fastify({
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
-                            await verifyToken(authorization.replace('Bearer ', ''));
+                            const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            request.headers.user = payload['http://cloud.netapp.com/full_name']
+                                ? payload['http://cloud.netapp.com/full_name']
+                                : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();
@@ -147,6 +153,7 @@ const app = fastify({
             awsRoutes(instance);
             credentialsRoutes(instance);
             deploymentRoutes(instance);
+            formConfigRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
@@ -201,6 +208,14 @@ app.listen({ port, host }, err => {
     logger.info(`Server listening on ${host}:${port}`);
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
     validateSchema();
-    createAndSubscribeToSnsTopicInAllRegions();
-    processCloudFormationMessages();
 });
+
+createAndSubscribeToSnsTopicInAllRegions();
+processCloudFormationMessages();
+
+try {
+    initializeDatabase();
+    await execute('node_modules/prisma/build/index.js migrate deploy');
+} catch (error) {
+    logger.error('Failed to initialize database', error);
+}

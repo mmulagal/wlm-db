@@ -23,7 +23,12 @@ import {
     WLM_ASSETS,
     SAME_ROUTETABLE_MESSAGE
 } from '../utils/consts';
-import { formatTemplateParameters, generateFsxParams, isCfStackQuotaReached, isSameRoutetables } from '../utils/utils';
+import {
+    formatTemplateParameters,
+    generateDeploymentParams,
+    isCfStackQuotaReached,
+    isSameRoutetables
+} from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 
@@ -63,8 +68,8 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
-        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
     const { roleArn } = await getRoleName(credentialsId);
 

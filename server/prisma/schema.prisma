@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model deployment {
+  id                        String            @id @default(uuid())
+  deployment_id             String            @db.VarChar(255)
+  parent_deployment_id      String?           @db.VarChar(255)
+  deployment_name           String            @db.VarChar(255)
+  account_id                String            @db.VarChar(80)
+  cloud_provider_account_id String?           @db.VarChar(80)
+  cloud_provider_name       String?           @db.VarChar(80)
+  region                    String            @db.VarChar(80)
+  credentials_id            String            @db.VarChar(80)
+  deployment_status         DEPLOYMENT_STATUS
+  deployment_status_reason  String?           @db.Text
+  start_time                DateTime          @db.DateTime(0)
+  end_time                  DateTime?         @db.DateTime(0)
+  data                      Json?             @default("{}")
+
+  @@unique([account_id, deployment_id], name: "uk_wlmdb_deployment_account_id_deployment_id", map: "uk_wlmdb_deployment_account_id_deployment_id")
+  @@index([account_id], map: "k_wlmdb_deployment_account_id")
+  @@index([deployment_id], map: "k_wlmdb_deployment_deployment_id")
+}
+
+model event {
+  id                  String            @id @default(uuid())
+  event_id            String            @db.VarChar(255)
+  deployment_id       String            @db.VarChar(255)
+  deployment_name     String            @db.VarChar(255)
+  event_status        DEPLOYMENT_STATUS
+  event_status_reason String?           @db.Text
+  resource_type       String?           @db.VarChar(255)
+  time                DateTime          @db.DateTime(0)
+  data                Json?             @default("{}")
+
+  @@unique([deployment_id, event_id], name: "uk_wlmdb_deployment_deployment_id_event_id", map: "uk_wlmdb_deployment_deployment_id_event_id")
+  @@index([event_id], map: "k_wlmdb_event_event_id")
+  @@index([deployment_id], map: "k_wlmdb_event_deployment_id")
+}
+
+model resource {
+  id                        String  @id @default(uuid())
+  account_id                String  @db.VarChar(80)
+  resource_id               String  @db.VarChar(255)
+  resource_name             String? @db.VarChar(255)
+  resource_type             String  @db.VarChar(20)
+  co_relation_id            String? @db.VarChar(20)
+  cloud_provider_account_id String? @db.VarChar(80)
+  cloud_provider_name       String? @db.VarChar(80)
+  region                    String? @db.VarChar(80)
+  metadata                  Json?   @default("{}")
+
+  @@index([account_id], map: "k_wlmdb_resource_account_id")
+  @@index([resource_id], map: "k_wlmdb_resource_resource_id")
+}
+
+model config {
+  id            String   @id @default(uuid())
+  account_id    String   @db.VarChar(80)
+  user          String   @db.VarChar(255)
+  creation_time DateTime @db.DateTime(0)
+  data          Json?    @default("{}")
+
+  @@index([account_id], map: "k_wlmdb_config_account_id")
+}
+
+enum DEPLOYMENT_STATUS {
+  CREATE_COMPLETE
+  CREATE_IN_PROGRESS
+  CREATE_FAILED
+  DELETE_COMPLETE
+  DELETE_FAILED
+  DELETE_IN_PROGRESS
+  REVIEW_IN_PROGRESS
+  ROLLBACK_COMPLETE
+  ROLLBACK_FAILED
+  ROLLBACK_IN_PROGRESS
+  UPDATE_COMPLETE
+  UPDATE_COMPLETE_CLEANUP_IN_PROGRESS
+  UPDATE_IN_PROGRESS
+  UPDATE_ROLLBACK_COMPLETE
+  UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
+  UPDATE_ROLLBACK_FAILED
+  UPDATE_ROLLBACK_IN_PROGRESS
+}

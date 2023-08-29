@@ -3,6 +3,7 @@
  * These functions can be re-used at different places and act as helper functions
  */
 import createError from 'http-errors';
+import { exec } from 'child_process';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
@@ -19,7 +20,8 @@ import {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     USER_TOKEN,
-    TEMPLATE_OPTIONAL_PARAMETERS
+    TEMPLATE_OPTIONAL_PARAMETERS,
+    DEFAULT_AWS_REGION
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -33,8 +35,29 @@ import {
 } from '../routes/types/deployment.types';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
+import { PrismaClient } from '@prisma/client';
 
 const logger = getLogger();
+
+const prisma: PrismaClient = new PrismaClient();
+
+async function initializeDatabase() {
+    await prisma.$connect();
+}
+
+async function execute(command: string, timeout?: number, cwd?: string) {
+    logger.info('Executing command:', { command, timeout, cwd });
+
+    return new Promise(resolve => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        exec(command, { cwd, timeout }, (error: any, stdout: any, stderr: any) => {
+            if (error) {
+                logger.error('Failed to execute shell commands', error);
+            }
+            resolve(stdout || stderr);
+        });
+    });
+}
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -69,7 +92,7 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
+function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
@@ -137,8 +160,8 @@ async function formatTemplateParameters(
     enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
-        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
@@ -233,14 +256,45 @@ function isValidJsonString(str: string | undefined) {
     }
 }
 
+function getQueueArn(accountId: string, queueName: string) {
+    return `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+}
+
+function getQueueUrl(accountId: string, queueName: string) {
+    return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
+}
+
+function derivePropertiesFromARN(awsResourceArn: string) {
+    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.+):(?<awsAccountId>.+):(?<resourceName>.+)/;
+    if (ARN_FORMAT.test(awsResourceArn)) {
+        const matchResult = awsResourceArn.match(ARN_FORMAT);
+        if (matchResult && matchResult.groups) {
+            const { awsServiceName, region, awsAccountId, resourceName } = matchResult.groups;
+
+            return {
+                awsServiceName,
+                region,
+                awsAccountId,
+                resourceName
+            };
+        }
+    }
+}
+
 export {
+    prisma,
+    execute,
+    initializeDatabase,
     filterSqlAmis,
     isVpcQuotaReached,
     isCfStackQuotaReached,
-    generateFsxParams,
+    generateDeploymentParams,
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
     isSameRoutetables,
-    isValidJsonString
+    isValidJsonString,
+    getQueueArn,
+    getQueueUrl,
+    derivePropertiesFromARN
 };

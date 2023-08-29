@@ -50,6 +50,7 @@
         "@opentelemetry/instrumentation-fastify": "^0.32.1",
         "@opentelemetry/instrumentation-http": "^0.41.2",
         "@opentelemetry/sdk-node": "^0.41.2",
+        "@prisma/client": "^5.2.0",
         "@sinclair/typebox": "^0.27.8",
         "async": "^3.2.4",
         "bluebird": "^3.7.2",

@@ -4,8 +4,21 @@ import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
 import { DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
+import { getQueueArn } from '../../utils/utils';
 
 const logger = getLogger();
+
+function transformStackEventMessage(message: string) {
+    logger.info('Transform stack events message', { message });
+
+    const messagesArray = message.split('\n');
+    const messageObject = new Map<string, string>();
+    messagesArray.forEach(message => {
+        const [key, value] = message.split('=');
+        messageObject.set(key, value);
+    });
+    return Object.fromEntries(messageObject);
+}
 
 async function getSnsTopics(credentialsId: string, region: string) {
     logger.info('List SNS topics in a region', { credentialsId, region });
@@ -38,7 +51,7 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                     if (code) {
                         const { TopicArn } = await createTopic(code, queueName);
                         const accountId = QueueUrl?.split('/')[3];
-                        const queueArn = `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+                        const queueArn = getQueueArn(accountId, queueName);
 
                         await subscribeTopic(code, {
                             Protocol: 'sqs',
@@ -54,4 +67,4 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
     }
 }
 
-export { getSnsTopics, createAndSubscribeToSnsTopicInAllRegions };
+export { getSnsTopics, createAndSubscribeToSnsTopicInAllRegions, transformStackEventMessage };

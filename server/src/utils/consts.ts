@@ -125,12 +125,14 @@ const SECRETS: Record<string, string | undefined> = {
         ? process.env.CLIENT_SECRET
         : config.has('service-token.client_secret')
         ? config.get('service-token.client_secret')
-        : undefined
+        : undefined,
+    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL : undefined
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
-    CLIENT_SECRET: 'CLIENT_SECRET'
+    CLIENT_SECRET: 'CLIENT_SECRET',
+    DATABASE_URL: 'DATABASE_URL'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
