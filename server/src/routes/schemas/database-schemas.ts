@@ -4,7 +4,8 @@ import {
     Tablesparams,
     DatabasesResponseBody,
     TablesResponseBody,
-    UtilisationResponseBody
+    UtilisationResponseBody,
+    ServerSummaryResponse
 } from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
@@ -19,6 +20,14 @@ const GetDatabasesSchema = {
     description: 'List of Databases',
     response: {
         200: DatabasesResponseBody
+    }
+};
+
+const GetServerSummarySchema = {
+    ...baseRequest,
+    description: 'Summary of database',
+    response: {
+        200: ServerSummaryResponse
     }
 };
 
@@ -39,4 +48,4 @@ const GetTablesSchema = {
     }
 };
 
-export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, GetTablesSchema };
+export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, GetServerSummarySchema, GetTablesSchema };

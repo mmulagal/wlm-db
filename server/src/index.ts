@@ -27,7 +27,7 @@ import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
 import workingEnvironmentRoutes from './routes/working-environment';
-import mssqlRoutes from './routes/mssql';
+import msSqlServerRoutes from './routes/mssql';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
@@ -148,7 +148,7 @@ const app = fastify({
             credentialsRoutes(instance);
             deploymentRoutes(instance);
             workingEnvironmentRoutes(instance);
-            mssqlRoutes(instance);
+            msSqlServerRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
