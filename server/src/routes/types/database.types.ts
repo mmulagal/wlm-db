@@ -1,6 +1,11 @@
 import { Type } from '@fastify/type-provider-typebox';
+import { HEADERS } from '../../utils/consts';
 
-const databaseParams = Type.Object({
+const DatabaseHeaders = Type.Object({
+    [HEADERS.WORKSPACE_ID]: Type.String({ minLength: 1 })
+});
+
+const DatabaseParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     resourceId: Type.String({ minLength: 1 })
 });
@@ -17,6 +22,11 @@ const DatabasesResponseBody = Type.Object({
     )
 });
 
+const DatabaseDeleteResponseBody = Type.Object({
+    status: Type.Integer(),
+    reason: Type.Optional(Type.String())
+});
+
 const UtilisationResponseBody = Type.Object({
     percentUsed: Type.String(),
     used: Type.String(),
@@ -24,4 +34,4 @@ const UtilisationResponseBody = Type.Object({
     remaining: Type.String()
 });
 
-export { databaseParams, DatabasesResponseBody, UtilisationResponseBody };
+export { DatabaseParams, DatabasesResponseBody, UtilisationResponseBody, DatabaseDeleteResponseBody, DatabaseHeaders };

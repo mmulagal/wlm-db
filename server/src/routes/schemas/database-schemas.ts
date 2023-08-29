@@ -1,11 +1,17 @@
 import { RouteTags } from '../../utils/consts';
-import { databaseParams, DatabasesResponseBody, UtilisationResponseBody } from '../types/database.types';
+import {
+    DatabaseParams,
+    DatabaseHeaders,
+    DatabasesResponseBody,
+    UtilisationResponseBody,
+    DatabaseDeleteResponseBody
+} from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
 const baseRequest = {
     Headers: GenericHeaders,
     tags: [RouteTags.DATABASE],
-    params: databaseParams
+    params: DatabaseParams
 };
 
 const GetDatabasesSchema = {
@@ -16,6 +22,16 @@ const GetDatabasesSchema = {
     }
 };
 
+const DeleteDatabaseSchema = {
+    headers: DatabaseHeaders,
+    tags: [RouteTags.DATABASE],
+    params: DatabaseParams,
+    description: 'Remove the given MS SQL Server resource',
+    response: {
+        200: DatabaseDeleteResponseBody
+    }
+};
+
 const DatabaseUtilisationResponseSchema = {
     ...baseRequest,
     description: 'Database Resource(CPU, Storage, Memory) Utilisation',
@@ -23,4 +39,5 @@ const DatabaseUtilisationResponseSchema = {
         200: UtilisationResponseBody
     }
 };
-export { GetDatabasesSchema, DatabaseUtilisationResponseSchema };
+
+export { GetDatabasesSchema, DatabaseUtilisationResponseSchema, DeleteDatabaseSchema };

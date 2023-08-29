@@ -1,13 +1,19 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { DatabaseUtilisationResponseSchema, GetDatabasesSchema } from './schemas/database-schemas';
+import {
+    DatabaseUtilisationResponseSchema,
+    GetDatabasesSchema,
+    DeleteDatabaseSchema
+} from './schemas/database-schemas';
 import { getDataBasesSummary, getResourceUtilisation } from '../operations/workloads/mssql/mssql-operations';
 import { DATABASE_METRIC_TYPE } from '../utils/consts';
+import { removeTenancyResource } from '../operations/tenancy-operations';
 
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function mssqlRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
+
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseUtilisationResponseSchema },
@@ -37,6 +43,15 @@ export default function mssqlRoutes(fastify: FastifyInstance) {
             params: { resourceId }
         } = request;
         const response = await getDataBasesSummary(resourceId);
+        return reply.send(response);
+    });
+
+    server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async (request, reply) => {
+        const {
+            params: { resourceId }
+        } = request;
+
+        const response = await removeTenancyResource(resourceId);
         return reply.send(response);
     });
 }
