@@ -1,6 +1,13 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, WORKSPACE_ID } from '../../utils/consts';
+import {
+    CLOUD_MANAGER_ENDPOINT,
+    HEADERS,
+    AUTH0_AUDIENCE,
+    SECRETS,
+    WORKSPACE_ID,
+    HttpErrorCodes
+} from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 
@@ -30,8 +37,8 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
                 .post(`${CLOUD_MANAGER_ENDPOINT}/auth/oauth/token`, {
                     json: {
                         audience: AUTH0_AUDIENCE,
-                        client_id: '3Sdstv1J0nIBIFinhic2uOF6Yr6qRMj7',
-                        client_secret: '2fbQV4RarcrCweRERZRGJEZ8RmuTQ9iFQkoy1gBGUmQc5WShqAIdKuFAjMGO0M3D',
+                        client_id: SECRETS.CLIENT_ID,
+                        client_secret: SECRETS.CLIENT_SECRET,
                         grant_type: 'client_credentials'
                     }
                 })
@@ -91,6 +98,24 @@ async function getTenancyResourcesByType(resourceType: string) {
     }
 }
 
+async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: string) {
+    logger.info('Getting tenancy resource details for resource:', resourceType, resourceId);
+    const resource = (await getTenancyResourcesByType(resourceType)).find(
+        resource => resource.resourceIdentifier === resourceId
+    );
+    if (resource) {
+        if (resource?.metadata?.length) {
+            resource.metadata = JSON.parse(resource.metadata);
+        } else {
+            resource.metadata = '';
+        }
+
+        return resource;
+    } else {
+        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
+    }
+}
+
 async function removeResource(resourceIdentifier: string) {
     logger.info('Removing resource from tenancy', { resourceIdentifier });
 
@@ -108,4 +133,12 @@ async function removeResource(resourceIdentifier: string) {
     }
 }
 
-export { registerServiceResource, getTenancyResourcesByType, removeResource, getServiceToken, ServiceResourceRequest };
+export {
+    registerServiceResource,
+    getTenancyResourcesByType,
+    getTenancyResourcesByTypeAndId,
+    removeResource,
+    getServiceToken,
+    ServiceResourceRequest,
+    MetaData
+};
