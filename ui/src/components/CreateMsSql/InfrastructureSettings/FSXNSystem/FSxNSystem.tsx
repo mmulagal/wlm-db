@@ -106,7 +106,7 @@ const FSxNSystem = () => {
             } else if (fsxPassVal(password)) {
                 return <AccordionError />;
             } else {
-                return <Typography variant="Regular_14">{selectedFsxnNewUserName}</Typography>;
+                return <Typography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</Typography>;
             }
         } else {
             //Checking for the existing option
