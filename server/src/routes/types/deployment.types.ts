@@ -17,7 +17,7 @@ const EC2Configuration = Type.Object({
 });
 
 const ADConfiguration = Type.Object({
-    adScenarioType: Type.String({ enum: ['AWS_MANAGED_AD', 'MICROSOFT_AD_ON_EC2'] }),
+    adScenarioType: Type.String({ enum: ['AWS_MANAGED_AD', 'USER_MANAGED_AD'] }),
     domainUsername: Type.String(),
     domainPassword: Type.String(),
     domainDnsname: Type.String(),

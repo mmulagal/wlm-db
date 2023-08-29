@@ -24,7 +24,6 @@ import {
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI
 } from './consts';
-
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
 import {

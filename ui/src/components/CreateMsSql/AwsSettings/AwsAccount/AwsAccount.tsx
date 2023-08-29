@@ -52,7 +52,7 @@ const AwsAccount = () => {
     const isCreatePresed = useAppSelector(state => state.msSqlAction.isCreatePressed);
     const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
-    const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isFsxNNameFilled = useAppSelector(state => state.mssqlForm.fsxN.fsxNPassword);
     const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
     const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);

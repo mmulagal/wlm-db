@@ -1,8 +1,14 @@
 import { Type } from '@fastify/type-provider-typebox';
 
-const databaseParams = Type.Object({
+const DatabaseParams = Type.Object({
     accountId: Type.String(),
     resourceId: Type.String()
+});
+
+const Tablesparams = Type.Object({
+    accountId: Type.String(),
+    resourceId: Type.String(),
+    databaseName: Type.String()
 });
 
 const DatabasesResponseBody = Type.Object({
@@ -17,6 +23,18 @@ const DatabasesResponseBody = Type.Object({
     )
 });
 
+const ServerSummaryResponse = Type.Object({
+    serverId: Type.String(),
+    serverVersion: Type.String(),
+    serverEdition: Type.String(),
+    serverEngine: Type.String(),
+    serverStatus: Type.String(),
+    activeConnections: Type.Integer(),
+    deploymentModel: Type.String(),
+    activeNode: Type.String(),
+    standbyNode: Type.String()
+});
+
 const UtilisationResponseBody = Type.Object({
     percentUsed: Type.String(),
     used: Type.String(),
@@ -24,4 +42,23 @@ const UtilisationResponseBody = Type.Object({
     remaining: Type.String()
 });
 
-export { databaseParams, DatabasesResponseBody, UtilisationResponseBody };
+const TablesResponseBody = Type.Object({
+    tables: Type.Array(
+        Type.Object({
+            tableName: Type.String(),
+            databaseName: Type.String(),
+            tableType: Type.String(),
+            tableSchema: Type.String(),
+            tableSize: Type.Number()
+        })
+    )
+});
+
+export {
+    DatabaseParams,
+    DatabasesResponseBody,
+    UtilisationResponseBody,
+    ServerSummaryResponse,
+    Tablesparams,
+    TablesResponseBody
+};
