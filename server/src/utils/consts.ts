@@ -591,9 +591,9 @@ const SQL_TEMPLATES_ASSETS = [
 ];
 
 const SQL_TEMPLATES_DISTRIBUTION = {
-    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
-    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml'
+    VALIDATION: './src/resources/mssql/templates/vpc-ad-validation.yaml',
+    SQLSTACK: './src/resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
+    MASTER: './src/resources/mssql/templates/wlm-master.yaml'
 };
 
 enum TemplateTypes {
