@@ -111,7 +111,7 @@ const FSxNSystem = () => {
             );
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        } else if (!selectedZone1 && !selectedZone2) {
+        } else if (!selectedZone1 || !selectedZone2) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_AZ}
@@ -144,8 +144,10 @@ const FSxNSystem = () => {
         <div className={styles.fsx}>
             <AccordionCard
                 isLoading={fsxnLoading}
-                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+                    || !selectedZone1 || !selectedZone2}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+                    || !selectedZone1 || !selectedZone2}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
