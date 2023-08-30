@@ -45,6 +45,18 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         }
     );
 
+    server.get(
+        `${MSSQL_DATA_API_PATH}/utilization/disk`,
+        { schema: DatabaseUtilisationResponseSchema },
+        async (request, reply) => {
+            const {
+                params: { resourceId }
+            } = request;
+            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
+            return reply.send(response);
+        }
+    );
+
     server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
         const {
             params: { resourceId }
