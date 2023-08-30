@@ -241,3 +241,17 @@ export const sortListOfDict = (dataList: any, field: string) => {
     const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
     return newDBList;
 };
+
+export const formatSizeOnePrecision = (value: number | string) => numeral(value).format('0.[0] ib');
+
+export const formatSizeSplit = (value: number | string) => {
+    const formatted = formatSizeOnePrecision(value);
+    const splitted = formatted.split(' ');
+    const actualValue = splitted[0];
+    const format = splitted[1];
+    return {value: actualValue, format}
+};
+
+export const displayFormattedValue = (value: number, msg: string) => {
+    return `${formatSize(value)} ${msg}`;
+}
