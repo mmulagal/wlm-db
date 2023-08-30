@@ -2,7 +2,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS, REGIONS_CODE_LIST } from './consts';
+import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
@@ -75,9 +75,9 @@ export const formatSize = (value: number, passedformat?: string) => {
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
     let newData: KmsKeys[] = [];
     data?.keys
-        ?.filter((key: KmsKeys) => key?.state === ENABLED_STATE)
+        ?.filter((key: KmsKeys) => (key?.state === ENABLED_STATE || key?.state === PENDING_DELETION))
         .map((val: KmsKeys) => {
-            if (val?.expiryStatus === EXPIRED_STATUS) {
+            if (val?.state === DISABLED_STATE) {
                 val = {
                     ...val,
                     cellProps: {
@@ -87,8 +87,10 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
             }
             if (val?.name === DEFAULT_MASTER_KEY) {
                 val = { ...val, default: true };
+                newData.unshift(val);
+            } else{
+                newData.push(val);
             }
-            newData.push(val);
         });
     return newData;
 };
@@ -198,7 +200,7 @@ export const formatSizeOrString = (value: number) => {
 };
 
 export const regionsSort = (regions: Array<Regions>) => {
-    if(!regions || regions.length < 2){
+    if (!regions || regions.length < 2) {
         return regions;
     }
 
@@ -206,15 +208,50 @@ export const regionsSort = (regions: Array<Regions>) => {
         const indexA = REGIONS_CODE_LIST.indexOf(a.regionCode || '');
         const indexB = REGIONS_CODE_LIST.indexOf(b.regionCode || '');
         if (indexA !== -1 && indexB !== -1) {
-          return indexA - indexB;
-        };
+            return indexA - indexB;
+        }
         if (indexA !== -1) {
-          return -1;
+            return -1;
         }
         if (indexB !== -1) {
-          return 1;
+            return 1;
         }
         return 0;
     });
     return newRegionList;
 };
+
+export const isValidUserName = (userName: string) => {
+    if (
+        userName.length &&
+        (userName.length < 5 ||
+            !/^[a-zA-Z0-9]+$/.test(userName) ||
+            userName === 'admin' ||
+            userName === 'administrator')
+    ) {
+        return GENERAL.USERNAME_TOOLTIP;
+    }
+};
+
+
+export const sortListOfDict = (dataList: any, field: string) => {
+    if(dataList && dataList.length < 2){
+        return dataList;
+    };
+    const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    return newDBList;
+};
+
+export const formatSizeOnePrecision = (value: number | string) => numeral(value).format('0.[0] ib');
+
+export const formatSizeSplit = (value: number | string) => {
+    const formatted = formatSizeOnePrecision(value);
+    const splitted = formatted.split(' ');
+    const actualValue = splitted[0];
+    const format = splitted[1];
+    return {value: actualValue, format}
+};
+
+export const displayFormattedValue = (value: number, msg: string) => {
+    return `${formatSize(value)} ${msg}`;
+}

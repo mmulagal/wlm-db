@@ -17,6 +17,12 @@ const WORKSPACE_ID = 'WORKSPACE_ID';
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
+const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
+
+enum FileSystemDeploymentType {
+    SINGLE_AZ_1,
+    MULTI_AZ_1
+}
 
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
@@ -68,6 +74,10 @@ const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
+const WLMDB_RESOURCE_CLASS = 'WLMDB';
+enum DatabaseTypes {
+    MS_SQL_SERVER = 'MSSQL'
+}
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
@@ -89,7 +99,9 @@ enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment'
+    DEPLOYMENT = 'Deployment',
+    WORKING_ENVIRONMENT = 'Working Environment',
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
@@ -98,6 +110,11 @@ enum HttpErrorCodes {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     VALIDATION_ERROR = 422
+}
+
+enum SqlServerDeploymentModel {
+    SQL_STANDALONE = 'Non-clustered',
+    SQL_FCI = 'Always On Failover Cluster Instance'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -195,6 +212,10 @@ const SQL_AMI_NAMES = [
 enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
+}
+
+enum RESOURCESTYPE {
+    MSSQL = 'MSSQL'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -397,8 +418,10 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = 'wlmbucket';
+const ASSETS_BUCKET_REGION = 'ap-southeast-1';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
+const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const ASSETS_REGION_CODE = 's3.ap-southeast-1';
@@ -406,7 +429,7 @@ const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = true;
-const MASTER_STACK_TIMEOUT_MINUTES = 120;
+const MASTER_STACK_TIMEOUT_MINUTES = 180;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
 const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
@@ -481,6 +504,17 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
+
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
 
 export {
     WLMDB,
@@ -570,6 +604,16 @@ export {
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
+    FileSystemDeploymentType,
+    FSX_RESOURCE_TYPE,
+    RESOURCESTYPE,
     FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE
+    FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI,
+    ASSETS_BUCKET_REGION,
+    DatabaseTypes,
+    WLMDB_RESOURCE_CLASS,
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS,
+    SqlServerDeploymentModel
 };

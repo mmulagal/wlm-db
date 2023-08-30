@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
@@ -28,9 +28,16 @@ const AvailabilityZone = () => {
     const selectedSubnet2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode2);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
+
+    //Refs
+    const az1Ref = useRef(null);
+    const az2Ref = useRef(null);
+    const sub1Ref = useRef(null);
+    const sub2Ref = useRef(null);
 
     useEffect(() => {
         dispatch(setSelectedAzNode1(null));
@@ -51,7 +58,13 @@ const AvailabilityZone = () => {
         zones
             ?.filter(key => key !== selectedZone2?.value)
             .map((val, idx: number) => {
-                const option = generateOptionType(val, val, '', false, '');
+                const subnetsList: Array<string> = [];
+                azData[val].map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                const data = {
+                    availabilityZone: val,
+                    subnets: subnetsList
+                };
+                const option = generateOptionType(val, val, '', false, '', data);
                 options.push(option);
             });
         return options;
@@ -65,7 +78,13 @@ const AvailabilityZone = () => {
         zones
             ?.filter(key => key !== selectedZone1?.value)
             .map((val, idx: number) => {
-                const option = generateOptionType(val, val, '', false, '');
+                const subnetsList: Array<string> = [];
+                azData[val].map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                const data = {
+                    availabilityZone: val,
+                    subnets: subnetsList
+                };
+                const option = generateOptionType(val, val, '', false, '', data);
                 options.push(option);
             });
         return options;
@@ -87,9 +106,43 @@ const AvailabilityZone = () => {
             const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
         });
-
         return options;
     }, [selectedVPCData, selectedZone1]);
+
+    useEffect(() => {
+        dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateSubnet1Options]);
+
+    useEffect(() => {
+        if (isCreateHit) {
+            if (!isAZNotFilled && !selectedZone1) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    az1Ref?.current?.focus();
+                }, 100);
+            }
+            if (!isAZNotFilled && !selectedSubnet1) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    sub1Ref?.current?.focus();
+                }, 90);
+            }
+            if (!isAZNotFilled && !selectedZone2) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    az2Ref?.current?.focus();
+                }, 80);
+            }
+
+            if (!isAZNotFilled && !selectedSubnet2) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    sub2Ref?.current?.focus();
+                }, 70);
+            }
+        }
+    }, [isAZNotFilled, selectedZone1, selectedSubnet1, selectedZone2, selectedSubnet2, isCreateHit]);
 
     //Function to generate the options for Select Field subnet 2
     const generateSubnet2Options = useMemo<optionType[]>((): optionType[] => {
@@ -105,9 +158,13 @@ const AvailabilityZone = () => {
             const option = generateOptionType(value, value, label2, false, '', val);
             options.push(option);
         });
-
         return options;
     }, [selectedVPCData, selectedZone2]);
+
+    useEffect(() => {
+        dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateSubnet2Options]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -167,6 +224,7 @@ const AvailabilityZone = () => {
                             <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_1}</Typography>
                             <SelectField
                                 label={GENERAL.AZ_Zone}
+                                ref={az1Ref}
                                 placeholder="Select an availability zone"
                                 isClearable={false}
                                 value={selectedZone1 ? selectedZone1 : undefined}
@@ -194,6 +252,7 @@ const AvailabilityZone = () => {
                             <SelectField
                                 label={GENERAL.SUBNET}
                                 placeholder="Select a subnet"
+                                ref={sub1Ref}
                                 isClearable={false}
                                 error={!isAZNotFilled && !selectedSubnet1 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
@@ -225,6 +284,7 @@ const AvailabilityZone = () => {
                             <SelectField
                                 label={GENERAL.AZ_Zone}
                                 placeholder="Select an availability zone"
+                                ref={az2Ref}
                                 isClearable={false}
                                 value={selectedZone2 ? selectedZone2 : undefined}
                                 error={!isAZNotFilled && !selectedZone2 ? GENERAL.ACTION_REQUIRED : ''}
@@ -252,6 +312,7 @@ const AvailabilityZone = () => {
                                 label={GENERAL.SUBNET}
                                 placeholder="Select a subnet"
                                 isClearable={false}
+                                ref={sub2Ref}
                                 value={selectedSubnet2 ? selectedSubnet2 : undefined}
                                 error={!isAZNotFilled && !selectedSubnet2 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore

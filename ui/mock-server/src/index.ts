@@ -10,6 +10,7 @@ registerMiddlewares(app);
 app.use('', routers.credentials);
 app.use('', routers.aws);
 app.use('', routers.mssql);
+app.use('', routers.resource);
 
 const server = app.listen(process.env.PORT || 8061, () => {
     const { port } = server.address() as AddressInfo;

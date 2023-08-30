@@ -7,6 +7,7 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
 import { SQL_DATABASE } from '../../../../utils/consts';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const DatabaseName = () => {
     const [input, setInput] = useState(SQL_DATABASE);
@@ -22,7 +23,7 @@ const DatabaseName = () => {
 
         if (
             input.length > 0 &&
-            (input.length > 15 || !/^[a-zA-Z_#&]/.test(firstChar) || !/^[a-zA-Z0-9_#&]+$/.test(input))
+            (input.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(input))
         ) {
             return GENERAL.DB_NAME_TOOLTIP;
         }
@@ -53,7 +54,7 @@ const DatabaseName = () => {
                                     setInput(e.target.value);
                                     dispatch(setDBName(e.target.value));
                                 }}
-                                error={isValidDBName()}
+                                error={useDelayedError(isValidDBName())}
                                 value={input}
                             />
                         </div>

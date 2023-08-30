@@ -2,7 +2,7 @@ import { Button, Header, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
-import { cmNavigateTo } from '../../../../utils/appConfig';
+import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { LoadConfiguration, SaveConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
@@ -21,6 +21,7 @@ const MSSqlHeader = () => {
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.Cancel}
                 callback={() => LoadConfiguration(dispatch)}
+                closeCallback={() => {}}
             />
         );
     };
@@ -41,7 +42,7 @@ const MSSqlHeader = () => {
         <Header
             closeButtonProps={{
                 onClick: function noRefCheck() {
-                    cmNavigateTo('/');
+                    navigateToCanvas();
                 }
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
