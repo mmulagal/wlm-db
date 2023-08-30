@@ -17,9 +17,9 @@ async function getWorkingEnvironments() {
                     if (metadata) {
                         const { properties } = JSON.parse(metadata) || {};
                         const parsedProperties = JSON.parse(properties);
-                        const workspaceid = parsedProperties.workspace || '';
+                        const workspaceId = parsedProperties.workspaceId || '';
                         // workaround to filter based on workspaceid passed as header
-                        return workspaceid === getAsyncLocalStorageResource<string>(WORKSPACE_ID);
+                        return workspaceId === getAsyncLocalStorageResource<string>(WORKSPACE_ID);
                     }
                 } catch (error) {
                     throw createError(
@@ -29,12 +29,26 @@ async function getWorkingEnvironments() {
                 }
                 return false;
             })
-            .map((resource: any) => ({
-                id: resource.resourceIdentifier,
-                provider: resource.resourceType,
-                name: resource.name,
-                deploymentState: resource.metadata ? JSON.parse(resource.metadata).properties.deploymentState || '' : ''
-            }));
+            .map((resource: any) => {
+                const { metadata } = resource || {};
+                let deploymentState: string = '';
+                try {
+                    const { properties } = JSON.parse(metadata) || {};
+                    const parsedProperties = JSON.parse(properties);
+                    deploymentState = parsedProperties.deploymentState || '';
+                } catch (error) {
+                    throw createError(
+                        HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                        `Error parsing resource properties, ${error}`
+                    );
+                }
+                return {
+                    id: resource.resourceIdentifier,
+                    provider: resource.resourceType,
+                    name: resource.name,
+                    deploymentState: deploymentState
+                };
+            });
     return workingEnvironments || [];
 }
 

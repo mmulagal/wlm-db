@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const WorkinEnvironmentHeaders = Type.Object({
