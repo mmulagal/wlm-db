@@ -23,7 +23,7 @@ const DatabaseName = () => {
 
         if (
             input.length > 0 &&
-            (input.length > 15 || !/^[a-zA-Z]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(input))
+            (input.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(input))
         ) {
             return GENERAL.DB_NAME_TOOLTIP;
         }
