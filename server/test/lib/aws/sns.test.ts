@@ -12,7 +12,25 @@ describe('List SNS topics', () => {
     });
 
     it('should create a SNS topics', async () => {
-        const resp = await createTopic('us-east-1', 'WLMDB');
+        const policyStatement = {
+            Sid: 'AllowCloudFormationService',
+            Effect: 'Allow',
+            Principal: {
+                Service: 'cloudformation.amazonaws.com'
+            },
+            Action: 'SNS:Publish',
+            Resource: 'arn:aws:sns:us-east-1:464262061435:wlmdb-test'
+        };
+        const resp = await createTopic('us-east-1', {
+            Name: 'wlmdb-test',
+            Attributes: {
+                Policy: JSON.stringify({
+                    Version: '2012-10-17',
+                    Id: 'CloudFormationServicePolicy',
+                    Statement: [policyStatement]
+                })
+            }
+        });
         expect(resp).toBeDefined();
     });
 

@@ -20,7 +20,7 @@ async function createQueue(region: string, input: CreateQueueCommandInput) {
 
     const sqs = new SQSClient({ region });
     const resp = await sqs.send(new CreateQueueCommand(input));
-    logger.info('Create queue command response', resp);
+    logger.debug('Create queue command response', resp);
 
     return resp;
 }
@@ -47,7 +47,7 @@ async function receiveMessage(region: string, input: ReceiveMessageCommandInput)
 
     const sqs = new SQSClient({ region });
     const resp = await sqs.send(new ReceiveMessageCommand(input));
-    logger.info('Receive queue message response', resp);
+    logger.debug('Receive queue message response', resp);
 
     return resp;
 }
@@ -58,7 +58,7 @@ async function deleteMessage(region: string, input: DeleteMessageCommandInput) {
 
     const sqs = new SQSClient({ region });
     const resp = await sqs.send(new DeleteMessageCommand(input));
-    logger.info('Deleting queue message response', resp);
+    logger.debug('Deleting queue message response', resp);
 
     return resp;
 }

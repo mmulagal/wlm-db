@@ -5,7 +5,8 @@ import {
     SubscribeCommand,
     SubscribeCommandInput,
     ConfirmSubscriptionCommand,
-    ConfirmSubscriptionCommandInput
+    ConfirmSubscriptionCommandInput,
+    CreateTopicCommandInput
 } from '@aws-sdk/client-sns';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -34,11 +35,11 @@ async function listTopics(credentialsId: string, region: string) {
 }
 
 //Topic Creted in WLMDB account
-async function createTopic(region: string, topicName: string) {
-    logger.info('Create SNS topic', { region });
+async function createTopic(region: string, input: CreateTopicCommandInput) {
+    logger.info('Create SNS topic', { region, input });
 
     const sns = new SNSClient({ region });
-    const resp = await sns.send(new CreateTopicCommand({ Name: topicName }));
+    const resp = await sns.send(new CreateTopicCommand(input));
     logger.info('Create topic command response', resp);
 
     return resp;

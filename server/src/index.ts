@@ -210,7 +210,7 @@ app.listen({ port, host }, err => {
     validateSchema();
 });
 
-createAndSubscribeToSnsTopicInAllRegions();
+await createAndSubscribeToSnsTopicInAllRegions();
 processCloudFormationMessages();
 
 try {

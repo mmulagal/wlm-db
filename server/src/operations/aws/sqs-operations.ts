@@ -21,7 +21,7 @@ async function getSqsMessages(region: string, queueUrl: string) {
 
     const { Messages } = await receiveMessage(region, {
         AttributeNames: ['SentTimestamp'],
-        MaxNumberOfMessages: 1,
+        MaxNumberOfMessages: 10,
         MessageAttributeNames: ['All'],
         QueueUrl: queueUrl,
         // The duration (in seconds) for which the call waits for a message
@@ -38,9 +38,10 @@ async function getSqsMessages(region: string, queueUrl: string) {
 }
 
 async function processCloudFormationMessages() {
+    logger.info('Processing cloud formation messages');
     if (process.env.AWS_ROLE_ARN) {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-        const [queueUrl] = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : [];
+        const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
@@ -69,7 +70,8 @@ async function processCloudFormationMessages() {
                                         CloudProviderAccountId: cloudProviderAccountId,
                                         CredentialsId: credentialsId,
                                         Region: region,
-                                        StackName: stackName
+                                        StackName: stackName,
+                                        JwtToken: jwtToken
                                     } = resourceProperties;
                                     await createDeployment(accountId, {
                                         deploymentId: stackId,
@@ -81,11 +83,15 @@ async function processCloudFormationMessages() {
                                         region: region,
                                         deploymentName: stackName
                                     });
+                                    logger.debug('>>JWT TOKEN', jwtToken);
+
+                                    //TODO add token validation logic
                                 }
+
                                 const cfnResponse =
                                     requestType === 'Create'
-                                        ? createStackAck(jsonMessage)
-                                        : modifyStackAck(jsonMessage);
+                                        ? createStackAck(jsonMessage, 'SUCCESS')
+                                        : modifyStackAck(jsonMessage, 'SUCCESS');
                                 await sendCfnResponse(responseUrl, cfnResponse);
                             }
                         } else {
@@ -175,10 +181,10 @@ async function processCloudFormationMessages() {
     setTimeout(processCloudFormationMessages, ms(config.get<string>('sqs-poll-interval')));
 }
 
-function createStackAck(message: { StackId: string; RequestId: string; LogicalResourceId: string }) {
+function createStackAck(message: { StackId: string; RequestId: string; LogicalResourceId: string }, status: string) {
     const { StackId, RequestId, LogicalResourceId } = message;
     return {
-        Status: 'SUCCESS',
+        Status: status,
         StackId,
         RequestId,
         LogicalResourceId,
@@ -186,15 +192,18 @@ function createStackAck(message: { StackId: string; RequestId: string; LogicalRe
     };
 }
 //used for both stack Delete and Update events
-function modifyStackAck(message: {
-    StackId: string;
-    RequestId: string;
-    LogicalResourceId: string;
-    PhysicalResourceId: string;
-}) {
+function modifyStackAck(
+    message: {
+        StackId: string;
+        RequestId: string;
+        LogicalResourceId: string;
+        PhysicalResourceId: string;
+    },
+    status: string
+) {
     const { StackId, RequestId, LogicalResourceId, PhysicalResourceId } = message;
     return {
-        Status: 'SUCCESS',
+        Status: status,
         StackId,
         RequestId,
         LogicalResourceId,

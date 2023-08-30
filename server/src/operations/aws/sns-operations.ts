@@ -4,7 +4,7 @@ import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
 import { DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import { getQueueArn } from '../../utils/utils';
+import { derivePropertiesFromARN, getQueueArn } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -48,8 +48,24 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
             await Promise.map(
                 regions,
                 async ({ RegionName: code }) => {
-                    if (code) {
-                        const { TopicArn } = await createTopic(code, queueName);
+                    if (code && process.env.AWS_ROLE_ARN) {
+                        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+                        const policyStatement = {
+                            Sid: 'AllowCloudFormationService',
+                            Effect: 'Allow',
+                            Principal: {
+                                Service: 'cloudformation.amazonaws.com'
+                            },
+                            Action: 'SNS:Publish',
+                            Resource: `arn:aws:sns:${DEFAULT_AWS_REGION}:${awsAccountId}:${queueName}`
+                        };
+                        const { TopicArn } = await createTopic(code, {
+                            Name: queueName,
+                            Attributes: {
+                                Policy: JSON.stringify(policyStatement)
+                            }
+                        });
+
                         const accountId = QueueUrl?.split('/')[3];
                         const queueArn = getQueueArn(accountId, queueName);
 
