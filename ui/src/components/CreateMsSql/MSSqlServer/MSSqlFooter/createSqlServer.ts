@@ -232,9 +232,6 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
     ) {
         payload = createMssqlPayload(state);
-        console.log("=============");
-        console.log(state.mssqlForm);
-        console.log("=============");
         console.log('Deploy Payload', payload);
     } else {
         console.log('Action required');
