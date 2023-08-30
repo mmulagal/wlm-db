@@ -264,5 +264,11 @@ export const GENERAL = {
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
     EC_NOTE:
-        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.'
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.',
+    MS_SQL_CPU_USED: 'CPU used by Microsoft SQL Server',
+    CPU_REM: 'CPU available and used by other processes',
+    MS_SQL_MEMORY_USED: 'Memory used by Microsoft SQL Server',
+    MEMORY_REM : 'Memory available and used by other processes',
+    MS_SQL_DISK_USED : 'Storage used by Microsoft SQL Server',
+    DISK_REM : 'Storage available and used by other processes'
 };

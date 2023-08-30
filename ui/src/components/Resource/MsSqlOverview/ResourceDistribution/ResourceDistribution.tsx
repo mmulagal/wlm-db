@@ -2,41 +2,84 @@ import { DoughnutChart, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getCssVariableValue } from '../../../../utils/utilityFunctions';
 import styles from './ResourceDistribution.module.scss';
+import { isNotNumberOrNA, formatSizeSplit, displayFormattedValue } from '../../../../utils/utilityFunctions';
+
+type Utilisation = {
+    percentUsed: string;
+    used: string;
+    total: string;
+    remaining: string;
+}
+
+type ResourceDistributionProps = {
+    mssqlCpu: Utilisation,
+    mssqlMemory: Utilisation,
+    mssqlDisk: Utilisation
+}
 
 type ResourceData = {
-    resourceName: string;
-    percentage: number;
-    dataToShowValue: string;
-    dataToShowUnit: string;
-    dataLabel: string;
-    color: string;
-};
+    resourceName: string,
+    percentage: string,
+    dataToShowValue: string,
+    dataToShowUnit: string,
+    dataLabel: string,
+}
 
-const ResourceDistribution = () => {
+const ResourceDistribution = ({mssqlCpu, mssqlMemory, mssqlDisk}: ResourceDistributionProps) => {
+    const cpuMsgCheck = isNotNumberOrNA(mssqlCpu?.percentUsed);
+        const memoryMsgCheck = isNotNumberOrNA(mssqlMemory?.percentUsed);
+        const diskMsgCheck =  isNotNumberOrNA(mssqlDisk?.percentUsed);
+    
+        const totalMemory = formatSizeSplit(mssqlMemory?.total);
+        const totalSize = formatSizeSplit(mssqlDisk?.total);
+    
+        const cpuUsedValue = !cpuMsgCheck && mssqlCpu?.percentUsed !== 'N/A' && mssqlCpu?.percentUsed;
+        const cpuUsedFormat = (mssqlCpu?.percentUsed && !cpuMsgCheck && mssqlCpu?.percentUsed !== 'N/A') ? '%' : '';
+        const cpuUsedTooltip = (mssqlCpu?.percentUsed && `${mssqlCpu.percentUsed}% ${GENERAL.MS_SQL_CPU_USED}`) || 'N/A';
+        const cpuRemTooltip = (mssqlCpu?.percentUsed && !cpuMsgCheck) ? 
+            `${(100 - parseInt(mssqlCpu?.percentUsed) ?? 0)}%  ${GENERAL.CPU_REM}` : 'N/A';
+        const memoryUsedValue = (!memoryMsgCheck && mssqlMemory?.percentUsed !== 'N/A' && mssqlMemory?.percentUsed) || 0;
+        const memoryUsedTooltip = (mssqlMemory?.used && !memoryMsgCheck) ? 
+            displayFormattedValue(parseInt(mssqlMemory?.used), GENERAL.MS_SQL_MEMORY_USED) : 'N/A';
+        const memoryRemTooltip = (mssqlMemory?.remaining && !memoryMsgCheck) ? 
+            displayFormattedValue(parseInt(mssqlMemory?.remaining), GENERAL.MEMORY_REM): 'N/A';
+        const diskUsedValue = (!diskMsgCheck && mssqlDisk?.percentUsed !== 'N/A' && mssqlDisk?.percentUsed) || 0;
+        const diskUsedTooltip = (mssqlDisk?.used && !diskMsgCheck) ? 
+            displayFormattedValue(parseInt(mssqlDisk?.used), GENERAL.MS_SQL_DISK_USED) : 'N/A';
+        const diskRemTooltip = (mssqlDisk?.remaining && !diskMsgCheck) ? 
+            displayFormattedValue(parseInt(mssqlDisk?.remaining), GENERAL.DISK_REM): 'N/A';
+    
+        const cpuInfoMsg = cpuMsgCheck && mssqlCpu.percentUsed;
+        const memoryInfoMsg = memoryMsgCheck && mssqlMemory.percentUsed;
+        const diskInfoMsg = diskMsgCheck && mssqlDisk.percentUsed;
+
     const resourceDistributionData = [
         {
             resourceName: 'CPU',
-            percentage: 53,
-            dataToShowValue: '53',
+            percentage: cpuUsedValue,
+            dataToShowValue: cpuUsedValue,
             dataToShowUnit: '%',
             dataLabel: 'CPU',
-            color: 'blue'
+            usedTooltip: cpuUsedTooltip,
+            remTooltip: cpuRemTooltip
         },
         {
             resourceName: 'Memory',
-            percentage: 62,
-            dataToShowValue: '801.2',
-            dataToShowUnit: 'TiB',
+            percentage: memoryUsedValue,
+            dataToShowValue: totalMemory.value,
+            dataToShowUnit: totalMemory.format,
             dataLabel: 'Memory (Allocated)',
-            color: 'green'
+            usedTooltip: memoryUsedTooltip,
+            remTooltip: memoryRemTooltip
         },
         {
             resourceName: 'Storage',
-            percentage: 75,
-            dataToShowValue: '801.2',
-            dataToShowUnit: 'TiB',
+            percentage: diskUsedValue,
+            dataToShowValue: totalSize.value,
+            dataToShowUnit: totalSize.format,
             dataLabel: 'Storage (Allocated)',
-            color: 'purple'
+            usedTooltip: diskUsedTooltip,
+            remTooltip: diskRemTooltip
         }
     ];
 
@@ -50,7 +93,7 @@ const ResourceDistribution = () => {
                 </Typography>
             </div>
             <div className={styles.doughnutContainer}>
-                {resourceDistributionData.map((resource: ResourceData, idx: number) => {
+                {resourceDistributionData.map((resource: any, idx: number) => {
                     const dataObj = {
                         datasets: [
                             {
@@ -58,15 +101,29 @@ const ResourceDistribution = () => {
                                     getCssVariableValue(chartColors[idx]),
                                     getCssVariableValue('--scroller')
                                 ],
-                                data: [resource.percentage, 100 - resource.percentage]
+                                data: [resource.percentage, 100 - parseInt(resource.percentage)]
                             }
                         ],
                         labels: []
                     };
 
+                    const tooltipList = [resource.usedTooltip, resource.remTooltip]
+
+                    const optionsObj={
+                        plugins: {
+                          tooltip: {
+                            callbacks: {
+                              label: (item:any) => {
+                               return  `${tooltipList[item.dataIndex]}`
+                              }
+                            }
+                          }
+                        }
+                      }
+
                     return (
                         <div className={styles.resourceContainer}>
-                            <DoughnutChart data={dataObj} className={styles.doughnutChart}>
+                            <DoughnutChart data={dataObj} className={styles.doughnutChart} options={optionsObj}>
                                 <div className={styles.doughnutText}>
                                     <div className={styles.doughnutTextValue}>
                                         <Typography className={styles.percentValue} variant="Regular_32">

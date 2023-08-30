@@ -2,6 +2,8 @@ import {BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError, 
 import {BaseQueryApi} from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
+import { DatabaseTables, BatchEntry } from './types/resourceTypes';
+import { setResourceTables } from '../store/resource/resourceSlice';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -29,6 +31,16 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     return `${apiHost}/wlmdb/accounts/${accountId}/api/v1`;
 };
 
+export const getUrlFixedInArg = (arg:BatchEntry[], baseUrl: string) : BatchEntry[] => {
+    return arg.map((request: BatchEntry) => {
+        const {url, inputs, key, ...rest} = request;
+        return {
+            ...rest,
+            url: `${baseUrl}/${url}`
+        }
+    });
+};
+
 //Build the baseUrl based on the environment
 const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = retry(async (args, api, extraOptions) => {
     const baseUrl = buildBaseUrl(api);
@@ -44,6 +56,60 @@ const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryE
     return result;
 }, {maxRetries: API_MAX_RETRIES});
 
+async function handleRemoveWE(path: string, baseQuery: any, queryApi: BaseQueryApi) {
+    const result = await baseQuery({url: path, method: 'DELETE'});
+    if (result.error) {
+        return ({error: result.error as FetchBaseQueryError});
+    }
+    return {data: result}
+}
+
+async function handleRootListItems<T extends DatabaseTables>(
+    queryApi: BaseQueryApi,
+    arg: BatchEntry[][],
+    baseQuery: any,
+    action: ((arg0: T[]) => any),
+    key:"tables") {
+    const results: any[] = [];
+    for (const batchEntryArray of arg) {
+        const {dispatch} = queryApi;
+        const baseUrl = buildBaseUrl(queryApi);
+        const urlFixedInArg = getUrlFixedInArg(batchEntryArray, baseUrl);
+        const result = await baseQuery({url: 'batch', method: 'POST', body: urlFixedInArg});
+        if (result.error) { //error on the batch request itself - will be handled in the error middleware
+            return ({error: result.error as FetchBaseQueryError});
+        }
+        if (!Array.isArray(result.data)) throw new Error(`Response is not an array: ${result.data}`);
+
+        const fixed: T[] = [];
+        result.data.map((value: { data?: any, error?: any }, index: number) => {
+            if (value.data) {
+                if (key) {
+                    const resultArray = value.data[`${key}`].map((resultInArray: T) => {
+                        return {
+                            ...resultInArray,
+                            ...batchEntryArray[index].inputs
+                        }
+                    });
+                    fixed.push(...resultArray)
+                } else {
+                    fixed.push({...value.data, ...batchEntryArray[index].inputs})
+                }
+            } else if (value.error) {
+                let message = "";
+                if (value.error.message) {
+                    message = value.error.message
+                } else if (value.error.error) {
+                    message = value.error.error.message;
+                } else {
+                    message = value.error;
+                }            }
+        });
+        dispatch(action(fixed));
+        results.push(...fixed);
+    }
+    return {data: results}
+}
 
 export const awsApi = createApi({
     reducerPath: 'aws',
@@ -99,6 +165,45 @@ export const awsApi = createApi({
     }
 });
 
+export const resourceApi = createApi({
+    reducerPath: 'resource',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            removeMSSQL: builder.mutation({
+                async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return await handleRemoveWE(`mssql/resources/${id}`, baseQuery, queryApi)
+                }
+            }),
+            getMSSQLDatabases: builder.query({
+                query: (id) => ({url: `mssql/resources/${id}/databases`})
+            }),
+            getMSSQLSummary: builder.query({
+                query: (id) => ({url: `mssql/resources/${id}/summary`})
+            }),
+            getMSSQLCpuUtilization: builder.query({
+                query: (id) => ({url: `mssql/resources/${id}/utilisation/cpu`})
+            }),
+            getMSSQLDiskUtilization: builder.query({
+                query: (id) => ({url: `mssql/resources/${id}/utilisation/disk`})
+            }),
+            getMSSQLMemoryUtilization: builder.query({
+                query: (id) => ({url: `mssql/resources/${id}/utilisation/memory`})
+            }),
+            batchTables: builder.mutation<DatabaseTables[], BatchEntry[][]>({
+                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return await handleRootListItems<DatabaseTables>(queryApi, arg, baseQuery, setResourceTables, 'tables');
+                }
+            }),
+        }
+    }
+});
+
 export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
     useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
     useGetFsxnListQuery, useCreateSqlTemplateMutation,  useDeploySqlTemplateMutation } = awsApi;
+
+export const {
+    useRemoveMSSQLMutation, useGetMSSQLDatabasesQuery, useGetMSSQLSummaryQuery, useGetMSSQLCpuUtilizationQuery,
+        useGetMSSQLDiskUtilizationQuery, useGetMSSQLMemoryUtilizationQuery, useBatchTablesMutation
+} = resourceApi;
