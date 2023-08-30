@@ -18,7 +18,12 @@ const SingleBatchResponse = Type.Object({
     error: Type.Optional(Type.Any())
 });
 
-const BatchResponse = Type.Array(Type.Object(SingleBatchResponse));
+const BatchResponse = Type.Array(
+    Type.Object({
+        data: Type.Optional(Type.Any()),
+        error: Type.Optional(Type.Any())
+    })
+);
 
 type BatchRequestBodyType = Static<typeof BatchRequestBody>;
 type BatchResponseType = Static<typeof BatchResponse>;
