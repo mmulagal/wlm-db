@@ -417,7 +417,7 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'bucketkrithi';
+const BUCKET_NAME = 'wlmbucket';
 const ASSETS_BUCKET_REGION = 'ap-southeast-1';
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
@@ -629,7 +629,7 @@ const SQL_TEMPLATES_DISTRIBUTION = {
     MASTER: './resources/mssql/templates/wlm-master.yaml'
 };
 
-enum TemplateTypes {
+enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation'
@@ -744,7 +744,7 @@ export {
     ASSETS_BUCKET_REGION,
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
-    TemplateTypes,
+    TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,

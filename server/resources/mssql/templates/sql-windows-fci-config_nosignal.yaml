@@ -566,6 +566,8 @@ Resources:
                         l-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
+                        m-move-ssmscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -1095,6 +1097,8 @@ Resources:
                         l-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
+                        m-move-ssmscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:

@@ -5,7 +5,7 @@ import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
     SQL_TEMPLATES_ASSETS,
-    TemplateTypes,
+    TEMPLATE_TYPES,
     BUCKET_NAME,
     SQL_TEMPLATES_DISTRIBUTION
 } from '../utils/consts';
@@ -65,7 +65,7 @@ async function updateTemplateUrls(
 
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
-    if (templateType == TemplateTypes.MASTER) {
+    if (templateType == TEMPLATE_TYPES.MASTER) {
         const contents = template({
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
@@ -83,7 +83,7 @@ async function updateTemplateUrls(
                 : ''
         });
         await putObjectBucket(credentialsId, region, BUCKET_NAME, 'templates/wlm-master.yaml', contents);
-    } else if (templateType == TemplateTypes.SQLSTACK) {
+    } else if (templateType == TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
             DSCSignature: decodeURI(signedUrls.get('DSCSignature')?.url || ''),
@@ -121,7 +121,7 @@ async function updateTemplateUrls(
             'templates/sql-windows-fci-config_nosignal.yaml',
             contents
         );
-    } else if (templateType == TemplateTypes.VALIDATION) {
+    } else if (templateType == TEMPLATE_TYPES.VALIDATION) {
         const contents = template({
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
             AmazonLaunchWizardForCFNSignature: decodeURI(
@@ -154,21 +154,21 @@ async function uploadTemplates(
             region,
             SQL_TEMPLATES_DISTRIBUTION.VALIDATION,
             signedUrls,
-            TemplateTypes.VALIDATION
+            TEMPLATE_TYPES.VALIDATION
         );
         await updateTemplateUrls(
             credentialsId,
             region,
             SQL_TEMPLATES_DISTRIBUTION.SQLSTACK,
             signedUrls,
-            TemplateTypes.SQLSTACK
+            TEMPLATE_TYPES.SQLSTACK
         );
         await updateTemplateUrls(
             credentialsId,
             region,
             SQL_TEMPLATES_DISTRIBUTION.MASTER,
             signedUrls,
-            TemplateTypes.MASTER,
+            TEMPLATE_TYPES.MASTER,
             tags
         );
     }
