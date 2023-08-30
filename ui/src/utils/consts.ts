@@ -85,3 +85,5 @@ export const REGIONS_CODE_LIST = [
     'ap-northeast-3',
     'me-central-1'
 ];
+
+export const DATABASE_SERVICE_PATH = '/database-services/'
