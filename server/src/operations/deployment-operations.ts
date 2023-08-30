@@ -49,7 +49,8 @@ async function createCloudFormationTemplateForUserDeployment(
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
-    enableCloudWatch: boolean = false
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
 ): Promise<CloudFormationTemplateResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
@@ -58,7 +59,8 @@ async function createCloudFormationTemplateForUserDeployment(
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
-        sqlConfiguration
+        sqlConfiguration,
+        tags
     });
 
     const sameRoutes = isSameRoutetables(networkConfiguration);
@@ -74,8 +76,8 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
@@ -103,7 +105,12 @@ async function createCloudFormationTemplateForUserDeployment(
     );
 
     //Generate Signed-url and upload to bucket
-    await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
+    await uploadTemplates(
+        credentialsId,
+        region,
+        DatabaseTypes.MS_SQL_SERVER,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
+    );
 
     const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
 
@@ -150,7 +157,8 @@ async function deployCloudFormationTemplate(
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
-    enableCloudWatch: boolean = false
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
 ): Promise<{ cloudFormationStackId: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
@@ -159,7 +167,8 @@ async function deployCloudFormationTemplate(
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
-        sqlConfiguration
+        sqlConfiguration,
+        tags
     });
 
     const sameRoutes = isSameRoutetables(networkConfiguration);
@@ -178,7 +187,12 @@ async function deployCloudFormationTemplate(
     }
 
     //Generate Signed-url and upload to bucket
-    await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
+    await uploadTemplates(
+        credentialsId,
+        region,
+        DatabaseTypes.MS_SQL_SERVER,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
+    );
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,

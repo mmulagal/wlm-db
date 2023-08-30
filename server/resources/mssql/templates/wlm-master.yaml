@@ -459,6 +459,7 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+      {{Tags}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -494,6 +495,7 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+      {{Tags}}
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
@@ -559,7 +561,8 @@ Resources:
         Fn::If:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue       
+          - !Ref AWS::NoValue     
+      {{Tags}}  
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
@@ -594,6 +597,7 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+      {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
@@ -704,3 +708,4 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+      {{Tags}}

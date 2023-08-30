@@ -1,4 +1,6 @@
 import Handlebars from 'handlebars';
+import { readFileSync } from 'fs';
+import yaml from 'yaml';
 import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
@@ -8,7 +10,6 @@ import {
     SQL_TEMPLATES_DISTRIBUTION
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { readFileSync } from 'fs';
 
 interface TemplateDetails {
     name: string;
@@ -57,7 +58,8 @@ async function updateTemplateUrls(
     region: string,
     templateFilepath: string,
     signedUrls: Map<string, TemplateDetails>,
-    templateType: string
+    templateType: string,
+    tags?: Array<{ Key: string; Value: string }>
 ) {
     logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
 
@@ -68,7 +70,17 @@ async function updateTemplateUrls(
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
-            SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || '')
+            SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
+            Tags: tags?.length
+                ? yaml.stringify(
+                      {
+                          Tags: tags
+                      },
+                      {
+                          indent: 6 // !IMP: This is a workaround untill we find a better solution, it should be changed if the indentation changes in master yaml file
+                      }
+                  )
+                : ''
         });
         await putObjectBucket(credentialsId, region, BUCKET_NAME, 'templates/wlm-master.yaml', contents);
     } else if (templateType == TemplateTypes.SQLSTACK) {
@@ -127,7 +139,12 @@ async function updateTemplateUrls(
     }
 }
 
-async function uploadTemplates(credentialsId: string, region: string, resourceType: DatabaseTypes) {
+async function uploadTemplates(
+    credentialsId: string,
+    region: string,
+    resourceType: DatabaseTypes,
+    tags?: Array<{ Key: string; Value: string }>
+) {
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 
     if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
@@ -151,7 +168,8 @@ async function uploadTemplates(credentialsId: string, region: string, resourceTy
             region,
             SQL_TEMPLATES_DISTRIBUTION.MASTER,
             signedUrls,
-            TemplateTypes.MASTER
+            TemplateTypes.MASTER,
+            tags
         );
     }
 }
