@@ -1,6 +1,7 @@
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import { sendSSMCommand, getCommandInvocation } from '../../../src/lib/aws/ssm';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommans-response.json';
 import { faker } from '@faker-js/faker';
@@ -22,9 +23,9 @@ describe('sendSSMCommand', () => {
                         '                                 FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;"'
                 ]
             },
-            InstanceIds: ['i-07e76a4b916548dc0']
+            InstanceIds: ['i-0880a21327284f67c']
         };
-        const resp = await sendSSMCommand(credentialsId, 'us-east-1', params);
+        const resp = await sendSSMCommand(credentialsId, 'ap-southeast-1', params);
         expect(resp).toEqual(ssmCommandOutput.Command.CommandId);
     });
 

@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 
 describe('executeSsmDocument', () => {
     it('executeSsmDocument', async () => {
@@ -23,8 +24,7 @@ describe('executeSsmDocument', () => {
             InstanceIds: ['i-07e76a4b916548dc0']
         };
 
-        const resp = await executeSSMDocument(credentialsId, 'us-east-1', params);
+        const resp = await executeSSMDocument(credentialsId, 'ap-southeast-1', params);
         expect(resp).toBeDefined();
     });
-    
 });
