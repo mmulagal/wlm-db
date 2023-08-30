@@ -329,25 +329,32 @@ async function discoverMsSqlServer(
     accountId: string,
     credentialsId: string,
     regionId: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId: string,
     resourceType: string
 ) {
     logger.info('Save SQL Server details in tenancy:', {
         accountId,
         credentialsId,
         regionId,
-        activeInstanceId,
-        standbyInstanceId,
+        activeInstanceId: activeNodeInstanceId,
+        standbyInstanceId: standbyNodeInstanceId,
         resourceType
     });
 
-    const serverId: string = await getSqlServerGuid(credentialsId, regionId, activeInstanceId, standbyInstanceId);
-    const serverName: string = await getSqlServerName(credentialsId, regionId, activeInstanceId, standbyInstanceId);
+    const [resourceIdentifier, name] = await Promise.all([
+        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
+            `${PSSCRIPT} -Query "${SERVER_GUID}"`
+        ]),
+        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
+            `${PSSCRIPT} -Query "${SERVER_NAME}"`
+        ])
+    ]);
+
     const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
     const params: ServiceResourceRequest = {
-        name: serverName,
-        resourceIdentifier: serverId,
+        name,
+        resourceIdentifier,
         resourceType,
         workspacePublicId: workspaceId,
         accountPublicId: accountId,
@@ -358,45 +365,15 @@ async function discoverMsSqlServer(
                 location: CloudProviders.AWS,
                 credentialsId: credentialsId,
                 region: regionId,
-                activeInstanceId,
-                standbyInstanceId,
+                activeInstanceId: activeNodeInstanceId,
+                standbyInstanceId: standbyNodeInstanceId,
                 deploymentState: DeploymentState.SUCCESS
             })
         }
     };
 
     await registerServiceResource(params);
-    return { resourceId: serverId, resourceName: serverName };
-}
-
-async function getSqlServerGuid(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string
-) {
-    logger.info('Get SQL Server GUID:', { credentialsId, region, activeInstanceId, standbyInstanceId });
-
-    const { serverGuid } = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-        `${PSSCRIPT} -Query "${SERVER_GUID}"`
-    ]);
-    logger.debug('SQL Server GUID:', serverGuid);
-    return serverGuid;
-}
-
-async function getSqlServerName(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string
-) {
-    logger.info('Get SQL Server name:', { credentialsId, region, activeInstanceId, standbyInstanceId });
-
-    const { serverName } = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-        `${PSSCRIPT} -Query "${SERVER_NAME}"`
-    ]);
-    logger.debug('SQL Server host name:', serverName);
-    return serverName;
+    return { resourceId: resourceIdentifier, resourceName: name };
 }
 
 export {

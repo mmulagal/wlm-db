@@ -16,10 +16,10 @@ import {
     discoverMsSqlServer
 } from '../operations/workloads/mssql/mssql-operations';
 import { removeTenancyResource } from '../operations/tenancy-operations';
-import { DATABASE_METRIC_TYPE, DatabaseTypes } from '../utils/consts';
+import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
 
 const MSSQL_DISCOVER_API_PATH: string =
-    '/v1/credentials/:credentialsId/regions/:regionId/ec2instances/:ec2InstanceId/mssql';
+    '/v1/mssql/credentials/:credentialsId/regions/:regionId/ec2instances/:ec2InstanceId';
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
