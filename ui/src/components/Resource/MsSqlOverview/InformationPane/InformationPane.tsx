@@ -27,7 +27,7 @@ type InformationPaneProps = {
 }
 
 const InformationPane = ({mssqlSummary}: InformationPaneProps) => {
-    const informationData = [
+    const informationData = mssqlSummary ? [
         { label: 'Deployment model', value: mssqlSummary.deploymentModel, showCopy: true },
         { label: 'SQL Server edition', value: mssqlSummary.serverEdition, showCopy: true },
         { label: 'SQL Server version', value: mssqlSummary.serverVersion, showCopy: true },
@@ -37,7 +37,7 @@ const InformationPane = ({mssqlSummary}: InformationPaneProps) => {
         { label: `Node 2 name ${(mssqlSummary.activeNode === mssqlSummary.standbyNode ? '(active)' : '')}`, value: mssqlSummary.standbyNode, showCopy: true },
         { label: 'ID', value: mssqlSummary.serverId, showCopy: true },
         { label: 'Connections', value: mssqlSummary.activeConnections, showCopy: false }
-    ];
+    ] : [];
 
     return (
         <div className={styles.informationPane}>
