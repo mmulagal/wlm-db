@@ -111,7 +111,13 @@ const FSxNSystem = () => {
             );
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        }
+        } else if (!selectedZone1 && !selectedZone2) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_AZ}
+                </Typography>
+            );
+        } 
 
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
