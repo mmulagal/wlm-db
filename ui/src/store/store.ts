@@ -1,11 +1,12 @@
 import { configureStore, combineReducers, MiddlewareAPI, isRejectedWithValue, Middleware } from '@reduxjs/toolkit';
 import notificationSlice, { addNotification, NOTIFICATION_TYPES } from './notificationSlice';
-import { awsApi } from '../utils/apiService';
+import { awsApi, resourceApi } from '../utils/apiService';
 import authSlice from './authSlice';
 import appContextSlice from './appContextSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
+import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
 import { requiredFieldError } from '../utils/utilityFunctions';
 
@@ -14,9 +15,11 @@ const rootReducer = combineReducers({
     [appContextSlice.name]: appContextSlice.reducer,
     [authSlice.name]: authSlice.reducer,
     [awsApi.reducerPath]: awsApi.reducer,
+    [resourceApi.reducerPath]: resourceApi.reducer,
     [mssqlSlice.name]: mssqlSlice.reducer,
     [mssqlFormSlice.name]: mssqlFormSlice.reducer,
-    [msSqlActionSlice.name]: msSqlActionSlice.reducer
+    [msSqlActionSlice.name]: msSqlActionSlice.reducer,
+    [resourceSlice.name]: resourceSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
@@ -41,7 +44,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
 const store = configureStore({
     reducer: rootReducer,
     middleware: getDefaultMiddleware =>
-        getDefaultMiddleware({ serializableCheck: false }).concat(awsApi.middleware).concat(rtkQueryErrorLogger)
+        getDefaultMiddleware({ serializableCheck: false }).concat(awsApi.middleware).concat(resourceApi.middleware).concat(rtkQueryErrorLogger)
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

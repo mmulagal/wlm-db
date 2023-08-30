@@ -6,6 +6,8 @@ interface AuthState {
     status: string | null;
     error: string | null;
     accessToken: string;
+    resourceId: string | (string | null)[] | null;
+    resourceName: string | (string | null)[] | null;
 }
 
 interface PayloadAuthSuccess {
@@ -16,6 +18,8 @@ const initialState: AuthState = {
     status: AUTH_STATUS.AUTH_STATUS_PROGRESS,
     error: '',
     accessToken: '',
+    resourceId: '',
+    resourceName: ''
 };
 
 const authSlice = createSlice({
@@ -35,9 +39,15 @@ const authSlice = createSlice({
         updateAuthFailed: (state, action: PayloadAction<string>) => {
             state.status = AUTH_STATUS.AUTH_STATUS_ERROR;
             state.error = action.payload;
+        },
+        updateResourceId: (state, action: PayloadAction<string | (string | null)[] | null>) => {
+            state.resourceId = action.payload;
+        },
+        updateResourceName: (state, action: PayloadAction<string | (string | null)[] | null>) => {
+            state.resourceName = action.payload;
         }
     }
 });
 
-export const { updateAuthSuccess, updateAuthFailed } = authSlice.actions;
+export const { updateAuthSuccess, updateAuthFailed, updateResourceId, updateResourceName } = authSlice.actions;
 export default authSlice;

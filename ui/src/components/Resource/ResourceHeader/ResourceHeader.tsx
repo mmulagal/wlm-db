@@ -8,10 +8,11 @@ import { useMemo } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 
 type ResourceHeaderProps = {
-    name?: string;
+    name: string | (string | null)[] | null;
+    refresh: () => void
 };
 
-const ResourceHeader = ({ name }: ResourceHeaderProps) => {
+const ResourceHeader = ({ name, refresh }: ResourceHeaderProps) => {
     const tabs = [
         { url: 'overview', name: 'Overview' },
         { url: 'databases', name: 'Databases' },
@@ -59,7 +60,7 @@ const ResourceHeader = ({ name }: ResourceHeaderProps) => {
                 <Button
                     variant="icon"
                     onClick={() => {
-                        console.log('reload clicked');
+                        refresh()
                     }}
                 >
                     <ReloadIcon />
