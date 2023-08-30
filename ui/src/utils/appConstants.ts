@@ -270,5 +270,7 @@ export const GENERAL = {
     MS_SQL_MEMORY_USED: 'Memory used by Microsoft SQL Server',
     MEMORY_REM : 'Memory available and used by other processes',
     MS_SQL_DISK_USED : 'Storage used by Microsoft SQL Server',
-    DISK_REM : 'Storage available and used by other processes'
+    DISK_REM : 'Storage available and used by other processes',
+    OVERVIEW: 'Overview',
+    
 };

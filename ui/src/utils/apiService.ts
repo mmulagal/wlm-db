@@ -182,13 +182,13 @@ export const resourceApi = createApi({
                 query: (id) => ({url: `mssql/resources/${id}/summary`})
             }),
             getMSSQLCpuUtilization: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/utilisation/cpu`})
+                query: (id) => ({url: `mssql/resources/${id}/utilization/cpu`})
             }),
             getMSSQLDiskUtilization: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/utilisation/disk`})
+                query: (id) => ({url: `mssql/resources/${id}/utilization/disk`})
             }),
             getMSSQLMemoryUtilization: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/utilisation/memory`})
+                query: (id) => ({url: `mssql/resources/${id}/utilization/memory`})
             }),
             batchTables: builder.mutation<DatabaseTables[], BatchEntry[][]>({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {

@@ -104,9 +104,11 @@ const useInitialize = () => {
             dispatch(setAppContext(appContext));
         }
 
-        handleAuthSuccess({
-            accessToken: accessTokenAsString || ''
-        });
+        if(accessTokenAsString){
+            handleAuthSuccess({
+                accessToken: accessTokenAsString || ''
+            });
+        }
 
         if (environment === LOCAL) {
             (window as any).auth = new Auth(AUTH_0_OPTIONS);

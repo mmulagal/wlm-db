@@ -14,9 +14,9 @@ type ResourceHeaderProps = {
 
 const ResourceHeader = ({ name, refresh }: ResourceHeaderProps) => {
     const tabs = [
-        { url: 'overview', name: 'Overview' },
-        { url: 'databases', name: 'Databases' },
-        { url: 'tables', name: 'Tables' }
+        { url: 'overview', name: GENERAL.OVERVIEW},
+        { url: 'databases', name: GENERAL.DATABASES },
+        { url: 'tables', name: GENERAL.TABLES }
     ];
     const { pathname } = useLocation();
 

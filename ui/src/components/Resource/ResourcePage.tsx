@@ -16,6 +16,7 @@ import { BatchEntry, Method } from '../../utils/types/resourceTypes';
 import { addNotification, NOTIFICATION_TYPES, clearNotifications } from '../../store/notificationSlice';
 import { useDispatch } from 'react-redux';
 import { resetMssqlTables } from '../../store/resource/resourceSlice';
+import { Spinner } from '@netapp/design-system'; 
 
 const ResourcePage = () => {
     const navigate = useNavigate();
@@ -28,30 +29,35 @@ const ResourcePage = () => {
     const {resourceId, resourceName} = useAppSelector(state => state.auth);
     const {tables, ready} = useAppSelector(state => state.resources)
 
+    //To fetch databases
     const {
         data: databases,
         isLoading: databasesLoading,
         refetch: databasesRefetch
     } = useGetMSSQLDatabasesQuery(resourceId);
 
+    //To fetch summary data
     const {
         data: mssqlSummary,
         isLoading: mssqlSummaryLoading,
         refetch: mssqlSummaryRefetch
     } = useGetMSSQLSummaryQuery(resourceId);
 
+    // To fetch CPU utilization data
     const {
         data: mssqlCpu,
         isLoading: mssqlCpuLoading,
         refetch: mssqlCpuRefetch
     } = useGetMSSQLCpuUtilizationQuery(resourceId);
 
+    // To fetch disk utilization data
     const {
         data: mssqlDisk,
         isLoading: mssqlDiskLoading,
         refetch: mssqlDiskRefetch
     } = useGetMSSQLDiskUtilizationQuery(resourceId);
 
+    // To fetch memory utilization data
     const {
         data: mssqlMemory,
         isLoading: mssqlMemoryLoading,
@@ -79,6 +85,7 @@ const ResourcePage = () => {
         mssqlMemoryRefetch();
     };
 
+    // To fetch tables data
     useEffect(() => {
         if(databases?.databases.length > 0){
             const tablesBatchBody: BatchEntry[] = databases.databases.map((databaseRow: any) => {
@@ -101,7 +108,7 @@ const ResourcePage = () => {
                     setBatchingCompleted(true);
                 })
                 .catch(error => {
-                    dispatch(addNotification({children: error.message, type: NOTIFICATION_TYPES.ERROR}));
+                    dispatch(addNotification({message: error?.data?.message, notificationType: NOTIFICATION_TYPES.ERROR}));
                 })
         };
     }, [databases?.databases, resourceId, batchTables, loading, navigate, dispatch]);
@@ -109,6 +116,13 @@ const ResourcePage = () => {
     return (
         <div className={styles.resourcePageContainer}>
             <ResourceHeader name={resourceName} refresh={refresh}/>
+            {loading && (
+                <div className={styles['loading-screen']}>
+                    <Spinner isLarge
+                        className={styles['general-loader']}
+                    />
+                </div>
+            )}
             {!loading && <Outlet
                 context={{
                     databasesList,
