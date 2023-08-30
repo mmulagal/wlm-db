@@ -37,6 +37,16 @@
             border-bottom: 1px solid var(--grey-15);
             gap: 8px;
 
+            .infoItemLabel{
+                white-space: nowrap;
+            }
+
+            .infoItemValue {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+
             .copyContainer {
                 margin-left: auto;
             }

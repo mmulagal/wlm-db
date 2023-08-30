@@ -33,8 +33,8 @@ const InformationPane = ({mssqlSummary}: InformationPaneProps) => {
         { label: 'SQL Server version', value: mssqlSummary.serverVersion, showCopy: true },
         { label: 'Status', value: mssqlSummary.serverStatus, showCopy: true },
         { label: 'Cluster name', value: 'sqldatabase-cluster', showCopy: true },
-        { label: `Node 1 name ${(mssqlSummary.activeNode === mssqlSummary.primaryNode ? '(active)' : '')}`, value: mssqlSummary.primaryNode, showCopy: true },
-        { label: `Node 2 name ${(mssqlSummary.activeNode === mssqlSummary.standbyNode ? '(active)' : '')}`, value: mssqlSummary.standbyNode, showCopy: true },
+        { label: 'Node 1 name (active)', value: mssqlSummary.activeNode, showCopy: true },
+        { label: 'Node 2 name', value: mssqlSummary.standbyNode, showCopy: true },
         { label: 'ID', value: mssqlSummary.serverId, showCopy: true },
         { label: 'Connections', value: mssqlSummary.activeConnections, showCopy: false }
     ] : [];
@@ -53,8 +53,8 @@ const InformationPane = ({mssqlSummary}: InformationPaneProps) => {
                 {informationData.map((item: InformationDataType) => {
                     return (
                         <div className={styles.infoItemContainer}>
-                            <Typography variant="Semibold_14">{`${item.label}: `}</Typography>
-                            <Typography variant="Regular_14">{item.value}</Typography>
+                            <Typography className={styles.infoItemLabel} variant="Semibold_14">{`${item.label}: `}</Typography>
+                            <Typography className={styles.infoItemValue} variant="Regular_14">{item.value}</Typography>
                             {item.showCopy && (
                                 <div className={styles.copyContainer}>
                                     <Popover
