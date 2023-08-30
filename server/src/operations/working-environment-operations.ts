@@ -5,51 +5,51 @@ import getLogger from '../utils/logger';
 import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
+interface WorkingEnvironment {
+    id: string;
+    provider: string;
+    name?: string;
+    deploymentState: string;
+}
+
+interface Resource {
+    metadata: string | null;
+    resourceIdentifier: string;
+    resourceType: string;
+    name?: string;
+}
 const logger = getLogger();
 async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
     const mssqlResources = await getTenancyResourcesByType(RESOURCESTYPE.MSSQL);
-    const workingEnvironments: { id: string; provider: string; name?: string; deploymentState: string }[] =
-        mssqlResources
-            .filter((resource: any) => {
-                const { metadata } = resource || {};
-                try {
-                    if (metadata) {
-                        const { properties } = JSON.parse(metadata) || {};
-                        const parsedProperties = JSON.parse(properties);
-                        const workspaceId = parsedProperties.workspaceId || '';
-                        // workaround to filter based on workspaceid passed as header
-                        return workspaceId === getAsyncLocalStorageResource<string>(WORKSPACE_ID);
-                    }
-                } catch (error) {
-                    throw createError(
-                        HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                        `Error parsing resource properties, ${error}`
-                    );
-                }
-                return false;
-            })
-            .map((resource: any) => {
-                const { metadata } = resource || {};
-                let deploymentState: string = '';
-                try {
+    const workingEnvironments: WorkingEnvironment[] = mssqlResources.reduce(
+        (result: WorkingEnvironment[], resource: Resource) => {
+            const { metadata, resourceIdentifier, resourceType, name } = resource || {};
+            try {
+                if (metadata) {
                     const { properties } = JSON.parse(metadata) || {};
                     const parsedProperties = JSON.parse(properties);
-                    deploymentState = parsedProperties.deploymentState || '';
-                } catch (error) {
-                    throw createError(
-                        HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                        `Error parsing resource properties, ${error}`
-                    );
+                    const workspaceId = parsedProperties.workspaceId || '';
+                    if (workspaceId === getAsyncLocalStorageResource<string>(WORKSPACE_ID)) {
+                        let deploymentState: string = '';
+                        deploymentState = parsedProperties.deploymentState || '';
+                        result.push({
+                            id: resourceIdentifier,
+                            provider: resourceType,
+                            name: name,
+                            deploymentState: deploymentState
+                        });
+                    }
                 }
-                return {
-                    id: resource.resourceIdentifier,
-                    provider: resource.resourceType,
-                    name: resource.name,
-                    deploymentState: deploymentState
-                };
-            });
-    return workingEnvironments || [];
+            } catch (error) {
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
+            }
+            return result;
+        },
+        []
+    );
+
+    return workingEnvironments;
 }
 
 async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
