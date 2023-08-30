@@ -479,6 +479,8 @@ const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 
 const AWS_FSX = 'aws/fsx';
 
+const JWKS_FULL_NAME = 'http://cloud.netapp.com/full_name';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -566,5 +568,6 @@ export {
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
     SAME_ROUTETABLE_MESSAGE,
-    AWS_FSX
+    AWS_FSX,
+    JWKS_FULL_NAME
 };

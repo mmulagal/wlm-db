@@ -5,7 +5,7 @@ const FormConfigListResponse = Type.Array(
         id: Type.String(),
         accountId: Type.String(),
         user: Type.String(),
-        data: Type.Object({})
+        data: Type.Any()
     })
 );
 
@@ -21,7 +21,7 @@ const FormConfigCreateResponse = Type.Object({});
 type FormConfigCreateResponseType = Static<typeof FormConfigCreateResponse>;
 
 const CreateConfigRequestBody = Type.Object({
-    data: Type.Object({})
+    data: Type.Any()
 });
 
 export {

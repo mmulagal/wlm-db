@@ -38,7 +38,7 @@ export default async function initiateSecrets() {
                 const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName]);
                 SECRETS[secretName] = secret?.value;
                 if (secretName === SECRETS_MANAGER_KEYS.DATABASE_URL) {
-                    process.env[SECRETS_MANAGER_KEYS.DATABASE_URL] = secret;
+                    process.env[SECRETS_MANAGER_KEYS.DATABASE_URL] = secret || process.env.DATABASE_URL;
                 }
             }
         })
