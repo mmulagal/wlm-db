@@ -10,6 +10,7 @@ import {
     DB_ROWS_COUNT,
     SERVER_NAME,
     SERVER_GUID,
+    DB_SIZE,
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
@@ -21,6 +22,7 @@ import {
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
+import { UtilisationResponseBody } from '../../../routes/types/database.types';
 import {
     DatabaseTypes,
     DATABASE_METRIC_TYPE,
@@ -185,6 +187,23 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
     commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
+
+    if (metricType === DATABASE_METRIC_TYPE.DISK) {
+        const dbSizecommand = [`${PSSCRIPT} -Query "${DB_SIZE}"`];
+        const diskUtilizationCommand = [`${PSSCRIPT} -Query "${DISK_UTILISATION}"`];
+
+        const [diskdata, size] = await Promise.all([
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, diskUtilizationCommand),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, dbSizecommand)
+        ]);
+        const diskUtilization = UtilisationResponseBody;
+        diskUtilization.used = size.TotalSize.toString();
+        diskUtilization.total = diskdata.total.toString();
+        diskUtilization.remaining = (Number(diskdata.total) - size.TotalSize).toString();
+        diskUtilization.percentUsed = Math.round((size.TotalSize * 100) / Number(diskdata.total)).toString();
+
+        return diskUtilization;
+    }
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching  utilization', response);
 

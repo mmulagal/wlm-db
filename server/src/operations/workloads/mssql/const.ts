@@ -26,7 +26,7 @@ const CPU_UTILISATION = `DECLARE @ts BIGINT;
                                 FROM sys.dm_os_ring_buffers             
                                 WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y 
                                 ORDER BY record_id DESC;`;
-
+const DB_SIZE = 'SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files';
 const DISK_UTILISATION = `WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum
                                 FROM sys.master_files mf1)
                                 ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID
@@ -110,5 +110,6 @@ export {
     SERVER_NAME,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
-    SERVER_NODES
+    SERVER_NODES,
+    DB_SIZE
 };
