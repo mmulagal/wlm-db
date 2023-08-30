@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
@@ -5,7 +6,10 @@ import {
     SQL_TEMPLATES_ASSETS,
     TEMPLATE_TYPES,
     BUCKET_NAME,
-    SQL_TEMPLATES_DISTRIBUTION
+    SQL_TEMPLATES_DISTRIBUTION,
+    SIGNED_URL_ERROR_MESSAGE,
+    HttpErrorCodes,
+    MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { readFileSync } from 'fs';
@@ -39,9 +43,9 @@ async function generateSignedUrls(credentialsId: string, region: string, resourc
                     signedUrl = await getPreSignedUrl(credentialsId, region, template.url);
                     signedUrls.set(template.name, { name: template.name, url: signedUrl, location: template.url });
                 } catch (error) {
-                    logger.error(
-                        `Error creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}. ${error}`
-                    );
+                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(template.url, region, credentialsId, error as string);
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
                 }
             })
         );
@@ -70,7 +74,7 @@ async function updateTemplateUrls(
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || '')
         });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'templates/wlm-master.yaml', contents);
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, MASTER_TEMPLATE_PATH, contents);
     } else if (templateType == TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
@@ -106,7 +110,7 @@ async function updateTemplateUrls(
             credentialsId,
             region,
             BUCKET_NAME,
-            'templates/sql-windows-fci-config_nosignal.yaml',
+            signedUrls.get('SQLTemplate')?.location || '',
             contents
         );
     } else if (templateType == TEMPLATE_TYPES.VALIDATION) {
@@ -123,7 +127,13 @@ async function updateTemplateUrls(
             ScriptRenameComputer: decodeURI(signedUrls.get('ScriptRenameComputer')?.url || ''),
             ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || '')
         });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'templates/vpc-ad-validation.yaml', contents);
+        await putObjectBucket(
+            credentialsId,
+            region,
+            BUCKET_NAME,
+            signedUrls.get('ValidationTemplate')?.location || '',
+            contents
+        );
     }
 }
 

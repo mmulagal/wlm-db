@@ -103,7 +103,7 @@ async function createCloudFormationTemplateForUserDeployment(
     );
 
     //Generate Signed-url and upload to bucket
-    await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
+    await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
 
@@ -178,7 +178,7 @@ async function deployCloudFormationTemplate(
     }
 
     //Generate Signed-url and upload to bucket
-    await uploadTemplates(credentialsId, region, DatabaseTypes.MS_SQL_SERVER);
+    await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
