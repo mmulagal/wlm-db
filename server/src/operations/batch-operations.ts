@@ -20,7 +20,6 @@ export default async function executeBatchApiCalls(requestBody: BatchRequestBody
 
             try {
                 // const { token } = await getServiceToken();
-
                 const response = await gotInstanceForInternalRequest[method.toLowerCase() as HTTPAlias](url, {
                     headers: {
                         ...headers
@@ -28,11 +27,11 @@ export default async function executeBatchApiCalls(requestBody: BatchRequestBody
                     },
                     ...(methodsWithPayload.includes(method) && { json: payload })
                 });
-                // logger.info('response here', response);
+
                 responseData.data = response ? response : 'Success';
                 return responseData;
             } catch (err: any) {
-                const errMsg = `Failed to make the batch api call. ${err.message}`;
+                const errMsg = `Failed to execute the batch api call. ${err.message}`;
                 logger.warn(errMsg);
                 responseData.error = errMsg;
                 return responseData;
