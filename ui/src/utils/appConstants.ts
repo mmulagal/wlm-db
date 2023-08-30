@@ -143,7 +143,7 @@ export const GENERAL = {
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
+    ERROR_CAPACITY: 'Capacity should be less than or equals to 130 TiB',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -161,6 +161,7 @@ export const GENERAL = {
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
     SELECT_EXISTING_FSX: 'Select an existing FSxN ',
     FSXN_NAME: 'FSxN name',
     USER_NAME: 'User name',
@@ -185,7 +186,7 @@ export const GENERAL = {
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
     //Availability zone
-    AZ_TEXT: 'Select an Availability Zone and subnet for each node.',
+    AZ_TEXT: 'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',

@@ -1,6 +1,14 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS } from '../../utils/consts';
+import {
+    CLOUD_MANAGER_ENDPOINT,
+    HEADERS,
+    AUTH0_AUDIENCE,
+    SECRETS,
+    WORKSPACE_ID,
+    HttpErrorCodes
+} from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -90,6 +98,24 @@ async function getTenancyResourcesByType(resourceType: string) {
     }
 }
 
+async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: string) {
+    logger.info('Getting tenancy resource details for resource:', resourceType, resourceId);
+    const resource = (await getTenancyResourcesByType(resourceType)).find(
+        resource => resource.resourceIdentifier === resourceId
+    );
+    if (resource) {
+        if (resource?.metadata?.length) {
+            resource.metadata = JSON.parse(resource.metadata);
+        } else {
+            resource.metadata = '';
+        }
+
+        return resource;
+    } else {
+        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
+    }
+}
+
 async function removeResource(resourceIdentifier: string) {
     logger.info('Removing resource from tenancy', { resourceIdentifier });
 
@@ -98,7 +124,8 @@ async function removeResource(resourceIdentifier: string) {
     try {
         return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
             headers: {
-                [HEADERS.AUTHORIZATION]: token
+                [HEADERS.AUTHORIZATION]: token,
+                [HEADERS.WORKSPACE_ID]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
             }
         });
     } catch (err) {
@@ -109,6 +136,7 @@ async function removeResource(resourceIdentifier: string) {
 export {
     registerServiceResource,
     getTenancyResourcesByType,
+    getTenancyResourcesByTypeAndId,
     removeResource,
     getServiceToken,
     ServiceResourceRequest,

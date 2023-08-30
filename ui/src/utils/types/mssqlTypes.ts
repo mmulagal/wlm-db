@@ -47,7 +47,7 @@ export interface KmsKeys {
     origin?: string;
     state?: string;
     expirationDate?: string;
-    expiryStatus?: string;
+    formattedDate?: string;
     cellProps?: Object;
     default?: boolean;
 }
