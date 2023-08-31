@@ -19,13 +19,17 @@ const Tablesparams = Type.Object({
 const MsSqlServerDiscoveryParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
-    regionId: Type.String(),
-    ec2InstanceId: Type.String()
+    regionId: Type.String()
 });
 
 const MsSqlServerDiscoveryResponse = Type.Object({
     resourceId: Type.String(),
     resourceName: Type.String()
+});
+
+const MsSqlServerDiscoverRequestBody = Type.Object({
+    activeInstanceId: Type.String(),
+    standbyInstanceId: Type.String()
 });
 
 const DatabasesResponseBody = Type.Object({
@@ -86,5 +90,6 @@ export {
     DatabaseDeleteResponseBody,
     DatabaseHeaders,
     MsSqlServerDiscoveryParams,
-    MsSqlServerDiscoveryResponse
+    MsSqlServerDiscoveryResponse,
+    MsSqlServerDiscoverRequestBody
 };

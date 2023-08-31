@@ -9,7 +9,8 @@ import {
     ServerSummaryResponse,
     DatabaseDeleteResponseBody,
     MsSqlServerDiscoveryParams,
-    MsSqlServerDiscoveryResponse
+    MsSqlServerDiscoveryResponse,
+    MsSqlServerDiscoverRequestBody
 } from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
@@ -22,6 +23,7 @@ const baseRequest = {
 const PostSqlServerSchema = {
     tags: [RouteTags.DATABASE],
     params: MsSqlServerDiscoveryParams,
+    body: MsSqlServerDiscoverRequestBody,
     description: 'Discover Microsoft SQL Server',
     response: {
         200: MsSqlServerDiscoveryResponse

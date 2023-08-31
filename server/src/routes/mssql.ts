@@ -18,8 +18,7 @@ import {
 import { removeTenancyResource } from '../operations/tenancy-operations';
 import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
 
-const MSSQL_DISCOVER_API_PATH: string =
-    '/v1/mssql/credentials/:credentialsId/regions/:regionId/ec2instances/:ec2InstanceId';
+const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:regionId';
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
@@ -27,15 +26,16 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, regionId, ec2InstanceId }
+            params: { accountId, credentialsId, regionId },
+            body: { activeInstanceId, standbyInstanceId }
         } = request;
 
         const response = await discoverMsSqlServer(
             accountId,
             credentialsId,
             regionId,
-            ec2InstanceId,
-            ec2InstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
+            activeInstanceId,
+            standbyInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
             DatabaseTypes.MS_SQL_SERVER
         );
         return reply.send(response);
