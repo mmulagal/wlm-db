@@ -1,24 +1,16 @@
-import { Type } from '@sinclair/typebox';
-import { RouteTags, HEADERS } from '../../utils/consts';
-import { WorkingEnvironmentResponse, WorkingEnvironmentsResponse } from '../types/working-environment.types';
-
-const GenericHeaders = Type.Object({
-    [HEADERS.SIMULATOR]: Type.Optional(Type.Boolean())
-});
-
-const AccountIdParams = Type.Object({
-    accountId: Type.String({ minLength: 1 })
-});
-
-const AccountIdAndWorkingEnvironmentIdParams = Type.Object({
-    accountId: Type.String({ minLength: 1 }),
-    workingEnvironmentId: Type.String({ minLength: 1 })
-});
+import { RouteTags } from '../../utils/consts';
+import {
+    WorkingEnvironmentResponse,
+    WorkingEnvironmentsResponse,
+    WorkinEnvironmentHeaders,
+    AccountIdParams,
+    AccountIdAndWorkingEnvironmentIdParams
+} from '../types/working-environment.types';
 
 const GetWorkingEnvironmentsSchema = {
     tags: [RouteTags.WORKING_ENVIRONMENT],
     description: 'Get working environments',
-    headers: GenericHeaders,
+    headers: WorkinEnvironmentHeaders,
     params: AccountIdParams,
     response: {
         200: WorkingEnvironmentsResponse
@@ -28,7 +20,7 @@ const GetWorkingEnvironmentsSchema = {
 const GetWorkingEnvironmentSchema = {
     tags: [RouteTags.WORKING_ENVIRONMENT],
     description: 'Get working environments',
-    headers: GenericHeaders,
+    headers: WorkinEnvironmentHeaders,
     params: AccountIdAndWorkingEnvironmentIdParams,
     response: {
         200: WorkingEnvironmentResponse
