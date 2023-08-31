@@ -95,6 +95,12 @@ enum CloudProviders {
     GCP = 'GCP'
 }
 
+enum DeploymentState {
+    INITIALIZING = 'Initializing',
+    SUCCESS = 'Success',
+    FAILED = 'Failed'
+}
+
 enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
@@ -754,6 +760,7 @@ export {
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
+    DeploymentState,
     SIGNED_URL_ERROR_MESSAGE,
     METHODS_WITH_PAYLOAD
 };
