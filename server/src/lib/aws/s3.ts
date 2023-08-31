@@ -5,17 +5,6 @@ import { BUCKET_NAME, MASTER_TEMPLATE_PATH, S3_BUCKET_SIGNED_URL_EXPIRTY } from 
 
 const logger = getLogger();
 
-// async function getS3Client(region: string, credentialsId: string) {
-//     logger.debug('Getting S3 client:', region, credentialsId);
-
-//     const {
-//         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-//     } = await getCredentialDetails(credentialsId);
-//     const credentials = { accessKeyId, secretAccessKey, sessionToken };
-
-//     return new S3Client({ credentials, region });
-// }
-
 async function getPreSignedUrl(region: string, key?: string) {
     logger.info('Getting presigned url', { region });
 
