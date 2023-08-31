@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import styles from './DatabaseName.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
@@ -48,7 +49,24 @@ const DatabaseName = () => {
                     <Typography>
                         <div className={styles.content}>
                             <TextField
-                                info={GENERAL.DB_NAME_TOOLTIP}
+                                info={
+                                    <div className={styles.userNameTooltip}>
+                                        <div className={styles.list}>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP1}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP2}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP3}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                                 label={GENERAL.DATABASE_INSTANCE_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setInput(e.target.value);
