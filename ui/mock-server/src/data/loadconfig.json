@@ -1,4 +1,6 @@
 {
+    "id": "id1",
+    "name": "config1",
     "data": {
         "awsAccount": {
             "selectedCredential": {

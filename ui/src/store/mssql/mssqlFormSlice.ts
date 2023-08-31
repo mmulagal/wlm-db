@@ -82,7 +82,8 @@ const initialState: any = {
         encryptionArn: ''
     },
     tags: [{ key: '', value: '' }],
-    saveConfigName: ''
+    saveConfigName: '',
+    loadConfig: ''
 };
 
 const mssqlFormSlice = createSlice({
@@ -241,6 +242,10 @@ const mssqlFormSlice = createSlice({
         setSaveConfigName(state, action: PayloadAction<any>) {
             state.saveConfigName = action.payload;
         },
+        //load config update
+        setLoadConfig(state, action: PayloadAction<any>) {
+            state.loadConfig = action.payload;
+        },
         //Update full form
         setMssqlForm(state, action: PayloadAction<any>) {
             return { ...state, ...action.payload };
@@ -293,6 +298,7 @@ export const {
     setSelectedKeyPair,
     setInstanceType,
     setTags,
+    setLoadConfig,
     setMssqlForm
 } = mssqlFormSlice.actions;
 export default mssqlFormSlice;

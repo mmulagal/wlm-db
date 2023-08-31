@@ -4,25 +4,25 @@ import loadconfig from '../data/loadconfig.json';
 const router = require('express').Router();
 
 //Get all saved credentials mock response
-router.get(`${BASE_URL}/v1/loadconfig`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
     const retData = [
         {
-            id: 'config1',
+            id: 'id1',
             name: 'config1',
         },
         {
-            id: 'config2',
+            id: 'id2',
             name: 'config2',
         },
     ];
     generateResponse(res, 200, retData);
 });
 
-router.get(`${BASE_URL}/v1/loadconfig/:configid`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/config/?id=:configid`, async (req: {}, res: any) => {
     generateResponse(res, 200, loadconfig);
 });
 
-router.post(`${BASE_URL}/v1/saveconfig/:configId`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
     generateResponse(res, 200, {'success': 'ok'});
 });
 

@@ -205,14 +205,14 @@ export const configApi = createApi({
     endpoints: builder => {
         return {
             getConfigList: builder.query({
-                query: () => ({url: `loadconfig`})
+                query: () => ({url: `config`})
             }),
             getConfigData: builder.query({
-                query: ({configId}) => ({url: `loadconfig/${configId}`})
+                query: ({configId}) => ({url: `config/?id=${configId}`})
             }),
             saveConfigData: builder.mutation({
-                query: ({configId, payload}) => ({
-                    url: `saveconfig/${configId}`,
+                query: ({payload}) => ({
+                    url: `config`,
                     method: 'POST',
                     body: payload,
                 })
@@ -230,4 +230,4 @@ export const {
         useGetMSSQLDiskUtilizationQuery, useGetMSSQLMemoryUtilizationQuery, useBatchTablesMutation
 } = resourceApi;
 
-export const { useGetConfigListQuery, useGetConfigDataQuery, useSaveConfigDataMutation } = configApi;
+export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation } = configApi;

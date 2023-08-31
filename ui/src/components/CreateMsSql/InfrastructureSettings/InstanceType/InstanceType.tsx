@@ -17,6 +17,7 @@ const InstanceType = () => {
     const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
@@ -41,7 +42,9 @@ const InstanceType = () => {
     }, [instanceTypeData]);
 
     useEffect(() => {
-        dispatch(setInstanceType(generateInstances[0]));
+        if(!isLoadConfig){
+            dispatch(setInstanceType(generateInstances[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
 
