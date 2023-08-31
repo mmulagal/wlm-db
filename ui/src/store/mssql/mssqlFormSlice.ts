@@ -240,6 +240,10 @@ const mssqlFormSlice = createSlice({
         //Save Config
         setSaveConfigName(state, action: PayloadAction<any>) {
             state.saveConfigName = action.payload;
+        },
+        //Update full form
+        setMssqlForm(state, action: PayloadAction<any>) {
+            return { ...state, ...action.payload };
         }
     }
 });
@@ -288,6 +292,7 @@ export const {
     setSelectedSubnetNode2,
     setSelectedKeyPair,
     setInstanceType,
-    setTags
+    setTags,
+    setMssqlForm
 } = mssqlFormSlice.actions;
 export default mssqlFormSlice;

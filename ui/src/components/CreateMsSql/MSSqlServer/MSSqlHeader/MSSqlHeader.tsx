@@ -2,6 +2,7 @@ import { Button, Header, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
+import { useGetConfigDataQuery, useSaveConfigDataMutation } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { LoadConfiguration, SaveConfiguration } from '../../Configuration/LoadConfiguration';
@@ -13,6 +14,12 @@ const MSSqlHeader = () => {
     const { setDialog } = useDialog();
     const dispatch = useDispatch();
 
+    const { 
+        data:configData,
+    } = useGetConfigDataQuery({configId: 'config1'});
+
+    const [saveConfigData] = useSaveConfigDataMutation();
+
     const handleLoadConfiguration = () => {
         setDialog(
             <DialogComponent
@@ -20,7 +27,7 @@ const MSSqlHeader = () => {
                 content={<LoadConfig />}
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.Cancel}
-                callback={() => LoadConfiguration(dispatch)}
+                callback={() => LoadConfiguration(dispatch, configData?.data)}
                 closeCallback={() => {}}
             />
         );
@@ -33,7 +40,7 @@ const MSSqlHeader = () => {
                 content={<SaveConfig />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.Cancel}
-                callback={() => SaveConfiguration(dispatch)}
+                callback={() => SaveConfiguration(dispatch, saveConfigData)}
                 closeCallback={() => dispatch(setSaveConfigName(''))}
             />
         );
@@ -47,7 +54,7 @@ const MSSqlHeader = () => {
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
         >
-            {/* <div className={styles['header-button']}>
+            <div className={styles['header-button']}>
                 <Button Component="button" onClick={handleLoadConfiguration} variant="text">
                     {SELECT_CONFIG.LOAD_CONFIG}
                 </Button>
@@ -55,7 +62,7 @@ const MSSqlHeader = () => {
                 <Button Component="button" onClick={handleSaveConfig} variant="text">
                     {SELECT_CONFIG.SAVE_CONFIG}
                 </Button>
-            </div> */}
+            </div>
         </Header>
     );
 };

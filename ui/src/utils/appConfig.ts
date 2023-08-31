@@ -4,9 +4,10 @@ import { postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useAppDispatch } from '../store/storeHooks';
 import queryString from 'query-string';
 import { setAppContext } from '../store/appContextSlice';
-import { updateAuthSuccess, updateResourceId, updateResourceName } from '../store/authSlice';
-import { LOCAL, DATABASE_SERVICE_PATH } from './consts';
-import Auth from './auth';
+import { updateAuthFailed, updateAuthSuccess } from '../store/authSlice';
+import { LOCAL } from './consts';
+import Auth, { refreshSso } from './auth';
+import { encodeAll } from './utilityFunctions';
 
 const AUTH_0_OPTIONS = {
     clientID: 'test-client-id',
@@ -87,13 +88,17 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken, pathname, storage, storageId, storageName } = search;
+        const { accountId, accessToken, storage, pathname } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const environment = process.env.REACT_APP_ENVIRONMENT ?? null;
 
         const handleAuthSuccess = (payload: any) => {
             dispatch(updateAuthSuccess(payload));
+        };
+
+        const handleAuthFailed = (payload: any) => {
+            dispatch(updateAuthFailed(payload));
         };
 
         if (accountIdAsString) {
@@ -104,11 +109,9 @@ const useInitialize = () => {
             dispatch(setAppContext(appContext));
         }
 
-        if(accessTokenAsString){
-            handleAuthSuccess({
-                accessToken: accessTokenAsString || ''
-            });
-        }
+        handleAuthSuccess({
+            accessToken: accessTokenAsString || ''
+        });
 
         if (environment === LOCAL) {
             (window as any).auth = new Auth(AUTH_0_OPTIONS);
@@ -123,14 +126,7 @@ const useInitialize = () => {
         }
 
         if (pathname) {
-
-            if(pathname === DATABASE_SERVICE_PATH){
-                navigate(`${storage}/${storageId}/${storageName}`);
-                dispatch(updateResourceId(storageId))
-                dispatch(updateResourceName(storageName))
-            } else {
-                navigate(`${pathname}`, { replace: true });
-            }
+            navigate(`${pathname}`, { replace: true });
         }
 
         sendAppReady();
