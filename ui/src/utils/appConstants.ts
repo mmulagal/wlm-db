@@ -136,14 +136,17 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The instance name must be 15 characters or less in length. The first character must be an alphabetic character (a-z). The first character can't be a numerical value (0-9), or an hyphen `-`. Spaces and special characters (such as @, ^, *, ) are not supported.",
+        "The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).",
+    DB_NAME_TOOLTIP1: "The cluster name must be 15 characters or less",
+    DB_NAME_TOOLTIP2: "The first character can be a letter (a-z or A-Z) or a number (0-9)",
+    DB_NAME_TOOLTIP3: "Subsequent characters can be a letter, number, or hyphen (-)",
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
+    ERROR_CAPACITY: 'The maximum supported capacity is 130 TiB.',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -186,7 +189,7 @@ export const GENERAL = {
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
     //Availability zone
-    AZ_TEXT: 'Select an Availability Zone and subnet for each node.',
+    AZ_TEXT: 'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
@@ -229,6 +232,7 @@ export const GENERAL = {
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
     SELECT_ANY_ACCOUNT: 'Select your AWS credentials first',
     SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
+    SELECT_AZ: 'Select the Availability Zones first',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
@@ -263,5 +267,13 @@ export const GENERAL = {
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
     EC_NOTE:
-        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.'
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.',
+    MS_SQL_CPU_USED: 'CPU used by Microsoft SQL Server',
+    CPU_REM: 'CPU available and used by other processes',
+    MS_SQL_MEMORY_USED: 'Memory used by Microsoft SQL Server',
+    MEMORY_REM : 'Memory available and used by other processes',
+    MS_SQL_DISK_USED : 'Storage used by Microsoft SQL Server',
+    DISK_REM : 'Storage available and used by other processes',
+    OVERVIEW: 'Overview',
+    
 };

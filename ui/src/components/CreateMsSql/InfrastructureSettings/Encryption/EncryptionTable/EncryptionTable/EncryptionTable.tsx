@@ -9,7 +9,7 @@ import { getSelectedFromSelectionState } from '../../../../../../utils/utilityFu
 import { useDispatch } from 'react-redux';
 import { setEncryptionRow } from '../../../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { DEFAULT_MASTER_KEY, EXPIRED_STATUS, EXPIRING_STATUS } from '../../../../../../utils/consts';
+import { DEFAULT_MASTER_KEY, DISABLED_STATE, PENDING_DELETION } from '../../../../../../utils/consts';
 
 const EncryptionTable = () => {
     const dispatch = useDispatch();
@@ -47,14 +47,14 @@ const EncryptionTable = () => {
         },
         {
             Header: GENERAL.EXPIRATION_DATE,
-            accessor: 'expirationDate',
+            accessor: 'formattedDate',
             id: '3',
             width: '177px',
 
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.expirationDate}>
-                        {rowData?.expiryStatus === EXPIRED_STATUS && (
+                        {rowData?.state === DISABLED_STATE && (
                             <div>
                                 <WarningIcon
                                     style={{
@@ -64,7 +64,7 @@ const EncryptionTable = () => {
                                 />
                             </div>
                         )}
-                        {rowData?.expiryStatus === EXPIRING_STATUS && (
+                        {rowData?.state === PENDING_DELETION && (
                             <div>
                                 <WarningIcon
                                     style={{

@@ -19,6 +19,7 @@ async function initiateSimulator() {
     await import('./scopes/aws/s3-scope');
     await import('./scopes/aws/iam-scope');
     await import('./scopes/aws/ssm-scope');
+    await import('./scopes/aws/s3-signed-scope');
     // Load server
     await import('../../src/index');
 }
