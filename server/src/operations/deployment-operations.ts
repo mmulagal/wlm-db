@@ -138,6 +138,9 @@ async function createCloudFormationTemplateForUserDeployment(
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
+
+    logger.info('CloudFormation template url ', signedTemplateURL);
+
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
@@ -181,6 +184,7 @@ async function deployCloudFormationTemplate(
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);
+    logger.info('Signed master url ', signedMasterTemplateUrl);
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
@@ -207,6 +211,10 @@ async function deployCloudFormationTemplate(
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
+    logger.info(
+        `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedMasterTemplateUrl}&${templateParameters}`
+    );
 
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
