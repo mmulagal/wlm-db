@@ -502,8 +502,140 @@ const HTTP_PATCH = 'PATCH';
 // Custom error messages
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
+const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, credentialsId: string, error: string) =>
+    `Error creating signed url for ${url} in region ${region} with credentials ${credentialsId}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
+
+const SQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-ad-validation.yaml'
+    },
+
+    {
+        name: 'SQLTemplate',
+        url: 'templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: 'DSC',
+        url: 'DSC.zip'
+    },
+    {
+        name: 'DSCSignature',
+        url: 'DSC.zip.sig'
+    },
+    {
+        name: 'PowerShell',
+        url: 'Installer/powershell.zip'
+    },
+    {
+        name: 'PowerShellSignature',
+        url: 'Installer/powershell.zip.sig'
+    },
+    {
+        name: 'Sqlspcu',
+        url: 'Installer/sqlspcu.zip'
+    },
+    {
+        name: 'SqlspcuSignature',
+        url: 'Installer/sqlspcu.zip.sig'
+    },
+    {
+        name: 'AmazonFailoverCluster',
+        url: 'modules/AmznFailoverCluster.zip'
+    },
+    {
+        name: 'AmazonFailoverClusterSignature',
+        url: 'modules/AmznFailoverCluster.zip.sig'
+    },
+    {
+        name: 'AmazonLaunchWizardForCFN',
+        url: 'modules/AWSLaunchWizardForCFN.zip'
+    },
+    {
+        name: 'AmazonLaunchWizardForCFNSignature',
+        url: 'modules/AWSLaunchWizardForCFN.zip.sig'
+    },
+    {
+        name: 'AmazonLaunchWizardForSSM',
+        url: 'modules/AWSLaunchWizardForSSM.zip'
+    },
+    {
+        name: 'AmazonLaunchWizardForSSMSignature',
+        url: 'modules/AWSLaunchWizardForSSM.zip.sig'
+    },
+    {
+        name: 'ScriptVerifySignature',
+        url: 'scripts/Verify-Signature.ps1'
+    },
+    {
+        name: 'ScriptUnzipArchive',
+        url: 'scripts/Unzip-Archive.ps1'
+    },
+    {
+        name: 'ScriptCommon',
+        url: 'scripts/common.zip'
+    },
+    {
+        name: 'ScriptCommonSignature',
+        url: 'scripts/common.zip.sig'
+    },
+    {
+        name: 'ScriptSQLFCI',
+        url: 'scripts/sqlfci.zip'
+    },
+    {
+        name: 'ScriptSQLFCISignature',
+        url: 'scripts/sqlfci.zip.sig'
+    },
+    {
+        name: 'ScriptSQLONTAP',
+        url: 'scripts/sqlontap.zip'
+    },
+    {
+        name: 'ScriptSQLONTAPSignature',
+        url: 'scripts/sqlontap.zip.sig'
+    },
+    {
+        name: 'ScriptVpcCheck',
+        url: 'validation/Validate-VPCConnectivity.ps1'
+    },
+    {
+        name: 'ScriptUpdateDnsServers',
+        url: 'validation/Update-DNSServers.ps1'
+    },
+    {
+        name: 'ScriptRenameComputer',
+        url: 'validation/Rename-Computer.ps1'
+    },
+    {
+        name: 'ScriptRestartComputer',
+        url: 'validation/Restart-Computer.ps1'
+    }
+];
+
+const SQL_TEMPLATES_DISTRIBUTION = {
+    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
+    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
+    MASTER: './resources/mssql/templates/wlm-master.yaml'
+};
+
+enum TEMPLATE_TYPES {
+    MASTER = 'master',
+    SQLSTACK = 'sqlstack',
+    VALIDATION = 'validation'
+}
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -602,8 +734,9 @@ export {
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
-    SAME_ROUTETABLE_MESSAGE,
     AWS_FSX,
+    SQL_TEMPLATES_ASSETS,
+    SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
     RESOURCESTYPE,
@@ -613,7 +746,10 @@ export {
     ASSETS_BUCKET_REGION,
     DatabaseTypes,
     WLMDB_RESOURCE_CLASS,
+    TEMPLATE_TYPES,
+    SQL_TEMPLATES_DISTRIBUTION,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
-    SqlServerDeploymentModel
+    SqlServerDeploymentModel,
+    SIGNED_URL_ERROR_MESSAGE
 };

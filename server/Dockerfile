@@ -16,6 +16,9 @@ COPY package-lock.json ./
 COPY config/default.json ./config/default.json
 COPY config/production.json ./config/production.json
 COPY config/log4js.json ./config/log4js.json
+COPY resources/mssql/templates/wlm-master.yaml ./resources/mssql/templates/wlm-master.yaml
+COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/templates/vpc-ad-validation.yaml
+COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
 COPY dist/src ./
 
 RUN npm ci --omit=dev
