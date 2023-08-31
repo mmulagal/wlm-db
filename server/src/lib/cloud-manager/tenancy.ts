@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
 import {
+    ACCOUNT_ID,
     CLOUD_MANAGER_ENDPOINT,
     HEADERS,
     AUTH0_AUDIENCE,
@@ -76,7 +77,9 @@ async function getTenancyResourcesByType(resourceType: string) {
         return gotInstanceForInternalRequest
             .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
                 searchParams: {
-                    resourceType
+                    resourceType,
+                    account: getAsyncLocalStorageResource<string>(ACCOUNT_ID),
+                    workspace: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
                 },
                 headers: {
                     [HEADERS.AUTHORIZATION]: token
