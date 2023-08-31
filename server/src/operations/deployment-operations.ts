@@ -212,6 +212,10 @@ async function deployCloudFormationTemplate(
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
+    logger.info(
+        `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedMasterTemplateUrl}&${templateParameters}`
+    );
+
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
