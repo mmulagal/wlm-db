@@ -78,6 +78,13 @@ Metadata:
           - AssetsS3RegionCode
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
+      - Label:
+          default: Custom Resource configuration
+        Parameters:
+          - AccountId
+          - CloudProviderAccountId
+          - RoleCredentialsId
+          - Token
     ParameterLabels:
       ApplicationName:
         default: Application Name
@@ -411,6 +418,22 @@ Parameters:
   ValidationAmi:
     Description: Validation node AMI image id
     Type: String
+  
+  RoleCredentialsId:
+    Description: Account credentials id to deploy and manage resources
+    Type: String
+  
+  AccountId:
+    Description: BlueXP account id
+    Type: String
+
+  CloudProviderAccountId:
+    Description: BlueXP CloudProviderAccountId id
+    Type: String
+  
+  Token:
+    Description: JWT Token to grant access to a resource
+    Type: String
 
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -704,3 +727,13 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+  TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref Token
+      Region: ${AWS::Region}
+      StackName: ${AWS::StackName}
+      EC2InstanceId: !Ref SQLServerStack
