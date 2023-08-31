@@ -508,8 +508,8 @@ const HTTP_PATCH = 'PATCH';
 // Custom error messages
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
-const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, credentialsId: string, error: string) =>
-    `Error creating signed url for ${url} in region ${region} with credentials ${credentialsId}. ${error}`;
+const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
+    `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
 

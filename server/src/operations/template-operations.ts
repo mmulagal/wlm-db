@@ -22,8 +22,8 @@ interface TemplateDetails {
 
 const logger = getLogger();
 
-async function generateSignedUrls(credentialsId: string, region: string, resourceType: DatabaseTypes) {
-    logger.info('Generating signed urls ', credentialsId, region, resourceType);
+async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
+    logger.info('Generating signed urls ', region, resourceType);
 
     let signedUrl: string = '';
     const signedUrls: Map<string, TemplateDetails> = new Map();
@@ -36,14 +36,12 @@ async function generateSignedUrls(credentialsId: string, region: string, resourc
     if (assets?.length) {
         await Promise.all(
             SQL_TEMPLATES_ASSETS.map(async template => {
-                logger.info(
-                    `Creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}.`
-                );
+                logger.info(`Creating signed url for ${template.url} in region ${region}.`);
                 try {
-                    signedUrl = await getPreSignedUrl(credentialsId, region, template.url);
+                    signedUrl = await getPreSignedUrl(region, template.url);
                     signedUrls.set(template.name, { name: template.name, url: signedUrl, location: template.url });
                 } catch (error) {
-                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(template.url, region, credentialsId, error as string);
+                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(template.url, region, error as string);
                     logger.error(errorMessage);
                     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
                 }
@@ -141,7 +139,7 @@ async function uploadTemplates(credentialsId: string, region: string, resourceTy
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 
     if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
-        const signedUrls = await generateSignedUrls(credentialsId, region, resourceType);
+        const signedUrls = await generateSignedUrls(region, resourceType);
         await updateTemplateUrls(
             credentialsId,
             region,
