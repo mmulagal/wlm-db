@@ -136,7 +136,10 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The instance name must be 15 characters or less in length. The first character must be an alphabetic character (a-z). The first character can't be a numerical value (0-9), or an hyphen `-`. Spaces and special characters (such as @, ^, *, ) are not supported.",
+        "The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).",
+    DB_NAME_TOOLTIP1: "The cluster name must be 15 characters or less",
+    DB_NAME_TOOLTIP2: "The first character can be a letter (a-z or A-Z) or a number (0-9)",
+    DB_NAME_TOOLTIP3: "Subsequent characters can be a letter, number, or hyphen (-)",
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
