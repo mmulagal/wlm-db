@@ -38,7 +38,7 @@ const Tags = () => {
     }, [tags]);
 
     const handleAddNewTag = () => {
-        dispatch(setTags([...tags, { key: '', value: '' }]));
+        dispatch(setTags([{ key: '', value: '' }, ...tags]));
     };
 
     const handleChange = (idx: number, prop: string, value: string) => {
