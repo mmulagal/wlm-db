@@ -1,6 +1,15 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS, HttpErrorCodes } from '../../utils/consts';
+import {
+    ACCOUNT_ID,
+    CLOUD_MANAGER_ENDPOINT,
+    HEADERS,
+    AUTH0_AUDIENCE,
+    SECRETS,
+    WORKSPACE_ID,
+    HttpErrorCodes
+} from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -68,7 +77,9 @@ async function getTenancyResourcesByType(resourceType: string) {
         return gotInstanceForInternalRequest
             .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
                 searchParams: {
-                    resourceType
+                    resourceType,
+                    account: getAsyncLocalStorageResource<string>(ACCOUNT_ID),
+                    workspace: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
                 },
                 headers: {
                     [HEADERS.AUTHORIZATION]: token
@@ -116,7 +127,8 @@ async function removeResource(resourceIdentifier: string) {
     try {
         return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
             headers: {
-                [HEADERS.AUTHORIZATION]: token
+                [HEADERS.AUTHORIZATION]: token,
+                [HEADERS.WORKSPACE_ID]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
             }
         });
     } catch (err) {

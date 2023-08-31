@@ -33,5 +33,9 @@
     },
     "service-token": {
         "expiration-margin": "10s"
+    },
+    "templates": {
+        "bucket": "staging.wlmdb.workloads.netapp.com",
+        "region": "us-east-1"
     }
 }

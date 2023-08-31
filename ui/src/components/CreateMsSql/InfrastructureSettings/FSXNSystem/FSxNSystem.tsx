@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -14,6 +14,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
@@ -44,10 +45,13 @@ const FSxNSystem = () => {
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
 
     const [password, setPassword] = useState('');
+
+    const fsxNameRef = useRef(null);
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
@@ -87,6 +91,16 @@ const FSxNSystem = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 
+    //FSX Name check to highlight the field
+    useEffect(() => {
+        if (!isFsxNotFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                fsxNameRef?.current?.focus();
+            }, 10);
+        }
+    }, [isFsxNotFilled, isCreateHit]);
+
     //Set the Header text here
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
@@ -97,7 +111,13 @@ const FSxNSystem = () => {
             );
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        }
+        } else if (!selectedZone1 || !selectedZone2) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_AZ}
+                </Typography>
+            );
+        } 
 
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
@@ -124,8 +144,10 @@ const FSxNSystem = () => {
         <div className={styles.fsx}>
             <AccordionCard
                 isLoading={fsxnLoading}
-                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+                    || !selectedZone1 || !selectedZone2}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+                    || !selectedZone1 || !selectedZone2}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
@@ -206,7 +228,23 @@ const FSxNSystem = () => {
                                         </div>
                                     </Typography>
                                 }
-                                error={useDelayedError(fsxPassVal(password))}
+                                error={
+                                    !isFsxNotFilled && !selectedFsxnPassword
+                                        ? GENERAL.ACTION_REQUIRED
+                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
+                                          '' || fsxPassVal(password)
+                                }
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));

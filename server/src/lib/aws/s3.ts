@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -28,4 +28,27 @@ async function getPreSignedUrl(credentialId: string, region: string, key?: strin
     return await getSignedUrl(s3, command, { expiresIn: S3_BUCKET_SIGNED_URL_EXPIRTY });
 }
 
-export { getPreSignedUrl };
+async function putObjectBucket(
+    credentialId: string,
+    region: string,
+    bucketName: string,
+    objectName: string,
+    objectData: string
+) {
+    logger.info('Uploading to bucket ', { credentialId, region, bucketName, objectName });
+
+    const s3 = new S3Client({ region });
+    const command = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: objectName,
+        Body: objectData
+    });
+
+    const response = await s3.send(command);
+
+    logger.debug('putObjectBucket response:', response);
+
+    return response;
+}
+
+export { getPreSignedUrl, putObjectBucket };
