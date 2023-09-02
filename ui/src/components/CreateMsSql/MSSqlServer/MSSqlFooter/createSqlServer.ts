@@ -86,11 +86,11 @@ const createMssqlPayload = (state: any) => {
 
     const ontapSgGroupIdsList = (() => {
         let ontapSgGroupList = [];
+        const sgType = state.mssqlForm.securityGroup?.selectedSecurityType;
         const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
-        if (vpcsg) {
+        if(sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
             ontapSgGroupList.push(vpcsg);
         }
-
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (fsxnType === GENERAL.SELECT_EXISTING_FSX) {
             const fsxsg = state.mssqlForm.fsxN?.fsxNExistingName?.data?.securityGroups || [];
