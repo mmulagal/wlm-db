@@ -16,6 +16,22 @@ const Tablesparams = Type.Object({
     databaseName: Type.String()
 });
 
+const MsSqlServerDiscoveryParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    regionId: Type.String()
+});
+
+const MsSqlServerDiscoveryResponse = Type.Object({
+    resourceId: Type.String(),
+    resourceName: Type.String()
+});
+
+const MsSqlServerDiscoverRequestBody = Type.Object({
+    activeInstanceId: Type.String(),
+    standbyInstanceId: Type.String()
+});
+
 const DatabasesResponseBody = Type.Object({
     databases: Type.Array(
         Type.Object({
@@ -72,5 +88,8 @@ export {
     Tablesparams,
     TablesResponseBody,
     DatabaseDeleteResponseBody,
-    DatabaseHeaders
+    DatabaseHeaders,
+    MsSqlServerDiscoveryParams,
+    MsSqlServerDiscoveryResponse,
+    MsSqlServerDiscoverRequestBody
 };

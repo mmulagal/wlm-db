@@ -1,0 +1,1454 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This workload template deploys a SqlFSx instance in an existing VPC.
+    **WARNING** This template creates EC2 instances and related resources. You will
+    be billed for the AWS resources used if you create a stack from this template.
+Metadata:
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            - Label:
+                  default: Network Configuration
+              Parameters:
+                  - VPCID
+                  - VPCCIDR
+                  - PrivateSubnet1ID
+                  - PrivateSubnet2ID
+                  - RouteTable1Id
+                  - RouteTable2Id
+            - Label:
+                  default: Microsoft Active Directory Configuration
+              Parameters:
+                  - DomainDNSName
+                  - DomainAdminUser
+                  - DomainAdminSecretName
+                  - ADDnsIpAddresses
+                  - DomainMemberSGID
+            - Label:
+                  default: Amazon EC2 Configuration
+              Parameters:
+                  - SqlFSxServerNetBIOSName1
+                  - SqlFSxServerNetBIOSName2
+                  - KeyPairName
+                  - WorkloadInstanceType
+            - Label:
+                  default: Amazon FSx for ONTAP Volume Configuration
+              Parameters:
+                  - FSxFileSystemId
+                  - FsxAdminPassword
+                  - SQLSvmName
+                  - FSxDataLunSize
+                  - FSxDataVolumeName
+                  - FSxLogVolumeName
+                  - FSxTempDbVolumeName
+                  - FSxQuorumVolumeName
+                  - SQLigroupname
+                  - ONTAPSecurityGroupID
+            - Label:
+                  default: Microsoft SQL Server FCI configurations
+              Parameters:
+                  - MSSQLMediaBucketName
+                  - MSSQLMediaPathKey
+                  - NumberOfNodes
+                  - SqlFSxWSFCName
+                  - SqlFSxFCIName
+                  - SQLAdminAccounts
+                  - SQLServiceAccountSecret
+                  - AMIID
+                  - BYOLAMI
+            - Label:
+                  default: AWS Configuration
+              Parameters:
+                  - AssetsBucketName
+                  - AssetsS3KeyPrefix
+                  - EnableCloudWatchLogFeature
+        ParameterLabels:
+            KeyPairName:
+                default: Key Pair Name for the Ec2 instances
+            PrivateSubnet1ID:
+                default: Private Subnet 1 ID for the first SQL node for existing VPC e.g subnet-000dc866d93550eb0
+            PrivateSubnet2ID:
+                default: Private Subnet 2 ID for the second SQL Node existing VPC e.g subnet-000dc866d93550eb0
+            RouteTable1Id:
+                default: Route Table ID of private subnet 1
+            RouteTable2Id:
+                default: Route Table ID of private subnet 2
+            AssetsBucketName:
+                default: S3 Bucket Name hosting LauncWizard Assets. e.g LaunchWizard-Assets.
+            AssetsS3RegionCode:
+                default: S3 bucket region for the bucket hosting LaunchWizard Assets e.g s3.us-east-1
+            AssetsS3KeyPrefix:
+                default: S3 Key Prefix for LaunchWizard assets e.g launchwizardprefix/
+            AMIID:
+                default: AMI ID of the AMI used to launch Instances e.g ami-0b8aa9827ffff6e39
+            VPCID:
+                default: VPC ID if the instances are launched in an exiting VPC e.g vpc-04e3ac96d2f5ac570
+            VPCCIDR:
+                default: VPCCIDR for instances launched in existing VPC. Also used for setting
+                    up security groups. e.g 10.0.0.8/16
+            WorkloadInstanceType:
+                default: Workload Servers Instance Type for SQL EC2 Instances e.g r4.xlarge
+            DomainAdminSecretName:
+                default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager
+                    e.g 'LaunchWizard-Admin'
+            SQLServiceAccountSecret:
+                default: Secret Name for the SQL Admin user in Secrets Manager e.g 'LaunchWizard-Admin'
+            DomainAdminUser:
+                default: Domain Admin User Name e.g Administrator
+            DomainDNSName:
+                default: Domain DNS Name e.g example.com
+            DomainMemberSGID:
+                default: Security Group ID for AD Domain Members e.g sg-0b7b0431023b4208a
+            SqlFSxServerNetBIOSName1:
+                default: Server1 NetBIOS Name e.g SQLFSX01
+            SqlFSxServerNetBIOSName2:
+                default: Server2 NetBIOS Name e.g SQLFSX02
+            FileShareVolumeSize:
+                default: FSx capacity in GB e.g 1024
+            FileShareThroughputCapacity:
+                default: Data throughput capacity (MB/s) e.g 16 MBps
+            ADDnsIpAddresses:
+                default: Comma Seperated List of DNS addresses for existing AD e.g 10.0.0.10,10.0.16.10
+            SQLStorageVMName:
+                default: SQL Storage VM Name for ONTAP
+            ONTAPSecurityGroupID:
+                default: Security Group ID for FSxN
+            FSxDataLunSize:
+                default: Projected SQL Data size
+            SQLigroupname:
+                default: SQL igroup name
+            FSxDataVolumeName:
+                default: SQL data volume name
+            FSxQuorumVolumeName:
+                default: WFC Quorum volume name
+            FSxLogVolumeName:
+                default: SQL log volume name
+            FSxTempDbVolumeName:
+                default: SQL tempDb volume name
+            FsxAdminPassword:
+                default: Secret name for FSxN Admin password in Secrets Manager
+            FSxFileSystemId:
+                default: File system ID for FSxN
+            SQLSvmName:
+                default: SVM for creating SQL volumes
+            NumberOfNodes:
+                default: Number of SQL Nodes
+            EnableCloudWatchLogFeature:
+                default: (optional) Enable monitoring by CloudWatch Logging
+Parameters:
+    Ec2RoleName:
+        Default: AmazonEC2RoleForLaunchWizard
+        Description: EC2 instance role name
+        Type: String
+    EnableCloudWatchLogFeature:
+        Default: false
+        Description: Enable Logs
+        Type: String
+    LogGroupName:
+        Default: SQLDLOG
+        Description: A name for the log group
+        Type: String
+    UniqueID:
+        Default: SQL123
+        Description: Automation Execution Unique Id.
+        Type: String
+    AMIID:
+        Description: AMI ID of the AMI to use
+        Type: String
+        Default: ami-06c634c2148dc0856
+    BYOLAMI:
+        Default: 'false'
+        Description: Whether the AMI is LI or BYOL
+        Type: String
+    KeyPairName:
+        Description: Name of an existing EC2 key pair. All instances will launch with
+            this key pair.
+        Type: AWS::EC2::KeyPair::KeyName
+    PrivateSubnet1ID:
+        Description: ID of private subnet 1 in Availability Zone 1 for the Workload (e.g.,
+            subnet-a0246dcd)
+        Type: String
+    PrivateSubnet2ID:
+        Description: ID of private subnet 2 in Availability Zone 2 for the Workload (e.g.,
+            subnet-a0246dcd)
+        Type: String
+    AssetsBucketName:
+        Description: S3 bucket name for WLMDB assets. 
+        Type: String
+    AssetsS3RegionCode:
+        Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
+            is hosted. When using your own bucket, you must specify this value.
+        Type: String
+    AssetsS3KeyPrefix:
+        AllowedPattern: ^[0-9a-zA-Z-/]*$
+        ConstraintDescription: Launch Wizard key prefix can include numbers, lowercase
+            letters, uppercase letters, hyphens (-), and forward slash (/).
+        Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
+            can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+            forward slash (/).
+        Type: String
+    VPCID:
+        Description: ID of your existing VPC for deployment
+        Type: String
+    VPCCIDR:
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+        ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+        Description: CIDR Block for the VPC
+        Type: String
+    SqlFSxServerNetBIOSName1:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: SqlFSx1
+        Description: NetBIOS name of the SQL server (up to 15 characters)
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlFSxServerNetBIOSName2:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: SqlFSx2
+        Description: NetBIOS name of the SQL server (up to 15 characters)
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlFSxWSFCName:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: WSFC
+        Description: Windows Server failover cluster name
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    SqlFSxFCIName:
+        AllowedPattern: '[a-zA-Z0-9\-]+'
+        Default: DBSFCI
+        Description: FCI name
+        MaxLength: '15'
+        MinLength: '1'
+        Type: String
+    DomainAdminSecretName:
+        Description: arn for the secret for domain admin.
+        Type: String
+    SQLServiceAccountSecret:
+        Description: arn for the secret for sql service account.
+        Type: String
+    DomainAdminUser:
+        AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
+        Default: admin
+        Description: User name for the account that will be used as Domain Administrator.
+            This is separate from the default "Administrator" account
+        MaxLength: '25'
+        MinLength: '5'
+        Type: String
+    DomainDNSName:
+        AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+        Description: Fully qualified domain name (FQDN) e.g. example.com
+        MaxLength: '255'
+        MinLength: '2'
+        Type: String
+    ADDnsIpAddresses:
+        Description: DNS IP addresses. Comma-separated.
+        MaxLength: '255'
+        MinLength: '2'
+        Type: String
+    DomainMemberSGID:
+        Description: ID of the Domain Member Security Group (e.g., sg-9cb7d0e5)
+        Type: String
+    WorkloadInstanceType:
+        Default: r5.large
+        Description: Type of EC2 instance for the Workload instances
+        Type: String
+    MSSQLMediaBucketName:
+        Default: LaunchWizard-sqlha
+        Description: The S3 bucket name wherefrom MSSQL media can be downloaded. This
+            string can include numbers, lowercase letters, uppercase letters, and hyphens
+            (-). It cannot start or end with a hyphen (-).
+        Type: String
+    MSSQLMediaPathKey:
+        Default: launchwizardscripts/sqlmedia/sqlserver.iso
+        Description: The S3 bucket key wherefrom MSSQL media can be downloaded. This string
+            can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+            forward slash (/).
+        Type: String
+    SQLAdminAccounts:
+        Default: sqlsa
+        Description: User name to be used as MSSQL DB Service Account Administrator. It
+            could be AD domain admin, other local or domain users.
+        MaxLength: '25'
+        MinLength: '5'
+        Type: String
+    NumberOfNodes:
+        Default: '2'
+        Description: Enter the number of SQLServer nodes to create
+        Type: String
+    RouteTable1Id:
+        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Type: String
+    RouteTable2Id:
+        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Type: String
+    SQLSvmName:
+        Description: SQL Storage Machine Virtual Name
+        Type: String
+        Default: SQLVM
+    SQLigroupname:
+        Description: SQL igroupname
+        Type: String
+        Default: SQLIQN
+    FSxDataVolumeName:
+        Description: SQL data volume name
+        Type: String
+        Default: SQLData
+    FSxLogVolumeName:
+        Description: SQL Log volume name
+        Type: String
+        Default: SQLLog
+    FSxTempDbVolumeName:
+        Description: SQL TempDb volume name
+        Type: String
+        Default: SQLTempDb
+    FSxQuorumVolumeName:
+        Description: Windows Failover cluster quorum volume name
+        Type: String
+        Default: WFCQuorum
+    FSxDataLunSize:
+        Description: SQL data LUN size for ONTAP(in GB)
+        Type: String
+    ONTAPSecurityGroupID:
+        Description: ONTAP Security Group ID
+        Type: String
+    FSxFileSystemId:
+        Description: FSx Filesystem ID
+        Type: String
+    FsxAdminPassword:
+        Description: Secret arn for Fsx Admin Password
+        Type: String
+Conditions:
+    ADSGNotSelected: !Equals
+        - !Ref 'DomainMemberSGID'
+        - ''
+    LogFeatureEnabled: !Equals
+        - !Ref 'EnableCloudWatchLogFeature'
+        - 'true'
+    UsingDefaultBucket: !Equals
+        - !Ref 'AssetsBucketName'
+        - LaunchWizard-sqlha-templates
+Rules:
+    KeyPairsNotEmpty:
+        Assertions:
+            - Assert: !Not
+                  - !EachMemberEquals
+                    - !RefAll 'AWS::EC2::KeyPair::KeyName'
+                    - ''
+              AssertDescription: Kay Pair must not be empty
+    SubnetsInVPC:
+        Assertions:
+            - Assert: !EachMemberIn
+                  - !ValueOfAll
+                    - AWS::EC2::Subnet::Id
+                    - VpcId
+                  - !RefAll 'AWS::EC2::VPC::Id'
+              AssertDescription: All subnets must be in the VPC
+Resources:
+    DisableIMDSv1:
+        Type: AWS::EC2::LaunchTemplate
+        Properties:
+            LaunchTemplateData:
+                MetadataOptions:
+                    HttpEndpoint: enabled
+                    HttpTokens: required
+    LaunchWizardSqlFSxProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties:
+            Roles:
+                - !Ref 'Ec2RoleName'
+            Path: /
+    NetworkInterface1:
+        Type: AWS::EC2::NetworkInterface
+        Properties:
+            SecondaryPrivateIpAddressCount: 2
+            SubnetId: !Ref 'PrivateSubnet1ID'
+            GroupSet: !If
+                - ADSGNotSelected
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                          - !Ref 'DomainMemberSGID'
+            Tags:
+                - Key: Name
+                  Value: !Ref 'SqlFSxServerNetBIOSName1'
+    NetworkInterface2:
+        Type: AWS::EC2::NetworkInterface
+        Properties:
+            SecondaryPrivateIpAddressCount: 2
+            SubnetId: !Ref 'PrivateSubnet2ID'
+            GroupSet: !If
+                - ADSGNotSelected
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                - !Split
+                    - ','
+                    - !Join
+                        - ','
+                        - - !Ref 'WorkloadSecurityGroup'
+                          - !Ref 'ONTAPSecurityGroupID'
+                          - !Ref 'DomainMemberSGID'
+            Tags:
+                - Key: Name
+                  Value: !Ref 'SqlFSxServerNetBIOSName2'
+    SqlFSxInstanceMAD1:
+        Type: AWS::EC2::Instance
+        CreationPolicy:
+            ResourceSignal:
+                Count: '1'
+                Timeout: PT180M
+        Metadata:
+            AWS::CloudFormation::Init:
+                configSets:
+                    config:
+                        - ConfigureCWLogs
+                        - FetchResources
+                        - ScriptSignatureVerificationandExtract
+                        - InitialSetup
+                        - ontapconfig
+                        - InstancePrep
+                        - ConfigureInstance
+                        - FCIConfigure
+                        - Cleanup
+                        - Finalize
+                ConfigureCWLogs:
+                    files:
+                        C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json:
+                            content: !If
+                                - LogFeatureEnabled
+                                - !Join
+                                  - ''
+                                  - - '{'
+                                    - '  "IsEnabled" : true,'
+                                    - '  "EngineConfiguration" : {'
+                                    - '    "PollInterval" : "00:00:05",'
+                                    - '    "Components" : [{'
+                                    - '      "Id" : "ApplicationEventLog",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.EventLog.EventLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "LogName" : "Application",'
+                                    - '        "Levels" : "7"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "LogDirectoryPath": "C:\\cfn\\log",'
+                                    - '        "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",'
+                                    - '        "Encoding": "ASCII",'
+                                    - '        "Filter": "cfn-init.log",'
+                                    - '        "CultureName": "en-US",'
+                                    - '        "TimeZoneKind": "Local"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CloudWatchCfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CloudWatchLogsOutput,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "AccessKey": "",'
+                                    - '        "SecretKey": "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - !Sub '        "LogGroup": "${AWS::StackName}",'
+                                    - '        "LogStream": "{instance_id}"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id" : "CloudWatch",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.CloudWatch.CloudWatchOutputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "AccessKey" : "",'
+                                    - '        "SecretKey" : "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - '        "NameSpace" : "Windows/Default"'
+                                    - '      }'
+                                    - '    }],'
+                                    - '    "Flows": {'
+                                    - '      "Flows": ['
+                                    - '        "CfnInitLog,CloudWatchCfnInitLog"'
+                                    - '      ]'
+                                    - '    }'
+                                    - '  }'
+                                    - '}'
+                                - ' { "IsEnabled" : false}'
+                    commands:
+                        a-enableSSM:
+                            command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
+                                Automatic"
+                            waitAfterCompletion: '30'
+                        b-restartSSM:
+                            command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
+                            waitAfterCompletion: '30'
+                FetchResources:
+                    files:
+                        C:\cfn\scripts\Verify-Signature.ps1:
+                            source: {{ ScriptVerifySignature }}
+                        C:\cfn\scripts\Unzip-Archive.ps1:
+                            source: {{ ScriptUnzipArchive }}
+                        C:\cfn\scripts\common.zip:
+                            source: {{ ScriptCommon }}
+                        C:\cfn\scripts\common.zip.sig:
+                            source: {{ ScriptCommonSignature }}
+                        C:\cfn\scripts\sqlfci.zip:
+                            source: {{ ScriptSQLFCI }}
+                        C:\cfn\scripts\sqlfci.zip.sig:
+                            source: {{ ScriptSQLFCISignature }}
+                        C:\cfn\scripts\sqlontap.zip:
+                            source: {{ ScriptSQLONTAP }}
+                        C:\cfn\scripts\sqlontap.zip.sig:
+                            source: {{ ScriptSQLONTAPSignature }}
+                        C:\cfn\DSC.zip:
+                            source: {{ DSC }}
+                        C:\cfn\DSC.zip.sig:
+                            source: {{ DSCSignature }}
+                        C:\cfn\Installer\powershell.zip:
+                            source: {{ PowerShell }}
+                        C:\cfn\Installer\powershell.zip.sig:
+                            source: {{ PowerShellSignature }}
+                        C:\cfn\modules\AWSLaunchWizardForCFN.zip:
+                            source: {{ AmazonLaunchWizardForCFN }}
+                        C:\cfn\modules\AWSLaunchWizardForCFN.zip.sig:
+                            source: {{ AmazonLaunchWizardForCFNSignature }}
+                        C:\cfn\modules\AWSLaunchWizardForSSM.zip:
+                            source: {{ AmazonLaunchWizardForSSM }}
+                        C:\cfn\modules\AWSLaunchWizardForSSM.zip.sig:
+                            source: {{ AmazonLaunchWizardForSSMSignature }}
+                        C:\cfn\modules\AmznFailoverCluster.zip:
+                            source: {{ AmazonFailoverCluster }}
+                        C:\cfn\modules\AmznFailoverCluster.zip.sig:
+                            source: {{ AmazonFailoverClusterSignature }}
+                        C:\cfn\Installer\sqlspcu.zip:
+                            source: {{ Sqlspcu }}
+                        C:\cfn\Installer\sqlspcu.zip.sig:
+                            source: {{ SqlspcuSignature }}
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        b-unpack-common-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: '0'
+                        d-unpack-DSC-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\DSC.zip -Destination C:\cfn
+                            waitAfterCompletion: '0'
+                        f-unpack-sqlfci-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: '0'
+                        h-unpack-sqlontap-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: '0'
+                        j-unpack-sqlspcu-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
+                        l-unpack-powershell-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
+                        m-move-ssmscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
+                InitialSetup:
+                    commands:
+                        a-unpack-launchwizard-module:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\modules\AWSLaunchWizardForCFN.zip -Destination 'C:\Program
+                                Files\WindowsPowerShell\Modules\'
+                            waitAfterCompletion: 0
+                        b-unpack-launchwizard-module:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\modules\AWSLaunchWizardForSSM.zip -Destination 'C:\Program
+                                Files\WindowsPowerShell\Modules\'
+                        c-unpack-failover-cluster-module:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\modules\AmznFailoverCluster.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'
+                        d-initialize-disks:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
+                            waitAfterCompletion: 0
+                        e-install-dsc-modules:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1"
+                        f-config-LCM:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\LCM-Config.ps1"
+                            waitAfterCompletion: 0
+                        g-rename-computer:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Rename-Computer.ps1
+                                    -Restart -NewName '
+                                  - !Ref 'SqlFSxServerNetBIOSName1'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        h-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                ontapconfig:
+                    commands:
+                        a-install-ontap-prereqs:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1
+                            waitAfterCompletion: 0
+                        b-install-powershell-7:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-powershell7.ps1
+                        c-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        d-configure-ontap:
+                            command: !Join
+                                - ''
+                                - - pwsh -Command "C:\cfn\scripts\sqlontap\Configure-ONTAP.ps1 -AdminSecret
+                                    '
+                                  - !Ref 'FsxAdminPassword'
+                                  - "' -SQLVMName '"
+                                  - !Ref 'SQLSvmName'
+                                  - "' -FSxDataVolumeName '"
+                                  - !Ref 'FSxDataVolumeName'
+                                  - "' -FSxLogVolumeName '"
+                                  - !Ref 'FSxLogVolumeName'
+                                  - "' -FileSystemId '"
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -FSxTempDbVolumeName '"
+                                  - !Ref 'FSxTempDbVolumeName'
+                                  - "' -FSxQuorumVolumeName '"
+                                  - !Ref 'FSxQuorumVolumeName'
+                                  - "' -FSxDataLunSize '"
+                                  - !Ref 'FSxDataLunSize'
+                                  - "' -IGROUP '"
+                                  - !Ref 'SQLigroupname'
+                                  - '''"'
+                        e-connect-ontap-instance:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
+                                    -FileSystemId '
+                                  - !Ref 'FSxFileSystemId'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        f-init-iscsi-disk:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlontap\Initialize-Iscsidisk.ps1"
+                InstancePrep:
+                    commands:
+                        a-enable-credssp:
+                            command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\Enable-CredSSP.ps1"
+                            waitAfterCompletion: 0
+                        b-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        c-set-dns:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Add-DNSEntry.ps1
+                                    -ADServerPrivateIP '
+                                  - !Select
+                                    - 0
+                                    - !Split
+                                      - ','
+                                      - !Ref 'ADDnsIpAddresses'
+                                  - "' -DomainDNSName '"
+                                  - !Ref 'DomainDNSName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-update-dnssuffixlist:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Update-DNSSuffixSearchList.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        e-join-domain:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: forever
+                        f-open-WSFC-ports:
+                            command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\OpenWSFCPorts.ps1"
+                            waitAfterCompletion: '0'
+                        g-add-domadmin-user-to-group:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe '
+                                  - '-ExecutionPolicy RemoteSigned '
+                                  - -Command "
+                                  - ' C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '''
+                                  - !Ref 'DomainAdminUser'
+                                  - ''' -GroupName ''Administrators''"'
+                            waitAfterCompletion: '0'
+                        h-create-sql-account:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Create-ADServiceAccount.ps1
+                                    -DomainAdminUser '
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainDNSName '"
+                                  - !Ref 'DomainDNSName'
+                                  - "' -ServiceAccountUser '"
+                                  - !Ref 'SQLAdminAccounts'
+                                  - "' -SqlUserSecret '"
+                                  - !Ref 'SQLServiceAccountSecret'
+                                  - '''"'
+                            waitAfterCompletion: '0'
+                        i-wait-for-ad-replication:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe '
+                                  - '-ExecutionPolicy RemoteSigned '
+                                  - -Command "
+                                  - C:\cfn\scripts\common\Test-ADUser.ps1 -UserName '
+                                  - !Ref 'SQLAdminAccounts'
+                                  - ''' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
+                            waitAfterCompletion: '0'
+                        j-add-sqlservice-user-to-group:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe '
+                                  - '-ExecutionPolicy RemoteSigned '
+                                  - -Command "
+                                  - C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '
+                                  - !Ref 'SQLAdminAccounts'
+                                  - ''' -GroupName ''Administrators''"'
+                            waitAfterCompletion: '0'
+                ConfigureInstance:
+                    commands:
+                        a-add-cluster-primary-node:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Node1AddCluster.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -FileSystemId '"
+                                  - !Ref 'FSxFileSystemId'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 60
+                        b-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        c-configure-cluster-primary-node:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Node1ONTAPClusterConfig.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - "' -WSFCNode1PrivateIP2 '"
+                                  - !Select
+                                    - '0'
+                                    - !GetAtt 'NetworkInterface1.SecondaryPrivateIpAddresses'
+                                  - "' -ClusterName '"
+                                  - !Ref 'SqlFSxWSFCName'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-set-wsfc-cluster-permission:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Configure-MAD-Permissions.ps1
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -wsfcName '"
+                                  - !Ref 'SqlFSxWSFCName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                FCIConfigure:
+                    commands:
+                        a-uninstall-sql-for-SQLLI:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Uninstall-SQL.ps1
+                                    -AMIID '
+                                  - !Ref 'AMIID'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        b-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        c-prepare-fci:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -SqlUserSecret '"
+                                  - !Ref 'SQLServiceAccountSecret'
+                                  - "' -MSSQLMediaBucket '"
+                                  - !Ref 'MSSQLMediaBucketName'
+                                  - "' -MSSQLMediaKey '"
+                                  - !Ref 'MSSQLMediaPathKey'
+                                  - "' -AMIID '"
+                                  - !Ref 'AMIID'
+                                  - "' -SqlUser '"
+                                  - !Ref 'SQLAdminAccounts'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        e-add-buildtin-admins-to-sysadmin:
+                            command: powershell.exe -Command "C:\cfn\DSC\PostConfigDSC.ps1"
+                            waitAfterCompletion: 30
+                        f-Install-sqlcu:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\Install-sqlcu.ps1"
+                            waitAfterCompletion: 0
+                        g-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        i-complete-fci:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\completeONTAP-fci.ps1
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -Node1FciIp '"
+                                  - !Select
+                                    - '1'
+                                    - !GetAtt 'NetworkInterface1.SecondaryPrivateIpAddresses'
+                                  - "' -Node1SubnetId '"
+                                  - !Ref 'PrivateSubnet1ID'
+                                  - "' -Node2FciIp '"
+                                  - !Select
+                                    - '1'
+                                    - !GetAtt 'NetworkInterface2.SecondaryPrivateIpAddresses'
+                                  - "' -Node2SubnetId '"
+                                  - !Ref 'PrivateSubnet2ID'
+                                  - "' -FCIName '"
+                                  - !Ref 'SqlFSxFCIName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        j-validate-FCI-Cluster:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1
+                                    -WFCName '
+                                  - !Ref 'SqlFSxWSFCName'
+                                  - "' -Node1 '"
+                                  - !Ref 'SqlFSxServerNetBIOSName1'
+                                  - "' -Node2 '"
+                                  - !Ref 'SqlFSxServerNetBIOSName2'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        k-validate-SQL-Login:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-SQLLogin.ps1
+                                    -SqlServer '
+                                  - !Ref 'SqlFSxFCIName'
+                                  - "' -SqlUserSecret '"
+                                  - !Ref 'SQLServiceAccountSecret'
+                                  - "' -SqlUser '"
+                                  - !Ref 'SQLAdminAccounts'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        l-update-sqltag:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Update-SQLNodeTag.ps1
+                                  - ' -StackName '
+                                  - !Ref 'AWS::StackName'
+                                  - '"'
+                            waitAfterCompletion: 0
+                        m-query-sqltag:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Query-SQLNodeTags.ps1
+                                  - ' -StackName '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -NumberOfNodes '
+                                  - '2'
+                                  - '"'
+                            waitAfterCompletion: 0
+                Cleanup:
+                    commands:
+                        b-disable-credssp:
+                            command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\Disable-CredSSP.ps1"
+                            waitAfterCompletion: 0
+                        c-cleanup-scripts:
+                            command: powershell -Command "Remove-Item C:\cfn\scripts -Recurse -Force"
+                            waitAfterCompletion: '0'
+                        d-cleanup-DSC:
+                            command: powershell -Command "Remove-Item C:\cfn\DSC* -Force -Recurse"
+                            waitAfterCompletion: '0'
+                Finalize:
+                    commands:
+                        a-signal-resource:
+                            command: !Sub "cfn-signal.exe -e %ERRORLEVEL% --resource SqlFSxInstanceMAD1\
+                                \ --stack ${AWS::StackName} --region ${AWS::Region}\n"
+                            waitAfterCompletion: 0
+        Properties:
+            ImageId: !Ref 'AMIID'
+            IamInstanceProfile: !Ref 'LaunchWizardSqlFSxProfile'
+            InstanceType: !Ref 'WorkloadInstanceType'
+            NetworkInterfaces:
+                - NetworkInterfaceId: !Ref 'NetworkInterface1'
+                  DeviceIndex: 0
+            Tags:
+                - Key: Name
+                  Value: !Ref 'SqlFSxServerNetBIOSName1'
+                - Key: FCIName
+                  Value: !Ref 'SqlFSxFCIName'
+                - Key: FCIRole
+                  Value: Primary
+            BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                      VolumeSize: '100'
+                      VolumeType: gp2
+            KeyName: !Ref 'KeyPairName'
+            UserData: !Base64
+                Fn::Join:
+                    - ''
+                    - - ''
+                      - <powershell>
+                      - 'cfn-init.exe -v -c config -s '
+                      - !Ref 'AWS::StackId'
+                      - ' -r SqlFSxInstanceMAD1'
+                      - ' --region '
+                      - !Ref 'AWS::Region'
+                      - </powershell>
+    SqlFSxInstanceMAD2:
+        Type: AWS::EC2::Instance
+        CreationPolicy:
+            ResourceSignal:
+                Count: '1'
+                Timeout: PT120M
+        Metadata:
+            AWS::CloudFormation::Init:
+                configSets:
+                    config:
+                        - ConfigureCWLogs
+                        - FetchResources
+                        - ScriptSignatureVerificationandExtract
+                        - InitialSetup
+                        - ontapconfig
+                        - InstancePrep
+                        - ConfigureInstance
+                        - ConfigureFCI
+                        - Cleanup
+                        - Finalize
+                ConfigureCWLogs:
+                    files:
+                        C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json:
+                            content: !If
+                                - LogFeatureEnabled
+                                - !Join
+                                  - ''
+                                  - - '{'
+                                    - '  "IsEnabled" : true,'
+                                    - '  "EngineConfiguration" : {'
+                                    - '    "PollInterval" : "00:00:05",'
+                                    - '    "Components" : [{'
+                                    - '      "Id" : "ApplicationEventLog",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.EventLog.EventLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "LogName" : "Application",'
+                                    - '        "Levels" : "7"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "LogDirectoryPath": "C:\\cfn\\log",'
+                                    - '        "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",'
+                                    - '        "Encoding": "ASCII",'
+                                    - '        "Filter": "cfn-init.log",'
+                                    - '        "CultureName": "en-US",'
+                                    - '        "TimeZoneKind": "Local"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CloudWatchCfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CloudWatchLogsOutput,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "AccessKey": "",'
+                                    - '        "SecretKey": "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - !Sub '        "LogGroup": "${AWS::StackName}",'
+                                    - '        "LogStream": "{instance_id}"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id" : "CloudWatch",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.CloudWatch.CloudWatchOutputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "AccessKey" : "",'
+                                    - '        "SecretKey" : "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - '        "NameSpace" : "Windows/Default"'
+                                    - '      }'
+                                    - '    }],'
+                                    - '    "Flows": {'
+                                    - '      "Flows": ['
+                                    - '        "CfnInitLog,CloudWatchCfnInitLog"'
+                                    - '      ]'
+                                    - '    }'
+                                    - '  }'
+                                    - '}'
+                                - ' { "IsEnabled" : false}'
+                    commands:
+                        a-enableSSM:
+                            command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
+                                Automatic"
+                            waitAfterCompletion: '30'
+                        b-restartSSM:
+                            command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
+                            waitAfterCompletion: '30'
+                FetchResources:
+                    files:
+                        C:\cfn\scripts\Verify-Signature.ps1:
+                            source: {{ ScriptVerifySignature }}
+                        C:\cfn\scripts\Unzip-Archive.ps1:
+                            source: {{ ScriptUnzipArchive }}
+                        C:\cfn\scripts\common.zip:
+                            source: {{ ScriptCommon }}
+                        C:\cfn\scripts\common.zip.sig:
+                            source: {{ ScriptCommonSignature }}
+                        C:\cfn\scripts\sqlfci.zip:
+                            source: {{ ScriptSQLFCI }}
+                        C:\cfn\scripts\sqlfci.zip.sig:
+                            source: {{ ScriptSQLFCISignature }}
+                        C:\cfn\scripts\sqlontap.zip:
+                            source: {{ ScriptSQLONTAP }}
+                        C:\cfn\scripts\sqlontap.zip.sig:
+                            source: {{ ScriptSQLONTAPSignature }}
+                        C:\cfn\DSC.zip:
+                            source: {{ DSC }}
+                        C:\cfn\DSC.zip.sig:
+                            source: {{ DSCSignature }}
+                        C:\cfn\Installer\powershell.zip:
+                            source: {{ PowerShell }}
+                        C:\cfn\Installer\powershell.zip.sig:
+                            source: {{ PowerShellSignature }}
+                        C:\cfn\modules\AWSLaunchWizardForCFN.zip:
+                            source: {{ AmazonLaunchWizardForCFN }}
+                        C:\cfn\modules\AWSLaunchWizardForCFN.zip.sig:
+                            source: {{ AmazonLaunchWizardForCFNSignature }}
+                        C:\cfn\modules\AWSLaunchWizardForSSM.zip:
+                            source: {{ AmazonLaunchWizardForSSM }}
+                        C:\cfn\modules\AWSLaunchWizardForSSM.zip.sig:
+                            source: {{ AmazonLaunchWizardForSSMSignature }}
+                        C:\cfn\modules\AmznFailoverCluster.zip:
+                            source: {{ AmazonFailoverCluster }}
+                        C:\cfn\modules\AmznFailoverCluster.zip.sig:
+                            source: {{ AmazonFailoverClusterSignature }}
+                        C:\cfn\Installer\sqlspcu.zip:
+                            source: {{ Sqlspcu }}
+                        C:\cfn\Installer\sqlspcu.zip.sig:
+                            source: {{ SqlspcuSignature }}
+                ScriptSignatureVerificationandExtract:
+                    commands:
+                        b-unpack-common-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\common.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: '0'
+                        d-unpack-sqlha-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\DSC.zip -Destination C:\cfn
+                            waitAfterCompletion: '0'
+                        f-unpack-sqlfci-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: '0'
+                        h-unpack-sqlontap-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts
+                            waitAfterCompletion: '0'
+                        j-unpack-sqlspcu-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
+                        l-unpack-powershell-scripts:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
+                        m-move-ssmscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
+                InitialSetup:
+                    commands:
+                        a-unpack-launchwizard-module:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\modules\AWSLaunchWizardForCFN.zip -Destination 'C:\Program
+                                Files\WindowsPowerShell\Modules\'
+                            waitAfterCompletion: 0
+                        b-unpack-launchwizard-module:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\modules\AWSLaunchWizardForSSM.zip -Destination 'C:\Program
+                                Files\WindowsPowerShell\Modules\'
+                        c-unpack-failover-cluster-module:
+                            command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
+                                C:\cfn\modules\AmznFailoverCluster.zip -Destination 'C:\Program Files\WindowsPowerShell\Modules\'
+                        d-initialize-disks:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
+                            waitAfterCompletion: 0
+                        e-install-dsc-modules:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1"
+                        f-config-LCM:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\LCM-Config.ps1"
+                            waitAfterCompletion: 0
+                        g-rename-computer:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Rename-Computer.ps1
+                                    -Restart -NewName '
+                                  - !Ref 'SqlFSxServerNetBIOSName2'
+                                  - '''"'
+                            waitAfterCompletion: forever
+                        h-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                ontapconfig:
+                    commands:
+                        a-install-ontap-prereqs:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-ONTAPprereqs.ps1
+                            waitAfterCompletion: 300
+                        b-install-powershell-7:
+                            command: powershell.exe -Command C:\cfn\scripts\sqlontap\install-powershell7.ps1
+                        c-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        d-add-node2-initiator:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Add-node2initiator.ps1
+                                    -AdminSecret '
+                                  - !Ref 'FsxAdminPassword'
+                                  - "' -SQLVMName '"
+                                  - !Ref 'SQLSvmName'
+                                  - "' -igroup '"
+                                  - !Ref 'SQLigroupname'
+                                  - "' -FileSystemId '"
+                                  - !Ref 'FSxFileSystemId'
+                                  - '''"'
+                        e-connect-ontap-instance:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
+                                    -FileSystemId '
+                                  - !Ref 'FSxFileSystemId'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                InstancePrep:
+                    commands:
+                        a-enable-credssp:
+                            command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\Enable-CredSSP.ps1"
+                            waitAfterCompletion: 0
+                        b-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        c-set-dns:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Add-DNSEntry.ps1
+                                    -ADServerPrivateIP '
+                                  - !Select
+                                    - 0
+                                    - !Split
+                                      - ','
+                                      - !Ref 'ADDnsIpAddresses'
+                                  - "' -DomainDNSName '"
+                                  - !Ref 'DomainDNSName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-join-domain:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Join-Domain.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: forever
+                        e-open-WSFC-ports:
+                            command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\OpenWSFCPorts.ps1"
+                            waitAfterCompletion: '0'
+                        f-add-domadmin-user-to-group:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe '
+                                  - '-ExecutionPolicy RemoteSigned '
+                                  - -Command "
+                                  - ' C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '''
+                                  - !Ref 'DomainAdminUser'
+                                  - ''' -GroupName ''Administrators''"'
+                            waitAfterCompletion: '0'
+                        g-add-sqlservice-user-to-group:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe '
+                                  - '-ExecutionPolicy RemoteSigned '
+                                  - -Command "
+                                  - C:\cfn\scripts\common\AddUserToGroup.ps1 -UserName '
+                                  - !Ref 'SQLAdminAccounts'
+                                  - ''' -GroupName ''Administrators''"'
+                            waitAfterCompletion: '0'
+                        h-update-dnssuffixlist:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Update-DNSSuffixSearchList.ps1
+                                    -DomainDNSName '
+                                  - !Ref 'DomainDNSName'
+                                  - '''"'
+                            waitAfterCompletion: 300
+                ConfigureInstance:
+                    commands:
+                        a-add-cluster-secondary-node:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeAddCluster.ps1
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 60
+                        b-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        c-configure-cluster-secondary-node:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\AdditionalNodeClusterConfig.ps1
+                                    -WSFCNode2PrivateIP2 '
+                                  - !Select
+                                    - '0'
+                                    - !GetAtt 'NetworkInterface2.SecondaryPrivateIpAddresses'
+                                  - "' -ClusterName '"
+                                  - !Ref 'SqlFSxWSFCName'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        e-add-secondary-Cluster-node:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Add-SecondaryNode.ps1
+                                    -WSFCNode2PrivateIP2 '
+                                  - !Select
+                                    - '0'
+                                    - !GetAtt 'NetworkInterface2.SecondaryPrivateIpAddresses'
+                                  - "' -ClusterName '"
+                                  - !Ref 'SqlFSxWSFCName'
+                                  - "' -AdminSecret '"
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                ConfigureFCI:
+                    commands:
+                        a-uninstall-sql-for-SQLLI:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Uninstall-SQL.ps1
+                                    -AMIID '
+                                  - !Ref 'AMIID'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        b-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        c-prepare-fci:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\prepare-fci.ps1
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -SqlUserSecret '"
+                                  - !Ref 'SQLServiceAccountSecret'
+                                  - "' -MSSQLMediaBucket '"
+                                  - !Ref 'MSSQLMediaBucketName'
+                                  - "' -MSSQLMediaKey '"
+                                  - !Ref 'MSSQLMediaPathKey'
+                                  - "' -AMIID '"
+                                  - !Ref 'AMIID'
+                                  - "' -SqlUser '"
+                                  - !Ref 'SQLAdminAccounts'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        d-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        e-add-buildtin-admins-to-sysadmin:
+                            command: powershell.exe -Command "C:\cfn\DSC\PostConfigDSC.ps1"
+                            waitAfterCompletion: 30
+                        f-Install-sqlcu:
+                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\Install-sqlcu.ps1"
+                            waitAfterCompletion: 0
+                        g-restart-computer:
+                            command: powershell.exe -Command "C:\cfn\scripts\common\Restart-Computer.ps1"
+                            waitAfterCompletion: forever
+                        h-update-sqltag:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Update-SQLNodeTag.ps1
+                                  - ' -StackName '
+                                  - !Ref 'AWS::StackName'
+                                  - '"'
+                            waitAfterCompletion: 0
+                Cleanup:
+                    commands:
+                        a-disable-credssp:
+                            command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\Disable-CredSSP.ps1"
+                            waitAfterCompletion: 0
+                        b-cleanup-scripts:
+                            command: powershell -Command "Remove-Item C:\cfn\scripts -Recurse -Force"
+                            waitAfterCompletion: '0'
+                        c-cleanup-DSC:
+                            command: powershell -Command "Remove-Item C:\cfn\DSC* -Force -Recurse"
+                            waitAfterCompletion: '0'
+                Finalize:
+                    commands:
+                        a-signal-resource:
+                            command: !Sub "cfn-signal.exe -e %ERRORLEVEL% --resource SqlFSxInstanceMAD2\
+                                \ --stack ${AWS::StackName} --region ${AWS::Region}\n"
+                            waitAfterCompletion: 0
+        Properties:
+            ImageId: !Ref 'AMIID'
+            IamInstanceProfile: !Ref 'LaunchWizardSqlFSxProfile'
+            InstanceType: !Ref 'WorkloadInstanceType'
+            NetworkInterfaces:
+                - NetworkInterfaceId: !Ref 'NetworkInterface2'
+                  DeviceIndex: 0
+            Tags:
+                - Key: Name
+                  Value: !Ref 'SqlFSxServerNetBIOSName2'
+                - Key: FCIName
+                  Value: !Ref 'SqlFSxFCIName'
+                - Key: FCIRole
+                  Value: Secondary
+            BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                      VolumeSize: '100'
+                      VolumeType: gp2
+            KeyName: !Ref 'KeyPairName'
+            UserData: !Base64
+                Fn::Join:
+                    - ''
+                    - - ''
+                      - <powershell>
+                      - 'cfn-init.exe -v -c config -s '
+                      - !Ref 'AWS::StackId'
+                      - ' -r SqlFSxInstanceMAD2'
+                      - ' --region '
+                      - !Ref 'AWS::Region'
+                      - </powershell>
+    WorkloadSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow access to the Workload instances
+            VpcId: !Ref 'VPCID'
+            SecurityGroupIngress:
+                - IpProtocol: -1
+                  FromPort: -1
+                  ToPort: -1
+                  CidrIp: !Ref 'VPCCIDR'
+                - IpProtocol: tcp
+                  FromPort: 53
+                  ToPort: 53
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 53
+                  ToPort: 53
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 88
+                  ToPort: 88
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 88
+                  ToPort: 88
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 464
+                  ToPort: 464
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 464
+                  ToPort: 464
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 389
+                  ToPort: 389
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 389
+                  ToPort: 389
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 123
+                  ToPort: 123
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 135
+                  ToPort: 135
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 445
+                  ToPort: 445
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 636
+                  ToPort: 636
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 3268
+                  ToPort: 3269
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 5985
+                  ToPort: 5985
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 9389
+                  ToPort: 9389
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 49152
+                  ToPort: 65535
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+Outputs:
+    SQLFSx1InstanceIPMAD:
+        Description: Private IP of SqlFSx Instance
+        Value: !GetAtt 'SqlFSxInstanceMAD1.PrivateIp'
+    SQLFSx2InstanceIPMAD:
+        Description: Private IP of SqlFSx Instance
+        Value: !GetAtt 'SqlFSxInstanceMAD2.PrivateIp'
