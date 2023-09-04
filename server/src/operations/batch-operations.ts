@@ -1,9 +1,10 @@
 import Promise from 'bluebird';
+import { HTTPAlias } from 'got';
 import { gotInstanceForInternalRequest } from '../utils/got';
 import { BatchRequestBodyType, SingleBatchResponseType, BatchResponseType } from '../routes/types/batch.types';
 import { METHODS_WITH_PAYLOAD, HEADERS, USER_TOKEN, BATCH_API_CONCURRENCY_LIMIT } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { HTTPAlias } from 'got';
+
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
