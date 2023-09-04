@@ -78,6 +78,13 @@ Metadata:
           - AssetsS3RegionCode
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
+      - Label:
+          default: Custom Resource configuration
+        Parameters:
+          - AccountId
+          - CloudProviderAccountId
+          - RoleCredentialsId
+          - JwtToken
     ParameterLabels:
       ApplicationName:
         default: Application Name
@@ -405,6 +412,22 @@ Parameters:
   ValidationAmi:
     Description: Validation node AMI image id
     Type: String
+  
+  RoleCredentialsId:
+    Description: Account credentials id to deploy and manage resources
+    Type: String
+  
+  AccountId:
+    Description: BlueXP account id
+    Type: String
+
+  CloudProviderAccountId:
+    Description: BlueXP CloudProviderAccountId id
+    Type: String
+  
+  JwtToken:
+    Description: JWT Token to grant access to a resource
+    Type: String
 
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -418,8 +441,18 @@ Conditions:
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
 Resources:
+TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: ${AWS::Region}
+      StackName: ${AWS::StackName}
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -455,6 +488,7 @@ Resources:
           - !Ref AWS::NoValue
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -491,6 +525,7 @@ Resources:
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -502,6 +537,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -558,6 +594,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -591,6 +628,7 @@ Resources:
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:

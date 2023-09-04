@@ -24,7 +24,11 @@ import {
     DEFAULT_AWS_REGION,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
-    VALIDATION_AMI
+    VALIDATION_AMI,
+    ACCOUNT_ID,
+    TEMPLATE_CLOUD_PROVIDER_ID,
+    TEMPLATE_CREDENTIALS_ID,
+    TEMPLATE_JWT_TOKEN
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -38,6 +42,7 @@ import {
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
 import { PrismaClient } from '@prisma/client';
+import { getServiceToken } from '../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
 
@@ -169,7 +174,7 @@ async function formatTemplateParameters(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -196,9 +201,16 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = await getServiceToken();
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
-        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {

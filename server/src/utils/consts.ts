@@ -514,6 +514,9 @@ const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
     `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
+const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
+const TEMPLATE_JWT_TOKEN = 'JwtToken';
+const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 
 const SQL_TEMPLATES_ASSETS = [
     {
@@ -760,6 +763,9 @@ export {
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
+    TEMPLATE_CLOUD_PROVIDER_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_CREDENTIALS_ID,
     DeploymentState,
     SIGNED_URL_ERROR_MESSAGE,
     JWKS_FULL_NAME
