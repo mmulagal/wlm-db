@@ -17,6 +17,12 @@ const WORKSPACE_ID = 'WORKSPACE_ID';
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
+const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
+
+enum FileSystemDeploymentType {
+    SINGLE_AZ_1,
+    MULTI_AZ_1
+}
 
 // version
 const VERSION: string = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString()).version;
@@ -39,7 +45,8 @@ enum HEADERS {
     REGION = 'x-region',
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
     SIMULATOR = 'x-simulator',
-    REFERER = 'referer'
+    REFERER = 'referer',
+    ACTIVE_TRACE_ID = 'active-trace-id'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -67,6 +74,10 @@ const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
 const RESOURCE_CLASS = 'STORAGE_SERVICES';
+const WLMDB_RESOURCE_CLASS = 'WLMDB';
+enum DatabaseTypes {
+    MS_SQL_SERVER = 'MSSQL'
+}
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
@@ -84,11 +95,19 @@ enum CloudProviders {
     GCP = 'GCP'
 }
 
+enum DeploymentState {
+    INITIALIZING = 'Initializing',
+    SUCCESS = 'Success',
+    FAILED = 'Failed'
+}
+
 enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
-    DEPLOYMENT = 'Deployment'
+    DEPLOYMENT = 'Deployment',
+    WORKING_ENVIRONMENT = 'Working Environment',
+    DATABASE = 'DATABASE'
 }
 
 enum HttpErrorCodes {
@@ -97,6 +116,11 @@ enum HttpErrorCodes {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     VALIDATION_ERROR = 422
+}
+
+enum SqlServerDeploymentModel {
+    SQL_STANDALONE = 'Non-clustered',
+    SQL_FCI = 'Always On Failover Cluster Instance'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -164,7 +188,10 @@ const SECRET_WORDS = [
     'SessionToken',
     'AccessKeyId',
     'SecretAccessKey',
-    'username'
+    'username',
+    'domainPassword',
+    'fsxPassword',
+    'serviceAccountPassword'
 ];
 
 const SQL_AMI_NAMES = [
@@ -193,6 +220,10 @@ const SQL_AMI_NAMES = [
 enum AWSQueryFields {
     SUBNET = 'subnet',
     SECURITY_GROUP = 'securitygroup'
+}
+
+enum RESOURCESTYPE {
+    MSSQL = 'MSSQL'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -394,17 +425,21 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'wlmbucket';
+const BUCKET_NAME = config.get<string>('templates.bucket');
+const ASSETS_BUCKET_REGION = config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
+const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
-const ASSETS_REGION_CODE = 's3.ap-southeast-1';
+const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
-const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
-const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
-const DISABLE_ROLLBACK = false;
-const MASTER_STACK_TIMEOUT_MINUTES = 120;
+const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
+const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const DISABLE_ROLLBACK = true;
+const MASTER_STACK_TIMEOUT_MINUTES = 180;
+const FSX_SSD_MIN_SIZE = 1024; // in GiB
+const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
 const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     vpcId: 'VPCID',
@@ -422,7 +457,6 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     securityGroupId: 'DomainMemberSGID',
 
     fsxFileSystemId: 'FSxFileSystemId',
-    databaseSize: 'FSxDataLunSize',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
@@ -464,7 +498,7 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
+const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -476,8 +510,151 @@ const HTTP_PATCH = 'PATCH';
 // Custom error messages
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
+const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
+    `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
+
+const SQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-ad-validation.yaml'
+    },
+
+    {
+        name: 'SQLTemplate',
+        url: 'templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: 'DSC',
+        url: 'DSC.zip'
+    },
+    {
+        name: 'DSCSignature',
+        url: 'DSC.zip.sig'
+    },
+    {
+        name: 'PowerShell',
+        url: 'Installer/powershell.zip'
+    },
+    {
+        name: 'PowerShellSignature',
+        url: 'Installer/powershell.zip.sig'
+    },
+    {
+        name: 'Sqlspcu',
+        url: 'Installer/sqlspcu.zip'
+    },
+    {
+        name: 'SqlspcuSignature',
+        url: 'Installer/sqlspcu.zip.sig'
+    },
+    {
+        name: 'AmazonFailoverCluster',
+        url: 'modules/AmznFailoverCluster.zip'
+    },
+    {
+        name: 'AmazonFailoverClusterSignature',
+        url: 'modules/AmznFailoverCluster.zip.sig'
+    },
+    {
+        name: 'AmazonLaunchWizardForCFN',
+        url: 'modules/AWSLaunchWizardForCFN.zip'
+    },
+    {
+        name: 'AmazonLaunchWizardForCFNSignature',
+        url: 'modules/AWSLaunchWizardForCFN.zip.sig'
+    },
+    {
+        name: 'AmazonLaunchWizardForSSM',
+        url: 'modules/AWSLaunchWizardForSSM.zip'
+    },
+    {
+        name: 'AmazonLaunchWizardForSSMSignature',
+        url: 'modules/AWSLaunchWizardForSSM.zip.sig'
+    },
+    {
+        name: 'ScriptVerifySignature',
+        url: 'scripts/Verify-Signature.ps1'
+    },
+    {
+        name: 'ScriptUnzipArchive',
+        url: 'scripts/Unzip-Archive.ps1'
+    },
+    {
+        name: 'ScriptCommon',
+        url: 'scripts/common.zip'
+    },
+    {
+        name: 'ScriptCommonSignature',
+        url: 'scripts/common.zip.sig'
+    },
+    {
+        name: 'ScriptSQLFCI',
+        url: 'scripts/sqlfci.zip'
+    },
+    {
+        name: 'ScriptSQLFCISignature',
+        url: 'scripts/sqlfci.zip.sig'
+    },
+    {
+        name: 'ScriptSQLONTAP',
+        url: 'scripts/sqlontap.zip'
+    },
+    {
+        name: 'ScriptSQLONTAPSignature',
+        url: 'scripts/sqlontap.zip.sig'
+    },
+    {
+        name: 'ScriptVpcCheck',
+        url: 'validation/Validate-VPCConnectivity.ps1'
+    },
+    {
+        name: 'ScriptUpdateDnsServers',
+        url: 'validation/Update-DNSServers.ps1'
+    },
+    {
+        name: 'ScriptRenameComputer',
+        url: 'validation/Rename-Computer.ps1'
+    },
+    {
+        name: 'ScriptRestartComputer',
+        url: 'validation/Restart-Computer.ps1'
+    }
+];
+
+const SQL_TEMPLATES_DISTRIBUTION = {
+    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
+    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
+    MASTER: './resources/mssql/templates/wlm-master.yaml'
+};
+
+enum TEMPLATE_TYPES {
+    MASTER = 'master',
+    SQLSTACK = 'sqlstack',
+    VALIDATION = 'validation'
+}
+
+enum DATABASE_METRIC_TYPE {
+    CPU = 'cpu',
+    DISK = 'disk',
+    MEMORY = 'memory'
+}
+
+enum SSM_QUERY_EXECUTION_STATUS {
+    FAILED = 'Failed',
+    SUCCESS = 'Success'
+}
 
 export {
     WLMDB,
@@ -565,6 +742,23 @@ export {
     TEMPLATE_OPTIONAL_PARAMETERS,
     INVALID_REGION_AWS,
     INVALID_REGION_MESSAGE,
+    AWS_FSX,
+    SQL_TEMPLATES_ASSETS,
     SAME_ROUTETABLE_MESSAGE,
-    AWS_FSX
+    FileSystemDeploymentType,
+    FSX_RESOURCE_TYPE,
+    RESOURCESTYPE,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI,
+    ASSETS_BUCKET_REGION,
+    DatabaseTypes,
+    WLMDB_RESOURCE_CLASS,
+    TEMPLATE_TYPES,
+    SQL_TEMPLATES_DISTRIBUTION,
+    DATABASE_METRIC_TYPE,
+    SSM_QUERY_EXECUTION_STATUS,
+    SqlServerDeploymentModel,
+    DeploymentState,
+    SIGNED_URL_ERROR_MESSAGE
 };

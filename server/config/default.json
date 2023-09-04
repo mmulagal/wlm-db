@@ -34,5 +34,9 @@
     "service-token": {
         "expiration-margin": "10s"
     },
-    "sqs-poll-interval": "30s"
+    "sqs-poll-interval": "30s",
+    "templates": {
+        "bucket": "staging.wlmdb.workloads.netapp.com",
+        "region": "us-east-1"
+    }
 }

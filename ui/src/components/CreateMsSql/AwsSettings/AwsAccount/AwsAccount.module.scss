@@ -27,6 +27,12 @@
     .info {
         margin-top: 16px;
         margin-bottom: 16px;
+
+        button {
+            span:first-letter {
+                text-transform: lowercase;
+            }
+        }
     }
 
     .noteText {
@@ -71,5 +77,13 @@
         font-style: normal;
         font-weight: 400;
         line-height: 24px;
+    }
+
+    .buttonStyle {
+        button {
+            span:first-letter {
+                text-transform: lowercase;
+            }
+        }
     }
 }

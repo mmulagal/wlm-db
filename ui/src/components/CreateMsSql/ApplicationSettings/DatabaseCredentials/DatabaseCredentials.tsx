@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -12,19 +12,38 @@ import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 import AccordionError from '../../../../common/AccordionError/AccordionError';
-import { dbPassVal } from '../../../../utils/utilityFunctions';
+import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
+import { SQL_USERNAME } from '../../../../utils/consts';
 
 const DatabaseCredentials = () => {
-    const [userName, setUserName] = useState('');
+    const [userName, setUserName] = useState(SQL_USERNAME);
     const [password, setPassword] = useState('');
+
+    const passwordRef = useRef(null);
 
     const dispatch = useDispatch();
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+
+    useEffect(() => {
+        dispatch(setDBCredentialsName(userName));
+    });
+
+    useEffect(() => {
+        if (!isDBPasswordFilled && isCreateHit) {
+            setTimeout(() => {
+                //@ts-ignore
+                passwordRef?.current?.focus();
+            }, 60);
+        }
+    }, [!isDBPasswordFilled, isCreateHit]);
+
     //Set the Header text here
     const setHeader = () => {
         if (!userName || !password) {
             return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
-        } else if (dbPassVal(password)) {
+        } else if (dbPassVal(password) || isValidUserName(userName)) {
             return <AccordionError />;
         } else {
             return <Typography variant="Regular_14">{userName}</Typography>;
@@ -69,9 +88,27 @@ const DatabaseCredentials = () => {
             >
                 <AccordionCardContent>
                     <Typography>
+                        <Typography variant="Regular_14" className={styles.subtext}>
+                            {GENERAL.DATABASE_CREDENTIAL_TEXT}
+                        </Typography>
                         <div className={styles.secondContainer}>
                             <TextField
                                 label={GENERAL.USER_NAME}
+                                info={
+                                    <div className={styles.userNameTooltip}>
+                                        <div className={styles.list}>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                error={useDelayedError(isValidUserName(userName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setUserName(e.target.value);
                                     dispatch(setDBCredentialsName(e.target.value));
@@ -81,7 +118,13 @@ const DatabaseCredentials = () => {
                             />
                             <PasswordField
                                 label={GENERAL.PASSWORD}
-                                error={!isDBPasswordFilled ? GENERAL.ACTION_REQUIRED : '' || dbPassVal(password)}
+                                ref={passwordRef}
+                                error={
+                                    !isDBPasswordFilled
+                                        ? GENERAL.ACTION_REQUIRED
+                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
+                                          '' || dbPassVal(password)
+                                }
                                 info={tooltipText()}
                                 //@ts-ignore
                                 isErrorPrefixHidden

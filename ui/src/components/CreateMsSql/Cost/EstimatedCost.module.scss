@@ -1,0 +1,101 @@
+.estimated-cost {
+    .ecContainer {
+        width: 959px;
+        .ecContainerHeader {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+
+            .resource {
+                padding-left: 24px;
+            }
+
+            .amount {
+                padding-right: 40px;
+            }
+        }
+
+        .computeContainer {
+            margin-top: 10px;
+            background-color: var(--grey-10);
+            height: 88px;
+            display: flex;
+        }
+
+        .compute {
+            width: 159px;
+            padding: 16px 0 0 24px;
+        }
+
+        .secondRow {
+            width: 606px;
+            padding: 16px 0 0 24px;
+            display: flex;
+            gap: 5px;
+            flex-direction: column;
+        }
+
+        .thirdRow {
+            width: 218px;
+            padding-top: 16px;
+            padding-right: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .costValue {
+            text-align: right;
+        }
+
+        .storageContainer {
+            height: 120px;
+            margin-top: 1px;
+            background-color: var(--grey-10);
+            display: flex;
+        }
+
+        .connectivityContainer,
+        .adContainer {
+            height: 80px;
+            margin-top: 1px;
+            background-color: var(--grey-10);
+            display: flex;
+        }
+
+        .lastContainer {
+            height: 72px;
+            margin-top: 8px;
+            background-color: var(--blue-20);
+            display: flex;
+
+            .ecCost {
+                width: 765px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding-left: 24px;
+            }
+
+            .ecCostValue {
+                width: 218px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                text-align: end;
+                padding-right: 40px;
+            }
+        }
+        .note {
+            margin-top: 24px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+
+            svg {
+                position: relative;
+                top: 3px;
+            }
+        }
+    }
+}

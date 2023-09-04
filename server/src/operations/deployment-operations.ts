@@ -16,12 +16,16 @@ import {
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
-    MASTER_TEMPLATE_URL,
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
     WLM_ASSETS,
-    SAME_ROUTETABLE_MESSAGE
+    SAME_ROUTETABLE_MESSAGE,
+    VALIDATION_AMI,
+    ASSETS_BUCKET_REGION,
+    EC2_ROLE_NAME,
+    DatabaseTypes,
+    MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import {
     formatTemplateParameters,
@@ -31,6 +35,8 @@ import {
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
+import { getWindowsServerBaseAmi } from './aws/ec2-operations';
+import { uploadTemplates } from './template-operations';
 
 const logger = getLogger();
 
@@ -71,7 +77,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -96,9 +102,14 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    const signedURL = await getPreSignedUrl(credentialsId, region);
+    //Generate Signed-url and upload to bucket
+    await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}`;
+    const signedURL = encodeURIComponent(await getPreSignedUrl(ASSETS_BUCKET_REGION));
+
+    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
@@ -127,6 +138,9 @@ async function createCloudFormationTemplateForUserDeployment(
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
+
+    logger.info('CloudFormation template url ', signedTemplateURL);
+
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
@@ -166,6 +180,13 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
+    //Generate Signed-url and upload to bucket
+    await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
         region,
@@ -184,13 +205,14 @@ async function deployCloudFormationTemplate(
         credentialsId,
         region,
         stackName,
-        MASTER_TEMPLATE_URL,
+        signedMasterTemplateUrl,
         templateParameters,
         DISABLE_ROLLBACK,
         MASTER_STACK_TIMEOUT_MINUTES
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 

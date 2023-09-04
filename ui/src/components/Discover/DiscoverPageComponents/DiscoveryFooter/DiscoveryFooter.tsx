@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../../utils/apiService';
-import { cmNavigateTo } from '../../../../utils/appConfig';
+import { navigateToCanvas } from '../../../../utils/appConfig';
 import { SELECT_CONFIG } from '../../../../utils/appConstants';
 
 const DiscoveryFooter = () => {
@@ -19,7 +19,7 @@ const DiscoveryFooter = () => {
 
     return (
         <>
-            <Button variant="secondary" isThin onClick={() => cmNavigateTo('/')}>
+            <Button variant="secondary" isThin onClick={() => navigateToCanvas()}>
                 {SELECT_CONFIG.PREVIOUS}
             </Button>
             <Button isThin onClick={handleCreate}>

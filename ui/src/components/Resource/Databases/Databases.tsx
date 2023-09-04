@@ -2,15 +2,22 @@ import { Table, TableTopBar, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import DatabaseSummary from './DatabasesSummary/DatabasesSummary';
 import StatusComponent from '../../../common/StatusComponent/StatusComponent';
-import { formatDate, isNotNumberOrNA, formatSizeOrString } from '../../../utils/utilityFunctions';
+import { formatDate, isNotNumberOrNA, formatSizeOrString, formatSizeSplit } from '../../../utils/utilityFunctions';
 import styles from './Databases.module.scss';
+import { useOutletContext } from 'react-router-dom';
+import { useMemo } from 'react';
 
 const Databases = () => {
-    const summaryData = {
-        count: 7,
-        sizeValue: '600',
-        sizeUnit: 'TiB'
-    };
+    let {databasesList} = useOutletContext<{databasesList: any}>();
+    const summaryData = useMemo(() => {
+        const totalSize = databasesList.reduce((sum:number, item:any) => sum + parseInt(item.databaseSize), 0);
+        const totalSizeObj = formatSizeSplit(totalSize);
+        return {
+            count: databasesList.length,
+            sizeValue: totalSizeObj.value,
+            sizeUnit: totalSizeObj.format
+        }
+    }, [databasesList])
 
     const DatabasesColDefs: ColumnProps[] = [
         {
@@ -61,57 +68,7 @@ const Databases = () => {
         }
     ];
 
-    const databaseTableData = [
-        {
-            databaseName: 'Database1',
-            id: '12345531',
-            creationDate: 1692547456,
-            databaseSize: 123252435343,
-            databaseStatus: 'Online'
-        },
-        {
-            databaseName: 'Database2',
-            id: '12345532',
-            creationDate: 1692547456,
-            databaseSize: 123252435876,
-            databaseStatus: 'Offline'
-        },
-        {
-            databaseName: 'Database3',
-            id: '12345534',
-            creationDate: 1692547456,
-            databaseSize: 123252435123,
-            databaseStatus: 'Restoring'
-        },
-        {
-            databaseName: 'Database4',
-            id: '12345554',
-            creationDate: 1692547456,
-            databaseSize: 1232524356546,
-            databaseStatus: 'Recovering'
-        },
-        {
-            databaseName: 'Database5',
-            id: '12345231',
-            creationDate: 1692547456,
-            databaseSize: 123252435212,
-            databaseStatus: 'Suspect'
-        },
-        {
-            databaseName: 'Database6',
-            id: '12345565',
-            creationDate: 1692547456,
-            databaseSize: 123252435432,
-            databaseStatus: 'Recovery pending'
-        },
-        {
-            databaseName: 'Database7',
-            id: '12345512',
-            creationDate: 1692547456,
-            databaseSize: 123252435432,
-            databaseStatus: 'Emergency'
-        }
-    ];
+    const databaseTableData = databasesList.length ? databasesList : []
 
     const tableProps = useTable({
         isSorting: false,

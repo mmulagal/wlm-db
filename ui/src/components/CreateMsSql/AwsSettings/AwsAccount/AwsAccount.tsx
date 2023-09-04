@@ -52,7 +52,7 @@ const AwsAccount = () => {
     const isCreatePresed = useAppSelector(state => state.msSqlAction.isCreatePressed);
     const isDBCredPassword = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isActiveDirectoryFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
-    const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isFsxNNameFilled = useAppSelector(state => state.mssqlForm.fsxN.fsxNPassword);
     const isProperDBName = useAppSelector(state => state.msSqlAction.dbNameSelected);
     const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
@@ -118,7 +118,7 @@ const AwsAccount = () => {
     //Set the Header text here
     const setHeader = () => {
         if (noAccount) {
-            return <Typography variant="Regular_14">No account</Typography>;
+            return <Typography variant="Regular_14">{GENERAL.NO_CREDENTIALS}</Typography>;
         } else {
             return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
         }
@@ -183,11 +183,11 @@ const AwsAccount = () => {
                         ) : (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
-                                <Typography variant="Regular_14">
+                                <Typography variant="Regular_14" className={styles.buttonStyle}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
                                         <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
-                                            {GENERAL.REQUIRED_PERMISSION_LINK}
+                                            {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
                                         </Button>
                                     </span>
                                 </Typography>

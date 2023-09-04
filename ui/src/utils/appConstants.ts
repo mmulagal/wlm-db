@@ -1,10 +1,9 @@
 export const SELECT_CONFIG = {
     STANDARD_CREATE: `Standard create`,
     EASY_CREATE: `Easy create`,
-    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including ones for
-    availability, security, backups, and maintenance.`,
+    STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
-        'Use a recommended est-practice configuration. You can change most configuration options after database is created.',
+        'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
@@ -18,6 +17,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     AWS_CREDENTIALS: 'AWS credentials',
+    NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
     ONE_OR_MORE_ERROR: 'One or more fields has an error',
     APPLICATION_SETTINGS: 'Application settings',
@@ -33,6 +33,7 @@ export const GENERAL = {
     KEY_PAIR_TEXT: 'Choose a key pair, which allows you to securely connect to your instance.',
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
+    COST: 'Cost',
     INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
@@ -54,9 +55,10 @@ export const GENERAL = {
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    REMOVE: 'Remove',
     SAVE: 'Save',
     API_REQUEST: 'API request',
-    Cancel: 'Cancel',
+    CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',
     STEP_TWO: 'Step 2:',
@@ -73,6 +75,7 @@ export const GENERAL = {
         "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
     GO_TO_THE: 'Go to the',
     REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'required permissions',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials page.',
     CREDENTIAL: 'Credentials.',
@@ -122,8 +125,9 @@ export const GENERAL = {
     VERSION: 'Version',
     //Constants for License accordion
     LICENSE_TEXT:
-        'Use an AWS provided license-included AMI with Windows and SQL Server installed or You can bring your own SQL licenses (BYOL) through your custom AMI or use license included custom AMI. If you use a custom AMI, ensure that it meets all required install parameters.',
+        'Use an AWS AMI (which includes a license) or bring your own SQL license (BYOL) through a custom AMI.',
     LICENSE_INCLUDED_AMI: 'License included AMI',
+    VIEW_THE_REQ: 'View the requirements',
     LICENSE_ID: 'License ID',
     USE_CUSTOM_AMI: 'Use custom AMI',
     AMI_ID: 'AMI ID',
@@ -133,14 +137,17 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The instance name must be 16 characters or less in length. The first character must be an alphabetic character (a-z), an underscore `_`, a number sign `#`, or an ampersand `&`. The first character can't be a numerical value (0-9). Spaces and special characters (such as @, ^, *, ) are not supported.",
+        "The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).",
+    DB_NAME_TOOLTIP1: "The cluster name must be 15 characters or less",
+    DB_NAME_TOOLTIP2: "The first character can be a letter (a-z or A-Z) or a number (0-9)",
+    DB_NAME_TOOLTIP3: "Subsequent characters can be a letter, number, or hyphen (-)",
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
+    ERROR_CAPACITY: 'The maximum supported capacity is 130 TiB.',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -158,6 +165,7 @@ export const GENERAL = {
         'Set up monitors and automated insights for this SQL deployment using CloudWatch Application Insights.',
     //FSX Accordion
     CREATE_NEW_FSXN: 'Create new FSxN',
+    CREATE_NEW_FSXN_SYSTEM: 'Create new file system',
     SELECT_EXISTING_FSX: 'Select an existing FSxN ',
     FSXN_NAME: 'FSxN name',
     USER_NAME: 'User name',
@@ -171,7 +179,7 @@ export const GENERAL = {
     DOMAIN_NAME: 'Domain name',
     DNS_ADDRESS: 'DNS address',
     AD_TEXT:
-        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain.',
+        'The directory in which you want to allow authorized users to authenticate with this SQL Server instance using Windows Authentication. Windows Server Failover Cluster requires that all servers be joined to the same Active Directory domain. Ensure that you have connection between the Active Directory and the VPC.',
     PASSWORD: 'Password',
     //Region VPC accordion
     REGION: 'Region',
@@ -182,12 +190,18 @@ export const GENERAL = {
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
     //Availability zone
-    AZ_TEXT: 'Select an Availability Zone and subnet for each node.',
+    AZ_TEXT: 'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
     SUBNET: 'Subnet',
     //DB credential
+    DATABASE_CREDENTIAL_TEXT: 'Create a new service account for SQL Server.',
+    USERNAME_TOOLTIP:
+        'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
+    USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
+    USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
+
     PASSWORD_CRED_1:
         'The password must be between 8 and 128 characters in length and contain characters from three of the following four categories: ',
     PASSWORD_CRED_LI_1: 'Uppercase letters (A-Z)',
@@ -217,8 +231,9 @@ export const GENERAL = {
     TAG_VALUE: 'Tag value',
     TAG_KEY_PLACEHOLDER: 'Up to 127 characters',
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
-    SELECT_ANY_ACCOUNT: 'Disabled - Need AWS credentials',
-    SELECT_ANY_VPC: 'Select a VPC',
+    SELECT_ANY_ACCOUNT: 'Select your AWS credentials first',
+    SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
+    SELECT_AZ: 'Select the Availability Zones first',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
@@ -230,5 +245,39 @@ export const GENERAL = {
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
         'Enter connection details for Microsoft SQL Server that is accessible from the BlueXP Connector',
-    IS_REQUIRED_MSG: ' is required'
+    IS_REQUIRED_MSG: ' is required',
+    DATABASES_SUMMARY: 'Databases summary',
+    DATABASES: 'Databases',
+    TOTAL_SIZE: 'Total size',
+    INFORMATION: 'Information',
+    RESOURCE_DISTRIBUTION: 'Resources Distribution',
+    TIMELINE: 'Timeline',
+    REMOVE_FROM_WORKSPACE: 'Remove from workspace',
+    TABLES_SUMMARY: 'Tables summary',
+    TABLES: 'Tables',
+    //Estimation cost
+    ESTIMATED_COST: 'Estimated cost',
+    ESTIMATED_SUBTEXT: 'Estimate of charges incurred to deploy the following resources.',
+    RESOURCES: 'Resources',
+    AMOUNT_IN_USD: 'Amount in USD (monthly)',
+    COMPUTE: 'Compute',
+    INSTANCE_TYPE_EC: 'Instance type',
+    QUANTITY: 'Quantity',
+    STORAGE: 'Storage',
+    TYPE: 'Type',
+    SIZE: 'Size',
+    ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
+    EC_NOTE:
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.',
+    MS_SQL_CPU_USED: 'CPU used by Microsoft SQL Server',
+    CPU_REM: 'CPU available and used by other processes',
+    MS_SQL_MEMORY_USED: 'Memory used by Microsoft SQL Server',
+    MEMORY_REM : 'Memory available and used by other processes',
+    MS_SQL_DISK_USED : 'Storage used by Microsoft SQL Server',
+    DISK_REM : 'Storage available and used by other processes',
+    OVERVIEW: 'Overview',
+    MSSQL: 'Microsoft SQL Server',
+    REMOVE_DIALOG_CONTENT_FIRST_PART: (weType: string) => `You are about to remove the ${weType} working environment`,
+    REMOVE_DIALOG_CONTENT_SECOND_PART: 'from workspace.',
+    REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`
 };

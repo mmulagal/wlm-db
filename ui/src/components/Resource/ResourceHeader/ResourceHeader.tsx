@@ -5,16 +5,20 @@ import { ReactComponent as MenuIcon } from '../../../assets/menu-icon.svg';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button, Typography, ButtonWithDropdown } from '@netapp/design-system';
 import { useMemo } from 'react';
+import { GENERAL } from '../../../utils/appConstants';
+import { cmNavigateTo } from '../../../utils/appConfig';
 
 type ResourceHeaderProps = {
-    name?: string;
+    name: string | (string | null)[] | null;
+    refresh: () => void,
+    onDeleteMssql: (event: React.MouseEvent<HTMLElement>) => void
 };
 
-const ResourceHeader = ({ name }: ResourceHeaderProps) => {
+const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) => {
     const tabs = [
-        { url: 'overview', name: 'Overview' },
-        { url: 'databases', name: 'Databases' },
-        { url: 'tables', name: 'Tables' }
+        { url: 'overview', name: GENERAL.OVERVIEW},
+        { url: 'databases', name: GENERAL.DATABASES },
+        { url: 'tables', name: GENERAL.TABLES }
     ];
     const { pathname } = useLocation();
 
@@ -49,16 +53,16 @@ const ResourceHeader = ({ name }: ResourceHeaderProps) => {
                 <Button
                     variant="secondary"
                     onClick={() => {
-                        console.log('timeline clicked');
+                        cmNavigateTo('/timeline');
                     }}
                     className={styles.timelineButton}
                 >
-                    Timeline
+                    {GENERAL.TIMELINE}
                 </Button>
                 <Button
                     variant="icon"
                     onClick={() => {
-                        console.log('reload clicked');
+                        refresh()
                     }}
                 >
                     <ReloadIcon />
@@ -70,11 +74,11 @@ const ResourceHeader = ({ name }: ResourceHeaderProps) => {
                             children: (
                                 <div
                                     className={styles.menuItem}
-                                    onClick={() => {
-                                        console.log('remove workspace clicked');
+                                    onClick={(e) => {
+                                        onDeleteMssql(e) ;
                                     }}
                                 >
-                                    <Typography variant="Regular_14">Remove from workspace</Typography>
+                                    <Typography variant="Regular_14">{GENERAL.REMOVE_FROM_WORKSPACE}</Typography>
                                 </div>
                             )
                         }

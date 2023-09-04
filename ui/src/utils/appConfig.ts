@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useAppDispatch } from '../store/storeHooks';
 import queryString from 'query-string';
 import { setAppContext } from '../store/appContextSlice';
-import { updateAuthFailed, updateAuthSuccess } from '../store/authSlice';
-import { LOCAL } from './consts';
-import Auth, { refreshSso } from './auth';
-import { encodeAll } from './utilityFunctions';
+import { updateAuthSuccess, updateResourceId, updateResourceName } from '../store/authSlice';
+import { LOCAL, DATABASE_SERVICE_PATH } from './consts';
+import Auth from './auth';
 
 const AUTH_0_OPTIONS = {
-    clientID: process.env.REACT_APP_AUTH_CLIENT,
+    clientID: 'test-client-id',
     domain: process.env.REACT_APP_AUTH_DOMAIN,
     audience: process.env.REACT_APP_AUTH_AUDIENCE
 };
@@ -47,6 +47,15 @@ const cmNavigateTo = (pathname: string, stateParams = {}) => {
     });
 };
 
+const navigateToCanvas = () => {
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: '/'
+        }
+    });
+};
+
 const useHandleCmMessages = (eventHandlers: any) => {
     const eventsHandlersRef = useRef(eventHandlers);
     eventsHandlersRef.current = eventHandlers;
@@ -78,17 +87,14 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken, storage, pathname } = search;
+        const { accountId, accessToken, pathname, storage, storageId, storageName } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
+        const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
         const environment = process.env.REACT_APP_ENVIRONMENT ?? null;
 
         const handleAuthSuccess = (payload: any) => {
             dispatch(updateAuthSuccess(payload));
-        };
-
-        const handleAuthFailed = (payload: any) => {
-            dispatch(updateAuthFailed(payload));
         };
 
         if (accountIdAsString) {
@@ -99,9 +105,11 @@ const useInitialize = () => {
             dispatch(setAppContext(appContext));
         }
 
-        handleAuthSuccess({
-            accessToken: accessTokenAsString || ''
-        });
+        if(accessTokenAsString){
+            handleAuthSuccess({
+                accessToken: accessTokenAsString || ''
+            });
+        }
 
         if (environment === LOCAL) {
             (window as any).auth = new Auth(AUTH_0_OPTIONS);
@@ -115,12 +123,18 @@ const useInitialize = () => {
             // });
         }
 
-        if (pathname) {
-            navigate(`${pathname}`, { replace: true });
+        if (pathnameAsString) {
+            if(pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH){
+                navigate(`${storage}/${storageId}/${storageName}`);
+                dispatch(updateResourceId(storageId))
+                dispatch(updateResourceName(storageName))
+            } else {
+                navigate(`${pathnameAsString}`, { replace: true });
+            }
         }
 
         sendAppReady();
     }, [dispatch]);
 };
 
-export { useInitialize, cmNavigateTo };
+export { useInitialize, cmNavigateTo, navigateToCanvas };

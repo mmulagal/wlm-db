@@ -8,6 +8,18 @@ import { SELECT_CONFIG } from '../../../utils/appConstants';
 const SelectConfig = () => {
     return (
         <div className={styles['select-config']}>
+            {/* Easy create section from here */}
+            <div className={styles['easy-create']}>
+                <EasyCreate />
+                <div className={styles['easy-create-content']}>
+                    <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
+                    <div className={styles['easy-create-content-text']}>{SELECT_CONFIG.EASY_CREATE_CONTENT}</div>
+                </div>
+                <div className={styles['tag']}>
+                    <Tag backgroundColor="var(--chart-9)">{SELECT_CONFIG.COMING_SOON}</Tag>
+                </div>
+            </div>
+
             {/* Standard create section here */}
             <div className={styles['standard-create']}>
                 <StandardCreate />
@@ -19,18 +31,6 @@ const SelectConfig = () => {
                 </div>
                 <div className={styles['tick-placement']}>
                     <BlueTick />
-                </div>
-            </div>
-
-            {/* Easy create section from here */}
-            <div className={styles['easy-create']}>
-                <EasyCreate />
-                <div className={styles['easy-create-content']}>
-                    <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
-                    <div className={styles['easy-create-content-text']}>{SELECT_CONFIG.EASY_CREATE_CONTENT}</div>
-                </div>
-                <div className={styles['tag']}>
-                    <Tag backgroundColor="var(--chart-9)">{SELECT_CONFIG.COMING_SOON}</Tag>
                 </div>
             </div>
         </div>

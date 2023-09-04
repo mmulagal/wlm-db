@@ -1,4 +1,4 @@
-import { Type } from '@fastify/type-provider-typebox';
+import { Type, Static } from '@fastify/type-provider-typebox';
 import { WLMDB } from '../../utils/consts.js';
 
 const STATUS_TYPES = Type.Union([
@@ -8,44 +8,55 @@ const STATUS_TYPES = Type.Union([
     Type.Literal('failed')
 ]);
 
-const createAuditGroupSchema = Type.Object({
-    startDate: Type.Number(),
+const CreateAuditGroupSchema = Type.Object({
+    startTime: Type.Number(),
     actionName: Type.String(),
     status: STATUS_TYPES,
     requestId: Type.String(),
     serviceName: Type.Literal(WLMDB),
     referrer: Type.String(),
     version: Type.String(),
-    actionParameters: Type.String(),
+    requestData: Type.String(),
     principalId: Type.String(),
-    resourceId: Type.Optional(Type.String())
+    resourceId: Type.Optional(Type.String()),
+    errors: Type.Optional(Type.Array(Type.String()))
 });
 
-const updateAuditGroupSchema = Type.Object({
-    startDate: Type.Number(),
-    endDate: Type.Number(),
+const UpdateAuditGroupSchema = Type.Object({
+    startTime: Type.Number(),
+    endTime: Type.Number(),
     actionName: Type.String(),
     status: STATUS_TYPES,
     requestId: Type.String(),
     serviceName: Type.Literal(WLMDB),
     referrer: Type.String(),
     version: Type.String(),
-    actionParameters: Type.String(),
     principalId: Type.String(),
     resourceId: Type.Optional(Type.String()),
     responseData: Type.Optional(Type.String()),
-    errorMessage: Type.Optional(Type.String())
+    errors: Type.Optional(Type.Array(Type.String()))
 });
 
-const auditRecordSchema = Type.Object({
+const AuditRecordSchema = Type.Object({
     recordId: Type.Number(),
     actionName: Type.String(),
-    date: Type.Number(),
+    creationTime: Type.Number(),
     status: STATUS_TYPES,
     requestId: Type.String(),
     serviceName: Type.Literal(WLMDB),
-    actionParameters: Type.String(),
-    errorMessage: Type.Optional(Type.String())
+    data: Type.String(),
+    errors: Type.Optional(Type.Array(Type.String()))
 });
 
-export { createAuditGroupSchema, updateAuditGroupSchema, auditRecordSchema };
+type CreateAuditGroupSchemaType = Static<typeof CreateAuditGroupSchema>;
+type UpdateAuditGroupSchemaType = Static<typeof UpdateAuditGroupSchema>;
+type AuditRecordSchemaType = Static<typeof AuditRecordSchema>;
+
+export {
+    CreateAuditGroupSchema,
+    UpdateAuditGroupSchema,
+    AuditRecordSchema,
+    CreateAuditGroupSchemaType,
+    UpdateAuditGroupSchemaType,
+    AuditRecordSchemaType
+};

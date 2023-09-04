@@ -8,7 +8,7 @@ import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 
-import { getVpcsList } from '../operations/aws/ec2-operations';
+import { getVpcsList, getWindowsServerBaseAmi } from '../operations/aws/ec2-operations';
 import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
 import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
 import {
@@ -21,9 +21,11 @@ import {
     WLM_ASSETS,
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    DEFAULT_AWS_REGION
+    DEFAULT_AWS_REGION,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE,
+    VALIDATION_AMI
 } from './consts';
-
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
 import {
@@ -103,12 +105,15 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
     const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
     const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    const FSxQuorumVolumeSize = 10000; // 10GB
+    const FSxQuorumVolumeSize = 12000; // 12GB
 
     // StorageCapacity in GiB
-    const FSxStorageCapacity = Math.ceil(
+    let FSxStorageCapacity = Math.ceil(
         (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
     );
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
     return {
         UniqueID: suffix,
@@ -131,7 +136,8 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         DomainAdminSecretName: `${prefix}-domain-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
         SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
-        FSxStorageCapacity
+        FSxStorageCapacity,
+        FSxDataLunSize: FSxDataLunSizeInMib
     };
 }
 
@@ -189,7 +195,11 @@ async function formatTemplateParameters(
     );
 
     const stackName = derivedParams.StackName;
-    const templateParams: Array<Parameter> = [{ ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName }];
+    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const templateParams: Array<Parameter> = [
+        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+    ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key != 'StackName') {
@@ -281,6 +291,10 @@ function derivePropertiesFromARN(awsResourceArn: string) {
     }
 }
 
+async function waitFor(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export {
     prisma,
     execute,
@@ -296,5 +310,6 @@ export {
     isValidJsonString,
     getQueueArn,
     getQueueUrl,
-    derivePropertiesFromARN
+    derivePropertiesFromARN,
+    waitFor
 };

@@ -17,7 +17,10 @@ import {
     DescribeKeyPairsCommand,
     DescribeKeyPairsCommandOutput,
     DescribeRouteTablesCommandOutput,
-    DescribeImagesCommandOutput
+    DescribeImagesCommandOutput,
+    DescribeNetworkInterfacesCommandInput,
+    DescribeNetworkInterfacesCommandOutput,
+    DescribeNetworkInterfacesCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -147,6 +150,20 @@ async function describeKeyPairs(
     return response;
 }
 
+async function describeNetworkInterfaces(
+    credentialsId: string,
+    region: string,
+    input: DescribeNetworkInterfacesCommandInput
+): Promise<DescribeNetworkInterfacesCommandOutput> {
+    logger.info('Describe network interfaces:', { credentialsId, region, input });
+
+    const client = await getEC2Client(region, credentialsId);
+    const response = await client.send(new DescribeNetworkInterfacesCommand(input));
+    logger.debug('Describe network interfaces:', response);
+
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -156,5 +173,6 @@ export {
     describeRegions,
     describeInstanceTypes,
     describeRouteTable,
-    describeKeyPairs
+    describeKeyPairs,
+    describeNetworkInterfaces
 };

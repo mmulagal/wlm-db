@@ -9,4 +9,19 @@
         position: relative;
         top: 1.5px;
     }
+
+    .textDisabled {
+        color: #a7a7a7;
+        font-size: 14px;
+    }
+
+    .disabledIcon {
+        position: relative;
+        top: 2px;
+        svg {
+            path {
+                fill: #a7a7a7;
+            }
+        }
+    }
 }

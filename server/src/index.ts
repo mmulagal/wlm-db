@@ -27,6 +27,8 @@ import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
 import formConfigRoutes from './routes/form-config';
+import workingEnvironmentRoutes from './routes/working-environment';
+import msSqlServerRoutes from './routes/mssql';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
@@ -154,6 +156,8 @@ const app = fastify({
             credentialsRoutes(instance);
             deploymentRoutes(instance);
             formConfigRoutes(instance);
+            workingEnvironmentRoutes(instance);
+            msSqlServerRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
@@ -195,7 +199,7 @@ const app = fastify({
     .addHook('onSend', async (request, reply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
         if (reply.statusCode !== 202) {
-            updateAuditGroup(request, payload);
+            updateAuditGroup(request, reply, payload);
         }
         return payload;
     });

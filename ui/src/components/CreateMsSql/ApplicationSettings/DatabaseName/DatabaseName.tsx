@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import styles from './DatabaseName.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
 import { SQL_DATABASE } from '../../../../utils/consts';
+import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const DatabaseName = () => {
     const [input, setInput] = useState(SQL_DATABASE);
@@ -22,7 +24,7 @@ const DatabaseName = () => {
 
         if (
             input.length > 0 &&
-            (input.length > 16 || !/^[a-zA-Z_#&]/.test(firstChar) || !/^[a-zA-Z0-9_#&]+$/.test(input))
+            (input.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(input))
         ) {
             return GENERAL.DB_NAME_TOOLTIP;
         }
@@ -47,13 +49,30 @@ const DatabaseName = () => {
                     <Typography>
                         <div className={styles.content}>
                             <TextField
-                                info={GENERAL.DB_NAME_TOOLTIP}
+                                info={
+                                    <div className={styles.userNameTooltip}>
+                                        <div className={styles.list}>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP1}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP2}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP3}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                                 label={GENERAL.DATABASE_INSTANCE_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setInput(e.target.value);
                                     dispatch(setDBName(e.target.value));
                                 }}
-                                error={isValidDBName()}
+                                error={useDelayedError(isValidDBName())}
                                 value={input}
                             />
                         </div>
