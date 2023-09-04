@@ -71,7 +71,7 @@ async function processCloudFormationMessages() {
                                         CredentialsId: credentialsId,
                                         Region: region,
                                         StackName: stackName,
-                                        JwtToken: jwtToken
+                                        JWTToken: jwtToken
                                     } = resourceProperties;
                                     await createDeployment(accountId, {
                                         deploymentId: stackId,
@@ -93,6 +93,12 @@ async function processCloudFormationMessages() {
                                         ? createStackAck(jsonMessage, 'SUCCESS')
                                         : modifyStackAck(jsonMessage, 'SUCCESS');
                                 await sendCfnResponse(responseUrl, cfnResponse);
+
+                                await deleteMessage(DEFAULT_AWS_REGION, {
+                                    // after processing the message , clear the message from queue so next processing is on a limited data set
+                                    QueueUrl: queueUrl,
+                                    ReceiptHandle: sqsMessage?.ReceiptHandle
+                                });
                             }
                         } else {
                             if (sqsMessage?.Body?.includes('AWS CloudFormation Notification')) {
@@ -152,16 +158,17 @@ async function processCloudFormationMessages() {
                                                 credentialsId: credentials_id,
                                                 startTime: new Date(timestamp).valueOf()
                                             });
+
+                                            await deleteMessage(DEFAULT_AWS_REGION, {
+                                                // after processing the message , clear the message from queue so next processing is on a limited data set
+                                                QueueUrl: queueUrl,
+                                                ReceiptHandle: sqsMessage?.ReceiptHandle
+                                            });
                                         }
                                     }
                                 }
                             }
                         }
-                        await deleteMessage(DEFAULT_AWS_REGION, {
-                            // after processing the message , clear the message from queue so next processing is on a limited data set
-                            QueueUrl: queueUrl,
-                            ReceiptHandle: sqsMessage?.ReceiptHandle
-                        });
                     },
                     { concurrency: 3 }
                 );

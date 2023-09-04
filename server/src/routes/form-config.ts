@@ -34,7 +34,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
         Params: FormConfigObjectParamsType;
         Reply: FormConfigObjectResponseType;
     }>(
-        `${API_PATH_CONFIG}`,
+        `${API_PATH_CONFIG}/:id`,
         {
             schema: FormConfigObjectSchema
         },

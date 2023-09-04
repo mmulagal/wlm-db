@@ -23,7 +23,7 @@ function hideSecretsValues(obj: any) {
             }
         });
     }
-    return obj;
+    return JSON.stringify(obj);
 }
 
 function getActiveTraceId() {
@@ -50,7 +50,7 @@ function initialize() {
                     message: loggingEvent =>
                         format(
                             ...loggingEvent.data.map(log =>
-                                isObject(log) ? `${hideSecretsValues(cloneDeep(log))}\n` : log
+                                isObject(log) ? `${hideSecretsValues(cloneDeep(log))}` : log
                             )
                         )
                 };
