@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import { gotInstanceForInternalRequest } from '../utils/got';
 import { BatchRequestBodyType, SingleBatchResponseType, BatchResponseType } from '../routes/types/batch.types';
-import { METHODS_WITH_PAYLOAD, HEADERS, USER_TOKEN } from '../utils/consts';
+import { METHODS_WITH_PAYLOAD, HEADERS, USER_TOKEN, BATCH_API_CONCURRENCY_LIMIT } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { HTTPAlias } from 'got';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -35,7 +35,7 @@ export default async function executeBatchApiCalls(requestBody: BatchRequestBody
                 return responseData;
             }
         },
-        { concurrency: 10 }
+        { concurrency: BATCH_API_CONCURRENCY_LIMIT }
     );
 
     return allApiResponse;
