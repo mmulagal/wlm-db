@@ -6,6 +6,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Button, Typography, ButtonWithDropdown } from '@netapp/design-system';
 import { useMemo } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
+import { cmNavigateTo } from '../../../utils/appConfig';
 
 type ResourceHeaderProps = {
     name: string | (string | null)[] | null;
@@ -52,7 +53,7 @@ const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) =
                 <Button
                     variant="secondary"
                     onClick={() => {
-                        console.log('timeline clicked');
+                        cmNavigateTo('/timeline');
                     }}
                     className={styles.timelineButton}
                 >
