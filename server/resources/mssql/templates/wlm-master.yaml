@@ -441,9 +441,10 @@ Conditions:
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
 Resources:
-TrackStackDeployment:
+  TrackStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
+      ServiceToken: 'arn:aws:sns:ap-southeast-1:464262061435:wlmdb'
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
