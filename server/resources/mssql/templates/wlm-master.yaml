@@ -84,7 +84,7 @@ Metadata:
           - AccountId
           - CloudProviderAccountId
           - RoleCredentialsId
-          - Token
+          - JwtToken
     ParameterLabels:
       ApplicationName:
         default: Application Name
@@ -431,7 +431,7 @@ Parameters:
     Description: BlueXP CloudProviderAccountId id
     Type: String
   
-  Token:
+  JwtToken:
     Description: JWT Token to grant access to a resource
     Type: String
 

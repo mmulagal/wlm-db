@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
+import { getServiceToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -25,7 +26,11 @@ import {
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
     EC2_ROLE_NAME,
-    DatabaseTypes
+    DatabaseTypes,
+    ACCOUNT_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_CREDENTIALS_ID,
+    TEMPLATE_CLOUD_PROVIDER_ID
 } from '../utils/consts';
 import {
     formatTemplateParameters,
@@ -37,6 +42,7 @@ import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
+import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -77,7 +83,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
         : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -109,7 +115,11 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = await getServiceToken();
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}`;
+
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
