@@ -7,5 +7,9 @@
     },
     "kinesis": {
         "stream-name": "audit-service-prod-stream"
+    },
+    "templates": {
+        "bucket": "production.wlmdb.workloads.netapp.com",
+        "region": "us-east-1"
     }
 }

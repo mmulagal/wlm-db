@@ -33,5 +33,9 @@
     },
     "service-token": {
         "expiration-margin": "10s"
+    },
+    "templates": {
+        "bucket": "bucketkrithi",
+        "region": "ap-southeast-1"
     }
 }

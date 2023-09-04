@@ -8,6 +8,8 @@ import {
     PSSCRIPT,
     DATABASES_COUNT,
     DB_ROWS_COUNT,
+    SERVER_NAME,
+    SERVER_GUID,
     DB_SIZE,
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
@@ -21,7 +23,18 @@ import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
 import { UtilisationResponseBody } from '../../../routes/types/database.types';
-import { DatabaseTypes, DATABASE_METRIC_TYPE, SqlServerDeploymentModel, HttpErrorCodes } from '../../../utils/consts';
+import {
+    DatabaseTypes,
+    DATABASE_METRIC_TYPE,
+    SqlServerDeploymentModel,
+    HttpErrorCodes,
+    WLMDB_RESOURCE_CLASS,
+    WORKSPACE_ID,
+    CloudProviders,
+    DeploymentState
+} from '../../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
+import { ServiceResourceRequest, registerServiceResource } from '../../../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
 
@@ -312,11 +325,63 @@ async function getServerSummary(resourceId: string): Promise<{
     };
 }
 
+async function discoverMsSqlServer(
+    accountId: string,
+    credentialsId: string,
+    regionId: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId: string,
+    resourceType: string
+) {
+    logger.info('Save SQL Server details in tenancy:', {
+        accountId,
+        credentialsId,
+        regionId,
+        activeInstanceId: activeNodeInstanceId,
+        standbyInstanceId: standbyNodeInstanceId,
+        resourceType
+    });
+
+    const [resourceIdentifier, name] = await Promise.all([
+        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
+            `${PSSCRIPT} -Query "${SERVER_GUID}"`
+        ]),
+        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
+            `${PSSCRIPT} -Query "${SERVER_NAME}"`
+        ])
+    ]);
+
+    const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
+    const params: ServiceResourceRequest = {
+        name,
+        resourceIdentifier,
+        resourceType,
+        workspacePublicId: workspaceId,
+        accountPublicId: accountId,
+        resourceClass: WLMDB_RESOURCE_CLASS,
+        metadata: {
+            propertyName: 'properties',
+            propertyValue: JSON.stringify({
+                location: CloudProviders.AWS,
+                credentialsId: credentialsId,
+                region: regionId,
+                activeInstanceId: activeNodeInstanceId,
+                standbyInstanceId: standbyNodeInstanceId,
+                deploymentState: DeploymentState.SUCCESS
+            })
+        }
+    };
+
+    await registerServiceResource(params);
+    return { resourceId: resourceIdentifier, resourceName: name };
+}
+
 export {
     getResourceUtilisation,
     getDataBasesSummary,
     getServerSummary,
     getResourceDetails,
     getDatabasesCount,
-    getTablesSummary
+    getTablesSummary,
+    discoverMsSqlServer
 };

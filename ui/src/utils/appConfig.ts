@@ -90,6 +90,7 @@ const useInitialize = () => {
         const { accountId, accessToken, pathname, storage, storageId, storageName } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
+        const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
         const environment = process.env.REACT_APP_ENVIRONMENT ?? null;
 
         const handleAuthSuccess = (payload: any) => {
@@ -122,14 +123,13 @@ const useInitialize = () => {
             // });
         }
 
-        if (pathname) {
-
-            if(pathname === DATABASE_SERVICE_PATH){
+        if (pathnameAsString) {
+            if(pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH){
                 navigate(`${storage}/${storageId}/${storageName}`);
                 dispatch(updateResourceId(storageId))
                 dispatch(updateResourceName(storageName))
             } else {
-                navigate(`${pathname}`, { replace: true });
+                navigate(`${pathnameAsString}`, { replace: true });
             }
         }
 

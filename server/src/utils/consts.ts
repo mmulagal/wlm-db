@@ -95,6 +95,12 @@ enum CloudProviders {
     GCP = 'GCP'
 }
 
+enum DeploymentState {
+    INITIALIZING = 'Initializing',
+    SUCCESS = 'Success',
+    FAILED = 'Failed'
+}
+
 enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
@@ -417,17 +423,17 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'wlmbucket';
-const ASSETS_BUCKET_REGION = 'ap-southeast-1';
+const BUCKET_NAME = config.get<string>('templates.bucket');
+const ASSETS_BUCKET_REGION = config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
-const ASSETS_REGION_CODE = 's3.ap-southeast-1';
+const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
-const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
-const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
+const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 180;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
@@ -490,7 +496,7 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
+const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -502,8 +508,8 @@ const HTTP_PATCH = 'PATCH';
 // Custom error messages
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
-const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, credentialsId: string, error: string) =>
-    `Error creating signed url for ${url} in region ${region} with credentials ${credentialsId}. ${error}`;
+const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
+    `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
 const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
@@ -754,8 +760,9 @@ export {
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
-    SIGNED_URL_ERROR_MESSAGE,
     TEMPLATE_CLOUD_PROVIDER_ID,
     TEMPLATE_JWT_TOKEN,
-    TEMPLATE_CREDENTIALS_ID
+    TEMPLATE_CREDENTIALS_ID,
+    DeploymentState,
+    SIGNED_URL_ERROR_MESSAGE
 };
