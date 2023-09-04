@@ -5332,8 +5332,8 @@
             }
         },
         "provisionedIOPS": {
-            "provisionedType": "Automatic",
-            "IOPSValue": ""
+            "provisionedType": "User-provisioned",
+            "IOPSValue": "3076"
         },
         "throughput": {
             "value": "128 MBps",
