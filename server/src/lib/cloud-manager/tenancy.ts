@@ -7,9 +7,11 @@ import {
     AUTH0_AUDIENCE,
     SECRETS,
     WORKSPACE_ID,
-    HttpErrorCodes
+    HttpErrorCodes,
+    SERVICE_TOKEN,
+    TOKEN_EXPIRATION_TIME
 } from '../../utils/consts';
-import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
+import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -32,6 +34,13 @@ interface MetaData {
 async function getServiceToken(): Promise<{ token: string; expiresIn: number }> {
     logger.info('Getting service token:');
 
+    const token: string = getAsyncLocalStorageResource(SERVICE_TOKEN);
+    const tokenExpirationTime: number = getAsyncLocalStorageResource(TOKEN_EXPIRATION_TIME);
+
+    if (token && Date.now() < tokenExpirationTime) {
+        return { token, expiresIn: tokenExpirationTime };
+    }
+
     try {
         const data: { access_token: string; expires_in: number; token_type: string } =
             await gotInstanceForInternalRequest
@@ -45,6 +54,10 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
                 })
                 .json();
         logger.debug('service token response', data);
+        setAsyncLocalStorageResource(SERVICE_TOKEN, `${data.token_type} ${data.access_token}`);
+        // converting seconds of expires in value to time stamp
+        const expiresIn = Date.now() + data.expires_in * 1000;
+        setAsyncLocalStorageResource(TOKEN_EXPIRATION_TIME, expiresIn);
         return { token: `${data.token_type} ${data.access_token}`, expiresIn: data.expires_in };
     } catch (err) {
         throw createError(500, `Error occured while getting service token, ${err}`);

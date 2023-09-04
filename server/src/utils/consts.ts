@@ -13,6 +13,8 @@ const ACCOUNT_ID = 'ACCOUNT_ID';
 const AGENT_ID = 'AGENT_ID';
 const AUDIT_GROUP = 'AUDIT_GROUP';
 const WORKSPACE_ID = 'WORKSPACE_ID';
+const SERVICE_TOKEN = 'SERVICE_TOKEN';
+const TOKEN_EXPIRATION_TIME = 'TOKEN_EXPIRATION_TIME';
 
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
@@ -762,5 +764,7 @@ export {
     SqlServerDeploymentModel,
     DeploymentState,
     SIGNED_URL_ERROR_MESSAGE,
-    METHODS_WITH_PAYLOAD
+    METHODS_WITH_PAYLOAD,
+    SERVICE_TOKEN,
+    TOKEN_EXPIRATION_TIME
 };
