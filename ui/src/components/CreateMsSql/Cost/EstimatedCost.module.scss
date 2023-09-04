@@ -97,5 +97,10 @@
                 top: 3px;
             }
         }
+
+        .loadingPlacement {
+            display: flex;
+            justify-content: flex-end;
+        }
     }
 }
