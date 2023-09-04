@@ -14,7 +14,8 @@ function transformStackEventMessage(message: string) {
     const messagesArray = message.split('\n');
     const messageObject = new Map<string, string>();
     messagesArray.forEach(message => {
-        const [key, value] = message.split('=');
+        // eslint-disable-next-line quotes
+        const [key, value] = message.replaceAll("'", '').split('=');
         messageObject.set(key, value);
     });
     return Object.fromEntries(messageObject);

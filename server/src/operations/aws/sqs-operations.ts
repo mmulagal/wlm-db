@@ -11,6 +11,7 @@ import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import { createDeployment, createEvent, listDeployments, upsertDeployment } from '../../lib/database/db';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
 
@@ -63,8 +64,7 @@ async function processCloudFormationMessages() {
                             } = jsonMessage;
                             if (requestType === 'Create') {
                                 //a custom resource create event marks the beginning of master template deployment
-                                const { message } = isValidJsonString(resourceProperties);
-                                if (message) {
+                                if (resourceProperties) {
                                     const {
                                         AccountId: accountId,
                                         CloudProviderAccountId: cloudProviderAccountId,
@@ -73,6 +73,20 @@ async function processCloudFormationMessages() {
                                         StackName: stackName,
                                         JWTToken: jwtToken
                                     } = resourceProperties;
+
+                                    logger.debug('>>JWT TOKEN', jwtToken);
+                                    try {
+                                        verifyAuthToken(jwtToken);
+                                    } catch (error) {
+                                        logger.error('Cloud formation token verification failed', error);
+                                        const cfnResponse = createStackAck(jsonMessage, 'FAILED');
+                                        await deleteMessage(DEFAULT_AWS_REGION, {
+                                            QueueUrl: queueUrl,
+                                            ReceiptHandle: sqsMessage?.ReceiptHandle
+                                        });
+                                        return sendCfnResponse(responseUrl, cfnResponse);
+                                    }
+
                                     await createDeployment(accountId, {
                                         deploymentId: stackId,
                                         cloudProviderAccountId: cloudProviderAccountId,
@@ -83,9 +97,6 @@ async function processCloudFormationMessages() {
                                         region: region,
                                         deploymentName: stackName
                                     });
-                                    logger.debug('>>JWT TOKEN', jwtToken);
-
-                                    //TODO add token validation logic
                                 }
 
                                 const cfnResponse =
@@ -135,7 +146,10 @@ async function processCloudFormationMessages() {
                                             undefined,
                                             masterStackName
                                         );
-                                        if (masterStackDeployment) {
+                                        if (
+                                            masterStackDeployment &&
+                                            stackName === masterStackDeployment.deployment_name
+                                        ) {
                                             const {
                                                 account_id,
                                                 region,
@@ -180,12 +194,12 @@ async function processCloudFormationMessages() {
                 // data broker user was deleted
                 logger.warn(`'${queueUrl}' queue invalid client token. Not polling for messages`);
             } else {
+                logger.debug('Possibly no new messages in queue');
                 logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, err);
                 setTimeout(() => processCloudFormationMessages(), ms(config.get<string>('sqs-poll-interval')));
             }
         }
     }
-    setTimeout(processCloudFormationMessages, ms(config.get<string>('sqs-poll-interval')));
 }
 
 function createStackAck(message: { StackId: string; RequestId: string; LogicalResourceId: string }, status: string) {

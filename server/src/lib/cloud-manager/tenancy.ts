@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
 import {
@@ -27,6 +28,26 @@ interface ServiceResourceRequest {
 interface MetaData {
     propertyName: string;
     propertyValue: string;
+}
+
+function generateAuthToken(user: object) {
+    logger.info('Generating auth token');
+    const token = jwt.sign({ user }, SECRETS.CLIENT_ID as string, {
+        expiresIn: '1h'
+    });
+
+    return { token };
+}
+
+function verifyAuthToken(token: string) {
+    logger.info('Verifying auth token');
+    try {
+        jwt.verify(token, SECRETS.CLIENT_ID as string);
+    } catch (err) {
+        const errMsg = 'Invalid token.';
+        logger.error(errMsg, err);
+        throw createError(400, errMsg);
+    }
 }
 
 async function getServiceToken(): Promise<{ token: string; expiresIn: number }> {
@@ -142,6 +163,8 @@ export {
     getTenancyResourcesByTypeAndId,
     removeResource,
     getServiceToken,
+    generateAuthToken,
+    verifyAuthToken,
     ServiceResourceRequest,
     MetaData
 };

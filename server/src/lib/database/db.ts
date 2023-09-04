@@ -161,7 +161,7 @@ async function upsertDeployment(
         },
         update: {
             ...(parentDeploymentId && { parent_deployment_id: parentDeploymentId }),
-            ...(deploymentName && { deploymen_name: deploymentName }),
+            ...(deploymentName && { deployment_name: deploymentName }),
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),

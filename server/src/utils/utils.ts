@@ -42,7 +42,7 @@ import {
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
 import { PrismaClient } from '@prisma/client';
-import { getServiceToken } from '../lib/cloud-manager/tenancy';
+import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
 
@@ -202,7 +202,7 @@ async function formatTemplateParameters(
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const { token } = await getServiceToken();
+    const { token } = generateAuthToken({ user: 'SYSTEM' });
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
