@@ -4,7 +4,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './InstanceType.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { formatSize, generateOptionType } from '../../../../utils/utilityFunctions';
+import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
@@ -37,7 +37,7 @@ const InstanceType = () => {
             options.push(option);
         });
 
-        return options;
+        return sortListOfDict(options, 'value');
     }, [instanceTypeData]);
 
     useEffect(() => {

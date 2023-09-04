@@ -16,7 +16,6 @@ import {
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
-    MASTER_TEMPLATE_URL,
     DISABLE_ROLLBACK,
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
@@ -25,7 +24,8 @@ import {
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
     EC2_ROLE_NAME,
-    DatabaseTypes
+    DatabaseTypes,
+    MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import {
     formatTemplateParameters,
@@ -105,7 +105,7 @@ async function createCloudFormationTemplateForUserDeployment(
     //Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
-    const signedURL = await getPreSignedUrl(credentialsId, ASSETS_BUCKET_REGION);
+    const signedURL = encodeURIComponent(await getPreSignedUrl(ASSETS_BUCKET_REGION));
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
@@ -138,6 +138,9 @@ async function createCloudFormationTemplateForUserDeployment(
     });
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
+
+    logger.info('CloudFormation template url ', signedTemplateURL);
+
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
@@ -180,6 +183,10 @@ async function deployCloudFormationTemplate(
     //Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
         region,
@@ -198,7 +205,7 @@ async function deployCloudFormationTemplate(
         credentialsId,
         region,
         stackName,
-        MASTER_TEMPLATE_URL,
+        signedMasterTemplateUrl,
         templateParameters,
         DISABLE_ROLLBACK,
         MASTER_STACK_TIMEOUT_MINUTES

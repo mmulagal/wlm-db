@@ -2,7 +2,6 @@ const PSSCRIPT = ' C:\\SSM\\ExecuteQueryFromSSM.ps1';
 const SSM_RUN_POWERSHELL_SCRIPT_DOC = 'AWS-RunPowerShellScript';
 const SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION = '1';
 const DB_ROWS_COUNT = 75;
-const HEALTHY = 'Healthy';
 const DATABASES = (offset: number, rowscount: number) =>
     `SELECT databaseId = d.database_id, databaseName = d.name, creationDate = d.create_date, databaseStatus = d.state_desc, databaseSize = t.databaseSize FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name offset ${offset} rows fetch next ${rowscount} rows only`;
 
@@ -43,6 +42,12 @@ const MEMORY_UTILISATION = `SELECT
                                 ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,
                                  ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
                                  FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;`;
+
+const SERVER_GUID = `SELECT service_broker_guid AS serverGuid
+                     FROM sys.databases
+                     WHERE name = 'msdb'`;
+
+const SERVER_NAME = 'SELECT @@SERVERNAME as serverName;';
 
 const SERVER_VERSION_DETAILS = 'SELECT @@version AS serverDetails';
 const SERVER_STATE = `EXEC
@@ -96,10 +101,11 @@ export {
     DISK_UTILISATION,
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
-    HEALTHY,
     TABLES_QUERY,
     TABLES_COUNT_QUERY,
     MEMORY_UTILISATION,
+    SERVER_GUID,
+    SERVER_NAME,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
     SERVER_NODES,

@@ -10,17 +10,25 @@ import {
     useGetMSSQLDiskUtilizationQuery,
     useGetMSSQLMemoryUtilizationQuery,
     useBatchTablesMutation,
-    resourceApi
+    resourceApi,
+    useRemoveMSSQLMutation
 } from '../../utils/apiService';
 import { BatchEntry, Method } from '../../utils/types/resourceTypes';
 import { addNotification, NOTIFICATION_TYPES, clearNotifications } from '../../store/notificationSlice';
 import { useDispatch } from 'react-redux';
 import { resetMssqlTables } from '../../store/resource/resourceSlice';
-import { Spinner } from '@netapp/design-system'; 
+import { Spinner, useDialog } from '@netapp/design-system'; 
+import { cmNavigateTo } from '../../utils/appConfig';
+import { GENERAL } from '../../utils/appConstants';
+import DialogComponent from '../../common/Dialog/DialogComponent';
+import RemoveDialog from './RemoveDialog/RemoveDialog';
 
 const ResourcePage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [removeMssql] = useRemoveMSSQLMutation();
+    const [batchTables] = useBatchTablesMutation();
+    const {setDialog} = useDialog();
 
     useEffect(() => {
         navigate('overview');
@@ -64,8 +72,6 @@ const ResourcePage = () => {
         refetch: mssqlMemoryRefetch
     } = useGetMSSQLMemoryUtilizationQuery(resourceId);
 
-    const [batchTables] = useBatchTablesMutation();
-
     const loading = databasesLoading || mssqlSummaryLoading || mssqlCpuLoading || 
     mssqlDiskLoading || mssqlMemoryLoading;
 
@@ -83,6 +89,30 @@ const ResourcePage = () => {
         mssqlCpuRefetch();
         mssqlDiskRefetch();
         mssqlMemoryRefetch();
+    };
+
+    const deleteMssqlResource = async () => {
+        try {
+            await removeMssql(resourceId).unwrap();
+            cmNavigateTo('/');
+        } catch (error) {
+            dispatch(addNotification({message: error, notificationType: NOTIFICATION_TYPES.ERROR}));
+        }
+    }
+
+    const onDeleteMssql = (event: any) => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.REMOVE_FROM_WORKSPACE}
+                content={<RemoveDialog weType={GENERAL.MSSQL}
+                name={resourceName!}/>}
+                primaryButton={GENERAL.REMOVE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    deleteMssqlResource();
+                }}
+            />
+        );
     };
 
     // To fetch tables data
@@ -115,7 +145,7 @@ const ResourcePage = () => {
 
     return (
         <div className={styles.resourcePageContainer}>
-            <ResourceHeader name={resourceName} refresh={refresh}/>
+            <ResourceHeader name={resourceName} refresh={refresh} onDeleteMssql={(e) => onDeleteMssql(e)}/>
             {loading && (
                 <div className={styles['loading-screen']}>
                     <Spinner isLarge

@@ -91,17 +91,12 @@ Parameters:
         Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
         Type: AWS::EC2::Subnet::Id
     AssetsBucketName:
-        Description: S3 bucket name for the LaunchWizard SQLHA assets. LaunchWizard SQLHA
-            bucket name can include numbers, lowercase letters, uppercase letters, and hyphens
-            (-). It cannot start or end with a hyphen (-).
+        Description: S3 bucket name for WLMDB assets. 
         Type: String
     AssetsS3KeyPrefix:
-        Description: S3 key prefix for the LaunchWizard SQLHA assets. LaunchWizard SQLHA
-            key prefix can include numbers, lowercase letters, uppercase letters, hyphens
-            (-), and forward slash (/).
+        Description: S3 key prefix for the  WLMDB assets.
         Type: String
     AssetsS3RegionCode:
-        Default: s3.us-east-1
         Description: S3 region code.
         Type: String
     VPCID:
