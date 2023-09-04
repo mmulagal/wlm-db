@@ -441,8 +441,18 @@ Conditions:
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
 Resources:
+TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: ${AWS::Region}
+      StackName: ${AWS::StackName}
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -478,6 +488,7 @@ Resources:
           - !Ref AWS::NoValue
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -514,6 +525,7 @@ Resources:
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -525,6 +537,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -581,6 +594,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -614,6 +628,7 @@ Resources:
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -721,13 +736,3 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
-  TrackStackDeployment:
-    Type: Custom::MyCustomResource
-    Properties:
-      AccountId: !Ref AccountId
-      CloudProviderAccountId: !Ref CloudProviderAccountId
-      CredentialsId: !Ref RoleCredentialsId
-      JWToken: !Ref JwtToken
-      Region: ${AWS::Region}
-      StackName: ${AWS::StackName}
-      EC2InstanceId: !Ref SQLServerStack
