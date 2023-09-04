@@ -13,6 +13,8 @@ const ACCOUNT_ID = 'ACCOUNT_ID';
 const AGENT_ID = 'AGENT_ID';
 const AUDIT_GROUP = 'AUDIT_GROUP';
 const WORKSPACE_ID = 'WORKSPACE_ID';
+const SERVICE_TOKEN = 'SERVICE_TOKEN';
+const TOKEN_EXPIRATION_TIME = 'TOKEN_EXPIRATION_TIME';
 
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
@@ -68,6 +70,7 @@ const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
+const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
@@ -107,7 +110,8 @@ enum RouteTags {
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
     WORKING_ENVIRONMENT = 'Working Environment',
-    DATABASE = 'DATABASE'
+    DATABASE = 'Database',
+    BATCH = 'Batch'
 }
 
 enum HttpErrorCodes {
@@ -654,6 +658,9 @@ enum SSM_QUERY_EXECUTION_STATUS {
     SUCCESS = 'Success'
 }
 
+const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
+const BATCH_API_CONCURRENCY_LIMIT = 10;
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -758,5 +765,10 @@ export {
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
     DeploymentState,
-    SIGNED_URL_ERROR_MESSAGE
+    SIGNED_URL_ERROR_MESSAGE,
+    METHODS_WITH_PAYLOAD,
+    SERVICE_TOKEN,
+    TOKEN_EXPIRATION_TIME,
+    WLMDB_ENDPOINT,
+    BATCH_API_CONCURRENCY_LIMIT
 };
