@@ -32,7 +32,7 @@ router.get(`${BASE_URL}/v1/:databaseType/resources/:resourceId/summary`, async (
 });
 
 router.get(
-    `${BASE_URL}/v1/:databaseType/resources/:resourceId/utilisation/cpu`,
+    `${BASE_URL}/v1/:databaseType/resources/:resourceId/utilization/cpu`,
     async (req: {}, res: CpuUtilisation) => {
         const retData = {
             percentUsed: '3',
@@ -45,7 +45,7 @@ router.get(
 );
 
 router.get(
-    `${BASE_URL}/v1/:databaseType/resources/:resourceId/utilisation/disk`,
+    `${BASE_URL}/v1/:databaseType/resources/:resourceId/utilization/disk`,
     async (req: {}, res: DiskUtilisation) => {
         const retData = {
             percentUsed: '30',
@@ -58,7 +58,7 @@ router.get(
 );
 
 router.get(
-    `${BASE_URL}/v1/:databaseType/resources/:resourceId/utilisation/memory`,
+    `${BASE_URL}/v1/:databaseType/resources/:resourceId/utilization/memory`,
     async (req: {}, res: MemoryUtilisation) => {
         const retData = {
             percentUsed: '40',

@@ -6,13 +6,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Button, Typography, ButtonWithDropdown } from '@netapp/design-system';
 import { useMemo } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
+import { cmNavigateTo } from '../../../utils/appConfig';
 
 type ResourceHeaderProps = {
     name: string | (string | null)[] | null;
-    refresh: () => void
+    refresh: () => void,
+    onDeleteMssql: (event: React.MouseEvent<HTMLElement>) => void
 };
 
-const ResourceHeader = ({ name, refresh }: ResourceHeaderProps) => {
+const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) => {
     const tabs = [
         { url: 'overview', name: GENERAL.OVERVIEW},
         { url: 'databases', name: GENERAL.DATABASES },
@@ -51,7 +53,7 @@ const ResourceHeader = ({ name, refresh }: ResourceHeaderProps) => {
                 <Button
                     variant="secondary"
                     onClick={() => {
-                        console.log('timeline clicked');
+                        cmNavigateTo('/timeline');
                     }}
                     className={styles.timelineButton}
                 >
@@ -72,8 +74,8 @@ const ResourceHeader = ({ name, refresh }: ResourceHeaderProps) => {
                             children: (
                                 <div
                                     className={styles.menuItem}
-                                    onClick={() => {
-                                        console.log('remove workspace clicked');
+                                    onClick={(e) => {
+                                        onDeleteMssql(e) ;
                                     }}
                                 >
                                     <Typography variant="Regular_14">{GENERAL.REMOVE_FROM_WORKSPACE}</Typography>
