@@ -18,7 +18,8 @@ import {
     REQUEST_ID,
     USER_TOKEN,
     VERSION,
-    WORKSPACE_ID
+    WORKSPACE_ID,
+    JWKS_FULL_NAME
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -140,9 +141,7 @@ const app = fastify({
                     if (authorization) {
                         try {
                             const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
-                            request.headers.user = payload['http://cloud.netapp.com/full_name']
-                                ? payload['http://cloud.netapp.com/full_name']
-                                : 'SYSTEM';
+                            request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();

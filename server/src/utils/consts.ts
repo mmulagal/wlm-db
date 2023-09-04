@@ -655,6 +655,7 @@ enum SSM_QUERY_EXECUTION_STATUS {
     FAILED = 'Failed',
     SUCCESS = 'Success'
 }
+const JWKS_FULL_NAME = 'http://cloud.netapp.com/full_name';
 
 export {
     WLMDB,
@@ -760,5 +761,6 @@ export {
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
     DeploymentState,
-    SIGNED_URL_ERROR_MESSAGE
+    SIGNED_URL_ERROR_MESSAGE,
+    JWKS_FULL_NAME
 };
