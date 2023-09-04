@@ -10,7 +10,7 @@
         "cloud-manager": "https://staging.api.bluexp.netapp.com",
         "local-connector": "http://127.0.0.1:8098",
         "signoz": "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces",
-        "wlm-db": "https://staging-api.workloads.bluexp.netapp.com"
+        "wlm-db": "https://staging.api.workloads.netapp.com"
     },
     "got": {
         "internal": {
