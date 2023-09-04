@@ -208,7 +208,7 @@ export const configApi = createApi({
                 query: () => ({url: `config`})
             }),
             getConfigData: builder.query({
-                query: ({configId}) => ({url: `config/?id=${configId}`})
+                query: ({configId}) => ({url: `config/${configId}`})
             }),
             saveConfigData: builder.mutation({
                 query: ({payload}) => ({

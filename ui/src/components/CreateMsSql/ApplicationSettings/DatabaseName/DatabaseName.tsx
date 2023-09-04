@@ -14,6 +14,8 @@ const DatabaseName = () => {
     const [input, setInput] = useState(SQL_DATABASE);
     const dispatch = useDispatch();
 
+    // const selectedDBName = 
+
     useEffect(() => {
         dispatch(setDBName(input));
     });
