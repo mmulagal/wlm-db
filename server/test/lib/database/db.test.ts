@@ -47,6 +47,7 @@ describe('List deployments', () => {
     it('should return a list of configs', async () => {
         await createConfig(ACCOUNT_ID, {
             user: 'testuser',
+            name: 'testconfig',
             creationTime: new Date().valueOf(),
             data: {
                 subnetId: 'subnet-12345',

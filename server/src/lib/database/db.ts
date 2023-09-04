@@ -279,13 +279,17 @@ async function listConfig(accountId: string, id?: string) {
     });
 }
 
-async function createConfig(accountId: string, params: { user: string; creationTime: number; data: object }) {
+async function createConfig(
+    accountId: string,
+    params: { user: string; creationTime: number; name: string; data: object }
+) {
     logger.info('Creating config', { accountId, params });
-    const { user, creationTime, data } = params;
+    const { user, creationTime, data, name } = params;
     return prisma.config.create({
         data: {
             account_id: accountId,
             user,
+            name,
             creation_time: new Date(creationTime),
             data
         }

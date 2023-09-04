@@ -66,6 +66,7 @@ model resource {
 model config {
   id            String   @id @default(uuid())
   account_id    String   @db.VarChar(80)
+  name          String   @db.VarChar(255)
   user          String   @db.VarChar(255)
   creation_time DateTime @db.DateTime(0)
   data          Json?    @default("{}")

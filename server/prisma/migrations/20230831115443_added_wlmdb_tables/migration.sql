@@ -61,6 +61,7 @@ CREATE TABLE `resource` (
 CREATE TABLE `config` (
     `id` VARCHAR(191) NOT NULL,
     `account_id` VARCHAR(80) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
     `user` VARCHAR(255) NOT NULL,
     `creation_time` DATETIME(0) NOT NULL,
     `data` JSON NULL,
