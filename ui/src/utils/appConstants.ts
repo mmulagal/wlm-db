@@ -55,9 +55,10 @@ export const GENERAL = {
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    REMOVE: 'Remove',
     SAVE: 'Save',
     API_REQUEST: 'API request',
-    Cancel: 'Cancel',
+    CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',
     STEP_TWO: 'Step 2:',
@@ -275,5 +276,8 @@ export const GENERAL = {
     MS_SQL_DISK_USED : 'Storage used by Microsoft SQL Server',
     DISK_REM : 'Storage available and used by other processes',
     OVERVIEW: 'Overview',
-    
+    MSSQL: 'Microsoft SQL Server',
+    REMOVE_DIALOG_CONTENT_FIRST_PART: (weType: string) => `You are about to remove the ${weType} working environment`,
+    REMOVE_DIALOG_CONTENT_SECOND_PART: 'from workspace.',
+    REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`
 };
