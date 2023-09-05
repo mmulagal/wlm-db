@@ -748,3 +748,10 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
+      FSxFileSystemId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
+      ActiveInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
+      StandbyInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
