@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import AppNotification from './common/AppNotification/AppNotification';
 import MainComponent from './components/CreateMsSql/MainComponent/MainComponent';
 import DiscoverPage from './components/Discover/DiscoverPage';
@@ -13,7 +13,6 @@ import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
 
 const Home = () => {
-    const location = useLocation();
     const notificationsObj = useSelector((state: any) => state.notifications);
     const dispatch = useDispatch();
     const showNotifications = useMemo(() => {
