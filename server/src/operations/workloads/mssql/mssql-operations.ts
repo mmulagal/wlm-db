@@ -22,7 +22,6 @@ import {
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { UtilisationResponseBody } from '../../../routes/types/database.types';
 import {
     DatabaseTypes,
     DATABASE_METRIC_TYPE,
@@ -196,12 +195,12 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
             callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, diskUtilizationCommand),
             callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, dbSizecommand)
         ]);
-        const diskUtilization = UtilisationResponseBody;
-        diskUtilization.used = size.TotalSize.toString();
-        diskUtilization.total = diskdata.total.toString();
-        diskUtilization.remaining = (Number(diskdata.total) - size.TotalSize).toString();
-        diskUtilization.percentUsed = Math.round((size.TotalSize * 100) / Number(diskdata.total)).toString();
-
+        const diskUtilization = {
+            used: size.TotalSize.toString(),
+            total: diskdata.total.toString(),
+            remaining: (Number(diskdata.total) - size.TotalSize).toString(),
+            percentUsed: Math.round((size.TotalSize * 100) / Number(diskdata.total)).toString()
+        };
         return diskUtilization;
     }
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
@@ -350,11 +349,12 @@ async function discoverMsSqlServer(
             `${PSSCRIPT} -Query "${SERVER_NAME}"`
         ])
     ]);
-
+    const resourceId = resourceIdentifier?.serverGuid;
+    const resourceName = name?.serverName;
     const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
     const params: ServiceResourceRequest = {
-        name,
-        resourceIdentifier,
+        name: resourceName,
+        resourceIdentifier: resourceId,
         resourceType,
         workspacePublicId: workspaceId,
         accountPublicId: accountId,
@@ -373,7 +373,7 @@ async function discoverMsSqlServer(
     };
 
     await registerServiceResource(params);
-    return { resourceId: resourceIdentifier, resourceName: name };
+    return { resourceId: resourceId, resourceName: resourceName };
 }
 
 export {
@@ -383,5 +383,9 @@ export {
     getResourceDetails,
     getDatabasesCount,
     getTablesSummary,
-    discoverMsSqlServer
+    discoverMsSqlServer,
+    callSsmExecution,
+    getDBSummary,
+    getTablesCount,
+    getTablesList
 };
