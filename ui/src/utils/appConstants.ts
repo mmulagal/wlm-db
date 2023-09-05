@@ -14,7 +14,8 @@ export const SELECT_CONFIG = {
     SECURITY_GROUP: 'Security group',
     DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server',
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
-    LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.'
+    LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
+    NO_SAVED_CONFIG: 'There are no saved configurations.'
 };
 
 export const GENERAL = {
