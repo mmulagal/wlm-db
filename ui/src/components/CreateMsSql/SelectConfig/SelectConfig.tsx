@@ -15,29 +15,6 @@ const SelectConfig = () => {
 
     return (
         <div className={styles['select-config']}>
-            {/* Standard create section here */}
-            <div
-                className={
-                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE
-                        ? `${styles['standard-create']} ${styles['add-border']}`
-                        : styles['standard-create']
-                }
-                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE))}
-            >
-                <StandardCreate />
-                <div className={styles['standard-create-content']}>
-                    <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
-                    <div className={styles['standard-create-content-text']}>
-                        {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
-                    </div>
-                </div>
-                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
-                    <div className={styles['tick-placement']}>
-                        <BlueTick />
-                    </div>
-                )}
-            </div>
-
             {/* Easy create section from here */}
             <div
                 className={
@@ -61,6 +38,28 @@ const SelectConfig = () => {
                 {/* <div className={styles['tag']}>
                     <Tag backgroundColor="var(--chart-9)">{SELECT_CONFIG.COMING_SOON}</Tag>
                 </div> */}
+            </div>
+            {/* Standard create section here */}
+            <div
+                className={
+                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE
+                        ? `${styles['standard-create']} ${styles['add-border']}`
+                        : styles['standard-create']
+                }
+                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE))}
+            >
+                <StandardCreate />
+                <div className={styles['standard-create-content']}>
+                    <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
+                    <div className={styles['standard-create-content-text']}>
+                        {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
+                    </div>
+                </div>
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                    <div className={styles['tick-placement']}>
+                        <BlueTick />
+                    </div>
+                )}
             </div>
         </div>
     );
