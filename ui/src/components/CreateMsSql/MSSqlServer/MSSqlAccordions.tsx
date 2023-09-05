@@ -141,7 +141,7 @@ const MSSqlAccordions = () => {
                     variant="Semibold_16"
                     className={styles.adjustMargin}
                 >
-                    {GENERAL.COST}
+                    {GENERAL.SUMMARY}
                 </Typography>
                 <EstimatedCost /> */}
             </AccordionController>
