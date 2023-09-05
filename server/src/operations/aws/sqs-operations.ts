@@ -260,6 +260,7 @@ async function processCloudFormationMessages() {
                     { concurrency: 3 }
                 );
             }
+            setImmediate(() => processCloudFormationMessages());
         } catch (err: any) {
             if (err.code === 'AWS.SimpleQueueService.NonExistentQueue') {
                 logger.warn(`'${queueUrl}' queue does not exist. Not polling for messages`);
