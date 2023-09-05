@@ -1,21 +1,21 @@
-import { useState } from 'react';
 import { AccordionCard, AccordionCardContent, ToggleSelector, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './CloudWatch.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setCloudWatch } from '../../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const CloudWatch = () => {
-    const [toggle, setToggle] = useState(false);
     const dispatch = useDispatch();
+
+    const toggle = useAppSelector(state => state.mssqlForm.cloudWatch);
     //Set the Header text here
     const setHeader = () => {
         return <Typography variant="Regular_14">{toggle ? 'Enabled' : 'Disabled'}</Typography>;
     };
 
     const handleChange = () => {
-        setToggle(prev => !prev);
         dispatch(setCloudWatch(!toggle));
     };
 

@@ -4,7 +4,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './InstanceType.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { formatSize, generateOptionType } from '../../../../utils/utilityFunctions';
+import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
@@ -17,6 +17,7 @@ const InstanceType = () => {
     const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
@@ -37,11 +38,13 @@ const InstanceType = () => {
             options.push(option);
         });
 
-        return options;
+        return sortListOfDict(options, 'value');
     }, [instanceTypeData]);
 
     useEffect(() => {
-        dispatch(setInstanceType(generateInstances[0]));
+        if(!isLoadConfig){
+            dispatch(setInstanceType(generateInstances[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
 

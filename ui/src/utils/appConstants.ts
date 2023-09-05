@@ -12,10 +12,14 @@ export const SELECT_CONFIG = {
     LOAD_CONFIG: 'Load configuration',
     SAVE_CONFIG: 'Save configuration',
     SECURITY_GROUP: 'Security group',
-    DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server'
+    DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server',
+    SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
+    LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.'
 };
 
 export const GENERAL = {
+    LOADING_DATA: 'Loading data',
+    ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
     AWS_CREDENTIALS: 'AWS credentials',
     NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
@@ -34,6 +38,7 @@ export const GENERAL = {
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
     COST: 'Cost',
+    SUMMARY: 'Summary',
     INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
@@ -55,9 +60,10 @@ export const GENERAL = {
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    REMOVE: 'Remove',
     SAVE: 'Save',
     API_REQUEST: 'API request',
-    Cancel: 'Cancel',
+    CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',
     STEP_TWO: 'Step 2:',
@@ -136,10 +142,10 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).",
-    DB_NAME_TOOLTIP1: "The cluster name must be 15 characters or less",
-    DB_NAME_TOOLTIP2: "The first character can be a letter (a-z or A-Z) or a number (0-9)",
-    DB_NAME_TOOLTIP3: "Subsequent characters can be a letter, number, or hyphen (-)",
+        'The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).',
+    DB_NAME_TOOLTIP1: 'The cluster name must be 15 characters or less',
+    DB_NAME_TOOLTIP2: 'The first character can be a letter (a-z or A-Z) or a number (0-9)',
+    DB_NAME_TOOLTIP3: 'Subsequent characters can be a letter, number, or hyphen (-)',
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
@@ -189,7 +195,8 @@ export const GENERAL = {
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
     //Availability zone
-    AZ_TEXT: 'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
+    AZ_TEXT:
+        'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
@@ -271,9 +278,12 @@ export const GENERAL = {
     MS_SQL_CPU_USED: 'CPU used by Microsoft SQL Server',
     CPU_REM: 'CPU available and used by other processes',
     MS_SQL_MEMORY_USED: 'Memory used by Microsoft SQL Server',
-    MEMORY_REM : 'Memory available and used by other processes',
-    MS_SQL_DISK_USED : 'Storage used by Microsoft SQL Server',
-    DISK_REM : 'Storage available and used by other processes',
+    MEMORY_REM: 'Memory available and used by other processes',
+    MS_SQL_DISK_USED: 'Storage used by Microsoft SQL Server',
+    DISK_REM: 'Storage available and used by other processes',
     OVERVIEW: 'Overview',
-    
+    MSSQL: 'Microsoft SQL Server',
+    REMOVE_DIALOG_CONTENT_FIRST_PART: (weType: string) => `You are about to remove the ${weType} working environment`,
+    REMOVE_DIALOG_CONTENT_SECOND_PART: 'from workspace.',
+    REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`
 };

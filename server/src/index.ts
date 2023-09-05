@@ -93,7 +93,7 @@ const app = fastify({
                     url: 'http://localhost:8085/wlmdb'
                 },
                 {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb'
+                    url: 'https://staging.api.workloads.netapp.com/wlmdb'
                 },
                 {
                     url: 'https://api.workloads.bluexp.netapp.com/wlmdb'

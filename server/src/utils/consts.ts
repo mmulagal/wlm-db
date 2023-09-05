@@ -500,7 +500,7 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
+const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -512,8 +512,8 @@ const HTTP_PATCH = 'PATCH';
 // Custom error messages
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
-const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, credentialsId: string, error: string) =>
-    `Error creating signed url for ${url} in region ${region} with credentials ${credentialsId}. ${error}`;
+const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
+    `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
 

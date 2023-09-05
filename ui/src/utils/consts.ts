@@ -86,4 +86,4 @@ export const REGIONS_CODE_LIST = [
     'me-central-1'
 ];
 
-export const DATABASE_SERVICE_PATH = '/database-services/'
+export const DATABASE_SERVICE_PATH = 'database-services'

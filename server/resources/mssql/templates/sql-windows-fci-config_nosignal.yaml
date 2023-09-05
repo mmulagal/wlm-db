@@ -171,24 +171,16 @@ Parameters:
             subnet-a0246dcd)
         Type: String
     AssetsBucketName:
-        AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-        ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-            letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-            (-).
-        Description: S3 bucket name for the LaunchWizard assets. This string can include
-            numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
-            or end with a hyphen (-).
+        Description: S3 bucket name for WLMDB assets. 
         Type: String
     AssetsS3RegionCode:
-        Default: s3.ap-southeast-1
-        Description: The AWS Region where the LaunchWizard S3 bucket (AssetsBucketName)
+        Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
             is hosted. When using your own bucket, you must specify this value.
         Type: String
     AssetsS3KeyPrefix:
         AllowedPattern: ^[0-9a-zA-Z-/]*$
         ConstraintDescription: Launch Wizard key prefix can include numbers, lowercase
             letters, uppercase letters, hyphens (-), and forward slash (/).
-        Default: scriptcleanup/
         Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
             can include numbers, lowercase letters, uppercase letters, hyphens (-), and
             forward slash (/).
@@ -863,18 +855,6 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - "' -Node2 '"
                                   - !Ref 'SqlFSxServerNetBIOSName2'
-                                  - '''"'
-                            waitAfterCompletion: 0
-                        k-validate-SQL-Login:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-SQLLogin.ps1
-                                    -SqlServer '
-                                  - !Ref 'SqlFSxFCIName'
-                                  - "' -SqlUserSecret '"
-                                  - !Ref 'SQLServiceAccountSecret'
-                                  - "' -SqlUser '"
-                                  - !Ref 'SQLAdminAccounts'
                                   - '''"'
                             waitAfterCompletion: 0
                         l-update-sqltag:

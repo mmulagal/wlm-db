@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GENERAL } from '../../utils/appConstants';
-import { FSXADMIN } from '../../utils/consts';
+import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
+import { AWS_MANAGED_AD, FSXADMIN } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -82,7 +82,9 @@ const initialState: any = {
         encryptionArn: ''
     },
     tags: [{ key: '', value: '' }],
-    saveConfigName: ''
+    saveConfigName: '',
+    selectConfig: SELECT_CONFIG.EASY_CREATE,
+    loadConfig: ''
 };
 
 const mssqlFormSlice = createSlice({
@@ -240,11 +242,24 @@ const mssqlFormSlice = createSlice({
         //Save Config
         setSaveConfigName(state, action: PayloadAction<any>) {
             state.saveConfigName = action.payload;
+        },
+        //Select config
+        setSelectConfig(state, action: PayloadAction<any>) {
+            state.selectConfig = action.payload;
+        },
+        //load config update
+        setLoadConfig(state, action: PayloadAction<any>) {
+            state.loadConfig = action.payload;
+        },
+        //Update full form
+        setMssqlForm(state, action: PayloadAction<any>) {
+            return { ...state, ...action.payload };
         }
     }
 });
 
 export const {
+    setSelectConfig,
     setSaveConfigName,
     setSelectedADScenarioType,
     setSelectedADDomainName,
@@ -288,6 +303,8 @@ export const {
     setSelectedSubnetNode2,
     setSelectedKeyPair,
     setInstanceType,
-    setTags
+    setTags,
+    setLoadConfig,
+    setMssqlForm
 } = mssqlFormSlice.actions;
 export default mssqlFormSlice;
