@@ -1,6 +1,7 @@
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
+import { CONFIG_DIALOG } from '../../utils/consts';
 
 type DialogProps = {
     header: string;
@@ -26,10 +27,10 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     variant={'primary'}
                     className={'continue-button'}
                     isThin={true}
-                    isLoading={dialogFrom === 'config' && isLoadConfig}
+                    isLoading={dialogFrom === CONFIG_DIALOG && isLoadConfig}
                     onClick={() => {
                         callback();
-                        if(dialogFrom !== 'config'){
+                        if(dialogFrom !== CONFIG_DIALOG){
                             closeDialog();
                         }
                     }}
