@@ -31,11 +31,12 @@ export default async function executeBatchApiCalls(instance, requestBody: BatchR
                     )
                 });
 
-                if (response?.statusCode >= 400) {
-                    responseData.error = JSON.parse(response.payload);
+                const { statusCode, payload: apiResponse } = response;
+                if (statusCode >= 400) {
+                    responseData.error = apiResponse ? JSON.parse(apiResponse) : 'Error';
                     return responseData;
                 } else {
-                    responseData.data = response ? JSON.parse(response.payload) : 'Success';
+                    responseData.data = apiResponse ? JSON.parse(apiResponse) : 'Success';
                     return responseData;
                 }
             } catch (err: any) {
