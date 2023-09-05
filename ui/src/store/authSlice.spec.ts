@@ -1,11 +1,8 @@
-import authSlice, { updateAuthSuccess, updateAuthFailed } from './authSlice'; // Update the import path based on your project structure
-import { AUTH_STATUS } from '../utils/consts';
+import authSlice, { updateAuthSuccess } from './authSlice'; // Update the import path based on your project structure
 
 describe('authSlice reducers', () => {
     let initialState: { 
         accountId: string,
-        status: string; 
-        error: string; 
         accessToken: string; 
         resourceId: '', 
         resourceName: '',
@@ -16,8 +13,6 @@ describe('authSlice reducers', () => {
     beforeEach(() => {
         initialState = {
             accountId: '',
-            status: AUTH_STATUS.AUTH_STATUS_PROGRESS,
-            error: '',
             accessToken: '',
             resourceId: '',
             resourceName: '',
@@ -31,21 +26,7 @@ describe('authSlice reducers', () => {
         const action = updateAuthSuccess({ accessToken });
 
         const newState = authSlice.reducer(initialState, action);
-
-        expect(newState.status).toEqual(AUTH_STATUS.AUTH_STATUS_SUCCESS);
-        expect(newState.accessToken).toEqual(`Bearer ${accessToken}`);
-        expect(newState.error).toEqual('');
-    });
-
-    it('should handle updateAuthFailed', () => {
-        const error = 'Sample error message';
-        const action = updateAuthFailed(error);
-
-        const newState = authSlice.reducer(initialState, action);
-
-        expect(newState.status).toEqual(AUTH_STATUS.AUTH_STATUS_ERROR);
-        expect(newState.error).toEqual(error);
-        expect(newState.accessToken).toEqual('');
+        expect(newState.accessToken).toEqual(`Bearer ${accessToken}`); 
     });
 
     it('should return initial state for unknown action', () => {
