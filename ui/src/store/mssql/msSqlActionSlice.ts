@@ -11,7 +11,7 @@ const initialState: any = {
     dbNameSelected: true,
     licenseIdSelected: true,
     isLoading: false,
-    isLoadConfig: false
+    isLoadConfig: false,
 };
 
 const msSqlActionSlice = createSlice({

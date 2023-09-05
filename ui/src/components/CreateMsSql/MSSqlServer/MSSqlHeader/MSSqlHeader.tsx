@@ -11,7 +11,7 @@ import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
 
 const MSSqlHeader = () => {
-    const { setDialog } = useDialog();
+    const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
 
     const [saveConfigData] = useSaveConfigDataMutation();
@@ -24,8 +24,11 @@ const MSSqlHeader = () => {
                 content={<LoadConfig />}
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => LoadConfiguration(dispatch, loadConfigDataExe)}
+                callback={() => {
+                    LoadConfiguration(dispatch, loadConfigDataExe, closeDialog);
+                }}
                 closeCallback={() => {}}
+                dialogFrom={'config'}
             />
         );
     };
