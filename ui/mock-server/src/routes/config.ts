@@ -26,4 +26,8 @@ router.post(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
     generateResponse(res, 200, {'success': 'ok'});
 });
 
+router.delete(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
+    generateResponse(res, 200, {'success': 'ok'});
+});
+
 export default router;
