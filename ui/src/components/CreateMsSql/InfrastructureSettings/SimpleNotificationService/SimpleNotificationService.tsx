@@ -3,23 +3,24 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './SimpleNotificationService.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSNSARN, setSNSState } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 
 const SimpleNotificationService = () => {
-    const [toggle, setToggle] = useState(false);
     const dispatch = useDispatch();
 
     //Getting the Data from state
     const { snsData, snsLoading } = useAppSelector(state => state.mssql.getSnsList);
+    const selectedState = useAppSelector(state => state.mssqlForm.simpleNotification.snsState);
     const selectedARNValue = useAppSelector(state => state.mssqlForm.simpleNotification.snsARN);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     //Set the Header text here
     const setHeader = () => {
-        if (!toggle) {
+        if (!selectedState) {
             return <Typography variant="Regular_14">Disabled</Typography>;
         } else {
             return (
@@ -35,8 +36,7 @@ const SimpleNotificationService = () => {
     };
 
     const handleChange = () => {
-        setToggle(prev => !prev);
-        dispatch(setSNSState(!toggle));
+        dispatch(setSNSState(!selectedState));
     };
 
     //Function to generate the options for Select Field
@@ -52,7 +52,9 @@ const SimpleNotificationService = () => {
 
     //Update selected SNS Topic in form data store
     useEffect(() => {
-        dispatch(setSNSARN(null));
+        if(!isLoadConfig){
+            dispatch(setSNSARN(null));
+        }
     }, [dispatch, generateArn]);
 
     return (
@@ -65,7 +67,7 @@ const SimpleNotificationService = () => {
             >
                 <AccordionCardContent>
                     <Typography>
-                        <ToggleSelector value={toggle} className="" onChange={handleChange} isDisabled={false}>
+                        <ToggleSelector value={selectedState} className="" onChange={handleChange} isDisabled={false}>
                             {GENERAL.SNS}
                         </ToggleSelector>
                         <Typography variant="Regular_14" className={styles.subText}>
@@ -82,7 +84,7 @@ const SimpleNotificationService = () => {
                                 }}
                                 isSearchable={generateArn.length > 5}
                                 options={generateArn}
-                                isDisabled={!toggle}
+                                isDisabled={!selectedState}
                                 value={selectedARNValue ? selectedARNValue : undefined}
                             />
                         </div>

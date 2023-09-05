@@ -857,18 +857,6 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName2'
                                   - '''"'
                             waitAfterCompletion: 0
-                        k-validate-SQL-Login:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-SQLLogin.ps1
-                                    -SqlServer '
-                                  - !Ref 'SqlFSxFCIName'
-                                  - "' -SqlUserSecret '"
-                                  - !Ref 'SQLServiceAccountSecret'
-                                  - "' -SqlUser '"
-                                  - !Ref 'SQLAdminAccounts'
-                                  - '''"'
-                            waitAfterCompletion: 0
                         l-update-sqltag:
                             command: !Join
                                 - ''

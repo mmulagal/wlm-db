@@ -34,6 +34,7 @@ const RegionVpc = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
@@ -49,7 +50,9 @@ const RegionVpc = () => {
 
     //Update selected region in form data store
     useEffect(() => {
-        dispatch(setSelectedRegionData(generateRegionsData[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedRegionData(generateRegionsData[0]));
+        }
     }, [dispatch, generateRegionsData]);
 
     useEffect(() => {
@@ -72,7 +75,12 @@ const RegionVpc = () => {
             });
             setIsDefaultOpen(true);
         }
-    }, [credentialData, regionsData]);
+        else if(isLoadConfig){
+            accordionContext({
+                2: false
+            });
+        }
+    }, [credentialData, regionsData, isLoadConfig]);
 
     //Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
@@ -107,7 +115,9 @@ const RegionVpc = () => {
 
     //Update selected VPC in form data store
     useEffect(() => {
-        dispatch(setSelectedVPC(null));
+        if(!isLoadConfig){
+            dispatch(setSelectedVPC(null));
+        }
     }, [dispatch, generateVPCOptions]);
 
     //Set the Header text here

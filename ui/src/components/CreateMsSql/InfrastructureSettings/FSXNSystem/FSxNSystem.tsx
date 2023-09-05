@@ -27,7 +27,6 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -46,8 +45,7 @@ const FSxNSystem = () => {
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
-
-    const [fsxType, setFsxType] = useState(selectedFsxnType);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     const [password, setPassword] = useState('');
 
@@ -86,8 +84,10 @@ const FSxNSystem = () => {
     }, [fsxnData, selectedZone1, selectedZone2]);
 
     useEffect(() => {
-        dispatch(setExistingFsxnName(generateExistingFsx[0]));
-        dispatch(setFsxNExistingUserName(FSXADMIN));
+        if(!isLoadConfig){
+            dispatch(setExistingFsxnName(generateExistingFsx[0]));
+            dispatch(setFsxNExistingUserName(FSXADMIN));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 
@@ -120,7 +120,7 @@ const FSxNSystem = () => {
         } 
 
         //Checking for the create new option
-        if (fsxType === GENERAL.CREATE_NEW_FSXN) {
+        if (selectedFsxnType === GENERAL.CREATE_NEW_FSXN) {
             if (!selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
             } else if (fsxPassVal(password)) {
@@ -156,30 +156,28 @@ const FSxNSystem = () => {
                     <Typography>
                         <div className={styles.handleRadio}>
                             <RadioButton
-                                isChecked={fsxType === GENERAL.CREATE_NEW_FSXN}
+                                isChecked={selectedFsxnType === GENERAL.CREATE_NEW_FSXN}
                                 onChange={() => {
-                                    setFsxType(GENERAL.CREATE_NEW_FSXN);
                                     dispatch(setFsxNType(GENERAL.CREATE_NEW_FSXN));
                                 }}
                                 children={GENERAL.CREATE_NEW_FSXN}
                                 className=""
                             />
                             <RadioButton
-                                isChecked={fsxType === GENERAL.SELECT_EXISTING_FSX}
+                                isChecked={selectedFsxnType === GENERAL.SELECT_EXISTING_FSX}
                                 onChange={() => {
-                                    setFsxType(GENERAL.SELECT_EXISTING_FSX);
                                     dispatch(setFsxNType(GENERAL.SELECT_EXISTING_FSX));
                                 }}
                                 children={GENERAL.SELECT_EXISTING_FSX}
                                 className=""
                             />
                         </div>
-                        {fsxType === GENERAL.SELECT_EXISTING_FSX && (
+                        {selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && (
                             <div className={styles.firstContainer}>
                                 <SelectField
                                     label={GENERAL.FSXN_NAME}
                                     isClearable={false}
-                                    defaultValue={[generateExistingFsx[0]]}
+                                    defaultValue={selectedExistingFsxnName ? [selectedExistingFsxnName] : [generateExistingFsx[0]]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setExistingFsxnName(selectedOptions));
                                     }}
@@ -192,7 +190,7 @@ const FSxNSystem = () => {
 
                         <div
                             className={
-                                fsxType === GENERAL.SELECT_EXISTING_FSX
+                                selectedFsxnType === GENERAL.SELECT_EXISTING_FSX
                                     ? `${styles.secondContainer}`
                                     : `${styles.createNewContainer}`
                             }
@@ -203,12 +201,12 @@ const FSxNSystem = () => {
                                     dispatch(setFsxNExistingUserName(e.target.value));
                                 }}
                                 value={
-                                    fsxType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName
+                                    selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName
                                         ? selectedFsxnExistingUserName
                                         : FSXADMIN
                                 }
                                 className={styles.textField}
-                                isDisabled={fsxType === GENERAL.CREATE_NEW_FSXN}
+                                isDisabled={selectedFsxnType === GENERAL.CREATE_NEW_FSXN}
                             />
                             <PasswordField
                                 label={GENERAL.FSX_PASSWORD}
