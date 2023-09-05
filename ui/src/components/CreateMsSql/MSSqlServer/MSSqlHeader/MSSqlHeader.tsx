@@ -5,6 +5,7 @@ import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
 import { useSaveConfigDataMutation, useLazyGetConfigDataQuery } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
+import { CONFIG_DIALOG } from '../../../../utils/consts';
 import { LoadConfiguration, SaveConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
 import SaveConfig from '../../SaveConfig/SaveConfig';
@@ -28,7 +29,7 @@ const MSSqlHeader = () => {
                     LoadConfiguration(dispatch, loadConfigDataExe, closeDialog);
                 }}
                 closeCallback={() => {}}
-                dialogFrom={'config'}
+                dialogFrom={CONFIG_DIALOG}
             />
         );
     };
