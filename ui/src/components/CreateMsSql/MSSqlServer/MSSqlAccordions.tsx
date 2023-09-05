@@ -160,7 +160,7 @@ const MSSqlAccordions = () => {
                     {GENERAL.SUMMARY}
                 </Typography>
                 <PreviewDefault />
-                <EstimatedCost />
+                {/* <EstimatedCost /> */}
             </AccordionController>
         </div>
     );
