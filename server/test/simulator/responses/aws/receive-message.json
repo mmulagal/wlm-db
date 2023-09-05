@@ -1,0 +1,19 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "961016ea-4dcd-50ac-88e7-4bb1b19d43d3",
+        "extendedRequestId": "undefined",
+        "cfId": "undefined",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Messages": [
+        {
+            "MessageId": "71be743e-bda8-4dcb-ad05-0f8f2249ef2a",
+            "ReceiptHandle": "AQEB2zPwgDPUzN3+2doDwcbOhll4Q1KcF9QnUwxV5GirOKkQhkIurvuWmVp6umoaffbfCkR162Y+reDZKsqX2v47GNzonQy3XxXqqXY8E6YDtczwi4kQAHyZnpUm6AvaVsLJIzhO9K4gZdYtlh6H9+2hKud7xEEfQZL7rngrp5fOKHydoPrz7CmAxb7btKWLy0dmnrVG3PDwCSaT4Bvdp/jA0CJ6fCxN3Wp8Nl2226GxeGPZjIMasmJuTSC11vcHtXLfDuzix5IDTHJZKzhxKzFYHPb2nYxzzhpFSm3e3ZlXS8bInx14Pr3R4S7R1SjOb84XvMaK3U8fiTuz8kolC2a/i5Ht1g7U3EdAplQ421G5gHz0S2fpZDst8Bnmi9DZ/es0",
+            "MD5OfBody": "cb183a95d9de8a1886dd103a48a1da3b",
+            "Body": "{\n  \"Type\" : \"Notification\",\n  \"MessageId\" : \"9cc33948-990e-53ba-a5fb-6411af31d37c\",\n  \"TopicArn\" : \"arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC\",\n  \"Subject\" : \"AWS CloudFormation custom resource request\",\n  \"Message\" : \"{\"RequestType\":\"Delete\",\"ServiceToken\":\"arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC\",\"ResponseURL\":\"https://cloudformation-custom-resource-response-useast1.s3.amazonaws.com/arn%3Aaws%3Acloudformation%3Aus-east-1%3A464262061435%3Astack/TESTSTACK/e4a298f0-3d85-11ee-85f5-124a10a755ff%7CMyCustomResource%7C5fdebf4a-7f7a-4750-9a5e-7c67096bf004?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230818T090359Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=AKIA6L7Q4OWTURTAPM6L%2F20230818%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=5d43de593e99478a33a59bc5b9a902d07e9dfc353723bfd0781d8696babd0c0b\",\"StackId\":\"arn:aws:cloudformation:us-east-1:464262061435:stack/TESTSTACK/e4a298f0-3d85-11ee-85f5-124a10a755ff\",\"RequestId\":\"5fdebf4a-7f7a-4750-9a5e-7c67096bf004\",\"LogicalResourceId\":\"MyCustomResource\",\"PhysicalResourceId\":\"TESTSTACK-MyCustomResource-FRPD8BSCIVYF\",\"ResourceType\":\"Custom::MyCustomResource\",\"ResourceProperties\":{\"ServiceToken\":\"arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC\"}}\",\n  \"Timestamp\" : \"2023-08-18T09:03:59.730Z\",\n  \"SignatureVersion\" : \"1\",\n  \"Signature\" : \"DH2VW04CFZPZXPUQ04CPPpAuL7omIWmdpref30aT7R+CWuXg9rku+pf24tRL7i/aXxMYnHoxnE/4eEUDUfEYPKheO6aqQ3ieLENNEYMypqbfp18cs31K9bHt3BhD4pJflMv4M8mkGI/rjqp8BufOcc2wODa6NH6rh7nxomaj5HGLBKNi1oJzS7EpuTGCQ+bxjFcUdg3gFTSExfEywNj9L8FLhkmE5Bkw0bwWdo+KpOMvUxZ5IoOGzMuG08ouvNl08o4FKPxUpqDAqEbMjvSkfnEYpXGtDyWRYjWpW/d651gZqkUeJt35kVSUlsUNXBl4yU4CyGoRx3cerdy3S1jMpw==\",\n  \"SigningCertURL\" : \"https://sns.us-east-1.amazonaws.com/SimpleNotificationService-01d088a6f77103d0fe307c0069e40ed6.pem\",\n  \"UnsubscribeURL\" : \"https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC:9fe3f190-ae10-4d66-a67a-818600cfb2ff\"\n}",
+            "Attributes": ["Object"]
+        }
+    ]
+}

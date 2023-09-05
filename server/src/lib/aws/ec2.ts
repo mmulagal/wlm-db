@@ -27,9 +27,11 @@ import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 const logger = getLogger();
-async function getEC2Client(region: string, credentialsId: string) {
+async function getEC2Client(region: string, credentialsId: string | undefined) {
     logger.debug('Getting EC2 client:', region, credentialsId);
-
+    if (!credentialsId) {
+        return new EC2Client({ region });
+    }
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
@@ -87,7 +89,7 @@ async function getAmis(
 }
 
 async function describeRegions(
-    credentialsId: string,
+    credentialsId: string | undefined,
     input: DescribeRegionsCommandInput
 ): Promise<DescribeRegionsCommandOutput> {
     logger.info('Describe AWS regions:', { credentialsId, input });

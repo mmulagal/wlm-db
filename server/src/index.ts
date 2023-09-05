@@ -18,7 +18,8 @@ import {
     REQUEST_ID,
     USER_TOKEN,
     VERSION,
-    WORKSPACE_ID
+    WORKSPACE_ID,
+    JWKS_FULL_NAME
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -26,12 +27,17 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import formConfigRoutes from './routes/form-config';
 import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
+import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
+import { processCloudFormationMessages } from './operations/aws/sqs-operations';
+import { execute, initializeDatabase } from './utils/utils';
+import { JwtPayload } from 'jsonwebtoken';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -135,7 +141,8 @@ const app = fastify({
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
-                            await verifyToken(authorization.replace('Bearer ', ''));
+                            const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();
@@ -148,6 +155,7 @@ const app = fastify({
             awsRoutes(instance);
             credentialsRoutes(instance);
             deploymentRoutes(instance);
+            formConfigRoutes(instance);
             workingEnvironmentRoutes(instance);
             msSqlServerRoutes(instance);
             batchRoutes(instance);
@@ -206,3 +214,13 @@ app.listen({ port, host }, err => {
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
     validateSchema();
 });
+
+await createAndSubscribeToSnsTopicInAllRegions();
+processCloudFormationMessages();
+
+try {
+    initializeDatabase();
+    await execute('node_modules/prisma/build/index.js migrate deploy');
+} catch (error) {
+    logger.error('Failed to initialize database', error);
+}

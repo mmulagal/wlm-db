@@ -3,6 +3,7 @@
  * These functions can be re-used at different places and act as helper functions
  */
 import createError from 'http-errors';
+import { exec } from 'child_process';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
@@ -20,9 +21,15 @@ import {
     WLM_ASSETS,
     USER_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
+    DEFAULT_AWS_REGION,
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
-    VALIDATION_AMI
+    VALIDATION_AMI,
+    TEMPLATE_CLOUD_PROVIDER_ID,
+    TEMPLATE_CREDENTIALS_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_ACCOUNT_ID,
+    ACCOUNT_ID
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -35,8 +42,30 @@ import {
 } from '../routes/types/deployment.types';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { getRoleName } from '../operations/cloud-manager/credentials-operations';
+import { PrismaClient } from '@prisma/client';
+import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
+
+const prisma: PrismaClient = new PrismaClient();
+
+async function initializeDatabase() {
+    await prisma.$connect();
+}
+
+async function execute(command: string, timeout?: number, cwd?: string) {
+    logger.info('Executing command:', { command, timeout, cwd });
+
+    return new Promise(resolve => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        exec(command, { cwd, timeout }, (error: any, stdout: any, stderr: any) => {
+            if (error) {
+                logger.error('Failed to execute shell commands', error);
+            }
+            resolve(stdout || stderr);
+        });
+    });
+}
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -143,10 +172,10 @@ async function formatTemplateParameters(
     enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -173,9 +202,16 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = generateAuthToken({ email: 'wlmdb-service-user@netapp.com' }); //dummy user for JWT token
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
-        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -232,12 +268,50 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
+function isValidJsonString(str: string | undefined) {
+    try {
+        if (str) {
+            return { isValid: true, message: JSON.parse(str) };
+        }
+        return { isValid: false };
+    } catch (err) {
+        return { isValid: false };
+    }
+}
+
+function getQueueArn(accountId: string, queueName: string) {
+    return `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+}
+
+function getQueueUrl(accountId: string, queueName: string) {
+    return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
+}
+
+function derivePropertiesFromARN(awsResourceArn: string) {
+    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.+):(?<awsAccountId>.+):(?<resourceName>.+)/;
+    if (ARN_FORMAT.test(awsResourceArn)) {
+        const matchResult = awsResourceArn.match(ARN_FORMAT);
+        if (matchResult && matchResult.groups) {
+            const { awsServiceName, region, awsAccountId, resourceName } = matchResult.groups;
+
+            return {
+                awsServiceName,
+                region,
+                awsAccountId,
+                resourceName
+            };
+        }
+    }
+}
 
 async function waitFor(ms: number) {
     await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export {
+    prisma,
+    execute,
+    initializeDatabase,
     filterSqlAmis,
     isVpcQuotaReached,
     isCfStackQuotaReached,
@@ -246,5 +320,9 @@ export {
     getSubjectFromBearerToken,
     hideSecretsValues,
     isSameRoutetables,
+    isValidJsonString,
+    getQueueArn,
+    getQueueUrl,
+    derivePropertiesFromARN,
     waitFor
 };
