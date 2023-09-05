@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GENERAL } from '../../utils/appConstants';
-import { FSXADMIN } from '../../utils/consts';
+import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
+import { AWS_MANAGED_AD, FSXADMIN } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -83,6 +83,7 @@ const initialState: any = {
     },
     tags: [{ key: '', value: '' }],
     saveConfigName: '',
+    selectConfig: SELECT_CONFIG.STANDARD_CREATE,
     loadConfig: ''
 };
 
@@ -242,6 +243,10 @@ const mssqlFormSlice = createSlice({
         setSaveConfigName(state, action: PayloadAction<any>) {
             state.saveConfigName = action.payload;
         },
+        //Select config
+        setSelectConfig(state, action: PayloadAction<any>) {
+            state.selectConfig = action.payload;
+        },
         //load config update
         setLoadConfig(state, action: PayloadAction<any>) {
             state.loadConfig = action.payload;
@@ -254,6 +259,7 @@ const mssqlFormSlice = createSlice({
 });
 
 export const {
+    setSelectConfig,
     setSaveConfigName,
     setSelectedADScenarioType,
     setSelectedADDomainName,

@@ -1,6 +1,6 @@
 import { AccordionController, Button, Typography, useDialog } from '@netapp/design-system';
 
-import { GENERAL } from '../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import AvailabilityZone from '../AwsSettings/AvailabilityZone/AvailabilityZone';
 import AwsAccount from '../AwsSettings/AwsAccount/AwsAccount';
 import RegionVpc from '../AwsSettings/RegionVpc/RegionVpc';
@@ -30,9 +30,12 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
 import ViewAPIRequest from './ViewAPIRequest/ViewAPIRequest';
 import EstimatedCost from '../Cost/EstimatedCost';
+import { useAppSelector } from '../../../store/storeHooks';
+import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
+    const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
     MssqlApis();
 
@@ -73,7 +76,7 @@ const MSSqlAccordions = () => {
                 <AwsAccount />
                 <RegionVpc />
                 <AvailabilityZone />
-                <SecurityGroup />
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <SecurityGroup />}
 
                 <Typography
                     style={{
@@ -86,12 +89,17 @@ const MSSqlAccordions = () => {
                 </Typography>
 
                 {/* Application settings accordions */}
-                <OperatingSystem />
-                <DatabaseDeploymentModel />
-                <DatabaseEdition />
-                <DatabaseVersion />
-                <License />
-                <DatabaseName />
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                    <>
+                        <OperatingSystem />
+                        <DatabaseDeploymentModel />
+                        <DatabaseEdition />
+                        <DatabaseVersion />
+                        <License />
+                        <DatabaseName />
+                    </>
+                )}
+
                 <DatabaseCredentials />
                 {/* Ends here */}
 
@@ -107,7 +115,8 @@ const MSSqlAccordions = () => {
                     </Typography>
                 </div>
                 {/* Connectivity accordions */}
-                <KeyPair />
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <KeyPair />}
+
                 <ActiveDirectory />
                 {/* Ends here */}
 
@@ -122,19 +131,26 @@ const MSSqlAccordions = () => {
                 </Typography>
 
                 {/* Infra settings accordions */}
-                <InstanceType />
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <InstanceType />}
+
                 <FSxNSystem />
                 <StorageCapacity />
-                <ProvisionedIOPS />
-                <ThroughputCapacity />
-                <Encryption />
-                <Tags />
-                <SimpleNotificationService />
-                <CloudWatch />
+
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                    <>
+                        <ProvisionedIOPS />
+                        <ThroughputCapacity />
+                        <Encryption />
+                        <Tags />
+                        <SimpleNotificationService />
+                        <CloudWatch />
+                    </>
+                )}
+
                 {/* Ends here */}
 
                 {/* Cost */}
-                {/* <Typography
+                <Typography
                     style={{
                         padding: '0 0 8px'
                     }}
@@ -143,7 +159,8 @@ const MSSqlAccordions = () => {
                 >
                     {GENERAL.SUMMARY}
                 </Typography>
-                <EstimatedCost /> */}
+                <PreviewDefault />
+                {/* <EstimatedCost /> */}
             </AccordionController>
         </div>
     );
