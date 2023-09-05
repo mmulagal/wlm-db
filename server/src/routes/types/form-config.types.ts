@@ -26,7 +26,14 @@ const FormConfigObjectParams = Type.Object({
 });
 type FormConfigObjectParamsType = Static<typeof FormConfigObjectParams>;
 
-const FormConfigCreateResponse = Type.Object({});
+const FormConfigCreateResponse = Type.Object({
+    id: Type.String({ minLength: 1 }),
+    account_id: Type.String({ minLength: 1 }),
+    name: Type.String(),
+    creation_time: Type.Date(),
+    user: Type.String(),
+    data: Type.Any()
+});
 
 type FormConfigCreateResponseType = Static<typeof FormConfigCreateResponse>;
 

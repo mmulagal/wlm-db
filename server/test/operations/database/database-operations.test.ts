@@ -1,9 +1,21 @@
 import { deleteConfig } from '../../../src/lib/database/db';
-import { getAllSavedConfig, saveConfig } from '../../../src/operations/database/database-operations';
+import { getSavedConfig, getAllSavedConfig, saveConfig } from '../../../src/operations/database/database-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 
 describe('Database operations', () => {
-    it('Save config', async () => {
+    it('Get saved config', async () => {
+        const response = await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
+            subnetId: 'test-subnet',
+            vpcId: 'test-vpc'
+        });
+        const resp = await getSavedConfig(ACCOUNT_ID, response.id);
+        expect(resp.accountId).toEqual(ACCOUNT_ID);
+        expect(resp.data.subnetId).toEqual('test-subnet');
+
+        await deleteConfig(ACCOUNT_ID, response.id);
+    });
+
+    it('Get all saved config', async () => {
         await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
             subnetId: 'test-subnet',
             vpcId: 'test-vpc'
