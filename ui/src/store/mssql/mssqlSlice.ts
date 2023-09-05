@@ -51,6 +51,11 @@ const initialState: MssqlEntities = {
         fsxnData: {},
         fsxnLoading: false,
         fsxnError: null
+    },
+    getSavedConfigList: {
+        configData: [],
+        configLoading: false,
+        configError: null
     }
 };
 
@@ -87,6 +92,9 @@ const mssqlSlice = createSlice({
         },
         addFsxnList: (state, action: PayloadAction<any>) => {
             state.getFsxnList = action.payload;
+        },
+        addSavedConfigList: (state, action: PayloadAction<any>) => {
+            state.getSavedConfigList = action.payload;
         }
     }
 });
@@ -101,6 +109,7 @@ export const {
     addKmsKeysList,
     addKeyPairList,
     addInstanceTypeList,
-    addFsxnList
+    addFsxnList,
+    addSavedConfigList
 } = mssqlSlice.actions;
 export default mssqlSlice;

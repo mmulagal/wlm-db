@@ -6,15 +6,16 @@ import { useDeleteConfigMutation, useGetConfigListQuery } from '../../../utils/a
 import { useDispatch } from 'react-redux';
 import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
 import { ReactComponent as DeleteIcon1 } from '../../../assets/delete-icon.svg';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const LoadConfig = () => {
     const dispatch = useDispatch();
     const [hoveredItem, setHoveredItem] = useState(null);
 
+    const { configData, configLoading} = useAppSelector(state => state.mssql.getSavedConfigList);
+
     // API call to get configuration list
     const {
-        data: configList,
-        isFetching: configListLoading,
         refetch: configListRefetch
     } = useGetConfigListQuery({});
 
@@ -23,11 +24,11 @@ const LoadConfig = () => {
     const [selectedConfig, setSelectedConfig] = useState('');
 
     useEffect(() => {
-        if(configList && configList.length > 0){
-            setSelectedConfig(configList[0]?.name);
-            dispatch(setLoadConfig(configList[0]?.id));
+        if(configData && configData.length > 0){
+            setSelectedConfig(configData[0]?.name);
+            dispatch(setLoadConfig(configData[0]?.id));
         }
-    }, [configList, dispatch]);
+    }, [configData, dispatch]);
     
     const handleChange = (item: any) => {
         setSelectedConfig(item?.name);
@@ -43,7 +44,7 @@ const LoadConfig = () => {
     };
 
     const deleteConfig = (index: any) => {
-        deleteConfigApi({configId: configList[index]?.id});
+        deleteConfigApi({configId: configData[index]?.id});
         configListRefetch();
     };
 
@@ -51,7 +52,7 @@ const LoadConfig = () => {
         <div className={styles['load-config']}>
             <div className={styles.content}>{GENERAL.LOAD_CONFIG_CONTENT}</div>
             <div className={styles.radioContainer}>
-                {!configListLoading && configList?.map((item: any, index: any) => (
+                {!configLoading && configData?.map((item: any, index: any) => (
                     <div className={index === 0 ? `${styles.item} ${styles.firstItem}` : `${styles.item}`} key={index} 
                         onMouseEnter={() => handleMouseEnter(index)}
                         onMouseLeave={handleMouseLeave}>
@@ -68,7 +69,7 @@ const LoadConfig = () => {
                         </div>
                     </div>
                 ))}
-                {configListLoading && <div className={styles.loading}><Spinner/></div>}
+                {configLoading && <div className={styles.loading}><Spinner/></div>}
             </div>
         </div>
     );
