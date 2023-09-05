@@ -49,9 +49,7 @@ function initialize() {
                     traceId: () => getActiveTraceId() || 'unknown',
                     message: loggingEvent =>
                         format(
-                            ...loggingEvent.data.map(log =>
-                                isObject(log) ? `${hideSecretsValues(cloneDeep(log))}` : log
-                            )
+                            ...loggingEvent.data.map(log => (isObject(log) ? hideSecretsValues(cloneDeep(log)) : log))
                         )
                 };
             }

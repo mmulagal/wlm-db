@@ -30,11 +30,15 @@ import {
     TEMPLATE_JWT_TOKEN,
     TEMPLATE_CREDENTIALS_ID,
     TEMPLATE_CLOUD_PROVIDER_ID,
-    MASTER_TEMPLATE_PATH
+    MASTER_TEMPLATE_PATH,
+    WLMDB,
+    TEMPLATE_SQS_SERVICE_TOKEN
 } from '../utils/consts';
 import {
+    derivePropertiesFromARN,
     formatTemplateParameters,
     generateDeploymentParams,
+    getQueueArn,
     isCfStackQuotaReached,
     isSameRoutetables
 } from '../utils/utils';
@@ -118,7 +122,10 @@ async function createCloudFormationTemplateForUserDeployment(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = await getServiceToken();
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}`;
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const sqsServiceToken = awsAccountId ? getQueueArn(awsAccountId, WLMDB) : '';
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SQS_SERVICE_TOKEN}=${sqsServiceToken}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {

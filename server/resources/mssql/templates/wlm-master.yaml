@@ -429,6 +429,10 @@ Parameters:
     Description: JWT Token to grant access to a resource
     Type: String
 
+  SqsServiceToken:
+    Description: SQS ARN to push cloud formation messages
+    Type: String
+
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -444,7 +448,7 @@ Resources:
   TrackStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
-      ServiceToken: 'arn:aws:sns:ap-southeast-1:464262061435:wlmdb'
+      ServiceToken: !Ref SqsServiceToken
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
@@ -741,7 +745,7 @@ Resources:
     Type: Custom::MyCustomResource
     DependsOn: SQLServerStack
     Properties:
-      ServiceToken: 'arn:aws:sns:ap-southeast-1:464262061435:wlmdb'
+      ServiceToken: !Ref SqsServiceToken
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId

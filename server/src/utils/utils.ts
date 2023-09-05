@@ -29,7 +29,8 @@ import {
     TEMPLATE_CREDENTIALS_ID,
     TEMPLATE_JWT_TOKEN,
     TEMPLATE_ACCOUNT_ID,
-    ACCOUNT_ID
+    ACCOUNT_ID,
+    TEMPLATE_SQS_SERVICE_TOKEN
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -205,13 +206,17 @@ async function formatTemplateParameters(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'wlmdb-service-user@netapp.com' }); //dummy user for JWT token
 
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const sqsServiceToken = awsAccountId ? getQueueArn(awsAccountId, WLMDB) : '';
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
-        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_SQS_SERVICE_TOKEN, ParameterValue: sqsServiceToken }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
