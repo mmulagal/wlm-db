@@ -199,6 +199,28 @@ export const resourceApi = createApi({
     }
 });
 
+export const configApi = createApi({
+    reducerPath: 'config',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getConfigList: builder.query({
+                query: () => ({url: `config`})
+            }),
+            getConfigData: builder.query({
+                query: ({configId}) => ({url: `config/${configId}`})
+            }),
+            saveConfigData: builder.mutation({
+                query: ({payload}) => ({
+                    url: `config`,
+                    method: 'POST',
+                    body: payload,
+                })
+            }),
+        }
+    }
+});
+
 export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
     useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
     useGetFsxnListQuery, useCreateSqlTemplateMutation,  useDeploySqlTemplateMutation } = awsApi;
@@ -207,3 +229,5 @@ export const {
     useRemoveMSSQLMutation, useGetMSSQLDatabasesQuery, useGetMSSQLSummaryQuery, useGetMSSQLCpuUtilizationQuery,
         useGetMSSQLDiskUtilizationQuery, useGetMSSQLMemoryUtilizationQuery, useBatchTablesMutation
 } = resourceApi;
+
+export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation } = configApi;

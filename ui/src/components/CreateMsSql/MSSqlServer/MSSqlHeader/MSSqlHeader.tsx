@@ -2,6 +2,7 @@ import { Button, Header, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
+import { useSaveConfigDataMutation, useLazyGetConfigDataQuery } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { LoadConfiguration, SaveConfiguration } from '../../Configuration/LoadConfiguration';
@@ -13,6 +14,9 @@ const MSSqlHeader = () => {
     const { setDialog } = useDialog();
     const dispatch = useDispatch();
 
+    const [saveConfigData] = useSaveConfigDataMutation();
+    const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+
     const handleLoadConfiguration = () => {
         setDialog(
             <DialogComponent
@@ -20,7 +24,7 @@ const MSSqlHeader = () => {
                 content={<LoadConfig />}
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => LoadConfiguration(dispatch)}
+                callback={() => LoadConfiguration(dispatch, loadConfigDataExe)}
                 closeCallback={() => {}}
             />
         );
@@ -33,7 +37,7 @@ const MSSqlHeader = () => {
                 content={<SaveConfig />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => SaveConfiguration(dispatch)}
+                callback={() => SaveConfiguration(dispatch, saveConfigData)}
                 closeCallback={() => dispatch(setSaveConfigName(''))}
             />
         );

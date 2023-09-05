@@ -150,16 +150,20 @@ const MSSqlAccordions = () => {
                 {/* Ends here */}
 
                 {/* Cost */}
-                <Typography
-                    style={{
-                        padding: '0 0 8px'
-                    }}
-                    variant="Semibold_16"
-                    className={styles.adjustMargin}
-                >
-                    {GENERAL.SUMMARY}
-                </Typography>
-                <PreviewDefault />
+                {selectedConfig === SELECT_CONFIG.EASY_CREATE && (
+                    <>
+                        <Typography
+                            style={{
+                                padding: '0 0 8px'
+                            }}
+                            variant="Semibold_16"
+                            className={styles.adjustMargin}
+                        >
+                            {GENERAL.SUMMARY}
+                        </Typography>
+                        <PreviewDefault /> 
+                    </>
+                )}
                 {/* <EstimatedCost /> */}
             </AccordionController>
         </div>

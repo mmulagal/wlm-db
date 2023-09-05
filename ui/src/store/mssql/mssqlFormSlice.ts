@@ -83,7 +83,8 @@ const initialState: any = {
     },
     tags: [{ key: '', value: '' }],
     saveConfigName: '',
-    selectConfig: SELECT_CONFIG.STANDARD_CREATE
+    selectConfig: SELECT_CONFIG.EASY_CREATE,
+    loadConfig: ''
 };
 
 const mssqlFormSlice = createSlice({
@@ -245,6 +246,14 @@ const mssqlFormSlice = createSlice({
         //Select config
         setSelectConfig(state, action: PayloadAction<any>) {
             state.selectConfig = action.payload;
+        },
+        //load config update
+        setLoadConfig(state, action: PayloadAction<any>) {
+            state.loadConfig = action.payload;
+        },
+        //Update full form
+        setMssqlForm(state, action: PayloadAction<any>) {
+            return { ...state, ...action.payload };
         }
     }
 });
@@ -294,6 +303,8 @@ export const {
     setSelectedSubnetNode2,
     setSelectedKeyPair,
     setInstanceType,
-    setTags
+    setTags,
+    setLoadConfig,
+    setMssqlForm
 } = mssqlFormSlice.actions;
 export default mssqlFormSlice;

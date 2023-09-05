@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, SelectField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import { optionType } from '@netapp/design-system/dist/components/Select';
@@ -18,6 +18,7 @@ const KeyPair = () => {
     const selectedKey = useAppSelector((state: any) => state.mssqlForm.keyPair.selectedKeyPair);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     //Function to generate the options for Select Field
     const generateKey = useMemo<optionType[]>((): optionType[] => {
@@ -32,7 +33,9 @@ const KeyPair = () => {
     }, [keyPairData]);
 
     useEffect(() => {
-        dispatch(setSelectedKeyPair(generateKey[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedKeyPair(generateKey[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateKey]);
 

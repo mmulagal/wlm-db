@@ -1,35 +1,42 @@
 import { RadioButton } from '@netapp/design-system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './LoadConfig.module.scss';
+import { useGetConfigListQuery } from '../../../utils/apiService';
+import { useDispatch } from 'react-redux';
+import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
 
 const LoadConfig = () => {
-    const configs = [
-        'MyQuickConfig',
-        'bMyQuickCalforniaRegion',
-        'cMyQuickCalforniaRegion',
-        'dMyQuickCalforniaRegion',
-        'eMyQuickCalforniaRegion',
-        'fMyQuickCalforniaRegion',
-        'fMyQuickCalforniaRegion1',
-        'fMyQuickCalforniaRegion2',
-        'fMyQuickCalforniaRegion3'
-    ];
-    const [selectedConfig, setSelectedConfig] = useState(configs[0]);
+    const dispatch = useDispatch();
 
+    // API call to get configuration list
+    const {
+        data: configList,
+    } = useGetConfigListQuery({});
+
+    const [selectedConfig, setSelectedConfig] = useState('');
+
+    useEffect(() => {
+        if(configList && configList.length > 0){
+            setSelectedConfig(configList[0]?.name);
+            dispatch(setLoadConfig(configList[0]?.id));
+        }
+    }, [configList, dispatch]);
+    
     const handleChange = (item: any) => {
-        setSelectedConfig(item);
+        setSelectedConfig(item?.name);
+        dispatch(setLoadConfig(item?.id));
     };
     return (
         <div className={styles['load-config']}>
             <div className={styles.content}>{GENERAL.LOAD_CONFIG_CONTENT}</div>
             <div className={styles.radioContainer}>
-                {configs.map((item, index) => (
+                {configList?.map((item: any, index: any) => (
                     <div className={index === 0 ? `${styles.item} ${styles.firstItem}` : `${styles.item}`} key={index}>
                         <RadioButton
-                            isChecked={selectedConfig === item}
+                            isChecked={selectedConfig === item?.name}
                             onChange={() => handleChange(item)}
-                            children={item}
+                            children={item?.name}
                             className=""
                         />
                     </div>
