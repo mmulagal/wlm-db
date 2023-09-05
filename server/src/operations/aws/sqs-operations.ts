@@ -5,11 +5,23 @@ import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
-import { CloudProviders, DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
+import {
+    CF_CUSTOM_RESOURCE_CODES,
+    CloudProviders,
+    DEFAULT_AWS_REGION,
+    TRACK_STATUS_CUSTOM_RESOURCE,
+    WLMDB
+} from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, isValidJsonString } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
-import { createDeployment, createEvent, listDeployments, upsertDeployment } from '../../lib/database/db';
+import {
+    createDeployment,
+    createEvent,
+    listDeployments,
+    updateDeployment,
+    upsertDeployment
+} from '../../lib/database/db';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 
@@ -51,7 +63,7 @@ async function processCloudFormationMessages() {
                     sqsMessages,
                     async sqsMessage => {
                         const {
-                            message: { Message = undefined }
+                            message: { Message = undefined, Timestamp: timestamp }
                         } = isValidJsonString(sqsMessage?.Body) || {};
                         const { message: jsonMessage } = isValidJsonString(Message) || {};
                         if (jsonMessage) {
@@ -60,9 +72,12 @@ async function processCloudFormationMessages() {
                                 RequestType: requestType,
                                 ResponseURL: responseUrl,
                                 ResourceProperties: resourceProperties,
-                                Timestamp: timestamp
+                                LogicalResourceId: logicalResourceId
                             } = jsonMessage;
-                            if (requestType === 'Create') {
+                            if (
+                                requestType === CF_CUSTOM_RESOURCE_CODES.CREATE ||
+                                requestType === CF_CUSTOM_RESOURCE_CODES.DELETE
+                            ) {
                                 //a custom resource create event marks the beginning of master template deployment
                                 if (resourceProperties) {
                                     const {
@@ -79,30 +94,63 @@ async function processCloudFormationMessages() {
                                         verifyAuthToken(jwtToken);
                                     } catch (error) {
                                         logger.error('Cloud formation token verification failed', error);
-                                        const cfnResponse = createStackAck(jsonMessage, 'FAILED');
+                                        const cfnResponse =
+                                            requestType === CF_CUSTOM_RESOURCE_CODES.CREATE
+                                                ? createStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.FAILED)
+                                                : modifyStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.FAILED);
                                         await deleteMessage(DEFAULT_AWS_REGION, {
                                             QueueUrl: queueUrl,
                                             ReceiptHandle: sqsMessage?.ReceiptHandle
                                         });
                                         return sendCfnResponse(responseUrl, cfnResponse);
                                     }
-
-                                    await createDeployment(accountId, {
-                                        deploymentId: stackId,
-                                        cloudProviderAccountId: cloudProviderAccountId,
-                                        cloudProviderName: CloudProviders.AWS,
-                                        credentialsId: credentialsId,
-                                        deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
-                                        startTime: new Date(timestamp).valueOf(),
-                                        region: region,
-                                        deploymentName: stackName
-                                    });
+                                    if (requestType === CF_CUSTOM_RESOURCE_CODES.CREATE) {
+                                        if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
+                                            //TRACK_STATUS_CUSTOM_RESOURCE is a custom resource created during start of a deployment
+                                            await createDeployment(accountId, {
+                                                deploymentId: stackId,
+                                                cloudProviderAccountId: cloudProviderAccountId,
+                                                cloudProviderName: CloudProviders.AWS,
+                                                credentialsId: credentialsId,
+                                                deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
+                                                startTime: new Date(timestamp).valueOf(),
+                                                region: region,
+                                                deploymentName: stackName
+                                            });
+                                        } else {
+                                            // Post deployment completion another custom resource is Created, to mark the successful completion of deployment
+                                            // CREATE_FAILED event for any underlying resource is considered as a failure event for master deployment; the same is updated later in the code execution flow
+                                            const [masterStackDeployment] = await listDeployments(
+                                                undefined,
+                                                undefined,
+                                                stackName
+                                            );
+                                            if (masterStackDeployment) {
+                                                await updateDeployment(accountId, masterStackDeployment.id, {
+                                                    deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
+                                                    endTime: new Date(timestamp).valueOf(),
+                                                    data: resourceProperties
+                                                });
+                                            }
+                                        }
+                                    } else {
+                                        const [masterStackDeployment] = await listDeployments(
+                                            undefined,
+                                            undefined,
+                                            stackName
+                                        );
+                                        if (masterStackDeployment) {
+                                            await updateDeployment(accountId, masterStackDeployment.id, {
+                                                deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
+                                                endTime: Date.now()
+                                            });
+                                        }
+                                    }
                                 }
-
                                 const cfnResponse =
-                                    requestType === 'Create'
-                                        ? createStackAck(jsonMessage, 'SUCCESS')
-                                        : modifyStackAck(jsonMessage, 'SUCCESS');
+                                    requestType === CF_CUSTOM_RESOURCE_CODES.CREATE
+                                        ? createStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.SUCCESS)
+                                        : modifyStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.SUCCESS);
                                 await sendCfnResponse(responseUrl, cfnResponse);
 
                                 await deleteMessage(DEFAULT_AWS_REGION, {
@@ -111,22 +159,22 @@ async function processCloudFormationMessages() {
                                     ReceiptHandle: sqsMessage?.ReceiptHandle
                                 });
                             }
-                        } else {
-                            if (sqsMessage?.Body?.includes('AWS CloudFormation Notification')) {
-                                const stackMessage = transformStackEventMessage(Message);
-                                logger.debug('STACK MESSAGE', stackMessage);
-                                const {
-                                    StackId: stackId,
-                                    StackName: stackName,
-                                    ResourceType: resourceType,
-                                    Timestamp: timestamp,
-                                    EventId: eventId,
-                                    ResourceStatus: resourceStatus,
-                                    ResourceStatusReason: resourceStatusReason,
-                                    ResourceProperties: resourceProperties
-                                } = stackMessage;
-                                if (stackId) {
-                                    const { isValid, message } = isValidJsonString(resourceProperties);
+                        } else if (sqsMessage?.Body?.includes('AWS CloudFormation Notification')) {
+                            const stackMessage = transformStackEventMessage(Message);
+                            logger.debug('STACK MESSAGE', stackMessage);
+                            const {
+                                StackId: stackId,
+                                StackName: stackName,
+                                ResourceType: resourceType,
+                                Timestamp: timestamp,
+                                EventId: eventId,
+                                ResourceStatus: resourceStatus,
+                                ResourceStatusReason: resourceStatusReason,
+                                ResourceProperties: resourceProperties
+                            } = stackMessage;
+                            if (stackId) {
+                                const { isValid, message } = isValidJsonString(resourceProperties);
+                                try {
                                     await createEvent({
                                         deploymentId: stackId,
                                         deploymentName: stackName,
@@ -137,48 +185,73 @@ async function processCloudFormationMessages() {
                                         eventStatusReason: resourceStatusReason,
                                         data: isValid ? message : {}
                                     });
-                                    const MASTER_STACK_NAME_PATTERN = /WLMDB-SQLFCIStack-(\d{13})/;
-                                    const match = stackName.match(MASTER_STACK_NAME_PATTERN);
-                                    if (match) {
-                                        const [masterStackName] = match;
-                                        const [masterStackDeployment] = await listDeployments(
-                                            undefined,
-                                            undefined,
-                                            masterStackName
-                                        );
+                                } catch (error) {
+                                    logger.error('Failed to create event', error);
+                                }
+                                const MASTER_STACK_NAME_PATTERN = /WLMDB-SQLFCIStack-(\d{13})/;
+                                const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
+                                if (matchingMasterStack) {
+                                    const [masterStackName] = matchingMasterStack;
+                                    const [masterStackDeployment] = await listDeployments(
+                                        undefined,
+                                        undefined,
+                                        masterStackName
+                                    );
+                                    if (masterStackDeployment) {
+                                        const {
+                                            id,
+                                            account_id: accountId,
+                                            region,
+                                            deployment_id: masterDeploymentId,
+                                            cloud_provider_account_id: cloudProviderAccountId,
+                                            cloud_provider_name: cloudProviderName,
+                                            credentials_id: credentialsId,
+                                            deployment_name: masterDeploymentName,
+                                            deployment_status: masterDeploymentStatus
+                                        } = masterStackDeployment;
+
+                                        /**
+                                             a master stack deployment record is created as part of the custom resource definition in master       template. As part of stack message additional deployment details for the master template deployment are  available.
+                                             *In addition, all nested stack deployment messages are also available, if its master template related message then update the existing record, otherwise if its related to nested deployment insert a deployment record; a master template may have a set of nested templates deployed;
+                                        **/
                                         if (
-                                            masterStackDeployment &&
-                                            stackName === masterStackDeployment.deployment_name
+                                            stackName === masterDeploymentName &&
+                                            masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED
                                         ) {
-                                            const {
-                                                account_id,
-                                                region,
-                                                deployment_id,
-                                                cloud_provider_account_id,
-                                                cloud_provider_name,
-                                                credentials_id
-                                            } = masterStackDeployment;
-                                            await upsertDeployment(account_id, {
-                                                // a master stack deployment record is created as part of the custom resource definition in master template. As part of stack message additional deployment details for the master template deployment are available. In addition, all nested stack deployment messages are also available, if its master template related message then update the existing record, otherwise if its related to nested deployment insert a deployment record; a master template may have a set of nested templates deployed;
+                                            await updateDeployment(accountId, id, {
+                                                deploymentName: stackName,
+                                                deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                deploymentStatusReason: resourceStatusReason
+                                            });
+                                        } else {
+                                            // there may be several events related to the same deployment, so upserting deployment information
+                                            await upsertDeployment(accountId, {
                                                 deploymentId: stackId,
                                                 deploymentName: stackName,
                                                 deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
                                                 deploymentStatusReason: resourceStatusReason,
-                                                cloudProviderAccountId: cloud_provider_account_id || '',
-                                                cloudProviderName: cloud_provider_name || CloudProviders.AWS,
+                                                cloudProviderAccountId: cloudProviderAccountId || '',
+                                                cloudProviderName: cloudProviderName || CloudProviders.AWS,
                                                 region,
                                                 parentDeploymentId:
-                                                    deployment_id === stackId ? undefined : deployment_id, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
-                                                credentialsId: credentials_id,
+                                                    masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
+                                                credentialsId: credentialsId,
                                                 startTime: new Date(timestamp).valueOf()
                                             });
-
-                                            await deleteMessage(DEFAULT_AWS_REGION, {
-                                                // after processing the message , clear the message from queue so next processing is on a limited data set
-                                                QueueUrl: queueUrl,
-                                                ReceiptHandle: sqsMessage?.ReceiptHandle
-                                            });
+                                            if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
+                                                // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED
+                                                await updateDeployment(accountId, id, {
+                                                    deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                    endTime: new Date(timestamp).valueOf()
+                                                });
+                                            }
                                         }
+
+                                        await deleteMessage(DEFAULT_AWS_REGION, {
+                                            // after processing the message , clear the message from queue so next processing is on a limited data set
+                                            QueueUrl: queueUrl,
+                                            ReceiptHandle: sqsMessage?.ReceiptHandle
+                                        });
                                     }
                                 }
                             }

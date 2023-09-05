@@ -658,6 +658,15 @@ enum SSM_QUERY_EXECUTION_STATUS {
     FAILED = 'Failed',
     SUCCESS = 'Success'
 }
+
+enum CF_CUSTOM_RESOURCE_CODES {
+    CREATE = 'Create',
+    DELETE = 'Delete',
+    FAILED = 'FAILED',
+    SUCCESS = 'SUCCESS'
+}
+
+const TRACK_STATUS_CUSTOM_RESOURCE = 'TrackStackDeployment';
 const JWKS_FULL_NAME = 'http://cloud.netapp.com/full_name';
 
 export {
@@ -768,5 +777,7 @@ export {
     TEMPLATE_CREDENTIALS_ID,
     DeploymentState,
     SIGNED_URL_ERROR_MESSAGE,
-    JWKS_FULL_NAME
+    TRACK_STATUS_CUSTOM_RESOURCE,
+    JWKS_FULL_NAME,
+    CF_CUSTOM_RESOURCE_CODES
 };
