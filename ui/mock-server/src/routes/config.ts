@@ -19,7 +19,9 @@ router.get(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
 });
 
 router.get(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
-    generateResponse(res, 200, loadconfig);
+    setTimeout(() => {
+        generateResponse(res, 200, loadconfig);
+    }, 3000);
 });
 
 router.post(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
