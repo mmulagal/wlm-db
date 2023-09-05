@@ -515,6 +515,7 @@ const AWS_FSX = 'aws/fsx';
 const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
 const TEMPLATE_JWT_TOKEN = 'JwtToken';
 const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
+const TEMPLATE_ACCOUNT_ID = 'AccountId';
 
 const SQL_TEMPLATES_ASSETS = [
     {
@@ -764,5 +765,6 @@ export {
     TEMPLATE_JWT_TOKEN,
     TEMPLATE_CREDENTIALS_ID,
     DeploymentState,
-    SIGNED_URL_ERROR_MESSAGE
+    SIGNED_URL_ERROR_MESSAGE,
+    TEMPLATE_ACCOUNT_ID
 };

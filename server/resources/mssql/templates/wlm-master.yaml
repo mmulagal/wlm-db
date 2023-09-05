@@ -449,8 +449,8 @@ Resources:
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
       JWToken: !Ref JwtToken
-      Region: ${AWS::Region}
-      StackName: ${AWS::StackName}
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
@@ -737,3 +737,14 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+  PostStackDeployment:
+    Type: Custom::MyCustomResource
+    DependsOn: SQLServerStack
+    Properties:
+      ServiceToken: 'arn:aws:sns:ap-southeast-1:464262061435:wlmdb'
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'

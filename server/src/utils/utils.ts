@@ -23,10 +23,10 @@ import {
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI,
-    ACCOUNT_ID,
     TEMPLATE_CLOUD_PROVIDER_ID,
     TEMPLATE_CREDENTIALS_ID,
-    TEMPLATE_JWT_TOKEN
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_ACCOUNT_ID
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -178,13 +178,13 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
-    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    //const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = await getServiceToken();
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: 'account-3GHtBPLo' },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
