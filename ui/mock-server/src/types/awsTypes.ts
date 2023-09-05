@@ -90,6 +90,7 @@ export interface KmsKeysRes {
             origin: string;
             state: string;
             expirationDate: string;
+            formattedDate: string;
         }
     ];
     totalRecords: 0;

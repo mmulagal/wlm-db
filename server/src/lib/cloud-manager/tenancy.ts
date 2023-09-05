@@ -1,6 +1,17 @@
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
-import { CLOUD_MANAGER_ENDPOINT, HEADERS, AUTH0_AUDIENCE, SECRETS, HttpErrorCodes } from '../../utils/consts';
+import {
+    ACCOUNT_ID,
+    CLOUD_MANAGER_ENDPOINT,
+    HEADERS,
+    AUTH0_AUDIENCE,
+    SECRETS,
+    WORKSPACE_ID,
+    HttpErrorCodes,
+    SERVICE_TOKEN,
+    TOKEN_EXPIRATION_TIME
+} from '../../utils/consts';
+import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -23,6 +34,13 @@ interface MetaData {
 async function getServiceToken(): Promise<{ token: string; expiresIn: number }> {
     logger.info('Getting service token:');
 
+    const token: string = getAsyncLocalStorageResource(SERVICE_TOKEN);
+    const tokenExpirationTime: number = getAsyncLocalStorageResource(TOKEN_EXPIRATION_TIME);
+
+    if (token && Date.now() < tokenExpirationTime) {
+        return { token, expiresIn: tokenExpirationTime };
+    }
+
     try {
         const data: { access_token: string; expires_in: number; token_type: string } =
             await gotInstanceForInternalRequest
@@ -36,6 +54,10 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
                 })
                 .json();
         logger.debug('service token response', data);
+        setAsyncLocalStorageResource(SERVICE_TOKEN, `${data.token_type} ${data.access_token}`);
+        // converting seconds of expires in value to time stamp
+        const expiresIn = Date.now() + data.expires_in * 1000;
+        setAsyncLocalStorageResource(TOKEN_EXPIRATION_TIME, expiresIn);
         return { token: `${data.token_type} ${data.access_token}`, expiresIn: data.expires_in };
     } catch (err) {
         throw createError(500, `Error occured while getting service token, ${err}`);
@@ -68,7 +90,9 @@ async function getTenancyResourcesByType(resourceType: string) {
         return gotInstanceForInternalRequest
             .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
                 searchParams: {
-                    resourceType
+                    resourceType,
+                    account: getAsyncLocalStorageResource<string>(ACCOUNT_ID),
+                    workspace: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
                 },
                 headers: {
                     [HEADERS.AUTHORIZATION]: token
@@ -116,7 +140,8 @@ async function removeResource(resourceIdentifier: string) {
     try {
         return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
             headers: {
-                [HEADERS.AUTHORIZATION]: token
+                [HEADERS.AUTHORIZATION]: token,
+                [HEADERS.WORKSPACE_ID]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
             }
         });
     } catch (err) {

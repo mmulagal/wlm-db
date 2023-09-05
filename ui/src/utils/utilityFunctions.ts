@@ -2,7 +2,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, ENABLED_STATE, EXPIRED_STATUS, REGIONS_CODE_LIST } from './consts';
+import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
@@ -75,9 +75,9 @@ export const formatSize = (value: number, passedformat?: string) => {
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
     let newData: KmsKeys[] = [];
     data?.keys
-        ?.filter((key: KmsKeys) => key?.state === ENABLED_STATE)
+        ?.filter((key: KmsKeys) => (key?.state === ENABLED_STATE || key?.state === PENDING_DELETION))
         .map((val: KmsKeys) => {
-            if (val?.expiryStatus === EXPIRED_STATUS) {
+            if (val?.state === DISABLED_STATE) {
                 val = {
                     ...val,
                     cellProps: {
@@ -180,7 +180,9 @@ export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
 
 export const formatDate = (date: string | number) => {
-    return moment(new Date(date)).format('LL');
+    const dateStr = date.toString();
+    const timeStamp = dateStr.substring(6,dateStr.length-2);
+    return moment(new Date(parseInt(timeStamp))).format('LL');
 };
 
 export const isNotNumberOrNA = (value: string | number) => {
@@ -241,3 +243,17 @@ export const sortListOfDict = (dataList: any, field: string) => {
     const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
     return newDBList;
 };
+
+export const formatSizeOnePrecision = (value: number | string) => numeral(value).format('0.[0] ib');
+
+export const formatSizeSplit = (value: number | string) => {
+    const formatted = formatSizeOnePrecision(value);
+    const splitted = formatted.split(' ');
+    const actualValue = splitted[0];
+    const format = splitted[1];
+    return {value: actualValue, format}
+};
+
+export const displayFormattedValue = (value: number, msg: string) => {
+    return `${formatSize(value)} ${msg}`;
+}

@@ -19,8 +19,9 @@ const MSSqlHeader = () => {
                 header={GENERAL.LOAD_CONFIG_HEADER}
                 content={<LoadConfig />}
                 primaryButton={GENERAL.LOAD}
-                secondaryButton={GENERAL.Cancel}
+                secondaryButton={GENERAL.CANCEL}
                 callback={() => LoadConfiguration(dispatch)}
+                closeCallback={() => {}}
             />
         );
     };
@@ -31,7 +32,7 @@ const MSSqlHeader = () => {
                 header={GENERAL.SAVE_CONFIG_HEADER}
                 content={<SaveConfig />}
                 primaryButton={GENERAL.SAVE}
-                secondaryButton={GENERAL.Cancel}
+                secondaryButton={GENERAL.CANCEL}
                 callback={() => SaveConfiguration(dispatch)}
                 closeCallback={() => dispatch(setSaveConfigName(''))}
             />

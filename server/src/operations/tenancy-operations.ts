@@ -1,7 +1,8 @@
 import {
     ServiceResourceRequest,
     registerServiceResource,
-    getTenancyResourcesByType
+    getTenancyResourcesByType,
+    removeResource
 } from '../lib/cloud-manager/tenancy';
 import { ACCOUNT_ID, WORKSPACE_ID } from '../utils/consts';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -83,4 +84,17 @@ async function getTenancyResource(resourceType: string, resourceId: string) {
     return details;
 }
 
-export { saveResourceInTenancy, getTenancyResource };
+async function removeTenancyResource(resourceId: string): Promise<{ status: number; message: string }> {
+    logger.info('Remove resouce from tenancy:', { resourceId });
+
+    try {
+        const response = await removeResource(resourceId);
+        logger.info('Remove resource response:', response);
+        return { status: 204, message: 'Ok' }; // Successfully deleted
+    } catch (error) {
+        logger.error('Failed to remove resource. Reason:', error);
+        return { status: 404, message: error as string };
+    }
+}
+
+export { saveResourceInTenancy, getTenancyResource, removeTenancyResource };

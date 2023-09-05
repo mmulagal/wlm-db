@@ -66,6 +66,6 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 topicArn,
                 enableCloudWatch
             );
-            return reply.send(response);
+            return reply.code(202).send(response);
         });
 }
