@@ -51,7 +51,7 @@ const MSSqlHeader = () => {
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
         >
-            {/* <div className={styles['header-button']}>
+            <div className={styles['header-button']}>
                 <Button Component="button" onClick={handleLoadConfiguration} variant="text">
                     {SELECT_CONFIG.LOAD_CONFIG}
                 </Button>
@@ -59,7 +59,7 @@ const MSSqlHeader = () => {
                 <Button Component="button" onClick={handleSaveConfig} variant="text">
                     {SELECT_CONFIG.SAVE_CONFIG}
                 </Button>
-            </div> */}
+            </div>
         </Header>
     );
 };
