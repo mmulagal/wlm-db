@@ -180,7 +180,9 @@ export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
 
 export const formatDate = (date: string | number) => {
-    return moment(new Date(date)).format('LL');
+    const dateStr = date.toString();
+    const timeStamp = dateStr.substring(6,dateStr.length-2);
+    return moment(new Date(parseInt(timeStamp))).format('LL');
 };
 
 export const isNotNumberOrNA = (value: string | number) => {
