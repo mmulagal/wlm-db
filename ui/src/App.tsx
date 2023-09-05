@@ -7,8 +7,7 @@ import ErrorPage from "./common/ErrorPage/ErrorPage";
 import { useInitialize } from "./utils/appConfig";
 
 function App() {
-  const { status, error } = useAppSelector((state) => state.auth);
-  const { accountId } = useAppSelector(state => state.appContext);
+  const { status, error, accountId } = useAppSelector((state) => state.auth);
 
   useInitialize();
   

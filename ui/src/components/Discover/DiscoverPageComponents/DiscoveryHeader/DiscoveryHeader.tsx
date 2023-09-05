@@ -1,7 +1,7 @@
 import { Button, Header, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { cmNavigateTo } from '../../../../utils/appConfig';
+import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import styles from './MSSqlHeader.module.scss';
 
@@ -13,7 +13,7 @@ const DiscoveryHeader = () => {
         <Header
             closeButtonProps={{
                 onClick: function noRefCheck() {
-                    cmNavigateTo('/');
+                    navigateToCanvas('/');
                 }
             }}
             title={SELECT_CONFIG.DISCOVER_SQL_SERVER}

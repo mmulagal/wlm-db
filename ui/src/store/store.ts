@@ -2,7 +2,6 @@ import { configureStore, combineReducers, MiddlewareAPI, isRejectedWithValue, Mi
 import notificationSlice, { addNotification, NOTIFICATION_TYPES } from './notificationSlice';
 import { awsApi, configApi, resourceApi } from '../utils/apiService';
 import authSlice from './authSlice';
-import appContextSlice from './appContextSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
@@ -12,7 +11,6 @@ import { requiredFieldError } from '../utils/utilityFunctions';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
-    [appContextSlice.name]: appContextSlice.reducer,
     [authSlice.name]: authSlice.reducer,
     [awsApi.reducerPath]: awsApi.reducer,
     [resourceApi.reducerPath]: resourceApi.reducer,

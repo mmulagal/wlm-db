@@ -3,11 +3,14 @@ import { AUTH_STATUS } from '../utils/consts';
 
 
 interface AuthState {
+    accountId: string;
     status: string | null;
     error: string | null;
     accessToken: string;
     resourceId: string | (string | null)[] | null;
     resourceName: string | (string | null)[] | null;
+    workspaceId?: string;
+    pathname?: string;
 }
 
 interface PayloadAuthSuccess {
@@ -15,17 +18,23 @@ interface PayloadAuthSuccess {
 }
 
 const initialState: AuthState = {
+    accountId: '',
     status: AUTH_STATUS.AUTH_STATUS_PROGRESS,
     error: '',
     accessToken: '',
     resourceId: '',
-    resourceName: ''
+    resourceName: '',
+    workspaceId: '',
+    pathname: ''
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        updateAccountId: (state, action: PayloadAction<string>) => {
+            state.accountId = action.payload;
+        },
         updateAuthSuccess: (
             state,
             action: PayloadAction<PayloadAuthSuccess>
@@ -45,9 +54,24 @@ const authSlice = createSlice({
         },
         updateResourceName: (state, action: PayloadAction<string | (string | null)[] | null>) => {
             state.resourceName = action.payload;
-        }
+        },
+        updateWorkspaceId: (state, action: PayloadAction<string>) => {
+            state.workspaceId = action.payload;
+        },
+        updatePathname: (state, action: PayloadAction<string>) => {
+            state.pathname = action.payload;
+        },
     }
 });
 
-export const { updateAuthSuccess, updateAuthFailed, updateResourceId, updateResourceName } = authSlice.actions;
+export const { 
+    updateAccountId, 
+    updateAuthSuccess, 
+    updateAuthFailed, 
+    updateResourceId, 
+    updateResourceName ,
+    updateWorkspaceId,
+    updatePathname
+} = authSlice.actions;
+
 export default authSlice;

@@ -2,15 +2,27 @@ import authSlice, { updateAuthSuccess, updateAuthFailed } from './authSlice'; //
 import { AUTH_STATUS } from '../utils/consts';
 
 describe('authSlice reducers', () => {
-    let initialState: { status: string; error: string; accessToken: string; resourceId: '', resourceName: '' };
+    let initialState: { 
+        accountId: string,
+        status: string; 
+        error: string; 
+        accessToken: string; 
+        resourceId: '', 
+        resourceName: '',
+        workspaceId: string,
+        pathname: string 
+    };
 
     beforeEach(() => {
         initialState = {
+            accountId: '',
             status: AUTH_STATUS.AUTH_STATUS_PROGRESS,
             error: '',
             accessToken: '',
             resourceId: '',
-            resourceName: ''
+            resourceName: '',
+            workspaceId: '',
+            pathname: ''
         };
     });
 

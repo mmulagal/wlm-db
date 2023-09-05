@@ -24,8 +24,8 @@ const rawBaseQuery = fetchBaseQuery({
 });
 
 export const buildBaseUrl = (api: BaseQueryApi): string => {
-    const {appContext} = api.getState() as RootState;
-    const {accountId } = appContext;
+    const {auth} = api.getState() as RootState;
+    const {accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
     return `${apiHost}/wlmdb/accounts/${accountId}/api/v1`;

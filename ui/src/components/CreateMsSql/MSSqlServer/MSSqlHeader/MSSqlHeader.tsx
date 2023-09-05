@@ -46,7 +46,7 @@ const MSSqlHeader = () => {
         <Header
             closeButtonProps={{
                 onClick: function noRefCheck() {
-                    navigateToCanvas();
+                    navigateToCanvas('/');
                 }
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
