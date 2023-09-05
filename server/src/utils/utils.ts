@@ -25,10 +25,11 @@ import {
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI,
-    ACCOUNT_ID,
     TEMPLATE_CLOUD_PROVIDER_ID,
     TEMPLATE_CREDENTIALS_ID,
-    TEMPLATE_JWT_TOKEN
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_ACCOUNT_ID,
+    ACCOUNT_ID
 } from './consts';
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
@@ -202,12 +203,12 @@ async function formatTemplateParameters(
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const { token } = generateAuthToken({ user: 'SYSTEM' });
+    const { token } = generateAuthToken({ email: 'wlmdb-service-user@netapp.com' }); //dummy user for JWT token
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
