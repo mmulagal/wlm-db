@@ -1,4 +1,4 @@
-import { RadioButton } from '@netapp/design-system';
+import { RadioButton, Spinner } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { GENERAL } from '../../../utils/appConstants';
 import styles from './LoadConfig.module.scss';
@@ -14,6 +14,7 @@ const LoadConfig = () => {
     // API call to get configuration list
     const {
         data: configList,
+        isFetching: configListLoading,
         refetch: configListRefetch
     } = useGetConfigListQuery({});
 
@@ -50,7 +51,7 @@ const LoadConfig = () => {
         <div className={styles['load-config']}>
             <div className={styles.content}>{GENERAL.LOAD_CONFIG_CONTENT}</div>
             <div className={styles.radioContainer}>
-                {configList?.map((item: any, index: any) => (
+                {!configListLoading && configList?.map((item: any, index: any) => (
                     <div className={index === 0 ? `${styles.item} ${styles.firstItem}` : `${styles.item}`} key={index} 
                         onMouseEnter={() => handleMouseEnter(index)}
                         onMouseLeave={handleMouseLeave}>
@@ -67,6 +68,7 @@ const LoadConfig = () => {
                         </div>
                     </div>
                 ))}
+                {configListLoading && <div className={styles.loading}><Spinner/></div>}
             </div>
         </div>
     );
