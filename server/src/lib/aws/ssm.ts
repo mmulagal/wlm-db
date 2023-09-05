@@ -30,7 +30,7 @@ async function sendSSMCommand(credentialsId: string, region: string, params: Sen
     const sendCommand = new SendCommandCommand(params);
     const response = await ssmClient.send(sendCommand);
 
-    logger.info('SSM Command response', response);
+    logger.debug('SSM Command response', response);
     return response.Command?.CommandId;
 }
 
@@ -39,7 +39,7 @@ async function getCommandInvocation(credentialsId: string, region: string, param
 
     const ssmClient = await getSSMClient(credentialsId, region);
     const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
-    logger.info('SSM Command response', response);
+    logger.debug('SSM Command response', response);
     return response;
 }
 

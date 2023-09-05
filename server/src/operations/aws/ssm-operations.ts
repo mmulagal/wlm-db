@@ -54,7 +54,7 @@ async function executeSSMDocument(credentialsId: string, region: string, params:
     };
     const response = await pollCommandStatus(credentialsId, region, pollParams);
 
-    logger.info('SSM command Response:', response);
+    logger.debug('SSM command Response:', response);
 
     return response;
 }

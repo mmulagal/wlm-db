@@ -204,7 +204,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         return diskUtilization;
     }
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
-    logger.info('Fetching  utilization', response);
+    logger.debug('Fetching  utilization', response);
 
     return response;
 }

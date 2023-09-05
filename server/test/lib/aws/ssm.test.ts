@@ -1,10 +1,10 @@
+import { faker } from '@faker-js/faker';
+import { sendSSMCommand, getCommandInvocation } from '../../../src/lib/aws/ssm';
+import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
-import { sendSSMCommand, getCommandInvocation } from '../../../src/lib/aws/ssm';
-import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
-import { faker } from '@faker-js/faker';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
