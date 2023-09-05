@@ -83,7 +83,7 @@ const initialState: any = {
     },
     tags: [{ key: '', value: '' }],
     saveConfigName: '',
-    selectConfig: SELECT_CONFIG.STANDARD_CREATE,
+    selectConfig: SELECT_CONFIG.EASY_CREATE,
     loadConfig: ''
 };
 
