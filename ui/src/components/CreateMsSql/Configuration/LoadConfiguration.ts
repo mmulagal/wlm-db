@@ -5,23 +5,27 @@ import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
 import { setIsLoadConfig } from '../../../store/mssql/msSqlActionSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 
-export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any) => {
+export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
     const state = store.getState();
     const selectedConfig = state.mssqlForm.loadConfig;
-    
+    dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
             console.log("Loaded Data response- ",data?.data?.data);
-            dispatch(setIsLoadConfig(true));
-            dispatch(setMssqlForm(data?.data?.data));
-            dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-                message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+            if(data?.data?.data){
+                dispatch(setMssqlForm(data?.data?.data));
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+                    message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+            } 
             setTimeout(() => {
                 dispatch(setIsLoadConfig(false));
-            }, 1000)
+            }, 1000);
+            closeDialog();
         })
         .catch((error: any) => {
             console.log("Error while loading data - ", error);
+            dispatch(setIsLoadConfig(false));
+            closeDialog();
         });
     return '';
 };

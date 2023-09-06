@@ -14,7 +14,8 @@ export const SELECT_CONFIG = {
     SECURITY_GROUP: 'Security group',
     DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server',
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
-    LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.'
+    LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
+    NO_SAVED_CONFIG: 'There are no saved configurations.'
 };
 
 export const GENERAL = {
@@ -285,5 +286,20 @@ export const GENERAL = {
     MSSQL: 'Microsoft SQL Server',
     REMOVE_DIALOG_CONTENT_FIRST_PART: (weType: string) => `You are about to remove the ${weType} working environment`,
     REMOVE_DIALOG_CONTENT_SECOND_PART: 'from workspace.',
-    REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`
+    REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`,
+    //PREVIEW DEFAULT
+    PREVIEW_DEFAULT_TEXT:
+        'Easy create sets the following configurations to their default values, some of which can be changed later. If you want to change any of these settings now, use',
+    PD_HEADER_TEXT: 'View the default configuration created by the system',
+    PREVIEW_DEFAULT: 'Preview default',
+    EDITABLE_AFTER: 'Editable after creation',
+    DEFAULT: 'Default',
+    CONFIGURATION: 'Configuration',
+    PD_DISABLED: 'Disabled',
+    YES: 'Yes',
+    PD_AUTO_CREATE: 'Automatically create based on user selection',
+    NO: 'No',
+    PD_CREATE_SECURITY: 'Create a security group for the user',
+    PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
+    FIRST_IN_THE_LIST: 'First in the list'
 };

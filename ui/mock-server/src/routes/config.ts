@@ -15,14 +15,22 @@ router.get(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
             name: 'config2',
         },
     ];
-    generateResponse(res, 200, retData);
+    setTimeout(() => {
+        generateResponse(res, 200, retData);
+    }, 3000);
 });
 
 router.get(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
-    generateResponse(res, 200, loadconfig);
+    setTimeout(() => {
+        generateResponse(res, 200, loadconfig);
+    }, 3000);
 });
 
 router.post(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
+    generateResponse(res, 200, {'success': 'ok'});
+});
+
+router.delete(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
     generateResponse(res, 200, {'success': 'ok'});
 });
 

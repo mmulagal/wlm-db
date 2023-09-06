@@ -217,6 +217,12 @@ export const configApi = createApi({
                     body: payload,
                 })
             }),
+            deleteConfig: builder.mutation({
+                query: ({configId}) => ({
+                    url: `config/${configId}`,
+                    method: 'DELETE',
+                })
+            }),
         }
     }
 });
@@ -230,4 +236,5 @@ export const {
         useGetMSSQLDiskUtilizationQuery, useGetMSSQLMemoryUtilizationQuery, useBatchTablesMutation
 } = resourceApi;
 
-export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation } = configApi;
+export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, 
+    useDeleteConfigMutation } = configApi;

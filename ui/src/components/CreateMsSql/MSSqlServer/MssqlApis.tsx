@@ -2,6 +2,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetAdsListQuery,
     useGetAmiListQuery,
+    useGetConfigListQuery,
     useGetCredentialsQuery,
     useGetFsxnListQuery,
     useGetInstanceTypesQuery,
@@ -20,6 +21,7 @@ import {
     addKeyPairList,
     addKmsKeysList,
     addRegions,
+    addSavedConfigList,
     addSnsList,
     addVpcList
 } from '../../../store/mssql/mssqlSlice';
@@ -186,6 +188,13 @@ const MssqlApis = () => {
         }
     );
 
+    // API call to get saved configuration list
+    const {
+        data: configData,
+        isFetching: configLoading,
+        isError: configError
+    } = useGetConfigListQuery({});
+
     // To add credentials information in MssqlEntities
     useEffect(() => {
         dispatch(addCredentials({ credentialData, credentialLoading, credentialError }));
@@ -338,6 +347,12 @@ const MssqlApis = () => {
             dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
         }
     }, [dispatch, fsxnData, fsxnLoading, fsxnError]);
+
+    // To add saved configuration list
+    useEffect(() => {
+        dispatch(addSavedConfigList({configData, configLoading, configError}));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [configData, configLoading, configError]);
 
     return;
 };

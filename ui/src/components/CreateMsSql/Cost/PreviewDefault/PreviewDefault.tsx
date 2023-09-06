@@ -1,58 +1,71 @@
-import { AccordionCard, AccordionCardContent, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, Button, Typography } from '@netapp/design-system';
 import { Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './PreviewDefault.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
+import { useDispatch } from 'react-redux';
+import { setSelectConfig } from '../../../../store/mssql/mssqlFormSlice';
 
 const PreviewDefault = () => {
+    const dispatch = useDispatch();
     const data = [
         {
             accordionName: SELECT_CONFIG.SECURITY_GROUP,
-            defaultValue: 'Create a security group for the user',
-            editable: 'Yes',
+            defaultValue: GENERAL.PD_CREATE_SECURITY,
+            editable: GENERAL.YES,
             id: '1'
         },
-        { accordionName: GENERAL.OPERATING_SYSTEM, defaultValue: 'Windows Server 2016', editable: 'No', id: '2' },
+        {
+            accordionName: GENERAL.OPERATING_SYSTEM,
+            defaultValue: GENERAL.WIN_SERVER_2016,
+            editable: GENERAL.NO,
+            id: '2'
+        },
         {
             accordionName: GENERAL.DATABASE_DEPLOYMENT_MODEL,
-            defaultValue: 'Failover Cluster Instances (FCI)',
-            editable: 'No',
+            defaultValue: GENERAL.FAILOVER_CLUSTER,
+            editable: GENERAL.NO,
             id: '3'
         },
         {
             accordionName: GENERAL.DATABASE_EDITION,
-            defaultValue: 'SQL Server Standard Edition',
-            editable: 'No',
+            defaultValue: GENERAL.SQL_SERVER_STANDARD_EDITION,
+            editable: GENERAL.NO,
             id: '4'
         },
         {
             accordionName: GENERAL.DATABASE_VERSION,
-            defaultValue: 'SQL Server 2019',
-            editable: 'Yes (can be upgraded manually)',
+            defaultValue: GENERAL.SQL_SERVER_2019,
+            editable: GENERAL.PD_UPGRADED_MANUALLY,
             id: '5'
         },
-        { accordionName: GENERAL.LICENSE, defaultValue: 'License included AMI', editable: 'No', id: '6' },
-        { accordionName: GENERAL.DATABASE_NAME, defaultValue: 'sqldatabase-1', editable: 'Yes', id: '7' },
-        { accordionName: GENERAL.KEY_PAIR, defaultValue: 'First in the list', editable: 'Yes', id: '8' },
+        { accordionName: GENERAL.LICENSE, defaultValue: GENERAL.LICENSE_INCLUDED_AMI, editable: GENERAL.NO, id: '6' },
+        { accordionName: GENERAL.DATABASE_NAME, defaultValue: 'sqldatabase1', editable: GENERAL.YES, id: '7' },
+        { accordionName: GENERAL.KEY_PAIR, defaultValue: GENERAL.FIRST_IN_THE_LIST, editable: GENERAL.YES, id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
-            defaultValue: 'Automaticlly create based on user selection',
-            editable: 'No',
+            defaultValue: GENERAL.PD_AUTO_CREATE,
+            editable: GENERAL.NO,
             id: '9'
         },
-        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: 'Automatic', editable: 'Yes', id: '10' },
-        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: '128 MB/s', editable: 'Yes', id: '11' },
-        { accordionName: GENERAL.ENCRYPTION, defaultValue: 'AWS/FSx', editable: 'Yes', id: '12' },
-        { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: 'Yes', id: '13' },
-        { accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE, defaultValue: 'Disabled', editable: '-', id: '14' },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: 'Disabled', editable: '-', id: '15' }
+        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
+        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: '128 MB/s', editable: GENERAL.YES, id: '11' },
+        { accordionName: GENERAL.ENCRYPTION, defaultValue: 'AWS/FSx', editable: GENERAL.YES, id: '12' },
+        { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
+        {
+            accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,
+            defaultValue: GENERAL.PD_DISABLED,
+            editable: '-',
+            id: '14'
+        },
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: '-', id: '15' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
         {
-            Header: 'Configuration',
+            Header: GENERAL.CONFIGURATION,
             accessor: 'accordionName',
             id: '1',
             isSortable: false,
@@ -60,13 +73,13 @@ const PreviewDefault = () => {
             width: '231px'
         },
         {
-            Header: 'Default',
+            Header: GENERAL.DEFAULT,
             accessor: 'defaultValue',
             id: '2',
             width: '495px'
         },
         {
-            Header: 'Editable after creation',
+            Header: GENERAL.EDITABLE_AFTER,
             accessor: 'editable',
             id: '3',
             width: '257px'
@@ -84,22 +97,29 @@ const PreviewDefault = () => {
         pageSize: 50
     });
     const setHeader = () => {
-        return <Typography variant="Regular_14">View the default configuration created by the system</Typography>;
+        return <Typography variant="Regular_14">{GENERAL.PD_HEADER_TEXT}</Typography>;
+    };
+
+    const handleConfig = () => {
+        dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
     };
     return (
         <div className={styles['preview-default']}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="23"
-                title={<div className={CommonStyles.title}>Preview default</div>}
+                title={<div className={CommonStyles.title}>{GENERAL.PREVIEW_DEFAULT}</div>}
             >
                 <AccordionCardContent>
                     <Typography>
                         <div className={styles.note}>
                             <ActionRequiredIcon />
                             <Typography variant="Regular_14">
-                                Easy create sets the following configurations to their default values, some of which can
-                                be changed later. If you want to change any of these settings now, use Standard create.
+                                {GENERAL.PREVIEW_DEFAULT_TEXT}{' '}
+                                <Button Component="button" onClick={handleConfig} variant="text">
+                                    {SELECT_CONFIG.STANDARD_CREATE}
+                                </Button>
+                                .
                             </Typography>
                         </div>
                         <div className={styles.table}>
