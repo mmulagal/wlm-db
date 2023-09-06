@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import nock from 'nock';
-import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts.js';
+import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts';
 import registerServiceResponse from '../../responses/cloud-manager/register-service-resource-tenancy.json';
 import getTenancyResourceResponse from '../../responses/cloud-manager/get-tenancy-resources-by-type.json';
 

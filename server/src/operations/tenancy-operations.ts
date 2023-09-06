@@ -41,10 +41,10 @@ async function saveResourceInTenancy(
     const params: ServiceResourceRequest = {
         name: resourceName,
         resourceIdentifier: resourceId,
-        resourceType: resourceType,
+        resourceType,
         workspacePublicId: workspaceId,
         accountPublicId: accountId,
-        resourceClass: resourceClass,
+        resourceClass,
         metadata: {
             propertyName: 'properties',
             propertyValue: JSON.stringify(resourceProperties)

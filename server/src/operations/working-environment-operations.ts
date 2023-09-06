@@ -36,8 +36,8 @@ async function getWorkingEnvironments() {
                         result.push({
                             id: resourceIdentifier,
                             provider: resourceType,
-                            name: name,
-                            deploymentState: deploymentState
+                            name,
+                            deploymentState
                         });
                     }
                 }
@@ -87,9 +87,8 @@ async function getWorkingEnvironment(id: string) {
         const response = await getMSSQLEnvData(tenancyResource, id);
         if (response) {
             return response;
-        } else {
-            throw createError(HttpErrorCodes.NOT_FOUND, 'Error Tenancy resource data not found');
         }
+        throw createError(HttpErrorCodes.NOT_FOUND, 'Error Tenancy resource data not found');
     }
 }
 

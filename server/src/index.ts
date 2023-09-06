@@ -168,7 +168,7 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID]: workspaceId },
+                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId },
                     params: { accountId },
                     id: requestId
                 } = request;

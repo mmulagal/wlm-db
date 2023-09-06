@@ -13,7 +13,7 @@ const logger = getLogger();
 
 const traceExporter = new OTLPTraceExporter({ url: SIGNOZ_ENDPOINT });
 const sdk = new opentelemetry.NodeSDK({
-    traceExporter: traceExporter,
+    traceExporter,
     instrumentations: [new HttpInstrumentation(), new FastifyInstrumentation()],
     resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: WLMDB

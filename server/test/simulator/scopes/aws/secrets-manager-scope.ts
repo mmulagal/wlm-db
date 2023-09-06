@@ -10,6 +10,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 import secretManagerResponse from '../../responses/aws/secrets-manager-create.json';
 import secretManagerGetSecretValueResponse from '../../responses/aws/secrets-manager-get.json';
 import secretManagerPolicyResponse from '../../responses/aws/secrets-manager-create-policy.json';
+
 const smMock = mockClient(SecretsManagerClient);
 
 smMock.on(CreateSecretCommand).resolves(secretManagerResponse);

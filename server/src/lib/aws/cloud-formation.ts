@@ -19,7 +19,7 @@ async function getCloudformationClient(credentialsId: string, region: string) {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
 
-    return new CloudFormationClient({ region: region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
+    return new CloudFormationClient({ region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
 async function listStacks(credentialsId: string, region: string, stackStatusFilter?: (StackStatus | string)[]) {

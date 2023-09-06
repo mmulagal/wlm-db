@@ -9,7 +9,7 @@ async function currentCfStacksCount(credentialsId: string, region: string) {
     const currentStacksCount = (await listStacks(credentialsId, region)).StackSummaries?.length;
     logger.debug('Completed stacks count ', currentStacksCount);
 
-    return { currentStacksCount: currentStacksCount };
+    return { currentStacksCount };
 }
 
 export { currentCfStacksCount };

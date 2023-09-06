@@ -11,7 +11,7 @@ async function getServiceQuotasClient(credentialsId: string, region: string) {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
 
-    return new ServiceQuotasClient({ region: region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
+    return new ServiceQuotasClient({ region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
 async function listServiceQuota(credentialsId: string, region: string, serviceCode: string) {
