@@ -34,7 +34,7 @@ const PreviewDefault = () => {
             id: '5'
         },
         { accordionName: GENERAL.LICENSE, defaultValue: 'License included AMI', editable: 'No', id: '6' },
-        { accordionName: GENERAL.DATABASE_NAME, defaultValue: 'sqldatabase-1', editable: 'Yes', id: '7' },
+        { accordionName: GENERAL.DATABASE_NAME, defaultValue: 'sqldatabase1', editable: 'Yes', id: '7' },
         { accordionName: GENERAL.KEY_PAIR, defaultValue: 'First in the list', editable: 'Yes', id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
