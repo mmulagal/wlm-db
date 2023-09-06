@@ -121,7 +121,7 @@ const ResourcePage = () => {
             const tablesBatchBody: BatchEntry[] = databases.databases.map((databaseRow: any) => {
                 const databaseName = databaseRow?.databaseName;
                 return {
-                    url: `mssql/${resourceId}/${databaseName}/tables`,
+                    url: `mssql/resources/${resourceId}/databases/${databaseName}/tables`,
                     method: Method.GET,
                     inputs: {databaseName}
                 }
