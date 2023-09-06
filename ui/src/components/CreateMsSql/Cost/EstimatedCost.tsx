@@ -45,26 +45,34 @@ const EstimatedCost = () => {
             }, 500);
         }
         setFetchResult(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchResult]);
 
     const setHeader = () => {
-        if (!az1Value || !az2value || !vpcValue || !domainName) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.ESTIMATED_COST_HEADER}
-                </Typography>
-            );
-        } else if (isLoading) {
-            return <LoadingComponent />;
-        } else {
-            return <Typography variant="Regular_14">cost</Typography>;
-        }
+        // if (!az1Value || !az2value || !vpcValue || !domainName) {
+        //     return (
+        //         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+        //             {GENERAL.ESTIMATED_COST_HEADER}
+        //         </Typography>
+        //     );
+        // } else if (isLoading) {
+        //     return <LoadingComponent />;
+        // } else {
+        //     return <Typography variant="Regular_14">cost</Typography>;
+        // }
+        return (
+            <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                {GENERAL.ESTIMATED_COST_HEADER}
+            </Typography>
+        );
     };
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
-                isDisabled={!az1Value || !az2value || !vpcValue || !domainName}
-                isExpandDisabled={!az1Value || !az2value || !vpcValue || !domainName}
+                // isDisabled={!az1Value || !az2value || !vpcValue || !domainName}
+                // isExpandDisabled={!az1Value || !az2value || !vpcValue || !domainName}
+                isDisabled={true}
+                isExpandDisabled={true}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="23"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
