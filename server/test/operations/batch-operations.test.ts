@@ -11,7 +11,7 @@ import '../simulator/scopes/batch-scope';
 
 describe('Batch operations', () => {
     it('Executing the batch api calls', async () => {
-        const resp = await executeBatchApiCalls('testinstance', [
+        const resp = await executeBatchApiCalls([
             {
                 url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Aaronview/tables',
                 method: 'GET'
