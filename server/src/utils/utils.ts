@@ -2,7 +2,7 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { trimEnd, trimStart } from 'lodash-es';
+import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
@@ -89,10 +89,15 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
-function isValidJsonString(str: string | undefined) {
+
+function checkAndRetrieveJsonObject(str: string | undefined) {
     try {
         if (str) {
-            return { isValid: true, message: JSON.parse(str) };
+            const result = attempt(JSON.parse, str);
+            if (result instanceof Error) {
+                return { isValid: false };
+            }
+            return { isValid: true, message: result };
         }
         return { isValid: false };
     } catch (err) {
@@ -137,7 +142,7 @@ export {
     getSubjectFromBearerToken,
     hideSecretsValues,
     isSameRoutetables,
-    isValidJsonString,
+    checkAndRetrieveJsonObject,
     getQueueArn,
     getQueueUrl,
     derivePropertiesFromARN,

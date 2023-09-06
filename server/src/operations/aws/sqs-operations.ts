@@ -2,6 +2,7 @@ import ms from 'ms';
 import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
@@ -14,7 +15,7 @@ import {
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB
 } from '../../utils/consts';
-import { derivePropertiesFromARN, getQueueUrl, isValidJsonString } from '../../utils/utils';
+import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -24,7 +25,6 @@ import {
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
-import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
@@ -64,9 +64,9 @@ async function processCloudFormationMessages() {
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
-                            message: { Message = undefined, Timestamp: timestamp }
-                        } = isValidJsonString(sqsMessage?.Body) || {};
-                        const { message: jsonMessage } = isValidJsonString(Message) || {};
+                            message: { Message: messageContent = undefined, Timestamp: messageTimestamp }
+                        } = checkAndRetrieveJsonObject(sqsMessage?.Body) || {};
+                        const { message: jsonMessage } = checkAndRetrieveJsonObject(messageContent) || {};
                         if (jsonMessage) {
                             const {
                                 StackId: stackId,
@@ -79,7 +79,7 @@ async function processCloudFormationMessages() {
                                 requestType === CF_CUSTOM_RESOURCE_CODES.CREATE ||
                                 requestType === CF_CUSTOM_RESOURCE_CODES.DELETE
                             ) {
-                                //a custom resource create event marks the beginning of master template deployment
+                                // a custom resource create event marks the beginning of master template deployment
                                 if (resourceProperties) {
                                     const {
                                         AccountId: accountId,
@@ -107,15 +107,15 @@ async function processCloudFormationMessages() {
                                     }
                                     if (requestType === CF_CUSTOM_RESOURCE_CODES.CREATE) {
                                         if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
-                                            //TRACK_STATUS_CUSTOM_RESOURCE is a custom resource created during start of a deployment
+                                            // TRACK_STATUS_CUSTOM_RESOURCE is a custom resource created during start of a deployment
                                             await createDeployment(accountId, {
                                                 deploymentId: stackId,
                                                 cloudProviderAccountId,
                                                 cloudProviderName: CloudProviders.AWS,
                                                 credentialsId,
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
-                                                startTime: new Date(timestamp).valueOf(),
-                                                region: region,
+                                                startTime: new Date(messageTimestamp).valueOf(),
+                                                region,
                                                 deploymentName: stackName
                                             });
                                         } else {
@@ -129,7 +129,7 @@ async function processCloudFormationMessages() {
                                             if (masterStackDeployment) {
                                                 await updateDeployment(accountId, masterStackDeployment.id, {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
-                                                    endTime: new Date(timestamp).valueOf(),
+                                                    endTime: new Date(messageTimestamp).valueOf(),
                                                     data: resourceProperties
                                                 });
                                             }
@@ -161,7 +161,7 @@ async function processCloudFormationMessages() {
                                 });
                             }
                         } else if (sqsMessage?.Body?.includes(CF_NOTIFICATION)) {
-                            const stackMessage = transformStackEventMessage(Message);
+                            const stackMessage = transformStackEventMessage(messageContent);
                             logger.debug('STACK MESSAGE', stackMessage);
                             const {
                                 StackId: stackId,
@@ -174,7 +174,7 @@ async function processCloudFormationMessages() {
                                 ResourceProperties: resourceProperties
                             } = stackMessage;
                             if (stackId) {
-                                const { isValid, message } = isValidJsonString(resourceProperties);
+                                const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
 
                                 const MASTER_STACK_NAME_PATTERN = /WLMDB-SQLFCIStack-(\d{13})/;
                                 const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
@@ -193,7 +193,7 @@ async function processCloudFormationMessages() {
                                                 deploymentName: stackName,
                                                 resourceType,
                                                 time: new Date(timestamp).valueOf(),
-                                                eventId: eventId,
+                                                eventId,
                                                 eventStatus: resourceStatus as DEPLOYMENT_STATUS,
                                                 eventStatusReason: resourceStatusReason,
                                                 data: isValid ? message : {}
@@ -217,7 +217,7 @@ async function processCloudFormationMessages() {
                                         /**
                                              a master stack deployment record is created as part of the custom resource definition in master       template. As part of stack message additional deployment details for the master template deployment are  available.
                                              *In addition, all nested stack deployment messages are also available, if its master template related message then update the existing record, otherwise if its related to nested deployment insert a deployment record; a master template may have a set of nested templates deployed;
-                                        **/
+                                        * */
                                         if (
                                             stackName === masterDeploymentName &&
                                             masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED
@@ -239,7 +239,7 @@ async function processCloudFormationMessages() {
                                                 region,
                                                 parentDeploymentId:
                                                     masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
-                                                credentialsId: credentialsId,
+                                                credentialsId,
                                                 startTime: new Date(timestamp).valueOf()
                                             });
                                             if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
@@ -266,8 +266,8 @@ async function processCloudFormationMessages() {
                         }
                     })
                 );
+                processCloudFormationMessages();
             }
-            processCloudFormationMessages();
         } catch (err: any) {
             if (err.code === ERROR_CODE_SQS_NON_EXISTENT_QUEUE) {
                 logger.warn(`'${queueUrl}' queue does not exist. Not polling for messages`);
@@ -293,7 +293,7 @@ function createStackAck(message: { StackId: string; RequestId: string; LogicalRe
         PhysicalResourceId: randomUUID()
     };
 }
-//used for both stack Delete and Update events
+// used for both stack Delete and Update events
 function modifyStackAck(
     message: {
         StackId: string;
