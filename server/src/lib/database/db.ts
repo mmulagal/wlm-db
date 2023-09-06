@@ -20,6 +20,36 @@ interface Deployment {
     data?: object;
 }
 
+interface Event {
+    eventId: string;
+    accountId: string;
+    deploymentId: string;
+    deploymentName: string;
+    eventStatus: DEPLOYMENT_STATUS;
+    eventStatusReason: string;
+    resourceType: string;
+    time: number;
+    data?: object;
+}
+
+interface Resource {
+    resourceId: string;
+    resourceName?: string;
+    resourceType: string;
+    coRelationId?: string;
+    cloudProviderAccountId?: string;
+    cloudProviderName?: string;
+    region: string;
+    metadata?: object;
+}
+
+interface Config {
+    user: string;
+    creationTime: number;
+    name: string;
+    data: object;
+}
+
 async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
     logger.info('Listing deployments', { accountId, deploymentId });
     return prisma.deployment.findMany({
@@ -153,17 +183,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
     });
 }
 
-async function createEvent(params: {
-    eventId: string;
-    accountId: string;
-    deploymentId: string;
-    deploymentName: string;
-    eventStatus: DEPLOYMENT_STATUS;
-    eventStatusReason: string;
-    resourceType: string;
-    time: number;
-    data?: object;
-}) {
+async function createEvent(params: Event) {
     logger.debug('Creating event', { params });
     const {
         eventId,
@@ -211,19 +231,7 @@ async function listResources(accountId: string) {
     });
 }
 
-async function createResource(
-    accountId: string,
-    params: {
-        resourceId: string;
-        resourceName?: string;
-        resourceType: string;
-        coRelationId?: string;
-        cloudProviderAccountId?: string;
-        cloudProviderName?: string;
-        region: string;
-        metadata?: object;
-    }
-) {
+async function createResource(accountId: string, params: Resource) {
     logger.info('Creating resource', { accountId, params });
     const {
         resourceId,
@@ -274,10 +282,7 @@ async function listConfig(accountId: string, id?: string) {
     });
 }
 
-async function createConfig(
-    accountId: string,
-    params: { user: string; creationTime: number; name: string; data: object }
-) {
+async function createConfig(accountId: string, params: Config) {
     logger.info('Creating config', { accountId, params });
     const { user, creationTime, data, name } = params;
     return prisma.config.create({
