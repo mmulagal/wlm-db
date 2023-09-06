@@ -40,7 +40,7 @@ async function createTopic(region: string, input: CreateTopicCommandInput) {
 
     const sns = new SNSClient({ region });
     const resp = await sns.send(new CreateTopicCommand(input));
-    logger.info('Create topic command response', resp);
+    logger.debug('Create topic command response', resp);
 
     return resp;
 }

@@ -5,6 +5,21 @@ import { prisma } from '../../utils/utils';
 
 const logger = getLogger();
 
+interface Deployment {
+    deploymentId: string;
+    parentDeploymentId?: string;
+    deploymentName: string;
+    cloudProviderAccountId?: string;
+    cloudProviderName?: string;
+    credentialsId: string;
+    deploymentStatus: DEPLOYMENT_STATUS;
+    deploymentStatusReason?: string;
+    startTime: number;
+    endTime?: number;
+    region: string;
+    data?: object;
+}
+
 async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
     logger.info('Listing deployments', { accountId, deploymentId });
     return prisma.deployment.findMany({
@@ -20,23 +35,7 @@ async function listDeployments(accountId?: string, deploymentId?: string, deploy
     });
 }
 
-async function createDeployment(
-    accountId: string,
-    params: {
-        deploymentId: string;
-        parentDeploymentId?: string;
-        deploymentName: string;
-        cloudProviderAccountId?: string;
-        cloudProviderName?: string;
-        credentialsId: string;
-        deploymentStatus: DEPLOYMENT_STATUS;
-        deploymentStatusReason?: string;
-        startTime: number;
-        endTime?: number;
-        region: string;
-        data?: object;
-    }
-) {
+async function createDeployment(accountId: string, params: Deployment) {
     logger.info('Creating deployment', { accountId, params });
     const {
         deploymentId,
@@ -103,23 +102,7 @@ async function updateDeployment(
     });
 }
 
-async function upsertDeployment(
-    accountId: string,
-    params: {
-        deploymentId: string;
-        parentDeploymentId?: string;
-        deploymentName: string;
-        cloudProviderAccountId?: string;
-        cloudProviderName?: string;
-        credentialsId: string;
-        deploymentStatus: DEPLOYMENT_STATUS;
-        deploymentStatusReason?: string;
-        startTime: number;
-        endTime?: number;
-        region: string;
-        data?: object;
-    }
-) {
+async function upsertDeployment(accountId: string, params: Deployment) {
     logger.info('Upserting deployment', { params });
     const {
         deploymentId,

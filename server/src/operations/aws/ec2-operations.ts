@@ -364,7 +364,7 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
         }
     };
 
-    const { Regions: regions } = await describeRegions(credentialsId, input);
+    const { Regions: regions } = await describeRegions(input, credentialsId);
 
     const fsxRegionsList: Array<FSxAvailableRegions> = [];
 

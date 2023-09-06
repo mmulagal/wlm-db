@@ -41,7 +41,7 @@ async function getSnsTopics(credentialsId: string, region: string) {
 async function createAndSubscribeToSnsTopicInAllRegions() {
     logger.info('Create and subscribe to SNS topics in all region');
 
-    const { Regions: regions } = await describeRegions(undefined, {});
+    const { Regions: regions } = await describeRegions({});
     try {
         const queueName = WLMDB;
         const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, { QueueName: queueName });
