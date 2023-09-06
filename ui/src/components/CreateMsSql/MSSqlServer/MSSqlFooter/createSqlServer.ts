@@ -10,7 +10,7 @@ import {
     setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
@@ -28,7 +28,11 @@ const createMssqlPayload = (state: any) => {
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
-            return state.mssqlForm.encryption?.selectedRow[0]?.id;
+            if(state.mssqlForm.encryption?.selectedRow){
+                return state.mssqlForm.encryption?.selectedRow[0]?.id;
+            } else {
+                return '';
+            }
         } else {
             return state.mssqlForm.encryption?.encryptionArn;
         }

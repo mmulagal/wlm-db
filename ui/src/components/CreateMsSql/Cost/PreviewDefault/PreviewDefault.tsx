@@ -6,10 +6,25 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
 import { useDispatch } from 'react-redux';
-import { setSelectConfig } from '../../../../store/mssql/mssqlFormSlice';
+import { setSelectConfig, setThroughputValue } from '../../../../store/mssql/mssqlFormSlice';
+import { useEffect } from 'react';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { generateOptionType } from '../../../../utils/utilityFunctions';
+import { DEFAULT_MASTER_KEY, SQL_DATABASE } from '../../../../utils/consts';
 
 const PreviewDefault = () => {
     const dispatch = useDispatch();
+
+    const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+
+    useEffect(() => {
+        if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+            const throughputVal = '128 MBps';
+            const option = generateOptionType(throughputVal, throughputVal, '', false, '');
+            dispatch(setThroughputValue(option));
+        }
+    }, [selectedConfig]);
+
     const data = [
         {
             accordionName: SELECT_CONFIG.SECURITY_GROUP,
@@ -42,7 +57,7 @@ const PreviewDefault = () => {
             id: '5'
         },
         { accordionName: GENERAL.LICENSE, defaultValue: GENERAL.LICENSE_INCLUDED_AMI, editable: GENERAL.NO, id: '6' },
-        { accordionName: GENERAL.DATABASE_NAME, defaultValue: 'sqldatabase1', editable: GENERAL.YES, id: '7' },
+        { accordionName: GENERAL.DATABASE_NAME, defaultValue: SQL_DATABASE, editable: GENERAL.YES, id: '7' },
         { accordionName: GENERAL.KEY_PAIR, defaultValue: GENERAL.FIRST_IN_THE_LIST, editable: GENERAL.YES, id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
@@ -51,8 +66,8 @@ const PreviewDefault = () => {
             id: '9'
         },
         { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
-        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: '128 MB/s', editable: GENERAL.YES, id: '11' },
-        { accordionName: GENERAL.ENCRYPTION, defaultValue: 'AWS/FSx', editable: GENERAL.YES, id: '12' },
+        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: '128 MBps', editable: GENERAL.YES, id: '11' },
+        { accordionName: GENERAL.ENCRYPTION, defaultValue: DEFAULT_MASTER_KEY, editable: GENERAL.YES, id: '12' },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
             accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,

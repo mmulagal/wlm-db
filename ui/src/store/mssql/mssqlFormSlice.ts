@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
-import { AWS_MANAGED_AD, FSXADMIN } from '../../utils/consts';
+import { FSXADMIN } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
