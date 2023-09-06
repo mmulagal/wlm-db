@@ -1,0 +1,254 @@
+{
+    "resourceInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"used\":  342859776,\"total\":  4294557696,\"remaining\":  3951697920,\"percentUsed\":  7}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "dbCountInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"totalCount\":7}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "dbSummaryInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[ {  \"databaseId\":  1,  \"databaseName\":  \"Aaronview\",  \"creationDate\":  \"\\/Date(1681235380963)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  553648128.00 }, {  \"databaseId\":  2,  \"databaseName\":  \"Adamfort\",  \"creationDate\":  \"\\/Date(1681233819663)\\/\",  \"databaseStatus\":  \"OFFLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  3,  \"databaseName\":  \"Adamsview\",  \"creationDate\":  \"\\/Date(1681235388887)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  4,  \"databaseName\":  \"Alexandraside\",  \"creationDate\":  \"\\/Date(1681234989220)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  5,  \"databaseName\":  \"Alexandraville\",  \"creationDate\":  \"\\/Date(1681235398353)\\/\",  \"databaseStatus\":  \"OFFLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  6,  \"databaseName\":  \"Amandaberg\",  \"creationDate\":  \"\\/Date(1681233818587)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  7,  \"databaseName\":  \"Angelashire\",  \"creationDate\":  \"\\/Date(1681233816840)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "serNodesInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{ \"activeNode\":\"EC2AMAZ-GAAT3OE\", \"standbyNode\":\"EC2AMAZ-GAAT3OE\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "noOfConnInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\r\n    \"numberOfConnections\":  2\r\n}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "serStateInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"Current Service State\":  \"Running.\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "serVersionInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"serverDetails\":  \"Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) \\n\\tSep 24 2019 13:48:23 \\n\\tCopyright (C) 2019 Microsoft Corporation\\n\\tExpress Edition (64-bit) on Windows Server 2019 Datacenter 10.0 \\u003cX64\\u003e (Build 17763: ) (Hypervisor)\\n\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "serIsClusteredInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"isClustered\":  0}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "tablesCountInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"totalCount\":  7}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "tablesListInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{    \"tableName\":  \"Croats\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  270336},{    \"tableName\":  \"Employee\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  73728},{    \"tableName\":  \"Insomnia\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  59973632},{    \"tableName\":  \"KnightRiders\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  57614336},{    \"tableName\":  \"People\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  73728},{    \"tableName\":  \"Riders\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  3416064},{    \"tableName\":  \"Supes\",    \"tableType\":  \"USER_TABLE\",    \"tableSchema\":  \"dbo\",    \"tableSize\":  270336}]",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "diskSizeInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"TotalSize\":  4871618560}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "diskDataInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"total\":  161058123776,\"remaining\":  124290809856}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "serNameInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"serverName\":  \"EC2AMAZ-GAAT3OE\\\\DBSIQN_SQL\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "servGUIDInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"serverGuid\":  \"5c791ae7-0e86-486b-8dc2-bafef485b875\"}",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    }
+}

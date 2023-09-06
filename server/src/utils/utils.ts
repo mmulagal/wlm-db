@@ -24,7 +24,6 @@ import {
     FSX_SSD_MAX_SIZE,
     VALIDATION_AMI
 } from './consts';
-
 import getLogger, { hideSecretsValues } from './logger';
 import { createSecrets } from '../operations/aws/secrets-manager-operations';
 import {
@@ -72,7 +71,7 @@ async function isCfStackQuotaReached(credentialsId: string, region: string) {
     );
 }
 
-function generateFsxParams(FSxDataLunSize: number, isExistingFSx: boolean) {
+function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
@@ -144,8 +143,8 @@ async function formatTemplateParameters(
     enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateFsxParams(fsxConfiguration.databaseSize, true)
-        : await generateFsxParams(fsxConfiguration.databaseSize, false);
+        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
     const { roleName, roleArn } = await getRoleName(credentialsId);
 
@@ -242,7 +241,7 @@ export {
     filterSqlAmis,
     isVpcQuotaReached,
     isCfStackQuotaReached,
-    generateFsxParams,
+    generateDeploymentParams,
     formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,

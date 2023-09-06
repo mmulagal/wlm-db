@@ -13,12 +13,11 @@ import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../../utils/appConstants';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
-import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
-    setFsxNName,
     setFsxNPassword,
     setFsxNType,
     setFsxNExistingUserName
@@ -35,19 +34,18 @@ const FSxNSystem = () => {
 
     const { fsxnData, fsxnLoading } = useAppSelector(state => state.mssql.getFsxnList);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
-    const selectedFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNName);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedFsxnNewUserName = useAppSelector(state => state.mssqlForm.fsxN.fsxNNewUserName);
     const selectedFsxnExistingUserName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingUserName);
     const selectedFsxnPassword = useAppSelector(state => state.mssqlForm.fsxN.fsxNPassword);
-    const isFsxNNameFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
-    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     const [fsxType, setFsxType] = useState(selectedFsxnType);
 
@@ -95,13 +93,13 @@ const FSxNSystem = () => {
 
     //FSX Name check to highlight the field
     useEffect(() => {
-        if (!isFsxNNameFilled && isCreateHit) {
+        if (!isFsxNotFilled && isCreateHit) {
             setTimeout(() => {
                 //@ts-ignore
                 fsxNameRef?.current?.focus();
             }, 10);
         }
-    }, [isFsxNNameFilled, isCreateHit]);
+    }, [isFsxNotFilled, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -113,16 +111,22 @@ const FSxNSystem = () => {
             );
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        }
+        } else if (!selectedZone1 || !selectedZone2) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_AZ}
+                </Typography>
+            );
+        } 
 
         //Checking for the create new option
         if (fsxType === GENERAL.CREATE_NEW_FSXN) {
-            if (!selectedFsxnName || !selectedFsxnNewUserName || !selectedFsxnPassword) {
+            if (!selectedFsxnNewUserName || !selectedFsxnPassword) {
                 return <ActionRequired error={!isFsxNotFilled ? true : false} />;
             } else if (fsxPassVal(password)) {
                 return <AccordionError />;
             } else {
-                return <Typography variant="Regular_14">{selectedFsxnName}</Typography>;
+                return <Typography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</Typography>;
             }
         } else {
             //Checking for the existing option
@@ -140,8 +144,10 @@ const FSxNSystem = () => {
         <div className={styles.fsx}>
             <AccordionCard
                 isLoading={fsxnLoading}
-                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData}
+                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+                    || !selectedZone1 || !selectedZone2}
+                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+                    || !selectedZone1 || !selectedZone2}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
@@ -168,32 +174,8 @@ const FSxNSystem = () => {
                                 className=""
                             />
                         </div>
-                        <div className={styles.firstContainer}>
-                            {fsxType === GENERAL.CREATE_NEW_FSXN && (
-                                <TextField
-                                    label={GENERAL.FSXN_NAME}
-                                    ref={fsxNameRef}
-                                    error={!isFsxNNameFilled && !selectedFsxnName ? GENERAL.ACTION_REQUIRED : ''}
-                                    //@ts-ignore
-                                    isErrorPrefixHidden
-                                    customErrorWarningIcon={
-                                        <WarningIcon
-                                            style={{
-                                                width: '16px',
-                                                height: '16px',
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--error'
-                                            }}
-                                        />
-                                    }
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        dispatch(setFsxNName(e.target.value));
-                                    }}
-                                    value={selectedFsxnName ? selectedFsxnName : ''}
-                                    className={styles.textField}
-                                />
-                            )}
-                            {fsxType === GENERAL.SELECT_EXISTING_FSX && (
+                        {fsxType === GENERAL.SELECT_EXISTING_FSX && (
+                            <div className={styles.firstContainer}>
                                 <SelectField
                                     label={GENERAL.FSXN_NAME}
                                     isClearable={false}
@@ -205,9 +187,16 @@ const FSxNSystem = () => {
                                     options={generateExistingFsx}
                                     className={styles.textField}
                                 />
-                            )}
-                        </div>
-                        <div className={styles.secondContainer}>
+                            </div>
+                        )}
+
+                        <div
+                            className={
+                                fsxType === GENERAL.SELECT_EXISTING_FSX
+                                    ? `${styles.secondContainer}`
+                                    : `${styles.createNewContainer}`
+                            }
+                        >
                             <TextField
                                 label={GENERAL.USER_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,7 +228,23 @@ const FSxNSystem = () => {
                                         </div>
                                     </Typography>
                                 }
-                                error={useDelayedError(fsxPassVal(password))}
+                                error={
+                                    !isFsxNotFilled && !selectedFsxnPassword
+                                        ? GENERAL.ACTION_REQUIRED
+                                        : // eslint-disable-next-line react-hooks/rules-of-hooks
+                                          '' || fsxPassVal(password)
+                                }
+                                isErrorPrefixHidden
+                                customErrorWarningIcon={
+                                    <WarningIcon
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            //@ts-ignore
+                                            '--icon-primary-color': 'var(--error'
+                                        }}
+                                    />
+                                }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));

@@ -86,11 +86,11 @@ const createMssqlPayload = (state: any) => {
 
     const ontapSgGroupIdsList = (() => {
         let ontapSgGroupList = [];
+        const sgType = state.mssqlForm.securityGroup?.selectedSecurityType;
         const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
-        if (vpcsg) {
+        if(sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
             ontapSgGroupList.push(vpcsg);
         }
-
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (fsxnType === GENERAL.SELECT_EXISTING_FSX) {
             const fsxsg = state.mssqlForm.fsxN?.fsxNExistingName?.data?.securityGroups || [];
@@ -169,7 +169,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         !state.mssqlForm.activeDirectory.password;
 
     const fsxStateValue =
-        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNName) ||
+        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNPassword) ||
         (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !state.mssqlForm.fsxN.fsxNExistingName);
 
     const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
@@ -203,7 +203,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     //Check for DB Name - InvalidName
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
+        input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
     const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));
