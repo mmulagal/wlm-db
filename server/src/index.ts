@@ -37,7 +37,7 @@ import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
-import { execute, initializeDatabase } from './utils/utils';
+import { execute, initializeDatabase } from './utils/prisma-utils';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');

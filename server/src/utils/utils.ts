@@ -2,10 +2,8 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { exec } from 'child_process';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import { SQL_AMI_NAMES, WLMDB, USER_TOKEN, DEFAULT_AWS_REGION, FSX_SSD_MIN_SIZE, FSX_SSD_MAX_SIZE } from './consts';
@@ -14,26 +12,6 @@ import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 
 const logger = getLogger();
-
-const prisma: PrismaClient = new PrismaClient();
-
-async function initializeDatabase() {
-    await prisma.$connect();
-}
-
-async function execute(command: string, timeout?: number, cwd?: string) {
-    logger.info('Executing command:', { command, timeout, cwd });
-
-    return new Promise(resolve => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        exec(command, { cwd, timeout }, (error: any, stdout: any, stderr: any) => {
-            if (error) {
-                logger.error('Failed to execute shell commands', error);
-            }
-            resolve(stdout || stderr);
-        });
-    });
-}
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -154,9 +132,6 @@ async function sleep(ms: number) {
 }
 
 export {
-    prisma,
-    execute,
-    initializeDatabase,
     filterSqlAmis,
     generateDeploymentParams,
     getSubjectFromBearerToken,

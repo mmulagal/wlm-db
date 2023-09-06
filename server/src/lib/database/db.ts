@@ -1,7 +1,7 @@
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
-import { prisma } from '../../utils/utils';
+import { prisma } from '../../utils/prisma-utils';
 
 const logger = getLogger();
 
@@ -296,7 +296,7 @@ async function deleteConfig(accountId: string, id: string) {
     return prisma.config.delete({
         where: {
             account_id: accountId,
-            id: id
+            id
         }
     });
 }
