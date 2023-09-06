@@ -5373,6 +5373,7 @@
                 "value": "value1"
             }
         ],
-        "saveConfigName": ""
+        "saveConfigName": "",
+        "selectConfig": "Standard create"
     }
 }
