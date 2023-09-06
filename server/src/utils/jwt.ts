@@ -28,16 +28,13 @@ async function verifyToken(token: string) {
                     issuer: `${AUTH0_SERVER_ADDRESS}/`,
                     algorithms: ['RS256']
                 },
-                (error, payload) => {
-                    return error || !payload ? reject(error) : resolve(payload);
-                }
+                (error, payload) => (error || !payload ? reject(error) : resolve(payload))
             );
         });
-    } else {
-        const errMsg = 'Token decode failed';
-        logger.error(errMsg);
-        throw new Error(errMsg);
     }
+    const errMsg = 'Token decode failed';
+    logger.error(errMsg);
+    throw new Error(errMsg);
 }
 
 const jwtOperation = { verifyToken };

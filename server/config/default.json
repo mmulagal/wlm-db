@@ -24,6 +24,12 @@
             "connect-timeout": "2s",
             "response-timeout": "50s",
             "retry-count": 2
+        },
+        "batch": {
+            "lookup-timeout": "10s",
+            "connect-timeout": "30s",
+            "response-timeout": "30s",
+            "retry-count": 1
         }
     },
     "log4js": {

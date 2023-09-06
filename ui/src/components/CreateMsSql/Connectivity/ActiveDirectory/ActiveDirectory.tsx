@@ -39,8 +39,10 @@ const ActiveDirectory = () => {
     const isADNotFilled = useAppSelector(state => state.msSqlAction.activeDirectorySelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
-    const [userName, setUserName] = useState('');
-    const [password, setPassword] = useState('');
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+
+    const userName = useAppSelector(state => state.mssqlForm.activeDirectory.userName);
+    const password = useAppSelector(state => state.mssqlForm.activeDirectory.password);
 
     //Refs
     const domainNameRef = useRef(null);
@@ -106,11 +108,13 @@ const ActiveDirectory = () => {
     }, [versions]);
 
     useEffect(() => {
-        dispatch(setSelectedADDomainName(null));
-        dispatch(setSelectedADDomainAddress(''));
-        dispatch(setSelectedADScenarioType(''));
-        setUserName('');
-        setPassword('');
+        if(!isLoadConfig){
+            dispatch(setSelectedADDomainName(null));
+            dispatch(setSelectedADDomainAddress(''));
+            dispatch(setSelectedADScenarioType(''));
+            dispatch(setSelectedADUserName(''));
+            dispatch(setSelectedADPassword(''));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateActiveDirectories]);
 
@@ -263,7 +267,6 @@ const ActiveDirectory = () => {
                                     />
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setUserName(e.target.value);
                                     dispatch(setSelectedADUserName(e.target.value));
                                 }}
                                 value={userName}
@@ -273,7 +276,6 @@ const ActiveDirectory = () => {
                                 label={GENERAL.PASSWORD}
                                 ref={passwordRefAD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setPassword(e.target.value);
                                     dispatch(setSelectedADPassword(e.target.value));
                                 }}
                                 error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : ''}

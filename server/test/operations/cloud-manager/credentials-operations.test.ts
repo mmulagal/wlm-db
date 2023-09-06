@@ -2,11 +2,11 @@ import { getCredentials } from '../../../src/operations/cloud-manager/credential
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 
-const aws_credentialsType = 'aws_assume_role';
+const awsCredentialsType = 'aws_assume_role';
 
 describe('getAwsCredentials method', () => {
     it('getAwsCredentials method should return mock data', async () => {
-        const resp = await getCredentials(aws_credentialsType);
+        const resp = await getCredentials(awsCredentialsType);
         expect(resp[0].credentialsId).toBeDefined();
     });
 });

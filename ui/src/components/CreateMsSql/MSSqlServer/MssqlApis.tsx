@@ -2,6 +2,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetAdsListQuery,
     useGetAmiListQuery,
+    useGetConfigListQuery,
     useGetCredentialsQuery,
     useGetFsxnListQuery,
     useGetInstanceTypesQuery,
@@ -20,15 +21,20 @@ import {
     addKeyPairList,
     addKmsKeysList,
     addRegions,
+    addSavedConfigList,
     addSnsList,
     addVpcList
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
 import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
-import { formatKmsData } from '../../../utils/utilityFunctions';
+import { formatKmsData, formatSize, generateOptionType } from '../../../utils/utilityFunctions';
+import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
+import { SELECT_CONFIG } from '../../../utils/appConstants';
+
 
 const MssqlApis = () => {
     const dispatch = useAppDispatch();
+    const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
     // CredentialId state
     const [selectedCredId, setSelectedCredId] = useState(undefined);
@@ -182,6 +188,13 @@ const MssqlApis = () => {
         }
     );
 
+    // API call to get saved configuration list
+    const {
+        data: configData,
+        isFetching: configLoading,
+        isError: configError
+    } = useGetConfigListQuery({});
+
     // To add credentials information in MssqlEntities
     useEffect(() => {
         dispatch(addCredentials({ credentialData, credentialLoading, credentialError }));
@@ -254,6 +267,13 @@ const MssqlApis = () => {
             dispatch(addAmiList({ undefined, amiLoading, amiError }));
         } else {
             dispatch(addAmiList({ amiData, amiLoading, amiError }));
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+                const firstAmi = amiData?.amis[0];
+                const amiVal = firstAmi?.imageId;
+                const amiName = firstAmi?.name;
+                const option = generateOptionType(amiVal, amiVal, amiName, false, '');
+                dispatch(setSelectedLicenseId(option));
+            }
         }
     }, [dispatch, amiData, amiLoading, amiError]);
 
@@ -273,6 +293,9 @@ const MssqlApis = () => {
         } else {
             const kmsData = formatKmsData(kmsList);
             dispatch(addKmsKeysList({ kmsData, kmsLoading, kmsError }));
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE && kmsData && kmsData.length > 0){
+                dispatch(setEncryptionRow([kmsData[0]]));
+            }
         }
     }, [dispatch, kmsList, kmsLoading, kmsError]);
 
@@ -282,6 +305,12 @@ const MssqlApis = () => {
             dispatch(addKeyPairList({ undefined, keyPairLoading, keyPairError }));
         } else {
             dispatch(addKeyPairList({ keyPairData, keyPairLoading, keyPairError }));
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+                const keyPaitFirst = keyPairData?.keyPairs[0];
+                const keyPairName = keyPaitFirst?.name || '';
+                const option = generateOptionType(keyPairName, keyPairName, '', false, '', keyPaitFirst);
+                dispatch(setSelectedKeyPair(option));
+            }
         }
     }, [dispatch, keyPairData, keyPairLoading, keyPairError]);
 
@@ -291,6 +320,22 @@ const MssqlApis = () => {
             dispatch(addInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
         } else {
             dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+                const firstInstanceName = instanceTypeData?.instanceTypes[0];
+                const value = firstInstanceName?.instanceType || '';
+                let label2 = '';
+                if (firstInstanceName?.vCpus) {
+                    label2 += firstInstanceName?.vCpus + 'vCPU, ';
+                }
+                if (firstInstanceName?.ramInMib) {
+                    label2 += formatSize(firstInstanceName?.ramInMib, 'mib') + ' RAM, ';
+                }
+                if (firstInstanceName?.iopsInMbps) {
+                    label2 += firstInstanceName?.iopsInMbps + 'Mbps';
+                }
+                const option = generateOptionType(value, value, label2, false, '', firstInstanceName);
+                dispatch(setInstanceType(option));
+            }
         }
     }, [dispatch, instanceTypeData, instanceTypeLoading, instanceTypeError]);
 
@@ -302,6 +347,12 @@ const MssqlApis = () => {
             dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
         }
     }, [dispatch, fsxnData, fsxnLoading, fsxnError]);
+
+    // To add saved configuration list
+    useEffect(() => {
+        dispatch(addSavedConfigList({configData, configLoading, configError}));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [configData, configLoading, configError]);
 
     return;
 };

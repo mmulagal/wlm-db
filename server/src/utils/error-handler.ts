@@ -24,16 +24,16 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         reply.status(errCode).send({ message: error.message });
     } else if (isHTTPError(error)) {
         const body = error.response.body as any;
-        const { statusCode } = error.response;
+        const { statusCode: httpStatusCode } = error.response;
         if (body.error && isArray(body.error.errors)) {
             // then it's gcp error
-            reply.status(statusCode).send({ message: body.error.message });
+            reply.status(httpStatusCode).send({ message: body.error.message });
         }
-        const message = typeof body === 'string' ? body : body.message;
+        const responseMessage = typeof body === 'string' ? body : body.message;
         if (request.url.includes('proxy') && body.body) {
             return reply.status(statusCode).send(body.body);
         }
-        reply.status(statusCode).send({ message });
+        reply.status(statusCode).send({ responseMessage });
     } else if (isTimeoutError(error)) {
         reply.gatewayTimeout();
     } else {
@@ -62,11 +62,11 @@ function handleValidationError(
             ) => {
                 if (cur.params?.allowedValue) {
                     return `${acc}${cur.params?.allowedValue}, `;
-                } else if (cur.params?.allowedValues && Array.isArray(cur.params.allowedValues)) {
-                    return `${acc}${cur.params?.allowedValues.join(', ')}, `;
-                } else {
-                    return acc;
                 }
+                if (cur.params?.allowedValues && Array.isArray(cur.params.allowedValues)) {
+                    return `${acc}${cur.params?.allowedValues.join(', ')}, `;
+                }
+                return acc;
             },
             ''
         );

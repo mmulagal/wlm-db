@@ -1,4 +1,5 @@
 import createError from 'http-errors';
+import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
@@ -32,23 +33,112 @@ import {
     TEMPLATE_CLOUD_PROVIDER_ID,
     MASTER_TEMPLATE_PATH,
     WLMDB,
-    TEMPLATE_SQS_SERVICE_TOKEN
+    TEMPLATE_SQS_SERVICE_TOKEN,
+    TEMPLATE_OPTIONAL_PARAMETERS
 } from '../utils/consts';
-import {
-    derivePropertiesFromARN,
-    formatTemplateParameters,
-    generateDeploymentParams,
-    getQueueArn,
-    isCfStackQuotaReached,
-    isSameRoutetables
-} from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getQueueArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
+import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
+
+async function formatTemplateParameters(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean
+) {
+    const derivedParams = fsxConfiguration.fsxFileSystemId
+        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
+
+    const { roleName, roleArn } = await getRoleName(credentialsId);
+
+    await createSecrets(
+        credentialsId,
+        region,
+        [
+            {
+                secretName: derivedParams.DomainAdminSecretName,
+                username: adConfiguration.domainUsername,
+                password: adConfiguration.domainPassword
+            },
+            {
+                secretName: derivedParams.FSxAdministratorPasswordSecret,
+                username: fsxConfiguration.fsxUsername,
+                password: fsxConfiguration.fsxPassword
+            },
+            {
+                secretName: derivedParams.SQLServiceAccountSecret,
+                username: sqlConfiguration.serviceAccountName,
+                password: sqlConfiguration.serviceAccountPassword
+            }
+        ],
+        roleArn
+    );
+
+    const stackName = derivedParams.StackName;
+    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const templateParams: Array<Parameter> = [
+        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+    ];
+
+    Object.entries(derivedParams).forEach(([key, value]) => {
+        if (key !== 'StackName') {
+            templateParams.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    const clubbedParamList = {
+        ...networkConfiguration,
+        ...adConfiguration,
+        ...fsxConfiguration,
+        ...sqlConfiguration,
+        ...ec2Configuration,
+        topicArn,
+        enableCloudWatch
+    };
+
+    Object.entries(clubbedParamList).forEach(([key, value]) => {
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            templateParams.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
+        if (!(key in clubbedParamList)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: ''
+            });
+        }
+    });
+
+    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
+    });
+
+    return { stackName, templateParameters: templateParams };
+}
 
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
@@ -112,7 +202,7 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    //Generate Signed-url and upload to bucket
+    // Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const signedURL = encodeURIComponent(await getPreSignedUrl(ASSETS_BUCKET_REGION));
@@ -197,7 +287,7 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
-    //Generate Signed-url and upload to bucket
+    // Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);

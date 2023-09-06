@@ -19,7 +19,7 @@ const DiscoveryFooter = () => {
 
     return (
         <>
-            <Button variant="secondary" isThin onClick={() => navigateToCanvas()}>
+            <Button variant="secondary" isThin onClick={() => navigateToCanvas('/')}>
                 {SELECT_CONFIG.PREVIOUS}
             </Button>
             <Button isThin onClick={handleCreate}>

@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 
-//General
+// General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
 
@@ -35,11 +35,11 @@ const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
 
 enum HEADERS {
     AUTHORIZATION = 'authorization',
-    REQUEST_ID = 'x-request-id',
+    REQUEST_ID_HEADER = 'x-request-id',
     SERVICE_REQUEST_ID = 'x-service-request-id',
     TENANCY_ACCOUNT_ID = 'x-tenancy-account-id',
     CERTIFICATE_AUTHORITY = 'x-certificate-authority',
-    WORKSPACE_ID = 'x-workspace-id',
+    WORKSPACE_ID_HEADER = 'x-workspace-id',
     TOKEN = 'x-token',
     ENDPOINT = 'x-endpoint',
     CERTIFICATE = 'x-certificate',

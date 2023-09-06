@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -17,8 +17,9 @@ import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { SQL_USERNAME } from '../../../../utils/consts';
 
 const DatabaseCredentials = () => {
-    const [userName, setUserName] = useState(SQL_USERNAME);
-    const [password, setPassword] = useState('');
+
+    const userName = useAppSelector(state => state.mssqlForm.dbCredentials.name);
+    const password = useAppSelector(state => state.mssqlForm.dbCredentials.password);
 
     const passwordRef = useRef(null);
 
@@ -27,7 +28,9 @@ const DatabaseCredentials = () => {
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     useEffect(() => {
-        dispatch(setDBCredentialsName(userName));
+        if(!userName){
+            dispatch(setDBCredentialsName(SQL_USERNAME));
+        }
     });
 
     useEffect(() => {
@@ -110,7 +113,6 @@ const DatabaseCredentials = () => {
                                 }
                                 error={useDelayedError(isValidUserName(userName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setUserName(e.target.value);
                                     dispatch(setDBCredentialsName(e.target.value));
                                 }}
                                 value={userName}
@@ -135,7 +137,6 @@ const DatabaseCredentials = () => {
                                     />
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setPassword(e.target.value);
                                     dispatch(setDBCredentialsPassword(e.target.value));
                                 }}
                                 value={password}

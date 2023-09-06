@@ -71,7 +71,7 @@ async function callSsmExecution(
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
         Parameters: {
-            commands: commands
+            commands
         }
     };
     let params = {
@@ -269,7 +269,9 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
         tablesList.push(...resp);
         offset += DB_ROWS_COUNT;
     }
-    tablesList.map(result => (result.databaseName = databaseName));
+    tablesList.forEach(result => {
+        result.databaseName = databaseName;
+    });
 
     return { tables: tablesList };
 }
@@ -363,7 +365,7 @@ async function discoverMsSqlServer(
             propertyName: 'properties',
             propertyValue: JSON.stringify({
                 location: CloudProviders.AWS,
-                credentialsId: credentialsId,
+                credentialsId,
                 region: regionId,
                 activeInstanceId: activeNodeInstanceId,
                 standbyInstanceId: standbyNodeInstanceId,

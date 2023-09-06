@@ -97,7 +97,7 @@ const AmiResponse = Type.Object({
     )
 });
 
-//SNS list topics Response
+// SNS list topics Response
 const SnsResponse = Type.Object({
     topics: Type.Array(
         Type.Object({

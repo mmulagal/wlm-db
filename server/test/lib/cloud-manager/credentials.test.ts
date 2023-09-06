@@ -7,15 +7,13 @@ import {
 } from '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 
-const account_id = 'account-' + `${faker.string.alpha(6)}`;
+const accountId = `account-${faker.string.alpha(6)}`;
 
-vi.mock('../../../src/utils/async-local-storage.ts', () => {
-    return {
-        getAsyncLocalStorageResource() {
-            return account_id;
-        }
-    };
-});
+vi.mock('../../../src/utils/async-local-storage.ts', () => ({
+    getAsyncLocalStorageResource() {
+        return accountId;
+    }
+}));
 
 describe('getAllAwsCredentials', () => {
     it('should return a list of AWS credentials', async () => {

@@ -2,49 +2,16 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import createError from 'http-errors';
 import { exec } from 'child_process';
-import { getAsyncLocalStorageResource } from './async-local-storage';
 import { trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-
-import { getVpcsList, getWindowsServerBaseAmi } from '../operations/aws/ec2-operations';
-import { currentCfStacksCount } from '../operations/aws/cloud-formation-operations';
-import { getCfQuota, getVpcQuota } from '../operations/aws/service-quotas-operations';
-import {
-    SQL_AMI_NAMES,
-    HttpErrorCodes,
-    STACKS_DEPLOYED,
-    WLMDB,
-    EC2_ROLE_NAME,
-    TEMPLATE_CONFIGURATION_MAPPING,
-    WLM_ASSETS,
-    USER_TOKEN,
-    TEMPLATE_OPTIONAL_PARAMETERS,
-    DEFAULT_AWS_REGION,
-    FSX_SSD_MIN_SIZE,
-    FSX_SSD_MAX_SIZE,
-    VALIDATION_AMI,
-    TEMPLATE_CLOUD_PROVIDER_ID,
-    TEMPLATE_CREDENTIALS_ID,
-    TEMPLATE_JWT_TOKEN,
-    TEMPLATE_ACCOUNT_ID,
-    ACCOUNT_ID,
-    TEMPLATE_SQS_SERVICE_TOKEN
-} from './consts';
-import getLogger, { hideSecretsValues } from './logger';
-import { createSecrets } from '../operations/aws/secrets-manager-operations';
-import {
-    CFNetworkConfigurationType,
-    EC2ConfigurationType,
-    ADConfigurationType,
-    FSXConfigurationType,
-    SQLConfigurationType
-} from '../routes/types/deployment.types';
-import { Parameter } from '@aws-sdk/client-cloudformation';
-import { getRoleName } from '../operations/cloud-manager/credentials-operations';
 import { PrismaClient } from '@prisma/client';
-import { generateAuthToken } from '../lib/cloud-manager/tenancy';
+import { getAsyncLocalStorageResource } from './async-local-storage';
+
+import { SQL_AMI_NAMES, WLMDB, USER_TOKEN, DEFAULT_AWS_REGION, FSX_SSD_MIN_SIZE, FSX_SSD_MAX_SIZE } from './consts';
+
+import getLogger, { hideSecretsValues } from './logger';
+import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
 
 const logger = getLogger();
 
@@ -77,30 +44,6 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
         .filter(ami => (dbEdition ? ami.toLowerCase().includes(dbEdition.toLowerCase()) : true));
 }
 
-async function isVpcQuotaReached(credentialsId: string, region: string) {
-    logger.info('Performing vpc quota check in region ', { credentialsId, region });
-    const quotaDetails = await getVpcQuota(credentialsId, region);
-    const currentVpcCount = (await getVpcsList(credentialsId, region)).vpcs.length;
-    return currentVpcCount == quotaDetails.vpcCountQuota;
-}
-
-async function isCfStackQuotaReached(credentialsId: string, region: string) {
-    logger.info('Performing cloudformation stacks quota check in region ', region);
-    const quotaDetails = await getCfQuota(credentialsId, region);
-    const stacksCount = await currentCfStacksCount(credentialsId, region);
-    if (!stacksCount.currentStacksCount) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to get cloudformation stacks in region ${region} and credentials ${credentialsId}.`
-        );
-    }
-    // We might deploy more than 1 stack and diff (cfstackquota, current deployed stacks) must be >= STACKS_DEPLOYED
-    return (
-        stacksCount.currentStacksCount == quotaDetails.cfCountQuota ||
-        quotaDetails.cfCountQuota - stacksCount.currentStacksCount < STACKS_DEPLOYED
-    );
-}
-
 function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean) {
     const prefix = WLMDB;
     const suffix = Date.now();
@@ -125,7 +68,7 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
     return {
         UniqueID: suffix,
         StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
-        //VpcName: `${prefix}-vpc-${suffix}`,
+        // VpcName: `${prefix}-vpc-${suffix}`,
         SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
         FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
         FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
@@ -159,111 +102,6 @@ function getSubjectFromBearerToken() {
     const tokenWithoutBearerSuffix = trimEnd(tokenWithoutBearerPrefix, 'clients').trim();
     const decodedToken = jwt.decode(tokenWithoutBearerSuffix, { complete: true });
     return decodedToken?.payload.sub;
-}
-
-async function formatTemplateParameters(
-    credentialsId: string,
-    region: string,
-    networkConfiguration: CFNetworkConfigurationType,
-    ec2Configuration: EC2ConfigurationType,
-    adConfiguration: ADConfigurationType,
-    fsxConfiguration: FSXConfigurationType,
-    sqlConfiguration: SQLConfigurationType,
-    topicArn: string,
-    enableCloudWatch: boolean
-) {
-    const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
-
-    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
-
-    await createSecrets(
-        credentialsId,
-        region,
-        [
-            {
-                secretName: derivedParams.DomainAdminSecretName,
-                username: adConfiguration.domainUsername,
-                password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
-            },
-            {
-                secretName: derivedParams.SQLServiceAccountSecret,
-                username: sqlConfiguration.serviceAccountName,
-                password: sqlConfiguration.serviceAccountPassword
-            }
-        ],
-        roleArn
-    );
-
-    const stackName = derivedParams.StackName;
-    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
-    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const { token } = generateAuthToken({ email: 'wlmdb-service-user@netapp.com' }); //dummy user for JWT token
-
-    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const sqsServiceToken = awsAccountId ? getQueueArn(awsAccountId, WLMDB) : '';
-
-    const templateParams: Array<Parameter> = [
-        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
-        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
-        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
-        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
-        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
-        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
-        { ParameterKey: TEMPLATE_SQS_SERVICE_TOKEN, ParameterValue: sqsServiceToken }
-    ];
-
-    Object.entries(derivedParams).forEach(([key, value]) => {
-        if (key != 'StackName') {
-            templateParams.push({
-                ParameterKey: key,
-                ParameterValue: value.toString()
-            });
-        }
-    });
-
-    const clubbedParamList = {
-        ...networkConfiguration,
-        ...adConfiguration,
-        ...fsxConfiguration,
-        ...sqlConfiguration,
-        ...ec2Configuration,
-        topicArn,
-        enableCloudWatch
-    };
-
-    Object.entries(clubbedParamList).forEach(([key, value]) => {
-        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
-            templateParams.push({
-                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-                ParameterValue: value.toString()
-            });
-        }
-    });
-
-    Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
-        if (!(key in clubbedParamList)) {
-            templateParams.push({
-                ParameterKey: value,
-                ParameterValue: ''
-            });
-        }
-    });
-
-    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
-        templateParams.push({
-            ParameterKey: key,
-            ParameterValue: value.toString()
-        });
-    });
-
-    return { stackName: stackName, templateParameters: templateParams };
 }
 
 function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
@@ -309,8 +147,10 @@ function derivePropertiesFromARN(awsResourceArn: string) {
     }
 }
 
-async function waitFor(ms: number) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+async function sleep(ms: number) {
+    await new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
 }
 
 export {
@@ -318,10 +158,7 @@ export {
     execute,
     initializeDatabase,
     filterSqlAmis,
-    isVpcQuotaReached,
-    isCfStackQuotaReached,
     generateDeploymentParams,
-    formatTemplateParameters,
     getSubjectFromBearerToken,
     hideSecretsValues,
     isSameRoutetables,
@@ -329,5 +166,5 @@ export {
     getQueueArn,
     getQueueUrl,
     derivePropertiesFromARN,
-    waitFor
+    sleep
 };

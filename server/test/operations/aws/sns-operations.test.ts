@@ -1,5 +1,5 @@
-import { getSnsTopics } from '../../../src/operations/aws/sns-operations';
 import { faker } from '@faker-js/faker';
+import { getSnsTopics } from '../../../src/operations/aws/sns-operations';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/sns-scope';

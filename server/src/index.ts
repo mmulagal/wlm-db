@@ -1,5 +1,6 @@
 import config from 'config';
 import randomize from 'randomatic';
+import { JwtPayload } from 'jsonwebtoken';
 import './utils/tracer';
 import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
@@ -37,7 +38,6 @@ import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/utils';
-import { JwtPayload } from 'jsonwebtoken';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -176,7 +176,7 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID]: workspaceId },
+                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId },
                     params: { accountId },
                     id: requestId
                 } = request;

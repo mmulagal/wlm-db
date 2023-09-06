@@ -1,5 +1,5 @@
-import { listTopics, createTopic, subscribeTopic } from '../../../src/lib/aws/sns';
 import { faker } from '@faker-js/faker';
+import { listTopics, createTopic, subscribeTopic } from '../../../src/lib/aws/sns';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/sns-scope';

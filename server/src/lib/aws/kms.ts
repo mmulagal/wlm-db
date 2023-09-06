@@ -44,7 +44,7 @@ async function listAliases(
 ): Promise<Array<AliasListEntry>> {
     logger.debug('List aliases for a key', { credentialsId, region, params, markerId });
 
-    const kms = kmsClient ? kmsClient : await getKMS(region, credentialsId);
+    const kms = kmsClient || (await getKMS(region, credentialsId));
 
     if (markerId) {
         params.Marker = markerId;
@@ -83,7 +83,7 @@ async function listKeys(
         markerId
     });
 
-    const kms = kmsClient ? kmsClient : await getKMS(region, credentialsId);
+    const kms = kmsClient || (await getKMS(region, credentialsId));
 
     const {
         Keys: keys,

@@ -139,7 +139,7 @@ async function getTenancyResourcesByType(resourceType: string) {
 async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: string) {
     logger.info('Getting tenancy resource details for resource:', resourceType, resourceId);
     const resource = (await getTenancyResourcesByType(resourceType)).find(
-        resource => resource.resourceIdentifier === resourceId
+        resourceObject => resourceObject.resourceIdentifier === resourceId
     );
     if (resource) {
         if (resource?.metadata?.length) {
@@ -149,9 +149,8 @@ async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: 
         }
 
         return resource;
-    } else {
-        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
+    throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
 }
 
 async function removeResource(resourceIdentifier: string) {
@@ -163,7 +162,7 @@ async function removeResource(resourceIdentifier: string) {
         return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
             headers: {
                 [HEADERS.AUTHORIZATION]: token,
-                [HEADERS.WORKSPACE_ID]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
+                [HEADERS.WORKSPACE_ID_HEADER]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
             }
         });
     } catch (err) {

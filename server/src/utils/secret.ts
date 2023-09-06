@@ -1,6 +1,6 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { SECRETS_MANAGER_KEYS, SECRETS } from '../utils/consts';
-import getLogger from '../utils/logger';
+import { SECRETS_MANAGER_KEYS, SECRETS } from './consts';
+import getLogger from './logger';
 
 const logger = getLogger();
 

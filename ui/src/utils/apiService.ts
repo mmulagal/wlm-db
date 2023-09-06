@@ -24,8 +24,8 @@ const rawBaseQuery = fetchBaseQuery({
 });
 
 export const buildBaseUrl = (api: BaseQueryApi): string => {
-    const {appContext} = api.getState() as RootState;
-    const {accountId } = appContext;
+    const {auth} = api.getState() as RootState;
+    const {accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
     return `${apiHost}/wlmdb/accounts/${accountId}/api/v1`;
@@ -199,6 +199,34 @@ export const resourceApi = createApi({
     }
 });
 
+export const configApi = createApi({
+    reducerPath: 'config',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getConfigList: builder.query({
+                query: () => ({url: `config`})
+            }),
+            getConfigData: builder.query({
+                query: ({configId}) => ({url: `config/${configId}`})
+            }),
+            saveConfigData: builder.mutation({
+                query: ({payload}) => ({
+                    url: `config`,
+                    method: 'POST',
+                    body: payload,
+                })
+            }),
+            deleteConfig: builder.mutation({
+                query: ({configId}) => ({
+                    url: `config/${configId}`,
+                    method: 'DELETE',
+                })
+            }),
+        }
+    }
+});
+
 export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
     useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
     useGetFsxnListQuery, useCreateSqlTemplateMutation,  useDeploySqlTemplateMutation } = awsApi;
@@ -207,3 +235,6 @@ export const {
     useRemoveMSSQLMutation, useGetMSSQLDatabasesQuery, useGetMSSQLSummaryQuery, useGetMSSQLCpuUtilizationQuery,
         useGetMSSQLDiskUtilizationQuery, useGetMSSQLMemoryUtilizationQuery, useBatchTablesMutation
 } = resourceApi;
+
+export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, 
+    useDeleteConfigMutation } = configApi;
