@@ -44,7 +44,7 @@ const MSSqlFooter = () => {
                         );
                         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
                         setTimeout(() => {
-                            navigateToCanvas();
+                            navigateToCanvas('/');
                         }, 3000);
                     }
                 })
@@ -56,7 +56,7 @@ const MSSqlFooter = () => {
 
     return (
         <>
-            <Button variant="secondary" isThin onClick={() => navigateToCanvas()}>
+            <Button variant="secondary" isThin onClick={() => navigateToCanvas('/')}>
                 {SELECT_CONFIG.CANCEL}
             </Button>
             <Button isThin onClick={handleCreate}>
