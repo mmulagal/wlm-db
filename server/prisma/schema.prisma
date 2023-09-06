@@ -15,10 +15,10 @@ model deployment {
   deployment_id             String            @db.VarChar(255)
   parent_deployment_id      String?           @db.VarChar(255)
   deployment_name           String            @db.VarChar(255)
-  account_id                String            @db.VarChar(80)
+  account_id                String            @db.VarChar(30)
   cloud_provider_account_id String?           @db.VarChar(80)
-  cloud_provider_name       String?           @db.VarChar(80)
-  region                    String            @db.VarChar(80)
+  cloud_provider_name       String?           @db.VarChar(30)
+  region                    String            @db.VarChar(30)
   credentials_id            String            @db.VarChar(80)
   deployment_status         DEPLOYMENT_STATUS
   deployment_status_reason  String?           @db.Text
@@ -35,7 +35,7 @@ model deployment {
 model event {
   id                  String            @id @default(uuid())
   event_id            String            @db.VarChar(255)
-  account_id          String            @db.VarChar(255)
+  account_id          String            @db.VarChar(30)
   deployment_id       String            @db.VarChar(255)
   deployment_name     String            @db.VarChar(255)
   event_status        DEPLOYMENT_STATUS
@@ -53,14 +53,14 @@ model event {
 
 model resource {
   id                        String  @id @default(uuid())
-  account_id                String  @db.VarChar(80)
+  account_id                String  @db.VarChar(30)
   resource_id               String  @db.VarChar(255)
   resource_name             String? @db.VarChar(255)
   resource_type             String  @db.VarChar(20)
   co_relation_id            String? @db.VarChar(20)
   cloud_provider_account_id String? @db.VarChar(80)
-  cloud_provider_name       String? @db.VarChar(80)
-  region                    String? @db.VarChar(80)
+  cloud_provider_name       String? @db.VarChar(30)
+  region                    String? @db.VarChar(30)
   metadata                  Json?   @default("{}")
 
   @@index([account_id], map: "k_wlmdb_resource_account_id")
@@ -69,7 +69,7 @@ model resource {
 
 model config {
   id            String   @id @default(uuid())
-  account_id    String   @db.VarChar(80)
+  account_id    String   @db.VarChar(30)
   name          String   @db.VarChar(255)
   user          String   @db.VarChar(255)
   creation_time DateTime @db.DateTime(0)
