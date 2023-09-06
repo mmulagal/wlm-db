@@ -25,6 +25,7 @@ model deployment {
   start_time                DateTime          @db.DateTime(0)
   end_time                  DateTime?         @db.DateTime(0)
   data                      Json?             @default("{}")
+  event                    event[]
 
   @@unique([account_id, deployment_id], name: "uk_wlmdb_deployment_account_id_deployment_id", map: "uk_wlmdb_deployment_account_id_deployment_id")
   @@index([account_id], map: "k_wlmdb_deployment_account_id")
@@ -34,6 +35,7 @@ model deployment {
 model event {
   id                  String            @id @default(uuid())
   event_id            String            @db.VarChar(255)
+  account_id          String            @db.VarChar(255)
   deployment_id       String            @db.VarChar(255)
   deployment_name     String            @db.VarChar(255)
   event_status        DEPLOYMENT_STATUS
@@ -41,8 +43,10 @@ model event {
   resource_type       String?           @db.VarChar(255)
   time                DateTime          @db.DateTime(0)
   data                Json?             @default("{}")
+  deployment          deployment        @relation(fields: [account_id, deployment_id], references: [account_id, deployment_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_wlmdb_event_deployment_id")
 
-  @@unique([deployment_id, event_id], name: "uk_wlmdb_deployment_deployment_id_event_id", map: "uk_wlmdb_deployment_deployment_id_event_id")
+
+  @@unique([deployment_id, event_id], name: "uk_wlmdb_event_deployment_id_event_id", map: "uk_wlmdb_event_deployment_id_event_id")
   @@index([event_id], map: "k_wlmdb_event_event_id")
   @@index([deployment_id], map: "k_wlmdb_event_deployment_id")
 }

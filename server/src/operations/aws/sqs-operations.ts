@@ -1,6 +1,5 @@
 import ms from 'ms';
 import config from 'config';
-import Promise from 'bluebird';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
@@ -62,9 +61,8 @@ async function processCloudFormationMessages() {
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (sqsMessages) {
-                await Promise.map(
-                    sqsMessages,
-                    async sqsMessage => {
+                await Promise.all(
+                    sqsMessages.map(async sqsMessage => {
                         const {
                             message: { Message = undefined, Timestamp: timestamp }
                         } = isValidJsonString(sqsMessage?.Body) || {};
@@ -112,9 +110,9 @@ async function processCloudFormationMessages() {
                                             //TRACK_STATUS_CUSTOM_RESOURCE is a custom resource created during start of a deployment
                                             await createDeployment(accountId, {
                                                 deploymentId: stackId,
-                                                cloudProviderAccountId: cloudProviderAccountId,
+                                                cloudProviderAccountId,
                                                 cloudProviderName: CloudProviders.AWS,
-                                                credentialsId: credentialsId,
+                                                credentialsId,
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
                                                 startTime: new Date(timestamp).valueOf(),
                                                 region: region,
@@ -177,20 +175,7 @@ async function processCloudFormationMessages() {
                             } = stackMessage;
                             if (stackId) {
                                 const { isValid, message } = isValidJsonString(resourceProperties);
-                                try {
-                                    await createEvent({
-                                        deploymentId: stackId,
-                                        deploymentName: stackName,
-                                        resourceType: resourceType,
-                                        time: new Date(timestamp).valueOf(),
-                                        eventId: eventId,
-                                        eventStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                        eventStatusReason: resourceStatusReason,
-                                        data: isValid ? message : {}
-                                    });
-                                } catch (error) {
-                                    logger.error('Failed to create event', error);
-                                }
+
                                 const MASTER_STACK_NAME_PATTERN = /WLMDB-SQLFCIStack-(\d{13})/;
                                 const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
                                 if (matchingMasterStack) {
@@ -201,6 +186,22 @@ async function processCloudFormationMessages() {
                                         masterStackName
                                     );
                                     if (masterStackDeployment) {
+                                        try {
+                                            await createEvent({
+                                                deploymentId: stackId,
+                                                accountId: masterStackDeployment.account_id,
+                                                deploymentName: stackName,
+                                                resourceType,
+                                                time: new Date(timestamp).valueOf(),
+                                                eventId: eventId,
+                                                eventStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                eventStatusReason: resourceStatusReason,
+                                                data: isValid ? message : {}
+                                            });
+                                        } catch (error) {
+                                            logger.error('Failed to create event', error);
+                                        }
+
                                         const {
                                             id,
                                             account_id: accountId,
@@ -256,14 +257,17 @@ async function processCloudFormationMessages() {
                                             ReceiptHandle: sqsMessage?.ReceiptHandle
                                         });
                                     }
+                                } else {
+                                    logger.error(
+                                        'The SQS event notification does not correspond to a valid WLMDB stack deployment'
+                                    );
                                 }
                             }
                         }
-                    },
-                    { concurrency: 3 }
+                    })
                 );
             }
-            setImmediate(() => processCloudFormationMessages());
+            processCloudFormationMessages();
         } catch (err: any) {
             if (err.code === ERROR_CODE_SQS_NON_EXISTENT_QUEUE) {
                 logger.warn(`'${queueUrl}' queue does not exist. Not polling for messages`);

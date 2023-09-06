@@ -155,6 +155,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
 
 async function createEvent(params: {
     eventId: string;
+    accountId: string;
     deploymentId: string;
     deploymentName: string;
     eventStatus: DEPLOYMENT_STATUS;
@@ -164,10 +165,21 @@ async function createEvent(params: {
     data?: object;
 }) {
     logger.debug('Creating event', { params });
-    const { eventId, deploymentId, deploymentName, eventStatus, eventStatusReason, resourceType, time, data } = params;
+    const {
+        eventId,
+        accountId,
+        deploymentId,
+        deploymentName,
+        eventStatus,
+        eventStatusReason,
+        resourceType,
+        time,
+        data
+    } = params;
     return prisma.event.create({
         data: {
             event_id: eventId,
+            account_id: accountId,
             deployment_id: deploymentId,
             deployment_name: deploymentName,
             event_status: eventStatus,

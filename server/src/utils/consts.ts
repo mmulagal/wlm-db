@@ -154,7 +154,7 @@ const SECRETS: Record<string, string | undefined> = {
         : config.has('service-token.client_secret')
         ? config.get('service-token.client_secret')
         : undefined,
-    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL : undefined
+    DATABASE_URL: process.env.DATABASE_URL
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {

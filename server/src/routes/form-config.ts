@@ -1,10 +1,4 @@
 import { FastifyInstance } from 'fastify/types/instance';
-import {
-    FormConfigListParamsType,
-    FormConfigListResponseType,
-    FormConfigObjectParamsType,
-    FormConfigObjectResponseType
-} from './types/form-config.types';
 import { FormConfigListSchema, FormConfigCreateSchema, FormConfigObjectSchema } from './schemas/form-config-schema';
 import { getAllSavedConfig, getSavedConfig, saveConfig } from '../operations/database/database-operations';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
@@ -14,10 +8,7 @@ const API_PATH_CONFIG: string = '/v1/config';
 export default function formConfigRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-    server.get<{
-        Params: FormConfigListParamsType;
-        Reply: FormConfigListResponseType;
-    }>(
+    server.get(
         `${API_PATH_CONFIG}`,
         {
             schema: FormConfigListSchema
@@ -30,10 +21,7 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get<{
-        Params: FormConfigObjectParamsType;
-        Reply: FormConfigObjectResponseType;
-    }>(
+    server.get(
         `${API_PATH_CONFIG}/:id`,
         {
             schema: FormConfigObjectSchema

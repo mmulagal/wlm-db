@@ -205,16 +205,6 @@ const app = fastify({
         return payload;
     });
 
-app.listen({ port, host }, err => {
-    if (err) {
-        logger.error('Failed to start server', err.message);
-        process.exit(1);
-    }
-    logger.info(`Server listening on ${host}:${port}`);
-    logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
-    validateSchema();
-});
-
 await createAndSubscribeToSnsTopicInAllRegions();
 processCloudFormationMessages();
 
@@ -224,3 +214,13 @@ try {
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
+
+app.listen({ port, host }, err => {
+    if (err) {
+        logger.error('Failed to start server', err.message);
+        process.exit(1);
+    }
+    logger.info(`Server listening on ${host}:${port}`);
+    logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
+    validateSchema();
+});

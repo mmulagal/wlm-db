@@ -7,7 +7,8 @@ import {
     deleteResource,
     listConfig,
     createConfig,
-    deleteConfig
+    deleteConfig,
+    createEvent
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -22,6 +23,18 @@ describe('List deployments', () => {
             deploymentStatus: 'CREATE_IN_PROGRESS',
             startTime: new Date('2023-08-21T11:10:35.875Z').valueOf(),
             region: 'us-east-1'
+        });
+
+        await createEvent({
+            eventId: 'test-event',
+            accountId: ACCOUNT_ID,
+            deploymentId:
+                'arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de',
+            deploymentName: 'TESTSTACK',
+            eventStatus: 'CREATE_IN_PROGRESS',
+            eventStatusReason: '',
+            resourceType: 'CloudFormation:Stack',
+            time: Date.now()
         });
         const resp = await listDeployments(ACCOUNT_ID);
         expect(resp[0].account_id).toEqual(ACCOUNT_ID);
