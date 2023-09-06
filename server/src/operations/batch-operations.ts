@@ -1,14 +1,16 @@
 import Promise from 'bluebird';
-import { HTTPMethods } from 'fastify';
+import { HTTPAlias } from 'got';
 import { isNil, omitBy } from 'lodash-es';
+import { gotInstanceForBatchRequest } from '../utils/got';
 import { BatchRequestBodyType, SingleBatchResponseType, BatchResponseType } from '../routes/types/batch.types';
 import { METHODS_WITH_PAYLOAD, HEADERS, USER_TOKEN, BATCH_API_CONCURRENCY_LIMIT } from '../utils/consts';
 import getLogger from '../utils/logger';
+
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
 
-export default async function executeBatchApiCalls(instance, requestBody: BatchRequestBodyType) {
+export default async function executeBatchApiCalls(requestBody: BatchRequestBodyType) {
     logger.info('Executing Batch Api calls', requestBody);
 
     const allApiResponse: BatchResponseType = await Promise.map(
@@ -18,27 +20,19 @@ export default async function executeBatchApiCalls(instance, requestBody: BatchR
             const { url, headers, payload, method } = singleRequest;
 
             try {
-                const response = await instance.inject({
-                    method: method as HTTPMethods,
-                    url,
-                    ...(METHODS_WITH_PAYLOAD.includes(method) && { payload: payload }),
+                const response = await gotInstanceForBatchRequest[method.toLowerCase() as HTTPAlias](url, {
                     headers: omitBy(
                         {
                             ...headers,
                             [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource<string>(USER_TOKEN)
                         },
                         isNil
-                    )
+                    ),
+                    ...(METHODS_WITH_PAYLOAD.includes(method) && { json: payload })
                 });
 
-                const { statusCode, payload: apiResponse } = response;
-                if (statusCode >= 400) {
-                    responseData.error = apiResponse ? JSON.parse(apiResponse) : 'Error';
-                    return responseData;
-                } else {
-                    responseData.data = apiResponse ? JSON.parse(apiResponse) : 'Success';
-                    return responseData;
-                }
+                responseData.data = response ? response : 'Success';
+                return responseData;
             } catch (err: any) {
                 const errMsg = `Failed to execute the batch api call. ${err.message}`;
                 logger.error(errMsg);

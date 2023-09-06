@@ -10,7 +10,7 @@ export default function batchRoutes(fastify: FastifyInstance) {
 
     server.post(`${API_PREFIX_PATH}`, { schema: BatchSchema }, async (request, reply) => {
         const { body } = request;
-        const response = await executeBatchApiCalls(fastify, body);
+        const response = await executeBatchApiCalls(body);
         return reply.send(response);
     });
 }
