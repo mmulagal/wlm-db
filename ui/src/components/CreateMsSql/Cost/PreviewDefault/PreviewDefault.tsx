@@ -15,7 +15,7 @@ import { DEFAULT_MASTER_KEY, SQL_DATABASE } from '../../../../utils/consts';
 const PreviewDefault = () => {
     const dispatch = useDispatch();
 
-    const selectedConfig = useAppSelector(state => state.mssqlForm.selectedConfig);
+    const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
 
     useEffect(() => {
         if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
@@ -23,7 +23,7 @@ const PreviewDefault = () => {
             const option = generateOptionType(throughputVal, throughputVal, '', false, '');
             dispatch(setThroughputValue(option));
         }
-    });
+    }, [selectedConfig]);
 
     const data = [
         {

@@ -28,7 +28,11 @@ const createMssqlPayload = (state: any) => {
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
-            return state.mssqlForm.encryption?.selectedRow[0]?.id;
+            if(state.mssqlForm.encryption?.selectedRow){
+                return state.mssqlForm.encryption?.selectedRow[0]?.id;
+            } else {
+                return '';
+            }
         } else {
             return state.mssqlForm.encryption?.encryptionArn;
         }

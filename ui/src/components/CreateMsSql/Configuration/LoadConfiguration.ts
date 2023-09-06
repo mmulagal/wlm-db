@@ -56,28 +56,28 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any) => {
 
 
 const checkMissingFields = (data: any) => {
-    const vpcStateValue = !data?.regionAndVpc.selectedVPC;
+    const vpcStateValue = !data?.regionAndVpc?.selectedVPC;
 
     const azStateValue =
-        !data?.availabilityZones.selectedAzNode1 ||
-        !data?.availabilityZones.selectedSubnetNode1 ||
-        !data?.availabilityZones.selectedAzNode2 ||
-        !data?.availabilityZones.selectedSubnetNode2;
+        !data?.availabilityZones?.selectedAzNode1 ||
+        !data?.availabilityZones?.selectedSubnetNode1 ||
+        !data?.availabilityZones?.selectedAzNode2 ||
+        !data?.availabilityZones?.selectedSubnetNode2;
 
-    const dbCredStateValue = !data?.dbCredentials.password;
+    const dbCredStateValue = !data?.dbCredentials?.password;
 
     const adStateValue =
-        !data?.activeDirectory.domainAddress ||
-        !data?.activeDirectory.domainName ||
-        !data?.activeDirectory.userName ||
-        !data?.activeDirectory.password;
+        !data?.activeDirectory?.domainAddress ||
+        !data?.activeDirectory?.domainName ||
+        !data?.activeDirectory?.userName ||
+        !data?.activeDirectory?.password;
 
     const fsxStateValue =
-        (data?.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !data?.fsxN.fsxNPassword) ||
-        (data?.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !data?.fsxN.fsxNExistingName);
+        (data?.fsxN?.fsxNType === GENERAL.CREATE_NEW_FSXN && !data?.fsxN?.fsxNPassword) ||
+        (data?.fsxN?.fsxNType === GENERAL.SELECT_EXISTING_FSX && !data?.fsxN?.fsxNExistingName);
 
-    const licenseIdCheck = !data?.license.selectedLicenseId;
-    const checkForUserName = isValidUserName(data?.dbCredentials.name);
+    const licenseIdCheck = !data?.license?.selectedLicenseId;
+    const checkForUserName = isValidUserName(data?.dbCredentials?.name);
 
     //Check for DB Name - InvalidName
     const input = data?.dbName;
