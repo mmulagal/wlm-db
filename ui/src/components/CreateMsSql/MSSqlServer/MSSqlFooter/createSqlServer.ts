@@ -66,7 +66,7 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const fsxVolThroughput = (() => {
-        let value = state.mssqlForm.throughput?.value || '';
+        const value = state.mssqlForm.throughput?.value || '';
         const value1 = value.split(' ');
         if (value1.length === 2) {
             if (value1[1] === 'GBps') {
