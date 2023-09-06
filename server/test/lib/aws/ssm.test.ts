@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { sendSSMCommand, getCommandInvocation } from '../../../src/lib/aws/ssm';
+import { SSM_PARAMS } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
@@ -10,22 +11,7 @@ const credentialsId = `${faker.string.alpha(20)}`;
 
 describe('sendSSMCommand', () => {
     it('sendSSMCommand', async () => {
-        const params = {
-            DocumentName: 'AWS-RunPowerShellScript',
-            Documentversion: '1',
-            Parameters: {
-                commands: [
-                    ' C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SELECT\n' +
-                        '                                (processmem.physical_memory_in_use_kb * 1024) AS used,\n' +
-                        '                                (sysmem.total_physical_memory_kb * 1024) AS total,\n' +
-                        '                                ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n' +
-                        '                                 ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n' +
-                        '                                 FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;"'
-                ]
-            },
-            InstanceIds: ['i-0880a21327284f67c']
-        };
-        const resp = await sendSSMCommand(credentialsId, 'ap-southeast-1', params);
+        const resp = await sendSSMCommand(credentialsId, 'ap-southeast-1', SSM_PARAMS);
         expect(resp).toEqual(ssmCommandOutput.resourceCommandResponse.Command.CommandId);
     });
 

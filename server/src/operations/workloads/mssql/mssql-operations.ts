@@ -34,6 +34,7 @@ import {
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { ServiceResourceRequest, registerServiceResource } from '../../../lib/cloud-manager/tenancy';
+import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 
 const logger = getLogger();
 
@@ -195,7 +196,8 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
             callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, diskUtilizationCommand),
             callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, dbSizecommand)
         ]);
-        const diskUtilization = {
+
+        const diskUtilization: UtilisationResponseBodyInterface = {
             used: size.TotalSize.toString(),
             total: diskdata.total.toString(),
             remaining: (Number(diskdata.total) - size.TotalSize).toString(),
@@ -203,6 +205,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         };
         return diskUtilization;
     }
+
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching  utilization', response);
 

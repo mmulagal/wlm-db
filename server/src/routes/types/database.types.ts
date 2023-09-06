@@ -1,4 +1,4 @@
-import { Type } from '@fastify/type-provider-typebox';
+import { Static, Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const DatabaseHeaders = Type.Object({
@@ -68,6 +68,8 @@ const UtilisationResponseBody = Type.Object({
     remaining: Type.String()
 });
 
+type UtilisationResponseBodyInterface = Static<typeof UtilisationResponseBody>;
+
 const TablesResponseBody = Type.Object({
     tables: Type.Array(
         Type.Object({
@@ -84,6 +86,7 @@ export {
     DatabaseParams,
     DatabasesResponseBody,
     UtilisationResponseBody,
+    UtilisationResponseBodyInterface,
     ServerSummaryResponse,
     Tablesparams,
     TablesResponseBody,
