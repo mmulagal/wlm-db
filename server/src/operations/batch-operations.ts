@@ -1,6 +1,7 @@
 import Promise from 'bluebird';
 import { HTTPAlias } from 'got';
-import { gotInstanceForInternalRequest } from '../utils/got';
+import { isNil, omitBy } from 'lodash-es';
+import { gotInstanceForBatchRequest } from '../utils/got';
 import { BatchRequestBodyType, SingleBatchResponseType, BatchResponseType } from '../routes/types/batch.types';
 import { METHODS_WITH_PAYLOAD, HEADERS, USER_TOKEN, BATCH_API_CONCURRENCY_LIMIT } from '../utils/consts';
 import getLogger from '../utils/logger';
@@ -19,11 +20,14 @@ export default async function executeBatchApiCalls(requestBody: BatchRequestBody
             const { url, headers, payload, method } = singleRequest;
 
             try {
-                const response = await gotInstanceForInternalRequest[method.toLowerCase() as HTTPAlias](url, {
-                    headers: {
-                        ...headers,
-                        [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource<string>(USER_TOKEN)
-                    },
+                const response = await gotInstanceForBatchRequest[method.toLowerCase() as HTTPAlias](url, {
+                    headers: omitBy(
+                        {
+                            ...headers,
+                            [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource<string>(USER_TOKEN)
+                        },
+                        isNil
+                    ),
                     ...(METHODS_WITH_PAYLOAD.includes(method) && { json: payload })
                 });
 

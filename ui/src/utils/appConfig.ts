@@ -57,7 +57,6 @@ const useInitialize = () => {
 
     useBlueXP({
         onReady: (initialData: any) => {
-            console.log("Initial Data : ",initialData);
             const {accessToken, accountId } = initialData;
             dispatch(updateAuthSuccess({accessToken: accessToken}));
             dispatch(updateAccountId(accountId));
