@@ -10,7 +10,7 @@ import {
     setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
@@ -62,7 +62,7 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const fsxVolThroughput = (() => {
-        const value = state.mssqlForm.throughput?.value || '';
+        let value = state.mssqlForm.throughput?.value || '';
         const value1 = value.split(' ');
         if (value1.length === 2) {
             if (value1[1] === 'GBps') {
