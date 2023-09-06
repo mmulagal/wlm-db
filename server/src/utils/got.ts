@@ -8,7 +8,7 @@ const logger = getLogger('got');
 
 const LOGGING_BODY_MAX_LEN = 1000;
 
-export const hooks: Hooks = {
+const hooks: Hooks = {
     beforeRetry: [
         (error: RequestError, retryCount) => {
             const {

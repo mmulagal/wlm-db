@@ -1,10 +1,10 @@
+import { Static } from '@fastify/type-provider-typebox';
+import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
 import { describeFSxFileSystems, describeFSxVolumes } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
-import { Static } from '@fastify/type-provider-typebox';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
 import { FSX_FILESYSTEM_TYPE, FSX_STORAGE_TYPE, AWS_RESOURCE_NAME_TAG } from '../../utils/consts';
-import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { getNetworkInterfacesList } from '../../operations/aws/ec2-operations';
+import { getNetworkInterfacesList } from './ec2-operations';
 
 const logger = getLogger();
 
@@ -33,8 +33,8 @@ async function getFSxFileSystemsList(
     // 3. DescribeFSxFileSystems() returns all filesystems in a given AWS
     //    region, spanning different VPCs. We shall return only the filesystems
     //    in the given VPC.
-    allFSxFilesystems = allFSxFilesystems?.filter(({ FileSystemType, FileSystemId, VpcId, StorageType }) => {
-        return (
+    allFSxFilesystems = allFSxFilesystems?.filter(
+        ({ FileSystemType, FileSystemId, VpcId, StorageType }) =>
             FileSystemType &&
             FileSystemType === FSX_FILESYSTEM_TYPE &&
             FileSystemId &&
@@ -43,8 +43,7 @@ async function getFSxFileSystemsList(
             vpcId === VpcId &&
             StorageType &&
             StorageType === FSX_STORAGE_TYPE
-        );
-    });
+    );
 
     if (allFSxFilesystems?.length) {
         for (const fs of allFSxFilesystems) {

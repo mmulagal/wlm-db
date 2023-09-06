@@ -1,5 +1,6 @@
 import { describeDirectories } from '../../lib/aws/directory-service';
 import getLogger from '../../utils/logger';
+
 const logger = getLogger();
 
 interface AdsInterface {

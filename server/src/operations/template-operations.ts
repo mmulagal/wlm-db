@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import Handlebars from 'handlebars';
+import { readFileSync } from 'fs';
 import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
@@ -12,7 +13,6 @@ import {
     MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { readFileSync } from 'fs';
 
 interface TemplateDetails {
     name: string;
@@ -29,7 +29,7 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
     const signedUrls: Map<string, TemplateDetails> = new Map();
 
     let assets = [];
-    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
+    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         assets = SQL_TEMPLATES_ASSETS;
     }
 
@@ -65,7 +65,7 @@ async function updateTemplateUrls(
 
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
-    if (templateType == TEMPLATE_TYPES.MASTER) {
+    if (templateType === TEMPLATE_TYPES.MASTER) {
         const contents = template({
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
@@ -73,7 +73,7 @@ async function updateTemplateUrls(
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || '')
         });
         await putObjectBucket(credentialsId, region, BUCKET_NAME, MASTER_TEMPLATE_PATH, contents);
-    } else if (templateType == TEMPLATE_TYPES.SQLSTACK) {
+    } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
             DSCSignature: decodeURI(signedUrls.get('DSCSignature')?.url || ''),
@@ -111,7 +111,7 @@ async function updateTemplateUrls(
             signedUrls.get('SQLTemplate')?.location || '',
             contents
         );
-    } else if (templateType == TEMPLATE_TYPES.VALIDATION) {
+    } else if (templateType === TEMPLATE_TYPES.VALIDATION) {
         const contents = template({
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
             AmazonLaunchWizardForCFNSignature: decodeURI(
@@ -138,7 +138,7 @@ async function updateTemplateUrls(
 async function uploadTemplates(credentialsId: string, region: string, resourceType: DatabaseTypes) {
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 
-    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
+    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const signedUrls = await generateSignedUrls(region, resourceType);
         await updateTemplateUrls(
             credentialsId,

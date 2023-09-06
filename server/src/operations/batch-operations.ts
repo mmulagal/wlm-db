@@ -31,7 +31,7 @@ export default async function executeBatchApiCalls(requestBody: BatchRequestBody
                     ...(METHODS_WITH_PAYLOAD.includes(method) && { json: payload })
                 });
 
-                responseData.data = response ? response : 'Success';
+                responseData.data = response || 'Success';
                 return responseData;
             } catch (err: any) {
                 const errMsg = `Failed to execute the batch api call. ${err.message}`;

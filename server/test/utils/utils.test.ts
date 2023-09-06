@@ -4,13 +4,9 @@ import '../simulator/scopes/aws/secrets-manager-scope';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
-vi.mock('../../src/lib/aws/secrets-manager', () => {
-    return {
-        createSecret: vi.fn().mockImplementation(async () => {
-            return secretManagerResponse;
-        })
-    };
-});
+vi.mock('../../src/lib/aws/secrets-manager', () => ({
+    createSecret: vi.fn().mockImplementation(async () => secretManagerResponse)
+}));
 
 describe(' Secrets Manager string', () => {
     it(' Create Secrets Manager String', async () => {

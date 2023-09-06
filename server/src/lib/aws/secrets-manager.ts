@@ -25,7 +25,7 @@ async function getSecretsManagerClient(credentialsId: string, region: string) {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
 
-    return new SecretsManagerClient({ region: region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
+    return new SecretsManagerClient({ region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
 async function putResourcePolicy(credentialsId: string, region: string, secretId: string, roleArn: string) {
@@ -53,7 +53,7 @@ async function createSecret(
 ) {
     logger.info('Create Secrets Manager String');
     const secretsManagerClient = await getSecretsManagerClient(credentialsId, region);
-    const secretString = { username: username, password: password };
+    const secretString = { username, password };
     const resp = await secretsManagerClient.send(
         new CreateSecretCommand({ Name: secretName, SecretString: JSON.stringify(secretString) })
     );

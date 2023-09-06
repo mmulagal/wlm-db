@@ -6,7 +6,7 @@ import {
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
 import { getSSMClient, sendSSMCommand, getCommandInvocation } from '../../lib/aws/ssm';
-import { waitFor } from '../../utils/utils';
+import { sleep } from '../../utils/utils';
 import { SSM_QUERY_EXECUTION_STATUS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
@@ -25,21 +25,20 @@ async function pollCommandStatus(
 
         const status = response.Status;
 
-        if (status === SSM_QUERY_EXECUTION_STATUS.SUCCESS || status == SSM_QUERY_EXECUTION_STATUS.FAILED) {
+        if (status === SSM_QUERY_EXECUTION_STATUS.SUCCESS || status === SSM_QUERY_EXECUTION_STATUS.FAILED) {
             return response;
-        } else {
-            await waitFor(100);
-            return await pollCommandStatus(ssmClient, pollParams);
         }
+
+        await sleep(100);
+        return pollCommandStatus(ssmClient, pollParams);
     } catch (error) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
-            await waitFor(100);
-            return await pollCommandStatus(ssmClient, pollParams);
-        } else {
-            logger.error('Error fetching command status:', error);
-            throw new Error('Error fetching command status:');
+            await sleep(100);
+            return pollCommandStatus(ssmClient, pollParams);
         }
+        logger.error('Error fetching command status:', error);
+        throw new Error('Error fetching command status:');
     }
 }
 
