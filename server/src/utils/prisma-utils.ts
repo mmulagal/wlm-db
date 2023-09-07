@@ -1,14 +1,24 @@
 import { exec } from 'child_process';
 import { PrismaClient } from '@prisma/client';
-
 import getLogger from './logger';
 
 const logger = getLogger();
 
-const prisma: PrismaClient = new PrismaClient();
-
+const prisma = { client: new PrismaClient() };
 async function initializeDatabase() {
-    await prisma.$connect();
+    prisma.client = new PrismaClient();
+
+    prisma.client.$use(async (params, next) => {
+        const before = Date.now();
+
+        const result = await next(params);
+
+        const after = Date.now();
+
+        logger.debug(`Query ${params.model}.${params.action} took ${after - before}ms`);
+
+        return result;
+    });
 }
 
 async function execute(command: string, timeout?: number, cwd?: string) {

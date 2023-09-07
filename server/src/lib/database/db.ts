@@ -52,7 +52,7 @@ interface Config {
 
 async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
     logger.info('Listing deployments', { accountId, deploymentId });
-    return prisma.deployment.findMany({
+    return prisma.client.deployment.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(deploymentId && { deployment_id: deploymentId }),
@@ -81,7 +81,7 @@ async function createDeployment(accountId: string, params: Deployment) {
         region,
         data
     } = params;
-    return prisma.deployment.create({
+    return prisma.client.deployment.create({
         data: {
             account_id: accountId,
             deployment_id: deploymentId,
@@ -116,7 +116,7 @@ async function updateDeployment(
 ) {
     logger.info('Updating deployment', { id, params });
     const { parentDeploymentId, deploymentName, deploymentStatus, deploymentStatusReason, endTime, data } = params;
-    return prisma.deployment.update({
+    return prisma.client.deployment.update({
         where: {
             account_id: accountId,
             id
@@ -148,7 +148,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
         region,
         data
     } = params;
-    return prisma.deployment.upsert({
+    return prisma.client.deployment.upsert({
         where: {
             uk_wlmdb_deployment_account_id_deployment_id: {
                 account_id: accountId,
@@ -196,7 +196,7 @@ async function createEvent(params: Event) {
         time,
         data
     } = params;
-    return prisma.event.create({
+    return prisma.client.event.create({
         data: {
             event_id: eventId,
             account_id: accountId,
@@ -213,7 +213,7 @@ async function createEvent(params: Event) {
 
 async function deleteDeployment(accountId: string, deploymentId: string) {
     logger.info('Deleting deployment', { accountId, deploymentId });
-    return prisma.deployment.deleteMany({
+    return prisma.client.deployment.deleteMany({
         where: {
             account_id: accountId,
             deployment_id: deploymentId
@@ -223,7 +223,7 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 
 async function listResources(accountId: string) {
     logger.info('Listing resources', accountId);
-    return prisma.resource.findMany({
+    return prisma.client.resource.findMany({
         where: {
             account_id: accountId
         },
@@ -243,7 +243,7 @@ async function createResource(accountId: string, params: Resource) {
         region,
         metadata
     } = params;
-    return prisma.resource.create({
+    return prisma.client.resource.create({
         data: {
             account_id: accountId,
             resource_id: resourceId,
@@ -263,7 +263,7 @@ async function createResource(accountId: string, params: Resource) {
 async function deleteResource(accountId: string, resourceId: string) {
     logger.info('Deleting resource', { accountId, resourceId });
 
-    return prisma.resource.deleteMany({
+    return prisma.client.resource.deleteMany({
         where: {
             account_id: accountId,
             resource_id: resourceId
@@ -273,7 +273,7 @@ async function deleteResource(accountId: string, resourceId: string) {
 
 async function listConfig(accountId: string, id?: string) {
     logger.info('Listing config', accountId, id);
-    return prisma.config.findMany({
+    return prisma.client.config.findMany({
         where: {
             account_id: accountId,
             ...(id && { id })
@@ -285,7 +285,7 @@ async function listConfig(accountId: string, id?: string) {
 async function createConfig(accountId: string, params: Config) {
     logger.info('Creating config', { accountId, params });
     const { user, creationTime, data, name } = params;
-    return prisma.config.create({
+    return prisma.client.config.create({
         data: {
             account_id: accountId,
             user,
@@ -298,7 +298,7 @@ async function createConfig(accountId: string, params: Config) {
 
 async function deleteConfig(accountId: string, id: string) {
     logger.info('Deleting config', { accountId, id });
-    return prisma.config.delete({
+    return prisma.client.config.delete({
         where: {
             account_id: accountId,
             id
