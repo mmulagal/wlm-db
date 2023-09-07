@@ -137,6 +137,14 @@ async function formatTemplateParameters(
         });
     });
 
+    // Include SNS topic to push cloud formation notification messages
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const sqsServiceToken = awsAccountId ? getQueueArn(awsAccountId, WLMDB) : '';
+    templateParams.push({
+        ParameterKey: TEMPLATE_SQS_SERVICE_TOKEN,
+        ParameterValue: sqsServiceToken
+    });
+
     return { stackName, templateParameters: templateParams };
 }
 

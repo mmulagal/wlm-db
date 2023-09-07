@@ -489,8 +489,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SqsServiceToken]
+          - [Ref: SqsServiceToken]
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
@@ -525,8 +525,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SqsServiceToken]
+          - [Ref: SqsServiceToken]
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
@@ -593,8 +593,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue       
+          - [Ref: NotificationARN, Ref: SqsServiceToken]
+          - [Ref: SqsServiceToken]     
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
@@ -628,8 +628,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SqsServiceToken]
+          - [Ref: SqsServiceToken]
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
@@ -739,8 +739,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SqsServiceToken]
+          - [Ref: SqsServiceToken]
   PostStackDeployment:
     Type: Custom::MyCustomResource
     DependsOn: SQLServerStack
