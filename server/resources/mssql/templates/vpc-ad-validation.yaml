@@ -28,6 +28,8 @@ Metadata:
               Parameters:
                   - AssetsBucketName
                   - AssetsS3KeyPrefix
+                  - EnableCloudWatchLogFeature
+                  - ParentStackName
         ParameterLabels:
             UniqueID:
                 default: unique ID for your resource tags
@@ -57,6 +59,10 @@ Metadata:
                 default: Role name for EC2 instance profile
             PerformADCheck:
                 default: Boolean to check whether to perform Directory check
+            EnableCloudWatchLogFeature:
+                default: (optional) Enable monitoring by CloudWatch Logging
+            ParentStackName:
+                default: Stack name for parent cloud formation stack
 Parameters:
     UniqueID:
         Default: UID123
@@ -91,7 +97,7 @@ Parameters:
         Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
         Type: AWS::EC2::Subnet::Id
     AssetsBucketName:
-        Description: S3 bucket name for WLMDB assets. 
+        Description: S3 bucket name for WLMDB assets.
         Type: String
     AssetsS3KeyPrefix:
         Description: S3 key prefix for the  WLMDB assets.
@@ -113,6 +119,10 @@ Parameters:
         Default: 'false'
         Description: If Cloudwatch logging is enabled
         Type: String
+    EnableCloudWatchLogFeature:
+        Default: false
+        Description: Enable Logs
+        Type: String
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -130,6 +140,9 @@ Conditions:
     CreateNewRole: !Equals
         - !Ref 'Ec2RoleName'
         - ''
+    LogFeatureEnabled: !Equals
+        - !Ref 'EnableCloudWatchLogFeature'
+        - 'true'
 Resources:
     ValidationInstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -162,10 +175,79 @@ Resources:
             AWS::CloudFormation::Init:
                 configSets:
                     config:
+                        - ConfigureCWLogs
                         - FetchResources
                         - LaunchWizardCFNSetup
                         - Prep
                         - Finalize
+                ConfigureCWLogs:
+                    files:
+                        C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json:
+                            content: !If
+                                - LogFeatureEnabled
+                                - !Join
+                                  - ''
+                                  - - '{'
+                                    - '  "IsEnabled" : true,'
+                                    - '  "EngineConfiguration" : {'
+                                    - '    "PollInterval" : "00:00:05",'
+                                    - '    "Components" : [{'
+                                    - '      "Id" : "ApplicationEventLog",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.EventLog.EventLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "LogName" : "Application",'
+                                    - '        "Levels" : "7"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "LogDirectoryPath": "C:\\cfn\\log",'
+                                    - '        "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",'
+                                    - '        "Encoding": "ASCII",'
+                                    - '        "Filter": "cfn-init.log",'
+                                    - '        "CultureName": "en-US",'
+                                    - '        "TimeZoneKind": "Local"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CloudWatchCfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CloudWatchLogsOutput,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "AccessKey": "",'
+                                    - '        "SecretKey": "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - !Sub '        "LogGroup": "${ParentStackName}",'
+                                    - '        "LogStream": "{instance_id}"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id" : "CloudWatch",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.CloudWatch.CloudWatchOutputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "AccessKey" : "",'
+                                    - '        "SecretKey" : "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - '        "NameSpace" : "Windows/Default"'
+                                    - '      }'
+                                    - '    }],'
+                                    - '    "Flows": {'
+                                    - '      "Flows": ['
+                                    - '        "CfnInitLog,CloudWatchCfnInitLog"'
+                                    - '      ]'
+                                    - '    }'
+                                    - '  }'
+                                    - '}'
+                                - ' { "IsEnabled" : false}'
+                    commands:
+                        a-enableSSM:
+                            command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
+                                Automatic"
+                            waitAfterCompletion: '30'
+                        b-restartSSM:
+                            command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
+                            waitAfterCompletion: '30'
                 FetchResources:
                     files:
                         C:\cfn\scripts\Unzip-Archive.ps1:
@@ -180,6 +262,8 @@ Resources:
                             source: {{ ScriptRenameComputer }}
                         C:\cfn\scripts\Restart-Computer.ps1:
                             source: {{ ScriptRestartComputer }}
+                        C:\cfn\scripts\Validate-Credentials.ps1:
+                            source: {{ ScriptAdValidation }}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -214,6 +298,16 @@ Resources:
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
+                                  - '"'
+                            waitAfterCompletion: '0'
+                        c-validate-ad:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Credentials.ps1 -DomainName '
+                                  - !Ref 'DomainDNSName'
+                                  - ' -DomainAdminSecretName '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - ' -isSecretManagerSupported  true'
                                   - '"'
                             waitAfterCompletion: '0'
                         c-signal-resource:
@@ -256,9 +350,78 @@ Resources:
             AWS::CloudFormation::Init:
                 configSets:
                     config:
+                        - ConfigureCWLogs
                         - FetchResources
                         - LaunchWizardCFNSetup
                         - Finalize
+                ConfigureCWLogs:
+                    files:
+                        C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json:
+                            content: !If
+                                - LogFeatureEnabled
+                                - !Join
+                                  - ''
+                                  - - '{'
+                                    - '  "IsEnabled" : true,'
+                                    - '  "EngineConfiguration" : {'
+                                    - '    "PollInterval" : "00:00:05",'
+                                    - '    "Components" : [{'
+                                    - '      "Id" : "ApplicationEventLog",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.EventLog.EventLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "LogName" : "Application",'
+                                    - '        "Levels" : "7"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "LogDirectoryPath": "C:\\cfn\\log",'
+                                    - '        "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",'
+                                    - '        "Encoding": "ASCII",'
+                                    - '        "Filter": "cfn-init.log",'
+                                    - '        "CultureName": "en-US",'
+                                    - '        "TimeZoneKind": "Local"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id": "CloudWatchCfnInitLog",'
+                                    - '      "FullName": "AWS.EC2.Windows.CloudWatch.CloudWatchLogsOutput,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters": {'
+                                    - '        "AccessKey": "",'
+                                    - '        "SecretKey": "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - !Sub '        "LogGroup": "${ParentStackName}",'
+                                    - '        "LogStream": "{instance_id}"'
+                                    - '      }'
+                                    - '    },'
+                                    - '    {'
+                                    - '      "Id" : "CloudWatch",'
+                                    - '      "FullName" : "AWS.EC2.Windows.CloudWatch.CloudWatch.CloudWatchOutputComponent,AWS.EC2.Windows.CloudWatch",'
+                                    - '      "Parameters" : {'
+                                    - '        "AccessKey" : "",'
+                                    - '        "SecretKey" : "",'
+                                    - !Sub '        "Region": "${AWS::Region}",'
+                                    - '        "NameSpace" : "Windows/Default"'
+                                    - '      }'
+                                    - '    }],'
+                                    - '    "Flows": {'
+                                    - '      "Flows": ['
+                                    - '        "CfnInitLog,CloudWatchCfnInitLog"'
+                                    - '      ]'
+                                    - '    }'
+                                    - '  }'
+                                    - '}'
+                                - ' { "IsEnabled" : false}'
+                    commands:
+                        a-enableSSM:
+                            command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
+                                Automatic"
+                            waitAfterCompletion: '30'
+                        b-restartSSM:
+                            command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
+                            waitAfterCompletion: '30'
                 FetchResources:
                     files:
                         C:\cfn\scripts\Unzip-Archive.ps1:

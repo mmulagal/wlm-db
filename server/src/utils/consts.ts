@@ -632,6 +632,10 @@ const SQL_TEMPLATES_ASSETS = [
     {
         name: 'ScriptRestartComputer',
         url: 'validation/Restart-Computer.ps1'
+    },
+    {
+        name: 'ScriptAdValidation',
+        url: 'validation/Validate-Credentials.ps1'
     }
 ];
 

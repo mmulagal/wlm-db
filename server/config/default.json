@@ -42,7 +42,7 @@
         "expiration-margin": "10s"
     },
     "templates": {
-        "bucket": "staging.wlmdb.workloads.netapp.com",
-        "region": "us-east-1"
+        "bucket": "bucketkrithi",
+        "region": "ap-southeast-1"
     }
 }
