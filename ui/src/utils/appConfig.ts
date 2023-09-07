@@ -29,9 +29,10 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken, pathname, storage, storageId, storageName } = search;
+        const { accountId, accessToken, pathname, storage, storageId, storageName, workspaceId } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
+        const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
 
         if(accountIdAsString){
             dispatch(updateAccountId(accountIdAsString || ''));
@@ -39,6 +40,10 @@ const useInitialize = () => {
 
         if(accessTokenAsString){
             dispatch(updateAuthSuccess({accessToken: accessTokenAsString || ''}));
+        }
+
+        if(workspaceIdAsString){
+            dispatch(updateWorkspaceId(workspaceIdAsString));
         }
 
         const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
