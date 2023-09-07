@@ -16,7 +16,7 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
-    MISSING_FIELDS_MESSAGE: 
+    MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
 };
 
@@ -303,5 +303,15 @@ export const GENERAL = {
     NO: 'No',
     PD_CREATE_SECURITY: 'Create a security group for the user',
     PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
-    FIRST_IN_THE_LIST: 'First in the list'
+    FIRST_IN_THE_LIST: 'First in the list',
+    ACTIONS: 'Actions',
+    DEPLOY: 'Deploy',
+    MIGRATE: 'Migrate',
+    CLONE: 'Clone',
+    PROTECT: 'Protect',
+    AWS_INTEGRATION: 'AWS Integration',
+    CONFIG_CLOUDWATCH: 'Configure CloudWatch monitoring',
+    PROTECT_AWS_BACKUP: 'Protect with AWS Backup',
+    CONNECT_TO_AWS_SAGE: 'Connect to AWS SageMaker',
+    CONNECT_TO_AD: 'Connect to Active Directory'
 };
