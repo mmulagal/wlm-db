@@ -26,8 +26,8 @@ import {
     addVpcList
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
-import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
-import { formatKmsData, formatSize, generateOptionType } from '../../../utils/utilityFunctions';
+import { AWS_ASSUME_ROLE, DATABASE_TYPE, DEAFULT_INSTANCE_VALUE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
+import { formatKmsData, formatSize, generateOptionType, sortListOfDict } from '../../../utils/utilityFunctions';
 import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 
@@ -320,8 +320,10 @@ const MssqlApis = () => {
             dispatch(addInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
         } else {
             dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
-                const firstInstanceName = instanceTypeData?.instanceTypes[0];
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE && instanceTypeData && instanceTypeData?.instanceTypes.length > 0){
+                const defaultInsType = instanceTypeData?.instanceTypes?.filter((instance: { instanceType: string; }) => 
+                    instance.instanceType === DEAFULT_INSTANCE_VALUE);
+                const firstInstanceName = (defaultInsType && defaultInsType.length > 0) ? defaultInsType[0] : instanceTypeData?.instanceTypes[0];
                 const value = firstInstanceName?.instanceType || '';
                 let label2 = '';
                 if (firstInstanceName?.vCpus) {

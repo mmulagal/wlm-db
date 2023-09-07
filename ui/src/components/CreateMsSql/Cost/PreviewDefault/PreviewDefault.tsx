@@ -16,6 +16,8 @@ const PreviewDefault = () => {
     const dispatch = useDispatch();
 
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const keyPairValue = useAppSelector(state => state.mssqlForm.keyPair.selectedKeyPair);
+    const instanceValue = useAppSelector(state => state.mssqlForm.instanceType);
 
     useEffect(() => {
         if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
@@ -58,10 +60,10 @@ const PreviewDefault = () => {
         },
         { accordionName: GENERAL.LICENSE, defaultValue: GENERAL.LICENSE_INCLUDED_AMI, editable: GENERAL.NO, id: '6' },
         { accordionName: GENERAL.DATABASE_NAME, defaultValue: SQL_DATABASE, editable: GENERAL.YES, id: '7' },
-        { accordionName: GENERAL.KEY_PAIR, defaultValue: GENERAL.FIRST_IN_THE_LIST, editable: GENERAL.YES, id: '8' },
+        { accordionName: GENERAL.KEY_PAIR, defaultValue: keyPairValue?.value, editable: GENERAL.YES, id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
-            defaultValue: GENERAL.PD_AUTO_CREATE,
+            defaultValue: instanceValue?.value,
             editable: GENERAL.NO,
             id: '9'
         },
