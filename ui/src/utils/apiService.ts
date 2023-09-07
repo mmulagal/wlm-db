@@ -11,9 +11,12 @@ const prepareHeaders = (
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
     const {getState} = api;
-    const {accessToken} = (getState() as RootState).auth;
+    const {accessToken, workspaceId} = (getState() as RootState).auth;
     if (accessToken) {
         headers.set('authorization', accessToken);
+    }
+    if (workspaceId) {
+        headers.set('x-workspace-id', workspaceId);
     }
     return headers;
 };
