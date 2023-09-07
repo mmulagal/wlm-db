@@ -118,7 +118,7 @@ function getQueueUrl(accountId: string, queueName: string) {
 }
 
 function derivePropertiesFromARN(awsResourceArn: string) {
-    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.+):(?<awsAccountId>.+):(?<resourceName>.+)/;
+    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.*):(?<awsAccountId>.+):(?<resourceName>.+)/;
     if (ARN_FORMAT.test(awsResourceArn)) {
         const matchResult = awsResourceArn.match(ARN_FORMAT);
         if (matchResult && matchResult.groups) {
