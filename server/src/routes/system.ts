@@ -13,8 +13,8 @@ export default function systemRoutes(fastify: FastifyInstance) {
                 reply.send({
                     version: VERSION,
                     nodeVersion: process.version,
-                    mode: process.env.ENV_SS_BUILD_MODE,
-                    build: process.env.ENV_SS_BUILD_TC
+                    mode: process.env.ENV_WLMDB_BUILD_MODE,
+                    build: process.env.ENV_WLMDB_BUILD_TC
                 });
             }
         )

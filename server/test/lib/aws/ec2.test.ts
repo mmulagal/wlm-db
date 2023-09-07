@@ -87,7 +87,7 @@ describe('EC2 Lib', () => {
             }
         };
 
-        const response = await describeRegions(DEFAULT_AWS_CREDENTIALS_TYPE, input);
+        const response = await describeRegions(input, DEFAULT_AWS_CREDENTIALS_TYPE);
         expect(response).toEqual(fsxRegions);
     });
 

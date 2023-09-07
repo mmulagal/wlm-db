@@ -22,7 +22,11 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 
 async function getRoleName(credentialsId: string) {
     const data = await getCredentialDetails(credentialsId);
-    return { roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '', roleArn: data.extra.arn };
+    return {
+        roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '',
+        roleArn: data.extra.arn,
+        providerAccountId: data.extra.arn.match(/\d+/)?.[0] || ''
+    };
 }
 
 export { getCredentials, getRoleName };

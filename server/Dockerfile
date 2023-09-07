@@ -21,6 +21,8 @@ COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/template
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
 COPY dist/src ./
 
+COPY prisma ./prisma/
+
 RUN npm ci --omit=dev
 
 # build mode - development or production
