@@ -205,8 +205,12 @@ const app = fastify({
         return payload;
     });
 
-await createAndSubscribeToSnsTopicInAllRegions();
-processCloudFormationMessages();
+try {
+    await createAndSubscribeToSnsTopicInAllRegions();
+    processCloudFormationMessages();
+} catch (error) {
+    logger.error('Failed to setup SNS-SQS infra', error);
+}
 
 try {
     initializeDatabase();
