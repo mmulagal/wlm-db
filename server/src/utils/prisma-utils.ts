@@ -8,17 +8,17 @@ const prisma = { client: new PrismaClient() };
 async function initializeDatabase() {
     prisma.client = new PrismaClient();
 
-    prisma.client.$use(async (params, next) => {
-        const before = Date.now();
+    // prisma.client.$use(async (params, next) => {
+    //     const before = Date.now();
 
-        const result = await next(params);
+    //     const result = await next(params);
 
-        const after = Date.now();
+    //     const after = Date.now();
 
-        logger.debug(`Query ${params.model}.${params.action} took ${after - before}ms`);
+    //     logger.debug(`Query ${params.model}.${params.action} took ${after - before}ms`);
 
-        return result;
-    });
+    //     return result;
+    // });
 }
 
 async function execute(command: string, timeout?: number, cwd?: string) {
