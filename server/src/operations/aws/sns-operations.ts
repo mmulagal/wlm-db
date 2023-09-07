@@ -52,13 +52,18 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                     if (code && process.env.AWS_ROLE_ARN) {
                         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
                         const policyStatement = {
-                            Sid: 'AllowCloudFormationService',
-                            Effect: 'Allow',
-                            Principal: {
-                                Service: 'cloudformation.amazonaws.com'
-                            },
-                            Action: 'SNS:Publish',
-                            Resource: `arn:aws:sns:${DEFAULT_AWS_REGION}:${awsAccountId}:${queueName}`
+                            Version: '2012-10-17',
+                            Statement: [
+                                {
+                                    Sid: 'AllowCloudFormationService',
+                                    Effect: 'Allow',
+                                    Principal: {
+                                        Service: 'cloudformation.amazonaws.com'
+                                    },
+                                    Action: 'SNS:Publish',
+                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
+                                }
+                            ]
                         };
                         const { TopicArn } = await createTopic(code, {
                             Name: queueName,
