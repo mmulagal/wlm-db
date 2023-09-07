@@ -7,8 +7,8 @@
     "main": "index.ts",
     "scripts": {
         "build": "rimraf dist && tsc",
-        "start": "node --loader @esbuild-kit/esm-loader dist/src/index.js",
-        "dev": "node --loader @esbuild-kit/esm-loader --inspect --watch src/index.ts",
+        "start": "node --loader ./dist/src/utils/loader.js dist/src/index.js",
+        "dev": "node --loader ./dist/src/utils/loader.js --inspect --watch src/index.ts",
         "simulator": "cross-env NODE_ENV=simulator node --loader @esbuild-kit/esm-loader --inspect --watch test/simulator/index.ts",
         "format": "../node_modules/prettier/bin-prettier.js --write \"{src,test}/**/*.ts\"",
         "format:check": "../node_modules/prettier/bin-prettier.js --check \"{src,test}/**/*.ts\"",
@@ -41,7 +41,6 @@
         "@aws-sdk/client-sqs": "^3.395.0",
         "@aws-sdk/client-ssm": "^3.398.0",
         "@aws-sdk/s3-request-presigner": "^3.397.0",
-        "@esbuild-kit/esm-loader": "^2.5.5",
         "@fastify/compress": "^6.4.0",
         "@fastify/cors": "^8.3.0",
         "@fastify/helmet": "^11.0.0",
