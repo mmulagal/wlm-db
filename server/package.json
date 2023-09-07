@@ -52,10 +52,10 @@
         "@opentelemetry/instrumentation-fastify": "^0.32.1",
         "@opentelemetry/instrumentation-http": "^0.41.2",
         "@opentelemetry/sdk-node": "^0.41.2",
+        "@prisma/client": "^5.2.0",
         "@sinclair/typebox": "^0.31.1",
         "async": "^3.2.4",
         "aws-sdk-client-mock": "^3.0.0",
-        "@prisma/client": "^5.2.0",
         "bluebird": "^3.7.2",
         "config": "^3.3.9",
         "fastify": "^4.21.0",
@@ -67,6 +67,7 @@
         "log4js": "^6.9.1",
         "moment": "^2.29.4",
         "nanoid": "^4.0.2",
+        "prisma": "^5.2.0",
         "randomatic": "^3.1.1"
     },
     "devDependencies": {
