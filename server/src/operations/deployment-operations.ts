@@ -34,7 +34,8 @@ import {
     MASTER_TEMPLATE_PATH,
     WLMDB,
     TEMPLATE_SNS_SERVICE_TOKEN,
-    TEMPLATE_OPTIONAL_PARAMETERS
+    TEMPLATE_OPTIONAL_PARAMETERS,
+    TEMPLATE_ACCOUNT_ID
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -61,7 +62,7 @@ async function formatTemplateParameters(
         ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
         : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -88,9 +89,20 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = await getServiceToken();
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
-        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -135,14 +147,6 @@ async function formatTemplateParameters(
             ParameterKey: key,
             ParameterValue: value.toString()
         });
-    });
-
-    // Include SNS topic to push cloud formation notification messages
-    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
-    templateParams.push({
-        ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN,
-        ParameterValue: snsServiceToken
     });
 
     return { stackName, templateParameters: templateParams };
@@ -223,7 +227,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
