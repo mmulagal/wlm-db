@@ -39,4 +39,4 @@ ENV ENV_WLMDB_BUILD_GIT $ARG_WLMDB_BUILD_GIT
 ENV ENV_WLMDB_BUILD_TC $ARG_WLMDB_BUILD_TC
 ENV ENV_WLMDB_BUILD_MODE $ARG_WLMDB_BUILD_MODE
 
-CMD ["node", "--loader", "./dist/src/utils/loader.js", "index.js"]
+CMD ["node", "--loader", "./utils/loader.js", "index.js"]
