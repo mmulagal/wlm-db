@@ -13,9 +13,9 @@ function transformStackEventMessage(message: string) {
 
     const messagesArray = message.split('\n');
     const messageObject = new Map<string, string>();
-    messagesArray.forEach(message => {
+    messagesArray.forEach(messageString => {
         // eslint-disable-next-line quotes
-        const [key, value] = message.replaceAll("'", '').split('=');
+        const [key, value] = messageString.replaceAll("'", '').split('=');
         messageObject.set(key, value);
     });
     return Object.fromEntries(messageObject);
@@ -45,7 +45,7 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
     try {
         const queueName = WLMDB;
         const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, { QueueName: queueName });
-        if (regions && QueueUrl)
+        if (regions && QueueUrl) {
             await Promise.map(
                 regions,
                 async ({ RegionName: code }) => {
@@ -79,6 +79,7 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                 },
                 { concurrency: 3 }
             );
+        }
     } catch (error) {
         logger.error('Failed to create and subscribe to SNS topics', error);
     }
