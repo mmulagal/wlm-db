@@ -45,6 +45,8 @@ const SQL_CONFIGURATION = {
     sqlFciName: 'SampleFci'
 };
 
+const ACCOUNT_ID = 'account-test';
+
 export {
     SQL_CONFIGURATION,
     FSX_CONFIGURATION,
@@ -54,5 +56,6 @@ export {
     DEFAULT_AWS_VPC_ID,
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_CREDENTIALS_ID,
-    DEFAULT_AWS_REGION
+    DEFAULT_AWS_REGION,
+    ACCOUNT_ID
 };

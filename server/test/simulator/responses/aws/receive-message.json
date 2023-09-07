@@ -1,0 +1,19 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "961016ea-4dcd-50ac-88e7-4bb1b19d43d3",
+        "extendedRequestId": "undefined",
+        "cfId": "undefined",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Messages": [
+        {
+            "MessageId": "71be743e-bda8-4dcb-ad05-0f8f2249ef2a",
+            "ReceiptHandle": "message handle",
+            "MD5OfBody": "cb183a95d9de8a1886dd103a48a1da3b",
+            "Body": "{\n  \"Type\" : \"Notification\",\n  \"MessageId\" : \"9cc33948-990e-53ba-a5fb-6411af31d37c\",\n  \"TopicArn\" : \"arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC\",\n  \"Subject\" : \"AWS CloudFormation custom resource request\",\n  \"Message\" : \"{\"RequestType\":\"Delete\",\"ServiceToken\":\"arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC\",\"ResponseURL\":\"https://cloudformation-custom-resource-response-useast1.s3.amazonaws.com/arn%3Aaws%3Acloudformation%3Aus-east-1%3A464262061435%3Astack/TESTSTACK/e4a298f0-3d85-11ee-85f5-124a10a755ff%7CMyCustomResource%7C5fdebf4a-7f7a-4750-9a5e-7c67096bf004?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230818T090359Z&X-Amz-SignedHeaders=host&X-Amz-Expires=7200&X-Amz-Credential=ABCDEFGHI%2F20230818%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=1a2b3c4d5e6f7g8h9i0j\",\"StackId\":\"arn:aws:cloudformation:us-east-1:464262061435:stack/TESTSTACK/e4a298f0-3d85-11ee-85f5-124a10a755ff\",\"RequestId\":\"5fdebf4a-7f7a-4750-9a5e-7c67096bf004\",\"LogicalResourceId\":\"MyCustomResource\",\"PhysicalResourceId\":\"TESTSTACK-MyCustomResource-FRPD8BSCIVYF\",\"ResourceType\":\"Custom::MyCustomResource\",\"ResourceProperties\":{\"ServiceToken\":\"arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC\"}}\",\n  \"Timestamp\" : \"2023-08-18T09:03:59.730Z\",\n  \"SignatureVersion\" : \"1\",\n  \"Signature\" : \"AWS TOKEN\",\n  \"SigningCertURL\" : \"https://sns.us-east-1.amazonaws.com/SimpleNotificationService-01d088a6f77103d0fe307c0069e40ed6.pem\",\n  \"UnsubscribeURL\" : \"https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:464262061435:SGTESTTOPIC:9fe3f190-ae10-4d66-a67a-818600cfb2ff\"\n}",
+            "Attributes": ["Object"]
+        }
+    ]
+}

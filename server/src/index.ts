@@ -1,5 +1,6 @@
 import config from 'config';
 import randomize from 'randomatic';
+import { JwtPayload } from 'jsonwebtoken';
 import './utils/tracer';
 import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
@@ -18,7 +19,8 @@ import {
     REQUEST_ID,
     USER_TOKEN,
     VERSION,
-    WORKSPACE_ID
+    WORKSPACE_ID,
+    JWKS_FULL_NAME
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -26,12 +28,16 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import formConfigRoutes from './routes/form-config';
 import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
+import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
+import { processCloudFormationMessages } from './operations/aws/sqs-operations';
+import { execute, initializeDatabase } from './utils/prisma-utils';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -135,7 +141,8 @@ const app = fastify({
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
-                            await verifyToken(authorization.replace('Bearer ', ''));
+                            const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();
@@ -148,6 +155,7 @@ const app = fastify({
             awsRoutes(instance);
             credentialsRoutes(instance);
             deploymentRoutes(instance);
+            formConfigRoutes(instance);
             workingEnvironmentRoutes(instance);
             msSqlServerRoutes(instance);
             batchRoutes(instance);
@@ -196,6 +204,20 @@ const app = fastify({
         }
         return payload;
     });
+
+try {
+    await createAndSubscribeToSnsTopicInAllRegions();
+    processCloudFormationMessages();
+} catch (error) {
+    logger.error('Failed to setup SNS-SQS infra', error);
+}
+
+try {
+    initializeDatabase();
+    await execute('node_modules/prisma/build/index.js migrate deploy');
+} catch (error) {
+    logger.error('Failed to initialize database', error);
+}
 
 app.listen({ port, host }, err => {
     if (err) {

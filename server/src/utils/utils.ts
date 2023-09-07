@@ -2,10 +2,11 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { trimEnd, trimStart } from 'lodash-es';
+import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import { getAsyncLocalStorageResource } from './async-local-storage';
-import { SQL_AMI_NAMES, WLMDB, USER_TOKEN, FSX_SSD_MIN_SIZE, FSX_SSD_MAX_SIZE } from './consts';
+
+import { SQL_AMI_NAMES, WLMDB, USER_TOKEN, DEFAULT_AWS_REGION, FSX_SSD_MIN_SIZE, FSX_SSD_MAX_SIZE } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
@@ -89,6 +90,50 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     );
 }
 
+function checkAndRetrieveJsonObject(str: string | undefined) {
+    try {
+        if (str) {
+            const result = attempt(JSON.parse, str);
+            if (result instanceof Error) {
+                return { isValid: false };
+            }
+            return { isValid: true, message: result };
+        }
+        return { isValid: false };
+    } catch (err) {
+        return { isValid: false };
+    }
+}
+
+function getQueueArn(accountId: string, queueName: string) {
+    return `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+}
+
+function getSnsArn(accountId: string, region: string, snsName: string) {
+    return `arn:aws:sns:${region}:${accountId}:${snsName}`;
+}
+
+function getQueueUrl(accountId: string, queueName: string) {
+    return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
+}
+
+function derivePropertiesFromARN(awsResourceArn: string) {
+    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.*):(?<awsAccountId>.+):(?<resourceName>.+)/;
+    if (ARN_FORMAT.test(awsResourceArn)) {
+        const matchResult = awsResourceArn.match(ARN_FORMAT);
+        if (matchResult && matchResult.groups) {
+            const { awsServiceName, region, awsAccountId, resourceName } = matchResult.groups;
+
+            return {
+                awsServiceName,
+                region,
+                awsAccountId,
+                resourceName
+            };
+        }
+    }
+}
+
 async function sleep(ms: number) {
     await new Promise(resolve => {
         setTimeout(resolve, ms);
@@ -101,5 +146,10 @@ export {
     getSubjectFromBearerToken,
     hideSecretsValues,
     isSameRoutetables,
-    sleep
+    checkAndRetrieveJsonObject,
+    getQueueArn,
+    getQueueUrl,
+    derivePropertiesFromARN,
+    sleep,
+    getSnsArn
 };

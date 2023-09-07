@@ -3,6 +3,7 @@ import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
+import { getServiceToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -26,15 +27,23 @@ import {
     ASSETS_BUCKET_REGION,
     EC2_ROLE_NAME,
     DatabaseTypes,
+    ACCOUNT_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_CREDENTIALS_ID,
+    TEMPLATE_CLOUD_PROVIDER_ID,
     MASTER_TEMPLATE_PATH,
-    TEMPLATE_OPTIONAL_PARAMETERS
+    WLMDB,
+    TEMPLATE_SNS_SERVICE_TOKEN,
+    TEMPLATE_OPTIONAL_PARAMETERS,
+    TEMPLATE_ACCOUNT_ID
 } from '../utils/consts';
-import { generateDeploymentParams, isSameRoutetables } from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
+import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -53,7 +62,7 @@ async function formatTemplateParameters(
         ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
         : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -80,9 +89,20 @@ async function formatTemplateParameters(
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = await getServiceToken();
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
-        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage }
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -166,10 +186,10 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -201,7 +221,14 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = await getServiceToken();
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
+
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
