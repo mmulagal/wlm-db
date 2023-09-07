@@ -27,9 +27,14 @@ param(
     [string]$FSxDataLunSize,
 
     [Parameter(Mandatory=$true)]
-    [string]$IGROUP
+    [string]$IGROUP,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
+
 )
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
+
 $ErrorActionPreference = "Stop"
 
 $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
@@ -43,8 +48,13 @@ $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/place
 $pair = "$($username):$($password)"
 $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
 $base64 = [System.Convert]::ToBase64String($bytes)
+
 #get management IP
 $nodeiqn = (Get-InitiatorPort).NodeAddress
+
+#get Instance ID
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
 function returncert{
     param(
     [Parameter(Mandatory=$true)]
@@ -68,7 +78,11 @@ function callrestapi{
     [Parameter(Mandatory=$true)]
     [Hashtable]$parambody,
     [Parameter(Mandatory=$true)]
-    [string]$creds
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [string]$stack,
+    [Parameter(Mandatory=$true)]
+    [string]$instanceId
     )
     try{
         $restcert = returncert -region $region
@@ -83,6 +97,7 @@ function callrestapi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
+        Send-CFNResourceSignal -StackName $stack -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
     }
 }
@@ -119,7 +134,8 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    #$_ | Write-AWSLaunchWizardException
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
@@ -149,6 +165,7 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
@@ -179,6 +196,7 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
@@ -204,6 +222,7 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
@@ -219,7 +238,7 @@ $Body = @{
     "initiators"= @(@{"name" = "$nodeiqn"})
 }
 
-callrestapi -MgmtDNS $MgmtDNS -uri $IGUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $IGUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 Start-Sleep 5
  
 ##create data lun
@@ -235,7 +254,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$DSIZE"}       
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 
@@ -247,7 +266,7 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 ##create log lun
 $lunUriDynamicPart='storage/luns'
@@ -263,7 +282,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$LSIZE"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 ##mapping log lun
@@ -273,7 +292,7 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 ##create tempDb lun
 $lunUriDynamicPart='storage/luns'
@@ -290,7 +309,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$TSIZE"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 ##mapping tempDb lun
@@ -301,7 +320,7 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 ##create quorum lun
 $lunUriDynamicPart='storage/luns'
@@ -315,7 +334,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "10G"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 ##mapping quorum lun
@@ -326,7 +345,7 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -stack $Stackname -instanceId $instanceId
 
  
  

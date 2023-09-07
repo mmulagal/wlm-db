@@ -8,8 +8,16 @@ param(
     [string]$DomainAdminUser,   
 
 	[Parameter(Mandatory=$true)]
-    [string]$wsfcName
+    [string]$wsfcName,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
 )
+
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
 try {
 	    Start-Transcript -Path C:\cfn\log\configuremadpermissions.ps1.txt -Append
     $ErrorActionPreference = "Stop"
@@ -39,6 +47,7 @@ Invoke-Command -scriptblock {
 	Set-acl -aclobject $acl "ad:$OU"
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 } catch {
+	Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
 	$_ | Write-AWSLaunchWizardException
 }
 

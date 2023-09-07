@@ -5,10 +5,19 @@ param(
     [string]$AdminSecret,
 
     [Parameter(Mandatory=$true)]
-    [string]$DomainAdminUser
+    [string]$DomainAdminUser,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
 
 )
 #Requires -Modules xFailOverCluster,PSDscResources
+
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
+
 try {
 Start-Transcript -Path C:\cfn\log\AdditionalNodeAddCluster.ps1.txt -Append
 $ErrorActionPreference = "Stop"
@@ -62,5 +71,6 @@ AdditionalNodeAddCluster -OutputPath 'C:\cfn\dsc\AdditionalNodeAddCluster' -Conf
 
 Start-DscConfiguration 'C:\cfn\dsc\AdditionalNodeAddCluster' -Wait -Verbose -Force
 }catch {
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD2' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

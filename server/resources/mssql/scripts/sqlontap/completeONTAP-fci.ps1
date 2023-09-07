@@ -20,7 +20,10 @@ param(
     [string]$FCIName,
 
     [Parameter(Mandatory=$true)]
-    [string]$DomainAdminUser
+    [string]$DomainAdminUser,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
 
 )
 
@@ -95,8 +98,10 @@ try
 
     $arguments = '/QUIET /ACTION=CompleteFailoverCluster /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION="SQL_Latin1_General_CP1_CI_AS" /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath
     Invoke-Command -scriptblock {
-    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow
+    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
+
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 } catch {
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId 'CompleteFCIFailed'
         $_ | Write-AWSLaunchWizardException
 }

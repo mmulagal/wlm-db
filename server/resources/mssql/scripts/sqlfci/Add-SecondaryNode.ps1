@@ -11,9 +11,20 @@ param(
     [string]$AdminSecret,
 
     [Parameter(Mandatory=$true)]
-    [string]$DomainAdminUser
+    [string]$DomainAdminUser,
 
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
+ 
 )
+
+Start-Sleep -Seconds 180
+
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
+
 try{
 Start-Transcript -Path C:\cfn\log\AddSecondaryNode.ps1.txt -Append
 $ErrorActionPreference = "Stop"
@@ -81,5 +92,6 @@ AddSecondaryNode -OutputPath 'C:\cfn\dsc\AddSecondaryNode' -ConfigurationData $C
 
 Start-DscConfiguration 'C:\cfn\dsc\AddSecondaryNode' -Wait -Verbose -Force
 } catch {
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD2' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

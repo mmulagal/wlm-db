@@ -7,9 +7,16 @@ param (
     [string]$Node1,
 
     [Parameter(Mandatory=$true)]
-    [string]$Node2
+    [string]$Node2,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
+  
 )
 
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
 class NodeException: System.Exception{
     [string] $Emessage
@@ -65,21 +72,25 @@ try {
 
 catch [NodeException] {
     Write-Output "Cluster does not contain both nodes or not in healthy state"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
 }
 
 catch [ResourceException] {
     Write-Output "Cluster does not have all the required resources(disk and networking) created."
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
 
 catch [SQLFCIException] {
     Write-Output "SQL FCI configuration failed. SQL server related roles not created or not online"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
 catch {
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 } 
  
