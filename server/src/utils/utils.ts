@@ -109,6 +109,10 @@ function getQueueArn(accountId: string, queueName: string) {
     return `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
 }
 
+function getSnsArn(accountId: string, region: string, snsName: string) {
+    return `arn:aws:sns:${region}:${accountId}:${snsName}`;
+}
+
 function getQueueUrl(accountId: string, queueName: string) {
     return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
 }
@@ -146,5 +150,6 @@ export {
     getQueueArn,
     getQueueUrl,
     derivePropertiesFromARN,
-    sleep
+    sleep,
+    getSnsArn
 };

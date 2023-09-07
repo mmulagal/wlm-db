@@ -33,10 +33,10 @@ import {
     TEMPLATE_CLOUD_PROVIDER_ID,
     MASTER_TEMPLATE_PATH,
     WLMDB,
-    TEMPLATE_SQS_SERVICE_TOKEN,
+    TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS
 } from '../utils/consts';
-import { derivePropertiesFromARN, generateDeploymentParams, getQueueArn, isSameRoutetables } from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
@@ -139,10 +139,10 @@ async function formatTemplateParameters(
 
     // Include SNS topic to push cloud formation notification messages
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const sqsServiceToken = awsAccountId ? getQueueArn(awsAccountId, WLMDB) : '';
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
     templateParams.push({
-        ParameterKey: TEMPLATE_SQS_SERVICE_TOKEN,
-        ParameterValue: sqsServiceToken
+        ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN,
+        ParameterValue: snsServiceToken
     });
 
     return { stackName, templateParameters: templateParams };
@@ -221,9 +221,9 @@ async function createCloudFormationTemplateForUserDeployment(
     const { token } = await getServiceToken();
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const sqsServiceToken = awsAccountId ? getQueueArn(awsAccountId, WLMDB) : '';
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SQS_SERVICE_TOKEN}=${sqsServiceToken}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {

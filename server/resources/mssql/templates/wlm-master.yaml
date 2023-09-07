@@ -429,8 +429,8 @@ Parameters:
     Description: JWT Token to grant access to a resource
     Type: String
 
-  SqsServiceToken:
-    Description: SQS ARN to push cloud formation messages
+  SnsServiceToken:
+    Description: SNS ARN to push cloud formation messages
     Type: String
 
 Conditions:
@@ -448,7 +448,7 @@ Resources:
   TrackStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
-      ServiceToken: !Ref SqsServiceToken
+      ServiceToken: !Ref SnsServiceToken
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
@@ -489,8 +489,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - [Ref: NotificationARN, Ref: SqsServiceToken]
-          - [Ref: SqsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
@@ -525,8 +525,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - [Ref: NotificationARN, Ref: SqsServiceToken]
-          - [Ref: SqsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
@@ -593,8 +593,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - [Ref: NotificationARN, Ref: SqsServiceToken]
-          - [Ref: SqsServiceToken]     
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]     
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
@@ -628,8 +628,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - [Ref: NotificationARN, Ref: SqsServiceToken]
-          - [Ref: SqsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
@@ -739,13 +739,13 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - [Ref: NotificationARN, Ref: SqsServiceToken]
-          - [Ref: SqsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   PostStackDeployment:
     Type: Custom::MyCustomResource
     DependsOn: SQLServerStack
     Properties:
-      ServiceToken: !Ref SqsServiceToken
+      ServiceToken: !Ref SnsServiceToken
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
