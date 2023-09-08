@@ -123,6 +123,9 @@ Parameters:
         Default: false
         Description: Enable Logs
         Type: String
+    ParentStackName:
+        Description: Stack name for parent cloud formation stack
+        Type: String
 Conditions:
     isGovRegion: !Or
         - !Equals
@@ -298,16 +301,6 @@ Resources:
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
-                                  - '"'
-                            waitAfterCompletion: '0'
-                        c-validate-ad:
-                            command: !Join
-                                - ''
-                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Credentials.ps1 -DomainName '
-                                  - !Ref 'DomainDNSName'
-                                  - ' -DomainAdminSecretName '
-                                  - !Ref 'DomainAdminSecretName'
-                                  - ' -isSecretManagerSupported  true'
                                   - '"'
                             waitAfterCompletion: '0'
                         c-signal-resource:

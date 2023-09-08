@@ -698,7 +698,7 @@ Resources:
             - !Ref "ONTAPSecurityGroupID"
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
-	      ParentStackName:
+        ParentStackName:
           Ref: AWS::StackName
         NumberOfNodes: "2"
         FSxLogVolumeName:
