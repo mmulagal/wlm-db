@@ -34,6 +34,7 @@
         "@aws-sdk/client-fsx": "^3.395.0",
         "@aws-sdk/client-iam": "^3.395.0",
         "@aws-sdk/client-kms": "^3.395.0",
+        "@aws-sdk/client-pricing": "^3.405.0",
         "@aws-sdk/client-s3": "^3.397.0",
         "@aws-sdk/client-secrets-manager": "^3.395.0",
         "@aws-sdk/client-service-quotas": "^3.395.0",
