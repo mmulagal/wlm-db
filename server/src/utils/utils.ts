@@ -140,10 +140,6 @@ async function sleep(ms: number) {
     });
 }
 
-function stringReplaceAll(data: string, original: string, replacement: string) {
-    return data.replaceAll(original, replacement);
-}
-
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -155,6 +151,5 @@ export {
     getQueueUrl,
     derivePropertiesFromARN,
     sleep,
-    getSnsArn,
-    stringReplaceAll
+    getSnsArn
 };

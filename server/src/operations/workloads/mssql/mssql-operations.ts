@@ -23,7 +23,6 @@ import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
 import { UtilisationResponseBody } from '../../../routes/types/database.types';
-import { stringReplaceAll } from '../../../utils/utils';
 import {
     DatabaseTypes,
     DATABASE_METRIC_TYPE,
@@ -41,12 +40,12 @@ const logger = getLogger();
 
 function sqlResponseParsing(response: string) {
     try {
-        const cleanResponse = stringReplaceAll(response, '\r\n', '');
+        const cleanResponse = response.replaceAll('\r\n', '');
         const jsonResponse = JSON.parse(cleanResponse);
         return jsonResponse;
     } catch (error) {
-        logger.error('Error parsing query Response:', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query Response, ${error}`);
+        logger.error('Error parsing query response:', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query response, ${error}`);
     }
 }
 
@@ -142,8 +141,7 @@ async function getDatabasesCount(
     const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching databases count response', response);
-    const resp = sqlResponseParsing(response);
-    return resp[0];
+    return sqlResponseParsing(response)[0];
 }
 
 async function getDataBasesSummary(resourceId: string) {
@@ -205,8 +203,8 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
             callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, dbSizecommand)
         ]);
 
-        const sizeValue = sqlResponseParsing(size)[0];
-        const diskDataValue = sqlResponseParsing(diskdata)[0];
+        const [sizeValue] = sqlResponseParsing(size);
+        const [diskDataValue] = sqlResponseParsing(diskdata);
         const diskUtilization = UtilisationResponseBody;
         diskUtilization.used = sizeValue.TotalSize.toString();
         diskUtilization.total = diskDataValue.total.toString();
@@ -234,8 +232,7 @@ async function getTablesCount(
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching tables count response', response);
 
-    const resp = sqlResponseParsing(response);
-    return resp[0];
+    return sqlResponseParsing(response)[0];
 }
 
 async function getTablesList(
@@ -321,13 +318,13 @@ async function getServerSummary(resourceId: string): Promise<{
             `${PSSCRIPT} -Query "${SERVER_NODES}"`
         ])
     ]);
-    const serverDet = serverDetails.replace(/\r\n/g, '');
+    const serverDet = serverDetails.replaceAll('\r\n', '');
     const serverInfo = serverDet?.split('\t');
     const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
-    const stateValue = stringReplaceAll(state, '\r\n', '');
-    const connValue = sqlResponseParsing(connections)[0];
-    const nodesValue = sqlResponseParsing(nodes)[0];
-    const isClusterdValue = sqlResponseParsing(isClustered)[0];
+    const stateValue = state.replaceAll('\r\n', '').replace('.', '');
+    const [connValue] = sqlResponseParsing(connections);
+    const [nodesValue] = sqlResponseParsing(nodes);
+    const [isClusterdValue] = sqlResponseParsing(isClustered);
     return {
         serverId: resourceId,
         serverVersion: version ? version[0] : ' ',
