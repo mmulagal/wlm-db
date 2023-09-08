@@ -8,46 +8,102 @@ import styles from './DatabaseAWSIntegration.module.scss';
 
 const DatabaseAWSIntegration = () => {
     return (
-        <div className={styles.awsIntegration}>
-            <Typography variant="Semibold_14">{GENERAL.AWS_INTEGRATION}</Typography>
-            <div className={styles.awsCardContainer}>
-                <div className={styles.cardContent}>
-                    <div className={styles.imageContainer}>
-                        <CloudWatch />
+        <>
+            <div className={styles.awsIntegration}>
+                <Typography variant="Semibold_14">{GENERAL.AWS_INTEGRATION}</Typography>
+                <div className={styles.awsCardContainer}>
+                    <div className={styles.cardContent}>
+                        <div className={styles.imageContainer}>
+                            <CloudWatch />
+                        </div>
+                        <div className={styles.text}>
+                            <Typography variant="Regular_14">{GENERAL.CONFIG_CLOUDWATCH}</Typography>
+                        </div>
                     </div>
-                    <div className={styles.text}>
-                        <Typography variant="Regular_14">{GENERAL.CONFIG_CLOUDWATCH}</Typography>
-                    </div>
-                </div>
 
-                <div className={styles.cardContent}>
-                    <div className={styles.imageContainer}>
-                        <ProtectBackup />
+                    <div className={styles.cardContent}>
+                        <div className={styles.imageContainer}>
+                            <ProtectBackup />
+                        </div>
+                        <div className={styles.text}>
+                            <Typography variant="Regular_14">{GENERAL.PROTECT_AWS_BACKUP}</Typography>
+                        </div>
                     </div>
-                    <div className={styles.text}>
-                        <Typography variant="Regular_14">{GENERAL.PROTECT_AWS_BACKUP}</Typography>
-                    </div>
-                </div>
 
-                <div className={styles.cardContent}>
-                    <div className={styles.imageContainer}>
-                        <SageMaker />
+                    <div className={styles.cardContent}>
+                        <div className={styles.imageContainer}>
+                            <SageMaker />
+                        </div>
+                        <div className={styles.text}>
+                            <Typography variant="Regular_14">{GENERAL.CONNECT_TO_AWS_SAGE}</Typography>
+                        </div>
                     </div>
-                    <div className={styles.text}>
-                        <Typography variant="Regular_14">{GENERAL.CONNECT_TO_AWS_SAGE}</Typography>
-                    </div>
-                </div>
 
-                <div className={styles.cardContent}>
-                    <div className={styles.imageContainer}>
-                        <AD />
-                    </div>
-                    <div className={styles.text}>
-                        <Typography variant="Regular_14">{GENERAL.CONNECT_TO_AD}</Typography>
+                    <div className={styles.cardContent}>
+                        <div className={styles.imageContainer}>
+                            <AD />
+                        </div>
+                        <div className={styles.text}>
+                            <Typography variant="Regular_14">{GENERAL.CONNECT_TO_AD}</Typography>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            {/* Test performance */}
+            {/* -90 + (10/100) * 180 */}
+            {/* <div className={styles.test}>
+                <div className={styles.union}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="204" height="102" viewBox="0 0 204 102" fill="none">
+                        <mask id="path-1-inside-1_266_40665" fill="white">
+                            <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M123.12 23.1803C136.837 26.8563 149.484 34.0839 159.7 44.3001C175.003 59.6031 183.6 80.3583 183.6 102H204C204 74.9479 193.254 49.0038 174.125 29.8751C155.11 10.8604 129.361 0.1284 102.484 0.00114473C102.322 0.000380309 102.161 2.23346e-07 102 0C95.34 -9.22345e-06 88.6748 0.652239 82.1008 1.9599C66.7559 5.0122 52.3188 11.5536 39.9063 21.078C27.4939 30.6024 17.4388 42.8545 10.519 56.8866C3.59913 70.9186 -2.36241e-06 86.3545 0 102H20.4C20.4 89.4836 23.2793 77.1349 28.8152 65.9093C34.3511 54.6836 42.3951 44.8819 52.3251 37.2624C62.255 29.6429 73.8047 24.4098 86.0806 21.9679C91.3399 20.9218 96.672 20.4 102 20.4C102.89 20.4 103.78 20.4146 104.67 20.4437C110.884 20.6471 117.075 21.5607 123.12 23.1805L123.12 23.1803Z"
+                            />
+                        </mask>
+                        <path
+                            fill-rule="evenodd"
+                            clip-rule="evenodd"
+                            d="M123.12 23.1803C136.837 26.8563 149.484 34.0839 159.7 44.3001C175.003 59.6031 183.6 80.3583 183.6 102H204C204 74.9479 193.254 49.0038 174.125 29.8751C155.11 10.8604 129.361 0.1284 102.484 0.00114473C102.322 0.000380309 102.161 2.23346e-07 102 0C95.34 -9.22345e-06 88.6748 0.652239 82.1008 1.9599C66.7559 5.0122 52.3188 11.5536 39.9063 21.078C27.4939 30.6024 17.4388 42.8545 10.519 56.8866C3.59913 70.9186 -2.36241e-06 86.3545 0 102H20.4C20.4 89.4836 23.2793 77.1349 28.8152 65.9093C34.3511 54.6836 42.3951 44.8819 52.3251 37.2624C62.255 29.6429 73.8047 24.4098 86.0806 21.9679C91.3399 20.9218 96.672 20.4 102 20.4C102.89 20.4 103.78 20.4146 104.67 20.4437C110.884 20.6471 117.075 21.5607 123.12 23.1805L123.12 23.1803Z"
+                            fill="url(#paint0_linear_266_40665)"
+                        />
+                        <path
+                            d="M123.12 23.1803L123.896 20.2825L121.002 19.5069L120.223 22.4003L123.12 23.1803ZM159.7 44.3001L161.821 42.1788V42.1788L159.7 44.3001ZM183.6 102H180.6V105H183.6V102ZM204 102V105H207V102H204ZM174.125 29.8751L172.004 31.9964L174.125 29.8751ZM102.484 0.00114473L102.469 3.00111H102.469L102.484 0.00114473ZM102 0L102 3L102 0ZM82.1008 1.9599L81.5155 -0.982453L82.1008 1.9599ZM39.9063 21.078L38.08 18.6979L39.9063 21.078ZM10.519 56.8866L13.2096 58.2134L10.519 56.8866ZM0 102H-3L-3 105H0V102ZM20.4 102V105H23.4V102H20.4ZM28.8152 65.9093L31.5058 67.2361L28.8152 65.9093ZM52.3251 37.2624L54.1513 39.6424H54.1513L52.3251 37.2624ZM86.0806 21.9679L86.6659 24.9103L86.0806 21.9679ZM102 20.4L102 23.4H102V20.4ZM104.67 20.4437L104.572 23.4421L104.67 20.4437ZM123.12 23.1805L122.343 26.0782L125.237 26.8538L126.016 23.9604L123.12 23.1805ZM122.343 26.078C135.557 29.619 147.738 36.5808 157.579 46.4214L161.821 42.1788C151.229 31.5869 138.118 24.0937 123.896 20.2825L122.343 26.078ZM157.579 46.4214C172.319 61.1618 180.6 81.154 180.6 102H186.6C186.6 79.5627 177.687 58.0443 161.821 42.1788L157.579 46.4214ZM183.6 105H204V99H183.6V105ZM207 102C207 74.1523 195.938 47.4451 176.246 27.7538L172.004 31.9964C190.57 50.5625 201 75.7436 201 102H207ZM176.246 27.7538C156.672 8.17983 130.166 -2.86782 102.498 -2.99882L102.469 3.00111C128.556 3.12462 153.548 13.541 172.004 31.9964L176.246 27.7538ZM102.498 -2.99882C102.332 -2.99961 102.166 -3 102 -3L102 3C102.156 3 102.313 3.00037 102.469 3.00111L102.498 -2.99882ZM102 -3C95.1442 -3.00001 88.2829 -2.32858 81.5155 -0.982453L82.6861 4.90226C89.0668 3.63305 95.5359 2.99999 102 3L102 -3ZM81.5155 -0.982453C65.7193 2.15962 50.8576 8.89337 38.08 18.6979L41.7326 23.458C53.78 14.2138 67.7925 7.86478 82.6861 4.90226L81.5155 -0.982453ZM38.08 18.6979C25.3025 28.5024 14.9517 41.1149 7.82836 55.5597L13.2096 58.2134C19.9259 44.5941 29.6852 32.7023 41.7326 23.458L38.08 18.6979ZM7.82836 55.5597C0.704987 70.0045 -3 85.8943 -3 102H3C3 86.8146 6.49327 71.8328 13.2096 58.2134L7.82836 55.5597ZM0 105H20.4V99H0V105ZM23.4 102C23.4 89.9437 26.1735 78.0491 31.5058 67.2361L26.1246 64.5824C20.3852 76.2207 17.4 89.0234 17.4 102H23.4ZM31.5058 67.2361C36.8382 56.4232 44.5865 46.9818 54.1513 39.6424L50.4988 34.8823C40.2038 42.782 31.864 52.944 26.1246 64.5824L31.5058 67.2361ZM54.1513 39.6424C63.7162 32.303 74.8413 27.2623 86.6659 24.9103L85.4954 19.0256C72.7681 21.5572 60.7938 26.9827 50.4988 34.8823L54.1513 39.6424ZM86.6659 24.9103C91.7318 23.9026 96.8679 23.4 102 23.4L102 17.4C96.4762 17.4 90.948 17.941 85.4954 19.0256L86.6659 24.9103ZM102 23.4C102.857 23.4 103.715 23.414 104.572 23.4421L104.768 17.4453C103.846 17.4151 102.923 17.4 102 17.4V23.4ZM104.572 23.4421C110.557 23.638 116.52 24.518 122.343 26.0782L123.896 20.2827C117.629 18.6034 111.211 17.6562 104.768 17.4453L104.572 23.4421ZM126.016 23.9604L126.017 23.9602L120.223 22.4003L120.223 22.4005L126.016 23.9604Z"
+                            fill="white"
+                            mask="url(#path-1-inside-1_266_40665)"
+                        />
+
+                        <defs>
+                            <linearGradient
+                                id="paint0_linear_266_40665"
+                                x1="194.022"
+                                y1="102"
+                                x2="12.439"
+                                y2="102"
+                                gradientUnits="userSpaceOnUse"
+                            >
+                                <stop stop-color="#68C6B3" />
+                                <stop offset="0.291998" stop-color="#68C6B3" />
+                                <stop offset="1" stop-color="#FDC300" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <div className={styles.needle}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="12" viewBox="0 0 60 12" fill="none">
+                        <g>
+                            <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M11.4644 8.48151L60 6.5L11.4758 3.54359C10.5372 1.45468 8.43849 -2.25383e-06 6 -2.36041e-06C2.68629 -2.50526e-06 -1.17422e-07 2.68629 -2.62268e-07 6C-4.07115e-07 9.31371 2.68629 12 6 12C8.42871 12 10.5204 10.557 11.4644 8.48151Z"
+                                fill="#404040"
+                            />
+                        </g>
+                    </svg>
+                </div>
+            </div> */}
+        </>
     );
 };
 

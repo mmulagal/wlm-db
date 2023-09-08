@@ -25,3 +25,21 @@
         }
     }
 }
+
+.test {
+    width: 204px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.needle {
+    margin-left: 58px;
+    position: relative;
+    top: -13px;
+
+    svg {
+        transform-origin: 2.5px 50%;
+        transform: rotate(-31deg);
+    }
+}
