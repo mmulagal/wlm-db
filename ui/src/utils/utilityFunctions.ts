@@ -166,6 +166,9 @@ export const encodeAll = (text: string | (string | null)[] | null) => {
 };
 
 export const requiredFieldError = (inputString: string) => {
+    if(!inputString){
+        return null;
+    }
     const regex = /'([^']+)'/;
     const match = inputString.match(regex);
     const subStr = 'must have required property';
