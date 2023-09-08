@@ -27,7 +27,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         let errorMsg = action.payload.error || action.payload.data?.message;
 
         // Added temporary to avoid error message for save and load config
-        if(errorMsg.includes('api/v1/config')){
+        if(errorMsg && errorMsg.includes('api/v1/config')){
             return
         }
 
