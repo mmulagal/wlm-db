@@ -24,7 +24,7 @@ const rootReducer = combineReducers({
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
-        let errorMsg = action.payload.error || action.payload.data?.message;
+        let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
         // Added temporary to avoid error message for save and load config
         if(errorMsg && errorMsg.includes('api/v1/config')){

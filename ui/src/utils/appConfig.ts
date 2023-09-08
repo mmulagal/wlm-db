@@ -71,9 +71,11 @@ const useInitialize = () => {
                 const storage = initialData?.storage;
                 const storageId = initialData?.storageId;
                 const storageName = initialData?.storageName;
+                const workspaceId = initialData?.workspaceId;
                 navigate(`${storage}/${storageId}/${storageName}`);
                 dispatch(updateResourceId(storageId));
                 dispatch(updateResourceName(storageName));
+                dispatch(updateWorkspaceId(workspaceId));
             } else {
                 navigate(`${initialData?.pathname}`, { replace: true });
             }
