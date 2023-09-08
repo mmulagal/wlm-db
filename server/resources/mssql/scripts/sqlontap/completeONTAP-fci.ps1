@@ -75,7 +75,7 @@ try
                     $subnet_mask = "{0}.{1}.{2}.{3}" -f $A, $B, $C, $D
                     return $subnet_mask
                  }
-    Start-Transcript -Path C:\cfn\log\completefci.ps1.txt -Append
+    Start-Transcript -Path C:\cfn\log\completeONTAPfci.ps1.txt -Append
     $ErrorActionPreference = "Stop"
     $DomainNetBIOSName = $env:USERDOMAIN
     $AdminGroup = 'BUILTIN\Administrators'

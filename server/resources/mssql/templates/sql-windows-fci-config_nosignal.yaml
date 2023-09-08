@@ -1160,7 +1160,7 @@ Resources:
                                   - !Ref 'SQLigroupname'
                                   - "' -FileSystemId '"
                                   - !Ref 'FSxFileSystemId'
-                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'                                  
                                   - '''"'
                         e-connect-ontap-instance:
