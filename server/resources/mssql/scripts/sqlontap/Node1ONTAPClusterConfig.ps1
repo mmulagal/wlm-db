@@ -17,6 +17,9 @@ param(
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
     [string]$Stackname   
 
 )
@@ -134,6 +137,7 @@ Node1ClusterConfig -OutputPath 'C:\cfn\dsc\Node1ClusterConfig' -ConfigurationDat
 Start-DscConfiguration 'C:\cfn\dsc\Node1ClusterConfig' -Wait -Verbose -Force
 
 } catch{
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+    Write-Output "Configuring shared disks for Windows cluster failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

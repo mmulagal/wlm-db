@@ -1,9 +1,21 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [string]$FileSystemId
+    [string]$FileSystemId,
+
+    [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname    
 )
 Start-Transcript -Path C:\cfn\log\connectontapinstance.ps1.txt -Append
+
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
+
 $ErrorActionPreference = "Stop"
 try{
 $fslist = Get-FSXFileSystem -FileSystemId $FileSystemId
@@ -22,6 +34,7 @@ New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
 Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
 }catch{
     Write-Output "Error connecting to Iscsi targets"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
 

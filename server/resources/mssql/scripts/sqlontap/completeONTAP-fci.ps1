@@ -23,11 +23,19 @@ param(
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
     [string]$Stackname
 
 )
 
 Start-Sleep -Seconds 600
+
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
 
 try
 {
@@ -102,6 +110,7 @@ try
 
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 } catch {
-        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId 'CompleteFCIFailed'
+        Write-Output "Failed to run complete Failover cluster action for SQL installation"
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
 }

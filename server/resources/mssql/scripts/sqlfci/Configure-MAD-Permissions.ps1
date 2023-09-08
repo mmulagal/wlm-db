@@ -11,6 +11,9 @@ param(
     [string]$wsfcName,
 
     [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
     [string]$Stackname
 )
 
@@ -47,7 +50,8 @@ Invoke-Command -scriptblock {
 	Set-acl -aclobject $acl "ad:$OU"
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 } catch {
-	Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+	Write-Output "Error configuring permissions for WSFC in Active Directory"
+	Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
 	$_ | Write-AWSLaunchWizardException
 }
 

@@ -628,8 +628,8 @@ Resources:
                                   - "' -FSxDataLunSize '"
                                   - !Ref 'FSxDataLunSize'
                                   - "' -IGROUP '"
-                                  - !Ref 'SQLigroupname'
-                                  - "' -Stackname '"
+                                  - !Ref 'SQLigroupname',
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                         e-connect-ontap-instance:
@@ -638,6 +638,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                  
                                   - '''"'
                             waitAfterCompletion: 0
                         f-init-iscsi-disk:
@@ -768,7 +770,7 @@ Resources:
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                  - "' -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -782,7 +784,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
-                                  - "' -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -817,6 +819,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:
@@ -853,7 +857,7 @@ Resources:
                                   - !Ref 'SqlFSxFCIName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                  - "' -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -867,7 +871,7 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - "' -Node2 '"
                                   - !Ref 'SqlFSxServerNetBIOSName2'
-                                  - "' -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1156,6 +1160,8 @@ Resources:
                                   - !Ref 'SQLigroupname'
                                   - "' -FileSystemId '"
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                  
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -1163,6 +1169,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                  
                                   - '''"'
                             waitAfterCompletion: 0
                 InstancePrep:
@@ -1240,7 +1248,7 @@ Resources:
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                  - "' -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 60
@@ -1280,7 +1288,7 @@ Resources:
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                  - "' -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1315,6 +1323,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:

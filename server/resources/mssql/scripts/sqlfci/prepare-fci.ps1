@@ -20,8 +20,13 @@ param(
     [string]$SqlUser,
 
     [Parameter(Mandatory=$true)]
-    [string]$DomainAdminUser
+    [string]$DomainAdminUser,
 
+    [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
 )
 
 try{
@@ -71,5 +76,7 @@ Invoke-Command -scriptblock {
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
 }
 } catch {
+        Write-Output "Failed to run prepare Failover cluster action for SQL installation"
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
 }

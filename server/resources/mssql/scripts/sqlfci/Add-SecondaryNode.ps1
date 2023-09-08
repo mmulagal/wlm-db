@@ -14,7 +14,10 @@ param(
     [string]$DomainAdminUser,
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname 
  
 )
 
@@ -92,6 +95,7 @@ AddSecondaryNode -OutputPath 'C:\cfn\dsc\AddSecondaryNode' -ConfigurationData $C
 
 Start-DscConfiguration 'C:\cfn\dsc\AddSecondaryNode' -Wait -Verbose -Force
 } catch {
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD2' -UniqueId $instanceId
+    Write-Output "Adding secondary node for Windows clusterfailed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

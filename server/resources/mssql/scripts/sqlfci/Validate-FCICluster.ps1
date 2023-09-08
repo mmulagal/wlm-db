@@ -10,7 +10,10 @@ param (
     [string]$Node2,
 
     [Parameter(Mandatory=$true)]
-    [string]$Stackname
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname  
   
 )
 
@@ -72,25 +75,26 @@ try {
 
 catch [NodeException] {
     Write-Output "Cluster does not contain both nodes or not in healthy state"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
 }
 
 catch [ResourceException] {
     Write-Output "Cluster does not have all the required resources(disk and networking) created."
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
 
 catch [SQLFCIException] {
     Write-Output "SQL FCI configuration failed. SQL server related roles not created or not online"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
 catch {
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId 'SqlFSxInstanceMAD1' -UniqueId $instanceId
+    Write-Output "SQL FCI validation failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 } 
  
