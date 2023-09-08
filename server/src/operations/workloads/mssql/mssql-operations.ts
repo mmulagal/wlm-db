@@ -19,7 +19,7 @@ import {
     SERVER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    PROMISE_CONCURRENCY_COUNT
+    SSM_QUERY_CONCURRENCY_LIMIT
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -245,13 +245,8 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 
     const responses = await Promise.map(
         batchQueries,
-        async (query: string) => {
-            const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                query
-            ]);
-            return response;
-        },
-        { concurrency: PROMISE_CONCURRENCY_COUNT }
+        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
 
     const tablesList = responses.flat(1);
