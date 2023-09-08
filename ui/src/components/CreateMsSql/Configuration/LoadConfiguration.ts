@@ -42,8 +42,6 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any) => {
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, 
             message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG }));
     } else {
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-            message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
         saveConfigData({ payload: payload })
             .then((data: any) => {
                 if (!data?.error) {
