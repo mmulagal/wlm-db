@@ -31,22 +31,22 @@ const EstimatedCost = () => {
     }, [az1Value, az2value, vpcValue, domainName, instanceTypeName]);
 
     //To open accordion if default account is present
-    useEffect(() => {
-        if (fetchResult) {
-            accordionContext({
-                23: true
-            });
-            setTimeout(() => {
-                document.querySelector('#estimated-cost')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'end',
-                    inline: 'nearest'
-                });
-            }, 500);
-        }
-        setFetchResult(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fetchResult]);
+    // useEffect(() => {
+    //     if (fetchResult) {
+    //         accordionContext({
+    //             23: true
+    //         });
+    //         setTimeout(() => {
+    //             document.querySelector('#estimated-cost')?.scrollIntoView({
+    //                 behavior: 'smooth',
+    //                 block: 'end',
+    //                 inline: 'nearest'
+    //             });
+    //         }, 500);
+    //     }
+    //     setFetchResult(false);
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [fetchResult]);
 
     const setHeader = () => {
         // if (!az1Value || !az2value || !vpcValue || !domainName) {

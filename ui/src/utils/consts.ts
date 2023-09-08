@@ -91,4 +91,8 @@ export const REGIONS_CODE_LIST = [
 
 export const DATABASE_SERVICE_PATH = 'database-services';
 
-export const CONFIG_DIALOG = 'config';
+export const FROM_DIALOG = {
+    LOAD_CONFIG: 'load_config',
+    SAVE_CONFIG: 'save_config',
+    HEADER_CROSS: 'header_cross'
+}

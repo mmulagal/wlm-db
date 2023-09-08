@@ -1,7 +1,8 @@
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
-import { CONFIG_DIALOG } from '../../utils/consts';
+import { navigateToCanvas } from '../../utils/appConfig';
+import { FROM_DIALOG } from '../../utils/consts';
 
 type DialogProps = {
     header: string;
@@ -17,6 +18,22 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
     const { closeDialog } = useDialog();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
+
+    const primaryButtonClick = () => {
+        callback();
+        if(dialogFrom !== FROM_DIALOG.LOAD_CONFIG){
+            closeDialog();
+        }
+    }
+
+    const secButtonClick = () => {
+        closeCallback();
+        closeDialog(null);
+        if(dialogFrom === FROM_DIALOG.HEADER_CROSS) {
+            navigateToCanvas('/');
+        }
+    }
 
     return (
         <DialogLayout>
@@ -27,13 +44,10 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     variant={'primary'}
                     className={'continue-button'}
                     isThin={true}
-                    isLoading={dialogFrom === CONFIG_DIALOG && isLoadConfig}
-                    onClick={() => {
-                        callback();
-                        if(dialogFrom !== CONFIG_DIALOG){
-                            closeDialog();
-                        }
-                    }}
+                    isDisabled={(dialogFrom === FROM_DIALOG.SAVE_CONFIG || 
+                        dialogFrom === FROM_DIALOG.HEADER_CROSS) && saveConfigName === ''}
+                    isLoading={dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig}
+                    onClick={primaryButtonClick}
                 >
                     {primaryButton}
                 </Button>
@@ -41,10 +55,7 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     <Button
                         variant={'secondary'}
                         isThin={true}
-                        onClick={() => {
-                            closeCallback();
-                            closeDialog(null);
-                        }}
+                        onClick={secButtonClick}
                     >
                         {secondaryButton}
                     </Button>

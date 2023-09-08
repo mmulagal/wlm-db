@@ -8,6 +8,7 @@ import styles from './SaveConfig.module.scss';
 const SaveConfig = () => {
     const [configName, setConfigName] = useState('');
     const dispatch = useDispatch();
+
     return (
         <div className={styles['save-config']}>
             <Typography variant="Regular_14">{GENERAL.SAVE_CONFIG_CONTENT}</Typography>
