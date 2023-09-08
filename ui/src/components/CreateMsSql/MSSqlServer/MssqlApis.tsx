@@ -27,7 +27,7 @@ import {
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
 import { AWS_ASSUME_ROLE, DATABASE_TYPE, DEAFULT_INSTANCE_VALUE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
-import { formatKmsData, formatSize, generateOptionType, sortListOfDict } from '../../../utils/utilityFunctions';
+import { formatKmsData, formatSize, generateOptionType } from '../../../utils/utilityFunctions';
 import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 
@@ -241,7 +241,8 @@ const MssqlApis = () => {
         } else {
             dispatch(addRegions({ regionsData, regionsLoading, regionsError }));
         }
-    }, [dispatch, regionsData, regionsError, regionsLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [regionsData, regionsError, regionsLoading]);
 
     // To add VPC information in MssqlEntities
     useEffect(() => {
@@ -250,7 +251,8 @@ const MssqlApis = () => {
         } else {
             dispatch(addVpcList({ vpcData, vpcLoading, vpcError }));
         }
-    }, [dispatch, vpcData, vpcLoading, vpcError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vpcData, vpcLoading, vpcError]);
 
     // To add Ads information in MssqlEntities
     useEffect(() => {
@@ -259,7 +261,8 @@ const MssqlApis = () => {
         } else {
             dispatch(addAdsList({ adsData, adsLoading, adsError }));
         }
-    }, [dispatch, adsData, adsLoading, adsError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [adsData, adsLoading, adsError]);
 
     // To add AMI information in MssqlEntities
     useEffect(() => {
@@ -275,7 +278,8 @@ const MssqlApis = () => {
                 dispatch(setSelectedLicenseId(option));
             }
         }
-    }, [dispatch, amiData, amiLoading, amiError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [amiData, amiLoading, amiError]);
 
     // To add SNS information in MssqlEntities
     useEffect(() => {
@@ -284,7 +288,8 @@ const MssqlApis = () => {
         } else {
             dispatch(addSnsList({ snsData, snsLoading, snsError }));
         }
-    }, [dispatch, snsData, snsLoading, snsError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [snsData, snsLoading, snsError]);
 
     // To add KMS Keys in MssqlEntities
     useEffect(() => {
@@ -297,7 +302,8 @@ const MssqlApis = () => {
                 dispatch(setEncryptionRow([kmsData[0]]));
             }
         }
-    }, [dispatch, kmsList, kmsLoading, kmsError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kmsList, kmsLoading, kmsError]);
 
     // To add Key Pair in MssqlEntities
     useEffect(() => {
@@ -312,7 +318,8 @@ const MssqlApis = () => {
                 dispatch(setSelectedKeyPair(option));
             }
         }
-    }, [dispatch, keyPairData, keyPairLoading, keyPairError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keyPairData, keyPairLoading, keyPairError]);
 
     // To add Instance Type in MssqlEntities
     useEffect(() => {
@@ -339,7 +346,8 @@ const MssqlApis = () => {
                 dispatch(setInstanceType(option));
             }
         }
-    }, [dispatch, instanceTypeData, instanceTypeLoading, instanceTypeError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
 
     // To add FSxN in MssqlEntities
     useEffect(() => {
@@ -348,11 +356,17 @@ const MssqlApis = () => {
         } else {
             dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
         }
-    }, [dispatch, fsxnData, fsxnLoading, fsxnError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fsxnData, fsxnLoading, fsxnError]);
 
     // To add saved configuration list
     useEffect(() => {
-        dispatch(addSavedConfigList({configData, configLoading, configError}));
+        if(configError) {
+            dispatch(addSavedConfigList({undefined, configLoading, configError}));
+        } else {
+            dispatch(addSavedConfigList({configData, configLoading, configError}));
+        }
+        
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, configLoading, configError]);
 

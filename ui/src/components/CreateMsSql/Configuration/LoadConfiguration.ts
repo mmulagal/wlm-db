@@ -2,7 +2,7 @@ import { Dispatch } from 'redux';
 import store from '../../../store/store';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
-import { setIsLoadConfig } from '../../../store/mssql/msSqlActionSlice';
+import { setIsLoadConfig, setIsMissingFieldsInLoad, setSavedConfig } from '../../../store/mssql/msSqlActionSlice';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../utils/utilityFunctions';
 
@@ -14,19 +14,15 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
         .then((data: any) => {
             if(data?.data?.data){
                 dispatch(setMssqlForm(data?.data?.data));
+                dispatch(setSavedConfig(data?.data?.data));
                 const isMissing = checkMissingFields(data?.data?.data);
-                if(isMissing){
-                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
-                        message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
-                } else {
-                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-                        message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
-                }
-            } 
-            setTimeout(() => {
+                dispatch(setIsMissingFieldsInLoad(isMissing));
+            } else {
                 dispatch(setIsLoadConfig(false));
-            }, 1000);
-            closeDialog();
+                closeDialog();
+                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
+                    message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
+            }
         })
         .catch((error: any) => {
             console.log("Error while loading data - ", error);
@@ -39,19 +35,81 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
 export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any) => {
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
+    const existingSavedConfig = state.msSqlAction.savedConfig;
     const payload = {name: saveConfigName, data:state.mssqlForm};
-
-    saveConfigData({ payload: payload })
-        .then((data: any) => {
-            if (!data?.error) {
-                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-                    message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
-            }
-        })
-        .catch((error: any) => {
-            console.log("Error while saving data - ",error);
-        });
+    const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
+    if(isDuplicate){
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, 
+            message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG }));
+    } else {
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+            message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
+        saveConfigData({ payload: payload })
+            .then((data: any) => {
+                if (!data?.error) {
+                    dispatch(setSavedConfig(state.mssqlForm));
+                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+                        message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
+                }
+            })
+            .catch((error: any) => {
+                console.log("Error while saving data - ",error);
+            });
+    }
     return '';
+};
+
+const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
+    if(!oldConfig){
+        return false;
+    }
+    const cred = newConfig?.awsAccount?.selectedCredential?.value === oldConfig?.awsAccount?.selectedCredential?.value;
+    const region = newConfig?.regionAndVpc?.selectedRegion?.value === oldConfig?.regionAndVpc?.selectedRegion?.value;
+    const vpcId = newConfig?.regionAndVpc?.selectedVPC?.label2 === oldConfig?.regionAndVpc?.selectedVPC?.label2;
+    const availabilityZone1 = newConfig?.availabilityZones?.selectedAzNode1?.value === oldConfig?.availabilityZones?.selectedAzNode1?.value;
+    const availabilityZone2 = newConfig?.availabilityZones?.selectedAzNode2?.value === oldConfig?.availabilityZones?.selectedAzNode2?.value;
+    const privateSubnet1Id = newConfig?.availabilityZones?.selectedSubnetNode1?.label2 === oldConfig?.availabilityZones?.selectedSubnetNode1?.label2;
+    const privateSubnet2Id = newConfig?.availabilityZones?.selectedSubnetNode2?.label2 === oldConfig?.availabilityZones?.selectedSubnetNode2?.label2;
+    const securityGroupType = newConfig?.securityGroup?.selectedSecurityType === oldConfig?.securityGroup?.selectedSecurityType;
+    const securityGroup = newConfig?.securityGroup?.selectedExistingSecurityGroup?.value === oldConfig?.securityGroup?.selectedExistingSecurityGroup?.value;
+    const operatingSystem = newConfig?.operatingSystem?.label === oldConfig?.operatingSystem?.label;
+    const deploymentModel = newConfig?.dbDeploymentModel === oldConfig?.dbDeploymentModel;
+    const edition = newConfig?.dbEdition?.value === oldConfig?.dbEdition?.value;
+    const dbVersion = newConfig?.dbVersion?.value === oldConfig?.dbVersion?.value;
+    const licenseType = newConfig?.license?.selectedLicenseType === oldConfig?.license?.selectedLicenseType;
+    const license = newConfig?.license?.selectedLicenseId?.value === oldConfig?.license?.selectedLicenseId?.value;
+    const dbName = newConfig?.dbName === oldConfig?.dbName;
+    const dbUsername = newConfig?.dbCredentials?.name === oldConfig?.dbCredentials?.name;
+    const dbPass = newConfig?.dbCredentials?.password === oldConfig?.dbCredentials?.password;
+    const keyPair = newConfig?.keyPair?.selectedKeyPair?.value === oldConfig?.keyPair?.selectedKeyPair?.value;
+    const adType = newConfig?.activeDirectory?.scenarioType === oldConfig?.activeDirectory?.scenarioType;
+    const adName = newConfig?.activeDirectory?.domainName?.value === oldConfig?.activeDirectory?.domainName?.value;
+    const adIPAddress = newConfig?.activeDirectory?.domainAddress === oldConfig?.activeDirectory?.domainAddress;
+    const adUser = newConfig?.activeDirectory?.userName === oldConfig?.activeDirectory?.userName;
+    const adPass = newConfig?.activeDirectory?.password === oldConfig?.activeDirectory?.password;
+    const dbInstanceType = newConfig?.instanceType?.value === oldConfig?.instanceType?.value;
+    const fsxType = newConfig?.fsxN?.fsxNType === oldConfig?.fsxN?.fsxNType;
+    const fsxNewName = newConfig?.fsxN?.fsxNName === oldConfig?.fsxN?.fsxNName;
+    const fsxNewUserName = newConfig?.fsxN?.fsxNNewUserName === oldConfig?.fsxN?.fsxNNewUserName;
+    const fsxExName = newConfig?.fsxN?.fsxNExistingName?.value === oldConfig?.fsxN?.fsxNExistingName?.value;
+    const fsxExUserName = newConfig?.fsxN?.fsxNExistingUserName === oldConfig?.fsxN?.fsxNExistingUserName;
+    const fsxPass = newConfig?.fsxN?.fsxNPassword === oldConfig?.fsxN?.fsxNPassword;
+    const dataDriveSize = newConfig?.storageCapacity?.capacity === oldConfig?.storageCapacity?.capacity;
+    const dataDriveUnit = newConfig?.storageCapacity?.unit?.value === oldConfig?.storageCapacity?.unit?.value;
+    const provisionedIops = newConfig?.provisionedIOPS?.IOPSValue === oldConfig?.provisionedIOPS?.IOPSValue;
+    const throughput = newConfig?.throughput?.value === oldConfig?.throughput?.value;
+    const encryptionType = newConfig?.encryption?.encryptionType === oldConfig?.encryption?.encryptionType;
+    const encryptionRow = newConfig?.encryption?.selectedRow === oldConfig?.encryption?.selectedRow;
+    const encryptionArn = newConfig?.encryption?.encryptionArn === oldConfig?.encryption?.encryptionArn;
+    const tags = newConfig?.tags === oldConfig?.tags;
+    const snsKey = newConfig?.simpleNotification?.snsARN?.value === oldConfig?.simpleNotification?.snsARN?.value;
+    const cloudWatch = newConfig?.cloudWatch === oldConfig?.cloudWatch;
+    return cred && region && vpcId && availabilityZone1 && availabilityZone2 && privateSubnet1Id && privateSubnet2Id && 
+            securityGroupType && securityGroup && operatingSystem && deploymentModel && edition && dbVersion && licenseType && 
+            license && dbName && dbUsername && dbPass && keyPair && adType && adName && adIPAddress && adUser && adPass && 
+            dbInstanceType && fsxType && fsxNewName && fsxNewUserName && fsxExName && fsxExUserName && fsxPass && dataDriveSize && 
+            dataDriveUnit && provisionedIops && throughput && encryptionType && encryptionRow && encryptionArn && tags && 
+            snsKey && cloudWatch;
 };
 
 

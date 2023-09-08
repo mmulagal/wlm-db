@@ -12,6 +12,8 @@ const initialState: any = {
     licenseIdSelected: true,
     isLoading: false,
     isLoadConfig: false,
+    savedConfig: null,
+    isMissingFieldsInLoad: false,
 };
 
 const msSqlActionSlice = createSlice({
@@ -50,6 +52,12 @@ const msSqlActionSlice = createSlice({
         },
         setIsLoadConfig(state, action: PayloadAction<any>) {
             state.isLoadConfig = action.payload;
+        },
+        setSavedConfig(state, action: PayloadAction<any>) {
+            state.savedConfig = action.payload;
+        },
+        setIsMissingFieldsInLoad(state, action: PayloadAction<any>) {
+            state.isMissingFieldsInLoad = action.payload;
         }
     }
 });
@@ -65,6 +73,8 @@ export const {
     setDBNameValue,
     setIsLoading,
     setLicenseIdValue,
-    setIsLoadConfig
+    setIsLoadConfig,
+    setSavedConfig,
+    setIsMissingFieldsInLoad
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;
