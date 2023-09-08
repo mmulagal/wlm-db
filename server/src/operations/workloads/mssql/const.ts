@@ -1,14 +1,25 @@
-const PSSCRIPT = ' C:\\SSM\\ExecuteQueryFromSSM.ps1';
+const PSSCRIPT = 'C:\\SSM\\ExecuteQueryFromSSM.ps1';
 const SSM_RUN_POWERSHELL_SCRIPT_DOC = 'AWS-RunPowerShellScript';
 const SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION = '1';
 const DB_ROWS_COUNT = 75;
+const SET_NOCOUNT = 'SET NOCOUNT ON;';
+const FOR_JSON_PATH = 'FOR JSON PATH';
 const DATABASES = (offset: number, rowscount: number) =>
-    `SELECT databaseId = d.database_id, databaseName = d.name, creationDate = d.create_date, databaseStatus = d.state_desc, databaseSize = t.databaseSize FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name offset ${offset} rows fetch next ${rowscount} rows only`;
+    `${SET_NOCOUNT} SELECT databaseId = d.database_id,
+            databaseName = d.name,
+            creationDate = d.create_date,
+            databaseStatus = d.state_desc,
+            databaseSize = t.databaseSize
+            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),
+            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))
+            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name
+            offset ${offset} rows fetch next ${rowscount} rows only ${FOR_JSON_PATH}`;
 
 const DATABASES_COUNT = () =>
-    'SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id';
+    `${SET_NOCOUNT} SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id ${FOR_JSON_PATH}`;
 
-const CPU_UTILISATION = `DECLARE @ts BIGINT;
+const CPU_UTILISATION = `${SET_NOCOUNT} set quoted_identifier ON;DECLARE @ts BIGINT;
                                 DECLARE @lastNmin TINYINT;
                                 SET @lastNmin = 1;
                                 SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); 
@@ -24,46 +35,37 @@ const CPU_UTILISATION = `DECLARE @ts BIGINT;
                                 FROM (SELECT[timestamp], convert(xml, record) AS [record]             
                                 FROM sys.dm_os_ring_buffers             
                                 WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y 
-                                ORDER BY record_id DESC;`;
-const DB_SIZE = 'SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files';
-const DISK_UTILISATION = `WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum
+                                ORDER BY record_id DESC ${FOR_JSON_PATH}`;
+const DB_SIZE = `${SET_NOCOUNT} SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files ${FOR_JSON_PATH}`;
+const DISK_UTILISATION = `${SET_NOCOUNT} WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum
                                 FROM sys.master_files mf1)
                                 ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID
                                 FROM presel pr
                                 WHERE pr.RowNum = 1)
-
                                 SELECT ovs.total_bytes AS total, ovs.available_bytes AS remaining
                                 FROM roundtwo mf
-                                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs`;
+                                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs ${FOR_JSON_PATH}`;
 
-const MEMORY_UTILISATION = `SELECT
-                                (processmem.physical_memory_in_use_kb * 1024) AS used,
-                                (sysmem.total_physical_memory_kb * 1024) AS total,
-                                ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,
-                                 ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
-                                 FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;`;
+const MEMORY_UTILISATION = `${SET_NOCOUNT} SELECT
+                                    (processmem.physical_memory_in_use_kb * 1024) AS used,
+                                    (sysmem.total_physical_memory_kb * 1024) AS total,
+                                    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,
+                                    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed
+                                    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem ${FOR_JSON_PATH}`;
 
-const SERVER_GUID = `SELECT service_broker_guid AS serverGuid
-                     FROM sys.databases
-                     WHERE name = 'msdb'`;
+const SERVER_GUID = `${SET_NOCOUNT} SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = 'msdb' ${FOR_JSON_PATH}`;
 
-const SERVER_NAME = 'SELECT @@SERVERNAME as serverName;';
+const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
 
-const SERVER_VERSION_DETAILS = 'SELECT @@version AS serverDetails';
-const SERVER_STATE = `EXEC
-                        master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
-const IS_SERVER_CLUSTERED = `SELECT
-                                SERVERPROPERTY('IsClustered') as isClustered`;
-const SERVER_NODES = `SELECT
-                        SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode,
-                        SERVERPROPERTY('MachineName') as standbyNode`;
+const SERVER_VERSION_DETAILS = `${SET_NOCOUNT} SELECT @@version AS serverDetails`;
+const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
+const IS_SERVER_CLUSTERED = `${SET_NOCOUNT} SELECT SERVERPROPERTY('IsClustered') as isClustered ${FOR_JSON_PATH}`;
+const SERVER_NODES = `${SET_NOCOUNT} SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, SERVERPROPERTY('MachineName') as standbyNode ${FOR_JSON_PATH}`;
 
-const NUMBER_OF_CONNECTIONS =
-    'SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL';
+const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
 
-const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) =>
-    `use ${databaseName}
-                    SELECT 
+const TABLES_QUERY = (offset: number, rowscount: number) =>
+    `${SET_NOCOUNT} SELECT 
                         t.NAME AS tableName,
                         t.type_desc AS tableType,
                         s.Name AS tableSchema,
@@ -81,14 +83,9 @@ const TABLES_QUERY = (databaseName: string, offset: number, rowscount: number) =
                     GROUP BY 
                         t.Name, s.Name, p.Rows, t.type_desc
                     ORDER BY 
-                        t.Name offset ${offset} rows fetch next ${rowscount} rows only`;
+                        t.Name offset ${offset} rows fetch next ${rowscount} rows only ${FOR_JSON_PATH}`;
 
-const TABLES_COUNT_QUERY = (databaseName: string) =>
-    `use ${databaseName}
-                        SELECT 
-                            COUNT(DISTINCT name) AS totalCount
-                        FROM 
-                            sys.tables`;
+const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables ${FOR_JSON_PATH}`;
 
 export {
     DB_ROWS_COUNT,
