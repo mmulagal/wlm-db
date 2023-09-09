@@ -2,14 +2,12 @@ import { Button, Header, useDialog } from '@netapp/design-system';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import { setIsLoadConfig } from '../../../../store/mssql/msSqlActionSlice';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useSaveConfigDataMutation, useLazyGetConfigDataQuery } from '../../../../utils/apiService';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { FROM_DIALOG } from '../../../../utils/consts';
-import { LoadConfiguration, SaveConfiguration } from '../../Configuration/LoadConfiguration';
+import { LoadConfiguration, resetChecksAfterLoad, SaveConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
 import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
@@ -25,23 +23,17 @@ const MSSqlHeader = () => {
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isMissing = useAppSelector(state => state.msSqlAction.isMissingFieldsInLoad);
+    const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
     
     useEffect(() => {
         if(isLoadConfig){
-            setTimeout(() => {
-                dispatch(setIsLoadConfig(false));
-                closeDialog();
-                if(isMissing){
-                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
-                            message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
-                } else {
-                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-                            message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
-                }
-            }, 20000);
-        }
+            if(refetchApiCount?.isLoading && (refetchApiCount?.ran === refetchApiCount?.expected || 
+                refetchApiCount?.expected === 0)) {
+                resetChecksAfterLoad(dispatch, closeDialog , isMissing);
+            } 
+        } 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoadConfig])
+    }, [isLoadConfig, refetchApiCount])
 
     const handleLoadConfiguration = () => {
         setDialog(

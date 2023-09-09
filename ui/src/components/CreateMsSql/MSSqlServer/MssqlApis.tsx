@@ -30,6 +30,7 @@ import { AWS_ASSUME_ROLE, DATABASE_TYPE, DEAFULT_INSTANCE_VALUE, OS_TYPE, VPC_AP
 import { formatKmsData, formatSize, generateOptionType } from '../../../utils/utilityFunctions';
 import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
 
 
 const MssqlApis = () => {
@@ -64,6 +65,8 @@ const MssqlApis = () => {
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
     const dbEdition = useAppSelector(state => state.mssqlForm.dbEdition);
     const dbVersion = useAppSelector(state => state.mssqlForm.dbVersion);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
 
     // API call to get credentials list for user account
     const {
@@ -241,6 +244,9 @@ const MssqlApis = () => {
         } else {
             dispatch(addRegions({ regionsData, regionsLoading, regionsError }));
         }
+        if(!regionsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [regionsData, regionsError, regionsLoading]);
 
@@ -251,6 +257,9 @@ const MssqlApis = () => {
         } else {
             dispatch(addVpcList({ vpcData, vpcLoading, vpcError }));
         }
+        if(!vpcLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [vpcData, vpcLoading, vpcError]);
 
@@ -260,6 +269,9 @@ const MssqlApis = () => {
             dispatch(addAdsList({ undefined, adsLoading, adsError }));
         } else {
             dispatch(addAdsList({ adsData, adsLoading, adsError }));
+        }
+        if(!adsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adsData, adsLoading, adsError]);
@@ -278,6 +290,9 @@ const MssqlApis = () => {
                 dispatch(setSelectedLicenseId(option));
             }
         }
+        if(!amiLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [amiData, amiLoading, amiError]);
 
@@ -287,6 +302,9 @@ const MssqlApis = () => {
             dispatch(addSnsList({ undefined, snsLoading, snsError }));
         } else {
             dispatch(addSnsList({ snsData, snsLoading, snsError }));
+        }
+        if(!snsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [snsData, snsLoading, snsError]);
@@ -301,6 +319,9 @@ const MssqlApis = () => {
             if(selectedConfig === SELECT_CONFIG.EASY_CREATE && kmsData && kmsData.length > 0){
                 dispatch(setEncryptionRow([kmsData[0]]));
             }
+        }
+        if(!kmsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [kmsList, kmsLoading, kmsError]);
@@ -317,6 +338,9 @@ const MssqlApis = () => {
                 const option = generateOptionType(keyPairName, keyPairName, '', false, '', keyPaitFirst);
                 dispatch(setSelectedKeyPair(option));
             }
+        }
+        if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [keyPairData, keyPairLoading, keyPairError]);
@@ -346,6 +370,9 @@ const MssqlApis = () => {
                 dispatch(setInstanceType(option));
             }
         }
+        if(!instanceTypeLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
 
@@ -355,6 +382,9 @@ const MssqlApis = () => {
             dispatch(addFsxnList({ undefined, fsxnLoading, fsxnError }));
         } else {
             dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
+        }
+        if(!fsxnLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected > 0){
+            dispatch(setRefetchApiCountRan(refetchApiCount?.ran + 1))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fsxnData, fsxnLoading, fsxnError]);

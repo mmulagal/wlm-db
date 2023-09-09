@@ -1,5 +1,5 @@
 import { TextField, Typography } from '@netapp/design-system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
 import { GENERAL } from '../../../utils/appConstants';
@@ -8,6 +8,10 @@ import styles from './SaveConfig.module.scss';
 const SaveConfig = () => {
     const [configName, setConfigName] = useState('');
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(setSaveConfigName(configName));
+    });
 
     return (
         <div className={styles['save-config']}>

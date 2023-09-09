@@ -5,7 +5,7 @@ import styles from './LoadConfig.module.scss';
 import { useDeleteConfigMutation, useGetConfigListQuery } from '../../../utils/apiService';
 import { useDispatch } from 'react-redux';
 import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
-import { ReactComponent as DeleteIcon1 } from '../../../assets/delete-icon.svg';
+import { ReactComponent as DeleteIcon } from '../../../assets/delete-icon.svg';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatDate } from '../../../utils/utilityFunctions';
 
@@ -58,14 +58,17 @@ const LoadConfig = () => {
                         onMouseEnter={() => handleMouseEnter(index)}
                         onMouseLeave={handleMouseLeave}>
                         <div className={styles.setRow}>
-                            <RadioButton
-                                isChecked={selectedConfig === (item?.name + " | " + item?.user + " | " + item?.creationTime)}
-                                onChange={() => handleChange(item)}
-                                children={item?.name + " | " + item?.user + " | " + formatDate(item?.creationTime)}
-                                className=""
-                            />
-                            {hoveredItem === index && <div className={styles.icon}>
-                                <DeleteIcon1 onClick={() => deleteConfig(index)}/>
+                            <div className={styles.radiobutton}>
+                                <RadioButton
+                                    isChecked={selectedConfig === (item?.name + " | " + item?.user + " | " + item?.creationTime)}
+                                    onChange={() => handleChange(item)}
+                                    children={item?.name + " | " + item?.user + " | " + formatDate(item?.creationTime || '')}
+                                    className=""
+                                />
+                            </div>
+                            {hoveredItem === index && 
+                            <div className={styles.icon}>
+                                <DeleteIcon onClick={() => deleteConfig(index)}/>
                             </div>}
                         </div>
                     </div>
