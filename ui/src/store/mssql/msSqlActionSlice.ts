@@ -10,9 +10,10 @@ const initialState: any = {
     fsxNNameSelected: true,
     dbNameSelected: true,
     licenseIdSelected: true,
-    isLoading: false,
-    isLoadConfig: false,
-    savedConfig: null,
+    isLoading: false, // To load page while create or save form or estimate cost
+    isLoadConfig: false, // To show loading in load config
+    isSaveConfigLoading: false, // To show loading while saving config
+    savedConfig: null, // Last Saved or last loaded data
     isMissingFieldsInLoad: false,
     refetchApiCount: {
         expected: 0,
@@ -58,6 +59,9 @@ const msSqlActionSlice = createSlice({
         setIsLoadConfig(state, action: PayloadAction<any>) {
             state.isLoadConfig = action.payload;
         },
+        setIsSaveConfigLoading(state, action: PayloadAction<any>) {
+            state.isSaveConfigLoading = action.payload;
+        },
         setSavedConfig(state, action: PayloadAction<any>) {
             state.savedConfig = action.payload;
         },
@@ -88,6 +92,7 @@ export const {
     setIsLoading,
     setLicenseIdValue,
     setIsLoadConfig,
+    setIsSaveConfigLoading,
     setSavedConfig,
     setIsMissingFieldsInLoad,
     setRefetchApiCountExpected,

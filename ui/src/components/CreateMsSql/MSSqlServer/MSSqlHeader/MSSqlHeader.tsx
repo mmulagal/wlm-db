@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useSaveConfigDataMutation, useLazyGetConfigDataQuery } from '../../../../utils/apiService';
+import { useSaveConfigDataMutation, useLazyGetConfigDataQuery, useGetConfigListQuery } from '../../../../utils/apiService';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { FROM_DIALOG } from '../../../../utils/consts';
 import { LoadConfiguration, resetChecksAfterLoad, SaveConfiguration } from '../../Configuration/LoadConfiguration';
@@ -20,6 +20,11 @@ const MSSqlHeader = () => {
 
     const [saveConfigData] = useSaveConfigDataMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+    
+    // API call to get configuration list
+    const {
+        refetch: configListRefetch
+    } = useGetConfigListQuery({});
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isMissing = useAppSelector(state => state.msSqlAction.isMissingFieldsInLoad);
@@ -58,7 +63,7 @@ const MSSqlHeader = () => {
                 content={<SaveConfig />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => SaveConfiguration(dispatch, saveConfigData)}
+                callback={() => SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog)}
                 closeCallback={() => dispatch(setSaveConfigName(''))}
                 dialogFrom={dialogFrom}
             />
