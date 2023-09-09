@@ -18,11 +18,19 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
     const { closeDialog } = useDialog();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
+
+    const primaryButtonLoad = (() => {
+        return (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) || 
+            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom ===FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading)
+    })();
 
     const primaryButtonClick = () => {
         callback();
-        if(dialogFrom !== FROM_DIALOG.LOAD_CONFIG){
+        if(dialogFrom !== FROM_DIALOG.LOAD_CONFIG && 
+            dialogFrom !== FROM_DIALOG.SAVE_CONFIG && 
+            dialogFrom !== FROM_DIALOG.HEADER_CROSS) {
             closeDialog();
         }
     }
@@ -46,7 +54,7 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     isThin={true}
                     isDisabled={(dialogFrom === FROM_DIALOG.SAVE_CONFIG || 
                         dialogFrom === FROM_DIALOG.HEADER_CROSS) && saveConfigName === ''}
-                    isLoading={dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig}
+                    isLoading={primaryButtonLoad}
                     onClick={primaryButtonClick}
                 >
                     {primaryButton}

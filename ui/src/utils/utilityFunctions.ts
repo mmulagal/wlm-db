@@ -188,6 +188,11 @@ export const formatDate = (date: string | number) => {
     return moment(new Date(parseInt(timeStamp))).format('LL');
 };
 
+export const formatDateWithTime = (date: string | number) => {
+    const dateStr = date.toString();
+    return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
+};
+
 export const isNotNumberOrNA = (value: string | number) => {
     if (!value) {
         return false;

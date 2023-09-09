@@ -5,6 +5,7 @@ import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
 import { 
     setIsLoadConfig, 
     setIsMissingFieldsInLoad, 
+    setIsSaveConfigLoading, 
     setRefetchApiCountExpected, 
     setRefetchApiCountLoading, 
     setRefetchApiCountRan, 
@@ -29,7 +30,7 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
                 // In case of any load API mismatch will close dialog in 30 sec
                 setTimeout(() => {
                     if(isLoadConfig){
-                        resetChecksAfterLoad(dispatch, closeDialog, isMissing);
+                        resetChecksAfterLoad(dispatch, closeDialog, true);
                     }
                 }, 30000);
             } else {
@@ -84,7 +85,7 @@ export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
     dispatch(setRefetchApiCountLoading(true));
 }
 
-export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any) => {
+export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, configListRefetch: any, closeDialog:any) => {
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
     const existingSavedConfig = state.msSqlAction.savedConfig;
@@ -93,17 +94,24 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any) => {
     if(isDuplicate){
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, 
             message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG }));
+        closeDialog();
     } else {
+        dispatch(setIsSaveConfigLoading(true));
         saveConfigData({ payload: payload })
             .then((data: any) => {
                 if (!data?.error) {
                     dispatch(setSavedConfig(state.mssqlForm));
+                    dispatch(setIsSaveConfigLoading(false));
                     dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
                         message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
+                    configListRefetch();
                 }
+                closeDialog();
             })
             .catch((error: any) => {
                 console.log("Error while saving data - ",error);
+                dispatch(setIsSaveConfigLoading(false));
+                closeDialog();
             });
     }
     return '';
@@ -149,7 +157,16 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
     const provisionedIops = newConfig?.provisionedIOPS?.IOPSValue === oldConfig?.provisionedIOPS?.IOPSValue;
     const throughput = newConfig?.throughput?.value === oldConfig?.throughput?.value;
     const encryptionType = newConfig?.encryption?.encryptionType === oldConfig?.encryption?.encryptionType;
-    const encryptionRow = newConfig?.encryption?.selectedRow === oldConfig?.encryption?.selectedRow;
+    const encryptionRow = (() => {
+        const newConfigEncryption = newConfig?.encryption?.selectedRow;
+        const oldConfigEncryption = oldConfig?.encryption?.selectedRow;
+        if(newConfigEncryption && newConfigEncryption.length > 0  && 
+            oldConfigEncryption && oldConfigEncryption.length > 0) {
+            return newConfigEncryption[0]?.id === oldConfigEncryption[0]?.id;
+        } else {
+            return true;
+        }
+    })();
     const encryptionArn = newConfig?.encryption?.encryptionArn === oldConfig?.encryption?.encryptionArn;
     const tags = newConfig?.tags === oldConfig?.tags;
     const snsKey = newConfig?.simpleNotification?.snsARN?.value === oldConfig?.simpleNotification?.snsARN?.value;

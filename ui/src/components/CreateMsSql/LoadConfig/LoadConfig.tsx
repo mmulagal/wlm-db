@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
 import { ReactComponent as DeleteIcon } from '../../../assets/delete-icon.svg';
 import { useAppSelector } from '../../../store/storeHooks';
-import { formatDate } from '../../../utils/utilityFunctions';
+import { formatDateWithTime } from '../../../utils/utilityFunctions';
 
 const LoadConfig = () => {
     const dispatch = useDispatch();
@@ -62,7 +62,7 @@ const LoadConfig = () => {
                                 <RadioButton
                                     isChecked={selectedConfig === (item?.name + " | " + item?.user + " | " + item?.creationTime)}
                                     onChange={() => handleChange(item)}
-                                    children={item?.name + " | " + item?.user + " | " + formatDate(item?.creationTime || '')}
+                                    children={item?.name + " | " + item?.user + " | " + formatDateWithTime(item?.creationTime || '')}
                                     className=""
                                 />
                             </div>
