@@ -2,21 +2,36 @@ import { Dispatch } from 'redux';
 import store from '../../../store/store';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
-import { setIsLoadConfig, setIsMissingFieldsInLoad, setSavedConfig } from '../../../store/mssql/msSqlActionSlice';
+import { 
+    setIsLoadConfig, 
+    setIsMissingFieldsInLoad, 
+    setRefetchApiCountExpected, 
+    setRefetchApiCountLoading, 
+    setRefetchApiCountRan, 
+    setSavedConfig 
+} from '../../../store/mssql/msSqlActionSlice';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../utils/utilityFunctions';
 
 export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
     const state = store.getState();
     const selectedConfig = state.mssqlForm.loadConfig;
+    const isLoadConfig = state.msSqlAction.isLoadConfig;
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
             if(data?.data?.data){
-                dispatch(setMssqlForm(data?.data?.data));
                 dispatch(setSavedConfig(data?.data?.data));
+                apiCallsCount(dispatch, data?.data?.data);
                 const isMissing = checkMissingFields(data?.data?.data);
                 dispatch(setIsMissingFieldsInLoad(isMissing));
+                dispatch(setMssqlForm(data?.data?.data));
+                // In case of any load API mismatch will close dialog in 30 sec
+                setTimeout(() => {
+                    if(isLoadConfig){
+                        resetChecksAfterLoad(dispatch, closeDialog, isMissing);
+                    }
+                }, 30000);
             } else {
                 dispatch(setIsLoadConfig(false));
                 closeDialog();
@@ -31,6 +46,43 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
         });
     return '';
 };
+
+export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMissing:boolean) => {
+    dispatch(setIsLoadConfig(false));
+    closeDialog();
+    if(isMissing){
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
+            message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
+    } else {
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+            message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+    }
+    dispatch(setRefetchApiCountExpected(0));
+    dispatch(setRefetchApiCountRan(0));
+    dispatch(setRefetchApiCountLoading(false));
+}
+
+export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
+    const state = store.getState();
+    let apiCount = 0;
+    if(state.mssqlForm.awsAccount?.selectedCredential?.value !== loadData?.awsAccount?.selectedCredential?.value){
+        apiCount = 9;
+    } else if(state.mssqlForm.regionAndVpc?.selectedRegion?.value !== loadData?.regionAndVpc?.selectedRegion?.value){
+        apiCount = 8;
+    } else{
+        if(state.mssqlForm.regionAndVpc?.selectedVPC?.label2 !== loadData?.regionAndVpc?.selectedVPC?.label2) {
+            apiCount += 1;
+        } 
+        if(
+            state.mssqlForm?.operatingSystem?.label === loadData?.operatingSystem?.label ||
+            state.mssqlForm?.dbVersion?.value === loadData?.dbVersion?.value ||
+            state.mssqlForm?.dbEdition?.value === loadData?.dbEdition?.value ) {
+            apiCount += 1;
+        }
+    } 
+    dispatch(setRefetchApiCountExpected(apiCount));
+    dispatch(setRefetchApiCountLoading(true));
+}
 
 export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any) => {
     const state = store.getState();

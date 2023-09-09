@@ -14,6 +14,11 @@ const initialState: any = {
     isLoadConfig: false,
     savedConfig: null,
     isMissingFieldsInLoad: false,
+    refetchApiCount: {
+        expected: 0,
+        ran: 0,
+        isLoading: false
+    }
 };
 
 const msSqlActionSlice = createSlice({
@@ -58,7 +63,16 @@ const msSqlActionSlice = createSlice({
         },
         setIsMissingFieldsInLoad(state, action: PayloadAction<any>) {
             state.isMissingFieldsInLoad = action.payload;
-        }
+        },
+        setRefetchApiCountExpected(state, action: PayloadAction<any>) {
+            state.refetchApiCount.expected = action.payload;
+        },
+        setRefetchApiCountRan(state, action: PayloadAction<any>) {
+            state.refetchApiCount.ran = action.payload;
+        },
+        setRefetchApiCountLoading(state, action: PayloadAction<any>) {
+            state.refetchApiCount.isLoading = action.payload;
+        },
     }
 });
 
@@ -75,6 +89,9 @@ export const {
     setLicenseIdValue,
     setIsLoadConfig,
     setSavedConfig,
-    setIsMissingFieldsInLoad
+    setIsMissingFieldsInLoad,
+    setRefetchApiCountExpected,
+    setRefetchApiCountRan,
+    setRefetchApiCountLoading
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;
