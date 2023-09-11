@@ -1,5 +1,5 @@
 import { Button, Header, useDialog } from '@netapp/design-system';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
@@ -19,6 +19,8 @@ const MSSqlHeader = () => {
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
 
+    const [isConfig, setIsConfig] = useState(false);
+
     const { configData} = useAppSelector(state => state.mssql.getSavedConfigList);
 
     const [saveConfigData] = useSaveConfigDataMutation();
@@ -28,6 +30,14 @@ const MSSqlHeader = () => {
     const {
         refetch: configListRefetch
     } = useGetConfigListQuery({});
+
+    useEffect(() => {
+        if(configData && configData.length > 0) {
+            setIsConfig(true);
+        } else {
+            setIsConfig(false);
+        }
+    }, [configData])
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isMissing = useAppSelector(state => state.msSqlAction.isMissingFieldsInLoad);
@@ -87,12 +97,11 @@ const MSSqlHeader = () => {
             title={SELECT_CONFIG.WIZARD_HEADING}
         >
             <div className={styles['header-button']}>
-                {configData && <Button Component="button" onClick={handleLoadConfiguration} variant="text" 
-                    isDisabled={!configData}>
+                {isConfig && <Button Component="button" onClick={handleLoadConfiguration} variant="text">
                     {SELECT_CONFIG.LOAD_CONFIG}
                 </Button>}
-                {!configData && <Button Component="button" variant="text" 
-                    isDisabled={!configData} title={SELECT_CONFIG.NO_SAVED_CONFIG}>
+                {!isConfig &&  <Button Component="button" variant="text" 
+                    isDisabled={!isConfig} title={SELECT_CONFIG.NO_SAVED_CONFIG}>
                     {SELECT_CONFIG.LOAD_CONFIG}
                 </Button>
                 }
