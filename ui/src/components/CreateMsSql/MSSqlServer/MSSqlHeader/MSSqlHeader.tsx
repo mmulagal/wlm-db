@@ -4,8 +4,7 @@ import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { useSaveConfigDataMutation, useLazyGetConfigDataQuery, 
-    useGetConfigListQuery } from '../../../../utils/apiService';
+import { useSaveConfigDataMutation, useLazyGetConfigDataQuery, useGetConfigListQuery } from '../../../../utils/apiService';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { FROM_DIALOG } from '../../../../utils/consts';
 import { LoadConfiguration, resetChecksAfterLoad, SaveConfiguration } from '../../Configuration/LoadConfiguration';

@@ -68,8 +68,6 @@ const MssqlApis = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
 
-    console.log(refetchApiCount);
-
     // API call to get credentials list for user account
     const {
         data: credentialData,
