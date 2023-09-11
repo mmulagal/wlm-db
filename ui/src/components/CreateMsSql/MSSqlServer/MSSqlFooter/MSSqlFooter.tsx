@@ -27,22 +27,28 @@ const MSSqlFooter = () => {
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
                     if (!data?.error) {
+                        let stackName = data?.data?.cloudFormationStackI;
+                        if(stackName && stackName.includes('/')){
+                            stackName = stackName.split('/')[1];
+                        }
                         const timelineUrl =
                             process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
                         const message = (
                             <>
                                 {GENERAL.CREATE_INFO_MESSAGE[0]}
+                                {stackName ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
+                                {GENERAL.CREATE_INFO_MESSAGE[2]}
                                 <Button
                                     Component="button"
                                     variant="text"
                                     onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
                                 >
-                                    {GENERAL.CREATE_INFO_MESSAGE[1]}
+                                    {GENERAL.CREATE_INFO_MESSAGE[3]}
                                 </Button>
-                                {GENERAL.CREATE_INFO_MESSAGE[2]}
+                                {GENERAL.CREATE_INFO_MESSAGE[4]}
                             </>
                         );
-                        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
+                        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
                         setTimeout(() => {
                             navigateToCanvas('/');
                         }, 3000);
