@@ -8,6 +8,7 @@ import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
 import { ReactComponent as DeleteIcon } from '../../../assets/delete-icon.svg';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatDateWithTime } from '../../../utils/utilityFunctions';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const LoadConfig = () => {
     const dispatch = useDispatch();
@@ -26,13 +27,13 @@ const LoadConfig = () => {
 
     useEffect(() => {
         if(configData && configData.length > 0){
-            setSelectedConfig(configData[0]?.name + " | " + configData[0]?.user + " | " + configData[0]?.creationTime);
+            setSelectedConfig(configData[0]?.name + configData[0]?.user + configData[0]?.creationTime);
             dispatch(setLoadConfig(configData[0]?.id));
         }
     }, [configData, dispatch]);
     
     const handleChange = (item: any) => {
-        setSelectedConfig(item?.name + " | " + item?.user + " | " + item?.creationTime);
+        setSelectedConfig(item?.name + item?.user + item?.creationTime);
         dispatch(setLoadConfig(item?.id));
     };
 
@@ -49,6 +50,18 @@ const LoadConfig = () => {
         configListRefetch();
     };
 
+    const configRows = (item: any) => {
+        return (<>
+            <div className={styles.setRowWithSeperator}>
+                <div>{item?.name}</div>
+                <div className={CommonStyles.separator} />
+                <div>{item?.user}</div>
+                <div className={CommonStyles.separator} />
+                <div>{formatDateWithTime(item?.creationTime || '')}</div>
+            </div>
+        </>)
+    }
+
     return (
         <div className={styles['load-config']}>
             <div className={styles.content}>{GENERAL.LOAD_CONFIG_CONTENT}</div>
@@ -60,9 +73,9 @@ const LoadConfig = () => {
                         <div className={styles.setRow}>
                             <div className={styles.radiobutton}>
                                 <RadioButton
-                                    isChecked={selectedConfig === (item?.name + " | " + item?.user + " | " + item?.creationTime)}
+                                    isChecked={selectedConfig === (item?.name + item?.user + item?.creationTime)}
                                     onChange={() => handleChange(item)}
-                                    children={item?.name + " | " + item?.user + " | " + formatDateWithTime(item?.creationTime || '')}
+                                    children={configRows(item)}
                                     className=""
                                 />
                             </div>
