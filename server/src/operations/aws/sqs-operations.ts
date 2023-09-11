@@ -64,7 +64,7 @@ async function processCloudFormationMessages() {
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
-                            message: { Message: messageContent = undefined, Timestamp: messageTimestamp }
+                            message: { Message: messageContent = undefined, Timestamp: messageTimestamp = 0 } = {}
                         } = checkAndRetrieveJsonObject(sqsMessage?.Body) || {};
                         const { message: jsonMessage } = checkAndRetrieveJsonObject(messageContent) || {};
                         if (jsonMessage) {
