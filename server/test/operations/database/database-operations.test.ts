@@ -1,5 +1,10 @@
 import { deleteConfig } from '../../../src/lib/database/db';
-import { getSavedConfig, getAllSavedConfig, saveConfig } from '../../../src/operations/database/database-operations';
+import {
+    getSavedConfig,
+    getAllSavedConfig,
+    saveConfig,
+    deleteSavedConfig
+} from '../../../src/operations/database/database-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 
 describe('Database operations', () => {
@@ -22,19 +27,16 @@ describe('Database operations', () => {
         });
         const resp = await getAllSavedConfig(ACCOUNT_ID);
         expect(resp[0].accountId).toEqual(ACCOUNT_ID);
-        expect(resp[0].data.subnetId).toEqual('test-subnet');
+        expect(resp[0].name).toEqual('testname');
 
         await deleteConfig(ACCOUNT_ID, resp[0].id);
     });
-    it('Return all saved config', async () => {
-        await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
+    it('Delete saved config', async () => {
+        const { id } = await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
             subnetId: 'test-subnet',
             vpcId: 'test-vpc'
         });
-        const resp = await getAllSavedConfig(ACCOUNT_ID);
-        expect(resp[0].accountId).toEqual(ACCOUNT_ID);
-        expect(resp[0].data.subnetId).toEqual('test-subnet');
-
-        await deleteConfig(ACCOUNT_ID, resp[0].id);
+        const response = await deleteSavedConfig(ACCOUNT_ID, id);
+        expect(response).toBeUndefined();
     });
 });
