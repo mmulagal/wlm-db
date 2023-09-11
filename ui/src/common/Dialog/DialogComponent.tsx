@@ -21,11 +21,13 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
 
+    // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() => {
         return (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) || 
             ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom ===FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading)
     })();
 
+    // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
     const primaryButtonClick = () => {
         callback();
         if(dialogFrom !== FROM_DIALOG.LOAD_CONFIG && 
@@ -35,6 +37,7 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
         }
     }
 
+    // Redirect to CM page on cancel click when save config is opened via header cross.
     const secButtonClick = () => {
         closeCallback();
         closeDialog(null);
