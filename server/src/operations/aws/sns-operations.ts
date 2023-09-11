@@ -55,10 +55,10 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                             Version: '2012-10-17',
                             Statement: [
                                 {
-                                    Sid: 'AllowCloudFormationService',
+                                    Sid: 'AllowSNSNotifications',
                                     Effect: 'Allow',
                                     Principal: {
-                                        Service: 'cloudformation.amazonaws.com'
+                                        AWS: '*'
                                     },
                                     Action: 'SNS:Publish',
                                     Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
