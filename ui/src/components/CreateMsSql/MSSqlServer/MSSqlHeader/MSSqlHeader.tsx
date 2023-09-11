@@ -32,8 +32,8 @@ const MSSqlHeader = () => {
     
     useEffect(() => {
         if(isLoadConfig){
-            if(refetchApiCount?.isLoading && (refetchApiCount?.ran === refetchApiCount?.expected || 
-                refetchApiCount?.expected === 0)) {
+            if(refetchApiCount?.isLoading && ( refetchApiCount?.expected === 0 || 
+                refetchApiCount?.ran === refetchApiCount?.expected)) {
                 resetChecksAfterLoad(dispatch, closeDialog , isMissing);
             } 
         } 

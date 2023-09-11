@@ -25,6 +25,16 @@
 
     .setRow {
         display: flex;
+        flex-direction: row;
+    }
+
+    .setRowWithSeperator {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+        font-size: 14px;
+        color: var(--grey-50);
+        line-height: none !important;
     }
 
     .item:hover {
