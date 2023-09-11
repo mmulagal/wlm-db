@@ -245,7 +245,7 @@ const MssqlApis = () => {
         } else {
             dispatch(addRegions({ regionsData, regionsLoading, regionsError }));
         }
-        if(!regionsLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.REGION in refetchApiCount?.expected)){
+        if(!regionsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.REGION)){
             dispatch(setRefetchApiCountRan(API_NAME.REGION));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,7 +258,7 @@ const MssqlApis = () => {
         } else {
             dispatch(addVpcList({ vpcData, vpcLoading, vpcError }));
         }
-        if(!vpcLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.VPC in refetchApiCount?.expected)){
+        if(!vpcLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.VPC)){
             dispatch(setRefetchApiCountRan(API_NAME.VPC))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -271,7 +271,7 @@ const MssqlApis = () => {
         } else {
             dispatch(addAdsList({ adsData, adsLoading, adsError }));
         }
-        if(!adsLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.ADS in refetchApiCount?.expected)){
+        if(!adsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.ADS)){
             dispatch(setRefetchApiCountRan(API_NAME.ADS))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -291,7 +291,7 @@ const MssqlApis = () => {
                 dispatch(setSelectedLicenseId(option));
             }
         }
-        if(!amiLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.AMI in refetchApiCount?.expected)){
+        if(!amiLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.AMI)){
             dispatch(setRefetchApiCountRan(API_NAME.AMI))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -304,7 +304,7 @@ const MssqlApis = () => {
         } else {
             dispatch(addSnsList({ snsData, snsLoading, snsError }));
         }
-        if(!snsLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.SNS in refetchApiCount?.expected)){
+        if(!snsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.SNS)){
             dispatch(setRefetchApiCountRan(API_NAME.SNS))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -321,7 +321,7 @@ const MssqlApis = () => {
                 dispatch(setEncryptionRow([kmsData[0]]));
             }
         }
-        if(!kmsLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.KMS in refetchApiCount?.expected)){
+        if(!kmsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KMS)){
             dispatch(setRefetchApiCountRan(API_NAME.KMS))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -340,7 +340,7 @@ const MssqlApis = () => {
                 dispatch(setSelectedKeyPair(option));
             }
         }
-        if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.KEYPAIR in refetchApiCount?.expected)){
+        if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KEYPAIR)){
             dispatch(setRefetchApiCountRan(API_NAME.KEYPAIR))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -371,7 +371,7 @@ const MssqlApis = () => {
                 dispatch(setInstanceType(option));
             }
         }
-        if(!instanceTypeLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.INSTANCE in refetchApiCount?.expected)){
+        if(!instanceTypeLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.INSTANCE)){
             dispatch(setRefetchApiCountRan(API_NAME.INSTANCE))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -388,7 +388,7 @@ const MssqlApis = () => {
             } else {
                 dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
             }
-            if(!fsxnLoading && isLoadConfig && refetchApiCount?.isLoading && (API_NAME.FSXN in refetchApiCount?.expected)){
+            if(!fsxnLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.FSXN)){
                 dispatch(setRefetchApiCountRan(API_NAME.FSXN))
             }
         }

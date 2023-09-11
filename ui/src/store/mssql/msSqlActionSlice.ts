@@ -72,7 +72,7 @@ const msSqlActionSlice = createSlice({
             state.refetchApiCount.expected = action.payload;
         },
         setRefetchApiCountRan(state, action: PayloadAction<any>) {
-            if(action.payload && !(action.payload in state.refetchApiCount)) {
+            if(action.payload) {
                 state.refetchApiCount.ran.push(action.payload);
             }
             else{

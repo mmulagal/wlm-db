@@ -32,6 +32,7 @@ const MSSqlHeader = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isMissing = useAppSelector(state => state.msSqlAction.isMissingFieldsInLoad);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+    console.log(refetchApiCount);
     
     useEffect(() => {
         if(isLoadConfig){
