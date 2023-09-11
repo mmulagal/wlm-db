@@ -55,9 +55,13 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
     } else if (error instanceof PrismaClientKnownRequestError) {
         logger.error('Error of type PrismaClientKnownRequestError occured', error);
         reply.status(500).send({
-            message: `An error occurred in DB query engine. Please make sure you are not violating unique constraints(${
-                error?.meta?.target ? error?.meta?.target : ''
-            }). If the issues persists, please contact support`
+            message: `An error occurred in DB query engine.${
+                error?.meta?.cause
+                    ? error?.meta?.cause
+                    : error?.meta?.target
+                    ? `An unique key constraint violated ${error?.meta?.target}`
+                    : ''
+            }`
         });
     } else {
         reply.status(statusCode).send({ message });
