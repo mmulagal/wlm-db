@@ -4,6 +4,7 @@ const SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION = '1';
 const DB_ROWS_COUNT = 75;
 const SET_NOCOUNT = 'SET NOCOUNT ON;';
 const FOR_JSON_PATH = 'FOR JSON PATH';
+const SSM_QUERY_CONCURRENCY_LIMIT = 10;
 const DATABASES = (offset: number, rowscount: number) =>
     `${SET_NOCOUNT} SELECT databaseId = d.database_id,
             databaseName = d.name,
@@ -106,5 +107,6 @@ export {
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
     SERVER_NODES,
-    DB_SIZE
+    DB_SIZE,
+    SSM_QUERY_CONCURRENCY_LIMIT
 };

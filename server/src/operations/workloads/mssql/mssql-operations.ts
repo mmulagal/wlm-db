@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import createError from 'http-errors';
 import {
     CPU_UTILISATION,
@@ -17,7 +18,8 @@ import {
     IS_SERVER_CLUSTERED,
     SERVER_NODES,
     TABLES_COUNT_QUERY,
-    TABLES_QUERY
+    TABLES_QUERY,
+    SSM_QUERY_CONCURRENCY_LIMIT
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -112,24 +114,6 @@ async function callSsmExecution(
     return response.StandardOutputContent!;
 }
 
-async function getDBSummary(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
-    offset: number,
-    rowscount: number
-) {
-    logger.info('Fetching databases ', credentialsId, region, activeInstanceId, offset, rowscount);
-
-    const commands = [`${PSSCRIPT} -Query "${DATABASES(offset, rowscount)}"`];
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
-    logger.debug('Fetching databases response', response);
-
-    const resp = sqlResponseParsing(response);
-    return resp;
-}
-
 async function getDatabasesCount(
     credentialsId: string,
     region: string,
@@ -152,23 +136,21 @@ async function getDataBasesSummary(resourceId: string) {
     dbCount = dbCount?.totalCount || 0;
 
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-
-    const finaldb = [];
-    let offset = 0;
-    for (let i = 0; i < rowscount; i++) {
-        const resp = await getDBSummary(
-            credentialsId,
-            region,
-            activeInstanceId,
-            standbyInstanceId,
-            offset,
-            DB_ROWS_COUNT
-        );
-        finaldb.push(...resp);
+    const batchQueries: string[] = [];
+    for (let i = 0, offset = 0; i < rowscount; i++) {
+        batchQueries.push(`${PSSCRIPT} -Query "${DATABASES(offset, DB_ROWS_COUNT)}"`);
         offset += DB_ROWS_COUNT;
     }
 
-    return { databases: finaldb };
+    const responses = await Promise.map(
+        batchQueries,
+        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    );
+    const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    const cleanDBSummanry = sqlResponseParsing(dbSummary);
+
+    return { databases: cleanDBSummanry };
 }
 
 function resourceUtilisationQuery(metricType: string) {
@@ -235,26 +217,6 @@ async function getTablesCount(
     return sqlResponseParsing(response)[0];
 }
 
-async function getTablesList(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
-    offset: number,
-    rowscount: number,
-    databaseName: string
-) {
-    logger.info('Fetching tables ', credentialsId, region, activeInstanceId, offset, rowscount, databaseName);
-
-    const commands = [`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_QUERY(offset, rowscount)}"`];
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
-
-    logger.debug('Fetching tables response', response);
-
-    const resp = sqlResponseParsing(response);
-    return resp;
-}
-
 async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId, databaseName);
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
@@ -262,41 +224,28 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     const { totalCount: tablesCount = 0 } =
         (await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName)) || {};
 
-    const batchcount = Math.ceil(tablesCount / DB_ROWS_COUNT);
+    const batchCount = Math.ceil(tablesCount / DB_ROWS_COUNT);
 
-    const tablesList = [];
-    let offset = 0;
-    for (let i = 0; i < batchcount; i++) {
-        const resp = await getTablesList(
-            credentialsId,
-            region,
-            activeInstanceId,
-            standbyInstanceId,
-            offset,
-            DB_ROWS_COUNT,
-            databaseName
-        );
-        tablesList.push(...resp);
+    const batchQueries: string[] = [];
+    for (let i = 0, offset = 0; i < batchCount; i++) {
+        batchQueries.push(`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_QUERY(offset, DB_ROWS_COUNT)}"`);
         offset += DB_ROWS_COUNT;
     }
-    tablesList.forEach(result => {
-        result.databaseName = databaseName;
-    });
 
-    return { tables: tablesList };
+    const responses = await Promise.map(
+        batchQueries,
+        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    );
+    const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    const cleanResponses = sqlResponseParsing(tablesList);
+    for (const record of cleanResponses) {
+        record.databaseName = databaseName;
+    }
+    return { tables: cleanResponses };
 }
 
-async function getServerSummary(resourceId: string): Promise<{
-    serverId: string;
-    serverVersion: string;
-    serverEdition: string;
-    serverEngine: string;
-    serverStatus: string;
-    activeConnections: number;
-    deploymentModel: string;
-    activeNode: string;
-    standbyNode: string;
-}> {
+async function getServerSummary(resourceId: string) {
     logger.info('Get details of SQL Server database:', { resourceId });
 
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
