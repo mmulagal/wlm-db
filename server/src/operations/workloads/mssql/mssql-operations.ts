@@ -148,6 +148,7 @@ async function getDataBasesSummary(resourceId: string) {
         { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
     const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
     const cleanDBSummanry = sqlResponseParsing(dbSummary);
 
     return { databases: cleanDBSummanry };
@@ -238,6 +239,8 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
         { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
     const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+
     const cleanResponses = sqlResponseParsing(tablesList);
     for (const record of cleanResponses) {
         record.databaseName = databaseName;
