@@ -3,7 +3,7 @@ import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
-import { getServiceToken } from '../lib/cloud-manager/tenancy';
+import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -90,7 +90,7 @@ async function formatTemplateParameters(
     const stackName = derivedParams.StackName;
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const { token } = await getServiceToken();
+    const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
@@ -222,7 +222,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const { token } = await getServiceToken();
+    const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
