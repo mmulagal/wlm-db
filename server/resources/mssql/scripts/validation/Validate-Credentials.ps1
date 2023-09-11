@@ -97,6 +97,8 @@
 
     if($Failed -ne $true) {
         Write-Output @{ status= "Completed"; reason= "Done." } | ConvertTo-Json -Compress
+        
     } else {
         Write-Output @{ status = "Failed"; reason = "Incorrect credentials for $($FailedUsers -join ', ')" } | ConvertTo-Json -Compress
+       
     }
