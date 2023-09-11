@@ -16,13 +16,14 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
-    MISSING_FIELDS_MESSAGE: 
+    MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
 };
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
+    COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
     NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
