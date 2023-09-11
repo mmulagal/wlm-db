@@ -1,16 +1,9 @@
 ﻿   
 param(
   [Parameter(Mandatory = $true)]
-  $SQLServer
+  [string]$SQLServer
 )
-
-
- if (Get-Module -ListAvailable -Name SqlServer) {
-    Write-output "Module exists"
-} 
-else {
-    Install-Module -Name SqlServer -AllowClobber -Force;
-} 
+ 
 
 $Query = 'SELECT name FROM sys. databases'
 

@@ -9,10 +9,14 @@ router.get(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
         {
             id: 'id1',
             name: 'config1',
+            user: 'TestUser',
+            creationTime: 1694169731000
         },
         {
             id: 'id2',
             name: 'config2',
+            user: 'TestUser',
+            creationTime: 1694169730000
         },
     ];
     setTimeout(() => {
@@ -27,7 +31,9 @@ router.get(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
 });
 
 router.post(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
-    generateResponse(res, 200, {'success': 'ok'});
+    setTimeout(() => {
+        generateResponse(res, 200, {'success': 'ok'});
+    }, 3000);
 });
 
 router.delete(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
