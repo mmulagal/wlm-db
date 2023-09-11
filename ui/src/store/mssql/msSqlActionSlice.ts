@@ -16,8 +16,8 @@ const initialState: any = {
     savedConfig: null, // Last Saved or last loaded data
     isMissingFieldsInLoad: false,
     refetchApiCount: {
-        expected: 0,
-        ran: 0,
+        expected: [],
+        ran: [],
         isLoading: false
     }
 };
@@ -72,7 +72,12 @@ const msSqlActionSlice = createSlice({
             state.refetchApiCount.expected = action.payload;
         },
         setRefetchApiCountRan(state, action: PayloadAction<any>) {
-            state.refetchApiCount.ran = action.payload;
+            if(action.payload && !(action.payload in state.refetchApiCount)) {
+                state.refetchApiCount.ran.push(action.payload);
+            }
+            else{
+                state.refetchApiCount.ran = [];
+            }
         },
         setRefetchApiCountLoading(state, action: PayloadAction<any>) {
             state.refetchApiCount.isLoading = action.payload;

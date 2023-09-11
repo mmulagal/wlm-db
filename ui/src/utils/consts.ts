@@ -96,3 +96,15 @@ export const FROM_DIALOG = {
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross'
 }
+
+export const API_NAME = {
+    REGION: 'region',
+    VPC: 'vpc',
+    ADS: 'ads',
+    SNS: 'sns',
+    KMS: 'kms',
+    KEYPAIR: 'keypair',
+    INSTANCE: 'instance',
+    AMI: 'ami',
+    FSXN: 'fsxn'
+}

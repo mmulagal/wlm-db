@@ -264,4 +264,4 @@ export const formatSizeSplit = (value: number | string) => {
 
 export const displayFormattedValue = (value: number, msg: string) => {
     return `${formatSize(value)} ${msg}`;
-}
+};
