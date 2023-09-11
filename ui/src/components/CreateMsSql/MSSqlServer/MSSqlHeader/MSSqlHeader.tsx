@@ -13,6 +13,7 @@ import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
 import { setIsLoadConfig, setRefetchApiCountExpected, setRefetchApiCountLoading, 
     setRefetchApiCountRan } from '../../../../store/mssql/msSqlActionSlice';
+import { navigateToCanvas } from '../../../../utils/appConfig';
 const _ = require('lodash');
 
 const MSSqlHeader = () => {
@@ -83,7 +84,12 @@ const MSSqlHeader = () => {
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog)}
-                closeCallback={() => dispatch(setSaveConfigName(''))}
+                closeCallback={() => {
+                    dispatch(setSaveConfigName(''));
+                    if(dialogFrom === FROM_DIALOG.HEADER_CROSS){
+                        navigateToCanvas('/');
+                    }
+                }}
                 dialogFrom={dialogFrom}
             />
         );

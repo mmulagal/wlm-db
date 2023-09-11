@@ -1,7 +1,6 @@
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
 import { ReactNode } from 'react';
 import { useAppSelector } from '../../store/storeHooks';
-import { navigateToCanvas } from '../../utils/appConfig';
 import { FROM_DIALOG } from '../../utils/consts';
 
 type DialogProps = {
@@ -41,9 +40,6 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
     const secButtonClick = () => {
         closeCallback();
         closeDialog(null);
-        if(dialogFrom === FROM_DIALOG.HEADER_CROSS) {
-            navigateToCanvas('/');
-        }
     }
 
     return (
