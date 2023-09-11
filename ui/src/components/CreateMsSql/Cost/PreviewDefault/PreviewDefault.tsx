@@ -23,7 +23,7 @@ const PreviewDefault = () => {
     const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
 
     useEffect(() => {
-        if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+        if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
             const throughputVal = '128 MBps';
             const option = generateOptionType(throughputVal, throughputVal, '', false, '');
             dispatch(setThroughputValue(option));
@@ -72,7 +72,12 @@ const PreviewDefault = () => {
             id: '9'
         },
         { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
-        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: throughputValue?.value, editable: GENERAL.YES, id: '11' },
+        {
+            accordionName: GENERAL.THROUGHPUT_CAPACITY,
+            defaultValue: throughputValue?.value,
+            editable: GENERAL.YES,
+            id: '11'
+        },
         { accordionName: GENERAL.ENCRYPTION, defaultValue: DEFAULT_MASTER_KEY, editable: GENERAL.YES, id: '12' },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
@@ -128,7 +133,7 @@ const PreviewDefault = () => {
         <div className={styles['preview-default']}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="23"
+                id="22"
                 title={<div className={CommonStyles.title}>{GENERAL.PREVIEW_DEFAULT}</div>}
             >
                 <AccordionCardContent>
