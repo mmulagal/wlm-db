@@ -87,10 +87,10 @@ async function processCloudFormationMessages() {
                                         CredentialsId: credentialsId,
                                         Region: region,
                                         StackName: stackName,
-                                        JWTToken: jwtToken
+                                        JWToken: jwtToken
                                     } = resourceProperties;
 
-                                    logger.debug('>>JWT TOKEN', jwtToken);
+                                    logger.info('>>JWT TOKEN', jwtToken); // TODO: change me to debug
                                     try {
                                         verifyAuthToken(jwtToken);
                                     } catch (error) {
