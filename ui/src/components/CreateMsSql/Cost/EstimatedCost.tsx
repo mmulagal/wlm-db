@@ -40,6 +40,7 @@ const EstimatedCost = () => {
 
     useEffect(() => {
         if (
+            false &&
             regionValue &&
             instanceTypeName &&
             sqlSoftwareTypeValue &&
@@ -113,27 +114,35 @@ const EstimatedCost = () => {
     // }, [fetchResult]);
 
     const setHeader = () => {
-        if (isLoading) {
-            return <LoadingComponent />;
-        } else if (isDisabled) {
+        // if (isLoading) {
+        //     return <LoadingComponent />;
+        // } else if (isDisabled) {
+        //     <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+        //         {GENERAL.COST_ERROR}
+        //     </Typography>;
+        // } else if (!regionValue) {
+        //     return (
+        //         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+        //             {GENERAL.ESTIMATED_COST_HEADER}
+        //         </Typography>
+        //     );
+        // } else {
+        //     return <Typography variant="Regular_14">{data?.data.total}</Typography>;
+        // }
+
+        return (
             <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                {GENERAL.COST_ERROR}
-            </Typography>;
-        } else if (!regionValue) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.ESTIMATED_COST_HEADER}
-                </Typography>
-            );
-        } else {
-            return <Typography variant="Regular_14">{data?.data.total}</Typography>;
-        }
+                {GENERAL.ESTIMATED_COST_HEADER}
+            </Typography>
+        );
     };
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
-                isDisabled={isDisabled || !regionValue}
-                isExpandDisabled={isDisabled || !regionValue}
+                isDisabled={true}
+                isExpandDisabled={true}
+                // isDisabled={isDisabled || !regionValue}
+                // isExpandDisabled={isDisabled || !regionValue}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="23"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
