@@ -6,7 +6,9 @@ import {
     SubscribeCommandInput,
     ConfirmSubscriptionCommand,
     ConfirmSubscriptionCommandInput,
-    CreateTopicCommandInput
+    CreateTopicCommandInput,
+    SetTopicAttributesCommandInput,
+    SetTopicAttributesCommand
 } from '@aws-sdk/client-sns';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
@@ -34,7 +36,7 @@ async function listTopics(credentialsId: string, region: string) {
     return resp;
 }
 
-//Topic Creted in WLMDB account
+// Topic Creted in WLMDB account
 async function createTopic(region: string, input: CreateTopicCommandInput) {
     logger.info('Create SNS topic', { region, input });
 
@@ -45,7 +47,18 @@ async function createTopic(region: string, input: CreateTopicCommandInput) {
     return resp;
 }
 
-//Subscribe topic in WLMDB account
+// TODO: delete me; Temporary function to update queues in staging cluster, will be removed
+async function setTopicAttributes(region: string, input: SetTopicAttributesCommandInput) {
+    logger.info('Set SNS topic attributes', { region, input });
+
+    const sns = new SNSClient({ region });
+    const resp = await sns.send(new SetTopicAttributesCommand(input));
+    logger.debug('Set SNS topic attribute response', resp);
+
+    return resp;
+}
+
+// Subscribe topic in WLMDB account
 async function subscribeTopic(region: string, input: SubscribeCommandInput) {
     logger.info('Subscribe to  SNS topic', { region, input });
 
@@ -56,7 +69,7 @@ async function subscribeTopic(region: string, input: SubscribeCommandInput) {
     return resp;
 }
 
-//Configm subscription in WLMDB account
+// Confirm subscription in WLMDB account
 async function confirmSubscription(region: string, input: ConfirmSubscriptionCommandInput) {
     logger.info('Confirm subscription to  SNS topic', { region, input });
 
@@ -67,4 +80,4 @@ async function confirmSubscription(region: string, input: ConfirmSubscriptionCom
     return resp;
 }
 
-export { listTopics, createTopic, subscribeTopic, confirmSubscription };
+export { listTopics, createTopic, setTopicAttributes, subscribeTopic, confirmSubscription };
