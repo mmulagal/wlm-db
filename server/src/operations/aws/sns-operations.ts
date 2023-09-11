@@ -113,6 +113,15 @@ async function updateSnsTopicAttributeInAllRegions() {
                                     },
                                     Action: 'SNS:Publish',
                                     Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
+                                },
+                                {
+                                    Sid: 'AllowSNSSubscriptions',
+                                    Effect: 'Allow',
+                                    Principal: {
+                                        AWS: '*'
+                                    },
+                                    Action: 'SNS:Subscribe',
+                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
                                 }
                             ]
                         };
