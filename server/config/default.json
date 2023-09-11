@@ -41,8 +41,10 @@
     "service-token": {
         "expiration-margin": "10s"
     },
+    "sqs-poll-interval": "30s",
+    "jwt-token-expiry": "6h",
     "templates": {
-        "bucket": "bucketkrithi",
-        "region": "ap-southeast-1"
+        "bucket": "staging.wlmdb.workloads.netapp.com",
+        "region": "us-east-1"
     }
 }
