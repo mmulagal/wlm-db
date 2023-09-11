@@ -628,7 +628,7 @@ Resources:
                                   - "' -FSxDataLunSize '"
                                   - !Ref 'FSxDataLunSize'
                                   - "' -IGROUP '"
-                                  - !Ref 'SQLigroupname',
+                                  - !Ref 'SQLigroupname'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
@@ -819,7 +819,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1323,7 +1323,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
