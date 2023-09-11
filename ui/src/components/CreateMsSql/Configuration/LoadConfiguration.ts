@@ -14,10 +14,12 @@ import {
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../utils/utilityFunctions';
 
+/*
+This function is used to load config data on click on config load. 
+*/
 export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
     const state = store.getState();
     const selectedConfig = state.mssqlForm.loadConfig;
-    const isLoadConfig = state.msSqlAction.isLoadConfig;
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
@@ -27,12 +29,6 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
                 const isMissing = checkMissingFields(data?.data?.data);
                 dispatch(setIsMissingFieldsInLoad(isMissing));
                 dispatch(setMssqlForm(data?.data?.data));
-                // In case of any load API mismatch will close dialog in 30 sec
-                setTimeout(() => {
-                    if(isLoadConfig){
-                        resetChecksAfterLoad(dispatch, closeDialog, true);
-                    }
-                }, 30000);
             } else {
                 dispatch(setIsLoadConfig(false));
                 closeDialog();
@@ -48,6 +44,9 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
     return '';
 };
 
+/* 
+This function is used to reset all load config related action states once data is loaded.
+*/
 export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMissing:boolean) => {
     dispatch(setIsLoadConfig(false));
     closeDialog();
@@ -63,6 +62,10 @@ export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMiss
     dispatch(setRefetchApiCountLoading(false));
 }
 
+/* 
+On click of load config this function will check how many get APIs call will run on change on any dependent fields.
+Get APIs calls are required on change fields as to show latest data in accordions dropdown.
+*/
 export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
     const state = store.getState();
     let apiCount = 0;
@@ -85,6 +88,9 @@ export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
     dispatch(setRefetchApiCountLoading(true));
 }
 
+/*
+On click of save config it will call API to store config data.
+*/
 export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, configListRefetch: any, closeDialog:any) => {
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
@@ -117,6 +123,10 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, confi
     return '';
 };
 
+/*
+This function is used to avoid saving config again if saved just now.
+If data is loaded recently and user is trying to save same data again than also it will not allow to save. 
+*/
 const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
     if(!oldConfig){
         return false;
@@ -180,6 +190,9 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
 };
 
 
+/*
+On config load this function will check if load data has any missing mandatory fields. 
+*/
 const checkMissingFields = (data: any) => {
     const vpcStateValue = !data?.regionAndVpc?.selectedVPC;
 
