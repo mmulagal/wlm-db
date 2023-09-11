@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This workload template deploys a SqlFSx instance in an existing VPC.
+Description: This workload template deploys a SQL FCI instance using FSxN in an existing VPC.
     **WARNING** This template creates EC2 instances and related resources. You will
     be billed for the AWS resources used if you create a stack from this template.
 Metadata:
@@ -72,11 +72,11 @@ Metadata:
             RouteTable2Id:
                 default: Route Table ID of private subnet 2
             AssetsBucketName:
-                default: S3 Bucket Name hosting LauncWizard Assets. e.g LaunchWizard-Assets.
+                default: S3 Bucket Name hosting WLMDB Assets. e.g LaunchWizard-Assets.
             AssetsS3RegionCode:
-                default: S3 bucket region for the bucket hosting LaunchWizard Assets e.g s3.us-east-1
+                default: S3 bucket region for the bucket hosting WLMDB Assets e.g s3.us-east-1
             AssetsS3KeyPrefix:
-                default: S3 Key Prefix for LaunchWizard assets e.g launchwizardprefix/
+                default: S3 Key Prefix for WLMDB assets e.g launchwizardprefix/
             AMIID:
                 default: AMI ID of the AMI used to launch Instances e.g ami-0b8aa9827ffff6e39
             VPCID:
@@ -90,7 +90,7 @@ Metadata:
                 default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager
                     e.g 'LaunchWizard-Admin'
             SQLServiceAccountSecret:
-                default: Secret Name for the SQL Admin user in Secrets Manager e.g 'LaunchWizard-Admin'
+                default: Secret Name for the SQL Admin user in Secrets Manager e.g 'WLMDB-Admin'
             DomainAdminUser:
                 default: Domain Admin User Name e.g Administrator
             DomainDNSName:
@@ -171,11 +171,15 @@ Parameters:
             subnet-a0246dcd)
         Type: String
     AssetsBucketName:
-        Description: S3 bucket name for WLMDB assets. 
+        Description: S3 bucket name for WLMDB assets.
+        AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+        ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+            letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+            (-).
         Type: String
     AssetsS3RegionCode:
         Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
-            is hosted. When using your own bucket, you must specify this value.
+            is hosted.
         Type: String
     AssetsS3KeyPrefix:
         AllowedPattern: ^[0-9a-zA-Z-/]*$
@@ -217,7 +221,7 @@ Parameters:
     SqlFSxFCIName:
         AllowedPattern: '[a-zA-Z0-9\-]+'
         Default: DBSFCI
-        Description: FCI name
+        Description: SQL Failover Cluster Instance Name
         MaxLength: '15'
         MinLength: '1'
         Type: String
@@ -225,7 +229,7 @@ Parameters:
         Description: arn for the secret for domain admin.
         Type: String
     SQLServiceAccountSecret:
-        Description: arn for the secret for sql service account.
+        Description: arn for the secret for SQL service account.
         Type: String
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
@@ -307,7 +311,7 @@ Parameters:
         Type: String
         Default: WFCQuorum
     FSxDataLunSize:
-        Description: SQL data LUN size for ONTAP(in GB)
+        Description: SQL data LUN size for ONTAP(in MiB)
         Type: String
     ONTAPSecurityGroupID:
         Description: ONTAP Security Group ID
@@ -624,7 +628,9 @@ Resources:
                                   - "' -FSxDataLunSize '"
                                   - !Ref 'FSxDataLunSize'
                                   - "' -IGROUP '"
-                                  - !Ref 'SQLigroupname'
+                                  - !Ref 'SQLigroupname',
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -632,6 +638,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                  
                                   - '''"'
                             waitAfterCompletion: 0
                         f-init-iscsi-disk:
@@ -762,6 +770,8 @@ Resources:
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         d-set-wsfc-cluster-permission:
@@ -774,6 +784,8 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - "' -wsfcName '"
                                   - !Ref 'SqlFSxWSFCName'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                 FCIConfigure:
@@ -807,6 +819,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:
@@ -843,6 +857,8 @@ Resources:
                                   - !Ref 'SqlFSxFCIName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         j-validate-FCI-Cluster:
@@ -855,6 +871,16 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName1'
                                   - "' -Node2 '"
                                   - !Ref 'SqlFSxServerNetBIOSName2'
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
+                            waitAfterCompletion: 0
+                        k-validate-SQL-Login:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-SQLLogin.ps1
+                                    -SqlServer '
+                                  - !Ref 'SqlFSxFCIName'
                                   - '''"'
                             waitAfterCompletion: 0
                         l-update-sqltag:
@@ -1134,6 +1160,8 @@ Resources:
                                   - !Ref 'SQLigroupname'
                                   - "' -FileSystemId '"
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                  
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -1141,6 +1169,8 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                  
                                   - '''"'
                             waitAfterCompletion: 0
                 InstancePrep:
@@ -1218,6 +1248,8 @@ Resources:
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 60
                         b-restart-computer:
@@ -1256,6 +1288,8 @@ Resources:
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                 ConfigureFCI:
@@ -1289,6 +1323,8 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
+                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:
