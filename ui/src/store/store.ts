@@ -26,11 +26,6 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
-        // Added temporary to avoid error message for save and load config
-        if(errorMsg && errorMsg.includes('api/v1/config')){
-            return
-        }
-
         const reqFieldChk = requiredFieldError(errorMsg);
         if(reqFieldChk){
             errorMsg = reqFieldChk + GENERAL.IS_REQUIRED_MSG;

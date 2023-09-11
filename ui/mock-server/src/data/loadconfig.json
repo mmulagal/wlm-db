@@ -1,6 +1,8 @@
 {
     "id": "id1",
     "name": "config1",
+    "user": "TestUser",
+    "creationTime": 1694169731000,
     "data": {
         "awsAccount": {
             "selectedCredential": {

@@ -60,6 +60,8 @@ export interface KeyPairs {
 export interface SavedConfiguration {
     id: string;
     name: string;
+    user: string;
+    creationTime: number;
 }
 
 export interface InstanceType {

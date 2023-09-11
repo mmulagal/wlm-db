@@ -10,8 +10,16 @@ const initialState: any = {
     fsxNNameSelected: true,
     dbNameSelected: true,
     licenseIdSelected: true,
-    isLoading: false,
-    isLoadConfig: false,
+    isLoading: false, // To load page while create or save form or estimate cost
+    isLoadConfig: false, // To show loading in load config
+    isSaveConfigLoading: false, // To show loading while saving config
+    savedConfig: null, // Last Saved or last loaded data
+    isMissingFieldsInLoad: false,
+    refetchApiCount: {
+        expected: 0,
+        ran: 0,
+        isLoading: false
+    }
 };
 
 const msSqlActionSlice = createSlice({
@@ -50,7 +58,25 @@ const msSqlActionSlice = createSlice({
         },
         setIsLoadConfig(state, action: PayloadAction<any>) {
             state.isLoadConfig = action.payload;
-        }
+        },
+        setIsSaveConfigLoading(state, action: PayloadAction<any>) {
+            state.isSaveConfigLoading = action.payload;
+        },
+        setSavedConfig(state, action: PayloadAction<any>) {
+            state.savedConfig = action.payload;
+        },
+        setIsMissingFieldsInLoad(state, action: PayloadAction<any>) {
+            state.isMissingFieldsInLoad = action.payload;
+        },
+        setRefetchApiCountExpected(state, action: PayloadAction<any>) {
+            state.refetchApiCount.expected = action.payload;
+        },
+        setRefetchApiCountRan(state, action: PayloadAction<any>) {
+            state.refetchApiCount.ran = action.payload;
+        },
+        setRefetchApiCountLoading(state, action: PayloadAction<any>) {
+            state.refetchApiCount.isLoading = action.payload;
+        },
     }
 });
 
@@ -65,6 +91,12 @@ export const {
     setDBNameValue,
     setIsLoading,
     setLicenseIdValue,
-    setIsLoadConfig
+    setIsLoadConfig,
+    setIsSaveConfigLoading,
+    setSavedConfig,
+    setIsMissingFieldsInLoad,
+    setRefetchApiCountExpected,
+    setRefetchApiCountRan,
+    setRefetchApiCountLoading
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;
