@@ -4,7 +4,7 @@
         "account": "account-rGw40mJL",
         "resourceType": "mssql",
         "resourceClass": "WLMDB",
-        "name": "EC2AMAZ-GAAT3OE\\DBSIQN_SQL",
+        "name": "EC2AMAZ-GAAT3OE\\DUMMY_SQL",
         "agentIds": [],
         "metadata": "{\"properties\": \"{\\\"credentialsId\\\":\\\"f6082f35-c1db-4619-bb5c-84bcb5bf3286\\\",\\\"deploymentState\\\":\\\"initializing\\\",\\\"workspaceId\\\":\\\"workspaceWUu2HLQ8\\\",\\\"region\\\":\\\"ap-southeast-1\\\",\\\"location\\\":\\\"AWS\\\",\\\"activeInstanceId\\\":\\\"i-07e76a4b916548dc0\\\",\\\"standbyInstanceId\\\":\\\"i-0880a21327284f67c\\\"}\"}"
     },

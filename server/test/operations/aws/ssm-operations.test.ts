@@ -1,5 +1,5 @@
-import { executeSSMDocument } from '../../../src/operations/aws/ssm-operations';
 import { faker } from '@faker-js/faker';
+import { executeSSMDocument } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS } from '../../utils/consts';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';

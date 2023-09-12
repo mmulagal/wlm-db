@@ -12,7 +12,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"used\":  342859776,\"total\":  4294557696,\"remaining\":  3951697920,\"percentUsed\":  7}",
+        "StandardOutputContent": "[{\"percentUsed\":7,\"used\":342859776,\"total\":4294557696,\"remaining\":3951697920}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -30,7 +30,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"totalCount\":7}",
+        "StandardOutputContent": "[{\"totalCount\":7}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -48,7 +48,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[ {  \"databaseId\":  1,  \"databaseName\":  \"Aaronview\",  \"creationDate\":  \"\\/Date(1681235380963)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  553648128.00 }, {  \"databaseId\":  2,  \"databaseName\":  \"Adamfort\",  \"creationDate\":  \"\\/Date(1681233819663)\\/\",  \"databaseStatus\":  \"OFFLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  3,  \"databaseName\":  \"Adamsview\",  \"creationDate\":  \"\\/Date(1681235388887)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  4,  \"databaseName\":  \"Alexandraside\",  \"creationDate\":  \"\\/Date(1681234989220)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  5,  \"databaseName\":  \"Alexandraville\",  \"creationDate\":  \"\\/Date(1681235398353)\\/\",  \"databaseStatus\":  \"OFFLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  6,  \"databaseName\":  \"Amandaberg\",  \"creationDate\":  \"\\/Date(1681233818587)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }, {  \"databaseId\":  7,  \"databaseName\":  \"Angelashire\",  \"creationDate\":  \"\\/Date(1681233816840)\\/\",  \"databaseStatus\":  \"ONLINE\",  \"databaseSize\":  16777216.00 }]",
+        "StandardOutputContent": "[{\"databaseId\":224,\"databaseName\":\"Aaronview\",\"creationDate\":\"2023-04-11T17:49:55.340\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":120,\"databaseName\":\"North_Anna\",\"creationDate\":\"2023-04-11T17:43:27.590\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":136,\"databaseName\":\"North_Brandon\",\"creationDate\":\"2023-04-11T17:43:32.410\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":67,\"databaseName\":\"North_Brian\",\"creationDate\":\"2023-04-11T17:43:11.783\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":144,\"databaseName\":\"North_Clarence\",\"creationDate\":\"2023-04-11T17:43:34.893\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":133,\"databaseName\":\"North_Derek\",\"creationDate\":\"2023-04-11T17:43:31.547\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00},{\"databaseId\":61,\"databaseName\":\"North_Josephfort\",\"creationDate\":\"2023-04-11T17:43:10.043\",\"databaseStatus\":\"ONLINE\",\"databaseSize\":16777216.00}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -66,7 +66,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{ \"activeNode\":\"EC2AMAZ-GAAT3OE\", \"standbyNode\":\"EC2AMAZ-GAAT3OE\"}",
+        "StandardOutputContent": "[{\"activeNode\":\"SQLNODE1-39362\",\"standbyNode\":\"SQLNODE2-39362\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -84,7 +84,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\r\n    \"numberOfConnections\":  2\r\n}\r\n",
+        "StandardOutputContent": "[{\"numberOfConnections\":8}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -102,7 +102,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"Current Service State\":  \"Running.\"}",
+        "StandardOutputContent": "Running.\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -120,7 +120,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"serverDetails\":  \"Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) \\n\\tSep 24 2019 13:48:23 \\n\\tCopyright (C) 2019 Microsoft Corporation\\n\\tExpress Edition (64-bit) on Windows Server 2019 Datacenter 10.0 \\u003cX64\\u003e (Build 17763: ) (Hypervisor)\\n\"}",
+        "StandardOutputContent": "Microsoft SQL Server 2016 (SP3-OD) (KB5006943) - 13.0.6404.1 (X64) \r\n\tOct 18 2021 09:37:01 \r\n\tCopyright (c) Microsoft Corporation\r\n\tStandard Edition (64-bit) on Windows Server 2016 Datacenter 10.0 <X64> (Build 14393: ) (Hypervisor)\r\n\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -138,7 +138,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"isClustered\":  0}",
+        "StandardOutputContent": "[{\"isClustered\":1}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -156,7 +156,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"totalCount\":  7}",
+        "StandardOutputContent": "[{\"totalCount\":7}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -192,7 +192,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"TotalSize\":  4871618560}",
+        "StandardOutputContent": "[{\"TotalSize\":147849216}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -210,7 +210,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"total\":  161058123776,\"remaining\":  124290809856}",
+        "StandardOutputContent": "[{\"total\":40128937984,\"remaining\":40004681728},{\"total\":160924893184,\"remaining\":160665894912},{\"total\":16070410240,\"remaining\":15964766208}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -228,7 +228,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"serverName\":  \"EC2AMAZ-GAAT3OE\\\\DBSIQN_SQL\"}",
+        "StandardOutputContent": "[{\"serverName\":  \"EC2AMAZ-GAAT3OE\\\\DUMMY_SQL\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -246,7 +246,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "{\"serverGuid\":  \"5c791ae7-0e86-486b-8dc2-bafef485b875\"}",
+        "StandardOutputContent": "[{\"serverGuid\":  \"5c791ae7-0e86-486b-8dc2-bafef485b875\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

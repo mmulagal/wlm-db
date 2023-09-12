@@ -1,3 +1,5 @@
+import { faker } from '@faker-js/faker';
+
 const DEFAULT_AWS_VPC_ID = 'vpc-84b3afe6';
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 const DEFAULT_AWS_CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
@@ -62,7 +64,9 @@ const SSM_PARAMS = {
 };
 
 const ACCOUNT_ID = 'account-test';
-
+const CREDENTIALS_ID = `${faker.string.alphanumeric(20)}`;
+const ACTIVE_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
+const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 export {
     SQL_CONFIGURATION,
     FSX_CONFIGURATION,
@@ -74,5 +78,8 @@ export {
     DEFAULT_AWS_CREDENTIALS_ID,
     DEFAULT_AWS_REGION,
     SSM_PARAMS,
-    ACCOUNT_ID
+    ACCOUNT_ID,
+    CREDENTIALS_ID,
+    ACTIVE_INSTANCE_ID,
+    STANDBY_INSTANCE_ID
 };
