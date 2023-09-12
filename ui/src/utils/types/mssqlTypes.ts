@@ -57,6 +57,13 @@ export interface KeyPairs {
     name?: string;
 }
 
+export interface SavedConfiguration {
+    id: string;
+    name: string;
+    user: string;
+    creationTime: number;
+}
+
 export interface InstanceType {
     instanceType?: string;
     vCpus?: number;
@@ -125,6 +132,11 @@ export interface MssqlEntities {
         fsxnData: { filesystems?: FSxN[] };
         fsxnLoading: false;
         fsxnError: null;
+    };
+    getSavedConfigList: {
+        configData: SavedConfiguration[];
+        configLoading: false;
+        configError: null;
     };
 }
 

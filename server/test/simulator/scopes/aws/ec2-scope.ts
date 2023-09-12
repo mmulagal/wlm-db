@@ -29,24 +29,24 @@ const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
 const keyPairsResponse = {
     KeyPairs: [
         {
-            KeyPairId: KeyPairId,
-            KeyFingerprint: KeyFingerprint,
+            KeyPairId,
+            KeyFingerprint,
             KeyName: 'occm_qa',
             KeyType: 'rsa',
             Tags: [],
             CreateTime: '2022-01-09T21:45:04.000Z'
         },
         {
-            KeyPairId: KeyPairId,
-            KeyFingerprint: KeyFingerprint,
+            KeyPairId,
+            KeyFingerprint,
             KeyName: 'kanikaj_key',
             KeyType: 'rsa',
             Tags: [],
             CreateTime: '2023-02-14T06:29:16.874Z'
         },
         {
-            KeyPairId: KeyPairId,
-            KeyFingerprint: KeyFingerprint,
+            KeyPairId,
+            KeyFingerprint,
             KeyName: 'nithin_xcp_sg',
             KeyType: 'rsa',
             Tags: [],

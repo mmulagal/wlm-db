@@ -3,6 +3,7 @@ import { getCredentialDetails } from '../../lib/cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 import { AWS_RESOURCES_ACTION_MAP } from '../../utils/consts';
 import { getPermissionsList } from '../../lib/aws/iam';
+
 const logger = getLogger();
 
 export default async function getMissingPermissionsList(
@@ -20,9 +21,7 @@ export default async function getMissingPermissionsList(
         PolicySourceArn: arn,
         ActionNames: Object.keys(AWS_RESOURCES_ACTION_MAP)
             .filter(key => !skipResources?.includes(key))
-            .map(key => {
-                return AWS_RESOURCES_ACTION_MAP[key as keyof typeof AWS_RESOURCES_ACTION_MAP];
-            })
+            .map(key => AWS_RESOURCES_ACTION_MAP[key as keyof typeof AWS_RESOURCES_ACTION_MAP])
             .flat(),
         MaxItems: 500
     };

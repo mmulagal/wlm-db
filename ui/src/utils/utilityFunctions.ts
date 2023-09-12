@@ -166,6 +166,9 @@ export const encodeAll = (text: string | (string | null)[] | null) => {
 };
 
 export const requiredFieldError = (inputString: string) => {
+    if(!inputString){
+        return null;
+    }
     const regex = /'([^']+)'/;
     const match = inputString.match(regex);
     const subStr = 'must have required property';
@@ -180,7 +183,14 @@ export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
 
 export const formatDate = (date: string | number) => {
-    return moment(new Date(date)).format('LL');
+    const dateStr = date.toString();
+    const timeStamp = dateStr.substring(6,dateStr.length-2);
+    return moment(new Date(parseInt(timeStamp))).format('LL');
+};
+
+export const formatDateWithTime = (date: string | number) => {
+    const dateStr = date.toString();
+    return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 
 export const isNotNumberOrNA = (value: string | number) => {
@@ -254,4 +264,4 @@ export const formatSizeSplit = (value: number | string) => {
 
 export const displayFormattedValue = (value: number, msg: string) => {
     return `${formatSize(value)} ${msg}`;
-}
+};

@@ -36,6 +36,9 @@ export const DISABLED_STATE = 'Disabled';
 export const PENDING_DELETION = 'PendingDeletion';
 export const DEFAULT_MASTER_KEY = 'aws/fsx';
 
+// Default instance type
+export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge'
+
 // Add credentials link
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
 export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
@@ -86,4 +89,22 @@ export const REGIONS_CODE_LIST = [
     'me-central-1'
 ];
 
-export const DATABASE_SERVICE_PATH = 'database-services'
+export const DATABASE_SERVICE_PATH = 'database-services';
+
+export const FROM_DIALOG = {
+    LOAD_CONFIG: 'load_config',
+    SAVE_CONFIG: 'save_config',
+    HEADER_CROSS: 'header_cross'
+}
+
+export const API_NAME = {
+    REGION: 'region',
+    VPC: 'vpc',
+    ADS: 'ads',
+    SNS: 'sns',
+    KMS: 'kms',
+    KEYPAIR: 'keypair',
+    INSTANCE: 'instance',
+    AMI: 'ami',
+    FSXN: 'fsxn'
+}

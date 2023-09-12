@@ -14,7 +14,7 @@ async function getPreSignedUrl(region: string, key?: string) {
         Key: key || MASTER_TEMPLATE_PATH
     });
 
-    return await getSignedUrl(s3, command, { expiresIn: S3_BUCKET_SIGNED_URL_EXPIRTY });
+    return getSignedUrl(s3, command, { expiresIn: S3_BUCKET_SIGNED_URL_EXPIRTY });
 }
 
 async function putObjectBucket(

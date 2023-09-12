@@ -29,6 +29,7 @@ const AvailabilityZone = () => {
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
@@ -40,13 +41,15 @@ const AvailabilityZone = () => {
     const sub2Ref = useRef(null);
 
     useEffect(() => {
-        dispatch(setSelectedAzNode1(null));
-        dispatch(setSelectedAzNode2(null));
-        dispatch(setSelectedSubnetNode1(null));
-        dispatch(setSelectedSubnetNode2(null));
-        setRouteTable1(undefined);
-        setRouteTable2(undefined);
-
+        if(!isLoadConfig){
+            dispatch(setSelectedAzNode1(null));
+            dispatch(setSelectedAzNode2(null));
+            dispatch(setSelectedSubnetNode1(null));
+            dispatch(setSelectedSubnetNode2(null));
+            setRouteTable1(undefined);
+            setRouteTable2(undefined);
+        }
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
 
@@ -110,7 +113,9 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone1]);
 
     useEffect(() => {
-        dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet1Options]);
 
@@ -162,7 +167,9 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone2]);
 
     useEffect(() => {
-        dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet2Options]);
 

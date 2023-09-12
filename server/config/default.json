@@ -9,7 +9,8 @@
         "auth0": "https://staging-netapp-cloud-account.auth0.com",
         "cloud-manager": "https://staging.api.bluexp.netapp.com",
         "local-connector": "http://127.0.0.1:8098",
-        "signoz": "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces"
+        "signoz": "http://signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces",
+        "wlm-db": "https://staging.api.workloads.netapp.com"
     },
     "got": {
         "internal": {
@@ -23,6 +24,12 @@
             "connect-timeout": "2s",
             "response-timeout": "50s",
             "retry-count": 2
+        },
+        "batch": {
+            "lookup-timeout": "10s",
+            "connect-timeout": "30s",
+            "response-timeout": "30s",
+            "retry-count": 1
         }
     },
     "log4js": {
@@ -34,6 +41,8 @@
     "service-token": {
         "expiration-margin": "10s"
     },
+    "sqs-poll-interval": "30s",
+    "jwt-token-expiry": "6h",
     "templates": {
         "bucket": "staging.wlmdb.workloads.netapp.com",
         "region": "us-east-1"

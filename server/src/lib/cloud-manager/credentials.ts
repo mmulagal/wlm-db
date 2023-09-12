@@ -36,7 +36,7 @@ async function getAllCredentials(credentialsType: string): Promise<Array<AllCred
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
             },
             searchParams: {
-                credentialsType: credentialsType
+                credentialsType
             }
         })
         .json<AllCredentials[]>();

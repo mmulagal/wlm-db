@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './Encryption.module.scss';
@@ -13,20 +13,23 @@ const Encryption = () => {
 
     const { kmsData, kmsLoading } = useAppSelector(state => state.mssql.getKmsList);
     const selectedRow = useAppSelector((state: any) => state.mssqlForm.encryption.selectedRow);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
-    const [accountSelected, setAccountSelected] = useState(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT);
-    const [input, setInput] = useState('');
+    const accountSelected = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionType);
+    const anotherAccArn = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionArn);
 
     // To select aws/fsx row if present
     useEffect(() => {
-        dispatch(setEncryptionRow(kmsData?.filter(key => key?.default)));
+        if(!isLoadConfig){
+            dispatch(setEncryptionRow(kmsData?.filter(key => key?.default)));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [kmsData]);
 
     //Set the Header text here
     const setHeader = () => {
         if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
-            return <Typography variant="Regular_14">{input}</Typography>;
+            return <Typography variant="Regular_14">{anotherAccArn}</Typography>;
         } else {
             return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
         }
@@ -58,7 +61,6 @@ const Encryption = () => {
                             <RadioButton
                                 isChecked={accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT}
                                 onChange={() => {
-                                    setAccountSelected(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT);
                                     dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT));
                                 }}
                                 children={GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT}
@@ -67,7 +69,6 @@ const Encryption = () => {
                             <RadioButton
                                 isChecked={accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT}
                                 onChange={() => {
-                                    setAccountSelected(GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT);
                                     dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT));
                                 }}
                                 children={GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT}
@@ -86,10 +87,9 @@ const Encryption = () => {
                                 <TextField
                                     label={GENERAL.ENCRYPTION_TEXT_FIELD}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        setInput(e.target.value);
                                         dispatch(setEncryptionARN(e.target.value));
                                     }}
-                                    value={input}
+                                    value={anotherAccArn}
                                     className={styles.textField}
                                 />
                             </>

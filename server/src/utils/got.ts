@@ -8,7 +8,7 @@ const logger = getLogger('got');
 
 const LOGGING_BODY_MAX_LEN = 1000;
 
-export const hooks: Hooks = {
+const hooks: Hooks = {
     beforeRetry: [
         (error: RequestError, retryCount) => {
             const {
@@ -71,16 +71,16 @@ export const hooks: Hooks = {
     beforeRequest: [
         options => {
             options.headers[HEADERS.REFERER] = WLMDB;
-            options.headers[HEADERS.ACTIVE_TRACE_ID] = getActiveTraceId();
+            options.headers[HEADERS.ACTIVE_TRACE_ID] = getActiveTraceId() || 'unknown';
         }
     ]
 };
 
-export function isHTTPError(error: Error): error is HTTPError {
+function isHTTPError(error: Error): error is HTTPError {
     return (error as HTTPError).response !== undefined;
 }
 
-export function isTimeoutError(error: Error): error is TimeoutError {
+function isTimeoutError(error: Error): error is TimeoutError {
     return (error as TimeoutError).event !== undefined;
 }
 
@@ -95,7 +95,7 @@ function setBodyToObject(body: any) {
     return body;
 }
 
-export const gotInstanceForInternalRequest = got.extend({
+const gotInstanceForInternalRequest = got.extend({
     retry: {
         limit: config.get<number>('got.internal.retry-count')
     },
@@ -109,7 +109,7 @@ export const gotInstanceForInternalRequest = got.extend({
     hooks
 });
 
-export const gotInstanceForExternalRequest = got.extend({
+const gotInstanceForExternalRequest = got.extend({
     retry: {
         limit: config.get<number>('got.external.retry-count')
     },
@@ -123,7 +123,7 @@ export const gotInstanceForExternalRequest = got.extend({
     hooks
 });
 
-export const gotInstanceForTextResponse = got.extend({
+const gotInstanceForTextResponse = got.extend({
     retry: {
         limit: config.get<number>('got.external.retry-count')
     },
@@ -136,3 +136,26 @@ export const gotInstanceForTextResponse = got.extend({
     responseType: 'text',
     hooks
 });
+
+const gotInstanceForBatchRequest = got.extend({
+    retry: {
+        limit: config.get<number>('got.batch.retry-count')
+    },
+    timeout: {
+        lookup: ms(config.get<string>('got.batch.lookup-timeout')),
+        connect: ms(config.get<string>('got.batch.connect-timeout')),
+        response: ms(config.get<string>('got.batch.response-timeout'))
+    },
+    resolveBodyOnly: true,
+    responseType: 'json',
+    hooks
+});
+
+export {
+    isHTTPError,
+    isTimeoutError,
+    gotInstanceForInternalRequest,
+    gotInstanceForExternalRequest,
+    gotInstanceForBatchRequest,
+    gotInstanceForTextResponse
+};

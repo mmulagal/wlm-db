@@ -53,7 +53,7 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
                         origin,
                         expirationDate,
                         state,
-                        isDefault: aliasName === AWS_FSX ? true : false,
+                        isDefault: aliasName === AWS_FSX,
                         ...(expirationDate && { formattedDate: moment(expirationDate).format('MMMM DD,YYYY') })
                     });
                 } catch (err: any) {

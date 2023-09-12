@@ -61,6 +61,8 @@ const SSM_PARAMS = {
     InstanceIds: ['i-07e76a4b916548dc0']
 };
 
+const ACCOUNT_ID = 'account-test';
+
 export {
     SQL_CONFIGURATION,
     FSX_CONFIGURATION,
@@ -71,5 +73,6 @@ export {
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_CREDENTIALS_ID,
     DEFAULT_AWS_REGION,
-    SSM_PARAMS
+    SSM_PARAMS,
+    ACCOUNT_ID
 };

@@ -1,7 +1,9 @@
 import createError from 'http-errors';
+import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getPreSignedUrl } from '../lib/aws/s3';
+import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
@@ -25,20 +27,130 @@ import {
     ASSETS_BUCKET_REGION,
     EC2_ROLE_NAME,
     DatabaseTypes,
-    MASTER_TEMPLATE_PATH
+    ACCOUNT_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_CREDENTIALS_ID,
+    TEMPLATE_CLOUD_PROVIDER_ID,
+    MASTER_TEMPLATE_PATH,
+    WLMDB,
+    TEMPLATE_SNS_SERVICE_TOKEN,
+    TEMPLATE_OPTIONAL_PARAMETERS,
+    TEMPLATE_ACCOUNT_ID
 } from '../utils/consts';
-import {
-    formatTemplateParameters,
-    generateDeploymentParams,
-    isCfStackQuotaReached,
-    isSameRoutetables
-} from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
+import { isCfStackQuotaReached } from './aws/service-quotas-operations';
+import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 
 const logger = getLogger();
+
+async function formatTemplateParameters(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string,
+    enableCloudWatch: boolean
+) {
+    const derivedParams = fsxConfiguration.fsxFileSystemId
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
+
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
+
+    await createSecrets(
+        credentialsId,
+        region,
+        [
+            {
+                secretName: derivedParams.DomainAdminSecretName,
+                username: adConfiguration.domainUsername,
+                password: adConfiguration.domainPassword
+            },
+            {
+                secretName: derivedParams.FSxAdministratorPasswordSecret,
+                username: fsxConfiguration.fsxUsername,
+                password: fsxConfiguration.fsxPassword
+            },
+            {
+                secretName: derivedParams.SQLServiceAccountSecret,
+                username: sqlConfiguration.serviceAccountName,
+                password: sqlConfiguration.serviceAccountPassword
+            }
+        ],
+        roleArn
+    );
+
+    const stackName = derivedParams.StackName;
+    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+
+    const templateParams: Array<Parameter> = [
+        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken }
+    ];
+
+    Object.entries(derivedParams).forEach(([key, value]) => {
+        if (key !== 'StackName') {
+            templateParams.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    const clubbedParamList = {
+        ...networkConfiguration,
+        ...adConfiguration,
+        ...fsxConfiguration,
+        ...sqlConfiguration,
+        ...ec2Configuration,
+        topicArn,
+        enableCloudWatch
+    };
+
+    Object.entries(clubbedParamList).forEach(([key, value]) => {
+        if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            templateParams.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
+        }
+    });
+
+    Object.entries(TEMPLATE_OPTIONAL_PARAMETERS).forEach(([key, value]) => {
+        if (!(key in clubbedParamList)) {
+            templateParams.push({
+                ParameterKey: value,
+                ParameterValue: ''
+            });
+        }
+    });
+
+    Object.entries(WLM_ASSETS).forEach(([key, value]) => {
+        templateParams.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
+    });
+
+    return { stackName, templateParameters: templateParams };
+}
 
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
@@ -74,10 +186,10 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? await generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : await generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
 
-    const { roleName, roleArn } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -102,14 +214,21 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    //Generate Signed-url and upload to bucket
+    // Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const signedURL = encodeURIComponent(await getPreSignedUrl(ASSETS_BUCKET_REGION));
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}`;
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
+
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
+
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
@@ -180,7 +299,7 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
-    //Generate Signed-url and upload to bucket
+    // Generate Signed-url and upload to bucket
     await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
 
     const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);

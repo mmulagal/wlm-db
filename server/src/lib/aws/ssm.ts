@@ -12,8 +12,8 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getSSMClient(credentialsId: string, region: string) {
-    logger.debug('Getting SSM client:', credentialsId, region);
+async function getSSMClient(region: string, credentialsId: string) {
+    logger.debug('Getting SSM client:', region, credentialsId);
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
@@ -23,10 +23,9 @@ async function getSSMClient(credentialsId: string, region: string) {
     return new SSMClient({ credentials, region });
 }
 
-async function sendSSMCommand(credentialsId: string, region: string, params: SendCommandCommandInput) {
+async function sendSSMCommand(ssmClient: SSMClient, params: SendCommandCommandInput) {
     logger.info('Send SSM Command', params);
 
-    const ssmClient = await getSSMClient(credentialsId, region);
     const sendCommand = new SendCommandCommand(params);
     const response = await ssmClient.send(sendCommand);
 
@@ -34,10 +33,8 @@ async function sendSSMCommand(credentialsId: string, region: string, params: Sen
     return response.Command?.CommandId;
 }
 
-async function getCommandInvocation(credentialsId: string, region: string, params: GetCommandInvocationCommandInput) {
+async function getCommandInvocation(ssmClient: SSMClient, params: GetCommandInvocationCommandInput) {
     logger.info('Getting command invocation details for command', params);
-
-    const ssmClient = await getSSMClient(credentialsId, region);
     const response: GetCommandInvocationCommandOutput = await ssmClient.send(new GetCommandInvocationCommand(params));
     logger.debug('SSM Command response', response);
     return response;

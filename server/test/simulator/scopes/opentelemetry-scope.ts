@@ -7,12 +7,8 @@ import { context, trace } from '@opentelemetry/api';
 // mocking a fake response for simulator purpose only
 sinon.stub(context, 'active').callsFake(async () => {});
 
-sinon.stub(trace, 'getSpan').callsFake(() => {
-    return {
-        spanContext: () => {
-            return {
-                traceId: randomize('Aa0', 15)
-            };
-        }
-    };
-});
+sinon.stub(trace, 'getSpan').callsFake(() => ({
+    spanContext: () => ({
+        traceId: randomize('Aa0', 15)
+    })
+}));

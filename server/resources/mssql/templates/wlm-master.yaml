@@ -78,6 +78,13 @@ Metadata:
           - AssetsS3RegionCode
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
+      - Label:
+          default: Custom Resource configuration
+        Parameters:
+          - AccountId
+          - CloudProviderAccountId
+          - RoleCredentialsId
+          - JwtToken
     ParameterLabels:
       ApplicationName:
         default: Application Name
@@ -405,6 +412,26 @@ Parameters:
   ValidationAmi:
     Description: Validation node AMI image id
     Type: String
+  
+  RoleCredentialsId:
+    Description: Account credentials id to deploy and manage resources
+    Type: String
+  
+  AccountId:
+    Description: BlueXP account id
+    Type: String
+
+  CloudProviderAccountId:
+    Description: BlueXP CloudProviderAccountId id
+    Type: String
+  
+  JwtToken:
+    Description: JWT Token to grant access to a resource
+    Type: String
+
+  SnsServiceToken:
+    Description: SNS ARN to push cloud formation messages
+    Type: String
 
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -418,8 +445,19 @@ Conditions:
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
 Resources:
+  TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: !Ref SnsServiceToken
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -451,10 +489,11 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -486,11 +525,12 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -502,6 +542,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -552,12 +593,13 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue       
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]     
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -586,11 +628,12 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -696,5 +739,23 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
+  PostStackDeployment:
+    Type: Custom::MyCustomResource
+    DependsOn: SQLServerStack
+    Properties:
+      ServiceToken: !Ref SnsServiceToken
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
+      FSxFileSystemId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
+      ActiveInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
+      StandbyInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"

@@ -1,11 +1,11 @@
-import getLogger from '../../utils/logger';
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { cloneDeep } from 'lodash-es';
+import randomize from 'randomatic';
+import getLogger from '../../utils/logger';
 import { getSubjectFromBearerToken, hideSecretsValues } from '../../utils/utils';
 import { AUDIT_GROUP, HTTP_DELETE, HTTP_POST, HTTP_PUT, REQUEST_ID, VERSION, WLMDB } from '../../utils/consts';
-import { cloneDeep } from 'lodash-es';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import sendAudit from '../../lib/cloud-manager/audit';
-import randomize from 'randomatic';
 import validateSchema from '../../utils/schema-validation';
 import {
     AuditRecordSchema,

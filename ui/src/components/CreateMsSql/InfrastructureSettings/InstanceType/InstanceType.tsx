@@ -8,6 +8,7 @@ import { formatSize, generateOptionType, sortListOfDict } from '../../../../util
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
+import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 
 const InstanceType = () => {
     const dispatch = useDispatch();
@@ -17,10 +18,12 @@ const InstanceType = () => {
     const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
-        const options: optionType[] = [];
+        let options: optionType[] = [];
+        let default_instance_item = null;
         instanceTypeData?.instanceTypes?.map((val, idx: number) => {
             const value = val?.instanceType || '';
             let label2 = '';
@@ -34,14 +37,24 @@ const InstanceType = () => {
                 label2 += val?.iopsInMbps + 'Mbps';
             }
             const option = generateOptionType(value, value, label2, false, '', val);
-            options.push(option);
+            if(value === DEAFULT_INSTANCE_VALUE){
+                default_instance_item = option;
+            } else{
+                options.push(option);
+            }
         });
-
-        return sortListOfDict(options, 'value');
+        
+        options = sortListOfDict(options, 'value');
+        if(default_instance_item){
+            options.unshift(default_instance_item);
+        }
+        return options;
     }, [instanceTypeData]);
 
     useEffect(() => {
-        dispatch(setInstanceType(generateInstances[0]));
+        if(!isLoadConfig){
+            dispatch(setInstanceType(generateInstances[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
 

@@ -18,7 +18,7 @@ import { addNotification, NOTIFICATION_TYPES, clearNotifications } from '../../s
 import { useDispatch } from 'react-redux';
 import { resetMssqlTables } from '../../store/resource/resourceSlice';
 import { Spinner, useDialog } from '@netapp/design-system'; 
-import { cmNavigateTo } from '../../utils/appConfig';
+import { navigateToCanvas } from '../../utils/appConfig';
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import RemoveDialog from './RemoveDialog/RemoveDialog';
@@ -94,7 +94,7 @@ const ResourcePage = () => {
     const deleteMssqlResource = async () => {
         try {
             await removeMssql(resourceId).unwrap();
-            cmNavigateTo('/');
+            navigateToCanvas('/');
         } catch (error) {
             dispatch(addNotification({message: error, notificationType: NOTIFICATION_TYPES.ERROR}));
         }
@@ -121,7 +121,7 @@ const ResourcePage = () => {
             const tablesBatchBody: BatchEntry[] = databases.databases.map((databaseRow: any) => {
                 const databaseName = databaseRow?.databaseName;
                 return {
-                    url: `mssql/${resourceId}/${databaseName}/tables`,
+                    url: `mssql/resources/${resourceId}/databases/${databaseName}/tables`,
                     method: Method.GET,
                     inputs: {databaseName}
                 }

@@ -2,7 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const GenericHeaders = Type.Object({
-    [HEADERS.WORKSPACE_ID]: Type.Optional(Type.String())
+    [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String())
 });
 type GenericHeadersType = Static<typeof GenericHeaders>;
 

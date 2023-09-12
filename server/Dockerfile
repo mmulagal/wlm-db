@@ -21,6 +21,8 @@ COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/template
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
 COPY dist/src ./
 
+COPY prisma ./prisma/
+
 RUN npm ci --omit=dev
 
 # build mode - development or production
@@ -37,4 +39,4 @@ ENV ENV_WLMDB_BUILD_GIT $ARG_WLMDB_BUILD_GIT
 ENV ENV_WLMDB_BUILD_TC $ARG_WLMDB_BUILD_TC
 ENV ENV_WLMDB_BUILD_MODE $ARG_WLMDB_BUILD_MODE
 
-CMD ["node", "--loader", "@esbuild-kit/esm-loader", "index.js"]
+CMD ["node", "--loader", "./utils/loader.js", "index.js"]
