@@ -827,7 +827,7 @@ Resources:
                             waitAfterCompletion: forever
                         e-add-buildtin-admins-to-sysadmin:
                             command: powershell.exe -Command "C:\cfn\DSC\PostConfigDSC.ps1"
-                            waitAfterCompletion: 30
+                            waitAfterCompletion: 0
                         f-Install-sqlcu:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlfci\Install-sqlcu.ps1"
                             waitAfterCompletion: 0
@@ -1331,7 +1331,7 @@ Resources:
                             waitAfterCompletion: forever
                         e-add-buildtin-admins-to-sysadmin:
                             command: powershell.exe -Command "C:\cfn\DSC\PostConfigDSC.ps1"
-                            waitAfterCompletion: 30
+                            waitAfterCompletion: 0
                         f-Install-sqlcu:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlfci\Install-sqlcu.ps1"
                             waitAfterCompletion: 0
