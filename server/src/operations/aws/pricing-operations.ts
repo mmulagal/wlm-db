@@ -45,28 +45,28 @@ interface Filter {
 const HOURS_IN_MONTH = 730;
 const DEFAULT_EBS_STORAGE = 100; // 100GB
 
-const computeInstaceProductFamily: Filter = {
-    Type: 'TERM_MATCH',
-    Field: 'productFamily',
-    Value: 'Compute Instance'
+const sqlSoftwareTypes = new Map<string, string>([
+    ['standard', 'SQL std'],
+    ['enterprise', 'SQL ent'],
+    ['web', 'SQL web']
+]);
+
+const formatVersion = {
+    FormatVersion: 'aws_v1'
+};
+
+const fsxService = {
+    ServiceCode: 'AmazonFSx'
+};
+
+const ec2Service = {
+    ServiceCode: 'AmazonEC2'
 };
 
 const storageProductFamily: Filter = {
     Type: 'TERM_MATCH',
     Field: 'productFamily',
     Value: 'Storage'
-};
-
-const throughputProductFamily: Filter = {
-    Type: 'TERM_MATCH',
-    Field: 'productFamily',
-    Value: 'Provisioned Throughput'
-};
-
-const iopsProductFamily: Filter = {
-    Type: 'TERM_MATCH',
-    Field: 'productFamily',
-    Value: 'Provisioned IOPS'
 };
 
 const readWriteRequestProductFamily: Filter = {
@@ -106,25 +106,12 @@ function getDeploymentOption(deploymentOption?: string): Filter {
 function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     logger.debug('Get sql software edition for filter', { sqlSoftwareType });
 
-    let edition: string = '';
-    switch (sqlSoftwareType) {
-        case 'standard':
-            edition = 'SQL std';
-            break;
-        case 'enterprise':
-            edition = 'SQL ent';
-            break;
-        case 'web':
-            edition = 'SQL web';
-            break;
-        default:
-            edition = 'SQL std';
-    }
+    const edition = sqlSoftwareTypes.get(sqlSoftwareType?.toLocaleLowerCase()) || sqlSoftwareTypes.get('standard');
 
     return {
         Type: 'TERM_MATCH',
         Field: 'preInstalledSw',
-        Value: edition
+        Value: edition!
     };
 }
 
@@ -132,11 +119,14 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): GetP
     logger.info('Get ec2 instance input', { compute });
 
     return {
-        ServiceCode: 'AmazonEC2',
         Filters: [
-            computeInstaceProductFamily,
-            getRegion(compute.region),
+            getRegion(compute.regionCode),
             getSqlSoftwareEdition(compute.sqlSoftwareType),
+            {
+                Type: 'TERM_MATCH',
+                Field: 'productFamily',
+                Value: 'Compute Instance'
+            },
             {
                 Type: 'TERM_MATCH',
                 Field: 'instanceType',
@@ -158,7 +148,8 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): GetP
                 Value: 'Used' // On-demand
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...ec2Service,
+        ...formatVersion
     };
 }
 
@@ -166,9 +157,8 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): GetP
     logger.info('Getting ec2 storage (EBS) input');
 
     return {
-        ServiceCode: 'AmazonEC2',
         Filters: [
-            getRegion(compute.region),
+            getRegion(compute.regionCode),
             storageProductFamily,
             {
                 Type: 'TERM_MATCH',
@@ -181,7 +171,8 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): GetP
                 Value: 'gp2'
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...ec2Service,
+        ...formatVersion
     };
 }
 
@@ -189,9 +180,8 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Get
     logger.info('Geting FSxN Storage Input', { storage });
 
     return {
-        ServiceCode: 'AmazonFSx',
         Filters: [
-            getRegion(storage.region),
+            getRegion(storage.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             storageProductFamily,
             {
@@ -205,7 +195,8 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Get
                 Value: 'SSD'
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...fsxService,
+        ...formatVersion
     };
 }
 
@@ -213,18 +204,22 @@ function getFSxNThroughputInput(storage: PricingServiceRequestType['storage']): 
     logger.info('Geting FSxN Throughput Input', { storage });
 
     return {
-        ServiceCode: 'AmazonFSx',
         Filters: [
-            getRegion(storage.region),
+            getRegion(storage.regionCode),
             getDeploymentOption(storage?.deploymentOption),
-            throughputProductFamily,
+            {
+                Type: 'TERM_MATCH',
+                Field: 'productFamily',
+                Value: 'Provisioned Throughput'
+            },
             {
                 Type: 'TERM_MATCH',
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...fsxService,
+        ...formatVersion
     };
 }
 
@@ -232,18 +227,22 @@ function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): GetPro
     logger.info('Geting FSxN Iops Input', { storage });
 
     return {
-        ServiceCode: 'AmazonFSx',
         Filters: [
-            getRegion(storage.region),
+            getRegion(storage.regionCode),
             getDeploymentOption(storage?.deploymentOption),
-            iopsProductFamily,
+            {
+                Type: 'TERM_MATCH',
+                Field: 'productFamily',
+                Value: 'Provisioned IOPS'
+            },
             {
                 Type: 'TERM_MATCH',
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...fsxService,
+        ...formatVersion
     };
 }
 
@@ -251,9 +250,8 @@ function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage'])
     logger.info('Geting FSxN read requests Input', { storage });
 
     return {
-        ServiceCode: 'AmazonFSx',
         Filters: [
-            getRegion(storage.region),
+            getRegion(storage.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             readWriteRequestProductFamily,
             {
@@ -267,7 +265,8 @@ function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage'])
                 Value: 'Read'
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...fsxService,
+        ...formatVersion
     };
 }
 
@@ -275,9 +274,8 @@ function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']
     logger.info('Geting FSxN write requests Input', { storage });
 
     return {
-        ServiceCode: 'AmazonFSx',
         Filters: [
-            getRegion(storage.region),
+            getRegion(storage.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             readWriteRequestProductFamily,
             {
@@ -291,7 +289,8 @@ function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']
                 Value: 'Write'
             }
         ],
-        FormatVersion: 'aws_v1'
+        ...fsxService,
+        ...formatVersion
     };
 }
 
@@ -309,7 +308,7 @@ function getVpcInput(): GetProductsCommandInput {
             }
             // TODO: add more filters here
         ],
-        FormatVersion: 'aws_v1'
+        ...formatVersion
     };
 }
 

@@ -2,12 +2,12 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 
 const PricingServiceRequest = Type.Object({
     compute: Type.Object({
-        region: Type.String(),
+        regionCode: Type.String(),
         instanceType: Type.String(),
         sqlSoftwareType: Type.String()
     }),
     storage: Type.Object({
-        region: Type.String(),
+        regionCode: Type.String(),
         diskSize: Type.String(),
         throughput: Type.Optional(Type.String()),
         iops: Type.Optional(Type.Number()),

@@ -3,7 +3,7 @@ import { PricingServiceRequest, PricingServiceResponse } from '../types/pricing.
 
 const CalculatePriceSchema = {
     tags: [RouteTags.PRICING],
-    description: 'Calculates cost for the selected resources.',
+    description: 'Estimates monthly cost of deployable resources in USD',
     body: PricingServiceRequest,
     response: {
         200: PricingServiceResponse
