@@ -27,13 +27,13 @@ async function getAllSavedConfig(accountId: string): Promise<FormConfigListRespo
     logger.info('Load saved config ', accountId);
 
     const data = await listConfig(accountId);
-    return data.map(({ account_id: accId, id, user, creation_time: creationTime, data: d, name }) => ({
-        accountId: accId,
+    return data.map(({ id, user, creation_time: creationTime, data: configData, name }) => ({
+        accountId,
         id,
         user,
         name,
         creationTime: moment(creationTime).unix() * 1000,
-        data: d as object
+        data: configData as object
     }));
 }
 
