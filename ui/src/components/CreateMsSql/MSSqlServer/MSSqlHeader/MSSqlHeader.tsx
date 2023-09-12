@@ -7,7 +7,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useSaveConfigDataMutation, useLazyGetConfigDataQuery, useGetConfigListQuery } from '../../../../utils/apiService';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { FROM_DIALOG } from '../../../../utils/consts';
-import { LoadConfiguration, resetChecksAfterLoad, SaveConfiguration } from '../../Configuration/LoadConfiguration';
+import { LoadConfiguration, resetChecksAfterLoad, resetRefetchApiCheck, SaveConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
 import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
@@ -66,9 +66,7 @@ const MSSqlHeader = () => {
                 }}
                 closeCallback={() => {
                     dispatch(setIsLoadConfig(false));
-                    dispatch(setRefetchApiCountExpected([]));
-                    dispatch(setRefetchApiCountRan(null));
-                    dispatch(setRefetchApiCountLoading(false));
+                    resetRefetchApiCheck(dispatch);
                 }}
                 dialogFrom={FROM_DIALOG.LOAD_CONFIG}
             />

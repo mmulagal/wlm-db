@@ -21,15 +21,17 @@ This function is used to load config data on click on config load.
 export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
     const state = store.getState();
     const selectedConfig = state.mssqlForm.loadConfig;
-    dispatch(setRefetchApiCountExpected([]));
-    dispatch(setRefetchApiCountRan(null));
-    dispatch(setRefetchApiCountLoading(false));
+    resetRefetchApiCheck(dispatch);
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
             if(data?.data?.data){
                 dispatch(setSavedConfig(data?.data?.data));
-                apiCallsCount(dispatch, data?.data?.data);
+                const apiList = apiCallsList(dispatch, data?.data?.data);
+                if(apiList) {
+                    dispatch(setRefetchApiCountExpected(apiList));
+                    dispatch(setRefetchApiCountLoading(true));
+                }
                 const isMissing = checkMissingFields(data?.data?.data);
                 dispatch(setIsMissingFieldsInLoad(isMissing));
                 dispatch(setMssqlForm(data?.data?.data));
@@ -61,6 +63,13 @@ export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMiss
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
             message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
     }
+    resetRefetchApiCheck(dispatch);
+}
+
+/* 
+This function is used to reset refetch API checks
+*/
+export const resetRefetchApiCheck = (dispatch: Dispatch) => {
     dispatch(setRefetchApiCountExpected([]));
     dispatch(setRefetchApiCountRan(null));
     dispatch(setRefetchApiCountLoading(false));
@@ -70,7 +79,7 @@ export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMiss
 On click of load config this function will check how many get APIs call will run on change on any dependent fields.
 Get APIs calls are required on change fields as to show latest data in accordions dropdown.
 */
-export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
+export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     const state = store.getState();
     let apis = [];
     const credId = loadData?.awsAccount?.selectedCredential?.value;
@@ -106,8 +115,7 @@ export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
         && (!isSameRegion || !isSameCred || !isSameOs || !isSameDbVersion || !isSameDbEdition)){
         apis.push(API_NAME.AMI);
     }
-    dispatch(setRefetchApiCountExpected(apis));
-    dispatch(setRefetchApiCountLoading(true));
+    return apis;
 }
 
 /*
