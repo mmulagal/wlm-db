@@ -4,7 +4,7 @@ import {
     PrismaClientInitializationError,
     PrismaClientKnownRequestError,
     PrismaClientValidationError
-} from '@prisma/client/runtime/library';
+} from '@prisma/client/runtime/library.js';
 import { isHTTPError, isTimeoutError } from './got';
 import { INVALID_REGION_AWS, INVALID_REGION_MESSAGE, HttpErrorCodes } from './consts';
 
