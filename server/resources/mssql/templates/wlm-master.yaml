@@ -486,6 +486,10 @@ Resources:
           Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
@@ -522,6 +526,10 @@ Resources:
           Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
@@ -733,6 +741,8 @@ Resources:
             - !Ref "ONTAPSecurityGroupID"
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
         NumberOfNodes: "2"
         FSxLogVolumeName:
           Ref: FSxLogVolumeName
