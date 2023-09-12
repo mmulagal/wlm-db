@@ -13,6 +13,7 @@ import {
 } from '../../../store/mssql/msSqlActionSlice';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../utils/utilityFunctions';
+import { API_NAME } from '../../../utils/consts';
 
 /*
 This function is used to load config data on click on config load. 
@@ -20,12 +21,17 @@ This function is used to load config data on click on config load.
 export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
     const state = store.getState();
     const selectedConfig = state.mssqlForm.loadConfig;
+    resetRefetchApiCheck(dispatch);
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
             if(data?.data?.data){
                 dispatch(setSavedConfig(data?.data?.data));
-                apiCallsCount(dispatch, data?.data?.data);
+                const apiList = apiCallsList(dispatch, data?.data?.data);
+                if(apiList) {
+                    dispatch(setRefetchApiCountExpected(apiList));
+                    dispatch(setRefetchApiCountLoading(true));
+                }
                 const isMissing = checkMissingFields(data?.data?.data);
                 dispatch(setIsMissingFieldsInLoad(isMissing));
                 dispatch(setMssqlForm(data?.data?.data));
@@ -57,8 +63,15 @@ export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMiss
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
             message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
     }
-    dispatch(setRefetchApiCountExpected(0));
-    dispatch(setRefetchApiCountRan(0));
+    resetRefetchApiCheck(dispatch);
+}
+
+/* 
+This function is used to reset refetch API checks
+*/
+export const resetRefetchApiCheck = (dispatch: Dispatch) => {
+    dispatch(setRefetchApiCountExpected([]));
+    dispatch(setRefetchApiCountRan(null));
     dispatch(setRefetchApiCountLoading(false));
 }
 
@@ -66,26 +79,43 @@ export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMiss
 On click of load config this function will check how many get APIs call will run on change on any dependent fields.
 Get APIs calls are required on change fields as to show latest data in accordions dropdown.
 */
-export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
+export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     const state = store.getState();
-    let apiCount = 0;
-    if(state.mssqlForm.awsAccount?.selectedCredential?.value !== loadData?.awsAccount?.selectedCredential?.value){
-        apiCount = 9;
-    } else if(state.mssqlForm.regionAndVpc?.selectedRegion?.value !== loadData?.regionAndVpc?.selectedRegion?.value){
-        apiCount = 8;
-    } else{
-        if(state.mssqlForm.regionAndVpc?.selectedVPC?.label2 !== loadData?.regionAndVpc?.selectedVPC?.label2) {
-            apiCount += 1;
-        } 
-        if(
-            state.mssqlForm?.operatingSystem?.label === loadData?.operatingSystem?.label ||
-            state.mssqlForm?.dbVersion?.value === loadData?.dbVersion?.value ||
-            state.mssqlForm?.dbEdition?.value === loadData?.dbEdition?.value ) {
-            apiCount += 1;
-        }
-    } 
-    dispatch(setRefetchApiCountExpected(apiCount));
-    dispatch(setRefetchApiCountLoading(true));
+    let apis = [];
+    const credId = loadData?.awsAccount?.selectedCredential?.value;
+    const regionId = loadData?.regionAndVpc?.selectedRegion?.value;
+    const vpcId = loadData?.regionAndVpc?.selectedVPC?.label2;
+    const osVersion = loadData?.operatingSystem?.label;
+    const dbVersion = loadData?.dbVersion?.value;
+    const dbEdition = loadData?.dbEdition?.value;
+
+    const isSameCred = state.mssqlForm.awsAccount?.selectedCredential?.value === credId;
+    const isSameRegion = state.mssqlForm.regionAndVpc?.selectedRegion?.value === regionId;
+    const isSameVpc = state.mssqlForm.regionAndVpc?.selectedVPC?.label2 === vpcId;
+
+    const isSameOs = state.mssqlForm?.operatingSystem?.label === osVersion;
+    const isSameDbVersion = state.mssqlForm?.dbVersion?.value === dbVersion;
+    const isSameDbEdition = state.mssqlForm?.dbEdition?.value === dbEdition;
+
+    if(credId && !isSameCred){
+        apis.push(API_NAME.REGION);
+    }
+    if(credId && regionId && (!isSameRegion || !isSameCred)){
+        apis.push(API_NAME.VPC);
+        apis.push(API_NAME.ADS);
+        apis.push(API_NAME.SNS);
+        apis.push(API_NAME.KMS);
+        apis.push(API_NAME.KEYPAIR);
+        apis.push(API_NAME.INSTANCE);
+    }
+    if(credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)){
+        apis.push(API_NAME.FSXN);
+    }
+    if(credId && regionId && osVersion && dbEdition && dbVersion 
+        && (!isSameRegion || !isSameCred || !isSameOs || !isSameDbVersion || !isSameDbEdition)){
+        apis.push(API_NAME.AMI);
+    }
+    return apis;
 }
 
 /*
