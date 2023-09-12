@@ -11,8 +11,7 @@ import { LoadConfiguration, resetChecksAfterLoad, resetRefetchApiCheck, SaveConf
 import LoadConfig from '../../LoadConfig/LoadConfig';
 import SaveConfig from '../../SaveConfig/SaveConfig';
 import styles from './MSSqlHeader.module.scss';
-import { setIsLoadConfig, setRefetchApiCountExpected, setRefetchApiCountLoading, 
-    setRefetchApiCountRan } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsLoadConfig } from '../../../../store/mssql/msSqlActionSlice';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 const _ = require('lodash');
 
@@ -41,14 +40,13 @@ const MSSqlHeader = () => {
     }, [configData])
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
-    const isMissing = useAppSelector(state => state.msSqlAction.isMissingFieldsInLoad);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
     
     useEffect(() => {
         if(isLoadConfig){
             if(refetchApiCount?.isLoading && ( refetchApiCount?.expected.length === 0 || 
                 _.uniq(refetchApiCount?.ran).length === _.uniq(refetchApiCount?.expected).length)) {
-                resetChecksAfterLoad(dispatch, closeDialog , isMissing);
+                resetChecksAfterLoad(dispatch, closeDialog);
             } 
         } 
     // eslint-disable-next-line react-hooks/exhaustive-deps
