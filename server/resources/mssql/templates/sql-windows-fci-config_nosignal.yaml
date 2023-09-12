@@ -172,10 +172,6 @@ Parameters:
         Type: String
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
-        AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-        ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-            letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-            (-).
         Type: String
     AssetsS3RegionCode:
         Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
