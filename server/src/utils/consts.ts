@@ -71,6 +71,7 @@ const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
 const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
+const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
@@ -681,6 +682,14 @@ const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
 
+// Notification
+const CRITICAL = 'critical';
+const RESOURCE_ID = 'WLMDB-Resource-1';
+const PUBLISH = 'publish';
+const MOREINFO = 'More information';
+const ACTION_BUTTOTN_DASHBOARD = 'Go to Dashboard';
+const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -801,5 +810,12 @@ export {
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
     WLMDB_ENDPOINT,
-    BATCH_API_CONCURRENCY_LIMIT
+    BATCH_API_CONCURRENCY_LIMIT,
+    CRITICAL,
+    PUBLISH,
+    MOREINFO,
+    ACTION_BUTTOTN_DASHBOARD,
+    ACTION_BUTTON_DATABASE,
+    RESOURCE_ID,
+    WLMDB_ABSOLUTE_ENDPOINT
 };
