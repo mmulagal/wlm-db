@@ -3,16 +3,14 @@ import store from '../../../store/store';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
 import { 
-    setIsLoadConfig, 
-    setIsMissingFieldsInLoad, 
+    setIsLoadConfig,
     setIsSaveConfigLoading, 
     setRefetchApiCountExpected, 
     setRefetchApiCountLoading, 
     setRefetchApiCountRan, 
     setSavedConfig 
 } from '../../../store/mssql/msSqlActionSlice';
-import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
-import { dbPassVal, fsxPassVal, isValidUserName } from '../../../utils/utilityFunctions';
+import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { API_NAME } from '../../../utils/consts';
 
 /*
@@ -32,8 +30,6 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
                     dispatch(setRefetchApiCountExpected(apiList));
                     dispatch(setRefetchApiCountLoading(true));
                 }
-                const isMissing = checkMissingFields(data?.data?.data);
-                dispatch(setIsMissingFieldsInLoad(isMissing));
                 dispatch(setMssqlForm(data?.data?.data));
             } else {
                 dispatch(setIsLoadConfig(false));
@@ -53,16 +49,11 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
 /* 
 This function is used to reset all load config related action states once data is loaded.
 */
-export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMissing:boolean) => {
+export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any) => {
     dispatch(setIsLoadConfig(false));
     closeDialog();
-    if(isMissing){
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
-            message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
-    } else {
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-            message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
-    }
+    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+        message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
     resetRefetchApiCheck(dispatch);
 }
 
@@ -217,56 +208,4 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
             dbInstanceType && fsxType && fsxNewName && fsxNewUserName && fsxExName && fsxExUserName && fsxPass && dataDriveSize && 
             dataDriveUnit && provisionedIops && throughput && encryptionType && encryptionRow && encryptionArn && tags && 
             snsKey && cloudWatch;
-};
-
-
-/*
-On config load this function will check if load data has any missing mandatory fields. 
-*/
-const checkMissingFields = (data: any) => {
-    const vpcStateValue = !data?.regionAndVpc?.selectedVPC;
-
-    const azStateValue =
-        !data?.availabilityZones?.selectedAzNode1 ||
-        !data?.availabilityZones?.selectedSubnetNode1 ||
-        !data?.availabilityZones?.selectedAzNode2 ||
-        !data?.availabilityZones?.selectedSubnetNode2;
-
-    const dbCredStateValue = !data?.dbCredentials?.password;
-
-    const adStateValue =
-        !data?.activeDirectory?.domainAddress ||
-        !data?.activeDirectory?.domainName ||
-        !data?.activeDirectory?.userName ||
-        !data?.activeDirectory?.password;
-
-    const fsxStateValue =
-        (data?.fsxN?.fsxNType === GENERAL.CREATE_NEW_FSXN && !data?.fsxN?.fsxNPassword) ||
-        (data?.fsxN?.fsxNType === GENERAL.SELECT_EXISTING_FSX && !data?.fsxN?.fsxNExistingName);
-
-    const licenseIdCheck = !data?.license?.selectedLicenseId;
-    const checkForUserName = isValidUserName(data?.dbCredentials?.name);
-
-    //Check for DB Name - InvalidName
-    const input = data?.dbName;
-    const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-    const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
-
-    if (
-        !vpcStateValue &&
-        !azStateValue &&
-        !dbCredStateValue &&
-        !adStateValue &&
-        !fsxStateValue &&
-        !isDBValueValid &&
-        !licenseIdCheck &&
-        !checkForUserName &&
-        !dbPassVal(data?.dbCredentials?.password) &&
-        !fsxPassVal(data?.fsxN?.fsxNPassword)
-    ) {
-        return false;
-    } else {
-        return true;
-    }
 };

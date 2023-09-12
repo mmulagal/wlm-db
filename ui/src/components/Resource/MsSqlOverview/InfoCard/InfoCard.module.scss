@@ -20,6 +20,12 @@
             .infoTextValue {
                 line-height: 32px;
             }
+
+            .loaderContainer {
+                height: 32px;
+                display: flex;
+                align-items: center;
+            }
         }
     }
 

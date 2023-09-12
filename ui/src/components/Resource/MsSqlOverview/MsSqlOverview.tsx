@@ -35,6 +35,7 @@ const MsSqlOverview = () => {
                             return <TablesIcon />;
                         }}
                         value={tables.length}
+                        isValueLoading={!batchingCompleted}
                         label={'Tables'}
                         buttonText={'View Tables'}
                         buttonClick={function (): void {

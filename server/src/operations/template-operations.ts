@@ -123,7 +123,8 @@ async function updateTemplateUrls(
             ScriptVpcCheck: decodeURI(signedUrls.get('ScriptVpcCheck')?.url || ''),
             ScriptUpdateDnsServers: decodeURI(signedUrls.get('ScriptUpdateDnsServers')?.url || ''),
             ScriptRenameComputer: decodeURI(signedUrls.get('ScriptRenameComputer')?.url || ''),
-            ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || '')
+            ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
+            ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || '')
         });
         await putObjectBucket(
             credentialsId,

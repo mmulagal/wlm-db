@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { createConfig, listConfig } from '../../lib/database/db';
+import { createConfig, deleteConfig, listConfig } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
     FormConfigListResponseType,
@@ -21,6 +21,12 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
         data,
         name
     };
+}
+
+async function deleteSavedConfig(accountId: string, id: string): Promise<void> {
+    logger.info('Delete saved config ', accountId, id);
+
+    await deleteConfig(accountId, id);
 }
 
 async function getAllSavedConfig(accountId: string): Promise<FormConfigListResponseType> {
@@ -58,4 +64,4 @@ async function saveConfig(
     });
     return { id, accountId: configAccountId, creationTime: moment(configCreationTime).unix() * 1000, user, data, name };
 }
-export { getSavedConfig, getAllSavedConfig, saveConfig };
+export { getSavedConfig, getAllSavedConfig, saveConfig, deleteSavedConfig };

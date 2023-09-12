@@ -76,6 +76,8 @@ model config {
   data          Json?    @default("{}")
 
   @@index([account_id], map: "k_wlmdb_config_account_id")
+  @@unique([account_id, name, user], name: "uk_wlmdb_config_account_id_name_user", map: "uk_wlmdb_config_account_id_name_user")
+
 }
 
 enum DEPLOYMENT_STATUS {
