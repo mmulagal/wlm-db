@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -16,19 +16,24 @@ const DatabaseName = () => {
 
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
 
+    const [databaseName, setDatabaseName] = useState(selectedDBName);
+
     useEffect(() => {
         if(!selectedDBName){
+            setDatabaseName(SQL_DATABASE);
             dispatch(setDBName(SQL_DATABASE));
         }
-    });
+        setDatabaseName(databaseName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [databaseName]);
 
     function isValidDBName() {
-        const firstChar = selectedDBName.charAt(0);
+        const firstChar = databaseName.charAt(0);
         // Check if the instance name is 16 characters or less in length
 
         if (
-            selectedDBName.length > 0 &&
-            (selectedDBName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(selectedDBName))
+            databaseName.length > 0 &&
+            (databaseName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(databaseName))
         ) {
             return GENERAL.DB_NAME_TOOLTIP;
         }
@@ -38,7 +43,7 @@ const DatabaseName = () => {
         if (isValidDBName()) {
             return <AccordionError />;
         } else {
-            return <Typography variant="Regular_14">{selectedDBName}</Typography>;
+            return <Typography variant="Regular_14">{databaseName}</Typography>;
         }
     };
 
@@ -73,10 +78,11 @@ const DatabaseName = () => {
                                 }
                                 label={GENERAL.DATABASE_INSTANCE_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setDatabaseName(e.target.value)
                                     dispatch(setDBName(e.target.value));
                                 }}
                                 error={useDelayedError(isValidDBName())}
-                                value={selectedDBName}
+                                value={databaseName}
                             />
                         </div>
                     </Typography>
