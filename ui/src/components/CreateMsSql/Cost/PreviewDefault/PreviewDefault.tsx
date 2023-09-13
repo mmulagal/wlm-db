@@ -6,7 +6,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
 import { useDispatch } from 'react-redux';
-import { setSelectConfig, setThroughputValue } from '../../../../store/mssql/mssqlFormSlice';
+import { setDBName, setSelectConfig, setThroughputValue } from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
@@ -16,12 +16,18 @@ const PreviewDefault = () => {
     const dispatch = useDispatch();
 
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const keyPairValue = useAppSelector(state => state.mssqlForm.keyPair.selectedKeyPair);
+    const instanceValue = useAppSelector(state => state.mssqlForm.instanceType);
+    const dbName = useAppSelector(state => state.mssqlForm.dbName);
+    const throughputValue = useAppSelector(state => state.mssqlForm.throughput);
+    const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
 
     useEffect(() => {
-        if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+        if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
             const throughputVal = '128 MBps';
             const option = generateOptionType(throughputVal, throughputVal, '', false, '');
             dispatch(setThroughputValue(option));
+            dispatch(setDBName(SQL_DATABASE));
         }
     }, [selectedConfig]);
 
@@ -56,17 +62,22 @@ const PreviewDefault = () => {
             editable: GENERAL.PD_UPGRADED_MANUALLY,
             id: '5'
         },
-        { accordionName: GENERAL.LICENSE, defaultValue: GENERAL.LICENSE_INCLUDED_AMI, editable: GENERAL.NO, id: '6' },
-        { accordionName: GENERAL.DATABASE_NAME, defaultValue: SQL_DATABASE, editable: GENERAL.YES, id: '7' },
-        { accordionName: GENERAL.KEY_PAIR, defaultValue: GENERAL.FIRST_IN_THE_LIST, editable: GENERAL.YES, id: '8' },
+        { accordionName: GENERAL.LICENSE, defaultValue: amiLicense?.value, editable: GENERAL.NO, id: '6' },
+        { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
+        { accordionName: GENERAL.KEY_PAIR, defaultValue: keyPairValue?.value, editable: GENERAL.YES, id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
-            defaultValue: GENERAL.PD_AUTO_CREATE,
+            defaultValue: instanceValue?.value,
             editable: GENERAL.NO,
             id: '9'
         },
         { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
-        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: '128 MBps', editable: GENERAL.YES, id: '11' },
+        {
+            accordionName: GENERAL.THROUGHPUT_CAPACITY,
+            defaultValue: throughputValue?.value,
+            editable: GENERAL.YES,
+            id: '11'
+        },
         { accordionName: GENERAL.ENCRYPTION, defaultValue: DEFAULT_MASTER_KEY, editable: GENERAL.YES, id: '12' },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
@@ -117,6 +128,13 @@ const PreviewDefault = () => {
 
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+        setTimeout(() => {
+            document.querySelector('#easy-create')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            });
+        }, 500);
     };
     return (
         <div className={styles['preview-default']}>

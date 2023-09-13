@@ -26,10 +26,11 @@ import {
     addVpcList
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
-import { AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
+import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, DEAFULT_INSTANCE_VALUE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
 import { formatKmsData, formatSize, generateOptionType } from '../../../utils/utilityFunctions';
 import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
 
 
 const MssqlApis = () => {
@@ -64,6 +65,8 @@ const MssqlApis = () => {
     const osVersion = useAppSelector(state => state.mssqlForm.operatingSystem);
     const dbEdition = useAppSelector(state => state.mssqlForm.dbEdition);
     const dbVersion = useAppSelector(state => state.mssqlForm.dbVersion);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
 
     // API call to get credentials list for user account
     const {
@@ -198,7 +201,8 @@ const MssqlApis = () => {
     // To add credentials information in MssqlEntities
     useEffect(() => {
         dispatch(addCredentials({ credentialData, credentialLoading, credentialError }));
-    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [credentialData, credentialLoading, credentialError]);
 
     //Handle dependency cases
     useEffect(() => {
@@ -210,7 +214,7 @@ const MssqlApis = () => {
         }
         if (vpcId) {
             setSelectedVpcId(vpcId);
-        }
+        } 
         if (credId) {
             setCredSkip(false);
             setSelectedCredId(credId);
@@ -241,7 +245,11 @@ const MssqlApis = () => {
         } else {
             dispatch(addRegions({ regionsData, regionsLoading, regionsError }));
         }
-    }, [dispatch, regionsData, regionsError, regionsLoading]);
+        if(!regionsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.REGION)){
+            dispatch(setRefetchApiCountRan(API_NAME.REGION));
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [regionsData, regionsError, regionsLoading]);
 
     // To add VPC information in MssqlEntities
     useEffect(() => {
@@ -250,7 +258,11 @@ const MssqlApis = () => {
         } else {
             dispatch(addVpcList({ vpcData, vpcLoading, vpcError }));
         }
-    }, [dispatch, vpcData, vpcLoading, vpcError]);
+        if(!vpcLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.VPC)){
+            dispatch(setRefetchApiCountRan(API_NAME.VPC))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vpcData, vpcLoading, vpcError]);
 
     // To add Ads information in MssqlEntities
     useEffect(() => {
@@ -259,7 +271,11 @@ const MssqlApis = () => {
         } else {
             dispatch(addAdsList({ adsData, adsLoading, adsError }));
         }
-    }, [dispatch, adsData, adsLoading, adsError]);
+        if(!adsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.ADS)){
+            dispatch(setRefetchApiCountRan(API_NAME.ADS))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [adsData, adsLoading, adsError]);
 
     // To add AMI information in MssqlEntities
     useEffect(() => {
@@ -275,7 +291,11 @@ const MssqlApis = () => {
                 dispatch(setSelectedLicenseId(option));
             }
         }
-    }, [dispatch, amiData, amiLoading, amiError]);
+        if(!amiLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.AMI)){
+            dispatch(setRefetchApiCountRan(API_NAME.AMI))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [amiData, amiLoading, amiError]);
 
     // To add SNS information in MssqlEntities
     useEffect(() => {
@@ -284,7 +304,11 @@ const MssqlApis = () => {
         } else {
             dispatch(addSnsList({ snsData, snsLoading, snsError }));
         }
-    }, [dispatch, snsData, snsLoading, snsError]);
+        if(!snsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.SNS)){
+            dispatch(setRefetchApiCountRan(API_NAME.SNS))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [snsData, snsLoading, snsError]);
 
     // To add KMS Keys in MssqlEntities
     useEffect(() => {
@@ -297,7 +321,11 @@ const MssqlApis = () => {
                 dispatch(setEncryptionRow([kmsData[0]]));
             }
         }
-    }, [dispatch, kmsList, kmsLoading, kmsError]);
+        if(!kmsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KMS)){
+            dispatch(setRefetchApiCountRan(API_NAME.KMS))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kmsList, kmsLoading, kmsError]);
 
     // To add Key Pair in MssqlEntities
     useEffect(() => {
@@ -312,7 +340,11 @@ const MssqlApis = () => {
                 dispatch(setSelectedKeyPair(option));
             }
         }
-    }, [dispatch, keyPairData, keyPairLoading, keyPairError]);
+        if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KEYPAIR)){
+            dispatch(setRefetchApiCountRan(API_NAME.KEYPAIR))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keyPairData, keyPairLoading, keyPairError]);
 
     // To add Instance Type in MssqlEntities
     useEffect(() => {
@@ -320,8 +352,10 @@ const MssqlApis = () => {
             dispatch(addInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
         } else {
             dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
-                const firstInstanceName = instanceTypeData?.instanceTypes[0];
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE && instanceTypeData && instanceTypeData?.instanceTypes.length > 0){
+                const defaultInsType = instanceTypeData?.instanceTypes?.filter((instance: { instanceType: string; }) => 
+                    instance.instanceType === DEAFULT_INSTANCE_VALUE);
+                const firstInstanceName = (defaultInsType && defaultInsType.length > 0) ? defaultInsType[0] : instanceTypeData?.instanceTypes[0];
                 const value = firstInstanceName?.instanceType || '';
                 let label2 = '';
                 if (firstInstanceName?.vCpus) {
@@ -337,20 +371,38 @@ const MssqlApis = () => {
                 dispatch(setInstanceType(option));
             }
         }
-    }, [dispatch, instanceTypeData, instanceTypeLoading, instanceTypeError]);
+        if(!instanceTypeLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.INSTANCE)){
+            dispatch(setRefetchApiCountRan(API_NAME.INSTANCE))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
 
     // To add FSxN in MssqlEntities
     useEffect(() => {
-        if (fsxnError) {
+        const vpcId = selectedVpcData?.data ? selectedVpcData?.data?.id : undefined;
+        if(!vpcId){
             dispatch(addFsxnList({ undefined, fsxnLoading, fsxnError }));
         } else {
-            dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
+            if (fsxnError) {
+                dispatch(addFsxnList({ undefined, fsxnLoading, fsxnError }));
+            } else {
+                dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
+            }
+            if(!fsxnLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.FSXN)){
+                dispatch(setRefetchApiCountRan(API_NAME.FSXN))
+            }
         }
-    }, [dispatch, fsxnData, fsxnLoading, fsxnError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fsxnData, fsxnLoading, fsxnError, selectedVpcData]);
 
     // To add saved configuration list
     useEffect(() => {
-        dispatch(addSavedConfigList({configData, configLoading, configError}));
+        if(configError) {
+            dispatch(addSavedConfigList({undefined, configLoading, configError}));
+        } else {
+            dispatch(addSavedConfigList({configData, configLoading, configError}));
+        }
+        
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, configLoading, configError]);
 

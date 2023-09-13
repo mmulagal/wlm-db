@@ -113,7 +113,9 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone1]);
 
     useEffect(() => {
-        dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet1Options]);
 
@@ -165,7 +167,9 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone2]);
 
     useEffect(() => {
-        dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet2Options]);
 

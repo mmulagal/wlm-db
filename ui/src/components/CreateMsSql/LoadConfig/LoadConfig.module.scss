@@ -25,14 +25,26 @@
 
     .setRow {
         display: flex;
+        flex-direction: row;
+    }
+
+    .setRowWithSeperator {
+        width: 500px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .item:hover {
         background-color: #f4fbff;
     }
 
+    .radiobutton {
+        width: 600px;
+    }
+
     .icon {
-        margin-left: 600px;
+        margin-left: 100px;
     }
 
     .loading {
@@ -40,3 +52,10 @@
         justify-content: center;
     }
 }
+
+@media screen and (max-width: 1600px) {
+    .setRowWithSeperator {
+        width: 280px !important;
+    }
+}
+

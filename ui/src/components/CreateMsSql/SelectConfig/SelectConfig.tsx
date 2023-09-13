@@ -9,6 +9,7 @@ import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
+import { Typography } from '@netapp/design-system';
 const SelectConfig = () => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
@@ -17,6 +18,7 @@ const SelectConfig = () => {
         <div className={styles['select-config']}>
             {/* Easy create section from here */}
             <div
+                id="easy-create"
                 className={
                     selectedConfig === SELECT_CONFIG.EASY_CREATE
                         ? `${styles['easy-create']} ${styles['add-border']}`
@@ -24,10 +26,14 @@ const SelectConfig = () => {
                 }
                 onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE))}
             >
-                <EasyCreate />
-                <div className={styles['easy-create-content']}>
-                    <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
-                    <div className={styles['easy-create-content-text']}>{SELECT_CONFIG.EASY_CREATE_CONTENT}</div>
+                <div className={styles.level}>
+                    <EasyCreate />
+                    <div className={styles['easy-create-content']}>
+                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
+                        <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
+                            {SELECT_CONFIG.EASY_CREATE_CONTENT}
+                        </Typography>
+                    </div>
                 </div>
 
                 {selectedConfig === SELECT_CONFIG.EASY_CREATE && (
@@ -48,13 +54,16 @@ const SelectConfig = () => {
                 }
                 onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE))}
             >
-                <StandardCreate />
-                <div className={styles['standard-create-content']}>
-                    <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
-                    <div className={styles['standard-create-content-text']}>
-                        {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
+                <div className={styles.level}>
+                    <StandardCreate />
+                    <div className={styles['standard-create-content']}>
+                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
+                        <Typography variant="Regular_13" className={styles['standard-create-content-text']}>
+                            {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
+                        </Typography>
                     </div>
                 </div>
+
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                     <div className={styles['tick-placement']}>
                         <BlueTick />

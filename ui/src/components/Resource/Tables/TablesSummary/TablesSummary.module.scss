@@ -15,6 +15,12 @@
         border-right: 1px solid var(--grey-15);
         padding-left: 40px;
 
+        .loaderContainer {
+            display: flex;
+            height: 32px;
+            align-items: center;
+        }
+
         .dataToShow {
             display: flex;
             flex-direction: column;

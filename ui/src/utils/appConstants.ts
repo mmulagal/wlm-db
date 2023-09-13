@@ -16,13 +16,15 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
-    MISSING_FIELDS_MESSAGE: 
+    DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
+    MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
 };
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
+    COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
     NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
@@ -246,7 +248,9 @@ export const GENERAL = {
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
-        'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
+        'Microsoft SQL Server and FSxN for ONTAP deployment ',
+        'with stack name ',
+        ' has been triggered. You can track the progress using the ',
         'Timeline',
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
