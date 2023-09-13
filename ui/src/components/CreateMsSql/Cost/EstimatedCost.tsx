@@ -144,7 +144,7 @@ const EstimatedCost = () => {
                 // isDisabled={isDisabled || !regionValue}
                 // isExpandDisabled={isDisabled || !regionValue}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="23"
+                id="24"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
             >
                 <AccordionCardContent>
