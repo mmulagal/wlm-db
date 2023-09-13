@@ -29,12 +29,10 @@
     }
 
     .setRowWithSeperator {
-        display: flex;
-        flex-direction: row;
-        gap: 16px;
-        font-size: 14px;
-        color: var(--grey-50);
-        line-height: none !important;
+        width: 500px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .item:hover {
@@ -54,3 +52,10 @@
         justify-content: center;
     }
 }
+
+@media screen and (max-width: 1600px) {
+    .setRowWithSeperator {
+        width: 280px !important;
+    }
+}
+
