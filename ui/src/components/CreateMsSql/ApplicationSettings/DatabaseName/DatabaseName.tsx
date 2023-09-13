@@ -16,16 +16,11 @@ const DatabaseName = () => {
 
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
 
-    const [databaseName, setDatabaseName] = useState(selectedDBName);
+    const [databaseName, setDatabaseName] = useState(SQL_DATABASE);
 
     useEffect(() => {
-        if(!selectedDBName){
-            setDatabaseName(SQL_DATABASE);
-            dispatch(setDBName(SQL_DATABASE));
-        }
-        setDatabaseName(databaseName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [databaseName]);
+        setDatabaseName(selectedDBName);
+    }, [selectedDBName]);
 
     function isValidDBName() {
         const firstChar = databaseName.charAt(0);
