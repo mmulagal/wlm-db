@@ -16,7 +16,8 @@ import {
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
-    SERVER_NODES,
+    SERVER_NODE,
+    CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
     SSM_QUERY_CONCURRENCY_LIMIT
@@ -253,7 +254,7 @@ async function getServerSummary(resourceId: string) {
 
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
 
-    const [serverDetails, connections, state, isClustered, nodes] = await Promise.all([
+    const [serverDetails, connections, state, isClustered, node, clusterNodes] = await Promise.all([
         callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
             `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
         ]),
@@ -267,16 +268,38 @@ async function getServerSummary(resourceId: string) {
             `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
         ]),
         callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_NODES}"`
+            `${PSSCRIPT} -Query "${SERVER_NODE}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
         ])
     ]);
+
     const serverDet = serverDetails.replaceAll('\r\n', '');
     const serverInfo = serverDet?.split('\t');
     const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
     const stateValue = state.replaceAll('\r\n', '').replace('.', '');
     const [connValue] = sqlResponseParsing(connections);
-    const [nodesValue] = sqlResponseParsing(nodes);
-    const [isClusterdValue] = sqlResponseParsing(isClustered);
+    const [nodeValue] = sqlResponseParsing(node);
+    const [isClusteredValue] = sqlResponseParsing(isClustered);
+
+    let activeNode = nodeValue?.activeNode;
+    let standbyNode: string = '';
+    if (isClusteredValue?.isClustered) {
+        const clusterNodesInfo: {
+            NodeName: string;
+            is_current_owner: string;
+        }[] = sqlResponseParsing(clusterNodes);
+
+        if (clusterNodesInfo[0]?.is_current_owner === 'True') {
+            activeNode = clusterNodesInfo[0]?.NodeName;
+            standbyNode = clusterNodesInfo[1]?.NodeName;
+        } else {
+            activeNode = clusterNodesInfo[1]?.NodeName;
+            standbyNode = clusterNodesInfo[0]?.NodeName;
+        }
+    }
+
     return {
         serverId: resourceId,
         serverVersion: version ? version[0] : ' ',
@@ -284,11 +307,11 @@ async function getServerSummary(resourceId: string) {
         serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
         serverStatus: stateValue,
         activeConnections: connValue.numberOfConnections,
-        deploymentModel: isClusterdValue.isClustered
+        deploymentModel: isClusteredValue.isClustered
             ? SqlServerDeploymentModel.SQL_FCI
             : SqlServerDeploymentModel.SQL_STANDALONE,
-        activeNode: nodesValue.activeNode,
-        standbyNode: nodesValue.standbyNode
+        activeNode,
+        ...(isClusteredValue.isClustered ? { standbyNode } : {})
     };
 }
 

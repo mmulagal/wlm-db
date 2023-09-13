@@ -41,9 +41,15 @@ const serClusterParams = {
 };
 const serNodesParams = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, SERVERPROPERTY('MachineName') as standbyNode FOR JSON PATH\""
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT SERVERPROPERTY(\'ComputerNamePhysicalNetBIOS\') as activeNode FOR JSON PATH"'
     ]
 };
+const clusterNodesParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes FOR JSON PATH"'
+    ]
+};
+
 const serStateParams = {
     commands: [
         "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'\""
@@ -101,6 +107,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.serClusterCommandResponse)
     .on(SendCommandCommand, { Parameters: serNodesParams })
     .resolves(listSendCommandCommandResponse.serNodesCommandResponse)
+    .on(SendCommandCommand, { Parameters: clusterNodesParams })
+    .resolves(listSendCommandCommandResponse.clusterNodesCommandResponse)
     .on(SendCommandCommand, { Parameters: serStateParams })
     .resolves(listSendCommandCommandResponse.serStateCommandResponse)
     .on(SendCommandCommand, { Parameters: serVerParams })
@@ -131,6 +139,8 @@ ssmMock
     .resolves(getCommandInvocationResponse.tablesListInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serNodes' })
     .resolves(getCommandInvocationResponse.serNodesInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNodes' })
+    .resolves(getCommandInvocationResponse.clusterNodesInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serCluster' })
     .resolves(getCommandInvocationResponse.serIsClusteredInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serState' })

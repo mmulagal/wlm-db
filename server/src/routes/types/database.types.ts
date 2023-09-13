@@ -58,7 +58,7 @@ const ServerSummaryResponse = Type.Object({
     activeConnections: Type.Integer(),
     deploymentModel: Type.String(),
     activeNode: Type.String(),
-    standbyNode: Type.String()
+    standbyNode: Type.Optional(Type.String())
 });
 
 const UtilisationResponseBody = Type.Object({
