@@ -31,8 +31,8 @@ const DatabaseName = () => {
         if (isCreateHit && !isDBClusterNameFilled) {
             setTimeout(() => {
                 //@ts-ignore
-                databaseName?.current?.focus();
-            }, 30);
+                databasenameRef?.current?.focus();
+            }, 60);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBClusterNameFilled, isCreateHit]);
