@@ -22,6 +22,7 @@ async function initiateSimulator() {
     await import('./scopes/aws/sns-scope');
     await import('./scopes/aws/sqs-scope');
     await import('./scopes/batch-scope');
+    await import('./scopes/cloud-manager/cloud-manager-notification-scope');
     // Load server
     await import('../../src/index');
 }
