@@ -27,7 +27,7 @@ const MSSqlFooter = () => {
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
                     if (!data?.error) {
-                        let stackName = data?.data?.cloudFormationStackI;
+                        let stackName = data?.data?.cloudFormationStackId;
                         if(stackName && stackName.includes('/')){
                             stackName = stackName.split('/')[1];
                         }
