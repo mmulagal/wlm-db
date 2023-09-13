@@ -46,8 +46,12 @@ const LoadConfig = () => {
     };
 
     const deleteConfig = (index: any) => {
-        deleteConfigApi({configId: configData[index]?.id});
-        configListRefetch();
+        deleteConfigApi({configId: configData[index]?.id})
+            .then((data: any) => {
+                if (!data?.error) {
+                    configListRefetch();
+                }
+            })
     };
 
     const configRows = (item: any) => {
