@@ -137,6 +137,9 @@ Metadata:
             ParentStackName:
                 default: Stack name for parent cloud formation stack
 Parameters:
+    ParentStackName:
+        Description: Stack name for parent cloud formation stack
+        Type: String
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
         Description: EC2 instance role name
