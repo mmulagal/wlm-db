@@ -14,7 +14,7 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-//Queue Creted in WLMDB account
+// Queue Creted in WLMDB account
 async function createQueue(region: string, input: CreateQueueCommandInput) {
     logger.info('Create SQS queue', { region, input });
 
@@ -25,7 +25,7 @@ async function createQueue(region: string, input: CreateQueueCommandInput) {
     return resp;
 }
 
-//Queues in WLMDB account
+// Queues in WLMDB account
 async function listQueues(region: string, input: ListQueuesCommandInput) {
     logger.info('List SQS queues', { region, input });
 
@@ -41,7 +41,7 @@ async function listQueues(region: string, input: ListQueuesCommandInput) {
     return urls;
 }
 
-//Receive message in WLMDB account
+// Receive message in WLMDB account
 async function receiveMessage(region: string, input: ReceiveMessageCommandInput) {
     logger.info('Receive SQS queue message', { region, input });
 
@@ -52,7 +52,7 @@ async function receiveMessage(region: string, input: ReceiveMessageCommandInput)
     return resp;
 }
 
-//Delete message in WLMDB account
+// Delete message in WLMDB account
 async function deleteMessage(region: string, input: DeleteMessageCommandInput) {
     logger.info('Delete SQS queue message', { region, input });
 

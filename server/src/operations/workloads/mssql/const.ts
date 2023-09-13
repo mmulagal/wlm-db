@@ -85,7 +85,6 @@ const TABLES_QUERY = (offset: number, rowscount: number) =>
                         t.Name, s.Name, p.Rows, t.type_desc
                     ORDER BY 
                         t.Name offset ${offset} rows fetch next ${rowscount} rows only ${FOR_JSON_PATH}`;
-
 const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables ${FOR_JSON_PATH}`;
 
 export {

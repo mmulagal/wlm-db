@@ -24,7 +24,7 @@ import {
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { UtilisationResponseBody } from '../../../routes/types/database.types';
+import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
     DatabaseTypes,
     DATABASE_METRIC_TYPE,
@@ -188,12 +188,12 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
 
         const [sizeValue] = sqlResponseParsing(size);
         const [diskDataValue] = sqlResponseParsing(diskdata);
-        const diskUtilization = UtilisationResponseBody;
-        diskUtilization.used = sizeValue.TotalSize.toString();
-        diskUtilization.total = diskDataValue.total.toString();
-        diskUtilization.remaining = (Number(diskDataValue.total) - sizeValue.TotalSize).toString();
-        diskUtilization.percentUsed = Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString();
-
+        const diskUtilization: UtilisationResponseBodyInterface = {
+            used: sizeValue.TotalSize.toString(),
+            total: diskDataValue.total.toString(),
+            remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
+            percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
+        };
         return diskUtilization;
     }
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
@@ -317,11 +317,14 @@ async function discoverMsSqlServer(
             `${PSSCRIPT} -Query "${SERVER_NAME}"`
         ])
     ]);
-
+    const resourceId = sqlResponseParsing(resourceIdentifier)[0];
+    const resourceName = sqlResponseParsing(name)[0];
+    const id = resourceId?.serverGuid;
+    const resName = resourceName?.serverName;
     const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
     const params: ServiceResourceRequest = {
-        name,
-        resourceIdentifier,
+        name: resName,
+        resourceIdentifier: id,
         resourceType,
         workspacePublicId: workspaceId,
         accountPublicId: accountId,
@@ -340,7 +343,7 @@ async function discoverMsSqlServer(
     };
 
     await registerServiceResource(params);
-    return { resourceId: resourceIdentifier, resourceName: name };
+    return { resourceId: id, resourceName: resName };
 }
 
 export {
@@ -350,5 +353,7 @@ export {
     getResourceDetails,
     getDatabasesCount,
     getTablesSummary,
-    discoverMsSqlServer
+    discoverMsSqlServer,
+    callSsmExecution,
+    getTablesCount
 };
