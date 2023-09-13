@@ -27,15 +27,10 @@ const DatabaseCredentials = () => {
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
-    const [credName, setCredName] = useState(userName);
+    const [credName, setCredName] = useState(SQL_USERNAME);
 
     useEffect(() => {
-        if(!userName){
-            setCredName(SQL_USERNAME);
-            dispatch(setDBCredentialsName(SQL_USERNAME));
-        }
         setCredName(userName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userName]);
 
     useEffect(() => {
