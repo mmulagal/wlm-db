@@ -128,12 +128,19 @@ const PreviewDefault = () => {
 
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+        setTimeout(() => {
+            document.querySelector('#easy-create')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            });
+        }, 500);
     };
     return (
         <div className={styles['preview-default']}>
             <AccordionCard
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="22"
+                id="23"
                 title={<div className={CommonStyles.title}>{GENERAL.PREVIEW_DEFAULT}</div>}
             >
                 <AccordionCardContent>
