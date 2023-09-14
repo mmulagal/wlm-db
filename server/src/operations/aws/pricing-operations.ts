@@ -81,7 +81,7 @@ function getPriceUtil(rate: string, quantity: number, instanceCount = 1): number
     return Number(quantity) * Number(rate) * instanceCount;
 }
 
-function getRegion(region: string): Filter {
+function getRegion(region?: string): Filter {
     logger.debug('Getting region', { region });
 
     return {
@@ -181,7 +181,7 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Get
 
     return {
         Filters: [
-            getRegion(storage.regionCode),
+            getRegion(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             storageProductFamily,
             {
@@ -205,7 +205,7 @@ function getFSxNThroughputInput(storage: PricingServiceRequestType['storage']): 
 
     return {
         Filters: [
-            getRegion(storage.regionCode),
+            getRegion(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             {
                 Type: 'TERM_MATCH',
@@ -228,7 +228,7 @@ function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): GetPro
 
     return {
         Filters: [
-            getRegion(storage.regionCode),
+            getRegion(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             {
                 Type: 'TERM_MATCH',
@@ -251,7 +251,7 @@ function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage'])
 
     return {
         Filters: [
-            getRegion(storage.regionCode),
+            getRegion(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             readWriteRequestProductFamily,
             {
@@ -275,7 +275,7 @@ function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']
 
     return {
         Filters: [
-            getRegion(storage.regionCode),
+            getRegion(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             readWriteRequestProductFamily,
             {
@@ -375,12 +375,12 @@ function calculateEc2Cost(instanceRate: string, storageRate: string): number {
 function getInputs(
     compute: PricingServiceRequestType['compute'],
     storage: PricingServiceRequestType['storage'],
-    connectivity: PricingServiceRequestType['connectivity']
+    vpc: PricingServiceRequestType['vpc']
 ): GetProductsCommandInput[] {
     logger.info('Getting product inputs', {
         compute,
         storage,
-        connectivity
+        vpc
     });
 
     return [
@@ -391,22 +391,22 @@ function getInputs(
         getFSxNIopsInput(storage),
         getFSxNReadRequestsInput(storage),
         getFSxNWriteRequestsInput(storage),
-        ...((connectivity?.createNewVpc && [getVpcInput()]) || [])
+        ...((vpc && [getVpcInput()]) || [])
     ];
 }
 
 async function calculatePrice(
     compute: PricingServiceRequestType['compute'],
     storage: PricingServiceRequestType['storage'],
-    connectivity: PricingServiceRequestType['connectivity']
+    vpc: PricingServiceRequestType['vpc']
 ): Promise<PricingServiceResponseType> {
     logger.info('calculating price', {
         compute,
         storage,
-        connectivity
+        vpc
     });
 
-    const inputList: GetProductsCommandInput[] = getInputs(compute, storage, connectivity);
+    const inputList: GetProductsCommandInput[] = getInputs(compute, storage, vpc);
 
     const productsResponse = await Promise.all(
         inputList.map(async (input: GetProductsCommandInput): Promise<GetProductsCommandOutput> => getProducts(input))

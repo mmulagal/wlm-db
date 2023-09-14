@@ -6,16 +6,16 @@ const PricingServiceRequest = Type.Object({
         instanceType: Type.String(),
         sqlSoftwareType: Type.String()
     }),
-    storage: Type.Object({
-        regionCode: Type.String(),
-        diskSize: Type.String(),
-        throughput: Type.Optional(Type.String()),
-        iops: Type.Optional(Type.Number()),
-        deploymentOption: Type.Optional(Type.String())
-    }),
-    connectivity: Type.Object({
-        createNewVpc: Type.Boolean()
-    })
+    storage: Type.Optional(
+        Type.Object({
+            regionCode: Type.String(),
+            diskSize: Type.String(),
+            throughput: Type.Optional(Type.String()),
+            iops: Type.Optional(Type.Number()),
+            deploymentOption: Type.Optional(Type.String())
+        })
+    ),
+    vpc: Type.Optional(Type.Boolean())
 });
 
 const PricingServiceResponse = Type.Object({
