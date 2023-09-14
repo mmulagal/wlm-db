@@ -53,7 +53,7 @@ try {
 
         ForEach ($path in $Using:paths) {
             New-Item -ItemType directory -Path $path
-            $rule = new-object System.Security.AccessControl.FileSystemAccessRule($Using:SQLFullUser,"FullControl","ContainerInherit, ObjectInherit","InheritOnly","Allow")
+            $rule = new-object System.Security.AccessControl.FileSystemAccessRule($Using:DomainAdminFullUser,"FullControl","ContainerInherit, ObjectInherit","InheritOnly","Allow")
             $acl = Get-Acl $path
             $acl.SetAccessRule($rule)
             Set-ACL -Path $path -AclObject $acl
@@ -115,8 +115,8 @@ try {
         Move-Item-Safely "C:\Program Files\Microsoft SQL Server\MSSQL*.MSSQLSERVER\MSSQL\DATA\mastlog.ldf" "$Using:logPath\mastlog.ldf"
 
         # Set SQL Server and Agent services user to SQL AD user
-        #$Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='MSSQLSERVER'"
-        #$Services.change($null,$null,$null,$null,$null,$null, $Using:DomainAdminFullUser ,$Using:DomainAdminPassword,$null,$null,$null)
+        $Services = Get-WmiObject -Class Win32_Service -Filter "Name='SQLSERVERAGENT' OR Name='MSSQLSERVER'"
+        $Services.change($null,$null,$null,$null,$null,$null, $Using:DomainAdminFullUser ,$Using:DomainAdminPassword,$null,$null,$null)
 
         # Start service
         $SQLService.Start()
