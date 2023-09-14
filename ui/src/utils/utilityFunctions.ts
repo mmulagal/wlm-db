@@ -244,11 +244,20 @@ export const isValidUserName = (userName: string) => {
 };
 
 
-export const sortListOfDict = (dataList: any, field: string) => {
-    if(dataList && dataList.length < 2){
+export const sortListOfDict = (dataList: any, field: string, ascOrder=true) => {
+    if(!dataList || (dataList && dataList.length < 2)){
         return dataList;
     };
-    const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    let newDBList = [];
+    try{
+        if(ascOrder){
+            newDBList = dataList.slice().sort((a:any, b:any) => a[field].toString().localeCompare(b[field].toString()));
+        } else {
+            newDBList = dataList.slice().sort((a:any, b:any) => b[field].toString().localeCompare(a[field].toString()));
+        }
+    } catch {
+        return dataList;
+    }
     return newDBList;
 };
 
