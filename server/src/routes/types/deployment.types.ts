@@ -8,7 +8,7 @@ const CFNetworkConfiguration = Type.Object({
     availabilityZone1: Type.String(),
     privateSubnet2Id: Type.Optional(Type.String()),
     routeTable2Id: Type.Optional(Type.String()),
-    availabilityZone2: Type.String()
+    availabilityZone2: Type.Optional(Type.String())
 });
 
 const EC2Configuration = Type.Object({
@@ -26,6 +26,7 @@ const ADConfiguration = Type.Object({
 });
 
 const FSXConfiguration = Type.Object({
+    fsxDeploymentMode: Type.String({ enum: ['SINGLE_AZ_1', 'MULTI_AZ_1'] }),
     fsxFileSystemId: Type.Optional(Type.String()),
     fsxUsername: Type.String(),
     fsxPassword: Type.String(),
@@ -37,6 +38,7 @@ const FSXConfiguration = Type.Object({
 });
 
 const SQLConfiguration = Type.Object({
+    sqlDeploymentMode: Type.String({ enum: ['standalone', 'fci'] }),
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
     serviceAccountPassword: Type.String(),

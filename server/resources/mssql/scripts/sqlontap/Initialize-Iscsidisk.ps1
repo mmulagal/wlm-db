@@ -1,6 +1,9 @@
  
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory=$false)]
+    [string]$IsFCI
+)
 Start-Transcript -Path C:\cfn\log\initializeiscsi.ps1.txt -Append
 $ErrorActionPreference = "Stop"
 #Retrieve a list of FSx for ONTAP disks
@@ -25,11 +28,17 @@ $driveletters = @("Q","T","L","S")
 #Stopping Service to prevent format dialogs
 Stop-Service -Name ShellHWDetection
 
+if ($IsFCI -ne "false") {
 New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $driveletters[0] | Format-Volume -FileSystem NTFS -Force -NewFileSystemLabel Quorum
 New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $driveletters[1] | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel SQL-TempDb
 New-Partition -DiskNumber ($disklist[2]).Number -UseMaximumSize -DriveLetter $driveletters[2] | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel SQL-Log
 New-Partition -DiskNumber ($disklist[3]).Number -UseMaximumSize -DriveLetter $driveletters[3] | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel SQL-Data
-
+}
+else {
+New-Partition -DiskNumber ($disklist[0]).Number -UseMaximumSize -DriveLetter $driveletters[1] | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel SQL-TempDb
+New-Partition -DiskNumber ($disklist[1]).Number -UseMaximumSize -DriveLetter $driveletters[2] | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel SQL-Log
+New-Partition -DiskNumber ($disklist[2]).Number -UseMaximumSize -DriveLetter $driveletters[3] | Format-Volume -FileSystem NTFS -AllocationUnitSize 65536 -Force -NewFileSystemLabel SQL-Data
+}
 Start-Service -Name ShellHWDetection
 
 }catch{
