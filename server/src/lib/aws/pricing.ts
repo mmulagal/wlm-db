@@ -4,6 +4,7 @@ import {
     GetProductsCommandInput,
     GetProductsCommandOutput
 } from '@aws-sdk/client-pricing';
+import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 import getLogger from '../../utils/logger';
 
@@ -14,7 +15,7 @@ async function getProducts(productFilters: GetProductsCommandInput): Promise<Get
         productFilters
     });
 
-    const pricingClient = new PricingClient();
+    const pricingClient = new PricingClient({ region: DEFAULT_AWS_REGION });
 
     const command = new GetProductsCommand(productFilters);
 
