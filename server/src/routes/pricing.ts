@@ -9,9 +9,9 @@ export default function prisingRoutes(fastify: FastifyInstance) {
     const API_PATH_PRICING = '/v1/pricing';
 
     server.post(API_PATH_PRICING, { schema: CalculatePriceSchema }, async (request, reply) => {
-        const { compute, storage, connectivity } = request.body;
+        const { compute, storage, vpc } = request.body;
 
-        const response = await calculatePrice(compute, storage, connectivity);
+        const response = await calculatePrice(compute, storage, vpc);
         return reply.send(response);
     });
 }
