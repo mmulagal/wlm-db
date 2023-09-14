@@ -505,7 +505,7 @@ const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different f
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
 // Signed URL Valid for 24 hours
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 24 * 60 * 60;
+const S3_BUCKET_SIGNED_URL_EXPIRY = 24 * 60 * 60;
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -773,7 +773,7 @@ export {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
-    S3_BUCKET_SIGNED_URL_EXPIRTY,
+    S3_BUCKET_SIGNED_URL_EXPIRY,
     HTTP_GET,
     HTTP_POST,
     HTTP_DELETE,
