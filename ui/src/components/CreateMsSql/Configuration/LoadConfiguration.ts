@@ -122,7 +122,6 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, confi
     if(isDuplicate){
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, 
             message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG }));
-        configListRefetch();
         closeSaveDialog(dialogFrom, closeDialog);
     } else {
         dispatch(setIsSaveConfigLoading(true));
