@@ -4,7 +4,8 @@ import {
     FormConfigObjectParams,
     FormConfigCreateResponse,
     FormConfigObjectResponse,
-    CreateConfigRequestBody
+    CreateConfigRequestBody,
+    FormConfigObjectDeleteResponse
 } from '../types/form-config.types';
 
 const FormConfigListSchema = {
@@ -25,6 +26,15 @@ const FormConfigObjectSchema = {
     }
 };
 
+const FormConfigObjectDeleteSchema = {
+    tags: ['Config'],
+    params: FormConfigObjectParams,
+    description: 'Delete individual saved config',
+    response: {
+        200: FormConfigObjectDeleteResponse
+    }
+};
+
 const FormConfigCreateSchema = {
     tags: ['Config'],
     params: FormConfigListParams,
@@ -35,4 +45,4 @@ const FormConfigCreateSchema = {
     }
 };
 
-export { FormConfigListSchema, FormConfigCreateSchema, FormConfigObjectSchema };
+export { FormConfigListSchema, FormConfigCreateSchema, FormConfigObjectSchema, FormConfigObjectDeleteSchema };

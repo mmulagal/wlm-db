@@ -23,7 +23,7 @@ const PreviewDefault = () => {
     const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
 
     useEffect(() => {
-        if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+        if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
             const throughputVal = '128 MBps';
             const option = generateOptionType(throughputVal, throughputVal, '', false, '');
             dispatch(setThroughputValue(option));
@@ -72,16 +72,21 @@ const PreviewDefault = () => {
             id: '9'
         },
         { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
-        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: throughputValue?.value, editable: GENERAL.YES, id: '11' },
+        {
+            accordionName: GENERAL.THROUGHPUT_CAPACITY,
+            defaultValue: throughputValue?.value,
+            editable: GENERAL.YES,
+            id: '11'
+        },
         { accordionName: GENERAL.ENCRYPTION, defaultValue: DEFAULT_MASTER_KEY, editable: GENERAL.YES, id: '12' },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
             accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,
             defaultValue: GENERAL.PD_DISABLED,
-            editable: '-',
+            editable: 'N/A',
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: '-', id: '15' }
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: 'N/A', id: '15' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
@@ -123,6 +128,13 @@ const PreviewDefault = () => {
 
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+        setTimeout(() => {
+            document.querySelector('#easy-create')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            });
+        }, 500);
     };
     return (
         <div className={styles['preview-default']}>

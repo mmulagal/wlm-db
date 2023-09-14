@@ -80,13 +80,13 @@ Metadata:
           - AssetsS3RegionCode
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
-      # - Label:
-      #     default: Custom Resource configuration
-      #   Parameters:
-      #     - AccountId
-      #     - CloudProviderAccountId
-      #     - RoleCredentialsId
-      #     - JwtToken
+      - Label:
+          default: Custom Resource configuration
+        Parameters:
+          - AccountId
+          - CloudProviderAccountId
+          - RoleCredentialsId
+          - JwtToken
     ParameterLabels:
       DeploymentMode:
         default: File system deployment mode
@@ -434,25 +434,25 @@ Parameters:
     Description: Validation node AMI image id
     Type: String
   
-  # RoleCredentialsId:
-  #   Description: Account credentials id to deploy and manage resources
-  #   Type: String
+  RoleCredentialsId:
+    Description: Account credentials id to deploy and manage resources
+    Type: String
   
-  # AccountId:
-  #   Description: BlueXP account id
-  #   Type: String
+  AccountId:
+    Description: BlueXP account id
+    Type: String
 
-  # CloudProviderAccountId:
-  #   Description: BlueXP CloudProviderAccountId id
-  #   Type: String
+  CloudProviderAccountId:
+    Description: BlueXP CloudProviderAccountId id
+    Type: String
   
-  # JwtToken:
-  #   Description: JWT Token to grant access to a resource
-  #   Type: String
+  JwtToken:
+    Description: JWT Token to grant access to a resource
+    Type: String
 
-  # SnsServiceToken:
-  #   Description: SNS ARN to push cloud formation messages
-  #   Type: String
+  SnsServiceToken:
+    Description: SNS ARN to push cloud formation messages
+    Type: String
 
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -468,19 +468,19 @@ Conditions:
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
 Resources:
-  # TrackStackDeployment:
-  #   Type: Custom::MyCustomResource
-  #   Properties:
-  #     ServiceToken: !Ref SnsServiceToken
-  #     AccountId: !Ref AccountId
-  #     CloudProviderAccountId: !Ref CloudProviderAccountId
-  #     CredentialsId: !Ref RoleCredentialsId
-  #     JWToken: !Ref JwtToken
-  #     Region: !Ref 'AWS::Region' 
-  #     StackName: !Ref 'AWS::StackName'
+  TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: !Ref SnsServiceToken
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
-    # DependsOn: TrackStackDeployment
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -509,17 +509,19 @@ Resources:
           Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
-          # - [Ref: NotificationARN, Ref: SnsServiceToken]
-          # - [Ref: SnsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
-    # DependsOn: TrackStackDeployment
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -548,22 +550,26 @@ Resources:
           Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
-          # - [Ref: NotificationARN, Ref: SnsServiceToken]
-          # - [Ref: SnsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   FCIWaitHandler: 
+    Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack2
       - ValidationStack1
-    Type: AWS::CloudFormation::WaitConditionHandle
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
@@ -633,10 +639,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
-          # - [Ref: NotificationARN, Ref: SnsServiceToken]
-          # - [Ref: SnsServiceToken]     
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]     
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
@@ -669,10 +673,8 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
-          # - [Ref: NotificationARN, Ref: SnsServiceToken]
-          # - [Ref: SnsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
@@ -774,16 +776,16 @@ Resources:
             - !Ref "ONTAPSecurityGroupID"
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
         NumberOfNodes: "2"
         FSxLogVolumeName:
           Ref: FSxLogVolumeName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
-          # - [Ref: NotificationARN, Ref: SnsServiceToken]
-          # - [Ref: SnsServiceToken]
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsStandalone
@@ -877,25 +879,30 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
-          # - [Ref: NotificationARN, Ref: SnsServiceToken]
-          # - [Ref: SnsServiceToken]
-  # PostStackDeployment:
-  #   Type: Custom::MyCustomResource
-  #   DependsOn: SQLServerStack
-  #   Properties:
-  #     ServiceToken: !Ref SnsServiceToken
-  #     AccountId: !Ref AccountId
-  #     CloudProviderAccountId: !Ref CloudProviderAccountId
-  #     CredentialsId: !Ref RoleCredentialsId
-  #     JWToken: !Ref JwtToken
-  #     Region: !Ref 'AWS::Region' 
-  #     StackName: !Ref 'AWS::StackName'
-  #     FSxFileSystemId:
-  #         !If
-  #           - NewOntapFsx
-  #           - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
-  #           - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-  #     ActiveInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
-  #     StandbyInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
+  PostStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: !Ref SnsServiceToken
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
+      FSxFileSystemId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
+      ActiveInstanceIp: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
+            - !GetAtt "SQLStandaloneStack.Outputs.SqlNode"
+      StandbyInstanceIp: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
+            - !Ref AWS::NoValue

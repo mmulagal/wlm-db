@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import { describeRegions } from '../../lib/aws/ec2';
-import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
+import { createTopic, listTopics, setTopicAttributes, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
 import { DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
@@ -55,10 +55,10 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                             Version: '2012-10-17',
                             Statement: [
                                 {
-                                    Sid: 'AllowCloudFormationService',
+                                    Sid: 'AllowSNSNotifications',
                                     Effect: 'Allow',
                                     Principal: {
-                                        Service: 'cloudformation.amazonaws.com'
+                                        Service: 'cloudformation.amazonaws.com' // TODO: temporary change as staging cluster has policy with above definition
                                     },
                                     Action: 'SNS:Publish',
                                     Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
@@ -90,4 +90,63 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
     }
 }
 
-export { getSnsTopics, createAndSubscribeToSnsTopicInAllRegions, transformStackEventMessage };
+// TODO: delete me; temporary function
+async function updateSnsTopicAttributeInAllRegions() {
+    logger.info('Update SNS topic attributes in all region');
+
+    const { Regions: regions } = await describeRegions({});
+    try {
+        if (regions) {
+            await Promise.map(
+                regions,
+                async ({ RegionName: code }) => {
+                    if (code && process.env.AWS_ROLE_ARN) {
+                        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+                        const policyStatement = {
+                            Version: '2012-10-17',
+                            Statement: [
+                                {
+                                    Sid: 'AllowSNSNotifications',
+                                    Effect: 'Allow',
+                                    Principal: {
+                                        AWS: '*'
+                                    },
+                                    Action: 'SNS:Publish',
+                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
+                                },
+                                {
+                                    Sid: 'AllowSNSSubscriptions',
+                                    Effect: 'Allow',
+                                    Principal: {
+                                        AWS: '*'
+                                    },
+                                    Action: 'SNS:Subscribe',
+                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
+                                }
+                            ]
+                        };
+                        try {
+                            await setTopicAttributes(code, {
+                                TopicArn: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`,
+                                AttributeName: 'Policy',
+                                AttributeValue: JSON.stringify(policyStatement)
+                            });
+                        } catch (error) {
+                            logger.error('>>Failed to set topic attributes', error);
+                        }
+                    }
+                },
+                { concurrency: 3 }
+            );
+        }
+    } catch (error) {
+        logger.error('Failed to create and subscribe to SNS topics', error);
+    }
+}
+
+export {
+    getSnsTopics,
+    createAndSubscribeToSnsTopicInAllRegions,
+    updateSnsTopicAttributeInAllRegions,
+    transformStackEventMessage
+};

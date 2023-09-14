@@ -3,16 +3,15 @@ import store from '../../../store/store';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
 import { 
-    setIsLoadConfig, 
-    setIsMissingFieldsInLoad, 
+    setIsLoadConfig,
     setIsSaveConfigLoading, 
     setRefetchApiCountExpected, 
     setRefetchApiCountLoading, 
     setRefetchApiCountRan, 
     setSavedConfig 
 } from '../../../store/mssql/msSqlActionSlice';
-import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
-import { dbPassVal, fsxPassVal, isValidUserName } from '../../../utils/utilityFunctions';
+import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { API_NAME } from '../../../utils/consts';
 
 /*
 This function is used to load config data on click on config load. 
@@ -20,14 +19,17 @@ This function is used to load config data on click on config load.
 export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
     const state = store.getState();
     const selectedConfig = state.mssqlForm.loadConfig;
+    resetRefetchApiCheck(dispatch);
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
             if(data?.data?.data){
                 dispatch(setSavedConfig(data?.data?.data));
-                apiCallsCount(dispatch, data?.data?.data);
-                const isMissing = checkMissingFields(data?.data?.data);
-                dispatch(setIsMissingFieldsInLoad(isMissing));
+                const apiList = apiCallsList(dispatch, data?.data?.data);
+                if(apiList) {
+                    dispatch(setRefetchApiCountExpected(apiList));
+                    dispatch(setRefetchApiCountLoading(true));
+                }
                 dispatch(setMssqlForm(data?.data?.data));
             } else {
                 dispatch(setIsLoadConfig(false));
@@ -47,18 +49,20 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
 /* 
 This function is used to reset all load config related action states once data is loaded.
 */
-export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMissing:boolean) => {
+export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any) => {
     dispatch(setIsLoadConfig(false));
     closeDialog();
-    if(isMissing){
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
-            message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
-    } else {
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-            message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
-    }
-    dispatch(setRefetchApiCountExpected(0));
-    dispatch(setRefetchApiCountRan(0));
+    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+        message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+    resetRefetchApiCheck(dispatch);
+}
+
+/* 
+This function is used to reset refetch API checks
+*/
+export const resetRefetchApiCheck = (dispatch: Dispatch) => {
+    dispatch(setRefetchApiCountExpected([]));
+    dispatch(setRefetchApiCountRan(null));
     dispatch(setRefetchApiCountLoading(false));
 }
 
@@ -66,26 +70,43 @@ export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any, isMiss
 On click of load config this function will check how many get APIs call will run on change on any dependent fields.
 Get APIs calls are required on change fields as to show latest data in accordions dropdown.
 */
-export const apiCallsCount = (dispatch: Dispatch, loadData: any) => {
+export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     const state = store.getState();
-    let apiCount = 0;
-    if(state.mssqlForm.awsAccount?.selectedCredential?.value !== loadData?.awsAccount?.selectedCredential?.value){
-        apiCount = 9;
-    } else if(state.mssqlForm.regionAndVpc?.selectedRegion?.value !== loadData?.regionAndVpc?.selectedRegion?.value){
-        apiCount = 8;
-    } else{
-        if(state.mssqlForm.regionAndVpc?.selectedVPC?.label2 !== loadData?.regionAndVpc?.selectedVPC?.label2) {
-            apiCount += 1;
-        } 
-        if(
-            state.mssqlForm?.operatingSystem?.label === loadData?.operatingSystem?.label ||
-            state.mssqlForm?.dbVersion?.value === loadData?.dbVersion?.value ||
-            state.mssqlForm?.dbEdition?.value === loadData?.dbEdition?.value ) {
-            apiCount += 1;
-        }
-    } 
-    dispatch(setRefetchApiCountExpected(apiCount));
-    dispatch(setRefetchApiCountLoading(true));
+    let apis = [];
+    const credId = loadData?.awsAccount?.selectedCredential?.value;
+    const regionId = loadData?.regionAndVpc?.selectedRegion?.value;
+    const vpcId = loadData?.regionAndVpc?.selectedVPC?.label2;
+    const osVersion = loadData?.operatingSystem?.label;
+    const dbVersion = loadData?.dbVersion?.value;
+    const dbEdition = loadData?.dbEdition?.value;
+
+    const isSameCred = state.mssqlForm.awsAccount?.selectedCredential?.value === credId;
+    const isSameRegion = state.mssqlForm.regionAndVpc?.selectedRegion?.value === regionId;
+    const isSameVpc = state.mssqlForm.regionAndVpc?.selectedVPC?.label2 === vpcId;
+
+    const isSameOs = state.mssqlForm?.operatingSystem?.label === osVersion;
+    const isSameDbVersion = state.mssqlForm?.dbVersion?.value === dbVersion;
+    const isSameDbEdition = state.mssqlForm?.dbEdition?.value === dbEdition;
+
+    if(credId && !isSameCred){
+        apis.push(API_NAME.REGION);
+    }
+    if(credId && regionId && (!isSameRegion || !isSameCred)){
+        apis.push(API_NAME.VPC);
+        apis.push(API_NAME.ADS);
+        apis.push(API_NAME.SNS);
+        apis.push(API_NAME.KMS);
+        apis.push(API_NAME.KEYPAIR);
+        apis.push(API_NAME.INSTANCE);
+    }
+    if(credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)){
+        apis.push(API_NAME.FSXN);
+    }
+    if(credId && regionId && osVersion && dbEdition && dbVersion 
+        && (!isSameRegion || !isSameCred || !isSameOs || !isSameDbVersion || !isSameDbEdition)){
+        apis.push(API_NAME.AMI);
+    }
+    return apis;
 }
 
 /*
@@ -187,56 +208,4 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
             dbInstanceType && fsxType && fsxNewName && fsxNewUserName && fsxExName && fsxExUserName && fsxPass && dataDriveSize && 
             dataDriveUnit && provisionedIops && throughput && encryptionType && encryptionRow && encryptionArn && tags && 
             snsKey && cloudWatch;
-};
-
-
-/*
-On config load this function will check if load data has any missing mandatory fields. 
-*/
-const checkMissingFields = (data: any) => {
-    const vpcStateValue = !data?.regionAndVpc?.selectedVPC;
-
-    const azStateValue =
-        !data?.availabilityZones?.selectedAzNode1 ||
-        !data?.availabilityZones?.selectedSubnetNode1 ||
-        !data?.availabilityZones?.selectedAzNode2 ||
-        !data?.availabilityZones?.selectedSubnetNode2;
-
-    const dbCredStateValue = !data?.dbCredentials?.password;
-
-    const adStateValue =
-        !data?.activeDirectory?.domainAddress ||
-        !data?.activeDirectory?.domainName ||
-        !data?.activeDirectory?.userName ||
-        !data?.activeDirectory?.password;
-
-    const fsxStateValue =
-        (data?.fsxN?.fsxNType === GENERAL.CREATE_NEW_FSXN && !data?.fsxN?.fsxNPassword) ||
-        (data?.fsxN?.fsxNType === GENERAL.SELECT_EXISTING_FSX && !data?.fsxN?.fsxNExistingName);
-
-    const licenseIdCheck = !data?.license?.selectedLicenseId;
-    const checkForUserName = isValidUserName(data?.dbCredentials?.name);
-
-    //Check for DB Name - InvalidName
-    const input = data?.dbName;
-    const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-    const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
-
-    if (
-        !vpcStateValue &&
-        !azStateValue &&
-        !dbCredStateValue &&
-        !adStateValue &&
-        !fsxStateValue &&
-        !isDBValueValid &&
-        !licenseIdCheck &&
-        !checkForUserName &&
-        !dbPassVal(data?.dbCredentials?.password) &&
-        !fsxPassVal(data?.fsxN?.fsxNPassword)
-    ) {
-        return false;
-    } else {
-        return true;
-    }
 };

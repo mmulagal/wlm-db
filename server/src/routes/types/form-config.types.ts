@@ -9,7 +9,17 @@ const FormConfigObjectResponse = Type.Object({
     data: Type.Any()
 });
 
-const FormConfigListResponse = Type.Array(FormConfigObjectResponse);
+const FormConfigListObjectResponse = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    creationTime: Type.Number(),
+    accountId: Type.String(),
+    user: Type.String()
+});
+
+const FormConfigObjectDeleteResponse = {};
+
+const FormConfigListResponse = Type.Array(FormConfigListObjectResponse);
 
 type FormConfigListResponseType = Static<typeof FormConfigListResponse>;
 
@@ -45,6 +55,7 @@ const CreateConfigRequestBody = Type.Object({
 export {
     FormConfigListResponse,
     FormConfigObjectResponse,
+    FormConfigObjectDeleteResponse,
     FormConfigListResponseType,
     FormConfigObjectResponseType,
     FormConfigListParamsType,

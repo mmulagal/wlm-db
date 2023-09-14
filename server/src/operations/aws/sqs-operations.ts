@@ -64,7 +64,7 @@ async function processCloudFormationMessages() {
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
-                            message: { Message: messageContent = undefined, Timestamp: messageTimestamp }
+                            message: { Message: messageContent = undefined, Timestamp: messageTimestamp = 0 } = {}
                         } = checkAndRetrieveJsonObject(sqsMessage?.Body) || {};
                         const { message: jsonMessage } = checkAndRetrieveJsonObject(messageContent) || {};
                         if (jsonMessage) {
@@ -87,10 +87,10 @@ async function processCloudFormationMessages() {
                                         CredentialsId: credentialsId,
                                         Region: region,
                                         StackName: stackName,
-                                        JWTToken: jwtToken
+                                        JWToken: jwtToken
                                     } = resourceProperties;
 
-                                    logger.debug('>>JWT TOKEN', jwtToken);
+                                    logger.info('>>JWT TOKEN', jwtToken); // TODO: change me to debug
                                     try {
                                         verifyAuthToken(jwtToken);
                                     } catch (error) {

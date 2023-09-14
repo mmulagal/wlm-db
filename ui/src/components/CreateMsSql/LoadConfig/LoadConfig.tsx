@@ -8,7 +8,6 @@ import { setLoadConfig } from '../../../store/mssql/mssqlFormSlice';
 import { ReactComponent as DeleteIcon } from '../../../assets/delete-icon.svg';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatDateWithTime } from '../../../utils/utilityFunctions';
-import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const LoadConfig = () => {
     const dispatch = useDispatch();
@@ -46,18 +45,19 @@ const LoadConfig = () => {
     };
 
     const deleteConfig = (index: any) => {
-        deleteConfigApi({configId: configData[index]?.id});
-        configListRefetch();
+        deleteConfigApi({configId: configData[index]?.id})
+            .then((data: any) => {
+                if (!data?.error) {
+                    configListRefetch();
+                }
+            })
     };
 
     const configRows = (item: any) => {
+        const value = item?.name + '_' + item?.user + '_' + formatDateWithTime(item?.creationTime || '')
         return (<>
-            <div className={styles.setRowWithSeperator}>
-                <div>{item?.name}</div>
-                <div className={CommonStyles.separator} />
-                <div>{item?.user}</div>
-                <div className={CommonStyles.separator} />
-                <div>{formatDateWithTime(item?.creationTime || '')}</div>
+            <div className={styles.setRowWithSeperator} title={value}>
+                {value}
             </div>
         </>)
     }

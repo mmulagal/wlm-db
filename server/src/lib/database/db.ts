@@ -278,6 +278,14 @@ async function listConfig(accountId: string, id?: string) {
             account_id: accountId,
             ...(id && { id })
         },
+        select: {
+            id: true,
+            user: true,
+            creation_time: true,
+            account_id: true,
+            data: !isEmpty(id),
+            name: true
+        },
         take: 100
     });
 }

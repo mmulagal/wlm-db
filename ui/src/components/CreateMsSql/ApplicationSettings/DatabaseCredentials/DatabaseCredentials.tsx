@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -27,11 +27,11 @@ const DatabaseCredentials = () => {
     const isDBPasswordFilled = useAppSelector(state => state.msSqlAction.dbCredentialPasswordSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
+    const [credName, setCredName] = useState(SQL_USERNAME);
+
     useEffect(() => {
-        if(!userName){
-            dispatch(setDBCredentialsName(SQL_USERNAME));
-        }
-    });
+        setCredName(userName);
+    }, [userName]);
 
     useEffect(() => {
         if (!isDBPasswordFilled && isCreateHit) {
@@ -40,16 +40,17 @@ const DatabaseCredentials = () => {
                 passwordRef?.current?.focus();
             }, 60);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBPasswordFilled, isCreateHit]);
 
     //Set the Header text here
     const setHeader = () => {
-        if (!userName || !password) {
+        if (!credName || !password) {
             return <ActionRequired error={!isDBPasswordFilled ? true : false} />;
-        } else if (dbPassVal(password) || isValidUserName(userName)) {
+        } else if (dbPassVal(password) || isValidUserName(credName)) {
             return <AccordionError />;
         } else {
-            return <Typography variant="Regular_14">{userName}</Typography>;
+            return <Typography variant="Regular_14">{credName}</Typography>;
         }
     };
 
@@ -111,11 +112,12 @@ const DatabaseCredentials = () => {
                                         </div>
                                     </div>
                                 }
-                                error={useDelayedError(isValidUserName(userName))}
+                                error={useDelayedError(isValidUserName(credName))}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    setCredName(e.target.value);
                                     dispatch(setDBCredentialsName(e.target.value));
                                 }}
-                                value={userName}
+                                value={credName}
                                 className={styles.textField}
                             />
                             <PasswordField

@@ -69,7 +69,7 @@ const FSxNSystem = () => {
                 lifecycle === 'AVAILABLE' &&
                 fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
             ) {
-                const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
+                const value = (val?.name ? val.name + ' | ' : '') + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
                     fileSystemName: val?.name,

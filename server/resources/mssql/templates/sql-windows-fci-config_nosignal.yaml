@@ -60,6 +60,7 @@ Metadata:
                   - AssetsBucketName
                   - AssetsS3KeyPrefix
                   - EnableCloudWatchLogFeature
+                  - ParentStackName
         ParameterLabels:
             KeyPairName:
                 default: Key Pair Name for the Ec2 instances
@@ -133,7 +134,12 @@ Metadata:
                 default: Number of SQL Nodes
             EnableCloudWatchLogFeature:
                 default: (optional) Enable monitoring by CloudWatch Logging
+            ParentStackName:
+                default: Stack name for parent cloud formation stack
 Parameters:
+    ParentStackName:
+        Description: Stack name for parent cloud formation stack
+        Type: String
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
         Description: EC2 instance role name
@@ -172,10 +178,6 @@ Parameters:
         Type: String
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
-        AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-        ConstraintDescription: Quick Start bucket name can include numbers, lowercase
-            letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-            (-).
         Type: String
     AssetsS3RegionCode:
         Description: The AWS Region where the WLMDB S3 bucket (AssetsBucketName)
@@ -466,7 +468,7 @@ Resources:
                                     - '        "AccessKey": "",'
                                     - '        "SecretKey": "",'
                                     - !Sub '        "Region": "${AWS::Region}",'
-                                    - !Sub '        "LogGroup": "${AWS::StackName}",'
+                                    - !Sub '        "LogGroup": "${ParentStackName}",'
                                     - '        "LogStream": "{instance_id}"'
                                     - '      }'
                                     - '    },'
@@ -628,7 +630,7 @@ Resources:
                                   - "' -FSxDataLunSize '"
                                   - !Ref 'FSxDataLunSize'
                                   - "' -IGROUP '"
-                                  - !Ref 'SQLigroupname',
+                                  - !Ref 'SQLigroupname'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
@@ -819,7 +821,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
                                   - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0
@@ -1007,7 +1009,7 @@ Resources:
                                     - '        "AccessKey": "",'
                                     - '        "SecretKey": "",'
                                     - !Sub '        "Region": "${AWS::Region}",'
-                                    - !Sub '        "LogGroup": "${AWS::StackName}",'
+                                    - !Sub '        "LogGroup": "${ParentStackName}",'
                                     - '        "LogStream": "{instance_id}"'
                                     - '      }'
                                     - '    },'
@@ -1323,7 +1325,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
-                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'                                 
                                   - '''"'
                             waitAfterCompletion: 0

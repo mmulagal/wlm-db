@@ -6,60 +6,130 @@ import styles from './EstimatedCost.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
+
+type Res = {
+    data: {
+        compute: '';
+        connectivity: '';
+        storage: '';
+        throughput: '';
+        total: '';
+    };
+};
 
 const EstimatedCost = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [data, setData] = useState<Res>();
     const [fetchResult, setFetchResult] = useState(false);
     const accordionContext = useAccordionContext()?.setOpenChildren!;
+    const [isDisabled, setIsDisabled] = useState(false);
+
+    const [getEstimationCost] = useGetEstimationCostMutation();
 
     //To get the Cost value based on the below parameters
-    const az1Value = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
-    const az2value = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
-    const vpcValue = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
-    const domainName = useAppSelector(state => state.mssqlForm.activeDirectory.domainAddress);
+    const regionValue = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const instanceTypeName = useAppSelector(state => state.mssqlForm.instanceType?.value);
+    const sqlSoftwareTypeValue = useAppSelector(state => state.mssqlForm.dbEdition);
+    const diskSize = useAppSelector(state => state.mssqlForm.storageCapacity?.capacity);
+    const diskSizeUnit = useAppSelector(state => state.mssqlForm.storageCapacity?.unit?.value);
+    const throughputValue = useAppSelector(state => state.mssqlForm.throughput?.value);
+    const iopsValueType = useAppSelector(state => state.mssqlForm.provisionedIOPS?.provisionedType);
+    const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
 
     useEffect(() => {
-        if (az1Value && az2value && vpcValue && domainName) {
+        if (
+            false &&
+            regionValue &&
+            instanceTypeName &&
+            sqlSoftwareTypeValue &&
+            diskSize &&
+            (iopsValueType !== GENERAL.USER_PROVISIONED ||
+                (iopsValueType === GENERAL.USER_PROVISIONED &&
+                    (iopsValue === '' || (Number(iopsValue) > 3072 && Number(iopsValue) < 160000))))
+        ) {
+            const splitRegion = regionValue?.value.split('|');
+            const updatedStr = splitRegion[0].replace(/\s?$/, '');
+            const payload = {
+                compute: {
+                    region: updatedStr || '',
+                    instanceType: instanceTypeName || '',
+                    sqlSoftwareType: sqlSoftwareTypeValue.value || ''
+                },
+                storage: {
+                    region: regionValue?.value || '',
+                    diskSize: `${diskSize} ${diskSizeUnit}`,
+                    throughput: throughputValue,
+                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : ''
+                },
+                connectivity: {
+                    createNewVpc: false
+                }
+            };
             setIsLoading(true);
-            setTimeout(() => {
-                setIsLoading(false);
-                setFetchResult(true);
-            }, 2000);
+            getEstimationCost(payload)
+                .then((data: any) => {
+                    setTimeout(() => {
+                        setIsLoading(false);
+                        setFetchResult(true);
+                        setData(data);
+                    }, 2000);
+                })
+                .catch((error: any) => {
+                    setIsLoading(false);
+                    setFetchResult(false);
+                    setIsDisabled(true);
+                    console.log('Error while fetching data - ', error);
+                });
         }
-    }, [az1Value, az2value, vpcValue, domainName, instanceTypeName]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        regionValue,
+        sqlSoftwareTypeValue,
+        instanceTypeName,
+        diskSize,
+        diskSizeUnit,
+        throughputValue,
+        iopsValueType,
+        iopsValue
+    ]);
 
     //To open accordion if default account is present
-    useEffect(() => {
-        if (fetchResult) {
-            accordionContext({
-                23: true
-            });
-            setTimeout(() => {
-                document.querySelector('#estimated-cost')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'end',
-                    inline: 'nearest'
-                });
-            }, 500);
-        }
-        setFetchResult(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fetchResult]);
+    // useEffect(() => {
+    //     if (fetchResult) {
+    //         accordionContext({
+    //             23: true
+    //         });
+    //         setTimeout(() => {
+    //             document.querySelector('#estimated-cost')?.scrollIntoView({
+    //                 behavior: 'smooth',
+    //                 block: 'end',
+    //                 inline: 'nearest'
+    //             });
+    //         }, 500);
+    //     }
+    //     setFetchResult(false);
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [fetchResult]);
 
     const setHeader = () => {
-        // if (!az1Value || !az2value || !vpcValue || !domainName) {
+        // if (isLoading) {
+        //     return <LoadingComponent />;
+        // } else if (isDisabled) {
+        //     <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+        //         {GENERAL.COST_ERROR}
+        //     </Typography>;
+        // } else if (!regionValue) {
         //     return (
         //         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
         //             {GENERAL.ESTIMATED_COST_HEADER}
         //         </Typography>
         //     );
-        // } else if (isLoading) {
-        //     return <LoadingComponent />;
         // } else {
-        //     return <Typography variant="Regular_14">cost</Typography>;
+        //     return <Typography variant="Regular_14">{data?.data.total}</Typography>;
         // }
+
         return (
             <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                 {GENERAL.ESTIMATED_COST_HEADER}
@@ -69,12 +139,12 @@ const EstimatedCost = () => {
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
-                // isDisabled={!az1Value || !az2value || !vpcValue || !domainName}
-                // isExpandDisabled={!az1Value || !az2value || !vpcValue || !domainName}
                 isDisabled={true}
                 isExpandDisabled={true}
+                // isDisabled={isDisabled || !regionValue}
+                // isExpandDisabled={isDisabled || !regionValue}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="23"
+                id="24"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
             >
                 <AccordionCardContent>
@@ -109,7 +179,8 @@ const EstimatedCost = () => {
                                             <LoadingComponent />
                                         </div>
                                     ) : (
-                                        '$ 4,347.36'
+                                        //@ts-ignore
+                                        data?.data?.compute || ''
                                     )}
                                 </Typography>
                             </div>
@@ -131,7 +202,8 @@ const EstimatedCost = () => {
                                             <LoadingComponent />
                                         </div>
                                     ) : (
-                                        '$ 500'
+                                        //@ts-ignore
+                                        data?.data?.storage || ''
                                     )}
                                 </Typography>
 
@@ -145,7 +217,8 @@ const EstimatedCost = () => {
                                             <LoadingComponent />
                                         </div>
                                     ) : (
-                                        '$ 154'
+                                        //@ts-ignore
+                                        data?.data?.throughput || ''
                                     )}
                                 </Typography>
                             </div>
@@ -165,13 +238,14 @@ const EstimatedCost = () => {
                                             <LoadingComponent />
                                         </div>
                                     ) : (
-                                        '$ 7.2'
+                                        //@ts-ignore
+                                        data?.data?.connectivity || ''
                                     )}
                                 </Typography>
                             </div>
                         </div>
 
-                        <div className={styles.adContainer}>
+                        {/* <div className={styles.adContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
                                 {GENERAL.ACTIVE_DIRECTORY}
                             </Typography>
@@ -189,7 +263,7 @@ const EstimatedCost = () => {
                                     )}
                                 </Typography>
                             </div>
-                        </div>
+                        </div> */}
 
                         <div className={styles.lastContainer}>
                             <Typography variant="Semibold_14" className={styles.ecCost}>
@@ -201,7 +275,8 @@ const EstimatedCost = () => {
                                         <LoadingComponent />
                                     </div>
                                 ) : (
-                                    '$ 5,296.56'
+                                    //@ts-ignore
+                                    data?.data?.total || ''
                                 )}
                             </Typography>
                         </div>
