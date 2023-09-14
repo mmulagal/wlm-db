@@ -10,8 +10,7 @@ import {
     setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
-import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
-import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { GENERAL } from '../../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
@@ -224,8 +223,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
         input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-    const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
-    if (input.length > 0 && dataBaseNameValue) {
+    const isDBValueValid = dataBaseNameValue ? true : false;
+    if (dataBaseNameValue) {
         dispatch(setDBNameValue(false));
     } else {
         dispatch(setDBNameValue(true));
