@@ -9,10 +9,11 @@ import {
     DeleteMessageCommand
 } from '@aws-sdk/client-sqs';
 import { mockClient } from 'aws-sdk-client-mock';
+import createQueueResponse from '../../responses/aws/create-queue.json';
+import receiveMessageResponse from '../../responses/aws/receive-message.json';
+import deleteMessageResponse from '../../responses/aws/delete-message.json';
+
 const sqsMock = mockClient(SQSClient);
-import createQueueResponse from '../../../simulator/responses/aws/create-queue.json';
-import receiveMessageResponse from '../../../simulator/responses/aws/receive-message.json';
-import deleteMessageResponse from '../../../simulator/responses/aws/delete-message.json';
 
 const mockListQueues = {
     eachPage: callback => {

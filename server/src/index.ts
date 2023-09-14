@@ -32,6 +32,7 @@ import formConfigRoutes from './routes/form-config';
 import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
+import pricingRoutes from './routes/pricing';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
@@ -159,6 +160,7 @@ const app = fastify({
             workingEnvironmentRoutes(instance);
             msSqlServerRoutes(instance);
             batchRoutes(instance);
+            pricingRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }

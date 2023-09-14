@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker/locale/af_ZA';
 import {
     getServiceToken,
     getTenancyResourcesByType,
@@ -10,7 +11,6 @@ import '../../simulator/scopes/opentelemetry-scope';
 import registerServiceResponse from '../../simulator/responses/cloud-manager/register-service-resource-tenancy.json';
 import getTenancyResourceResponse from '../../simulator/responses/cloud-manager/get-tenancy-resources-by-type.json';
 import { SECRETS } from '../../../src/utils/consts';
-import { faker } from '@faker-js/faker/locale/af_ZA';
 
 SECRETS.CLIENT_ID = `${faker.string.uuid()}`;
 describe('tenancny resource lib', () => {
