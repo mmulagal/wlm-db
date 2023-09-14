@@ -35,10 +35,7 @@ import batchRoutes from './routes/batch';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
-import {
-    createAndSubscribeToSnsTopicInAllRegions,
-    updateSnsTopicAttributeInAllRegions
-} from './operations/aws/sns-operations';
+import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 
@@ -210,7 +207,6 @@ const app = fastify({
 
 try {
     await createAndSubscribeToSnsTopicInAllRegions();
-    await updateSnsTopicAttributeInAllRegions();
     processCloudFormationMessages();
 } catch (error) {
     logger.error('Failed to setup SNS-SQS infra', error);
