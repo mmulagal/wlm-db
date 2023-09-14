@@ -70,6 +70,6 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 enableCloudWatch,
                 tags
             );
-            return reply.send(response);
+            return reply.code(202).send(response);
         });
 }

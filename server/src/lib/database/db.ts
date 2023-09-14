@@ -1,0 +1,330 @@
+import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { isEmpty } from 'lodash-es';
+import getLogger from '../../utils/logger';
+import { prisma } from '../../utils/prisma-utils';
+
+const logger = getLogger();
+
+interface Deployment {
+    deploymentId: string;
+    parentDeploymentId?: string;
+    deploymentName: string;
+    cloudProviderAccountId?: string;
+    cloudProviderName?: string;
+    credentialsId: string;
+    deploymentStatus: DEPLOYMENT_STATUS;
+    deploymentStatusReason?: string;
+    startTime: number;
+    endTime?: number;
+    region: string;
+    data?: object;
+}
+
+interface Event {
+    eventId: string;
+    accountId: string;
+    deploymentId: string;
+    deploymentName: string;
+    eventStatus: DEPLOYMENT_STATUS;
+    eventStatusReason: string;
+    resourceType: string;
+    time: number;
+    data?: object;
+}
+
+interface Resource {
+    resourceId: string;
+    resourceName?: string;
+    resourceType: string;
+    coRelationId?: string;
+    cloudProviderAccountId?: string;
+    cloudProviderName?: string;
+    region: string;
+    metadata?: object;
+}
+
+interface Config {
+    user: string;
+    creationTime: number;
+    name: string;
+    data: object;
+}
+
+async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
+    logger.info('Listing deployments', { accountId, deploymentId });
+    return prisma.client.deployment.findMany({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(deploymentId && { deployment_id: deploymentId }),
+            ...(deploymentName && { deployment_name: deploymentName })
+        },
+        orderBy: {
+            start_time: 'desc'
+        },
+        take: 100
+    });
+}
+
+async function createDeployment(accountId: string, params: Deployment) {
+    logger.info('Creating deployment', { accountId, params });
+    const {
+        deploymentId,
+        parentDeploymentId,
+        deploymentName,
+        cloudProviderAccountId,
+        cloudProviderName,
+        credentialsId,
+        deploymentStatus,
+        deploymentStatusReason,
+        startTime,
+        endTime,
+        region,
+        data
+    } = params;
+    return prisma.client.deployment.create({
+        data: {
+            account_id: accountId,
+            deployment_id: deploymentId,
+            ...(parentDeploymentId && {
+                parent_deployment_id: parentDeploymentId
+            }),
+            deployment_name: deploymentName,
+            ...(cloudProviderAccountId && { cloud_provider_account_id: cloudProviderAccountId }),
+            ...(cloudProviderName && { cloud_provider_name: cloudProviderName }),
+            credentials_id: credentialsId,
+            deployment_status: deploymentStatus,
+            ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
+            start_time: new Date(startTime),
+            ...(endTime && { end_time: new Date(endTime) }),
+            ...(data && { data }),
+            region
+        }
+    });
+}
+
+async function updateDeployment(
+    accountId: string,
+    id: string,
+    params: {
+        parentDeploymentId?: string;
+        deploymentName?: string;
+        deploymentStatus?: DEPLOYMENT_STATUS;
+        deploymentStatusReason?: string;
+        endTime?: number;
+        data?: object;
+    }
+) {
+    logger.info('Updating deployment', { id, params });
+    const { parentDeploymentId, deploymentName, deploymentStatus, deploymentStatusReason, endTime, data } = params;
+    return prisma.client.deployment.update({
+        where: {
+            account_id: accountId,
+            id
+        },
+        data: {
+            ...(parentDeploymentId && { parent_deployment_id: parentDeploymentId }),
+            ...(deploymentName && { deploymen_name: deploymentName }),
+            ...(deploymentStatus && { deployment_status: deploymentStatus }),
+            ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
+            ...(endTime && { end_time: new Date(endTime) }),
+            ...(data && !isEmpty(data) && { data })
+        }
+    });
+}
+
+async function upsertDeployment(accountId: string, params: Deployment) {
+    logger.info('Upserting deployment', { params });
+    const {
+        deploymentId,
+        parentDeploymentId,
+        deploymentName,
+        cloudProviderAccountId,
+        cloudProviderName,
+        credentialsId,
+        deploymentStatus,
+        deploymentStatusReason,
+        startTime,
+        endTime,
+        region,
+        data
+    } = params;
+    return prisma.client.deployment.upsert({
+        where: {
+            uk_wlmdb_deployment_account_id_deployment_id: {
+                account_id: accountId,
+                deployment_id: deploymentId
+            }
+        },
+        create: {
+            account_id: accountId,
+            deployment_id: deploymentId,
+            ...(parentDeploymentId && {
+                parent_deployment_id: parentDeploymentId
+            }),
+            deployment_name: deploymentName,
+            ...(cloudProviderAccountId && { cloud_provider_account_id: cloudProviderAccountId }),
+            ...(cloudProviderName && { cloud_provider_name: cloudProviderName }),
+            credentials_id: credentialsId,
+            deployment_status: deploymentStatus,
+            ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
+            start_time: new Date(startTime),
+            ...(endTime && { end_time: new Date(endTime) }),
+            ...(data && { data }),
+            region
+        },
+        update: {
+            ...(parentDeploymentId && { parent_deployment_id: parentDeploymentId }),
+            ...(deploymentName && { deployment_name: deploymentName }),
+            ...(deploymentStatus && { deployment_status: deploymentStatus }),
+            ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
+            ...(endTime && { end_time: new Date(endTime) }),
+            ...(data && !isEmpty(data) && { data })
+        }
+    });
+}
+
+async function createEvent(params: Event) {
+    logger.debug('Creating event', { params });
+    const {
+        eventId,
+        accountId,
+        deploymentId,
+        deploymentName,
+        eventStatus,
+        eventStatusReason,
+        resourceType,
+        time,
+        data
+    } = params;
+    return prisma.client.event.create({
+        data: {
+            event_id: eventId,
+            account_id: accountId,
+            deployment_id: deploymentId,
+            deployment_name: deploymentName,
+            event_status: eventStatus,
+            event_status_reason: eventStatusReason,
+            resource_type: resourceType,
+            time: new Date(time),
+            ...(data && { data })
+        }
+    });
+}
+
+async function deleteDeployment(accountId: string, deploymentId: string) {
+    logger.info('Deleting deployment', { accountId, deploymentId });
+    return prisma.client.deployment.deleteMany({
+        where: {
+            account_id: accountId,
+            deployment_id: deploymentId
+        }
+    });
+}
+
+async function listResources(accountId: string) {
+    logger.info('Listing resources', accountId);
+    return prisma.client.resource.findMany({
+        where: {
+            account_id: accountId
+        },
+        take: 100
+    });
+}
+
+async function createResource(accountId: string, params: Resource) {
+    logger.info('Creating resource', { accountId, params });
+    const {
+        resourceId,
+        resourceName,
+        resourceType,
+        coRelationId,
+        cloudProviderAccountId,
+        cloudProviderName,
+        region,
+        metadata
+    } = params;
+    return prisma.client.resource.create({
+        data: {
+            account_id: accountId,
+            resource_id: resourceId,
+            ...(coRelationId && {
+                co_relation_id: coRelationId
+            }),
+            resource_name: resourceName,
+            resource_type: resourceType,
+            ...(cloudProviderAccountId && { cloud_provider_account_id: cloudProviderAccountId }),
+            ...(cloudProviderName && { cloud_provider_name: cloudProviderName }),
+            region,
+            ...(metadata && { metadata })
+        }
+    });
+}
+
+async function deleteResource(accountId: string, resourceId: string) {
+    logger.info('Deleting resource', { accountId, resourceId });
+
+    return prisma.client.resource.deleteMany({
+        where: {
+            account_id: accountId,
+            resource_id: resourceId
+        }
+    });
+}
+
+async function listConfig(accountId: string, id?: string) {
+    logger.info('Listing config', accountId, id);
+    return prisma.client.config.findMany({
+        where: {
+            account_id: accountId,
+            ...(id && { id })
+        },
+        select: {
+            id: true,
+            user: true,
+            creation_time: true,
+            account_id: true,
+            data: !isEmpty(id),
+            name: true
+        },
+        take: 100
+    });
+}
+
+async function createConfig(accountId: string, params: Config) {
+    logger.info('Creating config', { accountId, params });
+    const { user, creationTime, data, name } = params;
+    return prisma.client.config.create({
+        data: {
+            account_id: accountId,
+            user,
+            name,
+            creation_time: new Date(creationTime),
+            data
+        }
+    });
+}
+
+async function deleteConfig(accountId: string, id: string) {
+    logger.info('Deleting config', { accountId, id });
+    return prisma.client.config.delete({
+        where: {
+            account_id: accountId,
+            id
+        }
+    });
+}
+
+export {
+    listDeployments,
+    createDeployment,
+    deleteDeployment,
+    upsertDeployment,
+    updateDeployment,
+    createEvent,
+    listResources,
+    createResource,
+    deleteResource,
+    listConfig,
+    createConfig,
+    deleteConfig
+};

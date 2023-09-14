@@ -47,7 +47,7 @@ export interface KmsKeys {
     origin?: string;
     state?: string;
     expirationDate?: string;
-    expiryStatus?: string;
+    formattedDate?: string;
     cellProps?: Object;
     default?: boolean;
 }
@@ -55,6 +55,13 @@ export interface KmsKeys {
 export interface KeyPairs {
     id?: string;
     name?: string;
+}
+
+export interface SavedConfiguration {
+    id: string;
+    name: string;
+    user: string;
+    creationTime: number;
 }
 
 export interface InstanceType {
@@ -125,6 +132,11 @@ export interface MssqlEntities {
         fsxnData: { filesystems?: FSxN[] };
         fsxnLoading: false;
         fsxnError: null;
+    };
+    getSavedConfigList: {
+        configData: SavedConfiguration[];
+        configLoading: false;
+        configError: null;
     };
 }
 

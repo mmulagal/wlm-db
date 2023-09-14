@@ -1,6 +1,6 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { SECRETS_MANAGER_KEYS, SECRETS } from '../utils/consts';
-import getLogger from '../utils/logger';
+import { SECRETS_MANAGER_KEYS, SECRETS } from './consts';
+import getLogger from './logger';
 
 const logger = getLogger();
 
@@ -37,6 +37,9 @@ export default async function initiateSecrets() {
             if (!SECRETS[secretName]) {
                 const secret = await readSecretFromSecretManager(SECRETS_MANAGER_KEYS[secretName]);
                 SECRETS[secretName] = secret;
+                if (secretName === SECRETS_MANAGER_KEYS.DATABASE_URL) {
+                    process.env[SECRETS_MANAGER_KEYS.DATABASE_URL] = secret || process.env.DATABASE_URL;
+                }
             }
         })
     );

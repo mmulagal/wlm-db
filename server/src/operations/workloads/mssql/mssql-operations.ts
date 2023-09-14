@@ -1,3 +1,4 @@
+import Promise from 'bluebird';
 import createError from 'http-errors';
 import {
     CPU_UTILISATION,
@@ -8,20 +9,47 @@ import {
     PSSCRIPT,
     DATABASES_COUNT,
     DB_ROWS_COUNT,
+    SERVER_NAME,
+    SERVER_GUID,
+    DB_SIZE,
     SERVER_VERSION_DETAILS,
     NUMBER_OF_CONNECTIONS,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
     SERVER_NODES,
     TABLES_COUNT_QUERY,
-    TABLES_QUERY
+    TABLES_QUERY,
+    SSM_QUERY_CONCURRENCY_LIMIT
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { getTenancyResource } from '../../tenancy-operations';
-import { DatabaseTypes, DATABASE_METRIC_TYPE, SqlServerDeploymentModel, HttpErrorCodes } from '../../../utils/consts';
+import { UtilisationResponseBody } from '../../../routes/types/database.types';
+import {
+    DatabaseTypes,
+    DATABASE_METRIC_TYPE,
+    SqlServerDeploymentModel,
+    HttpErrorCodes,
+    WLMDB_RESOURCE_CLASS,
+    WORKSPACE_ID,
+    CloudProviders,
+    DeploymentState
+} from '../../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
+import { ServiceResourceRequest, registerServiceResource } from '../../../lib/cloud-manager/tenancy';
 
 const logger = getLogger();
+
+function sqlResponseParsing(response: string) {
+    try {
+        const cleanResponse = response.replaceAll('\r\n', '');
+        const jsonResponse = JSON.parse(cleanResponse);
+        return jsonResponse;
+    } catch (error) {
+        logger.error('Error parsing query response:', error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing query response, ${error}`);
+    }
+}
 
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
@@ -56,7 +84,7 @@ async function callSsmExecution(
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
         Parameters: {
-            commands: commands
+            commands
         }
     };
     let params = {
@@ -83,30 +111,7 @@ async function callSsmExecution(
         logger.debug('Error:', response.StandardErrorContent);
         throw new Error(response.StandardErrorContent);
     }
-    try {
-        logger.debug('Output:', response.StandardOutputContent);
-        return JSON.parse(response.StandardOutputContent!);
-    } catch (error) {
-        logger.error('Error parsing response for command:', commands, error);
-        throw new Error('Error parsing response for command:');
-    }
-}
-
-async function getDBSummary(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
-    offset: number,
-    rowscount: number
-) {
-    logger.info('Fetching databases ', credentialsId, region, activeInstanceId, offset, rowscount);
-
-    const commands = [`${PSSCRIPT} -Query "${DATABASES(offset, rowscount)}"`];
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
-    logger.debug('Fetching databases response', response);
-
-    return response;
+    return response.StandardOutputContent!;
 }
 
 async function getDatabasesCount(
@@ -120,8 +125,7 @@ async function getDatabasesCount(
     const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching databases count response', response);
-
-    return response;
+    return sqlResponseParsing(response)[0];
 }
 
 async function getDataBasesSummary(resourceId: string) {
@@ -132,23 +136,22 @@ async function getDataBasesSummary(resourceId: string) {
     dbCount = dbCount?.totalCount || 0;
 
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-
-    const finaldb = [];
-    let offset = 0;
-    for (let i = 0; i < rowscount; i++) {
-        const resp = await getDBSummary(
-            credentialsId,
-            region,
-            activeInstanceId,
-            standbyInstanceId,
-            offset,
-            DB_ROWS_COUNT
-        );
-        finaldb.push(...resp);
+    const batchQueries: string[] = [];
+    for (let i = 0, offset = 0; i < rowscount; i++) {
+        batchQueries.push(`${PSSCRIPT} -Query "${DATABASES(offset, DB_ROWS_COUNT)}"`);
         offset += DB_ROWS_COUNT;
     }
 
-    return { databases: finaldb };
+    const responses = await Promise.map(
+        batchQueries,
+        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    );
+    const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+    const cleanDBSummanry = sqlResponseParsing(dbSummary);
+
+    return { databases: cleanDBSummanry };
 }
 
 function resourceUtilisationQuery(metricType: string) {
@@ -163,6 +166,7 @@ function resourceUtilisationQuery(metricType: string) {
             return '';
     }
 }
+
 async function getResourceUtilisation(resourceId: string, metricType: string) {
     logger.info(`Get ${metricType} resource utilization for resource: `, resourceId);
 
@@ -172,10 +176,30 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
     commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
+
+    if (metricType === DATABASE_METRIC_TYPE.DISK) {
+        const dbSizecommand = [`${PSSCRIPT} -Query '${DB_SIZE}'`];
+        const diskUtilizationCommand = [`${PSSCRIPT} -Query "${DISK_UTILISATION}"`];
+
+        const [diskdata, size] = await Promise.all([
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, diskUtilizationCommand),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, dbSizecommand)
+        ]);
+
+        const [sizeValue] = sqlResponseParsing(size);
+        const [diskDataValue] = sqlResponseParsing(diskdata);
+        const diskUtilization = UtilisationResponseBody;
+        diskUtilization.used = sizeValue.TotalSize.toString();
+        diskUtilization.total = diskDataValue.total.toString();
+        diskUtilization.remaining = (Number(diskDataValue.total) - sizeValue.TotalSize).toString();
+        diskUtilization.percentUsed = Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString();
+
+        return diskUtilization;
+    }
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching  utilization', response);
 
-    return response;
+    return sqlResponseParsing(response)[0];
 }
 
 async function getTablesCount(
@@ -187,30 +211,11 @@ async function getTablesCount(
 ) {
     logger.info('Fetching tables total count ', credentialsId, region, activeInstanceId, databaseName);
 
-    const commands = [`${PSSCRIPT} -Query "${TABLES_COUNT_QUERY(databaseName)}"`];
+    const commands = [`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_COUNT_QUERY}"`];
     const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
     logger.debug('Fetching tables count response', response);
 
-    return response;
-}
-
-async function getTablesList(
-    credentialsId: string,
-    region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
-    offset: number,
-    rowscount: number,
-    databaseName: string
-) {
-    logger.info('Fetching tables ', credentialsId, region, activeInstanceId, offset, rowscount, databaseName);
-
-    const commands = [`${PSSCRIPT} -Query "${TABLES_QUERY(databaseName, offset, rowscount)}"`];
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
-
-    logger.debug('Fetching tables response', response);
-
-    return response;
+    return sqlResponseParsing(response)[0];
 }
 
 async function getTablesSummary(resourceId: string, databaseName: string) {
@@ -220,39 +225,30 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
     const { totalCount: tablesCount = 0 } =
         (await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName)) || {};
 
-    const batchcount = Math.ceil(tablesCount / DB_ROWS_COUNT);
+    const batchCount = Math.ceil(tablesCount / DB_ROWS_COUNT);
 
-    const tablesList = [];
-    let offset = 0;
-    for (let i = 0; i < batchcount; i++) {
-        const resp = await getTablesList(
-            credentialsId,
-            region,
-            activeInstanceId,
-            standbyInstanceId,
-            offset,
-            DB_ROWS_COUNT,
-            databaseName
-        );
-        tablesList.push(...resp);
+    const batchQueries: string[] = [];
+    for (let i = 0, offset = 0; i < batchCount; i++) {
+        batchQueries.push(`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_QUERY(offset, DB_ROWS_COUNT)}"`);
         offset += DB_ROWS_COUNT;
     }
-    tablesList.map(result => (result.databaseName = databaseName));
 
-    return { tables: tablesList };
+    const responses = await Promise.map(
+        batchQueries,
+        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    );
+    const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+
+    const cleanResponses = sqlResponseParsing(tablesList);
+    for (const record of cleanResponses) {
+        record.databaseName = databaseName;
+    }
+    return { tables: cleanResponses };
 }
 
-async function getServerSummary(resourceId: string): Promise<{
-    serverId: string;
-    serverVersion: string;
-    serverEdition: string;
-    serverEngine: string;
-    serverStatus: string;
-    activeConnections: number;
-    deploymentModel: string;
-    activeNode: string;
-    standbyNode: string;
-}> {
+async function getServerSummary(resourceId: string) {
     logger.info('Get details of SQL Server database:', { resourceId });
 
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
@@ -274,23 +270,77 @@ async function getServerSummary(resourceId: string): Promise<{
             `${PSSCRIPT} -Query "${SERVER_NODES}"`
         ])
     ]);
-
-    const serverInfo = serverDetails?.serverDetails?.split('\n');
+    const serverDet = serverDetails.replaceAll('\r\n', '');
+    const serverInfo = serverDet?.split('\t');
     const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
-
+    const stateValue = state.replaceAll('\r\n', '').replace('.', '');
+    const [connValue] = sqlResponseParsing(connections);
+    const [nodesValue] = sqlResponseParsing(nodes);
+    const [isClusterdValue] = sqlResponseParsing(isClustered);
     return {
         serverId: resourceId,
         serverVersion: version ? version[0] : ' ',
         serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
         serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-        serverStatus: state['Current Service State'],
-        activeConnections: connections.numberOfConnections,
-        deploymentModel: isClustered.isClustered
+        serverStatus: stateValue,
+        activeConnections: connValue.numberOfConnections,
+        deploymentModel: isClusterdValue.isClustered
             ? SqlServerDeploymentModel.SQL_FCI
             : SqlServerDeploymentModel.SQL_STANDALONE,
-        activeNode: nodes.activeNode,
-        standbyNode: nodes.standbyNode
+        activeNode: nodesValue.activeNode,
+        standbyNode: nodesValue.standbyNode
     };
+}
+
+async function discoverMsSqlServer(
+    accountId: string,
+    credentialsId: string,
+    regionId: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId: string,
+    resourceType: string
+) {
+    logger.info('Save SQL Server details in tenancy:', {
+        accountId,
+        credentialsId,
+        regionId,
+        activeInstanceId: activeNodeInstanceId,
+        standbyInstanceId: standbyNodeInstanceId,
+        resourceType
+    });
+
+    const [resourceIdentifier, name] = await Promise.all([
+        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
+            `${PSSCRIPT} -Query "${SERVER_GUID}"`
+        ]),
+        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
+            `${PSSCRIPT} -Query "${SERVER_NAME}"`
+        ])
+    ]);
+
+    const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
+    const params: ServiceResourceRequest = {
+        name,
+        resourceIdentifier,
+        resourceType,
+        workspacePublicId: workspaceId,
+        accountPublicId: accountId,
+        resourceClass: WLMDB_RESOURCE_CLASS,
+        metadata: {
+            propertyName: 'properties',
+            propertyValue: JSON.stringify({
+                location: CloudProviders.AWS,
+                credentialsId,
+                region: regionId,
+                activeInstanceId: activeNodeInstanceId,
+                standbyInstanceId: standbyNodeInstanceId,
+                deploymentState: DeploymentState.SUCCESS
+            })
+        }
+    };
+
+    await registerServiceResource(params);
+    return { resourceId: resourceIdentifier, resourceName: name };
 }
 
 export {
@@ -299,5 +349,6 @@ export {
     getServerSummary,
     getResourceDetails,
     getDatabasesCount,
-    getTablesSummary
+    getTablesSummary,
+    discoverMsSqlServer
 };

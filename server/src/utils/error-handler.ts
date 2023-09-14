@@ -1,7 +1,13 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { isArray } from 'lodash-es';
+import {
+    PrismaClientInitializationError,
+    PrismaClientKnownRequestError,
+    PrismaClientValidationError
+} from '@prisma/client/runtime/library.js';
 import { isHTTPError, isTimeoutError } from './got';
 import { INVALID_REGION_AWS, INVALID_REGION_MESSAGE, HttpErrorCodes } from './consts';
+
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -24,18 +30,39 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         reply.status(errCode).send({ message: error.message });
     } else if (isHTTPError(error)) {
         const body = error.response.body as any;
-        const { statusCode } = error.response;
+        const { statusCode: httpStatusCode } = error.response;
         if (body.error && isArray(body.error.errors)) {
             // then it's gcp error
-            reply.status(statusCode).send({ message: body.error.message });
+            reply.status(httpStatusCode).send({ message: body.error.message });
         }
-        const message = typeof body === 'string' ? body : body.message;
+        const responseMessage = typeof body === 'string' ? body : body.message;
         if (request.url.includes('proxy') && body.body) {
             return reply.status(statusCode).send(body.body);
         }
-        reply.status(statusCode).send({ message });
+        reply.status(statusCode).send({ responseMessage });
     } else if (isTimeoutError(error)) {
         reply.gatewayTimeout();
+    } else if (error instanceof PrismaClientValidationError) {
+        logger.error('Error of type PrismaClientValidationError occured', error);
+        reply
+            .status(500)
+            .send({ message: 'The request to update database failed due to bad request.Please contact support' });
+    } else if (error instanceof PrismaClientInitializationError) {
+        logger.error('Error of type PrismaClientInitializationError occured', error);
+        reply
+            .status(500)
+            .send({ message: 'We are unable to establish connection with database. Please contact support' });
+    } else if (error instanceof PrismaClientKnownRequestError) {
+        logger.error('Error of type PrismaClientKnownRequestError occured', error);
+        reply.status(500).send({
+            message: `An error occurred in DB query engine.${
+                error?.meta?.cause
+                    ? error?.meta?.cause
+                    : error?.meta?.target
+                    ? `An unique key constraint violated ${error?.meta?.target}`
+                    : ''
+            }`
+        });
     } else {
         reply.status(statusCode).send({ message });
     }
@@ -62,11 +89,11 @@ function handleValidationError(
             ) => {
                 if (cur.params?.allowedValue) {
                     return `${acc}${cur.params?.allowedValue}, `;
-                } else if (cur.params?.allowedValues && Array.isArray(cur.params.allowedValues)) {
-                    return `${acc}${cur.params?.allowedValues.join(', ')}, `;
-                } else {
-                    return acc;
                 }
+                if (cur.params?.allowedValues && Array.isArray(cur.params.allowedValues)) {
+                    return `${acc}${cur.params?.allowedValues.join(', ')}, `;
+                }
+                return acc;
             },
             ''
         );

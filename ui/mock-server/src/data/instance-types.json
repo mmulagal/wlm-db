@@ -13,10 +13,10 @@
         "iopsInMbps": 14000
       },
       {
-        "instanceType": "r6g.16xlarge",
-        "vCpus": 64,
-        "ramInMib": 524288,
-        "iopsInMbps": 19000
+        "instanceType": "m5.xlarge",
+        "vCpus": 4,
+        "ramInMib": 16384,
+        "iopsInMbps": 4750
       },
       {
         "instanceType": "c6a.48xlarge",

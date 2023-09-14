@@ -10,7 +10,7 @@ import {
     setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
-import { GENERAL } from '../../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
@@ -28,7 +28,11 @@ const createMssqlPayload = (state: any) => {
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
-            return state.mssqlForm.encryption?.selectedRow[0]?.id;
+            if(state.mssqlForm.encryption?.selectedRow){
+                return state.mssqlForm.encryption?.selectedRow[0]?.id;
+            } else {
+                return '';
+            }
         } else {
             return state.mssqlForm.encryption?.encryptionArn;
         }
@@ -62,7 +66,7 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const fsxVolThroughput = (() => {
-        const value = state.mssqlForm.throughput?.value;
+        const value = state.mssqlForm.throughput?.value || '';
         const value1 = value.split(' ');
         if (value1.length === 2) {
             if (value1[1] === 'GBps') {
@@ -86,11 +90,11 @@ const createMssqlPayload = (state: any) => {
 
     const ontapSgGroupIdsList = (() => {
         let ontapSgGroupList = [];
+        const sgType = state.mssqlForm.securityGroup?.selectedSecurityType;
         const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
-        if (vpcsg) {
+        if(sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
             ontapSgGroupList.push(vpcsg);
         }
-
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (fsxnType === GENERAL.SELECT_EXISTING_FSX) {
             const fsxsg = state.mssqlForm.fsxN?.fsxNExistingName?.data?.securityGroups || [];
@@ -203,7 +207,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     //Check for DB Name - InvalidName
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
+        input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
     const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
     if (input.length > 0 && dataBaseNameValue) {
         dispatch(setDBNameValue(false));

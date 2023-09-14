@@ -5,6 +5,7 @@ import {
     Tag,
     DescribeNetworkInterfacesCommandInput
 } from '@aws-sdk/client-ec2';
+import { Static } from '@fastify/type-provider-typebox';
 import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
@@ -19,7 +20,6 @@ import {
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
-import { Static } from '@fastify/type-provider-typebox';
 import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
@@ -168,13 +168,14 @@ async function getSubnetsList(credentialsId: string, region: string, params: Des
                 AvailableIpAddressCount: availableIps
             } = subnet;
 
-            const params = {
+            const options = {
                 Filters: [{ Name: 'vpc-id', Values: [vpcId as string] }]
             };
 
-            const { RouteTables } = await describeRouteTable(credentialsId, region, params);
+            const { RouteTables } = await describeRouteTable(credentialsId, region, options);
 
-            let mainTable, subnetTable;
+            let mainTable;
+            let subnetTable;
             // This logic is added to know the route table id whether the subnet association is done either Explicit subnet associations or Subnets without explicit associations in aws console.
             RouteTables?.forEach(routeTable => {
                 routeTable.Associations?.forEach(association => {
@@ -225,9 +226,9 @@ async function getSecurityGroupsList(credentialsId: string, region: string, para
             }) => {
                 const resourceName = findResourceNameFromTags(tags);
                 return {
-                    id: id,
-                    description: description,
-                    vpcId: vpcId,
+                    id,
+                    description,
+                    vpcId,
                     ipPermissions,
                     ...(resourceName && { name: resourceName }),
                     securityGroupName
@@ -256,18 +257,14 @@ async function getNetworkInterfacesList(
                 Description: description,
                 SubnetId: subnetId,
                 VpcId: vpcId
-            }) => {
-                return {
-                    id: id,
-                    description: description,
-                    vpcId: vpcId,
-                    securityGroups: securityGroups
-                        ?.filter(sg => sg.GroupId !== undefined)
-                        .map(sg => sg.GroupId as string),
-                    availabilityZone: availabilityZone,
-                    subnetId: subnetId
-                };
-            }
+            }) => ({
+                id,
+                description,
+                vpcId,
+                securityGroups: securityGroups?.filter(Boolean).map(sg => sg.GroupId as string),
+                availabilityZone,
+                subnetId
+            })
         );
     }
     return networkInterfacesList;
@@ -364,7 +361,7 @@ async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regi
         }
     };
 
-    const { Regions: regions } = await describeRegions(credentialsId, input);
+    const { Regions: regions } = await describeRegions(input, credentialsId);
 
     const fsxRegionsList: Array<FSxAvailableRegions> = [];
 
@@ -386,9 +383,9 @@ async function getInstanceTypes(credentialsId: string, region: string) {
     logger.info('List Ec2 Instance Types in region', { credentialsId, region });
 
     const response = await describeInstanceTypes(credentialsId, region);
-    /* 
+    /*
         SDK returns all the instance types which cannot be used to create the instance for SQL deployment.
-        Still trying to figure out on what basis the instances are listed in fro creation. As temp solution 
+        Still trying to figure out on what basis the instances are listed in fro creation. As temp solution
         went through the instances listed in Launch wizard and excluded few types. Needs work to filter out
         Created a list of instance that can be excluded EC2_INSTANCE_TYPE_EXCLUDE_LIST
         */
@@ -414,9 +411,7 @@ async function getKeyPairsList(credentialsId: string, region: string): Promise<{
     const { KeyPairs: kps } = await describeKeyPairs(credentialsId, region, {});
 
     if (kps?.length) {
-        kpList = kps.map(({ KeyPairId: id, KeyName: name }) => {
-            return { id, name };
-        });
+        kpList = kps.map(({ KeyPairId: id, KeyName: name }) => ({ id, name }));
     }
 
     return { keyPairs: kpList };

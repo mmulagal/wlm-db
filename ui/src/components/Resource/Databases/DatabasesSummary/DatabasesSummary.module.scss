@@ -45,3 +45,9 @@
         flex-direction: column;
     }
 }
+
+@media screen and (max-width: 1700px) {
+    .databaseSummary {
+        width: 1200px;
+    }
+}

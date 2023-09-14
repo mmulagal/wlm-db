@@ -4,22 +4,26 @@ import styles from './MsSqlOverview.module.scss';
 import ResourceDistribution from './ResourceDistribution/ResourceDistribution';
 import { ReactComponent as DatabasesIcon } from '../../../assets/databases-icon.svg';
 import { ReactComponent as TablesIcon } from '../../../assets/tables-icon.svg';
-import { useNavigate } from 'react-router';
+import { useNavigate, useOutletContext } from 'react-router';
 
 const MsSqlOverview = () => {
     const navigate = useNavigate();
+    let {databasesList, mssqlSummary, mssqlCpu, mssqlDisk, mssqlMemory, tables, batchingCompleted} = 
+    useOutletContext<{databasesList: any, mssqlSummary: any, mssqlCpu: any, mssqlDisk: any, mssqlMemory: any, tables: any, 
+        batchingCompleted: boolean}>();
+
     return (
         <div className={styles.overviewContainer}>
             <div className={styles.leftPane}>
                 <div className={styles.resourceDistribution}>
-                    <ResourceDistribution />
+                    <ResourceDistribution mssqlCpu={mssqlCpu} mssqlDisk={mssqlDisk} mssqlMemory={mssqlMemory}/>
                 </div>
                 <div className={styles.infoCards}>
                     <InfoCard
                         renderIcon={() => {
                             return <DatabasesIcon />;
                         }}
-                        value={'7'}
+                        value={databasesList.length}
                         label={'Databases'}
                         buttonText={'View Databases'}
                         buttonClick={function (): void {
@@ -30,7 +34,8 @@ const MsSqlOverview = () => {
                         renderIcon={() => {
                             return <TablesIcon />;
                         }}
-                        value={'65'}
+                        value={tables.length}
+                        isValueLoading={!batchingCompleted}
                         label={'Tables'}
                         buttonText={'View Tables'}
                         buttonClick={function (): void {
@@ -40,7 +45,7 @@ const MsSqlOverview = () => {
                 </div>
             </div>
             <div className={styles.rightPane}>
-                <InformationPane />
+                <InformationPane mssqlSummary={mssqlSummary}/>
             </div>
         </div>
     );

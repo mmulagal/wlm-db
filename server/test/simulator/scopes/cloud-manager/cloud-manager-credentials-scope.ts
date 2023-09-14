@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
 import nock from 'nock';
-import { CREDENTIALS_ENDPOINT } from '../../../../src/utils/consts.js';
+import { CREDENTIALS_ENDPOINT } from '../../../../src/utils/consts';
 
 const credentialsId = `${faker.string.alphanumeric(20)}`;
 const cloudManagerAllAwsCredentials = [
     {
-        credentialsId: credentialsId,
+        credentialsId,
         credentialsType: 'aws_assume_role',
         extra: {
             name: `${faker.string.alpha(10)}`,
@@ -18,7 +18,7 @@ const cloudManagerAllAwsCredentials = [
 ];
 
 const cloudManagerAwsCredentials = {
-    credentialsId: credentialsId,
+    credentialsId,
     credentialsType: 'aws_assume_role',
     extra: {
         name: `${faker.string.alpha(10)}`,

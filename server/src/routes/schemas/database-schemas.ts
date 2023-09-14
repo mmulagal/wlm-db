@@ -7,7 +7,10 @@ import {
     TablesResponseBody,
     UtilisationResponseBody,
     ServerSummaryResponse,
-    DatabaseDeleteResponseBody
+    DatabaseDeleteResponseBody,
+    MsSqlServerDiscoveryParams,
+    MsSqlServerDiscoveryResponse,
+    MsSqlServerDiscoverRequestBody
 } from '../types/database.types';
 import { GenericHeaders } from '../types/generic.types';
 
@@ -15,6 +18,16 @@ const baseRequest = {
     Headers: GenericHeaders,
     tags: [RouteTags.DATABASE],
     params: DatabaseParams
+};
+
+const PostSqlServerSchema = {
+    tags: [RouteTags.DATABASE],
+    params: MsSqlServerDiscoveryParams,
+    body: MsSqlServerDiscoverRequestBody,
+    description: 'Discover Microsoft SQL Server',
+    response: {
+        200: MsSqlServerDiscoveryResponse
+    }
 };
 
 const GetDatabasesSchema = {
@@ -63,6 +76,7 @@ const GetTablesSchema = {
 export {
     GetDatabasesSchema,
     DatabaseUtilisationResponseSchema,
+    PostSqlServerSchema,
     DeleteDatabaseSchema,
     GetServerSummarySchema,
     GetTablesSchema

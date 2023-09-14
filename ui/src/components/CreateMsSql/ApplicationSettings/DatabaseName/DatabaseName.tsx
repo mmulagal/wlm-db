@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import styles from './DatabaseName.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
@@ -8,22 +9,26 @@ import { useDispatch } from 'react-redux';
 import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
 import { SQL_DATABASE } from '../../../../utils/consts';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const DatabaseName = () => {
-    const [input, setInput] = useState(SQL_DATABASE);
     const dispatch = useDispatch();
 
+    const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
+
     useEffect(() => {
-        dispatch(setDBName(input));
+        if(!selectedDBName){
+            dispatch(setDBName(SQL_DATABASE));
+        }
     });
 
     function isValidDBName() {
-        const firstChar = input.charAt(0);
+        const firstChar = selectedDBName.charAt(0);
         // Check if the instance name is 16 characters or less in length
 
         if (
-            input.length > 0 &&
-            (input.length > 15 || !/^[a-zA-Z]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(input))
+            selectedDBName.length > 0 &&
+            (selectedDBName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(selectedDBName))
         ) {
             return GENERAL.DB_NAME_TOOLTIP;
         }
@@ -33,7 +38,7 @@ const DatabaseName = () => {
         if (isValidDBName()) {
             return <AccordionError />;
         } else {
-            return <Typography variant="Regular_14">{input}</Typography>;
+            return <Typography variant="Regular_14">{selectedDBName}</Typography>;
         }
     };
 
@@ -48,14 +53,30 @@ const DatabaseName = () => {
                     <Typography>
                         <div className={styles.content}>
                             <TextField
-                                info={GENERAL.DB_NAME_TOOLTIP}
+                                info={
+                                    <div className={styles.userNameTooltip}>
+                                        <div className={styles.list}>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP1}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP2}</div>
+                                            </div>
+                                            <div className={styles.listItem}>
+                                                <Bullet />
+                                                <div className={styles.textWidth}>{GENERAL.DB_NAME_TOOLTIP3}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                                 label={GENERAL.DATABASE_INSTANCE_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setInput(e.target.value);
                                     dispatch(setDBName(e.target.value));
                                 }}
                                 error={useDelayedError(isValidDBName())}
-                                value={input}
+                                value={selectedDBName}
                             />
                         </div>
                     </Typography>

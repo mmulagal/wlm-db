@@ -3,9 +3,9 @@ import { readFileSync } from 'fs';
 import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
 import config from 'config';
 import { isObject, cloneDeep, isArray, isPlainObject } from 'lodash-es';
+import { context, trace } from '@opentelemetry/api';
 import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
-import { context, trace } from '@opentelemetry/api';
 
 function isPatternLayout(layout: Layout): layout is PatternLayout {
     return (layout as PatternLayout).pattern !== undefined;
@@ -23,7 +23,7 @@ function hideSecretsValues(obj: any) {
             }
         });
     }
-    return obj;
+    return JSON.stringify(obj);
 }
 
 function getActiveTraceId() {

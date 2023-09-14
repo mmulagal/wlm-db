@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -11,8 +11,9 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssqlFormSlice';
 
 const StorageCapacity = () => {
-    const [input, setInput] = useState('1024');
     const dispatch = useDispatch();
+
+    const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
 
     const units = ['TiB', 'GiB'];
@@ -29,8 +30,11 @@ const StorageCapacity = () => {
 
     useEffect(() => {
         dispatch(setStorageUnit(generateUnitsForStorage[1]));
-        dispatch(setStorageCapacity(input));
+        if(!inputCapacity){
+            dispatch(setStorageCapacity('1024'));
+        }
     }, [generateUnitsForStorage]);
+
     //Set the Header text here
     const setHeader = () => {
         if (checkError()) {
@@ -38,7 +42,7 @@ const StorageCapacity = () => {
         }
         return (
             <Typography variant="Regular_14">
-                {input} {selectedUnit?.label}
+                {inputCapacity} {selectedUnit?.label}
             </Typography>
         );
     };
@@ -49,13 +53,14 @@ const StorageCapacity = () => {
         // if value is not blank, then test the regex
 
         if (e.target.value === '' || re.test(e.target.value)) {
-            setInput(e.target.value);
+            // setInput(e.target.value);
             dispatch(setStorageCapacity(e.target.value));
         }
     };
 
     const checkError = () => {
-        if (selectedUnit?.label === 'TiB' && Number(input) > 192) {
+        if ((selectedUnit?.label === 'TiB' && Number(inputCapacity) > 130) || 
+        (selectedUnit?.label === 'GiB' && Number(inputCapacity) > 133120)) {
             return GENERAL.ERROR_CAPACITY;
         }
     };
@@ -84,7 +89,7 @@ const StorageCapacity = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     handleChange(e);
                                 }}
-                                value={input}
+                                value={inputCapacity}
                                 className={styles.textfield}
                                 error={checkError()}
                             />

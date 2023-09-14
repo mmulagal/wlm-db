@@ -2,7 +2,7 @@ import { Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const DatabaseHeaders = Type.Object({
-    [HEADERS.WORKSPACE_ID]: Type.String({ minLength: 1 })
+    [HEADERS.WORKSPACE_ID_HEADER]: Type.String({ minLength: 1 })
 });
 
 const DatabaseParams = Type.Object({
@@ -14,6 +14,22 @@ const Tablesparams = Type.Object({
     accountId: Type.String(),
     resourceId: Type.String(),
     databaseName: Type.String()
+});
+
+const MsSqlServerDiscoveryParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String(),
+    regionId: Type.String()
+});
+
+const MsSqlServerDiscoveryResponse = Type.Object({
+    resourceId: Type.String(),
+    resourceName: Type.String()
+});
+
+const MsSqlServerDiscoverRequestBody = Type.Object({
+    activeInstanceId: Type.String(),
+    standbyInstanceId: Type.String()
 });
 
 const DatabasesResponseBody = Type.Object({
@@ -72,5 +88,8 @@ export {
     Tablesparams,
     TablesResponseBody,
     DatabaseDeleteResponseBody,
-    DatabaseHeaders
+    DatabaseHeaders,
+    MsSqlServerDiscoveryParams,
+    MsSqlServerDiscoveryResponse,
+    MsSqlServerDiscoverRequestBody
 };

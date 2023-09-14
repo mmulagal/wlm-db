@@ -2,16 +2,18 @@ import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './ProvisionedIOPS.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useState } from 'react';
 
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { setProvisionedIOPSValue, setProvisionedType } from '../../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 const ProvisionedIOPS = () => {
     const dispatch = useDispatch();
-    const [input, setInput] = useState('');
-    const [provisionValue, setProvisionValue] = useState(GENERAL.AUTOMATIC);
+
+    const provisionValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.provisionedType);
+    const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.IOPSValue);
+
     //Set the Header text here
     const setHeader = () => {
         if (checkError()) {
@@ -20,14 +22,14 @@ const ProvisionedIOPS = () => {
         if (provisionValue === GENERAL.AUTOMATIC) {
             return <Typography variant="Regular_14">{GENERAL.AUTOMATIC}</Typography>;
         }
-        return <Typography variant="Regular_14">{input}</Typography>;
+        return <Typography variant="Regular_14">{iopsValue}</Typography>;
     };
 
     const checkError = () => {
         if (
             provisionValue === GENERAL.USER_PROVISIONED &&
-            input.length &&
-            (Number(input) < 3072 || Number(input) > 160000)
+            iopsValue.length &&
+            (Number(iopsValue) < 3072 || Number(iopsValue) > 160000)
         ) {
             return 'range should be between 3072 - 160000 IOPS';
         }
@@ -45,7 +47,6 @@ const ProvisionedIOPS = () => {
                             <RadioButton
                                 isChecked={provisionValue === GENERAL.AUTOMATIC}
                                 onChange={() => {
-                                    setProvisionValue(GENERAL.AUTOMATIC);
                                     dispatch(setProvisionedType(GENERAL.AUTOMATIC));
                                 }}
                                 children={GENERAL.AUTOMATIC}
@@ -54,7 +55,6 @@ const ProvisionedIOPS = () => {
                             <RadioButton
                                 isChecked={provisionValue === GENERAL.USER_PROVISIONED}
                                 onChange={() => {
-                                    setProvisionValue(GENERAL.USER_PROVISIONED);
                                     dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
                                 }}
                                 children={GENERAL.USER_PROVISIONED}
@@ -71,10 +71,9 @@ const ProvisionedIOPS = () => {
                                     placeholder={GENERAL.PLACEHOLDER_PROVISIONED}
                                     label={GENERAL.IOPS_VALUE}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        setInput(e.target.value);
                                         dispatch(setProvisionedIOPSValue(e.target.value));
                                     }}
-                                    value={input}
+                                    value={iopsValue}
                                     className={styles.textfield}
                                     //@ts-ignore
                                     type="number"

@@ -78,6 +78,13 @@ Metadata:
           - AssetsS3RegionCode
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
+      - Label:
+          default: Custom Resource configuration
+        Parameters:
+          - AccountId
+          - CloudProviderAccountId
+          - RoleCredentialsId
+          - JwtToken
     ParameterLabels:
       ApplicationName:
         default: Application Name
@@ -204,14 +211,8 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
 
   AssetsBucketName:
-    ConstraintDescription:
-      Launch Wizard bucket name can include numbers, lowercase
-      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).
     Description:
-      S3 bucket name for the Launch Wizard assets. Launch Wizard bucket
-      name can include numbers, lowercase letters, uppercase letters, and hyphens
-      (-). It cannot start or end with a hyphen (-).
+      S3 bucket name for WLMDB assets. 
     Type: String
 
   AssetsS3RegionCode:
@@ -411,6 +412,26 @@ Parameters:
   ValidationAmi:
     Description: Validation node AMI image id
     Type: String
+  
+  RoleCredentialsId:
+    Description: Account credentials id to deploy and manage resources
+    Type: String
+  
+  AccountId:
+    Description: BlueXP account id
+    Type: String
+
+  CloudProviderAccountId:
+    Description: BlueXP CloudProviderAccountId id
+    Type: String
+  
+  JwtToken:
+    Description: JWT Token to grant access to a resource
+    Type: String
+
+  SnsServiceToken:
+    Description: SNS ARN to push cloud formation messages
+    Type: String
 
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -424,8 +445,19 @@ Conditions:
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
 Resources:
+  TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: !Ref SnsServiceToken
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -454,14 +486,21 @@ Resources:
           Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
       {{Tags}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -490,15 +529,22 @@ Resources:
           Ref: AssetsS3RegionCode
         AMI:
           Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
       {{Tags}}
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -510,6 +556,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -562,11 +609,14 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue     
-      {{Tags}}  
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
+      {{Tags}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -597,10 +647,13 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
       {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: 
+      - TrackStackDeployment
       - ValidationStack1
       - ValidationStack2
     Properties:
@@ -700,6 +753,8 @@ Resources:
             - !Ref "ONTAPSecurityGroupID"
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
         NumberOfNodes: "2"
         FSxLogVolumeName:
           Ref: FSxLogVolumeName
@@ -708,4 +763,24 @@ Resources:
           - IncludeNotification
           - !Split [",", !Ref NotificationARN]
           - !Ref AWS::NoValue
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
       {{Tags}}
+  PostStackDeployment:
+    Type: Custom::MyCustomResource
+    DependsOn: SQLServerStack
+    Properties:
+      ServiceToken: !Ref SnsServiceToken
+      AccountId: !Ref AccountId
+      CloudProviderAccountId: !Ref CloudProviderAccountId
+      CredentialsId: !Ref RoleCredentialsId
+      JWToken: !Ref JwtToken
+      Region: !Ref 'AWS::Region' 
+      StackName: !Ref 'AWS::StackName'
+      FSxFileSystemId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
+      ActiveInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
+      StandbyInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"

@@ -1,14 +1,19 @@
+import jwt from 'jsonwebtoken';
+import config from 'config';
 import createError from 'http-errors';
 import { gotInstanceForInternalRequest, gotInstanceForTextResponse } from '../../utils/got';
 import {
+    ACCOUNT_ID,
     CLOUD_MANAGER_ENDPOINT,
     HEADERS,
     AUTH0_AUDIENCE,
-    SECRETS,
     WORKSPACE_ID,
-    HttpErrorCodes
+    SECRETS,
+    HttpErrorCodes,
+    SERVICE_TOKEN,
+    TOKEN_EXPIRATION_TIME
 } from '../../utils/consts';
-import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
+import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -28,8 +33,35 @@ interface MetaData {
     propertyValue: string;
 }
 
+function generateAuthToken(user: object) {
+    logger.info('Generating auth token');
+    const token = jwt.sign({ user }, SECRETS.CLIENT_ID as string, {
+        expiresIn: config.get('jwt-token-expiry')
+    });
+
+    return { token };
+}
+
+function verifyAuthToken(token: string) {
+    logger.info('Verifying auth token');
+    try {
+        return jwt.verify(token, SECRETS.CLIENT_ID as string);
+    } catch (err) {
+        const errMsg = 'Invalid token.';
+        logger.error(errMsg, err);
+        throw createError(400, errMsg);
+    }
+}
+
 async function getServiceToken(): Promise<{ token: string; expiresIn: number }> {
     logger.info('Getting service token:');
+
+    const token: string = getAsyncLocalStorageResource(SERVICE_TOKEN);
+    const tokenExpirationTime: number = getAsyncLocalStorageResource(TOKEN_EXPIRATION_TIME);
+
+    if (token && Date.now() < tokenExpirationTime) {
+        return { token, expiresIn: tokenExpirationTime };
+    }
 
     try {
         const data: { access_token: string; expires_in: number; token_type: string } =
@@ -44,6 +76,10 @@ async function getServiceToken(): Promise<{ token: string; expiresIn: number }> 
                 })
                 .json();
         logger.debug('service token response', data);
+        setAsyncLocalStorageResource(SERVICE_TOKEN, `${data.token_type} ${data.access_token}`);
+        // converting seconds of expires in value to time stamp
+        const expiresIn = Date.now() + data.expires_in * 1000;
+        setAsyncLocalStorageResource(TOKEN_EXPIRATION_TIME, expiresIn);
         return { token: `${data.token_type} ${data.access_token}`, expiresIn: data.expires_in };
     } catch (err) {
         throw createError(500, `Error occured while getting service token, ${err}`);
@@ -76,7 +112,9 @@ async function getTenancyResourcesByType(resourceType: string) {
         return gotInstanceForInternalRequest
             .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
                 searchParams: {
-                    resourceType
+                    resourceType,
+                    account: getAsyncLocalStorageResource<string>(ACCOUNT_ID),
+                    workspace: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
                 },
                 headers: {
                     [HEADERS.AUTHORIZATION]: token
@@ -101,7 +139,7 @@ async function getTenancyResourcesByType(resourceType: string) {
 async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: string) {
     logger.info('Getting tenancy resource details for resource:', resourceType, resourceId);
     const resource = (await getTenancyResourcesByType(resourceType)).find(
-        resource => resource.resourceIdentifier === resourceId
+        resourceObject => resourceObject.resourceIdentifier === resourceId
     );
     if (resource) {
         if (resource?.metadata?.length) {
@@ -111,9 +149,8 @@ async function getTenancyResourcesByTypeAndId(resourceType: string, resourceId: 
         }
 
         return resource;
-    } else {
-        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
+    throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
 }
 
 async function removeResource(resourceIdentifier: string) {
@@ -125,7 +162,7 @@ async function removeResource(resourceIdentifier: string) {
         return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
             headers: {
                 [HEADERS.AUTHORIZATION]: token,
-                [HEADERS.WORKSPACE_ID]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
+                [HEADERS.WORKSPACE_ID_HEADER]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
             }
         });
     } catch (err) {
@@ -139,6 +176,8 @@ export {
     getTenancyResourcesByTypeAndId,
     removeResource,
     getServiceToken,
+    generateAuthToken,
+    verifyAuthToken,
     ServiceResourceRequest,
     MetaData
 };

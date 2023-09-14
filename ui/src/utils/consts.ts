@@ -31,10 +31,13 @@ export const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 export const USER_MANAGED_AD = 'USER_MANAGED_AD';
 
 // KMS status/state
-export const EXPIRED_STATUS = 'expired';
-export const EXPIRING_STATUS = 'expiring';
 export const ENABLED_STATE = 'Enabled';
+export const DISABLED_STATE = 'Disabled';
+export const PENDING_DELETION = 'PendingDeletion';
 export const DEFAULT_MASTER_KEY = 'aws/fsx';
+
+// Default instance type
+export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge'
 
 // Add credentials link
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
@@ -85,3 +88,23 @@ export const REGIONS_CODE_LIST = [
     'ap-northeast-3',
     'me-central-1'
 ];
+
+export const DATABASE_SERVICE_PATH = 'database-services';
+
+export const FROM_DIALOG = {
+    LOAD_CONFIG: 'load_config',
+    SAVE_CONFIG: 'save_config',
+    HEADER_CROSS: 'header_cross'
+}
+
+export const API_NAME = {
+    REGION: 'region',
+    VPC: 'vpc',
+    ADS: 'ads',
+    SNS: 'sns',
+    KMS: 'kms',
+    KEYPAIR: 'keypair',
+    INSTANCE: 'instance',
+    AMI: 'ami',
+    FSXN: 'fsxn'
+}

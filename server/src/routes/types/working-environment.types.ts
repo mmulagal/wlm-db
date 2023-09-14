@@ -1,4 +1,18 @@
 import { Type } from '@fastify/type-provider-typebox';
+import { HEADERS } from '../../utils/consts';
+
+const WorkinEnvironmentHeaders = Type.Object({
+    [HEADERS.WORKSPACE_ID_HEADER]: Type.String({ minLength: 1 })
+});
+
+const AccountIdParams = Type.Object({
+    accountId: Type.String({ minLength: 1 })
+});
+
+const AccountIdAndWorkingEnvironmentIdParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    workingEnvironmentId: Type.String({ minLength: 1 })
+});
 
 const WorkingEnvironmentsResponse = Type.Object({
     workingEnvironments: Type.Optional(
@@ -24,4 +38,10 @@ const WorkingEnvironmentResponse = Type.Optional(
     })
 );
 
-export { WorkingEnvironmentsResponse, WorkingEnvironmentResponse };
+export {
+    WorkingEnvironmentsResponse,
+    WorkingEnvironmentResponse,
+    WorkinEnvironmentHeaders,
+    AccountIdParams,
+    AccountIdAndWorkingEnvironmentIdParams
+};

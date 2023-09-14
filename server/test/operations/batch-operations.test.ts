@@ -1,0 +1,30 @@
+import executeBatchApiCalls from '../../src/operations/batch-operations';
+import '../simulator/scopes/aws/s3-scope';
+import '../simulator/scopes/aws/ec2-scope';
+import '../simulator/scopes/aws/iam-scope';
+import '../simulator/scopes/aws/secrets-manager-scope';
+// import '../simulator/scopes/aws/cloud-formation-scope';
+import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../simulator/scopes/aws/service-quota-scope';
+import '../simulator/scopes/opentelemetry-scope';
+import '../simulator/scopes/batch-scope';
+
+describe('Batch operations', () => {
+    it('Executing the batch api calls', async () => {
+        const resp = await executeBatchApiCalls([
+            {
+                url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Aaronview/tables',
+                method: 'GET'
+            },
+            {
+                url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Amandaberg/tables',
+                method: 'GET'
+            },
+            {
+                url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Adamsview/tables',
+                method: 'GET'
+            }
+        ]);
+        expect(resp).toBeDefined();
+    });
+});

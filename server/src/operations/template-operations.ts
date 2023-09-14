@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import yaml from 'yaml';
@@ -7,7 +8,10 @@ import {
     SQL_TEMPLATES_ASSETS,
     TEMPLATE_TYPES,
     BUCKET_NAME,
-    SQL_TEMPLATES_DISTRIBUTION
+    SQL_TEMPLATES_DISTRIBUTION,
+    SIGNED_URL_ERROR_MESSAGE,
+    HttpErrorCodes,
+    MASTER_TEMPLATE_PATH
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -19,30 +23,28 @@ interface TemplateDetails {
 
 const logger = getLogger();
 
-async function generateSignedUrls(credentialsId: string, region: string, resourceType: DatabaseTypes) {
-    logger.info('Generating signed urls ', credentialsId, region, resourceType);
+async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
+    logger.info('Generating signed urls ', region, resourceType);
 
     let signedUrl: string = '';
     const signedUrls: Map<string, TemplateDetails> = new Map();
 
     let assets = [];
-    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
+    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         assets = SQL_TEMPLATES_ASSETS;
     }
 
     if (assets?.length) {
         await Promise.all(
             SQL_TEMPLATES_ASSETS.map(async template => {
-                logger.info(
-                    `Creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}.`
-                );
+                logger.info(`Creating signed url for ${template.url} in region ${region}.`);
                 try {
-                    signedUrl = await getPreSignedUrl(credentialsId, region, template.url);
+                    signedUrl = await getPreSignedUrl(region, template.url);
                     signedUrls.set(template.name, { name: template.name, url: signedUrl, location: template.url });
                 } catch (error) {
-                    logger.error(
-                        `Error creating signed url for ${template.url} in region ${region} with credentials ${credentialsId}. ${error}`
-                    );
+                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(template.url, region, error as string);
+                    logger.error(errorMessage);
+                    throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
                 }
             })
         );
@@ -62,28 +64,26 @@ async function updateTemplateUrls(
     tags?: Array<{ Key: string; Value: string }>
 ) {
     logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
-
+    const yamlStr = yaml.stringify(
+        {
+            Tags: tags
+        },
+        {
+            indent: 6 // !IMP: This is a workaround untill we find a better solution, it should be changed if the indentation changes in master yaml file
+        }
+    );
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
-    if (templateType == TEMPLATE_TYPES.MASTER) {
+    if (templateType === TEMPLATE_TYPES.MASTER) {
         const contents = template({
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
-            Tags: tags?.length
-                ? yaml.stringify(
-                      {
-                          Tags: tags
-                      },
-                      {
-                          indent: 6 // !IMP: This is a workaround untill we find a better solution, it should be changed if the indentation changes in master yaml file
-                      }
-                  )
-                : ''
+            Tags: tags?.length ? yamlStr : ''
         });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'templates/wlm-master.yaml', contents);
-    } else if (templateType == TEMPLATE_TYPES.SQLSTACK) {
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, MASTER_TEMPLATE_PATH, contents);
+    } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
             DSCSignature: decodeURI(signedUrls.get('DSCSignature')?.url || ''),
@@ -118,10 +118,10 @@ async function updateTemplateUrls(
             credentialsId,
             region,
             BUCKET_NAME,
-            'templates/sql-windows-fci-config_nosignal.yaml',
+            signedUrls.get('SQLTemplate')?.location || '',
             contents
         );
-    } else if (templateType == TEMPLATE_TYPES.VALIDATION) {
+    } else if (templateType === TEMPLATE_TYPES.VALIDATION) {
         const contents = template({
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
             AmazonLaunchWizardForCFNSignature: decodeURI(
@@ -133,9 +133,16 @@ async function updateTemplateUrls(
             ScriptVpcCheck: decodeURI(signedUrls.get('ScriptVpcCheck')?.url || ''),
             ScriptUpdateDnsServers: decodeURI(signedUrls.get('ScriptUpdateDnsServers')?.url || ''),
             ScriptRenameComputer: decodeURI(signedUrls.get('ScriptRenameComputer')?.url || ''),
-            ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || '')
+            ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
+            ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || '')
         });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, 'templates/vpc-ad-validation.yaml', contents);
+        await putObjectBucket(
+            credentialsId,
+            region,
+            BUCKET_NAME,
+            signedUrls.get('ValidationTemplate')?.location || '',
+            contents
+        );
     }
 }
 
@@ -147,8 +154,8 @@ async function uploadTemplates(
 ) {
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 
-    if (resourceType == DatabaseTypes.MS_SQL_SERVER) {
-        const signedUrls = await generateSignedUrls(credentialsId, region, resourceType);
+    if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
+        const signedUrls = await generateSignedUrls(region, resourceType);
         await updateTemplateUrls(
             credentialsId,
             region,

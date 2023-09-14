@@ -9,8 +9,10 @@ import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import '../simulator/scopes/aws/cloud-formation-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../simulator/scopes/aws/service-quota-scope';
 import '../simulator/scopes/opentelemetry-scope';
+import '../simulator/scopes/jwt-scope';
 import {
     DEFAULT_AWS_REGION,
     SQL_CONFIGURATION,
@@ -19,8 +21,10 @@ import {
     EC2_CONFIGURATION,
     NETWORKING_CONFIGURATION
 } from '../utils/consts';
+import { SECRETS } from '../../src/utils/consts';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;
+SECRETS.CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 
 describe('Cloud formation operations', () => {
     it('Create the cloud formation template url for user deployment', async () => {

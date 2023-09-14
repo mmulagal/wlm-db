@@ -1,5 +1,7 @@
 import { Button, DialogContent, DialogFooter, DialogHeader, DialogLayout, useDialog } from '@netapp/design-system';
 import { ReactNode } from 'react';
+import { useAppSelector } from '../../store/storeHooks';
+import { FROM_DIALOG } from '../../utils/consts';
 
 type DialogProps = {
     header: string;
@@ -8,10 +10,37 @@ type DialogProps = {
     secondaryButton?: string;
     callback?: any;
     closeCallback?: any;
+    dialogFrom?: string;
 };
 
-const DialogComponent = ({ header, content, primaryButton, secondaryButton, callback, closeCallback }: DialogProps) => {
+const DialogComponent = ({ header, content, primaryButton, secondaryButton, callback, closeCallback, dialogFrom }: DialogProps) => {
     const { closeDialog } = useDialog();
+
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
+    const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
+
+    // To show loader on primary button in load config and save config dialog
+    const primaryButtonLoad = (() => {
+        return (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) || 
+            ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom ===FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading)
+    })();
+
+    // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
+    const primaryButtonClick = () => {
+        callback();
+        if(dialogFrom !== FROM_DIALOG.LOAD_CONFIG && 
+            dialogFrom !== FROM_DIALOG.SAVE_CONFIG && 
+            dialogFrom !== FROM_DIALOG.HEADER_CROSS) {
+            closeDialog();
+        }
+    }
+
+    // Redirect to CM page on cancel click when save config is opened via header cross.
+    const secButtonClick = () => {
+        closeCallback();
+        closeDialog(null);
+    }
 
     return (
         <DialogLayout>
@@ -22,10 +51,10 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     variant={'primary'}
                     className={'continue-button'}
                     isThin={true}
-                    onClick={() => {
-                        callback();
-                        closeDialog();
-                    }}
+                    isDisabled={(dialogFrom === FROM_DIALOG.SAVE_CONFIG || 
+                        dialogFrom === FROM_DIALOG.HEADER_CROSS) && saveConfigName === ''}
+                    isLoading={primaryButtonLoad}
+                    onClick={primaryButtonClick}
                 >
                     {primaryButton}
                 </Button>
@@ -33,10 +62,7 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     <Button
                         variant={'secondary'}
                         isThin={true}
-                        onClick={() => {
-                            closeCallback();
-                            closeDialog(null);
-                        }}
+                        onClick={secButtonClick}
                     >
                         {secondaryButton}
                     </Button>

@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 
-//General
+// General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
 
@@ -13,6 +13,8 @@ const ACCOUNT_ID = 'ACCOUNT_ID';
 const AGENT_ID = 'AGENT_ID';
 const AUDIT_GROUP = 'AUDIT_GROUP';
 const WORKSPACE_ID = 'WORKSPACE_ID';
+const SERVICE_TOKEN = 'SERVICE_TOKEN';
+const TOKEN_EXPIRATION_TIME = 'TOKEN_EXPIRATION_TIME';
 
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
@@ -33,11 +35,11 @@ const AUTH0_SERVER_ADDRESS = process.env.AUTH0_ENDPOINT
 
 enum HEADERS {
     AUTHORIZATION = 'authorization',
-    REQUEST_ID = 'x-request-id',
+    REQUEST_ID_HEADER = 'x-request-id',
     SERVICE_REQUEST_ID = 'x-service-request-id',
     TENANCY_ACCOUNT_ID = 'x-tenancy-account-id',
     CERTIFICATE_AUTHORITY = 'x-certificate-authority',
-    WORKSPACE_ID = 'x-workspace-id',
+    WORKSPACE_ID_HEADER = 'x-workspace-id',
     TOKEN = 'x-token',
     ENDPOINT = 'x-endpoint',
     CERTIFICATE = 'x-certificate',
@@ -68,6 +70,7 @@ const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
+const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
@@ -95,13 +98,20 @@ enum CloudProviders {
     GCP = 'GCP'
 }
 
+enum DeploymentState {
+    INITIALIZING = 'Initializing',
+    SUCCESS = 'Success',
+    FAILED = 'Failed'
+}
+
 enum RouteTags {
     AWS = 'AWS',
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
     WORKING_ENVIRONMENT = 'Working Environment',
-    DATABASE = 'DATABASE'
+    DATABASE = 'Database',
+    BATCH = 'Batch'
 }
 
 enum HttpErrorCodes {
@@ -143,12 +153,14 @@ const SECRETS: Record<string, string | undefined> = {
         ? process.env.CLIENT_SECRET
         : config.has('service-token.client_secret')
         ? config.get('service-token.client_secret')
-        : undefined
+        : undefined,
+    DATABASE_URL: process.env.DATABASE_URL
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
-    CLIENT_SECRET: 'CLIENT_SECRET'
+    CLIENT_SECRET: 'CLIENT_SECRET',
+    DATABASE_URL: 'DATABASE_URL'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
@@ -417,19 +429,19 @@ const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = 'wlmbucket';
-const ASSETS_BUCKET_REGION = 'ap-southeast-1';
+const BUCKET_NAME = config.get<string>('templates.bucket');
+const ASSETS_BUCKET_REGION = config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
-const ASSETS_REGION_CODE = 's3.ap-southeast-1';
+const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
-const CLOUD_FORMATION_STACK_URL = 'https://ap-southeast-1.console.aws.amazon.com/cloudformation/home';
-const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.s3.ap-southeast-1.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
+const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
 const DISABLE_ROLLBACK = true;
-const MASTER_STACK_TIMEOUT_MINUTES = 120;
+const MASTER_STACK_TIMEOUT_MINUTES = 180;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
 const FSX_SSD_MAX_SIZE = 211106; // in GiB
 
@@ -490,7 +502,7 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 3600;
+const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -502,8 +514,15 @@ const HTTP_PATCH = 'PATCH';
 // Custom error messages
 const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
+const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
+    `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
+const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
+const TEMPLATE_JWT_TOKEN = 'JwtToken';
+const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
+const TEMPLATE_ACCOUNT_ID = 'AccountId';
+const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 
 const SQL_TEMPLATES_ASSETS = [
     {
@@ -620,6 +639,10 @@ const SQL_TEMPLATES_ASSETS = [
     {
         name: 'ScriptRestartComputer',
         url: 'validation/Restart-Computer.ps1'
+    },
+    {
+        name: 'ScriptAdValidation',
+        url: 'validation/Validate-Credentials.ps1'
     }
 ];
 
@@ -645,6 +668,22 @@ enum SSM_QUERY_EXECUTION_STATUS {
     FAILED = 'Failed',
     SUCCESS = 'Success'
 }
+
+enum CF_CUSTOM_RESOURCE_CODES {
+    CREATE = 'Create',
+    DELETE = 'Delete',
+    FAILED = 'FAILED',
+    SUCCESS = 'SUCCESS'
+}
+
+const TRACK_STATUS_CUSTOM_RESOURCE = 'TrackStackDeployment';
+const JWKS_FULL_NAME = 'http://cloud.netapp.com/full_name';
+
+const CF_NOTIFICATION = 'AWS CloudFormation Notification';
+const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQueue';
+const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
+const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
+const BATCH_API_CONCURRENCY_LIMIT = 10;
 
 export {
     WLMDB,
@@ -748,5 +787,23 @@ export {
     SQL_TEMPLATES_DISTRIBUTION,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
-    SqlServerDeploymentModel
+    SqlServerDeploymentModel,
+    TEMPLATE_CLOUD_PROVIDER_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_CREDENTIALS_ID,
+    DeploymentState,
+    SIGNED_URL_ERROR_MESSAGE,
+    TRACK_STATUS_CUSTOM_RESOURCE,
+    JWKS_FULL_NAME,
+    CF_CUSTOM_RESOURCE_CODES,
+    TEMPLATE_ACCOUNT_ID,
+    TEMPLATE_SNS_SERVICE_TOKEN,
+    CF_NOTIFICATION,
+    ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
+    ERROR_CODE_SQS_INVALID_TOKEN,
+    METHODS_WITH_PAYLOAD,
+    SERVICE_TOKEN,
+    TOKEN_EXPIRATION_TIME,
+    WLMDB_ENDPOINT,
+    BATCH_API_CONCURRENCY_LIMIT
 };

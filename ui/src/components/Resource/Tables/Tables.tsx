@@ -2,15 +2,23 @@ import { Table, TableTopBar, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import TablesSummary from './TablesSummary/TablesSummary';
 import StatusComponent from '../../../common/StatusComponent/StatusComponent';
-import { formatDate, isNotNumberOrNA, formatSizeOrString } from '../../../utils/utilityFunctions';
+import { formatDate, isNotNumberOrNA, formatSizeOrString, formatSizeSplit } from '../../../utils/utilityFunctions';
 import styles from './Tables.module.scss';
+import { useOutletContext } from 'react-router-dom';
+import { useMemo } from 'react';
 
 const Tables = () => {
-    const summaryData = {
-        count: 65,
-        sizeValue: '600',
-        sizeUnit: 'TiB'
-    };
+    let {tables, batchingCompleted} = useOutletContext<{tables: any, batchingCompleted: boolean}>();
+    const summaryData = useMemo(() => {
+        const totalSize = tables.reduce((sum:number, item:any) => sum + parseInt(item.databaseSize), 0);
+        const totalSizeObj = formatSizeSplit(totalSize);
+        return {
+            count: tables.length,
+            sizeValue: totalSizeObj.value,
+            sizeUnit: totalSizeObj.format,
+            isLoading: !batchingCompleted
+        }
+    }, [tables, batchingCompleted])
 
     const TablesColDefs: ColumnProps[] = [
         {
@@ -54,71 +62,15 @@ const Tables = () => {
         }
     ];
 
-    const tablesTableData = [
-        {
-            id: '1',
-            databaseName: 'Database1',
-            tableName: 'table_a',
-            tableType: 'Base',
-            tableSchema: 'schema_1',
-            tableSize: 124354353324
-        },
-        {
-            id: '2',
-            databaseName: 'Database2',
-            tableName: 'table_b',
-            tableType: 'View',
-            tableSchema: 'schema_2',
-            tableSize: 124356545543
-        },
-        {
-            id: '3',
-            databaseName: 'Database3',
-            tableName: 'table_c',
-            tableType: 'Merged',
-            tableSchema: 'schema_3',
-            tableSize: 12430989032365
-        },
-        {
-            id: '4',
-            databaseName: 'Database4',
-            tableName: 'table_d',
-            tableType: 'Base',
-            tableSchema: 'schema_4',
-            tableSize: 124354453355412
-        },
-        {
-            id: '5',
-            databaseName: 'Database5',
-            tableName: 'table_e',
-            tableType: 'Merged',
-            tableSchema: 'schema_5',
-            tableSize: 12435434532332
-        },
-        {
-            id: '6',
-            databaseName: 'Database6',
-            tableName: 'table_f',
-            tableType: 'Base',
-            tableSchema: 'schema_6',
-            tableSize: 12435435365323
-        },
-        {
-            id: '7',
-            databaseName: 'Database7',
-            tableName: 'table_g',
-            tableType: 'Base',
-            tableSchema: 'schema_7',
-            tableSize: 12435435323432
-        }
-    ];
+    const tablesTableData = tables.length ? tables : [];
 
     const tableProps = useTable({
         isSorting: false,
         columns: TablesColDefs,
         rows: tablesTableData,
         pageSize: 10,
-        selectionType: 'none'
+        selectionType: 'none',
+        isLazyLoading: !batchingCompleted
     });
 
     return (
@@ -132,6 +84,7 @@ const Tables = () => {
                     tableProps={tableProps}
                     pluralTitle={'Tables'}
                     singularTitle={'Table'}
+                    lazyLoadingText='Loading Tables'
                 />
                 <Table
                     //@ts-ignore

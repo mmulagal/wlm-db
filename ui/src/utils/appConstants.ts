@@ -12,10 +12,19 @@ export const SELECT_CONFIG = {
     LOAD_CONFIG: 'Load configuration',
     SAVE_CONFIG: 'Save configuration',
     SECURITY_GROUP: 'Security group',
-    DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server'
+    DISCOVER_SQL_SERVER: 'Discover Microsoft SQL Server',
+    SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
+    LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
+    NO_SAVED_CONFIG: 'There are no saved configurations.',
+    DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
+    MISSING_FIELDS_MESSAGE:
+        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
 };
 
 export const GENERAL = {
+    LOADING_DATA: 'Loading data',
+    ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
+    COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
     NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
@@ -34,6 +43,7 @@ export const GENERAL = {
     ACTIVE_DIRECTORY: 'Active Directory',
     INFRASTRUCTURE_SETTINGS: 'Infrastructure settings',
     COST: 'Cost',
+    SUMMARY: 'Summary',
     INSTANCE_TYPE: 'DB Instance type',
     FSXN_SYSTEM: 'FSx for ONTAP system',
     STORAGE_CAPACITY: 'Data drive size',
@@ -55,9 +65,10 @@ export const GENERAL = {
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
+    REMOVE: 'Remove',
     SAVE: 'Save',
     API_REQUEST: 'API request',
-    Cancel: 'Cancel',
+    CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',
     STEP_TWO: 'Step 2:',
@@ -136,14 +147,17 @@ export const GENERAL = {
     //Constants for DB name accordion
     DATABASE_INSTANCE_NAME: 'Database cluster name',
     DB_NAME_TOOLTIP:
-        "The instance name must be 15 characters or less in length. The first character must be an alphabetic character (a-z). The first character can't be a numerical value (0-9), or an hyphen `-`. Spaces and special characters (such as @, ^, *, ) are not supported.",
+        'The cluster name must be 15 characters or less. The first character can be a letter (a-z or A-Z) or a number (0-9). Subsequent characters can be a letter, number, or hyphen (-).',
+    DB_NAME_TOOLTIP1: 'The cluster name must be 15 characters or less',
+    DB_NAME_TOOLTIP2: 'The first character can be a letter (a-z or A-Z) or a number (0-9)',
+    DB_NAME_TOOLTIP3: 'Subsequent characters can be a letter, number, or hyphen (-)',
     KEY_PAIR_NAME: 'Key pair',
     //Constants for Storage capacity
     CAPACITY: 'Capacity',
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'Capacity range is between 1 - 192 TiB',
+    ERROR_CAPACITY: 'The maximum supported capacity is 130 TiB.',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -186,7 +200,8 @@ export const GENERAL = {
     REGION_VPC: 'Region & VPC',
     VPC: 'VPC',
     //Availability zone
-    AZ_TEXT: 'Select an Availability Zone and subnet for each node.',
+    AZ_TEXT:
+        'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
@@ -229,10 +244,13 @@ export const GENERAL = {
     TAG_VALUE_PLACEHOLDER: 'Up to 255 characters',
     SELECT_ANY_ACCOUNT: 'Select your AWS credentials first',
     SELECT_ANY_VPC: 'This field will be enabled after you select a region and VPC.',
+    SELECT_AZ: 'Select the Availability Zones first',
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
-        'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
+        'Microsoft SQL Server and FSxN for ONTAP deployment ',
+        'with stack name ',
+        ' has been triggered. You can track the progress using the ',
         'Timeline',
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
@@ -263,5 +281,31 @@ export const GENERAL = {
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
     EC_NOTE:
-        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.'
+        'This is only an estimate of AWS costs to deploy additional resources and does not include any taxes or discounts that may apply. Actual fees depend on many factors, including actual usage of AWS services.',
+    MS_SQL_CPU_USED: 'CPU used by Microsoft SQL Server',
+    CPU_REM: 'CPU available and used by other processes',
+    MS_SQL_MEMORY_USED: 'Memory used by Microsoft SQL Server',
+    MEMORY_REM: 'Memory available and used by other processes',
+    MS_SQL_DISK_USED: 'Storage used by Microsoft SQL Server',
+    DISK_REM: 'Storage available and used by other processes',
+    OVERVIEW: 'Overview',
+    MSSQL: 'Microsoft SQL Server',
+    REMOVE_DIALOG_CONTENT_FIRST_PART: (weType: string) => `You are about to remove the ${weType} working environment`,
+    REMOVE_DIALOG_CONTENT_SECOND_PART: 'from workspace.',
+    REMOVE_DIALOG_NOTICE: (weType: string) => `This will not affect the ${weType} instance.`,
+    //PREVIEW DEFAULT
+    PREVIEW_DEFAULT_TEXT:
+        'Easy create sets the following configurations to their default values, some of which can be changed later. If you want to change any of these settings now, use',
+    PD_HEADER_TEXT: 'View the default configuration created by the system',
+    PREVIEW_DEFAULT: 'Preview default',
+    EDITABLE_AFTER: 'Editable after creation',
+    DEFAULT: 'Default',
+    CONFIGURATION: 'Configuration',
+    PD_DISABLED: 'Disabled',
+    YES: 'Yes',
+    PD_AUTO_CREATE: 'Automatically create based on user selection',
+    NO: 'No',
+    PD_CREATE_SECURITY: 'Create a security group for the user',
+    PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
+    FIRST_IN_THE_LIST: 'First in the list'
 };
