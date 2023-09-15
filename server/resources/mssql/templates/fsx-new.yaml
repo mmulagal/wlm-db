@@ -209,10 +209,6 @@ Resources:
             VpcId:
                 Ref: VPCID
             SecurityGroupIngress:
-                - IpProtocol: -1
-                  FromPort: -1
-                  ToPort: -1
-                  CidrIp: !Ref VPCCIDR
                 - IpProtocol: ICMP
                   FromPort: -1
                   ToPort: -1
