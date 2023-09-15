@@ -507,7 +507,7 @@ const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different f
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
 // Signed URL Valid for 24 hours
-const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry')}`, 'hours').asSeconds();
+const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry-hours')}`, 'hours').asSeconds();
 
 // HTTP Request types
 const HTTP_GET = 'GET';
