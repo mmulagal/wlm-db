@@ -43,47 +43,81 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
 
     const { Regions: regions } = await describeRegions({});
     try {
-        const queueName = WLMDB;
-        const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, { QueueName: queueName });
-        if (regions && QueueUrl) {
-            await Promise.map(
-                regions,
-                async ({ RegionName: code }) => {
-                    if (code && process.env.AWS_ROLE_ARN) {
-                        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-                        const policyStatement = {
-                            Version: '2012-10-17',
-                            Statement: [
-                                {
-                                    Sid: 'AllowSNSNotifications',
-                                    Effect: 'Allow',
-                                    Principal: {
-                                        Service: 'cloudformation.amazonaws.com' // TODO: temporary change as staging cluster has policy with above definition
-                                    },
-                                    Action: 'SNS:Publish',
-                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
+        if (process.env.AWS_ROLE_ARN) {
+            const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+            const queueName = WLMDB;
+            const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, {
+                QueueName: queueName,
+                Attributes: {
+                    Policy: JSON.stringify({
+                        Version: '2012-10-17',
+                        Statement: [
+                            {
+                                Sid: '__owner_statement',
+                                Effect: 'Allow',
+                                Principal: {
+                                    AWS: `arn:aws:iam::${awsAccountId}:root`
+                                },
+                                Action: 'SQS:*',
+                                Resource: `arn:aws:sqs:${DEFAULT_AWS_REGION}:${awsAccountId}:${queueName}`
+                            },
+                            {
+                                Sid: 'sns-topic-subscription',
+                                Effect: 'Allow',
+                                Principal: {
+                                    AWS: '*'
+                                },
+                                Action: 'SQS:SendMessage',
+                                Resource: `arn:aws:sqs:${DEFAULT_AWS_REGION}:${awsAccountId}:${queueName}`,
+                                Condition: {
+                                    ArnLike: {
+                                        'aws:SourceArn': `arn:aws:sns:*:${awsAccountId}:${queueName}`
+                                    }
                                 }
-                            ]
-                        };
-                        const { TopicArn } = await createTopic(code, {
-                            Name: queueName,
-                            Attributes: {
-                                Policy: JSON.stringify(policyStatement)
                             }
-                        });
+                        ]
+                    })
+                }
+            });
+            if (regions && QueueUrl) {
+                await Promise.map(
+                    regions,
+                    async ({ RegionName: code }) => {
+                        if (code) {
+                            const policyStatement = {
+                                Version: '2012-10-17',
+                                Statement: [
+                                    {
+                                        Sid: 'AllowSNSNotifications',
+                                        Effect: 'Allow',
+                                        Principal: {
+                                            AWS: '*'
+                                        },
+                                        Action: ['SNS:Publish', 'SNS:Subscribe'],
+                                        Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
+                                    }
+                                ]
+                            };
+                            const { TopicArn } = await createTopic(code, {
+                                Name: queueName,
+                                Attributes: {
+                                    Policy: JSON.stringify(policyStatement)
+                                }
+                            });
 
-                        const accountId = QueueUrl?.split('/')[3];
-                        const queueArn = getQueueArn(accountId, queueName);
+                            const accountId = QueueUrl?.split('/')[3];
+                            const queueArn = getQueueArn(accountId, queueName);
 
-                        await subscribeTopic(code, {
-                            Protocol: 'sqs',
-                            TopicArn,
-                            Endpoint: queueArn
-                        });
-                    }
-                },
-                { concurrency: 3 }
-            );
+                            await subscribeTopic(code, {
+                                Protocol: 'sqs',
+                                TopicArn,
+                                Endpoint: queueArn
+                            });
+                        }
+                    },
+                    { concurrency: 3 }
+                );
+            }
         }
     } catch (error) {
         logger.error('Failed to create and subscribe to SNS topics', error);
@@ -111,16 +145,7 @@ async function updateSnsTopicAttributeInAllRegions() {
                                     Principal: {
                                         AWS: '*'
                                     },
-                                    Action: 'SNS:Publish',
-                                    Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
-                                },
-                                {
-                                    Sid: 'AllowSNSSubscriptions',
-                                    Effect: 'Allow',
-                                    Principal: {
-                                        AWS: '*'
-                                    },
-                                    Action: 'SNS:Subscribe',
+                                    Action: ['SNS:Publish', 'SNS:Subscribe'],
                                     Resource: `arn:aws:sns:${code}:${awsAccountId}:${WLMDB}`
                                 }
                             ]

@@ -78,7 +78,7 @@ const MSSqlHeader = () => {
                 content={<SaveConfig />}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog)}
+                callback={() => SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog, dialogFrom)}
                 closeCallback={() => {
                     dispatch(setSaveConfigName(''));
                     if(dialogFrom === FROM_DIALOG.HEADER_CROSS){
