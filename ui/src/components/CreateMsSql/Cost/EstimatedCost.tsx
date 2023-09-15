@@ -37,6 +37,7 @@ const EstimatedCost = () => {
     const throughputValue = useAppSelector(state => state.mssqlForm.throughput?.value);
     const iopsValueType = useAppSelector(state => state.mssqlForm.provisionedIOPS?.provisionedType);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
+    const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     useEffect(() => {
         if (
@@ -61,7 +62,8 @@ const EstimatedCost = () => {
                     regionCode: regionValue?.value || '',
                     diskSize: `${diskSize}${diskSizeUnit}`,
                     throughput: throughputValue,
-                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : ''
+                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : '',
+                    deploymentOption: deploymentModel === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
                 },
                 connectivity: {
                     createNewVpc: false
