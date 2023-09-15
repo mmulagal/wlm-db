@@ -27,7 +27,6 @@ const SecurityGroup = () => {
 
     // State to select security groups
     const [securityGroup, setSecurityGroup] = useState(GENERAL.USE_AN_EXISTING_SECURITY);
-    // const [optionSelected, setOptionSelected] = useState<string | any>(selectedSG);
 
     //Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
@@ -38,8 +37,6 @@ const SecurityGroup = () => {
             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
             options.push(option);
         });
-        //To set the header value for first load
-        // setOptionSelected(options[0]);
         return options;
     }, [selectedVPCData]);
 
@@ -118,7 +115,6 @@ const SecurityGroup = () => {
                                             : [generateExistingSecurity[0]]
                                     }
                                     onChange={(selectedOptions: any): void => {
-                                        // setOptionSelected(selectedOptions);
                                         dispatch(setSelectedExistingSecurityGroup(selectedOptions));
                                     }}
                                     isSearchable={generateExistingSecurity.length > 5}
