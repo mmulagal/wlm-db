@@ -49,17 +49,8 @@ const FSxNSystem = () => {
     const deploymentMode = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     const [password, setPassword] = useState('');
-    const [fsxMode, setFsxMode] = useState('');
 
     const fsxNameRef = useRef(null);
-
-    useEffect(() => {
-        if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-            setFsxMode(FSX_DEPLOYMENT_MODE.MULTI_AZ_1);
-        } else if (deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
-            setFsxMode(FSX_DEPLOYMENT_MODE.SINGLE_AZ_1);
-        }
-    }, [deploymentMode]);
 
     const fsxCheck = (val: any) => {
         const fsxType = val?.ontapConfiguration?.deploymentType;
@@ -67,11 +58,13 @@ const FSxNSystem = () => {
         const fsxSubnets = val?.subnetIds || [];
         const node1SubnetsList = selectedZone1?.data?.subnets || [];
         const node2SubnetsList = selectedZone2?.data?.subnets || [];
-        if(fsxType && fsxType === fsxMode && lifecycle && lifecycle === 'AVAILABLE') {
-            if(fsxMode === GENERAL.FAILOVER_CLUSTER) {
+        if(lifecycle && lifecycle === 'AVAILABLE') {
+            if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1) {
                 return fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
+            } else if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+                return fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
             } else {
-                return fsxSubnets.every((val: string) => node1SubnetsList.includes(val));
+                return false;
             }
         } else {
             return false;
