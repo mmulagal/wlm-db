@@ -18,7 +18,7 @@ type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
 async function getFSXDetails(credentialsId: string, region: string, fs: any, ontapFSxFilesystems: FSxFileSystemType[]) {
     const enetInterfaceIds = fs.NetworkInterfaceIds;
-    const volumesList: FSxFileSystemType['volumes'] = [];
+    let volumesList: FSxFileSystemType['volumes'] = [];
 
     const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, fs.FileSystemId!);
 
@@ -34,18 +34,16 @@ async function getFSXDetails(credentialsId: string, region: string, fs: any, ont
     const networkInterfacesList = await getNetworkInterfacesList(credentialsId, region, enetInterfaces);
     const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
 
-    fsxVolumes?.forEach(
-        ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => {
-            volumesList.push({
-                volumeId,
-                volumeType,
-                securityStyle: volumeOntapConfiguration?.SecurityStyle,
-                sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
-                storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
-                storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
-                ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
-            });
-        }
+    volumesList = fsxVolumes?.map(
+        ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => ({
+            volumeId,
+            volumeType,
+            securityStyle: volumeOntapConfiguration?.SecurityStyle,
+            sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
+            storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
+            storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
+            ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
+        })
     );
 
     // Get the FSx filesystem name, if available.
