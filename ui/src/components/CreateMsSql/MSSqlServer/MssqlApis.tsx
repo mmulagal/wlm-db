@@ -27,7 +27,7 @@ import {
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
 import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, DEAFULT_INSTANCE_VALUE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
-import { formatKmsData, formatSize, generateOptionType } from '../../../utils/utilityFunctions';
+import { formatKmsData, formatSize, generateOptionType, sortListOfDict } from '../../../utils/utilityFunctions';
 import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
@@ -400,7 +400,8 @@ const MssqlApis = () => {
         if(configError) {
             dispatch(addSavedConfigList({undefined, configLoading, configError}));
         } else {
-            dispatch(addSavedConfigList({configData, configLoading, configError}));
+            const sortedConfig = configData ? sortListOfDict(configData, 'creationTime', false) : [];
+            dispatch(addSavedConfigList({configData: sortedConfig, configLoading, configError}));
         }
         
     // eslint-disable-next-line react-hooks/exhaustive-deps
