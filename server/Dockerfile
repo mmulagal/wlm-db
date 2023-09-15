@@ -23,6 +23,8 @@ COPY dist/src ./
 
 COPY prisma ./prisma/
 
+COPY patches ./patches/
+
 RUN npm ci --omit=dev
 
 # build mode - development or production
