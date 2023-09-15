@@ -561,7 +561,7 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlontap\Connect-ONTAPInstance.ps1
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
-                                  - - "' -ResourceID SqlNode -Stackname '"
+                                  - "' -ResourceID SqlNode -Stackname '"
                                   - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
