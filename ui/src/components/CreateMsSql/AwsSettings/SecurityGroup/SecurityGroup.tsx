@@ -15,6 +15,8 @@ const SecurityGroup = () => {
 
     // Getting selected VPC to get security groups for selected VPC
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const selectedSG = useAppSelector(state => state.mssqlForm.securityGroup?.selectedExistingSecurityGroup);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
@@ -25,9 +27,6 @@ const SecurityGroup = () => {
 
     // State to select security groups
     const [securityGroup, setSecurityGroup] = useState(GENERAL.USE_AN_EXISTING_SECURITY);
-    const [optionSelected, setOptionSelected] = useState<string | any>({
-        label: ''
-    });
 
     //Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
@@ -38,14 +37,16 @@ const SecurityGroup = () => {
             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
             options.push(option);
         });
-        //To set the header value for first load
-        setOptionSelected(options[0]);
         return options;
     }, [selectedVPCData]);
 
     useEffect(() => {
-        dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
-    }, [dispatch, generateExistingSecurity]);
+        if(!isLoadConfig) {
+            dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
+            dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateExistingSecurity]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -63,7 +64,7 @@ const SecurityGroup = () => {
                 <div className={styles.setHeaderStyle}>
                     <div>{GENERAL.USE_AN_EXISTING_SECURITY}</div>
                     <div className={styles.separator} />
-                    <div>{optionSelected?.label}</div>
+                    <div>{selectedSG?.label}</div>
                 </div>
             );
         }
@@ -97,6 +98,7 @@ const SecurityGroup = () => {
                                 onChange={() => {
                                     setSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP);
                                     dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
+                                    dispatch(setSelectedExistingSecurityGroup(null));
                                 }}
                                 children={GENERAL.GENERATED_SECURITY_GROUP}
                                 className=""
@@ -113,7 +115,6 @@ const SecurityGroup = () => {
                                             : [generateExistingSecurity[0]]
                                     }
                                     onChange={(selectedOptions: any): void => {
-                                        setOptionSelected(selectedOptions);
                                         dispatch(setSelectedExistingSecurityGroup(selectedOptions));
                                     }}
                                     isSearchable={generateExistingSecurity.length > 5}
