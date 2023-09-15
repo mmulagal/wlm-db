@@ -8,7 +8,7 @@ import {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
-    FSX_CONCURRENCY_VALUE
+    FSX_BATCH_CONCURRENCY_VALUE
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 
@@ -16,12 +16,8 @@ const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
-async function getFSXDetails(credentialsId: string, region: string, fs: any, ontapFSxFilesystems: FSxFileSystemType[]) {
-    const enetInterfaceIds = fs.NetworkInterfaceIds;
-    let volumesList: FSxFileSystemType['volumes'] = [];
-
-    const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, fs.FileSystemId!);
-
+async function getFSXDetails(credentialsId: string, region: string, filsSys: any) {
+    const enetInterfaceIds = filsSys.NetworkInterfaceIds;
     const enetInterfaces: DescribeNetworkInterfacesRequest = {
         Filters: [
             {
@@ -31,10 +27,13 @@ async function getFSXDetails(credentialsId: string, region: string, fs: any, ont
         ]
     };
 
-    const networkInterfacesList = await getNetworkInterfacesList(credentialsId, region, enetInterfaces);
+    const [{ Volumes: fsxVolumes }, networkInterfacesList] = await Promise.all([
+        describeFSxVolumes(credentialsId, region, filsSys.FileSystemId!),
+        getNetworkInterfacesList(credentialsId, region, enetInterfaces)
+    ]);
     const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
 
-    volumesList = fsxVolumes?.map(
+    const volumesList: FSxFileSystemType['volumes'] = fsxVolumes?.map(
         ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => ({
             volumeId,
             volumeType,
@@ -47,42 +46,42 @@ async function getFSXDetails(credentialsId: string, region: string, fs: any, ont
     );
 
     // Get the FSx filesystem name, if available.
-    const { Tags: tags } = fs;
+    const { Tags: tags } = filsSys;
     const tag = tags?.find(({ Key: key }: { Key: string }) => key === AWS_RESOURCE_NAME_TAG);
 
-    ontapFSxFilesystems.push({
-        fileSystemId: fs.FileSystemId!,
+    return {
+        fileSystemId: filsSys.FileSystemId!,
         name: tag?.Value,
-        kmsKeyId: fs.KmsKeyId,
-        lifecycle: fs.Lifecycle!,
-        networkInterfaceIds: fs.NetworkInterfaceIds,
-        subnetIds: fs.SubnetIds,
-        vpcId: fs.VpcId,
+        kmsKeyId: filsSys.KmsKeyId,
+        lifecycle: filsSys.Lifecycle!,
+        networkInterfaceIds: filsSys.NetworkInterfaceIds,
+        subnetIds: filsSys.SubnetIds,
+        vpcId: filsSys.VpcId,
         ontapConfiguration: {
-            deploymentType: fs.OntapConfiguration?.DeploymentType,
-            endpointIpAddressRange: fs.OntapConfiguration?.EndpointIpAddressRange,
-            fsxAdminPassword: fs.OntapConfiguration?.FsxAdminPassword,
-            preferredSubnetId: fs.OntapConfiguration?.PreferredSubnetId,
-            routeTableIds: fs.OntapConfiguration?.RouteTableIds,
-            throughputCapacity: fs.OntapConfiguration?.ThroughputCapacity,
+            deploymentType: filsSys.OntapConfiguration?.DeploymentType,
+            endpointIpAddressRange: filsSys.OntapConfiguration?.EndpointIpAddressRange,
+            fsxAdminPassword: filsSys.OntapConfiguration?.FsxAdminPassword,
+            preferredSubnetId: filsSys.OntapConfiguration?.PreferredSubnetId,
+            routeTableIds: filsSys.OntapConfiguration?.RouteTableIds,
+            throughputCapacity: filsSys.OntapConfiguration?.ThroughputCapacity,
             diskIopsConfiguration: {
-                iops: fs.OntapConfiguration?.DiskIopsConfiguration?.Iops,
-                mode: fs.OntapConfiguration?.DiskIopsConfiguration?.Mode
+                iops: filsSys.OntapConfiguration?.DiskIopsConfiguration?.Iops,
+                mode: filsSys.OntapConfiguration?.DiskIopsConfiguration?.Mode
             },
             endpoints: {
                 intercluster: {
-                    dnsName: fs.OntapConfiguration?.Endpoints?.Intercluster?.DNSName,
-                    ipAddresses: fs.OntapConfiguration?.Endpoints?.Intercluster?.IpAddresses
+                    dnsName: filsSys.OntapConfiguration?.Endpoints?.Intercluster?.DNSName,
+                    ipAddresses: filsSys.OntapConfiguration?.Endpoints?.Intercluster?.IpAddresses
                 },
                 management: {
-                    dnsName: fs.OntapConfiguration?.Endpoints?.Management?.DNSName,
-                    ipAddresses: fs.OntapConfiguration?.Endpoints?.Management?.IpAddresses
+                    dnsName: filsSys.OntapConfiguration?.Endpoints?.Management?.DNSName,
+                    ipAddresses: filsSys.OntapConfiguration?.Endpoints?.Management?.IpAddresses
                 }
             }
         },
         volumes: volumesList,
         securityGroups: Array.from(sgs)
-    });
+    };
 }
 
 /*
@@ -93,7 +92,6 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
 
     let { FileSystems: allFSxFilesystems } = await describeFSxFileSystems(credentialsId, region);
-    const ontapFSxFilesystems: FSxFileSystemType[] = [];
 
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
@@ -104,6 +102,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     // 3. DescribeFSxFileSystems() returns all filesystems in a given AWS
     //    region, spanning different VPCs. We shall return only the filesystems
     //    in the given VPC.
+
     allFSxFilesystems = allFSxFilesystems?.filter(
         ({ FileSystemType, FileSystemId, VpcId, StorageType }) =>
             FileSystemType &&
@@ -116,20 +115,13 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
             StorageType === FSX_STORAGE_TYPE
     );
 
-    if (allFSxFilesystems?.length) {
-        const batchFS: Array<object> = [];
-        for (const fs of allFSxFilesystems) {
-            batchFS.push(fs);
+    const ontapFSxFilesystems: FSxFileSystemType[] = await Promise.map(
+        allFSxFilesystems!,
+        async fileSystems => getFSXDetails(credentialsId, region, fileSystems),
+        {
+            concurrency: FSX_BATCH_CONCURRENCY_VALUE
         }
-
-        await Promise.map(
-            batchFS,
-            async fileSystems => getFSXDetails(credentialsId, region, fileSystems, ontapFSxFilesystems),
-            {
-                concurrency: FSX_CONCURRENCY_VALUE
-            }
-        );
-    }
+    );
 
     return { filesystems: ontapFSxFilesystems };
 }
