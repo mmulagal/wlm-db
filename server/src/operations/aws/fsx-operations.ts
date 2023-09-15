@@ -16,8 +16,8 @@ const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
-async function getFSXDetails(credentialsId: string, region: string, filsSys: any) {
-    const enetInterfaceIds = filsSys.NetworkInterfaceIds;
+async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
+    const enetInterfaceIds = fileSys.NetworkInterfaceIds;
     const enetInterfaces: DescribeNetworkInterfacesRequest = {
         Filters: [
             {
@@ -28,7 +28,7 @@ async function getFSXDetails(credentialsId: string, region: string, filsSys: any
     };
 
     const [{ Volumes: fsxVolumes }, networkInterfacesList] = await Promise.all([
-        describeFSxVolumes(credentialsId, region, filsSys.FileSystemId!),
+        describeFSxVolumes(credentialsId, region, fileSys.FileSystemId!),
         getNetworkInterfacesList(credentialsId, region, enetInterfaces)
     ]);
     const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
@@ -46,36 +46,36 @@ async function getFSXDetails(credentialsId: string, region: string, filsSys: any
     );
 
     // Get the FSx filesystem name, if available.
-    const { Tags: tags } = filsSys;
+    const { Tags: tags } = fileSys;
     const tag = tags?.find(({ Key: key }: { Key: string }) => key === AWS_RESOURCE_NAME_TAG);
 
     return {
-        fileSystemId: filsSys.FileSystemId!,
+        fileSystemId: fileSys.FileSystemId!,
         name: tag?.Value,
-        kmsKeyId: filsSys.KmsKeyId,
-        lifecycle: filsSys.Lifecycle!,
-        networkInterfaceIds: filsSys.NetworkInterfaceIds,
-        subnetIds: filsSys.SubnetIds,
-        vpcId: filsSys.VpcId,
+        kmsKeyId: fileSys.KmsKeyId,
+        lifecycle: fileSys.Lifecycle!,
+        networkInterfaceIds: fileSys.NetworkInterfaceIds,
+        subnetIds: fileSys.SubnetIds,
+        vpcId: fileSys.VpcId,
         ontapConfiguration: {
-            deploymentType: filsSys.OntapConfiguration?.DeploymentType,
-            endpointIpAddressRange: filsSys.OntapConfiguration?.EndpointIpAddressRange,
-            fsxAdminPassword: filsSys.OntapConfiguration?.FsxAdminPassword,
-            preferredSubnetId: filsSys.OntapConfiguration?.PreferredSubnetId,
-            routeTableIds: filsSys.OntapConfiguration?.RouteTableIds,
-            throughputCapacity: filsSys.OntapConfiguration?.ThroughputCapacity,
+            deploymentType: fileSys.OntapConfiguration?.DeploymentType,
+            endpointIpAddressRange: fileSys.OntapConfiguration?.EndpointIpAddressRange,
+            fsxAdminPassword: fileSys.OntapConfiguration?.FsxAdminPassword,
+            preferredSubnetId: fileSys.OntapConfiguration?.PreferredSubnetId,
+            routeTableIds: fileSys.OntapConfiguration?.RouteTableIds,
+            throughputCapacity: fileSys.OntapConfiguration?.ThroughputCapacity,
             diskIopsConfiguration: {
-                iops: filsSys.OntapConfiguration?.DiskIopsConfiguration?.Iops,
-                mode: filsSys.OntapConfiguration?.DiskIopsConfiguration?.Mode
+                iops: fileSys.OntapConfiguration?.DiskIopsConfiguration?.Iops,
+                mode: fileSys.OntapConfiguration?.DiskIopsConfiguration?.Mode
             },
             endpoints: {
                 intercluster: {
-                    dnsName: filsSys.OntapConfiguration?.Endpoints?.Intercluster?.DNSName,
-                    ipAddresses: filsSys.OntapConfiguration?.Endpoints?.Intercluster?.IpAddresses
+                    dnsName: fileSys.OntapConfiguration?.Endpoints?.Intercluster?.DNSName,
+                    ipAddresses: fileSys.OntapConfiguration?.Endpoints?.Intercluster?.IpAddresses
                 },
                 management: {
-                    dnsName: filsSys.OntapConfiguration?.Endpoints?.Management?.DNSName,
-                    ipAddresses: filsSys.OntapConfiguration?.Endpoints?.Management?.IpAddresses
+                    dnsName: fileSys.OntapConfiguration?.Endpoints?.Management?.DNSName,
+                    ipAddresses: fileSys.OntapConfiguration?.Endpoints?.Management?.IpAddresses
                 }
             }
         },
@@ -91,7 +91,7 @@ async function getFSXDetails(credentialsId: string, region: string, filsSys: any
 async function getFSxFileSystemsList(credentialsId: string, region: string, vpcId: string) {
     logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
 
-    let { FileSystems: allFSxFilesystems } = await describeFSxFileSystems(credentialsId, region);
+    let allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
 
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
@@ -117,7 +117,7 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
 
     const ontapFSxFilesystems: FSxFileSystemType[] = await Promise.map(
         allFSxFilesystems!,
-        async fileSystems => getFSXDetails(credentialsId, region, fileSystems),
+        async fileSystem => getFSXDetails(credentialsId, region, fileSystem),
         {
             concurrency: FSX_BATCH_CONCURRENCY_VALUE
         }

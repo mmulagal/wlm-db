@@ -12,7 +12,7 @@ const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 describe('Testcases for Amazon FSx resources', () => {
     it('List FSx Filesystems', async () => {
         const response = await describeFSxFileSystems(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION);
-        expect(response).toEqual(fsxFilesystems);
+        expect(response).toEqual(fsxFilesystems.FileSystems);
     });
 
     it('List FSx Volumes', async () => {
