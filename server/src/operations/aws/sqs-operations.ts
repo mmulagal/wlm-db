@@ -186,22 +186,6 @@ async function processCloudFormationMessages() {
                                         masterStackName
                                     );
                                     if (masterStackDeployment) {
-                                        try {
-                                            await createEvent({
-                                                deploymentId: stackId,
-                                                accountId: masterStackDeployment.account_id,
-                                                deploymentName: stackName,
-                                                resourceType,
-                                                time: new Date(timestamp).valueOf(),
-                                                eventId,
-                                                eventStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                                eventStatusReason: resourceStatusReason,
-                                                data: isValid ? message : {}
-                                            });
-                                        } catch (error) {
-                                            logger.error('Failed to create event', error);
-                                        }
-
                                         const {
                                             id,
                                             account_id: accountId,
@@ -249,6 +233,21 @@ async function processCloudFormationMessages() {
                                                     endTime: new Date(timestamp).valueOf()
                                                 });
                                             }
+                                        }
+                                        try {
+                                            await createEvent({
+                                                deploymentId: stackId,
+                                                accountId: masterStackDeployment.account_id,
+                                                deploymentName: stackName,
+                                                resourceType,
+                                                time: new Date(timestamp).valueOf(),
+                                                eventId,
+                                                eventStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                eventStatusReason: resourceStatusReason,
+                                                data: isValid ? message : {}
+                                            });
+                                        } catch (error) {
+                                            logger.error('Failed to create event', error);
                                         }
 
                                         await deleteMessage(DEFAULT_AWS_REGION, {
