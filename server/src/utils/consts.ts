@@ -113,7 +113,8 @@ enum RouteTags {
     DEPLOYMENT = 'Deployment',
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
-    BATCH = 'Batch'
+    BATCH = 'Batch',
+    PRICING = 'Pricing'
 }
 
 enum HttpErrorCodes {
