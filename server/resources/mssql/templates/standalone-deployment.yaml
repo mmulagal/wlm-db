@@ -702,12 +702,12 @@ Resources:
                         b-disable-credssp:
                             command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\Disable-CredSSP.ps1"
                             waitAfterCompletion: 0
-                        # c-cleanup-scripts:
-                        #     command: powershell -Command "Remove-Item C:\cfn\scripts -Recurse -Force"
-                        #     waitAfterCompletion: '0'
-                        # d-cleanup-DSC:
-                        #     command: powershell -Command "Remove-Item C:\cfn\DSC* -Force -Recurse"
-                        #     waitAfterCompletion: '0'
+                        c-cleanup-scripts:
+                            command: powershell -Command "Remove-Item C:\cfn\scripts -Recurse -Force"
+                            waitAfterCompletion: '0'
+                        d-cleanup-DSC:
+                            command: powershell -Command "Remove-Item C:\cfn\DSC* -Force -Recurse"
+                            waitAfterCompletion: '0'
                 Finalize:
                     commands:
                         a-signal-resource:
@@ -747,10 +747,6 @@ Resources:
             GroupDescription: Allow access to the Workload instances
             VpcId: !Ref 'VPCID'
             SecurityGroupIngress:
-                - IpProtocol: -1
-                  FromPort: -1
-                  ToPort: -1
-                  CidrIp: !Ref 'VPCCIDR'
                 - IpProtocol: tcp
                   FromPort: 53
                   ToPort: 53
