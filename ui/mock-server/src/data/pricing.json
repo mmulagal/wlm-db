@@ -1,6 +1,6 @@
 {
-    "compute": "$243",
-    "storage": "$187",
-    "connectivity": "$241",
-    "total": "$5000"
+    "compute": 243,
+    "storage": { "storageCapacity": 128, "throughput": 184.32 },
+    "vpc": 241,
+    "total": 5000
 }
