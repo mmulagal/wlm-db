@@ -1,0 +1,71 @@
+import { 
+    setEncryptionRow, 
+    setInstanceType, 
+    setSelectedExistingSecurityGroup, 
+    setSelectedKeyPair, 
+    setSelectedLicenseId, 
+    setSelectedLicenseType, 
+    setSelectedSecurityGroup, 
+    setThroughputValue 
+} from "../../../store/mssql/mssqlFormSlice";
+import { GENERAL } from "../../../utils/appConstants";
+import { DEAFULT_INSTANCE_VALUE } from "../../../utils/consts";
+import { formatSize, generateOptionType } from "../../../utils/utilityFunctions";
+
+
+export const selectDefaultSecurityGroup = (dispatch: any) => {
+    dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
+    dispatch(setSelectedExistingSecurityGroup(''))
+}
+
+export const selectDefaultKeyPair = (keyPairData: any, dispatch: any) => {
+    if(keyPairData && keyPairData?.keyPairs?.length > 0){
+        const keyPaitFirst = keyPairData?.keyPairs[0];
+        const keyPairName = keyPaitFirst?.name || '';
+        const optionKP = generateOptionType(keyPairName, keyPairName, '', false, '', keyPaitFirst);
+        dispatch(setSelectedKeyPair(optionKP));
+    }
+}
+
+export const selectDefaultInstanceType = (instanceTypeData: any, dispatch:any) => {
+    if(instanceTypeData && instanceTypeData?.instanceTypes?.length > 0) {
+        const defaultInsType = instanceTypeData?.instanceTypes?.filter((instance: { instanceType: string; }) => 
+                    instance.instanceType === DEAFULT_INSTANCE_VALUE);
+        const firstInstanceName = (defaultInsType && defaultInsType.length > 0) ? defaultInsType[0] : instanceTypeData?.instanceTypes[0];
+        const value = firstInstanceName?.instanceType || '';
+        let label2 = '';
+        if (firstInstanceName?.vCpus) {
+            label2 += firstInstanceName?.vCpus + 'vCPU, ';
+        }
+        if (firstInstanceName?.ramInMib) {
+            label2 += formatSize(firstInstanceName?.ramInMib, 'mib') + ' RAM, ';
+        }
+        if (firstInstanceName?.iopsInMbps) {
+            label2 += firstInstanceName?.iopsInMbps + 'Mbps';
+        }
+        const option = generateOptionType(value, value, label2, false, '', firstInstanceName);
+        dispatch(setInstanceType(option));
+    }
+}
+
+export const selectDefaultEncryption = (kmsData: any, dispatch: any) => {
+    if(kmsData && kmsData.length > 0){
+        dispatch(setEncryptionRow([kmsData[0]]));
+    }
+}
+
+export const selectDefaultThroughput = (throughputVal: string, dispatch: any) => {
+    const option = generateOptionType(throughputVal, throughputVal, '', false, '');
+    dispatch(setThroughputValue(option));
+}
+
+export const selectDefaultLicense = (amiData:any, dispatch: any) => {
+    if(amiData && amiData?.amis?.length > 0) {
+        const firstAmi = amiData?.amis[0];
+        const amiVal = firstAmi?.imageId;
+        const amiName = firstAmi?.name;
+        const option = generateOptionType(amiVal, amiVal, amiName, false, '');
+        dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
+        dispatch(setSelectedLicenseId(option));
+    }
+}

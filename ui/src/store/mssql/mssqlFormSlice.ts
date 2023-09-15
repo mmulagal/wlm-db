@@ -25,8 +25,8 @@ const initialState: any = {
         value: GENERAL.WIN_SERVER_2016_VERSION
     },
     dbVersion: {
-        value: GENERAL.SQL_SERVER_2016_VERSION,
-        label: GENERAL.SQL_SERVER_2016
+        value: GENERAL.SQL_SERVER_2019_VERSION,
+        label: GENERAL.SQL_SERVER_2019
     },
     dbDeploymentModel: GENERAL.FAILOVER_CLUSTER,
     dbEdition: {
