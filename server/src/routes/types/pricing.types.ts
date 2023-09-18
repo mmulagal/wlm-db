@@ -28,7 +28,8 @@ const PricingServiceResponse = Type.Object({
         throughput: Type.Number()
     }),
     compute: Type.Number(),
-    vpc: Type.Optional(Type.Number())
+    vpc: Type.Optional(Type.Number()),
+    total: Type.Number()
 });
 
 type PricingServiceRequestType = Static<typeof PricingServiceRequest>;

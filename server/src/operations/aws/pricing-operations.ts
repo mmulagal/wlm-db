@@ -55,7 +55,7 @@ const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
 };
 
-const AWS_PRICING_FILTER_TYPE = 'TERM_MATCH';
+const AWS_PRICING_FILTER_TERM_MATCH = 'TERM_MATCH';
 
 const fsxService = {
     ServiceCode: 'AmazonFSx'
@@ -66,13 +66,13 @@ const ec2Service = {
 };
 
 const storageProductFamily: Filter = {
-    Type: AWS_PRICING_FILTER_TYPE,
+    Type: AWS_PRICING_FILTER_TERM_MATCH,
     Field: 'productFamily',
     Value: 'Storage'
 };
 
 const readWriteRequestProductFamily: Filter = {
-    Type: AWS_PRICING_FILTER_TYPE,
+    Type: AWS_PRICING_FILTER_TERM_MATCH,
     Field: 'productFamily',
     Value: 'Request'
 };
@@ -87,7 +87,7 @@ function getRegionCodeFilter(region?: string): Filter {
     logger.debug('Getting region code', { region });
 
     return {
-        Type: AWS_PRICING_FILTER_TYPE,
+        Type: AWS_PRICING_FILTER_TERM_MATCH,
         Field: 'regionCode',
         Value: region || DEFAULT_AWS_REGION
     };
@@ -99,7 +99,7 @@ function getDeploymentOption(deploymentOption?: string): Filter {
     const deploymentString: string = deploymentOption === 'singleAZ' ? 'Single-AZ_2N' : 'Multi-AZ';
 
     return {
-        Type: AWS_PRICING_FILTER_TYPE,
+        Type: AWS_PRICING_FILTER_TERM_MATCH,
         Field: 'deploymentOption',
         Value: deploymentString
     };
@@ -111,7 +111,7 @@ function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     const edition = sqlSoftwareTypes.get(sqlSoftwareType?.toLocaleLowerCase()) || sqlSoftwareTypes.get('standard');
 
     return {
-        Type: AWS_PRICING_FILTER_TYPE,
+        Type: AWS_PRICING_FILTER_TERM_MATCH,
         Field: 'preInstalledSw',
         Value: edition!
     };
@@ -125,27 +125,27 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): GetP
             getRegionCodeFilter(compute.regionCode),
             getSqlSoftwareEdition(compute.sqlSoftwareType),
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'productFamily',
                 Value: 'Compute Instance'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'instanceType',
                 Value: compute.instanceType
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'operatingSystem',
                 Value: 'windows'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'tenancy',
                 Value: 'Shared' // default Shared for now
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'CapacityStatus',
                 Value: 'Used' // On-demand
             }
@@ -163,12 +163,12 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): GetP
             getRegionCodeFilter(compute.regionCode),
             storageProductFamily,
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'volumeType',
                 Value: 'General Purpose'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'volumeApiName',
                 Value: 'gp2'
             }
@@ -187,12 +187,12 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Get
             getDeploymentOption(storage?.deploymentOption),
             storageProductFamily,
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'StorageType',
                 Value: 'SSD'
             }
@@ -210,12 +210,12 @@ function getFSxNThroughputInput(storage: PricingServiceRequestType['storage']): 
             getRegionCodeFilter(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'productFamily',
                 Value: 'Provisioned Throughput'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             }
@@ -233,12 +233,12 @@ function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): GetPro
             getRegionCodeFilter(storage?.regionCode),
             getDeploymentOption(storage?.deploymentOption),
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'productFamily',
                 Value: 'Provisioned IOPS'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             }
@@ -257,12 +257,12 @@ function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage'])
             getDeploymentOption(storage?.deploymentOption),
             readWriteRequestProductFamily,
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'requestType',
                 Value: 'Read'
             }
@@ -281,12 +281,12 @@ function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']
             getDeploymentOption(storage?.deploymentOption),
             readWriteRequestProductFamily,
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'fileSystemType',
                 Value: 'ONTAP'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'requestType',
                 Value: 'Write'
             }
@@ -305,12 +305,12 @@ function getVpcInput(vpcInfo: PricingServiceRequestType['vpc']): GetProductsComm
         Filters: [
             getRegionCodeFilter(vpcInfo?.regionCode),
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'group',
                 Value: 'AWSClientVPN'
             },
             {
-                Type: AWS_PRICING_FILTER_TYPE,
+                Type: AWS_PRICING_FILTER_TERM_MATCH,
                 Field: 'operation',
                 Value: 'ClientVPNConnections'
             }
@@ -421,17 +421,18 @@ async function calculatePrice(
     const [
         ec2InstanceRate,
         ec2StorageRate,
-        // fsxStorageRate,
-        // fsxThroughputRate,
-        // fsxIopsRate,
-        // fsxReadRequestsRate,
-        // fsxWriteRequestsRate,
+        fsxStorageRate,
+        fsxThroughputRate,
+        fsxIopsRate,
+        fsxReadRequestsRate,
+        fsxWriteRequestsRate,
         vpcRate
     ] = (productsResponse || []).map(parseResponse);
 
     const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate);
-    const vpcCost = getPriceUtil(vpcRate, HOURS_IN_MONTH, 1);
+    const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
+    logger.debug(fsxStorageRate, fsxThroughputRate, fsxIopsRate, fsxReadRequestsRate, fsxWriteRequestsRate);
     // const fsxStorageCost = calculateFsxStorageCost(
     //     fsxStorageRate,
     //     storage.diskSize
@@ -452,7 +453,8 @@ async function calculatePrice(
             throughput: 184.32
         },
         compute: ec2Cost,
-        ...(vpc && { vpc: vpcCost })
+        ...(vpc && { vpc: vpcCost }),
+        total: ec2Cost + vpcCost
     };
 }
 
