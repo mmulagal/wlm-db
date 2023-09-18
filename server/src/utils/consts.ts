@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
+import moment from 'moment';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -504,7 +505,9 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
+
+// Signed URL Valid for 24 hours
+const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry-hours')}`, 'hours').asSeconds();
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -772,7 +775,7 @@ export {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
-    S3_BUCKET_SIGNED_URL_EXPIRTY,
+    S3_BUCKET_SIGNED_URL_EXPIRY,
     HTTP_GET,
     HTTP_POST,
     HTTP_DELETE,

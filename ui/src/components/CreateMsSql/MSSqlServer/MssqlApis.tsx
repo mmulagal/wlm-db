@@ -26,11 +26,16 @@ import {
     addVpcList
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
-import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, DEAFULT_INSTANCE_VALUE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
-import { formatKmsData, formatSize, generateOptionType, sortListOfDict } from '../../../utils/utilityFunctions';
-import { setEncryptionRow, setInstanceType, setSelectedKeyPair, setSelectedLicenseId } from '../../../store/mssql/mssqlFormSlice';
+import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
+import { formatKmsData, sortListOfDict } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
+import { 
+    selectDefaultEncryption, 
+    selectDefaultInstanceType,
+    selectDefaultKeyPair,
+    selectDefaultLicense
+ } from './MSSqlUtils';
 
 
 const MssqlApis = () => {
@@ -284,11 +289,7 @@ const MssqlApis = () => {
         } else {
             dispatch(addAmiList({ amiData, amiLoading, amiError }));
             if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
-                const firstAmi = amiData?.amis[0];
-                const amiVal = firstAmi?.imageId;
-                const amiName = firstAmi?.name;
-                const option = generateOptionType(amiVal, amiVal, amiName, false, '');
-                dispatch(setSelectedLicenseId(option));
+                selectDefaultLicense(amiData, dispatch);
             }
         }
         if(!amiLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.AMI)){
@@ -317,8 +318,8 @@ const MssqlApis = () => {
         } else {
             const kmsData = formatKmsData(kmsList);
             dispatch(addKmsKeysList({ kmsData, kmsLoading, kmsError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE && kmsData && kmsData.length > 0){
-                dispatch(setEncryptionRow([kmsData[0]]));
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+                selectDefaultEncryption(kmsData, dispatch);
             }
         }
         if(!kmsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KMS)){
@@ -334,10 +335,7 @@ const MssqlApis = () => {
         } else {
             dispatch(addKeyPairList({ keyPairData, keyPairLoading, keyPairError }));
             if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
-                const keyPaitFirst = keyPairData?.keyPairs[0];
-                const keyPairName = keyPaitFirst?.name || '';
-                const option = generateOptionType(keyPairName, keyPairName, '', false, '', keyPaitFirst);
-                dispatch(setSelectedKeyPair(option));
+                selectDefaultKeyPair(keyPairData, dispatch);
             }
         }
         if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KEYPAIR)){
@@ -352,23 +350,8 @@ const MssqlApis = () => {
             dispatch(addInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
         } else {
             dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE && instanceTypeData && instanceTypeData?.instanceTypes.length > 0){
-                const defaultInsType = instanceTypeData?.instanceTypes?.filter((instance: { instanceType: string; }) => 
-                    instance.instanceType === DEAFULT_INSTANCE_VALUE);
-                const firstInstanceName = (defaultInsType && defaultInsType.length > 0) ? defaultInsType[0] : instanceTypeData?.instanceTypes[0];
-                const value = firstInstanceName?.instanceType || '';
-                let label2 = '';
-                if (firstInstanceName?.vCpus) {
-                    label2 += firstInstanceName?.vCpus + 'vCPU, ';
-                }
-                if (firstInstanceName?.ramInMib) {
-                    label2 += formatSize(firstInstanceName?.ramInMib, 'mib') + ' RAM, ';
-                }
-                if (firstInstanceName?.iopsInMbps) {
-                    label2 += firstInstanceName?.iopsInMbps + 'Mbps';
-                }
-                const option = generateOptionType(value, value, label2, false, '', firstInstanceName);
-                dispatch(setInstanceType(option));
+            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+                selectDefaultInstanceType(instanceTypeData, dispatch);
             }
         }
         if(!instanceTypeLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.INSTANCE)){
