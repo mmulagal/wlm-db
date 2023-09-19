@@ -41,7 +41,6 @@ const EstimatedCost = () => {
 
     useEffect(() => {
         if (
-            false &&
             regionValue &&
             instanceTypeName &&
             sqlSoftwareTypeValue &&
@@ -62,7 +61,7 @@ const EstimatedCost = () => {
                     regionCode: regionValue?.value || '',
                     diskSize: `${diskSize}${diskSizeUnit}`,
                     throughput: throughputValue,
-                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : '',
+                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
                     deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
                 },
                 connectivity: {
@@ -75,7 +74,11 @@ const EstimatedCost = () => {
                     setTimeout(() => {
                         setIsLoading(false);
                         setFetchResult(true);
-                        setData(data);
+                        if (data.error) {
+                            setIsDisabled(true);
+                        } else {
+                            setData(data);
+                        }
                     }, 2000);
                 })
                 .catch((error: any) => {
@@ -116,35 +119,29 @@ const EstimatedCost = () => {
     // }, [fetchResult]);
 
     const setHeader = () => {
-        // if (isLoading) {
-        //     return <LoadingComponent />;
-        // } else if (isDisabled) {
-        //     <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-        //         {GENERAL.COST_ERROR}
-        //     </Typography>;
-        // } else if (!regionValue) {
-        //     return (
-        //         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-        //             {GENERAL.ESTIMATED_COST_HEADER}
-        //         </Typography>
-        //     );
-        // } else {
-        //     return <Typography variant="Regular_14">{`$${data?.data.total}`}</Typography>;
-        // }
-
-        return (
-            <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                {GENERAL.ESTIMATED_COST_HEADER}
-            </Typography>
-        );
+        if (isLoading) {
+            return <LoadingComponent />;
+        } else if (isDisabled) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.COST_ERROR}
+                </Typography>
+            );
+        } else if (!regionValue) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.ESTIMATED_COST_HEADER}
+                </Typography>
+            );
+        } else {
+            return <Typography variant="Regular_14">{`$${data?.data?.total}`}</Typography>;
+        }
     };
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
-                isDisabled={true}
-                isExpandDisabled={true}
-                // isDisabled={isDisabled || !regionValue}
-                // isExpandDisabled={isDisabled || !regionValue}
+                isDisabled={isDisabled || !regionValue}
+                isExpandDisabled={isDisabled || !regionValue}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="24"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
