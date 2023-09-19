@@ -404,6 +404,7 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['eu-west-1', 'Europe (Ireland)'],
     ['eu-west-2', 'Europe (London)'],
     ['eu-west-3', 'Europe (Paris)'],
+    ['il-central-1', 'Israel (Tel Aviv)'],
     ['me-central-1', 'Middle East (UAE)'],
     ['me-south-1', 'Middle East (Bahrain)'],
     ['sa-east-1', 'South America (Sao Paulo)'],
