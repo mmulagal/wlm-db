@@ -1,0 +1,149 @@
+// workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
+import { GetCommandInvocationCommand, SendCommandCommand, SSMClient } from '@aws-sdk/client-ssm';
+import { mockClient } from 'aws-sdk-client-mock';
+import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
+import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
+
+const ssmMock = mockClient(SSMClient);
+
+const cpuParams = {
+    commands: [
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\""
+    ]
+};
+const memeoryParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n                                    (processmem.physical_memory_in_use_kb * 1024) AS used,\n                                    (sysmem.total_physical_memory_kb * 1024) AS total,\n                                    ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n                                    ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n                                    FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem FOR JSON PATH"'
+    ]
+};
+const dbCountParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH"'
+    ]
+};
+const dbSummaryParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+const noOfConnParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL FOR JSON PATH"'
+    ]
+};
+const serClusterParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT SERVERPROPERTY(\'IsClustered\') as isClustered FOR JSON PATH"'
+    ]
+};
+const serNodesParams = {
+    commands: [
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, SERVERPROPERTY('MachineName') as standbyNode FOR JSON PATH\""
+    ]
+};
+const serStateParams = {
+    commands: [
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'\""
+    ]
+};
+const serVerParams = {
+    commands: ['C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT @@version AS serverDetails"']
+};
+const tablesCountParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database Aaronview -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables FOR JSON PATH"'
+    ]
+};
+const tablesListParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Database Aaronview -Query "SET NOCOUNT ON; SELECT \n                        t.NAME AS tableName,\n                        t.type_desc AS tableType,\n                        s.Name AS tableSchema,\n                        SUM(a.total_pages) * 8 * 1024 AS tableSize\n                    FROM \n                        sys.tables t\n                    INNER JOIN      \n                        sys.indexes i ON t.OBJECT_ID = i.object_id\n                    INNER JOIN \n                        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id\n                    INNER JOIN \n                        sys.allocation_units a ON p.partition_id = a.container_id\n                    LEFT OUTER JOIN \n                        sys.schemas s ON t.schema_id = s.schema_id\n                    GROUP BY \n                        t.Name, s.Name, p.Rows, t.type_desc\n                    ORDER BY \n                        t.Name offset 0 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+const diskSizeParams = {
+    commands: [
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query 'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH'"
+    ]
+};
+
+const diskDataParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; WITH presel AS (SELECT database_id, FILE_ID,LEFT(mf1.physical_name,3) AS Volume, ROW_NUMBER() OVER (PARTITION BY LEFT(mf1.physical_name,3) ORDER BY mf1.database_id) AS RowNum\n                                FROM sys.master_files mf1)\n                                ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID\n                                FROM presel pr\n                                WHERE pr.RowNum = 1)\n                                SELECT ovs.total_bytes AS total, ovs.available_bytes AS remaining\n                                FROM roundtwo mf\n                                CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs FOR JSON PATH"'
+    ]
+};
+const serGUIDParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT service_broker_guid AS serverGuid FROM sys.databases WHERE name = \'msdb\' FOR JSON PATH"'
+    ]
+};
+const serNameParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT @@SERVERNAME as serverName FOR JSON PATH"'
+    ]
+};
+
+ssmMock
+    .on(SendCommandCommand)
+    .resolves(listSendCommandCommandResponse.resourceCommandResponse)
+    .on(SendCommandCommand, { Parameters: cpuParams })
+    .resolves(listSendCommandCommandResponse.resourceCommandResponse)
+    .on(SendCommandCommand, { Parameters: memeoryParams })
+    .resolves(listSendCommandCommandResponse.resourceCommandResponse)
+    .on(SendCommandCommand, { Parameters: dbCountParams })
+    .resolves(listSendCommandCommandResponse.dbCountCommandResponse)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse)
+    .on(SendCommandCommand, { Parameters: noOfConnParams })
+    .resolves(listSendCommandCommandResponse.noOfConnCommandResponse)
+    .on(SendCommandCommand, { Parameters: serClusterParams })
+    .resolves(listSendCommandCommandResponse.serClusterCommandResponse)
+    .on(SendCommandCommand, { Parameters: serNodesParams })
+    .resolves(listSendCommandCommandResponse.serNodesCommandResponse)
+    .on(SendCommandCommand, { Parameters: serStateParams })
+    .resolves(listSendCommandCommandResponse.serStateCommandResponse)
+    .on(SendCommandCommand, { Parameters: serVerParams })
+    .resolves(listSendCommandCommandResponse.serVerCommandResponse)
+    .on(SendCommandCommand, { Parameters: tablesCountParams })
+    .resolves(listSendCommandCommandResponse.tablesCountCommandResponse)
+    .on(SendCommandCommand, { Parameters: tablesListParams })
+    .resolves(listSendCommandCommandResponse.tablesListCommandResponse)
+    .on(SendCommandCommand, { Parameters: diskSizeParams })
+    .resolves(listSendCommandCommandResponse.diskSizeCommandResponse)
+    .on(SendCommandCommand, { Parameters: diskDataParams })
+    .resolves(listSendCommandCommandResponse.diskDataCommandResponse)
+    .on(SendCommandCommand, { Parameters: serGUIDParams })
+    .resolves(listSendCommandCommandResponse.serGUIDCommandResponse)
+    .on(SendCommandCommand, { Parameters: serNameParams })
+    .resolves(listSendCommandCommandResponse.serNameCommandResponse);
+
+ssmMock
+    .on(GetCommandInvocationCommand)
+    .resolves(getCommandInvocationResponse.resourceInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbCount' })
+    .resolves(getCommandInvocationResponse.dbCountInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-tablesCount' })
+    .resolves(getCommandInvocationResponse.tablesCountInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-tablesList' })
+    .resolves(getCommandInvocationResponse.tablesListInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serNodes' })
+    .resolves(getCommandInvocationResponse.serNodesInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serCluster' })
+    .resolves(getCommandInvocationResponse.serIsClusteredInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serState' })
+    .resolves(getCommandInvocationResponse.serStateInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-noOfConn' })
+    .resolves(getCommandInvocationResponse.noOfConnInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serVer' })
+    .resolves(getCommandInvocationResponse.serVersionInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-diskSize' })
+    .resolves(getCommandInvocationResponse.diskSizeInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-diskData' })
+    .resolves(getCommandInvocationResponse.diskDataInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serGUID' })
+    .resolves(getCommandInvocationResponse.servGUIDInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serName' })
+    .resolves(getCommandInvocationResponse.serNameInvocationResponse);

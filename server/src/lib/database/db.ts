@@ -51,7 +51,7 @@ interface Config {
 }
 
 async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
-    logger.info('Listing deployments', { accountId, deploymentId });
+    logger.info('Listing deployments', { accountId, deploymentId, deploymentName });
     return prisma.client.deployment.findMany({
         where: {
             ...(accountId && { account_id: accountId }),

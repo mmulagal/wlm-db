@@ -4,6 +4,7 @@
 import { SNSClient, ListTopicsCommand, CreateTopicCommand, SubscribeCommand } from '@aws-sdk/client-sns';
 import { mockClient } from 'aws-sdk-client-mock';
 import { faker } from '@faker-js/faker';
+
 const snsMock = mockClient(SNSClient);
 
 snsMock.on(ListTopicsCommand).resolves({

@@ -53,7 +53,8 @@ const RegionVpc = () => {
         if(!isLoadConfig){
             dispatch(setSelectedRegionData(generateRegionsData[0]));
         }
-    }, [dispatch, generateRegionsData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateRegionsData]);
 
     useEffect(() => {
         if (!isVPCNotFilled && isCreateHit) {
@@ -80,13 +81,14 @@ const RegionVpc = () => {
                 2: false
             });
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, regionsData, isLoadConfig]);
 
     //Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
-            const vpcValue = (val.name || '-') + ' | ' + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '');
+            const vpcValue = ((val?.name ? val.name + ' | ': '') + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '')) || '-';
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
@@ -118,7 +120,8 @@ const RegionVpc = () => {
         if(!isLoadConfig){
             dispatch(setSelectedVPC(null));
         }
-    }, [dispatch, generateVPCOptions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [generateVPCOptions]);
 
     //Set the Header text here
     const setHeader = () => {

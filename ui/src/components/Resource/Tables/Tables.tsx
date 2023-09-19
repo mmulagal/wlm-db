@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 const Tables = () => {
     let {tables, batchingCompleted} = useOutletContext<{tables: any, batchingCompleted: boolean}>();
     const summaryData = useMemo(() => {
-        const totalSize = tables.reduce((sum:number, item:any) => sum + parseInt(item.databaseSize), 0);
+        const totalSize = tables.reduce((sum:number, item:any) => sum + parseInt(item.tableSize), 0);
         const totalSizeObj = formatSizeSplit(totalSize);
         return {
             count: tables.length,

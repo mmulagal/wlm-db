@@ -38,6 +38,7 @@ Metadata:
       - Label:
           default: Amazon FSx for ONTAP Volume Configuration
         Parameters: 
+          - DeploymentMode
           - FSxFileSystemName
           - FSxFileSystemId
           - FSxAdministratorPasswordSecret
@@ -58,8 +59,9 @@ Metadata:
           - FileSystemEncryptionKeyId
           - FSxDiskIops
       - Label:
-          default: Microsoft SQL Server FCI Configuration
+          default: Microsoft SQL Server Configuration
         Parameters:
+          - SQLDeploymentMode
           - SQLAMIID
           - SQLServiceAccountName
           - SQLServiceAccountSecret
@@ -86,6 +88,8 @@ Metadata:
           - RoleCredentialsId
           - JwtToken
     ParameterLabels:
+      DeploymentMode:
+        default: File system deployment mode
       ApplicationName:
         default: Application Name
       Ec2RoleName:
@@ -152,7 +156,21 @@ Metadata:
         default: (optional) Notification ARN
       ValidationAmi:
        default: Validation node AMI image id
+      SQLDeploymentMode:
+        default: SQL server deployment mode
 Parameters: 
+  DeploymentMode:
+        Description: File system deployment mode
+        Type: String
+        Default: MULTI_AZ_1
+        AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1]
+  
+  SQLDeploymentMode:
+        Description: SQL server deployment mode
+        Type: String
+        Default: fci
+        AllowedValues: [fci, standalone]
+
   Ec2RoleName:
     Description: EC2 instance role name
     Type: String
@@ -275,6 +293,7 @@ Parameters:
     MaxLength: "15"
     MinLength: "4"
     Type: String
+    Default: WSFCluster1
 
   VPCCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
@@ -344,10 +363,12 @@ Parameters:
   FSxQuorumVolumeName:
     Description: FSx quorum volume name
     Type: String
+    Default: wlmdb-quorum
   
   FSxQuorumVolumeSize:
     Description: Size of the cluster quorum volume, in megabytes (MiB).
     Type: Number
+    Default: 100
 
   FSxDataLunSize:
     Description: Size of the SQL data lun, in megabytes (MiB)
@@ -444,6 +465,8 @@ Conditions:
     - Condition: NewOntapFsx
   ExcludeNotification: !Equals [!Ref "NotificationARN", ""]
   IncludeNotification: !Not [Condition: ExcludeNotification]
+  IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
+  IsFailoverCluster: !Not [Condition: IsStandalone]
 Resources:
   TrackStackDeployment:
     Type: Custom::MyCustomResource
@@ -500,6 +523,7 @@ Resources:
       {{Tags}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
+    Condition: IsFailoverCluster
     DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
@@ -543,10 +567,27 @@ Resources:
       {{Tags}}
   WLMSQLResourceGroup:
     Type: AWS::ResourceGroups::Group
+  FCIWaitHandler: 
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Condition: IsFailoverCluster
+    DependsOn: 
+      - TrackStackDeployment
+      - ValidationStack2
+      - ValidationStack1
+  SIWaitHandler: 
+    Type: AWS::CloudFormation::WaitConditionHandle
     DependsOn: 
       - TrackStackDeployment
       - ValidationStack1
-      - ValidationStack2
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties: 
+      Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
+      Timeout: '7200'
+      Count: 0
+  WLMSQLResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    DependsOn: WaitCondition
     Properties:
       Name:
         Ref: AWS::StackName
@@ -555,13 +596,12 @@ Resources:
   NewFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
-    DependsOn: 
-      - TrackStackDeployment
-      - ValidationStack1
-      - ValidationStack2
+    DependsOn: WaitCondition
     Properties:
       TemplateURL: {{ FSXNewTemplate }}
       Parameters:
+        DeploymentMode:
+          Ref: DeploymentMode
         FSxFileSystemName:
           Ref: FSxFileSystemName
         FSxAdministratorPasswordSecret:
@@ -615,13 +655,12 @@ Resources:
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
-    DependsOn: 
-      - TrackStackDeployment
-      - ValidationStack1
-      - ValidationStack2
+    DependsOn: WaitCondition
     Properties:
       TemplateURL: {{FSXExistingTemplate}}
       Parameters:
+        DeploymentMode:
+          Ref: DeploymentMode
         FSxSvmName:
           Ref: SQLSvmName
         FSxFileSystemId:
@@ -652,10 +691,8 @@ Resources:
       {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: 
-      - TrackStackDeployment
-      - ValidationStack1
-      - ValidationStack2
+    Condition: IsFailoverCluster
+    DependsOn: WaitCondition
     Properties:
       TemplateURL: {{SQLTemplate}}
       Parameters:
@@ -766,9 +803,104 @@ Resources:
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
+  SQLStandaloneStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsStandalone
+    DependsOn: WaitCondition
+    Properties:
+      TemplateURL: {{SQLStandaloneTemplate}}
+      Parameters:
+        UniqueID:
+          Ref: UniqueID
+        Ec2RoleName:
+          Ref: Ec2RoleName
+        ADDnsIpAddresses:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: DNSIpAddresses
+        DomainAdminSecretName:
+          Ref: DomainAdminSecretName
+        DomainAdminUser:
+          Ref: DomainAdminUser
+        DomainDNSName:
+          Ref: DomainDNSName
+        DomainMemberSGID:
+          Ref: DomainMemberSGID
+        KeyPairName:
+          Ref: KeyPairName
+        PrivateSubnetID:
+          Ref: PrivateSubnet1ID
+        RouteTableId:
+          Ref: RouteTable1Id
+        AssetsBucketName:
+          Ref: AssetsBucketName
+        FSxDataLunSize:
+          Ref: FSxDataLunSize
+        AssetsS3RegionCode:
+          Ref: AssetsS3RegionCode
+        AssetsS3KeyPrefix:
+          Ref: AssetsS3KeyPrefix
+        MSSQLMediaBucketName:
+          Ref: MSSQLMediaBucketName
+        MSSQLMediaPathKey:
+          Ref: MSSQLMediaPathKey
+        AMIID:
+          Ref: SQLAMIID
+        SQLAdminAccounts:
+          Ref: SQLServiceAccountName
+        SQLServiceAccountSecret:
+          Ref: SQLServiceAccountSecret
+        VPCID:
+          Ref: VPCID
+        VPCCIDR:
+          Ref: VPCCIDR
+        WorkloadInstanceType:
+          Ref: WorkloadInstanceType
+        SqlFSxServerNetBIOSName:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+        FSxFileSystemId:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
+            - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
+        FsxAdminPassword:
+          Ref: FSxAdministratorPasswordSecret
+        SQLSvmName:
+          Ref: SQLSvmName
+        FSxDataVolumeName:
+          Ref: FSxDataVolumeName
+        FSxTempDbVolumeName:
+          Ref: FSxTempDbVolumeName
+        FSxDataLunSize:
+          Ref: FSxDataLunSize
+        SQLigroupname:
+          Ref: SQLigroupname
+        ONTAPSecurityGroupID:
+          !If
+            - NewOntapFsx
+            - !GetAtt "NewFSxStack.Outputs.FsxSecurityGroupID"
+            - !Ref "ONTAPSecurityGroupID"
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        NumberOfNodes: "1"
+        FSxLogVolumeName:
+          Ref: FSxLogVolumeName
+        ParentStackName:
+          Ref: AWS::StackName
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - [Ref: NotificationARN, Ref: SnsServiceToken]
+          - [Ref: SnsServiceToken]
+>>>>>>> 466317d28d5ddebc0787f3904ea0812f8f6e5a41
   PostStackDeployment:
     Type: Custom::MyCustomResource
-    DependsOn: SQLServerStack
     Properties:
       ServiceToken: !Ref SnsServiceToken
       AccountId: !Ref AccountId
@@ -782,5 +914,23 @@ Resources:
             - NewOntapFsx
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
-      ActiveInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
-      StandbyInstanceIp: !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
+      ActiveInstanceIp: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
+            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeIp"
+      ActiveInstanceId: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
+            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
+      StandbyInstanceIp: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
+            - !Ref AWS::NoValue
+      StandbyInstanceId: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
+            - !Ref AWS::NoValue

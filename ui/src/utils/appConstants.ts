@@ -95,7 +95,7 @@ export const GENERAL = {
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
-    CLOUDFORMATION_TEMPLATE_URL: 'CloudFormation template URL',
+    CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
     SAME_ROUTE_SUBNET_ERROR: 'AWS FSx requires route tables to be different for subnets in multi-zone deployment.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',

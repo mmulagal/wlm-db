@@ -61,8 +61,13 @@ const CloudFormation = () => {
                         dispatch(
                             addNotification({
                                 notificationType: NOTIFICATION_TYPES.INFO,
-                                message: GENERAL.CLOUDFORMATION_TEMPLATE_URL,
-                                additionalText: url
+                                message: <>
+                                    {GENERAL.CLOUDFORMATION_TEMPLATE_URL[0]}
+                                    <Button Component="button" variant="link" className={CommonStyles.buttonClass} 
+                                        onClick={() => window.open(url, '_blank', 'noopener')}>
+                                        {GENERAL.CLOUDFORMATION_TEMPLATE_URL[1]}
+                                    </Button>
+                                </>,
                             })
                         );
                         setTimeout(() => { window.open(url, '_blank', 'noopener') }, 3000);

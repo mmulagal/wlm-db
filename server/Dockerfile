@@ -19,9 +19,12 @@ COPY config/log4js.json ./config/log4js.json
 COPY resources/mssql/templates/wlm-master.yaml ./resources/mssql/templates/wlm-master.yaml
 COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/templates/vpc-ad-validation.yaml
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
+COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/templates/standalone-deployment.yaml
 COPY dist/src ./
 
 COPY prisma ./prisma/
+
+COPY patches ./patches/
 
 RUN npm ci --omit=dev
 

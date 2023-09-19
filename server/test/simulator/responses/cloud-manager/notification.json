@@ -1,0 +1,61 @@
+[
+    {
+        "id": "07c8f9ee8d214592b2073c1838eade71",
+        "payload": {
+            "plugins": {
+                "ui": {
+                    "user": "*",
+                    "timestamp": 1694493383957,
+                    "priority": "critical",
+                    "service": "WLMDB",
+                    "description": "MSSql cloud formation template successfully deployed",
+                    "errors": "",
+                    "persist": true,
+                    "persistConfig": {
+                        "ttl": 3600
+                    },
+                    "resourceName": "WLMDB",
+                    "actionLabel": "MSSql Cloud Formation Deployment",
+                    "actionRequired": {
+                        "to": "/database-services",
+                        "label": "Go to Dashboard"
+                    },
+                    "checkPermission": false,
+                    "permissionConfig": {
+                        "action": "resources:*",
+                        "enforceWorkspace": true
+                    },
+                    "link": {
+                        "url": "/database-services",
+                        "label": "More information"
+                    }
+                },
+                "alertNotification": {
+                    "subject": "MSSql Cloud Formation Deployment",
+                    "title": "MSSql Cloud Formation Deployment",
+                    "priority": "critical",
+                    "body": {
+                        "contentType": "markdown",
+                        "content": "MSSql cloud formation template successfully deployed"
+                    },
+                    "actionRequired": {
+                        "to": "https://staging.api.bluexp.netapp.com/database-services",
+                        "label": "Go to Dashboard"
+                    },
+                    "service": "WLMDB",
+                    "link": {
+                        "url": "https://staging.api.bluexp.netapp.com/database-services",
+                        "label": "More information"
+                    }
+                }
+            },
+            "id": "07c8f9ee8d214592b2073c1838eade71",
+            "_metadata": {
+                "action": "deployment",
+                "resourceType": "WLMDB",
+                "resourceId": "WLMDB-Resource-1",
+                "accountId": "account-6S5xAetX"
+            }
+        }
+    }
+]

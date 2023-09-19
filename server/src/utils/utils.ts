@@ -6,7 +6,16 @@ import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
-import { SQL_AMI_NAMES, WLMDB, USER_TOKEN, DEFAULT_AWS_REGION, FSX_SSD_MIN_SIZE, FSX_SSD_MAX_SIZE } from './consts';
+import {
+    SQL_AMI_NAMES,
+    WLMDB,
+    USER_TOKEN,
+    DEFAULT_AWS_REGION,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE,
+    FCI_STACKNAME,
+    STANDALONE_STACKNAME
+} from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
@@ -22,7 +31,7 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
         .filter(ami => (dbEdition ? ami.toLowerCase().includes(dbEdition.toLowerCase()) : true));
 }
 
-function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean) {
+function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean, sqlDeploymentType: string = 'fci') {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
@@ -43,11 +52,16 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
     FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
     FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
-    return {
+    const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
+    const netbios =
+        sqlDeploymentType === 'fci'
+            ? [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`]
+            : [`sqlnode-${randomDigits}`];
+
+    let params = {
         UniqueID: suffix,
-        StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
+        StackName: `${prefix.toUpperCase()}-${stacknameSubstring}-${suffix}`,
         // VpcName: `${prefix}-vpc-${suffix}`,
-        SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
         FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
         FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
         FSxDataVolumeSize,
@@ -55,18 +69,27 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         FSxLogVolumeSize, // 25% of FSxDataVolumeSize
         FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
         FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
-        FSxQuorumVolumeName: `${prefix}_quorum_${suffix}`,
-        FSxQuorumVolumeSize,
         FSxSvmName: `${prefix}_svm_${suffix}`,
         SQLigroupname: `${prefix}_sqligroup_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
-        NodeNetBIOSNames: [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`],
+        NodeNetBIOSNames: netbios,
         DomainAdminSecretName: `${prefix}-domain-${suffix}`,
         FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
         SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
         FSxStorageCapacity,
         FSxDataLunSize: FSxDataLunSizeInMib
     };
+    if (sqlDeploymentType === 'fci') {
+        params = {
+            ...params,
+            ...{
+                SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
+                FSxQuorumVolumeName: `${prefix}_quorum_${suffix}`,
+                FSxQuorumVolumeSize
+            }
+        };
+    }
+    return params;
 }
 
 function generateRandomNumberInRange(min: number, max: number) {

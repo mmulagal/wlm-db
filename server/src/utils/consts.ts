@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
+import moment from 'moment';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -71,6 +72,7 @@ const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
 const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
+const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
@@ -111,7 +113,8 @@ enum RouteTags {
     DEPLOYMENT = 'Deployment',
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
-    BATCH = 'Batch'
+    BATCH = 'Batch',
+    PRICING = 'Pricing'
 }
 
 enum HttpErrorCodes {
@@ -401,6 +404,7 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['eu-west-1', 'Europe (Ireland)'],
     ['eu-west-2', 'Europe (London)'],
     ['eu-west-3', 'Europe (Paris)'],
+    ['il-central-1', 'Israel (Tel Aviv)'],
     ['me-central-1', 'Middle East (UAE)'],
     ['me-south-1', 'Middle East (Bahrain)'],
     ['sa-east-1', 'South America (Sao Paulo)'],
@@ -460,12 +464,14 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
 
+    fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
     encryptionKey: 'FileSystemEncryptionKeyId',
 
+    sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
     sqlFciName: 'SqlFSxFCIName',
@@ -502,7 +508,9 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
+
+// Signed URL Valid for 24 hours
+const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry-hours')}`, 'hours').asSeconds();
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -641,6 +649,10 @@ const SQL_TEMPLATES_ASSETS = [
         url: 'validation/Restart-Computer.ps1'
     },
     {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
+    },
+    {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
     }
@@ -649,13 +661,15 @@ const SQL_TEMPLATES_ASSETS = [
 const SQL_TEMPLATES_DISTRIBUTION = {
     VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
     SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml'
+    MASTER: './resources/mssql/templates/wlm-master.yaml',
+    SQLSTANDALONE: './resources/mssql/templates/standalone-deployment.yaml'
 };
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
-    VALIDATION = 'validation'
+    VALIDATION = 'validation',
+    SQLSTANDALONE = 'sqlstandalone'
 }
 
 enum DATABASE_METRIC_TYPE {
@@ -684,6 +698,17 @@ const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQue
 const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
+
+const FCI_STACKNAME = 'SQLFCIStack';
+const STANDALONE_STACKNAME = 'Standalone';
+
+// Notification
+const CRITICAL = 'critical';
+const RESOURCE_ID = 'WLMDB-Resource-1';
+const PUBLISH = 'publish';
+const MOREINFO = 'More information';
+const ACTION_BUTTOTN_DASHBOARD = 'Go to Dashboard';
+const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 
 export {
     WLMDB,
@@ -762,7 +787,7 @@ export {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
-    S3_BUCKET_SIGNED_URL_EXPIRTY,
+    S3_BUCKET_SIGNED_URL_EXPIRY,
     HTTP_GET,
     HTTP_POST,
     HTTP_DELETE,
@@ -805,5 +830,14 @@ export {
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
     WLMDB_ENDPOINT,
-    BATCH_API_CONCURRENCY_LIMIT
+    BATCH_API_CONCURRENCY_LIMIT,
+    FCI_STACKNAME,
+    STANDALONE_STACKNAME,
+    CRITICAL,
+    PUBLISH,
+    MOREINFO,
+    ACTION_BUTTOTN_DASHBOARD,
+    ACTION_BUTTON_DATABASE,
+    RESOURCE_ID,
+    WLMDB_ABSOLUTE_ENDPOINT
 };
