@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
@@ -10,23 +10,40 @@ import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
 import { SQL_DATABASE } from '../../../../utils/consts';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { useAppSelector } from '../../../../store/storeHooks';
+import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 
 const DatabaseName = () => {
     const dispatch = useDispatch();
 
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+    const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction.dbNameSelected);
 
     const [databaseName, setDatabaseName] = useState(SQL_DATABASE);
+
+    const databasenameRef = useRef(null);
 
     useEffect(() => {
         setDatabaseName(selectedDBName);
     }, [selectedDBName]);
 
+    useEffect(() => {
+        if (isCreateHit && !isDBClusterNameFilled) {
+            setTimeout(() => {
+                //@ts-ignore
+                databasenameRef?.current?.focus();
+            }, 60);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [!isDBClusterNameFilled, isCreateHit]);
+
     function isValidDBName() {
         const firstChar = databaseName.charAt(0);
         // Check if the instance name is 16 characters or less in length
 
-        if (
+        if (databaseName.length === 0) {
+            return GENERAL.ACTION_REQUIRED;
+        } else if (
             databaseName.length > 0 &&
             (databaseName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(databaseName))
         ) {
@@ -35,7 +52,10 @@ const DatabaseName = () => {
     }
     //Set the Header text here
     const setHeader = () => {
-        if (isValidDBName()) {
+        if (!databaseName) {
+            return <ActionRequired error={!isDBClusterNameFilled ? true : false} />;
+        } 
+        else if (isValidDBName()) {
             return <AccordionError />;
         } else {
             return <Typography variant="Regular_14">{databaseName}</Typography>;
@@ -53,6 +73,7 @@ const DatabaseName = () => {
                     <Typography>
                         <div className={styles.content}>
                             <TextField
+                                ref={databasenameRef}
                                 info={
                                     <div className={styles.userNameTooltip}>
                                         <div className={styles.list}>

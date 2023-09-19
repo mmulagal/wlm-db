@@ -37,6 +37,7 @@ const EstimatedCost = () => {
     const throughputValue = useAppSelector(state => state.mssqlForm.throughput?.value);
     const iopsValueType = useAppSelector(state => state.mssqlForm.provisionedIOPS?.provisionedType);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
+    const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     useEffect(() => {
         if (
@@ -53,15 +54,16 @@ const EstimatedCost = () => {
             const updatedStr = splitRegion[0].replace(/\s?$/, '');
             const payload = {
                 compute: {
-                    region: updatedStr || '',
+                    regionCode: updatedStr || '',
                     instanceType: instanceTypeName || '',
                     sqlSoftwareType: sqlSoftwareTypeValue.value || ''
                 },
                 storage: {
-                    region: regionValue?.value || '',
-                    diskSize: `${diskSize} ${diskSizeUnit}`,
+                    regionCode: regionValue?.value || '',
+                    diskSize: `${diskSize}${diskSizeUnit}`,
                     throughput: throughputValue,
-                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : ''
+                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : '',
+                    deploymentOption: deploymentModel === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
                 },
                 connectivity: {
                     createNewVpc: false
@@ -127,7 +129,7 @@ const EstimatedCost = () => {
         //         </Typography>
         //     );
         // } else {
-        //     return <Typography variant="Regular_14">{data?.data.total}</Typography>;
+        //     return <Typography variant="Regular_14">{`$${data?.data.total}`}</Typography>;
         // }
 
         return (
@@ -180,7 +182,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.compute || ''
+                                        `$${data?.data?.compute}` || ''
                                     )}
                                 </Typography>
                             </div>
@@ -203,7 +205,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.storage || ''
+                                        `$${data?.data?.storage?.storageCapacity}` || ''
                                     )}
                                 </Typography>
 
@@ -218,13 +220,13 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.throughput || ''
+                                        `$${data?.data?.storage?.throughput}` || ''
                                     )}
                                 </Typography>
                             </div>
                         </div>
 
-                        <div className={styles.connectivityContainer}>
+                        {/* <div className={styles.connectivityContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
                                 {GENERAL.CONNECTIVITY}
                             </Typography>
@@ -239,11 +241,11 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.connectivity || ''
+                                        data?.data?.vpc || ''
                                     )}
                                 </Typography>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* <div className={styles.adContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
@@ -276,7 +278,7 @@ const EstimatedCost = () => {
                                     </div>
                                 ) : (
                                     //@ts-ignore
-                                    data?.data?.total || ''
+                                    `$${data?.data?.total}` || ''
                                 )}
                             </Typography>
                         </div>
