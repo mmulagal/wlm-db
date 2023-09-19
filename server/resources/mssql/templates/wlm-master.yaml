@@ -900,9 +900,19 @@ Resources:
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceIPMAD"
-            - !GetAtt "SQLStandaloneStack.Outputs.SqlNode"
+            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeIp"
+      ActiveInstanceId: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
+            - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
       StandbyInstanceIp: 
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceIPMAD"
+            - !Ref AWS::NoValue
+      StandbyInstanceId: 
+          !If
+            - IsFailoverCluster
+            - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
             - !Ref AWS::NoValue

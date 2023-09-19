@@ -814,6 +814,9 @@ Resources:
                   ToPort: 65535
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
 Outputs:
-    SqlNode:
+    SqlNodeIp:
         Description: Private IP of Sql Instance
         Value: !GetAtt 'SqlNode.PrivateIp'
+    SqlNodeId:
+        Description: Id of Sql Instance
+        Value: !Ref SqlNode
