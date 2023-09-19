@@ -254,64 +254,59 @@ async function getServerSummary(resourceId: string) {
 
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
 
-    const [serverDetails, connections, state, isClustered, node, clusterNodes] = await Promise.all([
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_STATE}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_NODE}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
-        ])
-    ]);
+    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo] =
+        await Promise.all([
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+                `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
+            ]),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+                `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
+            ]),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+                `${PSSCRIPT} -Query "${SERVER_STATE}"`
+            ]),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+                `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
+            ]),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+                `${PSSCRIPT} -Query "${SERVER_NODE}"`
+            ]),
+            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+                `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
+            ])
+        ]);
 
-    const serverDet = serverDetails.replaceAll('\r\n', '');
-    const serverInfo = serverDet?.split('\t');
-    const version = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/);
-    const stateValue = state.replaceAll('\r\n', '').replace('.', '');
-    const [connValue] = sqlResponseParsing(connections);
-    const [nodeValue] = sqlResponseParsing(node);
-    const [isClusteredValue] = sqlResponseParsing(isClustered);
+    const serverDetails = serverDetailsInfo.replaceAll('\r\n', '');
+    const serverInfo = serverDetails?.split('\t');
+    const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
+    const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
+    const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
+    let [{ activeNode }] = sqlResponseParsing(nodeInfo);
+    const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
 
-    let activeNode = nodeValue?.activeNode;
     let standbyNode: string = '';
-    if (isClusteredValue?.isClustered) {
-        const clusterNodesInfo: {
-            NodeName: string;
-            is_current_owner: string;
-        }[] = sqlResponseParsing(clusterNodes);
+    if (isClustered) {
+        const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
-        if (clusterNodesInfo[0]?.is_current_owner === 'True') {
-            activeNode = clusterNodesInfo[0]?.NodeName;
-            standbyNode = clusterNodesInfo[1]?.NodeName;
+        if (node1?.is_current_owner === 'True') {
+            activeNode = node1?.NodeName;
+            standbyNode = node2?.NodeName;
         } else {
-            activeNode = clusterNodesInfo[1]?.NodeName;
-            standbyNode = clusterNodesInfo[0]?.NodeName;
+            activeNode = node2?.NodeName;
+            standbyNode = node1?.NodeName;
         }
     }
 
     return {
         serverId: resourceId,
-        serverVersion: version ? version[0] : ' ',
+        serverVersion,
         serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
         serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-        serverStatus: stateValue,
-        activeConnections: connValue.numberOfConnections,
-        deploymentModel: isClusteredValue.isClustered
-            ? SqlServerDeploymentModel.SQL_FCI
-            : SqlServerDeploymentModel.SQL_STANDALONE,
+        serverStatus,
+        activeConnections,
+        deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
         activeNode,
-        ...(isClusteredValue.isClustered ? { standbyNode } : {})
+        ...(isClustered ? { standbyNode } : {})
     };
 }
 
