@@ -55,18 +55,18 @@ const EstimatedCost = () => {
                 compute: {
                     regionCode: updatedStr || '',
                     instanceType: instanceTypeName || '',
-                    sqlSoftwareType: sqlSoftwareTypeValue.value || ''
+                    sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || ''
                 },
                 storage: {
-                    regionCode: regionValue?.value || '',
+                    regionCode: updatedStr || '',
                     diskSize: `${diskSize}${diskSizeUnit}`,
                     throughput: throughputValue,
                     iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
                     deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
-                },
-                connectivity: {
-                    createNewVpc: false
                 }
+                // vpc: {
+                //     regionCode: updatedStr || '',
+                // }
             };
             setIsLoading(true);
             getEstimationCost(payload)
