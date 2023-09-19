@@ -63,7 +63,7 @@ const EstimatedCost = () => {
                     diskSize: `${diskSize}${diskSizeUnit}`,
                     throughput: throughputValue,
                     iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : '',
-                    deploymentOption: deploymentModel === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
+                    deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
                 },
                 connectivity: {
                     createNewVpc: false

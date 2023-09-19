@@ -6,10 +6,23 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
 import { useDispatch } from 'react-redux';
-import { setCloudWatch, setDBName, setDBVersion, setProvisionedIOPSValue, setProvisionedType, setSelectConfig, setSelectedDBDeploymentModel, setSelectedDBEdition, setSelectedLicenseType, setSelectedOperatingSystem, setSNSARN, setSNSState, setTags } from '../../../../store/mssql/mssqlFormSlice';
+import { 
+    setCloudWatch, 
+    setDBName, 
+    setDBVersion, 
+    setProvisionedIOPSValue, 
+    setProvisionedType, 
+    setSelectConfig, 
+    setSelectedDBDeploymentModel, 
+    setSelectedDBEdition, 
+    setSelectedOperatingSystem, 
+    setSNSARN, 
+    setSNSState, 
+    setTags 
+} from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { DEFAULT_MASTER_KEY, SQL_DATABASE } from '../../../../utils/consts';
+import { DEFAULT_MASTER_KEY, SQL_DATABASE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { 
     selectDefaultEncryption, 
     selectDefaultInstanceType, 
@@ -42,7 +55,12 @@ const PreviewDefault = () => {
                     value: GENERAL.WIN_SERVER_2016_VERSION
                 })
             );
-            dispatch(setSelectedDBDeploymentModel(GENERAL.FAILOVER_CLUSTER));
+            dispatch(
+                setSelectedDBDeploymentModel({
+                    label: GENERAL.FAILOVER_CLUSTER,
+                    value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                })
+            );
             dispatch(
                 setSelectedDBEdition({
                     label: GENERAL.SQL_SERVER_STANDARD_EDITION,

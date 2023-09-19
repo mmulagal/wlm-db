@@ -2,16 +2,18 @@ import { AccordionCard, AccordionCardContent, RadioButton, Typography } from '@n
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './DatabaseDeploymentModel.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSelectedDBDeploymentModel } from '../../../../store/mssql/mssqlFormSlice';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 
 const DatabaseDeploymentModel = () => {
     const dispatch = useDispatch();
-    const [deploymentModel, setDeploymentModel] = useState(GENERAL.FAILOVER_CLUSTER);
+    const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
+
     //Set the Header text here
     const setHeader = () => {
-        return <Typography variant="Regular_14">{deploymentModel}</Typography>;
+        return <Typography variant="Regular_14">{deploymentModel?.label}</Typography>;
     };
     return (
         <div className={styles['db-deployment']}>
@@ -24,10 +26,14 @@ const DatabaseDeploymentModel = () => {
                     <Typography>
                         <div className={styles.failOver}>
                             <RadioButton
-                                isChecked={deploymentModel === GENERAL.FAILOVER_CLUSTER}
+                                isChecked={deploymentModel?.label === GENERAL.FAILOVER_CLUSTER}
                                 onChange={() => {
-                                    setDeploymentModel(GENERAL.FAILOVER_CLUSTER);
-                                    dispatch(setSelectedDBDeploymentModel(GENERAL.FAILOVER_CLUSTER));
+                                    dispatch(
+                                        setSelectedDBDeploymentModel({
+                                            label: GENERAL.FAILOVER_CLUSTER,
+                                            value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                                        })
+                                    );
                                 }}
                                 children={GENERAL.FAILOVER_CLUSTER}
                                 className={styles.radio}
@@ -38,15 +44,19 @@ const DatabaseDeploymentModel = () => {
                         </div>
                         <div className={styles.failOver}>
                             <RadioButton
-                                isChecked={deploymentModel === GENERAL.SINGLE_INSTANCE}
+                                isChecked={deploymentModel?.label === GENERAL.SINGLE_INSTANCE}
                                 onChange={() => {
-                                    setDeploymentModel(GENERAL.SINGLE_INSTANCE);
+                                    dispatch(
+                                        setSelectedDBDeploymentModel({
+                                            label: GENERAL.SINGLE_INSTANCE,
+                                            value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                                        })
+                                    ); 
                                 }}
                                 children={GENERAL.SINGLE_INSTANCE}
                                 className={styles.radio}
-                                isDisabled
                             />
-                            <Typography variant="Regular_14" className={styles.failoverTextDisabled}>
+                            <Typography variant="Regular_14" className={styles.failoverText}>
                                 {GENERAL.SINGLE_INSTANCE_TEXT}
                             </Typography>
                             <div className={styles.separator} />
