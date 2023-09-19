@@ -1475,6 +1475,12 @@ Outputs:
     SQLFSx1InstanceIPMAD:
         Description: Private IP of SqlFSx Instance
         Value: !GetAtt 'SqlFSxInstanceMAD1.PrivateIp'
+    SQLFSx1InstanceId:
+        Description: Id of Primary Instance
+        Value: !Ref SqlFSxInstanceMAD1
     SQLFSx2InstanceIPMAD:
         Description: Private IP of SqlFSx Instance
         Value: !GetAtt 'SqlFSxInstanceMAD2.PrivateIp'
+    SQLFSx2InstanceId:
+        Description: Id of Standby Instance
+        Value: !Ref SqlFSxInstanceMAD2

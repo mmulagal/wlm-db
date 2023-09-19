@@ -20,7 +20,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$FSxTempDBVolumeName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$FSxQuorumVolumeName,    
 
     [Parameter(Mandatory=$true)]
@@ -206,6 +206,7 @@ try{
 }
 Start-Sleep 5
 
+if ($FSxQuorumVolumeName -ne "") {
 $URI=@"
 https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FSxQuorumVolumeName)
 "@
@@ -229,6 +230,7 @@ try{
     Write-Output "Volume modification failed"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
+}
 }
 Start-Sleep 5
 ##create igroup
@@ -328,6 +330,7 @@ $Body = @{
 callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 ##create quorum lun
+if ($FSxQuorumVolumeName -ne "") {
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
 $QLUN = 'quorum'
@@ -351,7 +354,7 @@ $Body = @{
     "igroup" = @{"name" = "$IGROUP"}
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
-
+}
  
  
  

@@ -30,6 +30,7 @@ const AD_CONFIGURATION = {
 };
 
 const FSX_CONFIGURATION = {
+    fsxDeploymentMode: 'MULTI_AZ_1',
     fsxFileSystemId: 'fs-05a228ef446b34d27',
     fsxUsername: 'fsxadmin',
     fsxPassword: 'netapp1!',
@@ -41,6 +42,7 @@ const FSX_CONFIGURATION = {
 };
 
 const SQL_CONFIGURATION = {
+    sqlDeploymentMode: 'fci',
     sqlAmiId: 'ami-0e0f179ddde359def',
     serviceAccountName: 'sqladmin',
     serviceAccountPassword: 'netapp1!',

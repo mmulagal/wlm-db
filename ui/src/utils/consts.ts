@@ -95,7 +95,7 @@ export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
     HEADER_CROSS: 'header_cross'
-}
+};
 
 export const API_NAME = {
     REGION: 'region',
@@ -107,4 +107,14 @@ export const API_NAME = {
     INSTANCE: 'instance',
     AMI: 'ami',
     FSXN: 'fsxn'
-}
+};
+
+export const FSX_DEPLOYMENT_MODE = {
+    SINGLE_AZ_1: 'SINGLE_AZ_1',
+    MULTI_AZ_1: 'MULTI_AZ_1'
+};
+
+export const SQL_DEPLOYMENT_MODE = {
+    FAILOVER_CLUSTER_VALUE: 'fci',
+    SINGLE_INSTANCE_VALUE: 'standalone'
+};
