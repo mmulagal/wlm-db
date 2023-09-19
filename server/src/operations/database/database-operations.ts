@@ -1,10 +1,11 @@
 import moment from 'moment';
-import { createConfig, deleteConfig, listConfig } from '../../lib/database/db';
+import { createConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
     FormConfigListResponseType,
     FormConfigObjectResponseType
 } from '../../routes/types/form-config.types';
+import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -64,4 +65,41 @@ async function saveConfig(
     });
     return { id, accountId: configAccountId, creationTime: moment(configCreationTime).unix() * 1000, user, data, name };
 }
-export { getSavedConfig, getAllSavedConfig, saveConfig, deleteSavedConfig };
+
+async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStatusListResponseType> {
+    logger.info(' Deployment status', accountId);
+
+    const data = await listDeployments(accountId);
+
+    logger.debug(data);
+
+    return data
+        .filter(each => each.parent_deployment_id == null)
+        .map(each => ({
+            id: each.deployment_id,
+            name: each.deployment_name,
+            status: each.deployment_status,
+            reason: each.deployment_status_reason!
+        }));
+}
+
+async function getDeploymentStatusById(accountId: string, id: string): Promise<DeploymentStatusResponseType> {
+    logger.info(' Deployment status by id', accountId, id);
+
+    const [{ deployment_id: deploymentId, deployment_name: deploymentName, deployment_status: deploymentStatus }] =
+        await listDeployments(accountId, id);
+    return {
+        id: deploymentId,
+        name: deploymentName,
+        status: deploymentStatus
+    };
+}
+
+export {
+    getSavedConfig,
+    getAllSavedConfig,
+    saveConfig,
+    deleteSavedConfig,
+    getAllDeploymentStatus,
+    getDeploymentStatusById
+};

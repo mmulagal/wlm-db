@@ -44,6 +44,7 @@ import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { getAllDeploymentStatus, getDeploymentStatusById } from './database/database-operations';
 
 const logger = getLogger();
 
@@ -335,4 +336,20 @@ async function deployCloudFormationTemplate(
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
-export { createCloudFormationTemplateForUserDeployment, deployCloudFormationTemplate };
+async function deploymentStatus(accountId: string) {
+    logger.info('Fetching deployment status from database', accountId);
+    const data = await getAllDeploymentStatus(accountId);
+    return data;
+}
+
+async function deploymentStatusById(accountId: string, deploymentId: string) {
+    logger.info('Fetching deployment status by id from database ', accountId, deploymentId);
+    const data = await getDeploymentStatusById(accountId, deploymentId);
+    return data;
+}
+export {
+    createCloudFormationTemplateForUserDeployment,
+    deployCloudFormationTemplate,
+    deploymentStatus,
+    deploymentStatusById
+};

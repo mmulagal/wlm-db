@@ -63,6 +63,23 @@ const DeployTemplateResponse = Type.Object({
     cloudFormationStackId: Type.String()
 });
 
+const DeploymentStatusResponse = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    status: Type.String(),
+    reason: Type.Optional(Type.String())
+});
+
+const DeploymentStatusObjectParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    deploymentId: Type.String({ minLength: 1 })
+});
+type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
+
+const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
+type DeploymentStatusResponseType = Static<typeof DeploymentStatusResponse>;
+type DeploymentStatusListResponseType = Static<typeof DeploymentStatusListResponse>;
+
 type CFNetworkConfigurationType = Static<typeof CFNetworkConfiguration>;
 type EC2ConfigurationType = Static<typeof EC2Configuration>;
 type ADConfigurationType = Static<typeof ADConfiguration>;
@@ -79,5 +96,11 @@ export {
     FSXConfigurationType,
     SQLConfigurationType,
     DeployTemplateResponse,
-    CloudFormationTemplateResponseType
+    CloudFormationTemplateResponseType,
+    DeploymentStatusResponse,
+    DeploymentStatusListResponse,
+    DeploymentStatusListResponseType,
+    DeploymentStatusResponseType,
+    DeploymentStatusObjectParams,
+    DeploymentStatusObjectParamsType
 };

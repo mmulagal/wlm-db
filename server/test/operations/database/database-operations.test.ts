@@ -1,9 +1,11 @@
-import { deleteConfig } from '../../../src/lib/database/db';
+import { createDeployment, deleteConfig, deleteDeployment } from '../../../src/lib/database/db';
 import {
     getSavedConfig,
     getAllSavedConfig,
     saveConfig,
-    deleteSavedConfig
+    deleteSavedConfig,
+    getAllDeploymentStatus,
+    getDeploymentStatusById
 } from '../../../src/operations/database/database-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 
@@ -38,5 +40,57 @@ describe('Database operations', () => {
         });
         const response = await deleteSavedConfig(ACCOUNT_ID, id);
         expect(response).toBeUndefined();
+    });
+    it('Get all deployment status', async () => {
+        const response = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-12345',
+            deploymentName: 'wlmdb-12345',
+            deploymentStatus: 'CREATE_COMPLETE',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-12345-sql',
+            deploymentName: 'wlmdb-12345-sql',
+            parentDeploymentId: 'wlmdb-12345',
+            deploymentStatus: 'CREATE_COMPLETE',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        const resp = await getAllDeploymentStatus(ACCOUNT_ID);
+        expect(response.deployment_id).toEqual(resp[0].id);
+
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-12345');
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-12345-sql');
+    });
+    it('Get deployment status by id', async () => {
+        const response = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-2345',
+            deploymentName: 'wlmdb-2345',
+            deploymentStatus: 'CREATE_COMPLETE',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        const response1 = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-45678',
+            deploymentName: 'wlmdb-45678',
+            deploymentStatus: 'CREATE_FAILED',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        let resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-2345');
+        expect(response.deployment_id).toEqual(resp.id);
+        expect(response.deployment_status).toEqual(resp.status);
+
+        resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-45678');
+        expect(response1.deployment_id).toEqual(resp.id);
+        expect(response1.deployment_status).toEqual(resp.status);
+
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-2345');
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-45678');
     });
 });
