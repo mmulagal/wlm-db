@@ -86,12 +86,20 @@ async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStat
 async function getDeploymentStatusById(accountId: string, id: string): Promise<DeploymentStatusResponseType> {
     logger.info(' Deployment status by id', accountId, id);
 
-    const [{ deployment_id: deploymentId, deployment_name: deploymentName, deployment_status: deploymentStatus }] =
-        await listDeployments(accountId, id);
+    const [
+        {
+            deployment_id: deploymentId,
+            deployment_name: deploymentName,
+            deployment_status: deploymentStatus,
+            deployment_status_reason: deploymentReason
+        }
+    ] = await listDeployments(accountId, id);
+
     return {
         id: deploymentId,
         name: deploymentName,
-        status: deploymentStatus
+        status: deploymentStatus,
+        reason: deploymentReason!
     };
 }
 
