@@ -1,7 +1,13 @@
 import { Type } from '@fastify/type-provider-typebox';
 
-// AWS Request Params
+// AWS request parameters
 const AwsParams = Type.Object({
+    accountId: Type.String(),
+    credentialsId: Type.String()
+});
+
+// AWS request parameters wth region
+const AwsParamsWithRegion = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
     region: Type.String()
@@ -131,12 +137,6 @@ const AdsResponse = Type.Object({
     )
 });
 
-// Regions Request Params
-const AwsRegionsParams = Type.Object({
-    accountId: Type.String(),
-    credentialsId: Type.String()
-});
-
 // Regions supporting FSx for ONTAP response
 const FSxRegionsResponse = Type.Object({
     regions: Type.Array(
@@ -248,8 +248,8 @@ const FSxFileSystemsResponse = Type.Object({
 export {
     AwsVpcQueryString,
     AwsParams,
+    AwsParamsWithRegion,
     InstanceTypes,
-    AwsRegionsParams,
     VpcListResponse,
     AmiResponse,
     AmiQueryString,
