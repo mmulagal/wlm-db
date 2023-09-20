@@ -35,7 +35,8 @@ import {
     WLMDB,
     TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    TEMPLATE_ACCOUNT_ID
+    TEMPLATE_ACCOUNT_ID,
+    SUCCESS
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -44,6 +45,7 @@ import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { prepareDetailsToSendNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
 
@@ -260,6 +262,14 @@ async function createCloudFormationTemplateForUserDeployment(
 
     logger.info('CloudFormation template url ', signedTemplateURL);
 
+    await prepareDetailsToSendNotification(
+        'user_deployment',
+        'Cloud formation signed template url created successfully',
+        'Cloud formation signed template url created successfully for quick user deployment',
+        { uiNotification: true, emailNotification: true },
+        undefined,
+        SUCCESS
+    );
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
@@ -331,6 +341,15 @@ async function deployCloudFormationTemplate(
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
+    await prepareDetailsToSendNotification(
+        'standard_deployment',
+        'Cloud formation standard deployment initiated',
+        'Cloud formation standard deployment initiated',
+        { uiNotification: true, emailNotification: true },
+        undefined,
+        SUCCESS
+    );
 
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
