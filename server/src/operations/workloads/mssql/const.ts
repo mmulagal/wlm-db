@@ -61,8 +61,8 @@ const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON
 const SERVER_VERSION_DETAILS = `${SET_NOCOUNT} SELECT @@version AS serverDetails`;
 const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
 const IS_SERVER_CLUSTERED = `${SET_NOCOUNT} SELECT SERVERPROPERTY('IsClustered') as isClustered ${FOR_JSON_PATH}`;
-const SERVER_NODES = `${SET_NOCOUNT} SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode, SERVERPROPERTY('MachineName') as standbyNode ${FOR_JSON_PATH}`;
-
+const SERVER_NODE = `${SET_NOCOUNT} SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode ${FOR_JSON_PATH}`;
+const CLUSTER_NODES = `${SET_NOCOUNT} SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes ${FOR_JSON_PATH}`;
 const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
 
 const TABLES_QUERY = (offset: number, rowscount: number) =>
@@ -105,7 +105,8 @@ export {
     SERVER_NAME,
     SERVER_STATE,
     IS_SERVER_CLUSTERED,
-    SERVER_NODES,
+    SERVER_NODE,
+    CLUSTER_NODES,
     DB_SIZE,
     SSM_QUERY_CONCURRENCY_LIMIT
 };
