@@ -76,7 +76,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             return reply.code(202).send(response);
         })
         .get(
-            `${API_PREFIX_PATH}/cloudformation/status`,
+            `${API_PREFIX_PATH}/cloudformation/stacks/status`,
             { schema: DeploymentStatusListSchema },
             async (request, reply) => {
                 const {
