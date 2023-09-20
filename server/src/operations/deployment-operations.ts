@@ -36,7 +36,8 @@ import {
     TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_ACCOUNT_ID,
-    SUCCESS
+    SUCCESS,
+    ACTION_BUTTON_DASHBOARD
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -267,7 +268,7 @@ async function createCloudFormationTemplateForUserDeployment(
         'Cloud formation signed template url created successfully',
         'Cloud formation signed template url created successfully for quick user deployment',
         { uiNotification: true, emailNotification: true },
-        undefined,
+        ACTION_BUTTON_DASHBOARD,
         SUCCESS
     );
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
@@ -347,7 +348,7 @@ async function deployCloudFormationTemplate(
         'Cloud formation standard deployment initiated',
         'Cloud formation standard deployment initiated',
         { uiNotification: true, emailNotification: true },
-        undefined,
+        ACTION_BUTTON_DASHBOARD,
         SUCCESS
     );
 

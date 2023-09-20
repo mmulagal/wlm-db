@@ -6,6 +6,7 @@ import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
+    ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
     CloudProviders,
@@ -139,7 +140,7 @@ async function processCloudFormationMessages() {
                                                     'Cloud formation stack deployment successful',
                                                     'Cloud formation stack deployment successful',
                                                     { uiNotification: true, emailNotification: true },
-                                                    undefined,
+                                                    ACTION_BUTTON_DASHBOARD,
                                                     SUCCESS
                                                 );
                                             }

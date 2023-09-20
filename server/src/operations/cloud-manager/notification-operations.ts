@@ -8,7 +8,7 @@ import {
     RESOURCE_ID,
     PUBLISH,
     MOREINFO,
-    ACTION_BUTTOTN_DASHBOARD
+    ACTION_BUTTON_DASHBOARD
 } from '../../utils/consts.js';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage.js';
 import sendNotification from '../../lib/cloud-manager/notification.js';
@@ -21,7 +21,7 @@ async function prepareDetailsToSendNotification(
     subject: string,
     uiNotificationDescription: string,
     notification: { uiNotification: boolean; emailNotification: boolean },
-    label: string = ACTION_BUTTOTN_DASHBOARD,
+    label: string = ACTION_BUTTON_DASHBOARD,
     priority?: string,
     redirectURL: string = '/database-services',
     mailNotificationDescription?: string,
