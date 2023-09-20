@@ -327,62 +327,89 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 async function getServerSummary(resourceId: string) {
     logger.info('Get details of SQL Server database:', { resourceId });
 
-    const [credentialsId, region, activeNodeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
     if (credentialsId && region && activeNodeInstanceId) {
         const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo] =
             await Promise.all([
-                callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                    `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
-                ]),
-                callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                    `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
-                ]),
-                callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                    `${PSSCRIPT} -Query "${SERVER_STATE}"`
-                ]),
-                callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                    `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
-                ]),
-                callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                    `${PSSCRIPT} -Query "${SERVER_NODE}"`
-                ]),
-                callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                    `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
-                ])
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId || undefined
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId || undefined
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${SERVER_STATE}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId || undefined
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId || undefined
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${SERVER_NODE}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId || undefined
+                ),
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${CLUSTER_NODES}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId || undefined
+                )
             ]);
+        if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
+            const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
+            const serverInfo = serverDetails?.split('\t');
+            const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
+            const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
+            const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
+            let [{ activeNode }] = sqlResponseParsing(nodeInfo);
+            const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
 
-        const serverDetails = serverDetailsInfo.replaceAll('\r\n', '');
-        const serverInfo = serverDetails?.split('\t');
-        const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
-        const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
-        const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
-        let [{ activeNode }] = sqlResponseParsing(nodeInfo);
-        const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
+            let standbyNode: string = '';
+            if (isClustered && clusterNodesInfo) {
+                const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
-        let standbyNode: string = '';
-        if (isClustered) {
-            const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
-
-            if (node1?.is_current_owner === 'True') {
-                activeNode = node1?.NodeName;
-                standbyNode = node2?.NodeName;
-            } else {
-                activeNode = node2?.NodeName;
-                standbyNode = node1?.NodeName;
+                if (node1?.is_current_owner === 'True') {
+                    activeNode = node1?.NodeName;
+                    standbyNode = node2?.NodeName;
+                } else {
+                    activeNode = node2?.NodeName;
+                    standbyNode = node1?.NodeName;
+                }
             }
-        }
 
-        return {
-            serverId: resourceId,
-            serverVersion,
-            serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
-            serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-            serverStatus,
-            activeConnections,
-            deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
-            activeNode,
-            ...(isClustered ? { standbyNode } : {})
-        };
+            return {
+                serverId: resourceId,
+                serverVersion,
+                serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
+                serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
+                serverStatus,
+                activeConnections,
+                deploymentModel: isClustered
+                    ? SqlServerDeploymentModel.SQL_FCI
+                    : SqlServerDeploymentModel.SQL_STANDALONE,
+                activeNode,
+                ...(isClustered ? { standbyNode } : {})
+            };
+        }
     }
 }
 
