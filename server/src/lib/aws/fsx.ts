@@ -2,7 +2,8 @@ import {
     FSxClient,
     DescribeVolumesCommand,
     DescribeVolumesCommandOutput,
-    paginateDescribeFileSystems
+    paginateDescribeFileSystems,
+    DescribeStorageVirtualMachinesCommand
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialDetails } from '../cloud-manager/credentials';
@@ -25,7 +26,6 @@ async function describeFSxFileSystems(credentialsId: string, region: string) {
 
     const client = await getFSxClient(credentialsId, region);
 
-    // const input = new DescribeFileSystemsCommand({});
     const paginator = paginateDescribeFileSystems({ client }, {});
 
     const fileSystems = [];
@@ -45,7 +45,7 @@ async function describeFSxVolumes(
     region: string,
     fsxFsId: string
 ): Promise<DescribeVolumesCommandOutput> {
-    logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', Array.from(arguments)); // eslint-disable-line
+    logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
     const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
@@ -55,4 +55,15 @@ async function describeFSxVolumes(
 
     return response;
 }
-export { describeFSxFileSystems, describeFSxVolumes };
+
+async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId: string) {
+    logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
+    const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+
+    const client = await getFSxClient(credentialsId, region);
+    const response = await client.send(new DescribeStorageVirtualMachinesCommand(input));
+    logger.debug('Decribe Amazon FSx for NetApp ONTAP storage virtual machines  response:', response);
+
+    return response;
+}
+export { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines };

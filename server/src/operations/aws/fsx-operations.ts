@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { describeFSxFileSystems, describeFSxVolumes } from '../../lib/aws/fsx';
+import { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
 import {
@@ -26,8 +26,8 @@ async function getFSXDetails(credentialsId: string, region: string, fileSys: any
             }
         ]
     };
-
-    const [{ Volumes: fsxVolumes }, networkInterfacesList] = await Promise.all([
+    const [{ StorageVirtualMachines: fsxSVMs }, { Volumes: fsxVolumes }, networkInterfacesList] = await Promise.all([
+        describeFSxStorageVirtualMachines(credentialsId, region, fileSys.FileSystemId!),
         describeFSxVolumes(credentialsId, region, fileSys.FileSystemId!),
         getNetworkInterfacesList(credentialsId, region, enetInterfaces)
     ]);
@@ -45,10 +45,29 @@ async function getFSXDetails(credentialsId: string, region: string, fileSys: any
         })
     );
 
+    const svmList: FSxFileSystemType['storageVirtualMachines'] = fsxSVMs?.map(
+        ({
+            StorageVirtualMachineId: storageVirtualMachineId,
+            Name: storageVirtualMachineName,
+            ResourceARN: resourceARN,
+            Subtype: subtype,
+            Lifecycle: lifeCycle,
+            CreationTime: creationTime,
+            UUID: uuid
+        }) => ({
+            storageVirtualMachineId,
+            storageVirtualMachineName,
+            resourceARN,
+            lifeCycle,
+            subtype,
+            creationTime,
+            uuid
+        })
+    );
     // Get the FSx filesystem name, if available.
     const { Tags: tags } = fileSys;
     const tag = tags?.find(({ Key: key }: { Key: string }) => key === AWS_RESOURCE_NAME_TAG);
-
+    const { OntapConfiguration: ontapConfig } = fileSys;
     return {
         fileSystemId: fileSys.FileSystemId!,
         name: tag?.Value,
@@ -58,29 +77,30 @@ async function getFSXDetails(credentialsId: string, region: string, fileSys: any
         subnetIds: fileSys.SubnetIds,
         vpcId: fileSys.VpcId,
         ontapConfiguration: {
-            deploymentType: fileSys.OntapConfiguration?.DeploymentType,
-            endpointIpAddressRange: fileSys.OntapConfiguration?.EndpointIpAddressRange,
-            fsxAdminPassword: fileSys.OntapConfiguration?.FsxAdminPassword,
-            preferredSubnetId: fileSys.OntapConfiguration?.PreferredSubnetId,
-            routeTableIds: fileSys.OntapConfiguration?.RouteTableIds,
-            throughputCapacity: fileSys.OntapConfiguration?.ThroughputCapacity,
+            deploymentType: ontapConfig.DeploymentType,
+            endpointIpAddressRange: ontapConfig?.EndpointIpAddressRange,
+            fsxAdminPassword: ontapConfig?.FsxAdminPassword,
+            preferredSubnetId: ontapConfig?.PreferredSubnetId,
+            routeTableIds: ontapConfig?.RouteTableIds,
+            throughputCapacity: ontapConfig?.ThroughputCapacity,
             diskIopsConfiguration: {
-                iops: fileSys.OntapConfiguration?.DiskIopsConfiguration?.Iops,
-                mode: fileSys.OntapConfiguration?.DiskIopsConfiguration?.Mode
+                iops: ontapConfig?.DiskIopsConfiguration?.Iops,
+                mode: ontapConfig?.DiskIopsConfiguration?.Mode
             },
             endpoints: {
                 intercluster: {
-                    dnsName: fileSys.OntapConfiguration?.Endpoints?.Intercluster?.DNSName,
-                    ipAddresses: fileSys.OntapConfiguration?.Endpoints?.Intercluster?.IpAddresses
+                    dnsName: ontapConfig?.Endpoints?.Intercluster?.DNSName,
+                    ipAddresses: ontapConfig?.Endpoints?.Intercluster?.IpAddresses
                 },
                 management: {
-                    dnsName: fileSys.OntapConfiguration?.Endpoints?.Management?.DNSName,
-                    ipAddresses: fileSys.OntapConfiguration?.Endpoints?.Management?.IpAddresses
+                    dnsName: ontapConfig?.Endpoints?.Management?.DNSName,
+                    ipAddresses: ontapConfig?.Endpoints?.Management?.IpAddresses
                 }
             }
         },
         volumes: volumesList,
-        securityGroups: Array.from(sgs)
+        securityGroups: Array.from(sgs),
+        storageVirtualMachines: svmList
     };
 }
 
