@@ -76,7 +76,7 @@ try {
 
  Write-Output $ClusterResource
      if (($Nodes -notmatch $Node1) -Or ($Nodes -notmatch $Node2)) {
-        throw [NodeException]::new('Node Check Failure:Node missing in Cluster',"All nodes are not path of the cluster")
+        throw [NodeException]::new('Node Check Failure:Node missing in Cluster',"All nodes are not part of the cluster")
     }
 
     if ($ClusterResource -notmatch "Quorum") {
@@ -90,7 +90,6 @@ try {
      if ($ClusterResource -notmatch "Cluster IP Address") {
         throw [ResourceException]::new('IP Check Failure',"Cluster IP Address Resource is not available")
     } 
-    
      if ($ClusterResource -notmatch "SQL Server") {
         throw [SQLFCIException]::new('SQL Check Failure:No SQL Server Role',"SQL Server Role could not be created or brought online")
     }
