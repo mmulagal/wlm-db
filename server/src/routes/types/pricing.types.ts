@@ -15,7 +15,11 @@ const PricingServiceRequest = Type.Object({
             deploymentOption: Type.Optional(Type.String())
         })
     ),
-    vpc: Type.Optional(Type.Boolean())
+    vpc: Type.Optional(
+        Type.Object({
+            regionCode: Type.String()
+        })
+    )
 });
 
 const PricingServiceResponse = Type.Object({
@@ -24,7 +28,7 @@ const PricingServiceResponse = Type.Object({
         throughput: Type.Number()
     }),
     compute: Type.Number(),
-    connectivity: Type.Optional(Type.Number()),
+    vpc: Type.Optional(Type.Number()),
     total: Type.Number()
 });
 

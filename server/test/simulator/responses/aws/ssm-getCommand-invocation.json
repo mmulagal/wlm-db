@@ -71,6 +71,24 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
+    "clusterNodesInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"NodeName\":\"SQLNODE1-39362\",\"is_current_owner\":\"True\"},{\"NodeName\":\"SQLNODE2-39362\",\"is_current_owner\":\"False\"}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
     "noOfConnInvocationResponse": {
         "$metadata": {
             "httpStatusCode": 200,

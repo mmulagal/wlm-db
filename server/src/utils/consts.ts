@@ -405,6 +405,7 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['eu-west-1', 'Europe (Ireland)'],
     ['eu-west-2', 'Europe (London)'],
     ['eu-west-3', 'Europe (Paris)'],
+    ['il-central-1', 'Israel (Tel Aviv)'],
     ['me-central-1', 'Middle East (UAE)'],
     ['me-south-1', 'Middle East (Bahrain)'],
     ['sa-east-1', 'South America (Sao Paulo)'],
@@ -464,12 +465,14 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
 
+    fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
     encryptionKey: 'FileSystemEncryptionKeyId',
 
+    sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
     sqlFciName: 'SqlFSxFCIName',
@@ -647,6 +650,10 @@ const SQL_TEMPLATES_ASSETS = [
         url: 'validation/Restart-Computer.ps1'
     },
     {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
+    },
+    {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
     }
@@ -655,13 +662,15 @@ const SQL_TEMPLATES_ASSETS = [
 const SQL_TEMPLATES_DISTRIBUTION = {
     VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
     SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml'
+    MASTER: './resources/mssql/templates/wlm-master.yaml',
+    SQLSTANDALONE: './resources/mssql/templates/standalone-deployment.yaml'
 };
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
-    VALIDATION = 'validation'
+    VALIDATION = 'validation',
+    SQLSTANDALONE = 'sqlstandalone'
 }
 
 enum DATABASE_METRIC_TYPE {
@@ -690,6 +699,9 @@ const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQue
 const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
+
+const FCI_STACKNAME = 'SQLFCIStack';
+const STANDALONE_STACKNAME = 'Standalone';
 
 // Notification
 const CRITICAL = 'critical';
@@ -820,6 +832,8 @@ export {
     TOKEN_EXPIRATION_TIME,
     WLMDB_ENDPOINT,
     BATCH_API_CONCURRENCY_LIMIT,
+    FCI_STACKNAME,
+    STANDALONE_STACKNAME,
     CRITICAL,
     PUBLISH,
     MOREINFO,

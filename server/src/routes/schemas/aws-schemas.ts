@@ -3,7 +3,7 @@ import {
     AmiResponse,
     VpcListResponse,
     AwsParams,
-    AwsRegionsParams,
+    AwsParamsWithRegion,
     AwsVpcQueryString,
     AdsResponse,
     SnsResponse,
@@ -19,7 +19,7 @@ import {
 // Base Request for AWS Routes
 const baseRequest = {
     tags: [RouteTags.AWS],
-    params: AwsParams
+    params: AwsParamsWithRegion
 };
 
 // GET VPC List Schema
@@ -71,7 +71,7 @@ const GetSnsTopicsSchema = {
 
 const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
-    params: AwsRegionsParams,
+    params: AwsParams,
     descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse

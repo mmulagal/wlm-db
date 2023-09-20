@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
-import { FSXADMIN, SQL_DATABASE, SQL_USERNAME } from '../../utils/consts';
+import { FSXADMIN, SQL_DATABASE, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -28,7 +28,10 @@ const initialState: any = {
         value: GENERAL.SQL_SERVER_2019_VERSION,
         label: GENERAL.SQL_SERVER_2019
     },
-    dbDeploymentModel: GENERAL.FAILOVER_CLUSTER,
+    dbDeploymentModel: {
+        label: GENERAL.FAILOVER_CLUSTER,
+        value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+    },
     dbEdition: {
         label: GENERAL.SQL_SERVER_STANDARD_EDITION,
         value: GENERAL.SQL_SERVER_STANDARD

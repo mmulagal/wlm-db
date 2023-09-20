@@ -59,8 +59,8 @@ async function formatTemplateParameters(
     enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
     const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
@@ -186,8 +186,8 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
     const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
