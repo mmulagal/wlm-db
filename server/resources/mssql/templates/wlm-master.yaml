@@ -516,8 +516,6 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
@@ -560,8 +558,6 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
@@ -647,8 +643,6 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue     
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
@@ -684,8 +678,6 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
@@ -798,8 +790,6 @@ Resources:
       NotificationARNs:
         Fn::If:
           - IncludeNotification
-          - !Split [",", !Ref NotificationARN]
-          - !Ref AWS::NoValue
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
@@ -898,7 +888,6 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
->>>>>>> 466317d28d5ddebc0787f3904ea0812f8f6e5a41
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Properties:

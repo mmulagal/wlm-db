@@ -221,10 +221,13 @@ async function createCloudFormationTemplateForUserDeployment(
         credentialsId,
         region,
         DatabaseTypes.MS_SQL_SERVER,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        derivedParams.StackName
     );
 
-    const signedURL = encodeURIComponent(await getPreSignedUrl(ASSETS_BUCKET_REGION));
+    const signedURL = encodeURIComponent(
+        await getPreSignedUrl(ASSETS_BUCKET_REGION, `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`)
+    );
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
@@ -308,14 +311,6 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(
-        credentialsId,
-        region,
-        DatabaseTypes.MS_SQL_SERVER,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
-    );
-
     const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
@@ -333,6 +328,15 @@ async function deployCloudFormationTemplate(
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        credentialsId,
+        region,
+        DatabaseTypes.MS_SQL_SERVER,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        stackName
+    );
 
     const deployStackResponse = await createStack(
         credentialsId,

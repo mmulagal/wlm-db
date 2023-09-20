@@ -61,6 +61,7 @@ async function updateTemplateUrls(
     templateFilepath: string,
     signedUrls: Map<string, TemplateDetails>,
     templateType: string,
+    stackName?: string,
     tags?: Array<{ Key: string; Value: string }>
 ) {
     logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
@@ -83,7 +84,8 @@ async function updateTemplateUrls(
             Tags: tags?.length ? yamlStr : '',
             SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || '')
         });
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, MASTER_TEMPLATE_PATH, contents);
+        const newMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, newMasterTemplatePath, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
@@ -115,13 +117,10 @@ async function updateTemplateUrls(
             ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
             ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
         });
-        await putObjectBucket(
-            credentialsId,
-            region,
-            BUCKET_NAME,
-            signedUrls.get('SQLTemplate')?.location || '',
-            contents
-        );
+        const newSQLTemplatePath: string = `${stackName}/${signedUrls.get('SQLTemplate')?.location || ''}`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, newSQLTemplatePath, contents);
+        const SQLsignedUrl = await getPreSignedUrl(region, newSQLTemplatePath);
+        signedUrls.set('SQLTemplate', { name: 'SQLTemplate', url: SQLsignedUrl, location: newSQLTemplatePath });
     } else if (templateType === TEMPLATE_TYPES.VALIDATION) {
         const contents = template({
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
@@ -137,13 +136,16 @@ async function updateTemplateUrls(
             ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
             ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || '')
         });
-        await putObjectBucket(
-            credentialsId,
-            region,
-            BUCKET_NAME,
-            signedUrls.get('ValidationTemplate')?.location || '',
-            contents
-        );
+        const newValidationTemplatePath: string = `${stackName}/${
+            signedUrls.get('ValidationTemplate')?.location || ''
+        }`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, newValidationTemplatePath, contents);
+        const SQLsignedUrl = await getPreSignedUrl(region, newValidationTemplatePath);
+        signedUrls.set('ValidationTemplate', {
+            name: 'ValidationTemplate',
+            url: SQLsignedUrl,
+            location: newValidationTemplatePath
+        });
     } else if (templateType === TEMPLATE_TYPES.SQLSTANDALONE) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
@@ -186,7 +188,8 @@ async function uploadTemplates(
     credentialsId: string,
     region: string,
     resourceType: DatabaseTypes,
-    tags?: Array<{ Key: string; Value: string }>
+    tags?: Array<{ Key: string; Value: string }>,
+    stackName?: string
 ) {
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 
@@ -197,14 +200,16 @@ async function uploadTemplates(
             region,
             SQL_TEMPLATES_DISTRIBUTION.VALIDATION,
             signedUrls,
-            TEMPLATE_TYPES.VALIDATION
+            TEMPLATE_TYPES.VALIDATION,
+            stackName
         );
         await updateTemplateUrls(
             credentialsId,
             region,
             SQL_TEMPLATES_DISTRIBUTION.SQLSTACK,
             signedUrls,
-            TEMPLATE_TYPES.SQLSTACK
+            TEMPLATE_TYPES.SQLSTACK,
+            stackName
         );
         await updateTemplateUrls(
             credentialsId,
@@ -212,6 +217,7 @@ async function uploadTemplates(
             SQL_TEMPLATES_DISTRIBUTION.MASTER,
             signedUrls,
             TEMPLATE_TYPES.MASTER,
+            stackName,
             tags
         );
         await updateTemplateUrls(
