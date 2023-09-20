@@ -867,7 +867,11 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1
-                                    -WFCName '
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -WFCName '"
                                   - !Ref 'SqlFSxWSFCName'
                                   - "' -Node1 '"
                                   - !Ref 'SqlFSxServerNetBIOSName1'
@@ -1403,10 +1407,6 @@ Resources:
             GroupDescription: Allow access to the Workload instances
             VpcId: !Ref 'VPCID'
             SecurityGroupIngress:
-                - IpProtocol: -1
-                  FromPort: -1
-                  ToPort: -1
-                  CidrIp: !Ref 'VPCCIDR'
                 - IpProtocol: tcp
                   FromPort: 53
                   ToPort: 53
