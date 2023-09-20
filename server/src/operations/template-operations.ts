@@ -188,8 +188,8 @@ async function uploadTemplates(
     credentialsId: string,
     region: string,
     resourceType: DatabaseTypes,
-    tags?: Array<{ Key: string; Value: string }>,
-    stackName?: string
+    stackName: string,
+    tags?: Array<{ Key: string; Value: string }>
 ) {
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 

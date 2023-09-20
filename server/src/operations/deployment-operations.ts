@@ -221,8 +221,8 @@ async function createCloudFormationTemplateForUserDeployment(
         credentialsId,
         region,
         DatabaseTypes.MS_SQL_SERVER,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        derivedParams.StackName
+        derivedParams.StackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
     );
 
     const signedURL = encodeURIComponent(
@@ -334,8 +334,8 @@ async function deployCloudFormationTemplate(
         credentialsId,
         region,
         DatabaseTypes.MS_SQL_SERVER,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        stackName
+        stackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
     );
 
     const deployStackResponse = await createStack(
