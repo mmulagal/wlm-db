@@ -15,6 +15,7 @@ const StorageCapacity = () => {
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
 
     const units = ['TiB', 'GiB'];
 
@@ -29,9 +30,11 @@ const StorageCapacity = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(setStorageUnit(generateUnitsForStorage[1]));
-        if(!inputCapacity){
-            dispatch(setStorageCapacity('1024'));
+        if(!isLoadConfig){
+            dispatch(setStorageUnit(generateUnitsForStorage[1]));
+            if(!inputCapacity){
+                dispatch(setStorageCapacity('1024'));
+            }
         }
     }, [generateUnitsForStorage]);
 

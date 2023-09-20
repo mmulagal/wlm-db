@@ -178,6 +178,7 @@ export interface MssqlRequestBody {
         securityGroupId: string;
     },
     fsxConfiguration: {
+        fsxDeploymentMode: string,
         fsxFileSystemId: string;
         fsxUsername: string;
         fsxPassword: string;
@@ -188,6 +189,7 @@ export interface MssqlRequestBody {
         encryptionKey: string;
     },
     sqlConfiguration: {
+        sqlDeploymentMode: string,
         sqlAmiId: string;
         serviceAccountName: string;
         serviceAccountPassword: string;

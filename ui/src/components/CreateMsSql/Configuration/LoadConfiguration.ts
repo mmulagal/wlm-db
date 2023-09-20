@@ -11,7 +11,8 @@ import {
     setSavedConfig 
 } from '../../../store/mssql/msSqlActionSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
-import { API_NAME } from '../../../utils/consts';
+import { API_NAME, FROM_DIALOG } from '../../../utils/consts';
+import { navigateToCanvas } from '../../../utils/appConfig';
 
 /*
 This function is used to load config data on click on config load. 
@@ -112,16 +113,16 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
 /*
 On click of save config it will call API to store config data.
 */
-export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, configListRefetch: any, closeDialog:any) => {
+export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, configListRefetch: any, closeDialog:any, dialogFrom: string) => {
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
     const existingSavedConfig = state.msSqlAction.savedConfig;
     const payload = {name: saveConfigName, data:state.mssqlForm};
     const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
     if(isDuplicate){
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, 
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, 
             message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG }));
-        closeDialog();
+        closeSaveDialog(dialogFrom, closeDialog);
     } else {
         dispatch(setIsSaveConfigLoading(true));
         saveConfigData({ payload: payload })
@@ -133,7 +134,7 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, confi
                         message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
                     configListRefetch();
                 }
-                closeDialog();
+                closeSaveDialog(dialogFrom, closeDialog);
             })
             .catch((error: any) => {
                 console.log("Error while saving data - ",error);
@@ -143,6 +144,18 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, confi
     }
     return '';
 };
+
+/* 
+Close dialog in case of save configuration. If save configuration is clicked from cross header than redirect to CM.
+*/
+const closeSaveDialog = (dialogFrom: string, closeDialog: any) => {
+    closeDialog();
+    if(dialogFrom === FROM_DIALOG.HEADER_CROSS){
+        setTimeout(() => {
+            navigateToCanvas('/');
+        },3000);
+    }
+}
 
 /*
 This function is used to avoid saving config again if saved just now.
@@ -162,7 +175,7 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
     const securityGroupType = newConfig?.securityGroup?.selectedSecurityType === oldConfig?.securityGroup?.selectedSecurityType;
     const securityGroup = newConfig?.securityGroup?.selectedExistingSecurityGroup?.value === oldConfig?.securityGroup?.selectedExistingSecurityGroup?.value;
     const operatingSystem = newConfig?.operatingSystem?.label === oldConfig?.operatingSystem?.label;
-    const deploymentModel = newConfig?.dbDeploymentModel === oldConfig?.dbDeploymentModel;
+    const deploymentModel = newConfig?.dbDeploymentModel?.value === oldConfig?.dbDeploymentModel?.value;
     const edition = newConfig?.dbEdition?.value === oldConfig?.dbEdition?.value;
     const dbVersion = newConfig?.dbVersion?.value === oldConfig?.dbVersion?.value;
     const licenseType = newConfig?.license?.selectedLicenseType === oldConfig?.license?.selectedLicenseType;

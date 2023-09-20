@@ -37,10 +37,10 @@ const EstimatedCost = () => {
     const throughputValue = useAppSelector(state => state.mssqlForm.throughput?.value);
     const iopsValueType = useAppSelector(state => state.mssqlForm.provisionedIOPS?.provisionedType);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
+    const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     useEffect(() => {
         if (
-            false &&
             regionValue &&
             instanceTypeName &&
             sqlSoftwareTypeValue &&
@@ -53,19 +53,20 @@ const EstimatedCost = () => {
             const updatedStr = splitRegion[0].replace(/\s?$/, '');
             const payload = {
                 compute: {
-                    region: updatedStr || '',
+                    regionCode: updatedStr || '',
                     instanceType: instanceTypeName || '',
-                    sqlSoftwareType: sqlSoftwareTypeValue.value || ''
+                    sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || ''
                 },
                 storage: {
-                    region: regionValue?.value || '',
-                    diskSize: `${diskSize} ${diskSizeUnit}`,
+                    regionCode: updatedStr || '',
+                    diskSize: `${diskSize}${diskSizeUnit}`,
                     throughput: throughputValue,
-                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? iopsValue : ''
-                },
-                connectivity: {
-                    createNewVpc: false
+                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
+                    deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
                 }
+                // vpc: {
+                //     regionCode: updatedStr || '',
+                // }
             };
             setIsLoading(true);
             getEstimationCost(payload)
@@ -73,7 +74,11 @@ const EstimatedCost = () => {
                     setTimeout(() => {
                         setIsLoading(false);
                         setFetchResult(true);
-                        setData(data);
+                        if (data.error) {
+                            setIsDisabled(true);
+                        } else {
+                            setData(data);
+                        }
                     }, 2000);
                 })
                 .catch((error: any) => {
@@ -114,37 +119,31 @@ const EstimatedCost = () => {
     // }, [fetchResult]);
 
     const setHeader = () => {
-        // if (isLoading) {
-        //     return <LoadingComponent />;
-        // } else if (isDisabled) {
-        //     <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-        //         {GENERAL.COST_ERROR}
-        //     </Typography>;
-        // } else if (!regionValue) {
-        //     return (
-        //         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-        //             {GENERAL.ESTIMATED_COST_HEADER}
-        //         </Typography>
-        //     );
-        // } else {
-        //     return <Typography variant="Regular_14">{data?.data.total}</Typography>;
-        // }
-
-        return (
-            <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                {GENERAL.ESTIMATED_COST_HEADER}
-            </Typography>
-        );
+        if (isLoading) {
+            return <LoadingComponent />;
+        } else if (isDisabled) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.COST_ERROR}
+                </Typography>
+            );
+        } else if (!regionValue) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.ESTIMATED_COST_HEADER}
+                </Typography>
+            );
+        } else {
+            return <Typography variant="Regular_14">{`$${data?.data?.total}`}</Typography>;
+        }
     };
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
-                isDisabled={true}
-                isExpandDisabled={true}
-                // isDisabled={isDisabled || !regionValue}
-                // isExpandDisabled={isDisabled || !regionValue}
+                isDisabled={isDisabled || !regionValue}
+                isExpandDisabled={isDisabled || !regionValue}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
-                id="23"
+                id="24"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
             >
                 <AccordionCardContent>
@@ -180,7 +179,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.compute || ''
+                                        `$${data?.data?.compute}` || ''
                                     )}
                                 </Typography>
                             </div>
@@ -203,7 +202,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.storage || ''
+                                        `$${data?.data?.storage?.storageCapacity}` || ''
                                     )}
                                 </Typography>
 
@@ -218,13 +217,13 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.throughput || ''
+                                        `$${data?.data?.storage?.throughput}` || ''
                                     )}
                                 </Typography>
                             </div>
                         </div>
 
-                        <div className={styles.connectivityContainer}>
+                        {/* <div className={styles.connectivityContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
                                 {GENERAL.CONNECTIVITY}
                             </Typography>
@@ -239,11 +238,11 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        data?.data?.connectivity || ''
+                                        data?.data?.vpc || ''
                                     )}
                                 </Typography>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* <div className={styles.adContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
@@ -276,7 +275,7 @@ const EstimatedCost = () => {
                                     </div>
                                 ) : (
                                     //@ts-ignore
-                                    data?.data?.total || ''
+                                    `$${data?.data?.total}` || ''
                                 )}
                             </Typography>
                         </div>

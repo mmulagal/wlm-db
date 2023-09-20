@@ -5236,7 +5236,10 @@
             "isDisabled": false,
             "disabledTitle": ""
         },
-        "dbDeploymentModel": "Failover cluster instance (FCI)",
+        "dbDeploymentModel": {
+            "label": "Failover cluster instance (FCI)",
+            "value": "fci"
+        },
         "dbEdition": {
             "label": "SQL Server Standard Edition",
             "value": "Standard"

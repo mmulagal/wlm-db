@@ -70,7 +70,8 @@ async function updateTemplateUrls(
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
-            SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || '')
+            SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
+            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || '')
         });
         await putObjectBucket(credentialsId, region, BUCKET_NAME, MASTER_TEMPLATE_PATH, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
@@ -133,6 +134,41 @@ async function updateTemplateUrls(
             signedUrls.get('ValidationTemplate')?.location || '',
             contents
         );
+    } else if (templateType === TEMPLATE_TYPES.SQLSTANDALONE) {
+        const contents = template({
+            DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
+            DSCSignature: decodeURI(signedUrls.get('DSCSignature')?.url || ''),
+            PowerShell: decodeURI(signedUrls.get('PowerShell')?.url || ''),
+            PowerShellSignature: decodeURI(signedUrls.get('PowerShellSignature')?.url || ''),
+
+            Sqlspcu: decodeURI(signedUrls.get('Sqlspcu')?.url || ''),
+            SqlspcuSignature: decodeURI(signedUrls.get('SqlspcuSignature')?.url || ''),
+            AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
+            AmazonLaunchWizardForCFNSignature: decodeURI(
+                signedUrls.get('AmazonLaunchWizardForCFNSignature')?.url || ''
+            ),
+            AmazonLaunchWizardForSSM: decodeURI(signedUrls.get('AmazonLaunchWizardForSSM')?.url || ''),
+            AmazonLaunchWizardForSSMSignature: decodeURI(
+                signedUrls.get('AmazonLaunchWizardForSSMSignature')?.url || ''
+            ),
+
+            ScriptVerifySignature: decodeURI(signedUrls.get('ScriptVerifySignature')?.url || ''),
+            ScriptUnzipArchive: decodeURI(signedUrls.get('ScriptUnzipArchive')?.url || ''),
+            ScriptCommon: decodeURI(signedUrls.get('ScriptCommon')?.url || ''),
+            ScriptCommonSignature: decodeURI(signedUrls.get('ScriptCommonSignature')?.url || ''),
+
+            ScriptSQLFCI: decodeURI(signedUrls.get('ScriptSQLFCI')?.url || ''),
+            ScriptSQLFCISignature: decodeURI(signedUrls.get('ScriptSQLFCISignature')?.url || ''),
+            ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
+            ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
+        });
+        await putObjectBucket(
+            credentialsId,
+            region,
+            BUCKET_NAME,
+            signedUrls.get('SQLStandaloneTemplate')?.location || '',
+            contents
+        );
     }
 }
 
@@ -161,6 +197,13 @@ async function uploadTemplates(credentialsId: string, region: string, resourceTy
             SQL_TEMPLATES_DISTRIBUTION.MASTER,
             signedUrls,
             TEMPLATE_TYPES.MASTER
+        );
+        await updateTemplateUrls(
+            credentialsId,
+            region,
+            SQL_TEMPLATES_DISTRIBUTION.SQLSTANDALONE,
+            signedUrls,
+            TEMPLATE_TYPES.SQLSTANDALONE
         );
     }
 }

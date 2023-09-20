@@ -32,13 +32,11 @@ import formConfigRoutes from './routes/form-config';
 import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
+import pricingRoutes from './routes/pricing';
 import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
-import {
-    createAndSubscribeToSnsTopicInAllRegions,
-    updateSnsTopicAttributeInAllRegions
-} from './operations/aws/sns-operations';
+import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 
@@ -162,6 +160,7 @@ const app = fastify({
             workingEnvironmentRoutes(instance);
             msSqlServerRoutes(instance);
             batchRoutes(instance);
+            pricingRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
@@ -210,7 +209,6 @@ const app = fastify({
 
 try {
     await createAndSubscribeToSnsTopicInAllRegions();
-    await updateSnsTopicAttributeInAllRegions();
     processCloudFormationMessages();
 } catch (error) {
     logger.error('Failed to setup SNS-SQS infra', error);
