@@ -91,9 +91,9 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             { schema: DeploymentStatusSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, deploymentId }
+                    params: { accountId, stackId }
                 } = request;
-                const response = await deploymentStatusById(accountId, deploymentId);
+                const response = await deploymentStatusById(accountId, stackId);
                 return reply.send(response);
             }
         );
