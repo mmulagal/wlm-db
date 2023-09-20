@@ -561,8 +561,6 @@ Resources:
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
       {{Tags}}
-  WLMSQLResourceGroup:
-    Type: AWS::ResourceGroups::Group
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
