@@ -1,9 +1,10 @@
 import createError from 'http-errors';
-import { RESOURCESTYPE, HttpErrorCodes, WORKSPACE_ID } from '../utils/consts';
-import { getTenancyResourcesByType, getTenancyResourcesByTypeAndId } from '../lib/cloud-manager/tenancy';
+import { resource } from '@prisma/client';
+import { RESOURCESTYPE, HttpErrorCodes, ACCOUNT_ID } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { listResources } from '../lib/database/db';
 
 interface WorkingEnvironment {
     id: string;
@@ -12,41 +13,19 @@ interface WorkingEnvironment {
     deploymentState: string;
 }
 
-interface Resource {
-    metadata: string | null;
-    resourceIdentifier: string;
-    resourceType: string;
-    name?: string;
-}
 const logger = getLogger();
 async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
-    const mssqlResources = await getTenancyResourcesByType(RESOURCESTYPE.MSSQL);
-    const workingEnvironments: WorkingEnvironment[] = mssqlResources.reduce(
-        (result: WorkingEnvironment[], resource: Resource) => {
-            const { metadata, resourceIdentifier, resourceType, name } = resource || {};
-            try {
-                if (metadata) {
-                    const { properties } = JSON.parse(metadata) || {};
-                    const parsedProperties = JSON.parse(properties);
-                    const workspaceId = parsedProperties.workspaceId || '';
-                    if (workspaceId === getAsyncLocalStorageResource<string>(WORKSPACE_ID)) {
-                        let deploymentState: string = '';
-                        deploymentState = parsedProperties.deploymentState || '';
-                        result.push({
-                            id: resourceIdentifier,
-                            provider: resourceType,
-                            name,
-                            deploymentState
-                        });
-                    }
-                }
-            } catch (error) {
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
-            }
-            return result;
-        },
-        []
+
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const mssqlResources = (await listResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[]; // ToDO: get from resources table
+    const workingEnvironments: WorkingEnvironment[] = mssqlResources.map(
+        ({ resource_id: resourceId, resource_type: resourceType, resource_name: resourceName }) => ({
+            id: resourceId,
+            provider: resourceType,
+            name: resourceName || '',
+            deploymentState: 'SUCCESS'
+        })
     );
 
     return workingEnvironments;
@@ -54,8 +33,16 @@ async function getWorkingEnvironments() {
 
 async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
     logger.info('Getting MSSQL working environment data for resource:', resourceId);
-    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
-    const dbCount = await getDatabasesCount(credentialsId, region, activeInstanceId, standbyInstanceId);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Unable to get mssql env data');
+    }
+    const dbCount = await getDatabasesCount(
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        standbyNodeInstanceId || undefined
+    );
     const { name: serverName, metadata } = tenancyResource || {};
     const { properties } = metadata || {};
     let location = '';
@@ -81,7 +68,8 @@ async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
 
 async function getWorkingEnvironment(id: string) {
     logger.info('Getting MSSQL working environment data for resource:', id);
-    const tenancyResource = await getTenancyResourcesByTypeAndId(RESOURCESTYPE.MSSQL, id);
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const [tenancyResource] = await listResources(accountId, id, RESOURCESTYPE.MSSQL);
 
     if (tenancyResource) {
         const response = await getMSSQLEnvData(tenancyResource, id);

@@ -26,17 +26,26 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, regionId },
-            body: { activeInstanceId, standbyInstanceId }
+            params: { accountId, credentialsId, region },
+            body: {
+                activeNodeInstanceId,
+                standbyNodeInstanceId,
+                activeNodeInstanceName,
+                standbyNodeInstanceName,
+                fsxId
+            }
         } = request;
 
         const response = await discoverMsSqlServer(
             accountId,
             credentialsId,
-            regionId,
-            activeInstanceId,
-            standbyInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
-            DatabaseTypes.MS_SQL_SERVER
+            region,
+            activeNodeInstanceId,
+            activeNodeInstanceName,
+            standbyNodeInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
+            standbyNodeInstanceName,
+            DatabaseTypes.MS_SQL_SERVER,
+            fsxId
         );
         return reply.send(response);
     });

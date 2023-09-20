@@ -230,7 +230,8 @@ enum AWSQueryFields {
 }
 
 enum RESOURCESTYPE {
-    MSSQL = 'MSSQL'
+    MSSQL = 'MSSQL',
+    FSX = 'FSX'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';

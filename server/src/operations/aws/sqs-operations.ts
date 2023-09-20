@@ -12,6 +12,7 @@ import {
     DEFAULT_AWS_REGION,
     ERROR_CODE_SQS_INVALID_TOKEN,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
+    RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB
 } from '../../utils/consts';
@@ -21,11 +22,13 @@ import { transformStackEventMessage } from './sns-operations';
 import {
     createDeployment,
     createEvent,
+    createResource,
     listDeployments,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
+import { getSqlServerDetails } from '../workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -131,6 +134,49 @@ async function processCloudFormationMessages() {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
                                                     endTime: new Date(messageTimestamp).valueOf(),
                                                     data: resourceProperties
+                                                });
+
+                                                const {
+                                                    ActiveInstanceId: activeNodeInstanceId,
+                                                    StandbyInstanceId: standbyNodeInstanceId,
+                                                    ActiveInstanceName: activeNodeInstanceName,
+                                                    StandbyInstanceName: standbyNodeInstanceName,
+                                                    FSxFileSystemId: fsxId,
+                                                    FSxFileSystemName: fsxName,
+                                                    ActiveInstanceIp: activeNodeInstanceIp,
+                                                    StandbyInstanceIp: standbyNodeInstanceIp
+                                                } = resourceProperties;
+                                                await createResource(accountId, {
+                                                    resourceId: fsxId,
+                                                    resourceName: fsxName,
+                                                    cloudProviderAccountId,
+                                                    cloudProviderName: CloudProviders.AWS,
+                                                    resourceType: RESOURCESTYPE.FSX,
+                                                    region
+                                                });
+                                                const { id, resourceName } = await getSqlServerDetails(
+                                                    credentialsId,
+                                                    region,
+                                                    activeNodeInstanceId,
+                                                    standbyNodeInstanceId
+                                                );
+                                                await createResource(accountId, {
+                                                    resourceId: id,
+                                                    resourceName,
+                                                    cloudProviderAccountId,
+                                                    cloudProviderName: CloudProviders.AWS,
+                                                    resourceType: RESOURCESTYPE.MSSQL,
+                                                    coRelationId: fsxId,
+                                                    region,
+                                                    metadata: {
+                                                        credentialsId,
+                                                        activeNodeInstanceId,
+                                                        standbyNodeInstanceId,
+                                                        activeNodeInstanceName,
+                                                        standbyNodeInstanceName,
+                                                        activeNodeInstanceIp,
+                                                        standbyNodeInstanceIp
+                                                    }
                                                 });
                                             }
                                         }
