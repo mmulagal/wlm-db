@@ -68,10 +68,10 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
 async function getWorkingEnvironment(id: string) {
     logger.info('Getting MSSQL working environment data for resource:', id);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const [Resource] = await listResources(accountId, id, RESOURCESTYPE.MSSQL);
+    const [resourceDetails] = await listResources(accountId, id, RESOURCESTYPE.MSSQL);
 
-    if (Resource) {
-        const response = await getMSSQLEnvData(Resource, id);
+    if (resourceDetails) {
+        const response = await getMSSQLEnvData(resourceDetails, id);
         if (response) {
             return response;
         }
