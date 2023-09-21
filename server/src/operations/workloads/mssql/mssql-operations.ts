@@ -120,6 +120,8 @@ async function callSsmExecution(
                 );
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${secondError}`);
             }
+        } else {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${error}`);
         }
     }
     if (response?.StandardErrorContent) {
