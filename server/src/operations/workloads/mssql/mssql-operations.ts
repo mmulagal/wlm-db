@@ -415,21 +415,21 @@ async function getServerSummary(resourceId: string) {
 
 async function getSqlServerDetails(
     credentialsId: string,
-    regionId: string,
+    region: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string
 ) {
     const [resourceIdentifier, name] = await Promise.all([
         callSsmExecution(
             credentialsId,
-            regionId,
+            region,
             [`${PSSCRIPT} -Query "${SERVER_GUID}"`],
             activeNodeInstanceId,
             standbyNodeInstanceId
         ),
         callSsmExecution(
             credentialsId,
-            regionId,
+            region,
             [`${PSSCRIPT} -Query "${SERVER_NAME}"`],
             activeNodeInstanceId,
             standbyNodeInstanceId
@@ -485,7 +485,7 @@ async function discoverMsSqlServer(
     //         propertyValue: JSON.stringify({
     //             location: CloudProviders.AWS,
     //             credentialsId,
-    //             region: regionId,
+    //             region,
     //             activeNodeInstanceId: activeNodeInstanceId,
     //             standbyNodeInstanceId: standbyNodeInstanceId,
     //             deploymentState: DeploymentState.SUCCESS

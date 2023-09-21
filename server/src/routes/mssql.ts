@@ -18,7 +18,7 @@ import {
 import { removeTenancyResource } from '../operations/tenancy-operations';
 import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
 
-const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:regionId';
+const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function msSqlServerRoutes(fastify: FastifyInstance) {

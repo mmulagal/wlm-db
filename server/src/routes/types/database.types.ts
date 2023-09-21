@@ -2,7 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const DatabaseHeaders = Type.Object({
-    [HEADERS.WORKSPACE_ID_HEADER]: Type.String({ minLength: 1 })
+    [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String({ minLength: 1 }))
 });
 
 const DatabaseParams = Type.Object({
