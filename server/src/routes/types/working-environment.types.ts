@@ -21,7 +21,8 @@ const WorkingEnvironmentsResponse = Type.Object({
                 id: Type.Optional(Type.String()),
                 name: Type.Optional(Type.String()),
                 provider: Type.Optional(Type.String()),
-                deploymentState: Type.Optional(Type.String())
+                deploymentState: Type.Optional(Type.String()),
+                location: Type.Optional(Type.String())
             })
         )
     )

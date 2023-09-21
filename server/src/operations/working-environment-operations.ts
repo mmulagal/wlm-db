@@ -20,10 +20,16 @@ async function getWorkingEnvironments() {
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const mssqlResources = (await listResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[]; // ToDO: get from resources table
     const workingEnvironments: WorkingEnvironment[] = mssqlResources.map(
-        ({ resource_id: resourceId, resource_type: resourceType, resource_name: resourceName }) => ({
+        ({
+            resource_id: resourceId,
+            resource_type: resourceType,
+            resource_name: resourceName,
+            cloud_provider_name: cloudProviderName
+        }) => ({
             id: resourceId,
             provider: resourceType,
             name: resourceName || '',
+            location: cloudProviderName,
             deploymentState: 'SUCCESS'
         })
     );
@@ -31,7 +37,7 @@ async function getWorkingEnvironments() {
     return workingEnvironments;
 }
 
-async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
+async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
     logger.info('Getting MSSQL working environment data for resource:', resourceId);
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
     if (!credentialsId || !region || !activeNodeInstanceId) {
@@ -43,18 +49,11 @@ async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
         activeNodeInstanceId,
         standbyNodeInstanceId || undefined
     );
-    const { name: serverName, metadata } = tenancyResource || {};
-    const { properties } = metadata || {};
-    let location = '';
-    let deploymentState = '';
-    try {
-        if (properties) {
-            const parsedProperties = JSON.parse(properties);
-            location = parsedProperties.location || '';
-            deploymentState = parsedProperties.deploymentState || '';
-        }
-    } catch (error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
+    const { resource_name: serverName, metadata, cloud_provider_name: location } = resourceDetails || {};
+    const deploymentState = 'SUCCESS';
+    let domain = '';
+    if (metadata) {
+        domain = metadata.activeNodeInstanceIp || '';
     }
     return {
         id: resourceId,
@@ -62,17 +61,17 @@ async function getMSSQLEnvData(tenancyResource: any, resourceId: string) {
         location,
         deploymentState,
         databasesCount: dbCount.totalCount,
-        domain: ''
+        domain
     };
 }
 
 async function getWorkingEnvironment(id: string) {
     logger.info('Getting MSSQL working environment data for resource:', id);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const [tenancyResource] = await listResources(accountId, id, RESOURCESTYPE.MSSQL);
+    const [Resource] = await listResources(accountId, id, RESOURCESTYPE.MSSQL);
 
-    if (tenancyResource) {
-        const response = await getMSSQLEnvData(tenancyResource, id);
+    if (Resource) {
+        const response = await getMSSQLEnvData(Resource, id);
         if (response) {
             return response;
         }
