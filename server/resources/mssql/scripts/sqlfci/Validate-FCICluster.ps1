@@ -1,4 +1,4 @@
-   [CmdletBinding()]
+    [CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)]
     [string]$AdminSecret,
@@ -27,7 +27,6 @@ param (
 $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
 $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
-
 class NodeException: System.Exception{
     [string] $Emessage
     NodeException($Message, $Emessage) : base($Message) {
@@ -48,7 +47,9 @@ class SQLFCIException: System.Exception{
     }
 }
 
+
 try {
+
     $ErrorActionPreference = "Stop"
 
     Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
@@ -74,7 +75,7 @@ try {
       }  -Credential $Credentials -ComputerName $HostName -Authentication credssp
 
 
- Write-Output $ClusterResource
+    Write-Output $ClusterResource
      if (($Nodes -notmatch $Node1) -Or ($Nodes -notmatch $Node2)) {
         throw [NodeException]::new('Node Check Failure:Node missing in Cluster',"All nodes are not part of the cluster")
     }
@@ -98,7 +99,7 @@ try {
         throw [SQLFCIException]::new('SQL Check Failure:No SQL Server Agent',"SQL Server Agent Role could not be created or brought online")
     }  
 
-
+}
     catch [NodeException] {
     Write-Output "Cluster does not contain both nodes or not in healthy state"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
@@ -120,16 +121,13 @@ try {
 }
   
 
-    
-
-}
-
 
 catch {
     Write-Output "SQL FCI validation failed"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 } 
+ 
  
  
  
