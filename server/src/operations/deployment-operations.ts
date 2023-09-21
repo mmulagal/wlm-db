@@ -219,7 +219,7 @@ async function createCloudFormationTemplateForUserDeployment(
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         credentialsId,
-        region,
+        ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         derivedParams.StackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value }))
