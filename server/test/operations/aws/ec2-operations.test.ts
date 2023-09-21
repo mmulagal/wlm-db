@@ -4,14 +4,14 @@ import {
     getVpcsList,
     getFSxAvailableRegionsList,
     getInstanceTypes,
-    getKeyPairsList,
-    getWindowsServerBaseAmi
+    getKeyPairsList
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { getWindowsServerBaseAmi } from '../../../src/lib/aws/ec2';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';

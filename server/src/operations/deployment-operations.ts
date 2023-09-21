@@ -40,7 +40,7 @@ import {
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
-import { getWindowsServerBaseAmi } from './aws/ec2-operations';
+import { getWindowsServerBaseAmi } from '../lib/aws/ec2';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -224,7 +224,8 @@ async function createCloudFormationTemplateForUserDeployment(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
-    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const awsAccountId = '464262061435';
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
