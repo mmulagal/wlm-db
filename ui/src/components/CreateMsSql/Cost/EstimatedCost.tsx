@@ -99,7 +99,8 @@ const EstimatedCost = () => {
         diskSizeUnit,
         throughputValue,
         iopsValueType,
-        iopsValue
+        iopsValue,
+        deploymentModel
     ]);
 
     //To open accordion if default account is present
@@ -136,7 +137,7 @@ const EstimatedCost = () => {
                 </Typography>
             );
         } else {
-            return <Typography variant="Regular_14">{`$${data?.data?.total}`}</Typography>;
+            return <Typography variant="Regular_14">{`$${Number(data?.data?.total).toFixed(2)}`}</Typography>;
         }
     };
     return (
@@ -171,7 +172,9 @@ const EstimatedCost = () => {
                                 <Typography variant="Regular_14">
                                     {GENERAL.INSTANCE_TYPE}: {instanceTypeName}
                                 </Typography>
-                                <Typography variant="Regular_14">{GENERAL.QUANTITY}: 2</Typography>
+                                <Typography variant="Regular_14">
+                                    {GENERAL.QUANTITY}: {deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 1 : 2}
+                                </Typography>
                             </div>
                             <div className={styles.thirdRow}>
                                 <Typography variant="Regular_14" className={styles.costValue}>
@@ -181,7 +184,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        `$${data?.data?.compute}` || ''
+                                        `$${Number(data?.data?.compute).toFixed(2)}` || ''
                                     )}
                                 </Typography>
                             </div>
@@ -204,7 +207,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        `$${data?.data?.storage?.storageCapacity}` || ''
+                                        `$${Number(data?.data?.storage?.storageCapacity).toFixed(2)}` || ''
                                     )}
                                 </Typography>
 
@@ -219,7 +222,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        `$${data?.data?.storage?.throughput}` || ''
+                                        `$${Number(data?.data?.storage?.throughput).toFixed(2)}` || ''
                                     )}
                                 </Typography>
                             </div>
@@ -277,7 +280,7 @@ const EstimatedCost = () => {
                                     </div>
                                 ) : (
                                     //@ts-ignore
-                                    `$${data?.data?.total}` || ''
+                                    `$${Number(data?.data?.total).toFixed(2)}` || ''
                                 )}
                             </Typography>
                         </div>
