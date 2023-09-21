@@ -237,6 +237,19 @@ const FSxFileSystemSchema = Type.Object({
                 ontapVolumeType: Type.Optional(Type.String())
             })
         )
+    ),
+    storageVirtualMachines: Type.Optional(
+        Type.Array(
+            Type.Object({
+                storageVirtualMachineId: Type.Optional(Type.String()),
+                storageVirtualMachineName: Type.Optional(Type.String()),
+                resourceARN: Type.Optional(Type.String()),
+                lifeCycle: Type.Optional(Type.String()),
+                subtype: Type.Optional(Type.String()),
+                creationTime: Type.Optional(Type.Any()),
+                uuid: Type.Optional(Type.String())
+            })
+        )
     )
 });
 

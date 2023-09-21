@@ -1,28 +1,117 @@
+import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { describeFSxFileSystems, describeFSxVolumes } from '../../lib/aws/fsx';
+import { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
-import { FSX_FILESYSTEM_TYPE, FSX_STORAGE_TYPE, AWS_RESOURCE_NAME_TAG } from '../../utils/consts';
+import {
+    FSX_FILESYSTEM_TYPE,
+    FSX_STORAGE_TYPE,
+    AWS_RESOURCE_NAME_TAG,
+    FSX_BATCH_CONCURRENCY_VALUE
+} from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 
 const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
+async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
+    const enetInterfaceIds = fileSys.NetworkInterfaceIds;
+    const enetInterfaces: DescribeNetworkInterfacesRequest = {
+        Filters: [
+            {
+                Name: 'network-interface-id',
+                Values: enetInterfaceIds
+            }
+        ]
+    };
+    const [{ StorageVirtualMachines: fsxSVMs }, { Volumes: fsxVolumes }, networkInterfacesList] = await Promise.all([
+        describeFSxStorageVirtualMachines(credentialsId, region, fileSys.FileSystemId!),
+        describeFSxVolumes(credentialsId, region, fileSys.FileSystemId!),
+        getNetworkInterfacesList(credentialsId, region, enetInterfaces)
+    ]);
+    const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
+
+    const volumesList: FSxFileSystemType['volumes'] = fsxVolumes?.map(
+        ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => ({
+            volumeId,
+            volumeType,
+            securityStyle: volumeOntapConfiguration?.SecurityStyle,
+            sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
+            storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
+            storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
+            ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
+        })
+    );
+
+    const svmList: FSxFileSystemType['storageVirtualMachines'] = fsxSVMs?.map(
+        ({
+            StorageVirtualMachineId: storageVirtualMachineId,
+            Name: storageVirtualMachineName,
+            ResourceARN: resourceARN,
+            Subtype: subtype,
+            Lifecycle: lifeCycle,
+            CreationTime: creationTime,
+            UUID: uuid
+        }) => ({
+            storageVirtualMachineId,
+            storageVirtualMachineName,
+            resourceARN,
+            lifeCycle,
+            subtype,
+            creationTime,
+            uuid
+        })
+    );
+    // Get the FSx filesystem name, if available.
+    const { Tags: tags } = fileSys;
+    const tag = tags?.find(({ Key: key }: { Key: string }) => key === AWS_RESOURCE_NAME_TAG);
+    const { OntapConfiguration: ontapConfig } = fileSys;
+    return {
+        fileSystemId: fileSys.FileSystemId!,
+        name: tag?.Value,
+        kmsKeyId: fileSys.KmsKeyId,
+        lifecycle: fileSys.Lifecycle!,
+        networkInterfaceIds: fileSys.NetworkInterfaceIds,
+        subnetIds: fileSys.SubnetIds,
+        vpcId: fileSys.VpcId,
+        ontapConfiguration: {
+            deploymentType: ontapConfig.DeploymentType,
+            endpointIpAddressRange: ontapConfig?.EndpointIpAddressRange,
+            fsxAdminPassword: ontapConfig?.FsxAdminPassword,
+            preferredSubnetId: ontapConfig?.PreferredSubnetId,
+            routeTableIds: ontapConfig?.RouteTableIds,
+            throughputCapacity: ontapConfig?.ThroughputCapacity,
+            diskIopsConfiguration: {
+                iops: ontapConfig?.DiskIopsConfiguration?.Iops,
+                mode: ontapConfig?.DiskIopsConfiguration?.Mode
+            },
+            endpoints: {
+                intercluster: {
+                    dnsName: ontapConfig?.Endpoints?.Intercluster?.DNSName,
+                    ipAddresses: ontapConfig?.Endpoints?.Intercluster?.IpAddresses
+                },
+                management: {
+                    dnsName: ontapConfig?.Endpoints?.Management?.DNSName,
+                    ipAddresses: ontapConfig?.Endpoints?.Management?.IpAddresses
+                }
+            }
+        },
+        volumes: volumesList,
+        securityGroups: Array.from(sgs),
+        storageVirtualMachines: svmList
+    };
+}
+
 /*
  * Return Amazon FSx for NetApp ONTAP filesystems in the given AWS region
  * and also available from the given VPC.
  */
-async function getFSxFileSystemsList(
-    credentialsId: string,
-    region: string,
-    vpcId: string
-): Promise<{ filesystems: FSxFileSystemType[] }> {
+async function getFSxFileSystemsList(credentialsId: string, region: string, vpcId: string) {
     logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
 
-    let { FileSystems: allFSxFilesystems } = await describeFSxFileSystems(credentialsId, region);
-    const ontapFSxFilesystems: FSxFileSystemType[] = [];
+    let allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
 
     // 1. We are supporting only Amazon FSx for NetApp ONTAP filesystems, which
     //    are always of storageType == SSD and fileSystemType == ONTAP.
@@ -33,6 +122,7 @@ async function getFSxFileSystemsList(
     // 3. DescribeFSxFileSystems() returns all filesystems in a given AWS
     //    region, spanning different VPCs. We shall return only the filesystems
     //    in the given VPC.
+
     allFSxFilesystems = allFSxFilesystems?.filter(
         ({ FileSystemType, FileSystemId, VpcId, StorageType }) =>
             FileSystemType &&
@@ -45,78 +135,13 @@ async function getFSxFileSystemsList(
             StorageType === FSX_STORAGE_TYPE
     );
 
-    if (allFSxFilesystems?.length) {
-        for (const fs of allFSxFilesystems) {
-            const enetInterfaceIds = fs.NetworkInterfaceIds;
-            const volumesList: FSxFileSystemType['volumes'] = [];
-
-            const { Volumes: fsxVolumes } = await describeFSxVolumes(credentialsId, region, fs.FileSystemId!);
-
-            const enetInterfaces: DescribeNetworkInterfacesRequest = {
-                Filters: [
-                    {
-                        Name: 'network-interface-id',
-                        Values: enetInterfaceIds
-                    }
-                ]
-            };
-
-            const networkInterfacesList = await getNetworkInterfacesList(credentialsId, region, enetInterfaces);
-            const sgs = new Set(networkInterfacesList.map(enet => enet.securityGroups ?? []).flat());
-
-            fsxVolumes?.forEach(
-                ({ VolumeId: volumeId, VolumeType: volumeType, OntapConfiguration: volumeOntapConfiguration }) => {
-                    volumesList.push({
-                        volumeId,
-                        volumeType,
-                        securityStyle: volumeOntapConfiguration?.SecurityStyle,
-                        sizeInMegabytes: volumeOntapConfiguration?.SizeInMegabytes,
-                        storageEfficiencyEnabled: volumeOntapConfiguration?.StorageEfficiencyEnabled,
-                        storageVirtualMachineId: volumeOntapConfiguration?.StorageVirtualMachineId,
-                        ontapVolumeType: volumeOntapConfiguration?.OntapVolumeType
-                    });
-                }
-            );
-
-            // Get the FSx filesystem name, if available.
-            const { Tags: tags } = fs;
-            const tag = tags?.find(({ Key: key }) => key === AWS_RESOURCE_NAME_TAG);
-
-            ontapFSxFilesystems.push({
-                fileSystemId: fs.FileSystemId!,
-                name: tag?.Value,
-                kmsKeyId: fs.KmsKeyId,
-                lifecycle: fs.Lifecycle!,
-                networkInterfaceIds: fs.NetworkInterfaceIds,
-                subnetIds: fs.SubnetIds,
-                vpcId: fs.VpcId,
-                ontapConfiguration: {
-                    deploymentType: fs.OntapConfiguration?.DeploymentType,
-                    endpointIpAddressRange: fs.OntapConfiguration?.EndpointIpAddressRange,
-                    fsxAdminPassword: fs.OntapConfiguration?.FsxAdminPassword,
-                    preferredSubnetId: fs.OntapConfiguration?.PreferredSubnetId,
-                    routeTableIds: fs.OntapConfiguration?.RouteTableIds,
-                    throughputCapacity: fs.OntapConfiguration?.ThroughputCapacity,
-                    diskIopsConfiguration: {
-                        iops: fs.OntapConfiguration?.DiskIopsConfiguration?.Iops,
-                        mode: fs.OntapConfiguration?.DiskIopsConfiguration?.Mode
-                    },
-                    endpoints: {
-                        intercluster: {
-                            dnsName: fs.OntapConfiguration?.Endpoints?.Intercluster?.DNSName,
-                            ipAddresses: fs.OntapConfiguration?.Endpoints?.Intercluster?.IpAddresses
-                        },
-                        management: {
-                            dnsName: fs.OntapConfiguration?.Endpoints?.Management?.DNSName,
-                            ipAddresses: fs.OntapConfiguration?.Endpoints?.Management?.IpAddresses
-                        }
-                    }
-                },
-                volumes: volumesList,
-                securityGroups: Array.from(sgs)
-            });
+    const ontapFSxFilesystems: FSxFileSystemType[] = await Promise.map(
+        allFSxFilesystems!,
+        async fileSystem => getFSXDetails(credentialsId, region, fileSystem),
+        {
+            concurrency: FSX_BATCH_CONCURRENCY_VALUE
         }
-    }
+    );
 
     return { filesystems: ontapFSxFilesystems };
 }
