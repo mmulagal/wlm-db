@@ -29,6 +29,7 @@ const EstimatedCost = () => {
     const [getEstimationCost] = useGetEstimationCostMutation();
 
     //To get the Cost value based on the below parameters
+    const selectedCredId = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId);
     const regionValue = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion);
     const instanceTypeName = useAppSelector(state => state.mssqlForm.instanceType?.value);
     const sqlSoftwareTypeValue = useAppSelector(state => state.mssqlForm.dbEdition);
@@ -69,7 +70,7 @@ const EstimatedCost = () => {
                 // }
             };
             setIsLoading(true);
-            getEstimationCost(payload)
+            getEstimationCost({ credentialId: selectedCredId, payload: payload })
                 .then((data: any) => {
                     setTimeout(() => {
                         setIsLoading(false);
@@ -78,6 +79,7 @@ const EstimatedCost = () => {
                             setIsDisabled(true);
                         } else {
                             setData(data);
+                            setIsDisabled(false);
                         }
                     }, 2000);
                 })
