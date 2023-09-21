@@ -40,7 +40,7 @@ import {
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
-import { getWindowsServerBaseAmi } from '../lib/aws/ec2';
+import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
