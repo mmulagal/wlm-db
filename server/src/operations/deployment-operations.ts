@@ -311,10 +311,6 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);
-
-    logger.info('Signed master url ', signedMasterTemplateUrl);
-
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
         region,
@@ -337,6 +333,12 @@ async function deployCloudFormationTemplate(
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value }))
     );
+
+    const newMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, newMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
 
     const deployStackResponse = await createStack(
         credentialsId,
