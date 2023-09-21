@@ -261,12 +261,12 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
 
-    logger.info('CloudFormation template url ', signedTemplateURL);
+    logger.info('Cloud Formation template URL ', signedTemplateURL);
 
     await prepareDetailsToSendNotification(
         'user_deployment',
-        'Cloud formation signed template url created successfully',
-        'Cloud formation signed template url created successfully for quick user deployment',
+        'Cloud formation signed template URL created successfully',
+        'Cloud formation signed template URL created successfully for quick user deployment',
         { uiNotification: true, emailNotification: true },
         ACTION_BUTTON_DASHBOARD,
         SUCCESS
