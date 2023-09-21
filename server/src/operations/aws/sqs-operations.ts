@@ -6,6 +6,7 @@ import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
+    ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
     CloudProviders,
@@ -13,6 +14,7 @@ import {
     ERROR_CODE_SQS_INVALID_TOKEN,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     RESOURCESTYPE,
+    SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB
 } from '../../utils/consts';
@@ -29,6 +31,7 @@ import {
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getSqlServerDetails } from '../workloads/mssql/mssql-operations';
+import { prepareDetailsToSendNotification } from '../cloud-manager/notification-operations';
 
 const logger = getLogger();
 
@@ -178,6 +181,14 @@ async function processCloudFormationMessages() {
                                                         standbyNodeInstanceIp
                                                     }
                                                 });
+                                                await prepareDetailsToSendNotification(
+                                                    'standard_deployment',
+                                                    'Cloud formation stack deployment successful',
+                                                    'Cloud formation stack deployment successful',
+                                                    { uiNotification: true, emailNotification: true },
+                                                    ACTION_BUTTON_DASHBOARD,
+                                                    SUCCESS
+                                                );
                                             }
                                         }
                                     } else {
@@ -191,6 +202,12 @@ async function processCloudFormationMessages() {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()
                                             });
+                                            await prepareDetailsToSendNotification(
+                                                'standard_deployment',
+                                                'Cloud formation stack deployment failed',
+                                                'Cloud formation stack deployment failed',
+                                                { uiNotification: true, emailNotification: true }
+                                            );
                                         }
                                     }
                                 }

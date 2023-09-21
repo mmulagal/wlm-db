@@ -37,7 +37,7 @@ export const PENDING_DELETION = 'PendingDeletion';
 export const DEFAULT_MASTER_KEY = 'aws/fsx';
 
 // Default instance type
-export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge'
+export const DEAFULT_INSTANCE_VALUE = 'r5.xlarge';
 
 // Add credentials link
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
