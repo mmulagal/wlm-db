@@ -18,7 +18,7 @@ async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const mssqlResources = (await listResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[]; // ToDO: get from resources table
+    const mssqlResources = (await listResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[];
     const workingEnvironments: WorkingEnvironment[] = mssqlResources.map(
         ({
             resource_id: resourceId,

@@ -154,40 +154,37 @@ async function getDatabasesCount(
 async function getDataBasesSummary(resourceId: string) {
     logger.info('Get databases summary for resource:', resourceId);
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-    if (credentialsId && region && activeNodeInstanceId) {
-        let dbCount = await getDatabasesCount(
-            credentialsId,
-            region,
-            activeNodeInstanceId,
-            standbyNodeInstanceId || undefined
-        );
-        dbCount = dbCount?.totalCount || 0;
 
-        const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
-        const batchQueries: string[] = [];
-        for (let i = 0, offset = 0; i < rowscount; i++) {
-            batchQueries.push(`${PSSCRIPT} -Query "${DATABASES(offset, DB_ROWS_COUNT)}"`);
-            offset += DB_ROWS_COUNT;
-        }
-
-        const responses = await Promise.map(
-            batchQueries,
-            async query =>
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [query],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-            { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
-        );
-        const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
-        // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
-        const cleanDBSummanry = sqlResponseParsing(dbSummary);
-
-        return { databases: cleanDBSummanry };
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');
     }
+
+    let dbCount = await getDatabasesCount(
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        standbyNodeInstanceId || undefined
+    );
+    dbCount = dbCount?.totalCount || 0;
+
+    const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
+    const batchQueries: string[] = [];
+    for (let i = 0, offset = 0; i < rowscount; i++) {
+        batchQueries.push(`${PSSCRIPT} -Query "${DATABASES(offset, DB_ROWS_COUNT)}"`);
+        offset += DB_ROWS_COUNT;
+    }
+
+    const responses = await Promise.map(
+        batchQueries,
+        async query =>
+            callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId || undefined),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    );
+    const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+    const cleanDBSummanry = sqlResponseParsing(dbSummary);
+
+    return { databases: cleanDBSummanry };
 }
 
 function resourceUtilisationQuery(metricType: string) {
@@ -207,55 +204,57 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
     logger.info(`Get ${metricType} resource utilization for resource: `, resourceId);
 
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-    if (credentialsId && region && activeNodeInstanceId) {
-        logger.info('Fetching utilization from primary', credentialsId, region, activeNodeInstanceId, metricType);
 
-        let commands: string[] = [];
-        const metricQuery = resourceUtilisationQuery(metricType);
-        commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
+    }
+    logger.info('Fetching utilization from primary', credentialsId, region, activeNodeInstanceId, metricType);
 
-        if (metricType === DATABASE_METRIC_TYPE.DISK) {
-            const dbSizecommand = [`${PSSCRIPT} -Query '${DB_SIZE}'`];
-            const diskUtilizationCommand = [`${PSSCRIPT} -Query "${DISK_UTILISATION}"`];
+    let commands: string[] = [];
+    const metricQuery = resourceUtilisationQuery(metricType);
+    commands = [`${PSSCRIPT} -Query "${metricQuery}"`];
 
-            const [diskdata, size] = await Promise.all([
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    diskUtilizationCommand,
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    dbSizecommand,
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                )
-            ]);
+    if (metricType === DATABASE_METRIC_TYPE.DISK) {
+        const dbSizecommand = [`${PSSCRIPT} -Query '${DB_SIZE}'`];
+        const diskUtilizationCommand = [`${PSSCRIPT} -Query "${DISK_UTILISATION}"`];
 
-            const [sizeValue] = size ? sqlResponseParsing(size) : [];
-            const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
-            const diskUtilization: UtilisationResponseBodyInterface = {
-                used: sizeValue.TotalSize.toString(),
-                total: diskDataValue.total.toString(),
-                remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
-                percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
-            };
-            return diskUtilization;
-        }
-        const response = await callSsmExecution(
-            credentialsId,
-            region,
-            commands,
-            activeNodeInstanceId,
-            standbyNodeInstanceId || undefined
-        );
-        logger.debug('Fetching  utilization', response);
-        if (response) {
-            return sqlResponseParsing(response)[0];
-        }
+        const [diskdata, size] = await Promise.all([
+            callSsmExecution(
+                credentialsId,
+                region,
+                diskUtilizationCommand,
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                dbSizecommand,
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            )
+        ]);
+
+        const [sizeValue] = size ? sqlResponseParsing(size) : [];
+        const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
+        const diskUtilization: UtilisationResponseBodyInterface = {
+            used: sizeValue.TotalSize.toString(),
+            total: diskDataValue.total.toString(),
+            remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
+            percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
+        };
+        return diskUtilization;
+    }
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId || undefined
+    );
+    logger.debug('Fetching  utilization', response);
+    if (response) {
+        return sqlResponseParsing(response)[0];
     }
 }
 
@@ -285,133 +284,129 @@ async function getTablesCount(
 async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId, databaseName);
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-    if (credentialsId && region && activeNodeInstanceId) {
-        const { totalCount: tablesCount = 0 } =
-            (await getTablesCount(
-                credentialsId,
-                region,
-                databaseName,
-                activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
-            )) || {};
 
-        const batchCount = Math.ceil(tablesCount / DB_ROWS_COUNT);
-
-        const batchQueries: string[] = [];
-        for (let i = 0, offset = 0; i < batchCount; i++) {
-            batchQueries.push(`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_QUERY(offset, DB_ROWS_COUNT)}"`);
-            offset += DB_ROWS_COUNT;
-        }
-
-        const responses = await Promise.map(
-            batchQueries,
-            async query =>
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [query],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-            { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
-        );
-        const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
-        // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
-
-        const cleanResponses = sqlResponseParsing(tablesList);
-        for (const record of cleanResponses) {
-            record.databaseName = databaseName;
-        }
-        return { tables: cleanResponses };
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get tables summary');
     }
+    const { totalCount: tablesCount = 0 } =
+        (await getTablesCount(
+            credentialsId,
+            region,
+            databaseName,
+            activeNodeInstanceId,
+            standbyNodeInstanceId || undefined
+        )) || {};
+
+    const batchCount = Math.ceil(tablesCount / DB_ROWS_COUNT);
+
+    const batchQueries: string[] = [];
+    for (let i = 0, offset = 0; i < batchCount; i++) {
+        batchQueries.push(`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_QUERY(offset, DB_ROWS_COUNT)}"`);
+        offset += DB_ROWS_COUNT;
+    }
+
+    const responses = await Promise.map(
+        batchQueries,
+        async query =>
+            callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId || undefined),
+        { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
+    );
+    const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
+    // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
+
+    const cleanResponses = sqlResponseParsing(tablesList);
+    for (const record of cleanResponses) {
+        record.databaseName = databaseName;
+    }
+    return { tables: cleanResponses };
 }
 
 async function getServerSummary(resourceId: string) {
     logger.info('Get details of SQL Server database:', { resourceId });
 
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-    if (credentialsId && region && activeNodeInstanceId) {
-        const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo] =
-            await Promise.all([
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${SERVER_STATE}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${SERVER_NODE}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                ),
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${CLUSTER_NODES}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId || undefined
-                )
-            ]);
-        if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
-            const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
-            const serverInfo = serverDetails?.split('\t');
-            const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
-            const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
-            const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
-            let [{ activeNode }] = sqlResponseParsing(nodeInfo);
-            const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
 
-            let standbyNode: string = '';
-            if (isClustered && clusterNodesInfo) {
-                const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
+    }
+    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo] =
+        await Promise.all([
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${SERVER_STATE}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${SERVER_NODE}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            ),
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${CLUSTER_NODES}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId || undefined
+            )
+        ]);
+    if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
+        const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
+        const serverInfo = serverDetails?.split('\t');
+        const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
+        const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
+        const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
+        let [{ activeNode }] = sqlResponseParsing(nodeInfo);
+        const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
 
-                if (node1?.is_current_owner === 'True') {
-                    activeNode = node1?.NodeName;
-                    standbyNode = node2?.NodeName;
-                } else {
-                    activeNode = node2?.NodeName;
-                    standbyNode = node1?.NodeName;
-                }
+        let standbyNode: string = '';
+        if (isClustered && clusterNodesInfo) {
+            const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
+
+            if (node1?.is_current_owner === 'True') {
+                activeNode = node1?.NodeName;
+                standbyNode = node2?.NodeName;
+            } else {
+                activeNode = node2?.NodeName;
+                standbyNode = node1?.NodeName;
             }
-
-            return {
-                serverId: resourceId,
-                serverVersion,
-                serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
-                serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-                serverStatus,
-                activeConnections,
-                deploymentModel: isClustered
-                    ? SqlServerDeploymentModel.SQL_FCI
-                    : SqlServerDeploymentModel.SQL_STANDALONE,
-                activeNode,
-                ...(isClustered ? { standbyNode } : {})
-            };
         }
+
+        return {
+            serverId: resourceId,
+            serverVersion,
+            serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
+            serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
+            serverStatus,
+            activeConnections,
+            deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
+            activeNode,
+            ...(isClustered ? { standbyNode } : {})
+        };
     }
 }
 
@@ -457,7 +452,7 @@ async function discoverMsSqlServer(
     resourceType: string,
     fsxId?: string
 ) {
-    logger.info('Save SQL Server details in tenancy:', {
+    logger.info('Save SQL Server details in database:', {
         accountId,
         credentialsId,
         region,
