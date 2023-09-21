@@ -60,7 +60,19 @@ describe('Testcases for Amazon FSx resources operations', () => {
                             ontapVolumeType: 'RW'
                         }
                     ],
-                    securityGroups: ['sg-05f4939d6670b405f', 'sg-3924c15c']
+                    securityGroups: ['sg-05f4939d6670b405f', 'sg-3924c15c'],
+                    storageVirtualMachines: [
+                        {
+                            storageVirtualMachineId: 'svm-0491dd89a76b7ca3d',
+                            storageVirtualMachineName: 'wlmdb_sqlsvm_1695189650293',
+                            resourceARN:
+                                'arn:aws:fsx:ap-southeast-1:464262061435:storage-virtual-machine/fs-0b6426cf6960a5082/svm-0491dd89a76b7ca3d',
+                            lifeCycle: 'CREATED',
+                            subtype: 'DEFAULT',
+                            creationTime: '2023-09-20T06:43:53.667Z',
+                            uuid: '3bb505f5-5781-11ee-bbaa-73441e925a97'
+                        }
+                    ]
                 }
             ]
         };
