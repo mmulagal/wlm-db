@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
-import { FSXADMIN, SQL_DATABASE, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
+import { FSXADMIN, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -41,7 +41,7 @@ const initialState: any = {
         selectedLicenseId: null,
         selectedCustomAMI: null
     },
-    dbName: SQL_DATABASE,
+    dbName: '',
     dbCredentials: {
         name: SQL_USERNAME,
         password: ''

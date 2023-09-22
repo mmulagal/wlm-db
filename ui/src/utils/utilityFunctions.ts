@@ -2,7 +2,7 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST } from './consts';
+import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST, SQL_DATABASE } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
@@ -274,3 +274,7 @@ export const formatSizeSplit = (value: number | string) => {
 export const displayFormattedValue = (value: number, msg: string) => {
     return `${formatSize(value)} ${msg}`;
 };
+
+export const generateRandomDBName = () => {
+    return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
+}
