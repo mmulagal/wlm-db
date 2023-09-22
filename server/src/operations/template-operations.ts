@@ -179,7 +179,7 @@ async function uploadTemplates(credentialsId: string, region: string, resourceTy
         const signedUrls = await generateSignedUrls(region, resourceType);
         await Promise.all(
             SQL_TEMPLATES_DISTRIBUTION.map(async template => {
-                await updateTemplateUrls(credentialsId, region, template.location, signedUrls, template.name);
+                updateTemplateUrls(credentialsId, region, template.location, signedUrls, template.name);
             })
         );
     }
