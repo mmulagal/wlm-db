@@ -276,6 +276,5 @@ export const displayFormattedValue = (value: number, msg: string) => {
 };
 
 export const generateRandomDBName = () => {
-    const randomNum = Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
-    return SQL_DATABASE + randomNum;
+    return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 }
