@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
-import { FSXADMIN, SQL_DATABASE, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
-import { generateRandomDBName } from '../../utils/utilityFunctions';
+import { FSXADMIN, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
