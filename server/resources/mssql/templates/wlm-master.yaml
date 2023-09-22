@@ -906,6 +906,12 @@ Resources:
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx1InstanceId"
             - !GetAtt "SQLStandaloneStack.Outputs.SqlNodeId"
+      ActiveInstanceName: 
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+              - ","
+              - Ref: NodeNetBIOSNames
       StandbyInstanceIp: 
           !If
             - IsFailoverCluster
@@ -915,4 +921,13 @@ Resources:
           !If
             - IsFailoverCluster
             - !GetAtt "SQLServerStack.Outputs.SQLFSx2InstanceId"
+            - !Ref AWS::NoValue
+      StandbyInstanceName: 
+          !If
+            - IsFailoverCluster
+            - Fn::Select:
+              - "1"
+              - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
