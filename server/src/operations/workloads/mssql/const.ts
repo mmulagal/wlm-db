@@ -63,6 +63,7 @@ const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTA
 const IS_SERVER_CLUSTERED = `${SET_NOCOUNT} SELECT SERVERPROPERTY('IsClustered') as isClustered ${FOR_JSON_PATH}`;
 const SERVER_NODE = `${SET_NOCOUNT} SELECT SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as activeNode ${FOR_JSON_PATH}`;
 const CLUSTER_NODES = `${SET_NOCOUNT} SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes ${FOR_JSON_PATH}`;
+const FCI_CLUSTER_NAME = `${SET_NOCOUNT} SELECT cluster_name from sys.dm_hadr_cluster ${FOR_JSON_PATH}`;
 const NUMBER_OF_CONNECTIONS = `${SET_NOCOUNT} SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL ${FOR_JSON_PATH}`;
 
 const TABLES_QUERY = (offset: number, rowscount: number) =>
@@ -108,5 +109,6 @@ export {
     SERVER_NODE,
     CLUSTER_NODES,
     DB_SIZE,
-    SSM_QUERY_CONCURRENCY_LIMIT
+    SSM_QUERY_CONCURRENCY_LIMIT,
+    FCI_CLUSTER_NAME
 };

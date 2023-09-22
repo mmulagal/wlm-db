@@ -20,7 +20,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SSM_QUERY_CONCURRENCY_LIMIT
+    SSM_QUERY_CONCURRENCY_LIMIT,
+    FCI_CLUSTER_NAME
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -254,27 +255,37 @@ async function getServerSummary(resourceId: string) {
 
     const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
 
-    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo] =
-        await Promise.all([
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
-            ]),
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
-            ]),
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                `${PSSCRIPT} -Query "${SERVER_STATE}"`
-            ]),
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
-            ]),
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                `${PSSCRIPT} -Query "${SERVER_NODE}"`
-            ]),
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-                `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
-            ])
-        ]);
+    const [
+        serverDetailsInfo,
+        connectionsInfo,
+        stateInfo,
+        isClusteredInfo,
+        nodeInfo,
+        clusterNodesInfo,
+        fciClusterNameInfo
+    ] = await Promise.all([
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_STATE}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${SERVER_NODE}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
+        ]),
+        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
+            `${PSSCRIPT} -Query "${FCI_CLUSTER_NAME}"`
+        ])
+    ]);
 
     const serverDetails = serverDetailsInfo.replaceAll('\r\n', '');
     const serverInfo = serverDetails?.split('\t');
@@ -285,6 +296,7 @@ async function getServerSummary(resourceId: string) {
     const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
 
     let standbyNode: string = '';
+    let clusterName: string = '';
     if (isClustered) {
         const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
@@ -295,6 +307,8 @@ async function getServerSummary(resourceId: string) {
             activeNode = node2?.NodeName;
             standbyNode = node1?.NodeName;
         }
+
+        [{ cluster_name: clusterName }] = sqlResponseParsing(fciClusterNameInfo);
     }
 
     return {
@@ -306,7 +320,7 @@ async function getServerSummary(resourceId: string) {
         activeConnections,
         deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
         activeNode,
-        ...(isClustered ? { standbyNode } : {})
+        ...(isClustered ? { standbyNode, clusterName } : {})
     };
 }
 
