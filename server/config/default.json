@@ -46,7 +46,7 @@
     "jwt-token-expiry": "6h",
     "signed-url-expiry-hours": "24",
     "templates": {
-        "bucket": "bucketkrithi",
-        "region": "ap-southeast-1"
+        "bucket": "staging.wlmdb.workloads.netapp.com",
+        "region": "us-east-1"
     }
 }
