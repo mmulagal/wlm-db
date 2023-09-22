@@ -216,17 +216,20 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
+    const newMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, newMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         credentialsId,
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         derivedParams.StackName,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
-    );
-
-    const signedURL = encodeURIComponent(
-        await getPreSignedUrl(ASSETS_BUCKET_REGION, `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`)
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        newMasterTemplatePath
     );
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
@@ -266,7 +269,7 @@ async function createCloudFormationTemplateForUserDeployment(
         templateParams += `&param_${key}=${value}`;
     });
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedMasterTemplateUrl}&${templateParams}`;
 
     logger.info('CloudFormation template url ', signedTemplateURL);
 
@@ -325,20 +328,21 @@ async function deployCloudFormationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
+    const newMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, newMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         credentialsId,
         region,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value }))
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        newMasterTemplatePath
     );
-
-    const newMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
-
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, newMasterTemplatePath);
-
-    logger.info('Signed master url ', signedMasterTemplateUrl);
 
     const deployStackResponse = await createStack(
         credentialsId,

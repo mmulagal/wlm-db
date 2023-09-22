@@ -15,6 +15,7 @@ import {
     ACCOUNT_ID,
     API_PATH_HEALTH,
     API_TITLE,
+    AUDIT_EXCLUDE_LIST,
     HEADERS,
     REQUEST_ID,
     USER_TOKEN,
@@ -33,7 +34,11 @@ import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
-import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
+import {
+    createAuditGroup,
+    updateAuditGroup,
+    updateAuditGroupResponse
+} from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
@@ -187,7 +192,10 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
-                createAuditGroup(request, reply);
+                const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+                if (!requestUrl) {
+                    createAuditGroup(request, reply);
+                }
                 done();
             });
         }
@@ -203,6 +211,8 @@ const app = fastify({
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
         if (reply.statusCode !== 202) {
             updateAuditGroup(request, reply, payload);
+        } else if (request.url.includes('cloudformation/stack')) {
+            updateAuditGroupResponse(request, payload);
         }
         return payload;
     });

@@ -886,6 +886,7 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
+      {{Tags}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Properties:

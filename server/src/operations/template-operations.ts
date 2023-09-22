@@ -5,13 +5,14 @@ import yaml from 'yaml';
 import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
+    SQL_RESOURCE_ASSETS,
     SQL_TEMPLATES_ASSETS,
+    SQL_TEMPLATE_TAGS_INDENTATION,
     TEMPLATE_TYPES,
     BUCKET_NAME,
     SQL_TEMPLATES_DISTRIBUTION,
     SIGNED_URL_ERROR_MESSAGE,
-    HttpErrorCodes,
-    MASTER_TEMPLATE_PATH
+    HttpErrorCodes
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -31,18 +32,18 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
 
     let assets = [];
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
-        assets = SQL_TEMPLATES_ASSETS;
+        assets = SQL_RESOURCE_ASSETS;
     }
 
     if (assets?.length) {
         await Promise.all(
-            SQL_TEMPLATES_ASSETS.map(async template => {
-                logger.info(`Creating signed url for ${template.url} in region ${region}.`);
+            SQL_RESOURCE_ASSETS.map(async resource => {
+                logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
                 try {
-                    signedUrl = await getPreSignedUrl(region, template.url);
-                    signedUrls.set(template.name, { name: template.name, url: signedUrl, location: template.url });
+                    signedUrl = await getPreSignedUrl(region, resource.url);
+                    signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
                 } catch (error) {
-                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(template.url, region, error as string);
+                    const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
                     logger.error(errorMessage);
                     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
                 }
@@ -61,8 +62,9 @@ async function updateTemplateUrls(
     templateFilepath: string,
     signedUrls: Map<string, TemplateDetails>,
     templateType: string,
-    stackName?: string,
-    tags?: Array<{ Key: string; Value: string }>
+    stackName: string,
+    tags?: Array<{ Key: string; Value: string }>,
+    templatePath?: string
 ) {
     logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
     const yamlStr = yaml.stringify(
@@ -70,12 +72,29 @@ async function updateTemplateUrls(
             Tags: tags
         },
         {
-            indent: 6 // !IMP: This is a workaround untill we find a better solution, it should be changed if the indentation changes in master yaml file
+            indent: SQL_TEMPLATE_TAGS_INDENTATION // !IMP: This is a workaround until we find a better solution, it should be changed if the indentation changes in master yaml file
         }
     );
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
     if (templateType === TEMPLATE_TYPES.MASTER) {
+        const fsxNewTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
+        const fsxExistingTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
+        const fsxNewTemplatesignedUrl = await getPreSignedUrl(region, fsxNewTemplatePath!.url);
+        const fsxExistingTemplatesignedUrl = await getPreSignedUrl(region, fsxExistingTemplatePath!.url);
+
+        await Promise.all([
+            signedUrls.set(fsxNewTemplatePath!.name, {
+                name: fsxNewTemplatePath!.name,
+                url: fsxNewTemplatesignedUrl,
+                location: fsxNewTemplatePath!.url
+            }),
+            signedUrls.set(fsxExistingTemplatePath!.name, {
+                name: fsxExistingTemplatePath!.name,
+                url: fsxExistingTemplatesignedUrl,
+                location: fsxNewTemplatePath!.url
+            })
+        ]);
         const contents = template({
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
@@ -84,8 +103,7 @@ async function updateTemplateUrls(
             Tags: tags?.length ? yamlStr : '',
             SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || '')
         });
-        const newMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, newMasterTemplatePath, contents);
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, templatePath!, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
         const contents = template({
             DSC: decodeURI(signedUrls.get('DSC')?.url || ''),
@@ -117,10 +135,16 @@ async function updateTemplateUrls(
             ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
             ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
         });
-        const newSQLTemplatePath: string = `${stackName}/${signedUrls.get('SQLTemplate')?.location || ''}`;
+
+        const sqlTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLTemplate');
+        const newSQLTemplatePath: string = `${stackName}/${sqlTemplatePath!.url}`;
         await putObjectBucket(credentialsId, region, BUCKET_NAME, newSQLTemplatePath, contents);
         const SQLsignedUrl = await getPreSignedUrl(region, newSQLTemplatePath);
-        signedUrls.set('SQLTemplate', { name: 'SQLTemplate', url: SQLsignedUrl, location: newSQLTemplatePath });
+        signedUrls.set(sqlTemplatePath!.name, {
+            name: sqlTemplatePath!.name,
+            url: SQLsignedUrl,
+            location: newSQLTemplatePath
+        });
     } else if (templateType === TEMPLATE_TYPES.VALIDATION) {
         const contents = template({
             AmazonLaunchWizardForCFN: decodeURI(signedUrls.get('AmazonLaunchWizardForCFN')?.url || ''),
@@ -136,14 +160,14 @@ async function updateTemplateUrls(
             ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
             ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || '')
         });
-        const newValidationTemplatePath: string = `${stackName}/${
-            signedUrls.get('ValidationTemplate')?.location || ''
-        }`;
+
+        const ValidationTemplate = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');
+        const newValidationTemplatePath: string = `${stackName}/${ValidationTemplate!.url}`;
         await putObjectBucket(credentialsId, region, BUCKET_NAME, newValidationTemplatePath, contents);
-        const SQLsignedUrl = await getPreSignedUrl(region, newValidationTemplatePath);
-        signedUrls.set('ValidationTemplate', {
-            name: 'ValidationTemplate',
-            url: SQLsignedUrl,
+        const valSignedUrl = await getPreSignedUrl(region, newValidationTemplatePath);
+        signedUrls.set(ValidationTemplate!.name, {
+            name: ValidationTemplate!.name,
+            url: valSignedUrl,
             location: newValidationTemplatePath
         });
     } else if (templateType === TEMPLATE_TYPES.SQLSTANDALONE) {
@@ -174,13 +198,15 @@ async function updateTemplateUrls(
             ScriptSQLONTAP: decodeURI(signedUrls.get('ScriptSQLONTAP')?.url || ''),
             ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
         });
-        await putObjectBucket(
-            credentialsId,
-            region,
-            BUCKET_NAME,
-            signedUrls.get('SQLStandaloneTemplate')?.location || '',
-            contents
-        );
+        const standAloneTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
+        const newStandAloneTemplatePath: string = `${stackName}/${standAloneTemplatePath!.url}`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, newStandAloneTemplatePath, contents);
+        const standAloneSignedUrl = await getPreSignedUrl(region, newStandAloneTemplatePath);
+        signedUrls.set(standAloneTemplatePath!.name, {
+            name: standAloneTemplatePath!.name,
+            url: standAloneSignedUrl,
+            location: newStandAloneTemplatePath
+        });
     }
 }
 
@@ -189,7 +215,8 @@ async function uploadTemplates(
     region: string,
     resourceType: DatabaseTypes,
     stackName: string,
-    tags?: Array<{ Key: string; Value: string }>
+    tags?: Array<{ Key: string; Value: string }>,
+    templatePath?: string
 ) {
     logger.info('Uploading templates ', credentialsId, region, resourceType);
 
@@ -214,18 +241,20 @@ async function uploadTemplates(
         await updateTemplateUrls(
             credentialsId,
             region,
-            SQL_TEMPLATES_DISTRIBUTION.MASTER,
+            SQL_TEMPLATES_DISTRIBUTION.SQLSTANDALONE,
             signedUrls,
-            TEMPLATE_TYPES.MASTER,
-            stackName,
-            tags
+            TEMPLATE_TYPES.SQLSTANDALONE,
+            stackName
         );
         await updateTemplateUrls(
             credentialsId,
             region,
-            SQL_TEMPLATES_DISTRIBUTION.SQLSTANDALONE,
+            SQL_TEMPLATES_DISTRIBUTION.MASTER,
             signedUrls,
-            TEMPLATE_TYPES.SQLSTANDALONE
+            TEMPLATE_TYPES.MASTER,
+            stackName,
+            tags,
+            templatePath
         );
     }
 }
