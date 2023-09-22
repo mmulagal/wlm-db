@@ -1456,6 +1456,10 @@ Resources:
                   ToPort: 3343
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
                 - IpProtocol: tcp
+                  FromPort: 3343
+                  ToPort: 3343
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
                   FromPort: 445
                   ToPort: 445
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
