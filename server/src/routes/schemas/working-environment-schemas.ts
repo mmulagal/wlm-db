@@ -2,7 +2,6 @@ import { RouteTags } from '../../utils/consts';
 import {
     WorkingEnvironmentResponse,
     WorkingEnvironmentsResponse,
-    WorkinEnvironmentHeaders,
     AccountIdParams,
     AccountIdAndWorkingEnvironmentIdParams
 } from '../types/working-environment.types';
@@ -10,7 +9,6 @@ import {
 const GetWorkingEnvironmentsSchema = {
     tags: [RouteTags.WORKING_ENVIRONMENT],
     description: 'Get working environments',
-    headers: WorkinEnvironmentHeaders,
     params: AccountIdParams,
     response: {
         200: WorkingEnvironmentsResponse
@@ -20,7 +18,6 @@ const GetWorkingEnvironmentsSchema = {
 const GetWorkingEnvironmentSchema = {
     tags: [RouteTags.WORKING_ENVIRONMENT],
     description: 'Get working environments',
-    headers: WorkinEnvironmentHeaders,
     params: AccountIdAndWorkingEnvironmentIdParams,
     response: {
         200: WorkingEnvironmentResponse
