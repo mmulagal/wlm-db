@@ -43,12 +43,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Unable to get mssql env data');
     }
-    const dbCount = await getDatabasesCount(
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        standbyNodeInstanceId || undefined
-    );
+    const dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId!);
     const { resource_name: serverName, metadata, cloud_provider_name: location } = resourceDetails || {};
     const deploymentState = 'SUCCESS';
     let domain = '';
@@ -60,7 +55,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
         serverName,
         location,
         deploymentState,
-        databasesCount: dbCount.totalCount,
+        databasesCount: dbCount?.totalCount,
         domain
     };
 }

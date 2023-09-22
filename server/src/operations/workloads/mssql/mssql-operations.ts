@@ -148,7 +148,7 @@ async function getDatabasesCount(
         standbyNodeInstanceId
     );
     logger.debug('Fetching databases count response', response);
-    return response ? sqlResponseParsing(response)[0] : '';
+    return response ? sqlResponseParsing(response)[0] : undefined;
 }
 
 async function getDataBasesSummary(resourceId: string) {
@@ -159,12 +159,7 @@ async function getDataBasesSummary(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');
     }
 
-    let dbCount = await getDatabasesCount(
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        standbyNodeInstanceId || undefined
-    );
+    let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId!);
     dbCount = dbCount?.totalCount || 0;
 
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
@@ -176,8 +171,7 @@ async function getDataBasesSummary(resourceId: string) {
 
     const responses = await Promise.map(
         batchQueries,
-        async query =>
-            callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId || undefined),
+        async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId!),
         { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
     const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
@@ -224,15 +218,9 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
                 region,
                 diskUtilizationCommand,
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                dbSizecommand,
-                activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
-            )
+            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, standbyNodeInstanceId!)
         ]);
 
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
@@ -250,7 +238,7 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId || undefined
+        standbyNodeInstanceId!
     );
     logger.debug('Fetching  utilization', response);
     if (response) {
@@ -289,13 +277,7 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get tables summary');
     }
     const { totalCount: tablesCount = 0 } =
-        (await getTablesCount(
-            credentialsId,
-            region,
-            databaseName,
-            activeNodeInstanceId,
-            standbyNodeInstanceId || undefined
-        )) || {};
+        (await getTablesCount(credentialsId, region, databaseName, activeNodeInstanceId, standbyNodeInstanceId!)) || {};
 
     const batchCount = Math.ceil(tablesCount / DB_ROWS_COUNT);
 
@@ -307,8 +289,7 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 
     const responses = await Promise.map(
         batchQueries,
-        async query =>
-            callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId || undefined),
+        async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId!),
         { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
     const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
@@ -336,42 +317,42 @@ async function getServerSummary(resourceId: string) {
                 region,
                 [`${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`],
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             ),
             callSsmExecution(
                 credentialsId,
                 region,
                 [`${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`],
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             ),
             callSsmExecution(
                 credentialsId,
                 region,
                 [`${PSSCRIPT} -Query "${SERVER_STATE}"`],
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             ),
             callSsmExecution(
                 credentialsId,
                 region,
                 [`${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`],
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             ),
             callSsmExecution(
                 credentialsId,
                 region,
                 [`${PSSCRIPT} -Query "${SERVER_NODE}"`],
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             ),
             callSsmExecution(
                 credentialsId,
                 region,
                 [`${PSSCRIPT} -Query "${CLUSTER_NODES}"`],
                 activeNodeInstanceId,
-                standbyNodeInstanceId || undefined
+                standbyNodeInstanceId!
             )
         ]);
     if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
