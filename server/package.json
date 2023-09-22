@@ -29,7 +29,7 @@
     "license": "UNLICENSED",
     "dependencies": {
         "@apidevtools/swagger-parser": "^10.1.0",
-        "@aws-sdk/client-cloudformation": "^3.414.0",
+        "@aws-sdk/client-cloudformation": "^3.395.0",
         "@aws-sdk/client-directory-service": "^3.395.0",
         "@aws-sdk/client-ec2": "^3.396.0",
         "@aws-sdk/client-fsx": "^3.395.0",
@@ -68,6 +68,8 @@
         "log4js": "^6.9.1",
         "moment": "^2.29.4",
         "nanoid": "^4.0.2",
+        "patch-package": "^8.0.0",
+        "prisma": "^5.2.0",
         "randomatic": "^3.1.1",
         "yaml": "^2.3.2"
     },
