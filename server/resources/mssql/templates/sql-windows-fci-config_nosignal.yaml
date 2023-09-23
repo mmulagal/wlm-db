@@ -1459,22 +1459,6 @@ Resources:
                   FromPort: 3343
                   ToPort: 3343
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
-                - IpProtocol: udp
-                  FromPort: 53
-                  ToPort: 53
-                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
-                - IpProtocol: udp
-                  FromPort: 88
-                  ToPort: 88
-                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
-                - IpProtocol: udp
-                  FromPort: 464
-                  ToPort: 464
-                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
-                - IpProtocol: udp
-                  FromPort: 389
-                  ToPort: 389
-                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
                 - IpProtocol: -1
                   FromPort: -1
                   ToPort: -1
