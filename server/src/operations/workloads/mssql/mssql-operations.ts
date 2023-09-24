@@ -83,10 +83,10 @@ async function callSsmExecution(
     logger.info(
         'Calling SSM command execution',
         credentialsId,
-        activeNodeInstanceId,
-        standbyNodeInstanceId,
         region,
-        commands
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
     );
     let response;
     const defaultParams = {
@@ -397,6 +397,8 @@ async function getSqlServerDetails(
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string
 ) {
+    logger.info('Getting SQL server details', { credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId });
+
     const [resourceIdentifier, name] = await Promise.all([
         callSsmExecution(
             credentialsId,
