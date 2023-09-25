@@ -1,4 +1,5 @@
 import ms from 'ms';
+import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
@@ -27,6 +28,7 @@ import {
     createEvent,
     createResource,
     listDeployments,
+    listResources,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
@@ -151,14 +153,22 @@ async function processCloudFormationMessages() {
                                                     ActiveInstanceIp: activeNodeInstanceIp,
                                                     StandbyInstanceIp: standbyNodeInstanceIp
                                                 } = resourceProperties;
-                                                await createResource(accountId, {
-                                                    resourceId: fsxId,
-                                                    resourceName: fsxName,
-                                                    cloudProviderAccountId,
-                                                    cloudProviderName: CloudProviders.AWS,
-                                                    resourceType: RESOURCESTYPE.FSX,
-                                                    region
-                                                });
+                                                const [resourceDetails] = await listResources(
+                                                    accountId,
+                                                    fsxId,
+                                                    RESOURCESTYPE.FSX
+                                                );
+                                                if (isEmpty(resourceDetails)) {
+                                                    // same fsx can be used in multiple SQL deployments, avoid creating multiple FSX resources.. Keep fsx resource unique per tenancy account
+                                                    await createResource(accountId, {
+                                                        resourceId: fsxId,
+                                                        resourceName: fsxName,
+                                                        cloudProviderAccountId,
+                                                        cloudProviderName: CloudProviders.AWS,
+                                                        resourceType: RESOURCESTYPE.FSX,
+                                                        region
+                                                    });
+                                                }
                                                 const { id, resourceName } = await getSqlServerDetails(
                                                     credentialsId,
                                                     region,
