@@ -2,7 +2,15 @@ import { GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/clie
 import { LazyJsonString } from '@smithy/smithy-client';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION } from '../../utils/consts';
+import {
+    DEFAULT_AWS_REGION,
+    FCI,
+    MAX_READ_REQUEST_FSXN,
+    MAX_WRITE_REQUEST_FSXN,
+    MIN_DISKSIZE,
+    MIN_THROUGHPUT,
+    SINGLE_AZ
+} from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
 
 const logger = getLogger();
@@ -96,7 +104,7 @@ function getRegionCodeFilter(region?: string): Filter {
 function getDeploymentOption(deploymentOption?: string): Filter {
     logger.debug('Getting deployment option', { deploymentOption });
 
-    const deploymentString: string = deploymentOption === 'singleAZ' ? 'Single-AZ_2N' : 'Multi-AZ';
+    const deploymentString: string = deploymentOption === SINGLE_AZ ? 'Single-AZ_2N' : 'Multi-AZ';
 
     return {
         Type: AWS_PRICING_FILTER_TERM_MATCH,
@@ -372,10 +380,49 @@ function parseResponse(response: GetProductsCommandOutput): number {
     return Number(rate);
 }
 
-function calculateEc2Cost(instanceRate: number, storageRate: number): number {
+function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentMode: string): number {
     logger.debug('Calculating compute cost');
 
-    return getPriceUtil(instanceRate, HOURS_IN_MONTH, 2) + getPriceUtil(storageRate, DEFAULT_EBS_STORAGE, 2);
+    const instanceCount = deploymentMode === FCI ? 2 : 1;
+    return (
+        getPriceUtil(instanceRate, HOURS_IN_MONTH, instanceCount) +
+        getPriceUtil(storageRate, DEFAULT_EBS_STORAGE, instanceCount)
+    );
+}
+
+function calculateFsxStorageCost(instanceRate: number, diskSize: number): number {
+    logger.debug('Calculating fsx storage cost', { instanceRate, diskSize });
+
+    return getPriceUtil(instanceRate, diskSize);
+}
+
+function calculateFsxThroughputCost(
+    fsxThroughputRate: number,
+    fsxIopsRate: number,
+    fsxReadRequestsRate: number,
+    fsxWriteRequestsRate: number,
+    storageThroughput: number,
+    storageIops: number,
+    storageReadRequest: number = MAX_READ_REQUEST_FSXN,
+    storageWriteRequest: number = MAX_WRITE_REQUEST_FSXN
+): number {
+    logger.debug('Calculating fsx storage cost', {
+        fsxThroughputRate,
+        fsxIopsRate,
+        fsxReadRequestsRate,
+        fsxWriteRequestsRate,
+        storageThroughput,
+        storageIops,
+        storageReadRequest,
+        storageWriteRequest
+    });
+
+    return (
+        getPriceUtil(fsxThroughputRate, storageThroughput) +
+        getPriceUtil(fsxIopsRate, storageIops) +
+        getPriceUtil(fsxReadRequestsRate, storageReadRequest) +
+        getPriceUtil(fsxWriteRequestsRate, storageWriteRequest)
+    );
 }
 
 function getInputs(
@@ -433,32 +480,34 @@ async function calculatePrice(
         vpcRate
     ] = (productsResponse || []).map(parseResponse);
 
-    const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate);
+    const ec2Cost = calculateEc2Cost(ec2InstanceRate, ec2StorageRate, compute?.sqlDeploymentMode);
     const vpcCost = vpcRate ? getPriceUtil(vpcRate, HOURS_IN_MONTH, 1) : 0;
 
     logger.debug(fsxStorageRate, fsxThroughputRate, fsxIopsRate, fsxReadRequestsRate, fsxWriteRequestsRate);
-    // const fsxStorageCost = calculateFsxStorageCost(
-    //     fsxStorageRate,
-    //     storage.diskSize
-    // );
 
-    // const fsxThroughputCost = calculateFsxThroughputCost(
-    //     fsxThroughputRate,
-    //     fsxIopsRate,
-    //     fsxReadRequestsRate,
-    //     fsxWriteRequestsRate,
-    //     storage?.throughput,
-    //     storage?.iops
-    // );
+    const fsxDisksize = storage?.diskSize || MIN_DISKSIZE;
+    const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
+    const fsxIops = storage?.iops || 3 * fsxDisksize;
+
+    const fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
+
+    const fsxThroughputCost = calculateFsxThroughputCost(
+        fsxThroughputRate,
+        fsxIopsRate,
+        fsxReadRequestsRate,
+        fsxWriteRequestsRate,
+        fsxThroughput,
+        fsxIops
+    );
 
     return {
         storage: {
-            storageCapacity: 128,
-            throughput: 184.32
+            capacity: fsxStorageCost,
+            throughput: fsxThroughputCost
         },
         compute: ec2Cost,
         ...(vpc && { vpc: vpcCost }),
-        total: ec2Cost + vpcCost
+        total: ec2Cost + vpcCost + fsxStorageCost + fsxThroughputCost
     };
 }
 
