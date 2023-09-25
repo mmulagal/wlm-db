@@ -18,7 +18,7 @@ import {
 import { removeTenancyResource } from '../operations/tenancy-operations';
 import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
 
-const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:regionId';
+const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
@@ -26,17 +26,26 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async (request, reply) => {
         const {
-            params: { accountId, credentialsId, regionId },
-            body: { activeInstanceId, standbyInstanceId }
+            params: { accountId, credentialsId, region },
+            body: {
+                activeNodeInstanceId,
+                standbyNodeInstanceId,
+                activeNodeInstanceName,
+                standbyNodeInstanceName,
+                fsxId
+            }
         } = request;
 
         const response = await discoverMsSqlServer(
             accountId,
             credentialsId,
-            regionId,
-            activeInstanceId,
-            standbyInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
-            DatabaseTypes.MS_SQL_SERVER
+            region,
+            activeNodeInstanceId,
+            activeNodeInstanceName,
+            standbyNodeInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
+            standbyNodeInstanceName,
+            DatabaseTypes.MS_SQL_SERVER,
+            fsxId
         );
         return reply.send(response);
     });

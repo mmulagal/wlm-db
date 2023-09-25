@@ -7,10 +7,10 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { setDBName } from '../../../../store/mssql/mssqlFormSlice';
-import { SQL_DATABASE } from '../../../../utils/consts';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
+import { generateRandomDBName } from '../../../../utils/utilityFunctions';
 
 const DatabaseName = () => {
     const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const DatabaseName = () => {
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction.dbNameSelected);
 
-    const [databaseName, setDatabaseName] = useState(SQL_DATABASE);
+    const [databaseName, setDatabaseName] = useState(selectedDBName ? selectedDBName : generateRandomDBName());
 
     const databasenameRef = useRef(null);
 

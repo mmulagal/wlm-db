@@ -867,7 +867,11 @@ Resources:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Validate-FCICluster.ps1
-                                    -WFCName '
+                                    -AdminSecret '
+                                  - !Ref 'DomainAdminSecretName'
+                                  - "' -DomainAdminUser '"
+                                  - !Ref 'DomainAdminUser'
+                                  - "' -WFCName '"
                                   - !Ref 'SqlFSxWSFCName'
                                   - "' -Node1 '"
                                   - !Ref 'SqlFSxServerNetBIOSName1'
@@ -1403,10 +1407,6 @@ Resources:
             GroupDescription: Allow access to the Workload instances
             VpcId: !Ref 'VPCID'
             SecurityGroupIngress:
-                - IpProtocol: -1
-                  FromPort: -1
-                  ToPort: -1
-                  CidrIp: !Ref 'VPCCIDR'
                 - IpProtocol: tcp
                   FromPort: 53
                   ToPort: 53
@@ -1447,6 +1447,22 @@ Resources:
                   FromPort: 135
                   ToPort: 135
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 137
+                  ToPort: 137
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 3343
+                  ToPort: 3343
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 3343
+                  ToPort: 3343
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: -1
+                  FromPort: -1
+                  ToPort: -1
+                  CidrIp: !Sub 'VPCCIDR'
                 - IpProtocol: tcp
                   FromPort: 445
                   ToPort: 445
@@ -1475,6 +1491,12 @@ Outputs:
     SQLFSx1InstanceIPMAD:
         Description: Private IP of SqlFSx Instance
         Value: !GetAtt 'SqlFSxInstanceMAD1.PrivateIp'
+    SQLFSx1InstanceId:
+        Description: Id of Primary Instance
+        Value: !Ref SqlFSxInstanceMAD1
     SQLFSx2InstanceIPMAD:
         Description: Private IP of SqlFSx Instance
         Value: !GetAtt 'SqlFSxInstanceMAD2.PrivateIp'
+    SQLFSx2InstanceId:
+        Description: Id of Standby Instance
+        Value: !Ref SqlFSxInstanceMAD2

@@ -175,7 +175,7 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
     const securityGroupType = newConfig?.securityGroup?.selectedSecurityType === oldConfig?.securityGroup?.selectedSecurityType;
     const securityGroup = newConfig?.securityGroup?.selectedExistingSecurityGroup?.value === oldConfig?.securityGroup?.selectedExistingSecurityGroup?.value;
     const operatingSystem = newConfig?.operatingSystem?.label === oldConfig?.operatingSystem?.label;
-    const deploymentModel = newConfig?.dbDeploymentModel === oldConfig?.dbDeploymentModel;
+    const deploymentModel = newConfig?.dbDeploymentModel?.value === oldConfig?.dbDeploymentModel?.value;
     const edition = newConfig?.dbEdition?.value === oldConfig?.dbEdition?.value;
     const dbVersion = newConfig?.dbVersion?.value === oldConfig?.dbVersion?.value;
     const licenseType = newConfig?.license?.selectedLicenseType === oldConfig?.license?.selectedLicenseType;

@@ -402,6 +402,7 @@ function getInputs(
 }
 
 async function calculatePrice(
+    credentialsId: string,
     compute: PricingServiceRequestType['compute'],
     storage: PricingServiceRequestType['storage'],
     vpc: PricingServiceRequestType['vpc']
@@ -415,7 +416,10 @@ async function calculatePrice(
     const inputList: GetProductsCommandInput[] = getInputs(compute, storage, vpc);
 
     const productsResponse = await Promise.all(
-        inputList.map(async (input: GetProductsCommandInput): Promise<GetProductsCommandOutput> => getProducts(input))
+        inputList.map(
+            async (input: GetProductsCommandInput): Promise<GetProductsCommandOutput> =>
+                getProducts(credentialsId, input)
+        )
     );
 
     const [
