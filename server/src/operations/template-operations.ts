@@ -177,33 +177,10 @@ async function uploadTemplates(credentialsId: string, region: string, resourceTy
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const signedUrls = await generateSignedUrls(region, resourceType);
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.VALIDATION,
-            signedUrls,
-            TEMPLATE_TYPES.VALIDATION
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.SQLSTACK,
-            signedUrls,
-            TEMPLATE_TYPES.SQLSTACK
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.MASTER,
-            signedUrls,
-            TEMPLATE_TYPES.MASTER
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.SQLSTANDALONE,
-            signedUrls,
-            TEMPLATE_TYPES.SQLSTANDALONE
+        await Promise.all(
+            SQL_TEMPLATES_DISTRIBUTION.map(async template => {
+                updateTemplateUrls(credentialsId, region, template.location, signedUrls, template.name);
+            })
         );
     }
 }

@@ -660,19 +660,31 @@ const SQL_TEMPLATES_ASSETS = [
     }
 ];
 
-const SQL_TEMPLATES_DISTRIBUTION = {
-    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
-    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml',
-    SQLSTANDALONE: './resources/mssql/templates/standalone-deployment.yaml'
-};
-
 enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
     SQLSTANDALONE = 'sqlstandalone'
 }
+
+const SQL_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/templates/vpc-ad-validation.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTACK,
+        location: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.MASTER,
+        location: './resources/mssql/templates/wlm-master.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/templates/standalone-deployment.yaml'
+    }
+];
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
