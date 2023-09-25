@@ -223,7 +223,7 @@ const EstimatedCost = () => {
                                         </div>
                                     ) : (
                                         //@ts-ignore
-                                        `$${Number(data?.data?.storage?.storageCapacity).toFixed(2)}` || ''
+                                        `$${Number(data?.data?.storage?.capacity).toFixed(2)}` || ''
                                     )}
                                 </Typography>
 
