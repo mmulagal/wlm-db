@@ -1,5 +1,11 @@
-  [CmdletBinding()]
+    [CmdletBinding()]
 param (
+    [Parameter(Mandatory=$true)]
+    [string]$AdminSecret,
+
+    [Parameter(Mandatory=$true)]
+    [string]$DomainAdminUser,  
+    
     [Parameter(Mandatory=$true)]
     [string]$WFCName,
 
@@ -41,61 +47,87 @@ class SQLFCIException: System.Exception{
     }
 }
 
+
 try {
+
     $ErrorActionPreference = "Stop"
 
     Start-Transcript -Path C:\cfn\log\$($MyInvocation.MyCommand.Name).log -Append
 
- 
-    $Nodes = (Get-ClusterNode -Cluster $WFCName) | Out-String
-    Write-Output $Nodes
-    if (($Nodes -notmatch $Node1) -Or ($Nodes -notmatch $Node2)) {
-        throw [NodeException]::new('Node Check Failure',"All nodes are not path of the cluster")
+    $HostName = hostname
+    $DomainNetBIOSName = $env:USERDOMAIN
+    $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString 
+    $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
+    $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+
+
+    $Nodes = Invoke-Command -scriptblock {
+    param($wincluster)
+    $clusnodes = (Get-ClusterNode -Cluster $wincluster) | Out-String
+    Write-Output $clusnodes
+    $clusnodes
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $WFCName
+
+    $ClusterResource = Invoke-Command -scriptblock {
+    $clusresources = Get-ClusterResource | Out-String
+    Write-Output $clusresources
+    $clusresources
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp
+
+
+    Write-Output $ClusterResource
+     if (($Nodes -notmatch $Node1) -Or ($Nodes -notmatch $Node2)) {
+        throw [NodeException]::new('Node Check Failure:Node missing in Cluster',"All nodes are not part of the cluster")
     }
 
-    $ClusterResource = Get-ClusterResource | Out-String
-    Write-Output $ClusterResource
     if ($ClusterResource -notmatch "Quorum") {
-        throw [ResourceException]::new('Disk Check Failure',"Cluster Quorum Disk Resource is not available")
+        throw [ResourceException]::new('Disk Check Failure:No Witness Disk',"Cluster Quorum Disk Resource is not available")
     }
+
     if ($ClusterResource -notmatch "SQL-DATA") {
-        throw [ResourceException]::new('Disk Check Failure',"SQL Data Disk Resource is not available")
+        throw [ResourceException]::new('Disk Check Failure:No SQL Data Disk',"SQL Data Disk Resource is not available")
     }
+
      if ($ClusterResource -notmatch "Cluster IP Address") {
         throw [ResourceException]::new('IP Check Failure',"Cluster IP Address Resource is not available")
-    }   
-    if ($ClusterResource -notmatch "SQL Server") {
-        throw [SQLFCIException]::new('SQL Check Failure',"SQL Server Role could not be created or brought online")
-    }   
-    if ($ClusterResource -notmatch "SQL Server Agent") {
-        throw [SQLFCIException]::new('SQL Check Failure',"SQL Server Agent Role could not be created or brought online")
-    }      
+    } 
+     if ($ClusterResource -notmatch "SQL Server") {
+        throw [SQLFCIException]::new('SQL Check Failure:No SQL Server Role',"SQL Server Role could not be created or brought online")
+    }
+
+     if ($ClusterResource -notmatch "SQL Server Agent") {
+        throw [SQLFCIException]::new('SQL Check Failure:No SQL Server Agent',"SQL Server Agent Role could not be created or brought online")
+    }  
 
 }
-
-catch [NodeException] {
+    catch [NodeException] {
     Write-Output "Cluster does not contain both nodes or not in healthy state"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
 }
 
-catch [ResourceException] {
+    catch [ResourceException] {
     Write-Output "Cluster does not have all the required resources(disk and networking) created."
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
 
-catch [SQLFCIException] {
+    catch [SQLFCIException] {
     Write-Output "SQL FCI configuration failed. SQL server related roles not created or not online"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException 
     
 }
+  
+
+
 catch {
     Write-Output "SQL FCI validation failed"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 } 
+ 
+ 
  
  

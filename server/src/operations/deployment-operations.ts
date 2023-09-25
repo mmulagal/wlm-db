@@ -35,7 +35,9 @@ import {
     WLMDB,
     TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    TEMPLATE_ACCOUNT_ID
+    TEMPLATE_ACCOUNT_ID,
+    SUCCESS,
+    ACTION_BUTTON_DASHBOARD
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -44,6 +46,7 @@ import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { prepareDetailsToSendNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
 
@@ -59,8 +62,8 @@ async function formatTemplateParameters(
     enableCloudWatch: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
     const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
@@ -186,8 +189,8 @@ async function createCloudFormationTemplateForUserDeployment(
         logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
-        ? generateDeploymentParams(fsxConfiguration.databaseSize, true)
-        : generateDeploymentParams(fsxConfiguration.databaseSize, false);
+        ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
+        : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
     const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
 
@@ -258,8 +261,16 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
 
-    logger.info('CloudFormation template url ', signedTemplateURL);
+    logger.info('Cloud Formation template URL ', signedTemplateURL);
 
+    await prepareDetailsToSendNotification(
+        'user_deployment',
+        'Cloud formation signed template URL created successfully',
+        'Cloud formation signed template URL created successfully for quick user deployment',
+        { uiNotification: true, emailNotification: true },
+        ACTION_BUTTON_DASHBOARD,
+        SUCCESS
+    );
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
@@ -331,6 +342,15 @@ async function deployCloudFormationTemplate(
     );
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
+
+    await prepareDetailsToSendNotification(
+        'standard_deployment',
+        'Cloud formation standard deployment initiated',
+        'Cloud formation standard deployment initiated',
+        { uiNotification: true, emailNotification: true },
+        ACTION_BUTTON_DASHBOARD,
+        SUCCESS
+    );
 
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
