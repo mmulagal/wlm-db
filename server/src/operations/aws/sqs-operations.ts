@@ -252,7 +252,7 @@ async function processCloudFormationMessages() {
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
 
-                                const MASTER_STACK_NAME_PATTERN = /WLMDB-SQLFCIStack-(\d{13})/;
+                                const MASTER_STACK_NAME_PATTERN = /WLMDB-(.+[a-zA-Z])-(\d{13})/;
                                 const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
                                 if (matchingMasterStack) {
                                     const [masterStackName] = matchingMasterStack;
