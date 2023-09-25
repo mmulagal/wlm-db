@@ -1,5 +1,7 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
+import { resource } from '@prisma/client';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
@@ -20,25 +22,21 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SSM_QUERY_CONCURRENCY_LIMIT,
-    FCI_CLUSTER_NAME
+    SSM_QUERY_CONCURRENCY_LIMIT
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
-import { getTenancyResource } from '../../tenancy-operations';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
     DatabaseTypes,
     DATABASE_METRIC_TYPE,
     SqlServerDeploymentModel,
     HttpErrorCodes,
-    WLMDB_RESOURCE_CLASS,
-    WORKSPACE_ID,
     CloudProviders,
-    DeploymentState
+    ACCOUNT_ID
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { ServiceResourceRequest, registerServiceResource } from '../../../lib/cloud-manager/tenancy';
+import { createResource, listResources } from '../../../lib/database/db';
 
 const logger = getLogger();
 
@@ -55,32 +53,41 @@ function sqlResponseParsing(response: string) {
 
 async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
-    const resourceDetails = await getTenancyResource(DatabaseTypes.MS_SQL_SERVER, resourceId);
-    logger.debug('Resource details for resource id:', resourceId, resourceDetails);
-    let resourceProperties;
-    try {
-        resourceProperties = resourceDetails?.metadata?.properties
-            ? JSON.parse(resourceDetails?.metadata?.properties)
-            : {};
-    } catch (error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error parsing resource properties, ${error}`);
-    }
-    const credentialsId = resourceProperties?.credentialsId || '';
-    const region = resourceProperties?.region || '';
-    const activeInstanceId = resourceProperties?.activeInstanceId || '';
-    const standbyInstanceId = resourceProperties?.standbyInstanceId || '';
 
-    return [credentialsId, region, activeInstanceId, standbyInstanceId];
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const [{ metadata, region }] = (await listResources(
+        accountId,
+        resourceId,
+        DatabaseTypes.MS_SQL_SERVER
+    )) as resource[];
+    let credentialsId;
+    let activeNodeInstanceId;
+    let standbyNodeInstanceId;
+    if (!isEmpty(metadata)) {
+        ({ credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+            credentialsId: string;
+            activeNodeInstanceId: string;
+            standbyNodeInstanceId?: string;
+        });
+    }
+    return [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId];
 }
 
 async function callSsmExecution(
     credentialsId: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
     region: string,
-    commands: Array<string>
+    commands: Array<string>,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
 ) {
-    logger.info('Calling SSM command execution', credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    logger.info(
+        'Calling SSM command execution',
+        credentialsId,
+        activeNodeInstanceId,
+        standbyNodeInstanceId,
+        region,
+        commands
+    );
     let response;
     const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -91,50 +98,68 @@ async function callSsmExecution(
     };
     let params = {
         ...defaultParams,
-        InstanceIds: [activeInstanceId]
+        InstanceIds: [activeNodeInstanceId]
     };
     try {
         response = await executeSSMDocument(credentialsId, region, params);
     } catch (error) {
-        logger.error('Fetching database summary from primary node failed', activeInstanceId, error);
-        logger.info('Fetching database summary from secondary', credentialsId, region, standbyInstanceId);
-        params = {
-            ...defaultParams,
-            InstanceIds: [standbyInstanceId]
-        };
-        try {
-            response = await executeSSMDocument(credentialsId, region, params);
-        } catch (secondError) {
-            logger.error('Fetching database summary from secondary node failed', standbyInstanceId, secondError);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${secondError}`);
+        logger.error('Fetching database summary from primary node failed', activeNodeInstanceId, error);
+        if (standbyNodeInstanceId) {
+            logger.info('Fetching database summary from secondary', credentialsId, region, standbyNodeInstanceId);
+            params = {
+                ...defaultParams,
+                InstanceIds: [standbyNodeInstanceId]
+            };
+            try {
+                response = await executeSSMDocument(credentialsId, region, params);
+            } catch (secondError) {
+                logger.error(
+                    'Fetching database summary from secondary node failed',
+                    standbyNodeInstanceId,
+                    secondError
+                );
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${secondError}`);
+            }
+        } else {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${error}`);
         }
     }
-    if (response.StandardErrorContent) {
-        logger.debug('Error:', response.StandardErrorContent);
-        throw new Error(response.StandardErrorContent);
+    if (response?.StandardErrorContent) {
+        logger.debug('Error:', response?.StandardErrorContent);
+        throw new Error(response?.StandardErrorContent);
     }
-    return response.StandardOutputContent!;
+    return response?.StandardOutputContent;
 }
 
 async function getDatabasesCount(
     credentialsId: string,
     region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
 ) {
-    logger.info('Fetching databases total count ', credentialsId, region, activeInstanceId);
+    logger.info('Fetching databases total count ', credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId);
 
     const commands = [`${PSSCRIPT} -Query "${DATABASES_COUNT()}"`];
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
     logger.debug('Fetching databases count response', response);
-    return sqlResponseParsing(response)[0];
+    return response ? sqlResponseParsing(response)[0] : undefined;
 }
 
 async function getDataBasesSummary(resourceId: string) {
     logger.info('Get databases summary for resource:', resourceId);
-    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
 
-    let dbCount = await getDatabasesCount(credentialsId, region, activeInstanceId, standbyInstanceId);
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');
+    }
+
+    let dbCount = await getDatabasesCount(credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId!);
     dbCount = dbCount?.totalCount || 0;
 
     const rowscount = Math.ceil(dbCount / DB_ROWS_COUNT);
@@ -146,7 +171,7 @@ async function getDataBasesSummary(resourceId: string) {
 
     const responses = await Promise.map(
         batchQueries,
-        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId!),
         { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
     const dbSummary = `[${responses.join().replace(/\[|\]/g, '')}]`;
@@ -172,8 +197,12 @@ function resourceUtilisationQuery(metricType: string) {
 async function getResourceUtilisation(resourceId: string, metricType: string) {
     logger.info(`Get ${metricType} resource utilization for resource: `, resourceId);
 
-    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
-    logger.info('Fetching utilization from primary', credentialsId, region, activeInstanceId, metricType);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get resource utilisation information');
+    }
+    logger.info('Fetching utilization from primary', credentialsId, region, activeNodeInstanceId, metricType);
 
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
@@ -184,12 +213,18 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         const diskUtilizationCommand = [`${PSSCRIPT} -Query "${DISK_UTILISATION}"`];
 
         const [diskdata, size] = await Promise.all([
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, diskUtilizationCommand),
-            callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, dbSizecommand)
+            callSsmExecution(
+                credentialsId,
+                region,
+                diskUtilizationCommand,
+                activeNodeInstanceId,
+                standbyNodeInstanceId!
+            ),
+            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, standbyNodeInstanceId!)
         ]);
 
-        const [sizeValue] = sqlResponseParsing(size);
-        const [diskDataValue] = sqlResponseParsing(diskdata);
+        const [sizeValue] = size ? sqlResponseParsing(size) : [];
+        const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
         const diskUtilization: UtilisationResponseBodyInterface = {
             used: sizeValue.TotalSize.toString(),
             total: diskDataValue.total.toString(),
@@ -198,34 +233,51 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         };
         return diskUtilization;
     }
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!
+    );
     logger.debug('Fetching  utilization', response);
-
-    return sqlResponseParsing(response)[0];
+    if (response) {
+        return sqlResponseParsing(response)[0];
+    }
 }
 
 async function getTablesCount(
     credentialsId: string,
     region: string,
-    activeInstanceId: string,
-    standbyInstanceId: string,
-    databaseName: string
+    databaseName: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
 ) {
-    logger.info('Fetching tables total count ', credentialsId, region, activeInstanceId, databaseName);
+    logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId, databaseName);
 
     const commands = [`${PSSCRIPT} -Database ${databaseName} -Query "${TABLES_COUNT_QUERY}"`];
-    const response = await callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, commands);
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
     logger.debug('Fetching tables count response', response);
-
-    return sqlResponseParsing(response)[0];
+    if (response) {
+        return sqlResponseParsing(response)[0];
+    }
 }
 
 async function getTablesSummary(resourceId: string, databaseName: string) {
     logger.info('Get tables list for resource:', resourceId, databaseName);
-    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
 
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get tables summary');
+    }
     const { totalCount: tablesCount = 0 } =
-        (await getTablesCount(credentialsId, region, activeInstanceId, standbyInstanceId, databaseName)) || {};
+        (await getTablesCount(credentialsId, region, databaseName, activeNodeInstanceId, standbyNodeInstanceId!)) || {};
 
     const batchCount = Math.ceil(tablesCount / DB_ROWS_COUNT);
 
@@ -237,7 +289,7 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 
     const responses = await Promise.map(
         batchQueries,
-        async query => callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [query]),
+        async query => callSsmExecution(credentialsId, region, [query], activeNodeInstanceId, standbyNodeInstanceId!),
         { concurrency: SSM_QUERY_CONCURRENCY_LIMIT }
     );
     const tablesList = `[${responses.join().replace(/\[|\]/g, '')}]`;
@@ -253,132 +305,172 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 async function getServerSummary(resourceId: string) {
     logger.info('Get details of SQL Server database:', { resourceId });
 
-    const [credentialsId, region, activeInstanceId, standbyInstanceId] = await getResourceDetails(resourceId);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
 
-    const [
-        serverDetailsInfo,
-        connectionsInfo,
-        stateInfo,
-        isClusteredInfo,
-        nodeInfo,
-        clusterNodesInfo,
-        fciClusterNameInfo
-    ] = await Promise.all([
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_STATE}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${SERVER_NODE}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${CLUSTER_NODES}"`
-        ]),
-        callSsmExecution(credentialsId, activeInstanceId, standbyInstanceId, region, [
-            `${PSSCRIPT} -Query "${FCI_CLUSTER_NAME}"`
-        ])
-    ]);
-
-    const serverDetails = serverDetailsInfo.replaceAll('\r\n', '');
-    const serverInfo = serverDetails?.split('\t');
-    const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
-    const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
-    const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
-    let [{ activeNode }] = sqlResponseParsing(nodeInfo);
-    const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
-
-    let standbyNode: string = '';
-    let clusterName: string = '';
-    if (isClustered) {
-        const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
-
-        if (node1?.is_current_owner === 'True') {
-            activeNode = node1?.NodeName;
-            standbyNode = node2?.NodeName;
-        } else {
-            activeNode = node2?.NodeName;
-            standbyNode = node1?.NodeName;
-        }
-
-        [{ cluster_name: clusterName }] = sqlResponseParsing(fciClusterNameInfo);
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    return {
-        serverId: resourceId,
-        serverVersion,
-        serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
-        serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-        serverStatus,
-        activeConnections,
-        deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
-        activeNode,
-        ...(isClustered ? { standbyNode, clusterName } : {})
-    };
+    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo, serverNameInfo] =
+        await Promise.all(
+            [
+                SERVER_VERSION_DETAILS,
+                NUMBER_OF_CONNECTIONS,
+                SERVER_STATE,
+                IS_SERVER_CLUSTERED,
+                SERVER_NODE,
+                CLUSTER_NODES,
+                SERVER_NAME
+            ].map(query =>
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${query}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId!
+                )
+            )
+        );
+
+    if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
+        const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
+        const serverInfo = serverDetails?.split('\t');
+        const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
+        const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
+        const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
+        let [{ activeNode }] = sqlResponseParsing(nodeInfo);
+        const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
+        const [{ serverName: clusterName }] = sqlResponseParsing(serverNameInfo!);
+
+        let standbyNode: string = '';
+        if (isClustered && clusterNodesInfo) {
+            const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
+
+            if (node1?.is_current_owner === 'True') {
+                activeNode = node1?.NodeName;
+                standbyNode = node2?.NodeName;
+            } else {
+                activeNode = node2?.NodeName;
+                standbyNode = node1?.NodeName;
+            }
+        }
+
+        return {
+            serverId: resourceId,
+            serverVersion,
+            serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
+            serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
+            serverStatus,
+            activeConnections,
+            deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
+            activeNode,
+            ...(isClustered ? { standbyNode, clusterName } : {})
+        };
+    }
 }
 
+async function getSqlServerDetails(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId: string
+) {
+    const [resourceIdentifier, name] = await Promise.all([
+        callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${SERVER_GUID}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        ),
+        callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${SERVER_NAME}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        )
+    ]);
+
+    const resourceId = resourceIdentifier ? sqlResponseParsing(resourceIdentifier)[0] : '';
+    const { serverName = '' } = name ? sqlResponseParsing(name)[0] : {};
+    const id = resourceId?.serverGuid;
+    return {
+        id,
+        resourceName: serverName
+    };
+}
 async function discoverMsSqlServer(
     accountId: string,
     credentialsId: string,
-    regionId: string,
+    region: string,
     activeNodeInstanceId: string,
+    activeNodeInstanceName: string,
     standbyNodeInstanceId: string,
-    resourceType: string
+    standbyNodeInstanceName: string,
+    resourceType: string,
+    fsxId?: string
 ) {
-    logger.info('Save SQL Server details in tenancy:', {
+    logger.info('Save SQL Server details in database:', {
         accountId,
         credentialsId,
-        regionId,
-        activeInstanceId: activeNodeInstanceId,
-        standbyInstanceId: standbyNodeInstanceId,
-        resourceType
+        region,
+        activeNodeInstanceId,
+        standbyNodeInstanceId,
+        resourceType,
+        fsxId
     });
 
-    const [resourceIdentifier, name] = await Promise.all([
-        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
-            `${PSSCRIPT} -Query "${SERVER_GUID}"`
-        ]),
-        callSsmExecution(credentialsId, activeNodeInstanceId, standbyNodeInstanceId, regionId, [
-            `${PSSCRIPT} -Query "${SERVER_NAME}"`
-        ])
-    ]);
-    const resourceId = sqlResponseParsing(resourceIdentifier)[0];
-    const resourceName = sqlResponseParsing(name)[0];
-    const id = resourceId?.serverGuid;
-    const resName = resourceName?.serverName;
-    const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
-    const params: ServiceResourceRequest = {
-        name: resName,
-        resourceIdentifier: id,
-        resourceType,
-        workspacePublicId: workspaceId,
-        accountPublicId: accountId,
-        resourceClass: WLMDB_RESOURCE_CLASS,
-        metadata: {
-            propertyName: 'properties',
-            propertyValue: JSON.stringify({
-                location: CloudProviders.AWS,
-                credentialsId,
-                region: regionId,
-                activeInstanceId: activeNodeInstanceId,
-                standbyInstanceId: standbyNodeInstanceId,
-                deploymentState: DeploymentState.SUCCESS
-            })
-        }
-    };
+    const { id: resourceId, resourceName } = await getSqlServerDetails(
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+    // const resName = resourceName?.serverName;
+    // const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
+    // const params: ServiceResourceRequest = {
+    //     name: resName,
+    //     resourceIdentifier: id,
+    //     resourceType,
+    //     workspacePublicId: workspaceId,
+    //     accountPublicId: accountId,
+    //     resourceClass: WLMDB_RESOURCE_CLASS,
+    //     metadata: {
+    //         propertyName: 'properties',
+    //         propertyValue: JSON.stringify({
+    //             location: CloudProviders.AWS,
+    //             credentialsId,
+    //             region,
+    //             activeNodeInstanceId: activeNodeInstanceId,
+    //             standbyNodeInstanceId: standbyNodeInstanceId,
+    //             deploymentState: DeploymentState.SUCCESS
+    //         })
+    //     }
+    // };
 
-    await registerServiceResource(params);
-    return { resourceId: id, resourceName: resName };
+    // await registerServiceResource(params); // todo: create resource record; add a new workspace column in resource table
+    await createResource(accountId, {
+        resourceId,
+        resourceName,
+        // cloudProviderAccountId?: string;
+        cloudProviderName: CloudProviders.AWS,
+        resourceType,
+        coRelationId: fsxId,
+        region,
+        metadata: {
+            credentialsId,
+            activeNodeInstanceId,
+            standbyNodeInstanceId,
+            activeNodeInstanceName,
+            standbyNodeInstanceName // TODO : store active an standby instance IP when available
+        }
+    });
+    return { resourceId, resourceName };
 }
 
 export {
+    getSqlServerDetails,
     getResourceUtilisation,
     getDataBasesSummary,
     getServerSummary,

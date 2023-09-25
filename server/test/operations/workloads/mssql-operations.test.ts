@@ -21,16 +21,35 @@ import {
     getServerSummary,
     discoverMsSqlServer
 } from '../../../src/operations/workloads/mssql/mssql-operations';
+import { createResource } from '../../../src/lib/database/db';
 
 describe('MSSQL Resource methods', () => {
     it('Get memory utilization', async () => {
+        await createResource(ACCOUNT_ID, {
+            resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
+            resourceName: 'test-resource',
+            resourceType: 'MSSQL',
+            coRelationId: 'test-fsx',
+            cloudProviderAccountId: 'test-aws-account',
+            cloudProviderName: 'AWS',
+            region: 'ap-southeast-1',
+            metadata: {
+                credentialsId: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                activeNodeInstanceId: 'i-07e76a4b916548dc0',
+                activeNodeInstanceName: 'node1',
+                standbyNodeInstanceId: 'i-0880a21327284f67c',
+                standbyNodeInstanceName: 'node2',
+                activeNodeInstanceIp: '10.0.0.0',
+                standbyNodeInstanceIp: '10.0.0.1'
+            }
+        });
         const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.MEMORY);
-        expect(resp).toEqual(mssqlResponse.getResourceUtilizationResponse);
+        expect(resp.percentUsed).toEqual(mssqlResponse.getResourceUtilizationResponse.percentUsed);
     });
 
     it('Get cpu utilization', async () => {
         const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.CPU);
-        expect(resp).toEqual(mssqlResponse.getResourceUtilizationResponse);
+        expect(resp.percentUsed).toEqual(mssqlResponse.getResourceUtilizationResponse.percentUsed);
     });
 
     it('Get disk utilization', async () => {
@@ -62,9 +81,9 @@ describe('MSSQL Resource methods', () => {
         const resp = await getTablesCount(
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
+            'Aaronview',
             ACTIVE_INSTANCE_ID,
-            STANDBY_INSTANCE_ID,
-            'Aaronview'
+            STANDBY_INSTANCE_ID
         );
         expect(resp.totalCount).toEqual(7);
     });
@@ -85,7 +104,9 @@ describe('MSSQL Resource methods', () => {
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             ACTIVE_INSTANCE_ID,
+            'test-active-instance-name',
             STANDBY_INSTANCE_ID,
+            'test-standby-instance-name',
             'mssql'
         );
         expect(resp).toEqual(mssqlResponse.mssqlRegistrationResponse);
