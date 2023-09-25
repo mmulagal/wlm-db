@@ -726,6 +726,15 @@ const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 const SUCCESS = 'success';
 const ERROR = 'error';
 
+const MAX_READ_REQUEST_FSXN = 1000000;
+const MAX_WRITE_REQUEST_FSXN = 100000;
+const MIN_DISKSIZE = 1024;
+const MIN_THROUGHPUT = 128;
+const STANDALONE = 'standalone';
+const FCI = 'fci';
+const SINGLE_AZ = 'SINGLE_AZ_1';
+const MULTI_AZ = 'MULTI_AZ_1';
+
 export {
     WLMDB,
     FSX_SUPPORTED_REGIONS,
@@ -858,5 +867,13 @@ export {
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
     SUCCESS,
-    ERROR
+    ERROR,
+    MAX_READ_REQUEST_FSXN,
+    MAX_WRITE_REQUEST_FSXN,
+    MIN_DISKSIZE,
+    STANDALONE,
+    FCI,
+    SINGLE_AZ,
+    MULTI_AZ,
+    MIN_THROUGHPUT
 };
