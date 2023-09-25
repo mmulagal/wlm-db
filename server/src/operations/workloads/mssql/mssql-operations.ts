@@ -226,8 +226,8 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
         const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
         const diskUtilization: UtilisationResponseBodyInterface = {
-            used: sizeValue.TotalSize.toString(),
-            total: diskDataValue.total.toString(),
+            used: sizeValue?.TotalSize?.toString(),
+            total: diskDataValue?.total?.toString(),
             remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
             percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
         };
