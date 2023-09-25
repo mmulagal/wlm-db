@@ -221,11 +221,13 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
     });
 }
 
-async function listResources(accountId: string) {
-    logger.info('Listing resources', accountId);
+async function listResources(accountId: string, resourceId?: string, resourceType?: string) {
+    logger.info('Listing resources', { accountId, resourceId, resourceType });
     return prisma.client.resource.findMany({
         where: {
-            account_id: accountId
+            account_id: accountId,
+            ...(resourceId && { resource_id: resourceId }),
+            ...(resourceType && { resource_type: resourceType })
         },
         take: 100
     });
@@ -315,6 +317,7 @@ async function deleteConfig(accountId: string, id: string) {
 }
 
 export {
+    Resource,
     listDeployments,
     createDeployment,
     deleteDeployment,
