@@ -2,6 +2,7 @@ import { GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/clie
 import { LazyJsonString } from '@smithy/smithy-client';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
+import { calculateFsxStorageCapacity } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -459,6 +460,13 @@ async function calculatePrice(
         storage,
         vpc
     });
+
+    // If the input size is database size, we need to calculate the total FSX storage capacity
+    // In cases where the input is total FSx Storage capacity, we don't this calculation.
+    if (storage && storage.diskSize) {
+        const fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
+        storage.diskSize = fsxDiskSizes.FSxStorageCapacity;
+    }
 
     const inputList: GetProductsCommandInput[] = getInputs(compute, storage, vpc);
 
