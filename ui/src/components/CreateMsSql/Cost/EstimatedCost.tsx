@@ -8,6 +8,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { useGetEstimationCostMutation } from '../../../utils/apiService';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
+import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 
 type Res = {
     data: {
@@ -40,6 +41,19 @@ const EstimatedCost = () => {
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
+    const fsxVolThroughput = () => {
+        const value = (throughputValue || '').split(' ');
+        if (value.length === 2) {
+            if (value[1] === 'GBps') {
+                return value[0] * 1000;
+            } else {
+                return Number(value[0]);
+            }
+        } else {
+            return throughputValue;
+        }
+    };
+
     useEffect(() => {
         if (
             regionValue &&
@@ -56,14 +70,16 @@ const EstimatedCost = () => {
                 compute: {
                     regionCode: updatedStr || '',
                     instanceType: instanceTypeName || '',
-                    sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || ''
+                    sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || '',
+                    sqlDeploymentMode: deploymentModel?.value
                 },
                 storage: {
                     regionCode: updatedStr || '',
-                    diskSize: `${diskSize}${diskSizeUnit}`,
-                    throughput: throughputValue,
+                    diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
+                    throughput: fsxVolThroughput(),
                     iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
-                    deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 'singleAZ' : 'multiAZ'
+                    deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 
+                        FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
                 }
                 // vpc: {
                 //     regionCode: updatedStr || '',
