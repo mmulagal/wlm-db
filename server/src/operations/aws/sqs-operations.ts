@@ -169,13 +169,13 @@ async function processCloudFormationMessages() {
                                                         region
                                                     });
                                                 }
+                                                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                                                 const { id, resourceName } = await getSqlServerDetails(
                                                     credentialsId,
                                                     region,
                                                     activeNodeInstanceId,
                                                     standbyNodeInstanceId
                                                 );
-                                                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                                                 await createResource(accountId, {
                                                     resourceId: id,
                                                     resourceName,
