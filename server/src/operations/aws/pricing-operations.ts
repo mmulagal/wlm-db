@@ -3,7 +3,7 @@ import { LazyJsonString } from '@smithy/smithy-client';
 import { compact } from 'lodash-es';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
-import { calculateFsxStorageCapacity } from '../../utils/utils';
+import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
 import {
     DEFAULT_AWS_REGION,
     FCI,
@@ -98,7 +98,7 @@ const readWriteRequestProductFamily: Filter = {
 };
 
 function getPriceUtil(rate: number, quantity: number, resourceCount = 1): number {
-    logger.info('Calculating price');
+    logger.debug('Calculate price util', { rate, quantity, resourceCount });
 
     return quantity * rate * resourceCount;
 }
@@ -261,7 +261,7 @@ function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): Produc
     logger.info('Geting FSxN Iops Input', { storage });
 
     return {
-        name: 'fsxiops',
+        name: 'fsxIops',
         input: {
             Filters: [
                 getRegionCodeFilter(storage?.regionCode),
@@ -568,12 +568,12 @@ async function calculatePrice(
                 // This is optional and only needed to display in UI
                 ...(fsxDiskSizes && {
                     size: {
-                        data: fsxDiskSizes?.FSxDataVolumeSize,
-                        log: fsxDiskSizes?.FSxLogVolumeSize,
-                        tempdb: fsxDiskSizes?.FSxTempDbVolumeSize,
+                        data: sizeInGigaBytes(fsxDiskSizes?.FSxDataVolumeSize),
+                        log: sizeInGigaBytes(fsxDiskSizes?.FSxLogVolumeSize),
+                        tempdb: sizeInGigaBytes(fsxDiskSizes?.FSxTempDbVolumeSize),
                         total: fsxDiskSizes?.FSxStorageCapacity,
                         ...(fsxDiskSizes?.FSxQuorumVolumeSize && {
-                            quorum: fsxDiskSizes?.FSxQuorumVolumeSize
+                            quorum: sizeInGigaBytes(fsxDiskSizes?.FSxQuorumVolumeSize)
                         })
                     }
                 })

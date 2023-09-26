@@ -187,6 +187,22 @@ async function sleep(ms: number) {
     });
 }
 
+function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
+    logger.debug('Converting size to GiB', { size });
+
+    if (Number.isNaN(size)) {
+        return 0;
+    }
+
+    switch (currentUnit.toLocaleUpperCase()) {
+        case 'MB':
+        case 'MIB':
+            return size / 1024;
+        default:
+            return size;
+    }
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -199,5 +215,6 @@ export {
     derivePropertiesFromARN,
     sleep,
     getSnsArn,
-    calculateFsxStorageCapacity
+    calculateFsxStorageCapacity,
+    sizeInGigaBytes
 };
