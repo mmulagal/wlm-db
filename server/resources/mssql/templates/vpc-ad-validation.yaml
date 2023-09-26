@@ -249,7 +249,7 @@ Resources:
                                 Automatic"
                             waitAfterCompletion: '30'
                         b-restartSSMScript:
-                            command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Stop}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
+                            command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Continue}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
                             waitAfterCompletion: '0'
                         c-restartSSM:
                             command: powershell.exe -Command C:/restart-ssm.ps1
@@ -428,7 +428,7 @@ Resources:
                                 Automatic"
                             waitAfterCompletion: '30'
                         b-restartSSMScript:
-                            command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Stop}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
+                            command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Continue}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
                             waitAfterCompletion: '0'
                         c-restartSSM:
                             command: powershell.exe -Command C:/restart-ssm.ps1
