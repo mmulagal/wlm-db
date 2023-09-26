@@ -264,14 +264,6 @@ async function createCloudFormationTemplateForUserDeployment(
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
-    await prepareDetailsToSendNotification(
-        'user_deployment',
-        'Cloud formation signed template URL created successfully',
-        'Cloud formation signed template URL created successfully for quick user deployment',
-        { uiNotification: true, emailNotification: true },
-        ACTION_BUTTON_DASHBOARD,
-        SUCCESS
-    );
     return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 

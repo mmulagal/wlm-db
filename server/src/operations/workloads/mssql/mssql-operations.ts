@@ -83,10 +83,10 @@ async function callSsmExecution(
     logger.info(
         'Calling SSM command execution',
         credentialsId,
-        activeNodeInstanceId,
-        standbyNodeInstanceId,
         region,
-        commands
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
     );
     let response;
     const defaultParams = {
@@ -226,8 +226,8 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
         const [diskDataValue] = diskdata ? sqlResponseParsing(diskdata) : [];
         const diskUtilization: UtilisationResponseBodyInterface = {
-            used: sizeValue.TotalSize.toString(),
-            total: diskDataValue.total.toString(),
+            used: sizeValue?.TotalSize?.toString(),
+            total: diskDataValue?.total?.toString(),
             remaining: (Number(diskDataValue.total) - sizeValue.TotalSize).toString(),
             percentUsed: Math.round((sizeValue.TotalSize * 100) / Number(diskDataValue.total)).toString()
         };
@@ -310,51 +310,28 @@ async function getServerSummary(resourceId: string) {
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
-    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo] =
-        await Promise.all([
-            callSsmExecution(
-                credentialsId,
-                region,
-                [`${PSSCRIPT} -Query "${SERVER_VERSION_DETAILS}"`],
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
-            ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                [`${PSSCRIPT} -Query "${NUMBER_OF_CONNECTIONS}"`],
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
-            ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                [`${PSSCRIPT} -Query "${SERVER_STATE}"`],
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
-            ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                [`${PSSCRIPT} -Query "${IS_SERVER_CLUSTERED}"`],
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
-            ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                [`${PSSCRIPT} -Query "${SERVER_NODE}"`],
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
-            ),
-            callSsmExecution(
-                credentialsId,
-                region,
-                [`${PSSCRIPT} -Query "${CLUSTER_NODES}"`],
-                activeNodeInstanceId,
-                standbyNodeInstanceId!
+
+    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo, serverNameInfo] =
+        await Promise.all(
+            [
+                SERVER_VERSION_DETAILS,
+                NUMBER_OF_CONNECTIONS,
+                SERVER_STATE,
+                IS_SERVER_CLUSTERED,
+                SERVER_NODE,
+                CLUSTER_NODES,
+                SERVER_NAME
+            ].map(query =>
+                callSsmExecution(
+                    credentialsId,
+                    region,
+                    [`${PSSCRIPT} -Query "${query}"`],
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId!
+                )
             )
-        ]);
+        );
+
     if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
         const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
         const serverInfo = serverDetails?.split('\t');
@@ -363,6 +340,7 @@ async function getServerSummary(resourceId: string) {
         const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
         let [{ activeNode }] = sqlResponseParsing(nodeInfo);
         const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
+        const [{ serverName: clusterName }] = sqlResponseParsing(serverNameInfo!);
 
         let standbyNode: string = '';
         if (isClustered && clusterNodesInfo) {
@@ -386,7 +364,7 @@ async function getServerSummary(resourceId: string) {
             activeConnections,
             deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
             activeNode,
-            ...(isClustered ? { standbyNode } : {})
+            ...(isClustered ? { standbyNode, clusterName } : {})
         };
     }
 }
@@ -397,6 +375,8 @@ async function getSqlServerDetails(
     activeNodeInstanceId: string,
     standbyNodeInstanceId: string
 ) {
+    logger.info('Getting SQL server details', { credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId });
+
     const [resourceIdentifier, name] = await Promise.all([
         callSsmExecution(
             credentialsId,
@@ -472,6 +452,10 @@ async function discoverMsSqlServer(
     // };
 
     // await registerServiceResource(params); // todo: create resource record; add a new workspace column in resource table
+    const [resourceDetails] = await listResources(accountId, resourceId);
+    if (!isEmpty(resourceDetails)) {
+        throw createError(409, 'MSSQL server already exists in your tenancy account');
+    }
     await createResource(accountId, {
         resourceId,
         resourceName,
