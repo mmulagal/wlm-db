@@ -78,8 +78,10 @@ const EstimatedCost = () => {
                     diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
                     throughput: fsxVolThroughput(),
                     iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
-                    deploymentOption: deploymentModel?.label === GENERAL.SINGLE_INSTANCE ? 
-                        FSX_DEPLOYMENT_MODE.SINGLE_AZ_1 : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                    deploymentOption:
+                        deploymentModel?.label === GENERAL.SINGLE_INSTANCE
+                            ? FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                            : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
                 }
                 // vpc: {
                 //     regionCode: updatedStr || '',
@@ -212,8 +214,12 @@ const EstimatedCost = () => {
                             </Typography>
                             <div className={styles.secondRow}>
                                 <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
-                                <Typography variant="Regular_14">{GENERAL.SIZE}: 1024 GB</Typography>
-                                <Typography variant="Regular_14">{GENERAL.THROUGHPUT}</Typography>
+                                <Typography variant="Regular_14">
+                                    {GENERAL.SIZE}: {diskSize || ''} {diskSizeUnit || ''}
+                                </Typography>
+                                <Typography variant="Regular_14">
+                                    {GENERAL.THROUGHPUT}: {throughputValue}
+                                </Typography>
                             </div>
                             <div className={styles.thirdRow}>
                                 <Typography variant="Regular_14" className={styles.costValue}>
