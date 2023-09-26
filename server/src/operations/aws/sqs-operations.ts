@@ -1,4 +1,5 @@
 import ms from 'ms';
+import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
@@ -6,6 +7,7 @@ import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
+    ACCOUNT_ID,
     ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
@@ -26,12 +28,14 @@ import {
     createEvent,
     createResource,
     listDeployments,
+    listResources,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getSqlServerDetails } from '../workloads/mssql/mssql-operations';
 import { prepareDetailsToSendNotification } from '../cloud-manager/notification-operations';
+import { setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -149,20 +153,29 @@ async function processCloudFormationMessages() {
                                                     ActiveInstanceIp: activeNodeInstanceIp,
                                                     StandbyInstanceIp: standbyNodeInstanceIp
                                                 } = resourceProperties;
-                                                await createResource(accountId, {
-                                                    resourceId: fsxId,
-                                                    resourceName: fsxName,
-                                                    cloudProviderAccountId,
-                                                    cloudProviderName: CloudProviders.AWS,
-                                                    resourceType: RESOURCESTYPE.FSX,
-                                                    region
-                                                });
+                                                const [resourceDetails] = await listResources(
+                                                    accountId,
+                                                    fsxId,
+                                                    RESOURCESTYPE.FSX
+                                                );
+                                                if (isEmpty(resourceDetails)) {
+                                                    // same fsx can be used in multiple SQL deployments, avoid creating multiple FSX resources.. Keep fsx resource unique per tenancy account
+                                                    await createResource(accountId, {
+                                                        resourceId: fsxId,
+                                                        resourceName: fsxName,
+                                                        cloudProviderAccountId,
+                                                        cloudProviderName: CloudProviders.AWS,
+                                                        resourceType: RESOURCESTYPE.FSX,
+                                                        region
+                                                    });
+                                                }
                                                 const { id, resourceName } = await getSqlServerDetails(
                                                     credentialsId,
                                                     region,
                                                     activeNodeInstanceId,
                                                     standbyNodeInstanceId
                                                 );
+                                                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                                                 await createResource(accountId, {
                                                     resourceId: id,
                                                     resourceName,
@@ -239,7 +252,7 @@ async function processCloudFormationMessages() {
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
 
-                                const MASTER_STACK_NAME_PATTERN = /WLMDB-SQLFCIStack-(\d{13})/;
+                                const MASTER_STACK_NAME_PATTERN = /WLMDB-(.+[a-zA-Z])-(\d{13})/;
                                 const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
                                 if (matchingMasterStack) {
                                     const [masterStackName] = matchingMasterStack;
