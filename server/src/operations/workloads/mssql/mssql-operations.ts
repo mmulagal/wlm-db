@@ -474,6 +474,10 @@ async function discoverMsSqlServer(
     // };
 
     // await registerServiceResource(params); // todo: create resource record; add a new workspace column in resource table
+    const [resourceDetails] = await listResources(accountId, resourceId);
+    if (!isEmpty(resourceDetails)) {
+        throw createError(409, 'MSSQL server already exists in your tenancy account');
+    }
     await createResource(accountId, {
         resourceId,
         resourceName,
