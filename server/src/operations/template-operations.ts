@@ -11,10 +11,10 @@ import {
     TEMPLATE_TYPES,
     BUCKET_NAME,
     SQL_TEMPLATES_DISTRIBUTION,
+    MASTER_TEMPLATE_DISTRIBUTION,
     SIGNED_URL_ERROR_MESSAGE,
     HttpErrorCodes
 } from '../utils/consts';
-import { sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
 
 interface TemplateDetails {
@@ -138,13 +138,13 @@ async function updateTemplateUrls(
         });
 
         const sqlTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLTemplate');
-        const newSQLTemplatePath: string = `${stackName}/${sqlTemplatePath!.url}`;
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, newSQLTemplatePath, contents);
-        const SQLsignedUrl = await getPreSignedUrl(region, newSQLTemplatePath);
+        const customSQLTemplatePath: string = `${stackName}/${sqlTemplatePath!.url}`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, customSQLTemplatePath, contents);
+        const SQLsignedUrl = await getPreSignedUrl(region, customSQLTemplatePath);
         signedUrls.set(sqlTemplatePath!.name, {
             name: sqlTemplatePath!.name,
             url: SQLsignedUrl,
-            location: newSQLTemplatePath
+            location: customSQLTemplatePath
         });
     } else if (templateType === TEMPLATE_TYPES.VALIDATION) {
         const contents = template({
@@ -163,13 +163,13 @@ async function updateTemplateUrls(
         });
 
         const ValidationTemplate = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');
-        const newValidationTemplatePath: string = `${stackName}/${ValidationTemplate!.url}`;
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, newValidationTemplatePath, contents);
-        const valSignedUrl = await getPreSignedUrl(region, newValidationTemplatePath);
+        const customValidationTemplatePath: string = `${stackName}/${ValidationTemplate!.url}`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, customValidationTemplatePath, contents);
+        const valSignedUrl = await getPreSignedUrl(region, customValidationTemplatePath);
         signedUrls.set(ValidationTemplate!.name, {
             name: ValidationTemplate!.name,
             url: valSignedUrl,
-            location: newValidationTemplatePath
+            location: customValidationTemplatePath
         });
     } else if (templateType === TEMPLATE_TYPES.SQLSTANDALONE) {
         const contents = template({
@@ -200,13 +200,13 @@ async function updateTemplateUrls(
             ScriptSQLONTAPSignature: decodeURI(signedUrls.get('ScriptSQLONTAPSignature')?.url || '')
         });
         const standAloneTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'SQLStandaloneTemplate');
-        const newStandAloneTemplatePath: string = `${stackName}/${standAloneTemplatePath!.url}`;
-        await putObjectBucket(credentialsId, region, BUCKET_NAME, newStandAloneTemplatePath, contents);
-        const standAloneSignedUrl = await getPreSignedUrl(region, newStandAloneTemplatePath);
+        const customStandAloneTemplatePath: string = `${stackName}/${standAloneTemplatePath!.url}`;
+        await putObjectBucket(credentialsId, region, BUCKET_NAME, customStandAloneTemplatePath, contents);
+        const standAloneSignedUrl = await getPreSignedUrl(region, customStandAloneTemplatePath);
         signedUrls.set(standAloneTemplatePath!.name, {
             name: standAloneTemplatePath!.name,
             url: standAloneSignedUrl,
-            location: newStandAloneTemplatePath
+            location: customStandAloneTemplatePath
         });
     }
 }
@@ -223,24 +223,23 @@ async function uploadTemplates(
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const signedUrls = await generateSignedUrls(region, resourceType);
-
-        await Promise.all(
-            SQL_TEMPLATES_DISTRIBUTION.map(async template => {
-                if (template.name === 'master') {
-                    sleep(500);
-                    updateTemplateUrls(
-                        credentialsId,
-                        region,
-                        template.location,
-                        signedUrls,
-                        template.name,
-                        stackName,
-                        tags,
-                        templatePath
-                    );
-                }
-                updateTemplateUrls(credentialsId, region, template.location, signedUrls, template.name, stackName);
-            })
+        const promises: any[] = [];
+        SQL_TEMPLATES_DISTRIBUTION.map(async template => {
+            promises.push(
+                updateTemplateUrls(credentialsId, region, template.location, signedUrls, template.name, stackName)
+            );
+        });
+        Promise.all(promises).then(() =>
+            updateTemplateUrls(
+                credentialsId,
+                region,
+                MASTER_TEMPLATE_DISTRIBUTION.location,
+                signedUrls,
+                MASTER_TEMPLATE_DISTRIBUTION.name,
+                stackName,
+                tags,
+                templatePath
+            )
         );
     }
 }

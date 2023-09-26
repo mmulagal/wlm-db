@@ -685,12 +685,18 @@ const SQL_TEMPLATES_DISTRIBUTION = [
     {
         name: TEMPLATE_TYPES.SQLSTANDALONE,
         location: './resources/mssql/templates/standalone-deployment.yaml'
-    },
-    {
-        name: TEMPLATE_TYPES.MASTER,
-        location: './resources/mssql/templates/wlm-master.yaml'
     }
 ];
+
+const MASTER_TEMPLATE_DISTRIBUTION = {
+    name: TEMPLATE_TYPES.MASTER,
+    location: './resources/mssql/templates/wlm-master.yaml'
+};
+
+const TEMPLATES = {
+    bucket: 'staging.wlmdb.workloads.netapp.com',
+    region: 'us-east-1'
+};
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -836,6 +842,8 @@ export {
     WLMDB_RESOURCE_CLASS,
     TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
+    MASTER_TEMPLATE_DISTRIBUTION,
+    TEMPLATES,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,

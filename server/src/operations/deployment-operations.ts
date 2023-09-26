@@ -219,9 +219,9 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    const newMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, newMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
@@ -232,7 +232,7 @@ async function createCloudFormationTemplateForUserDeployment(
         DatabaseTypes.MS_SQL_SERVER,
         derivedParams.StackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        newMasterTemplatePath
+        customMasterTemplatePath
     );
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
@@ -339,9 +339,9 @@ async function deployCloudFormationTemplate(
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
 
-    const newMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, newMasterTemplatePath);
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
@@ -352,7 +352,7 @@ async function deployCloudFormationTemplate(
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        newMasterTemplatePath
+        customMasterTemplatePath
     );
 
     const deployStackResponse = await createStack(

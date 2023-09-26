@@ -1,4 +1,10 @@
-import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+    S3Client,
+    GetObjectCommand,
+    PutObjectCommand,
+    PutBucketLifecycleConfigurationCommand,
+    GetBucketLifecycleConfigurationCommand
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import getLogger from '../../utils/logger';
 import { BUCKET_NAME, MASTER_TEMPLATE_PATH, S3_BUCKET_SIGNED_URL_EXPIRY } from '../../utils/consts';
@@ -40,4 +46,30 @@ async function putObjectBucket(
     return response;
 }
 
-export { getPreSignedUrl, putObjectBucket };
+async function putBucketLifecycleConfiguration(region: string, config: any) {
+    logger.info('Creating bucket lifcycle configuration', { region, config });
+    const s3 = new S3Client({ region });
+    const command = new PutBucketLifecycleConfigurationCommand(config);
+    try {
+        const response = await s3.send(command);
+        logger.debug('Put Bucket Lifecycle Configuration response:', response);
+        return response;
+    } catch (error) {
+        logger.error('Error configuring lifecycle:', error);
+    }
+}
+
+async function getBucketLifecycleConfiguration(region: string, bucketName: string) {
+    logger.info('Fetching bucket lifcycle configuration', { region, bucketName });
+    const s3 = new S3Client({ region });
+    try {
+        const command = new GetBucketLifecycleConfigurationCommand({ Bucket: bucketName });
+        const response = await s3.send(command);
+        logger.debug('Get Bucket Lifecycle Configuration response:', response);
+        return response;
+    } catch (error) {
+        logger.error(error);
+    }
+}
+
+export { getPreSignedUrl, putObjectBucket, putBucketLifecycleConfiguration, getBucketLifecycleConfiguration };
