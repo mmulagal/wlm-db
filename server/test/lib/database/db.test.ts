@@ -8,7 +8,8 @@ import {
     listConfig,
     createConfig,
     deleteConfig,
-    createEvent
+    createEvent,
+    listRelationshipsResources
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -72,5 +73,23 @@ describe('List deployments', () => {
         expect(resp[0].account_id).toEqual(ACCOUNT_ID);
 
         await deleteConfig(ACCOUNT_ID, resp[0].id);
+    });
+
+    it('should return a list of resources which has relationships', async () => {
+        await createResource(ACCOUNT_ID, {
+            resourceId: 'i-1a2b3c4d5e',
+            resourceName: 'sqlnode1',
+            resourceType: 'MSSQL',
+            cloudProviderAccountId: '464262061435',
+            cloudProviderName: 'AWS',
+            coRelationId: 'fsx-1234',
+            region: DEFAULT_AWS_REGION
+        });
+
+        const resp = await listRelationshipsResources(ACCOUNT_ID);
+        expect(resp[0].resource_id).toEqual('i-1a2b3c4d5e');
+        expect(resp[0].co_relation_id).toEqual('fsx-1234');
+
+        await deleteResource(ACCOUNT_ID, resp[0].resource_id);
     });
 });
