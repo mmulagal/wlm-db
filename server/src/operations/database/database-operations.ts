@@ -75,12 +75,19 @@ async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStat
 
     return data
         .filter(each => each.parent_deployment_id == null)
-        .map(each => ({
-            id: each.deployment_id,
-            name: each.deployment_name,
-            status: each.deployment_status,
-            reason: each.deployment_status_reason!
-        }));
+        .map(
+            ({
+                deployment_id: deploymentId,
+                deployment_name: deploymentName,
+                deployment_status: deploymentStatus,
+                deployment_status_reason: reason
+            }) => ({
+                deploymentId,
+                deploymentName,
+                deploymentStatus,
+                deploymentReason: reason || ''
+            })
+        );
 }
 
 async function getDeploymentStatusById(accountId: string, id: string): Promise<DeploymentStatusResponseType> {
@@ -91,15 +98,15 @@ async function getDeploymentStatusById(accountId: string, id: string): Promise<D
             deployment_id: deploymentId,
             deployment_name: deploymentName,
             deployment_status: deploymentStatus,
-            deployment_status_reason: deploymentReason
+            deployment_status_reason: reason
         }
     ] = await listDeployments(accountId, id);
 
     return {
-        id: deploymentId,
-        name: deploymentName,
-        status: deploymentStatus,
-        reason: deploymentReason!
+        deploymentId,
+        deploymentName,
+        deploymentStatus,
+        deploymentReason: reason || ''
     };
 }
 

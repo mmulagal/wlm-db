@@ -66,10 +66,10 @@ const DeployTemplateResponse = Type.Object({
 });
 
 const DeploymentStatusResponse = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    status: Type.String(),
-    reason: Type.Optional(Type.String())
+    deploymentId: Type.String(),
+    deploymentName: Type.String(),
+    deploymentStatus: Type.String(),
+    deploymentReason: Type.Optional(Type.String())
 });
 
 const DeploymentStatusObjectParams = Type.Object({

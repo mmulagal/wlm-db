@@ -60,7 +60,7 @@ describe('Database operations', () => {
             region: ''
         });
         const resp = await getAllDeploymentStatus(ACCOUNT_ID);
-        expect(response.deployment_id).toEqual(resp[0].id);
+        expect(response.deployment_id).toEqual(resp[0].deploymentId);
 
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-12345');
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-12345-sql');
@@ -83,12 +83,12 @@ describe('Database operations', () => {
             region: ''
         });
         let resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-2345');
-        expect(response.deployment_id).toEqual(resp.id);
-        expect(response.deployment_status).toEqual(resp.status);
+        expect(response.deployment_id).toEqual(resp.deploymentId);
+        expect(response.deployment_status).toEqual(resp.deploymentStatus);
 
         resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-45678');
-        expect(response1.deployment_id).toEqual(resp.id);
-        expect(response1.deployment_status).toEqual(resp.status);
+        expect(response1.deployment_id).toEqual(resp.deploymentId);
+        expect(response1.deployment_status).toEqual(resp.deploymentStatus);
 
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-2345');
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-45678');
