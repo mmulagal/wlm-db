@@ -1427,6 +1427,10 @@ Resources:
                   FromPort: 464
                   ToPort: 464
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: -1
+                  FromPort: -1
+                  ToPort: -1
+                  CidrIp: !Ref 'WorkloadSecurityGroup'
                 - IpProtocol: udp
                   FromPort: 464
                   ToPort: 464
