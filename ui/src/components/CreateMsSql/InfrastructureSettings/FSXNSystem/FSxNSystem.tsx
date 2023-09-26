@@ -53,16 +53,28 @@ const FSxNSystem = () => {
     const fsxNameRef = useRef(null);
 
     const fsxCheck = (val: any) => {
+        const svmCount = val?.storageVirtualMachines ? val.storageVirtualMachines.length : 0;
+        const throughputCapacity = val?.ontapConfiguration?.throughputCapacity;
         const fsxType = val?.ontapConfiguration?.deploymentType;
         const lifecycle = val?.lifecycle;
         const fsxSubnets = val?.subnetIds || [];
         const node1SubnetsList = selectedZone1?.data?.subnets || [];
         const node2SubnetsList = selectedZone2?.data?.subnets || [];
+        let svmCheck = false;
+        if(throughputCapacity === 128 || throughputCapacity === 256) {
+            svmCheck = svmCount < 6 ? true : false;
+        } else if(throughputCapacity === 512 || throughputCapacity === 1024) {
+            svmCheck = svmCount < 14 ? true : false;
+        } else if(throughputCapacity === 2048 || throughputCapacity === 4096) {
+            svmCheck = svmCount < 24 ? true : false;
+        } else {
+            svmCheck = true;
+        }
         if(lifecycle && lifecycle === 'AVAILABLE') {
             if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1) {
-                return fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
+                return svmCheck && fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
             } else if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
-                return fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
+                return svmCheck && fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
             } else {
                 return false;
             }

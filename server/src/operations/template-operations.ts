@@ -14,6 +14,7 @@ import {
     SIGNED_URL_ERROR_MESSAGE,
     HttpErrorCodes
 } from '../utils/consts';
+import { sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
 
 interface TemplateDetails {
@@ -222,39 +223,24 @@ async function uploadTemplates(
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const signedUrls = await generateSignedUrls(region, resourceType);
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.VALIDATION,
-            signedUrls,
-            TEMPLATE_TYPES.VALIDATION,
-            stackName
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.SQLSTACK,
-            signedUrls,
-            TEMPLATE_TYPES.SQLSTACK,
-            stackName
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.SQLSTANDALONE,
-            signedUrls,
-            TEMPLATE_TYPES.SQLSTANDALONE,
-            stackName
-        );
-        await updateTemplateUrls(
-            credentialsId,
-            region,
-            SQL_TEMPLATES_DISTRIBUTION.MASTER,
-            signedUrls,
-            TEMPLATE_TYPES.MASTER,
-            stackName,
-            tags,
-            templatePath
+
+        await Promise.all(
+            SQL_TEMPLATES_DISTRIBUTION.map(async template => {
+                if (template.name === 'master') {
+                    sleep(500);
+                    updateTemplateUrls(
+                        credentialsId,
+                        region,
+                        template.location,
+                        signedUrls,
+                        template.name,
+                        stackName,
+                        tags,
+                        templatePath
+                    );
+                }
+                updateTemplateUrls(credentialsId, region, template.location, signedUrls, template.name, stackName);
+            })
         );
     }
 }

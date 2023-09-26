@@ -424,16 +424,13 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
         Filters: [
             { Name: 'platform', Values: ['windows'] },
             { Name: 'is-public', Values: ['true'] },
-            { Name: 'owner-alias', Values: ['amazon'] }
+            { Name: 'owner-alias', Values: ['amazon'] },
+            { Name: 'name', Values: ['Windows_Server-*-English-Full-Base*'] }
         ]
     });
     const [filteredInstances] =
         amis.Images?.filter(
-            ({ Name, UsageOperation }) =>
-                UsageOperation?.includes('RunInstances:0002') &&
-                Name?.startsWith('Windows_Server') &&
-                Name?.includes('English-Full-Base') &&
-                !Name?.includes('SQL')
+            ({ Name, UsageOperation }) => UsageOperation?.includes('RunInstances:0002') && !Name?.includes('SQL')
         ) || [];
 
     logger.debug('Windows_Server AMI Image in region ', { region, filteredInstances });

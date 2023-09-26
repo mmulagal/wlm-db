@@ -21,6 +21,7 @@ const TOKEN_EXPIRATION_TIME = 'TOKEN_EXPIRATION_TIME';
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
 const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
+const FSX_BATCH_CONCURRENCY_VALUE = 10;
 
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
@@ -231,7 +232,8 @@ enum AWSQueryFields {
 }
 
 enum RESOURCESTYPE {
-    MSSQL = 'MSSQL'
+    MSSQL = 'MSSQL',
+    FSX = 'FSX'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -664,19 +666,31 @@ const SQL_TEMPLATES_ASSETS = [
 
 const SQL_TEMPLATE_TAGS_INDENTATION = 6;
 
-const SQL_TEMPLATES_DISTRIBUTION = {
-    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
-    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml',
-    SQLSTANDALONE: './resources/mssql/templates/standalone-deployment.yaml'
-};
-
 enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
     SQLSTANDALONE = 'sqlstandalone'
 }
+
+const SQL_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/templates/vpc-ad-validation.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTACK,
+        location: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/templates/standalone-deployment.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.MASTER,
+        location: './resources/mssql/templates/wlm-master.yaml'
+    }
+];
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -713,8 +727,10 @@ const CRITICAL = 'critical';
 const RESOURCE_ID = 'WLMDB-Resource-1';
 const PUBLISH = 'publish';
 const MOREINFO = 'More information';
-const ACTION_BUTTOTN_DASHBOARD = 'Go to Dashboard';
+const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
 const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
+const SUCCESS = 'success';
+const ERROR = 'error';
 
 export {
     WLMDB,
@@ -724,6 +740,7 @@ export {
     SERVICE_QUOTAS,
     FSX_ACTION_NAMES,
     FSX,
+    FSX_BATCH_CONCURRENCY_VALUE,
     RESOURCE_GROUPS_ACTION_NAMES,
     SNS_ACTION_NAMES,
     SNS,
@@ -845,8 +862,10 @@ export {
     CRITICAL,
     PUBLISH,
     MOREINFO,
-    ACTION_BUTTOTN_DASHBOARD,
+    ACTION_BUTTON_DASHBOARD,
     ACTION_BUTTON_DATABASE,
     RESOURCE_ID,
-    WLMDB_ABSOLUTE_ENDPOINT
+    WLMDB_ABSOLUTE_ENDPOINT,
+    SUCCESS,
+    ERROR
 };

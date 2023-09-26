@@ -22,7 +22,7 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { DEFAULT_MASTER_KEY, SQL_DATABASE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { 
     selectDefaultEncryption, 
     selectDefaultInstanceType, 
@@ -31,6 +31,7 @@ import {
     selectDefaultLicense,
     selectDefaultSecurityGroup
 } from '../../MSSqlServer/MSSqlUtils';
+import { generateRandomDBName } from '../../../../utils/utilityFunctions';
 
 const PreviewDefault = () => {
     const dispatch = useDispatch();
@@ -74,7 +75,7 @@ const PreviewDefault = () => {
                 })
             );
             selectDefaultLicense(amiData, dispatch);
-            dispatch(setDBName(SQL_DATABASE));
+            dispatch(setDBName(generateRandomDBName()));
             selectDefaultKeyPair(keyPairData, dispatch);
             selectDefaultInstanceType(instanceTypeData, dispatch);
             dispatch(setProvisionedType(GENERAL.AUTOMATIC));

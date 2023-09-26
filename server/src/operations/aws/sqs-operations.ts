@@ -6,12 +6,16 @@ import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
+    ACCOUNT_ID,
+    ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
     CloudProviders,
     DEFAULT_AWS_REGION,
     ERROR_CODE_SQS_INVALID_TOKEN,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
+    RESOURCESTYPE,
+    SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB
 } from '../../utils/consts';
@@ -21,11 +25,15 @@ import { transformStackEventMessage } from './sns-operations';
 import {
     createDeployment,
     createEvent,
+    createResource,
     listDeployments,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
+import { getSqlServerDetails } from '../workloads/mssql/mssql-operations';
+import { prepareDetailsToSendNotification } from '../cloud-manager/notification-operations';
+import { setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -132,6 +140,58 @@ async function processCloudFormationMessages() {
                                                     endTime: new Date(messageTimestamp).valueOf(),
                                                     data: resourceProperties
                                                 });
+
+                                                const {
+                                                    ActiveInstanceId: activeNodeInstanceId,
+                                                    StandbyInstanceId: standbyNodeInstanceId,
+                                                    ActiveInstanceName: activeNodeInstanceName,
+                                                    StandbyInstanceName: standbyNodeInstanceName,
+                                                    FSxFileSystemId: fsxId,
+                                                    FSxFileSystemName: fsxName,
+                                                    ActiveInstanceIp: activeNodeInstanceIp,
+                                                    StandbyInstanceIp: standbyNodeInstanceIp
+                                                } = resourceProperties;
+                                                await createResource(accountId, {
+                                                    resourceId: fsxId,
+                                                    resourceName: fsxName,
+                                                    cloudProviderAccountId,
+                                                    cloudProviderName: CloudProviders.AWS,
+                                                    resourceType: RESOURCESTYPE.FSX,
+                                                    region
+                                                });
+                                                const { id, resourceName } = await getSqlServerDetails(
+                                                    credentialsId,
+                                                    region,
+                                                    activeNodeInstanceId,
+                                                    standbyNodeInstanceId
+                                                );
+                                                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                                                await createResource(accountId, {
+                                                    resourceId: id,
+                                                    resourceName,
+                                                    cloudProviderAccountId,
+                                                    cloudProviderName: CloudProviders.AWS,
+                                                    resourceType: RESOURCESTYPE.MSSQL,
+                                                    coRelationId: fsxId,
+                                                    region,
+                                                    metadata: {
+                                                        credentialsId,
+                                                        activeNodeInstanceId,
+                                                        standbyNodeInstanceId,
+                                                        activeNodeInstanceName,
+                                                        standbyNodeInstanceName,
+                                                        activeNodeInstanceIp,
+                                                        standbyNodeInstanceIp
+                                                    }
+                                                });
+                                                await prepareDetailsToSendNotification(
+                                                    'standard_deployment',
+                                                    'Cloud formation stack deployment successful',
+                                                    'Cloud formation stack deployment successful',
+                                                    { uiNotification: true, emailNotification: true },
+                                                    ACTION_BUTTON_DASHBOARD,
+                                                    SUCCESS
+                                                );
                                             }
                                         }
                                     } else {
@@ -145,6 +205,12 @@ async function processCloudFormationMessages() {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()
                                             });
+                                            await prepareDetailsToSendNotification(
+                                                'standard_deployment',
+                                                'Cloud formation stack deployment failed',
+                                                'Cloud formation stack deployment failed',
+                                                { uiNotification: true, emailNotification: true }
+                                            );
                                         }
                                     }
                                 }
