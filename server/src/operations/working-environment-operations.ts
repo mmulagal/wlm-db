@@ -4,13 +4,22 @@ import { RESOURCESTYPE, HttpErrorCodes, ACCOUNT_ID } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { listResources } from '../lib/database/db';
+import { listResources, listRelationshipsResources } from '../lib/database/db';
 
 interface WorkingEnvironment {
     id: string;
     provider: string;
     name?: string;
     deploymentState: string;
+}
+
+interface WeRelationships {
+    source: {
+        id: string;
+    };
+    target: {
+        id: string;
+    };
 }
 
 const logger = getLogger();
@@ -74,4 +83,23 @@ async function getWorkingEnvironment(id: string) {
     }
 }
 
-export { getWorkingEnvironments, getWorkingEnvironment };
+async function getWeRelationships() {
+    logger.info('Get relations between working environments ');
+
+    const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
+    const relationshipResources = await listRelationshipsResources(accountId);
+
+    const relationData: WeRelationships[] = relationshipResources.map(
+        ({ resource_id: resourceId, co_relation_id: coRelationId }) => ({
+            source: {
+                id: resourceId
+            },
+            target: {
+                id: coRelationId!
+            }
+        })
+    );
+    return relationData;
+}
+
+export { getWorkingEnvironments, getWorkingEnvironment, getWeRelationships };
