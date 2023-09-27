@@ -52,12 +52,12 @@ async function getAllCredentials(credentialsType: string): Promise<Array<AllCred
  *  sessionId: string;
  *  expiration: Date }
  */
-async function getCredentialDetails(credentialsId: string) {
-    logger.info('Getting credential details for ', credentialsId);
+async function getCredentialDetails(credentialsId: string, accountId?: string) {
+    logger.info('Getting credential details for ', { credentialsId, accountId });
 
-    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
+    const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
     return gotInstanceForInternalRequest
-        .get(`credentials/accounts/${accountId}/credentials/${credentialsId}`, {
+        .get(`credentials/accounts/${tenancyAccountId}/credentials/${credentialsId}`, {
             prefixUrl: CREDENTIALS_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)

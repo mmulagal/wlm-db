@@ -78,7 +78,8 @@ async function callSsmExecution(
     region: string,
     commands: Array<string>,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    standbyNodeInstanceId?: string,
+    accountId?: string
 ) {
     logger.info(
         'Calling SSM command execution',
@@ -101,7 +102,7 @@ async function callSsmExecution(
         InstanceIds: [activeNodeInstanceId]
     };
     try {
-        response = await executeSSMDocument(credentialsId, region, params);
+        response = await executeSSMDocument(credentialsId, region, params, accountId);
     } catch (error) {
         logger.error('Fetching database summary from primary node failed', activeNodeInstanceId, error);
         if (standbyNodeInstanceId) {
@@ -111,7 +112,7 @@ async function callSsmExecution(
                 InstanceIds: [standbyNodeInstanceId]
             };
             try {
-                response = await executeSSMDocument(credentialsId, region, params);
+                response = await executeSSMDocument(credentialsId, region, params, accountId);
             } catch (secondError) {
                 logger.error(
                     'Fetching database summary from secondary node failed',
@@ -373,7 +374,8 @@ async function getSqlServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId: string
+    standbyNodeInstanceId: string,
+    accountId?: string
 ) {
     logger.info('Getting SQL server details', { credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId });
 
@@ -383,14 +385,16 @@ async function getSqlServerDetails(
             region,
             [`${PSSCRIPT} -Query "${SERVER_GUID}"`],
             activeNodeInstanceId,
-            standbyNodeInstanceId
+            standbyNodeInstanceId,
+            accountId
         ),
         callSsmExecution(
             credentialsId,
             region,
             [`${PSSCRIPT} -Query "${SERVER_NAME}"`],
             activeNodeInstanceId,
-            standbyNodeInstanceId
+            standbyNodeInstanceId,
+            accountId
         )
     ]);
 
