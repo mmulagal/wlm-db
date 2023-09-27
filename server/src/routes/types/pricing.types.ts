@@ -25,11 +25,27 @@ const PricingServiceRequest = Type.Object({
 });
 
 const PricingServiceResponse = Type.Object({
-    storage: Type.Object({
-        capacity: Type.Number(),
-        throughput: Type.Number()
-    }),
     compute: Type.Number(),
+    storage: Type.Optional(
+        Type.Object({
+            capacity: Type.Number(),
+            throughput: Type.Number(),
+            size: Type.Optional(
+                Type.Object(
+                    {
+                        data: Type.Number(),
+                        log: Type.Number(),
+                        tempdb: Type.Number(),
+                        quorum: Type.Optional(Type.Number()),
+                        total: Type.Number()
+                    },
+                    {
+                        description: 'All the sizes are in GiB'
+                    }
+                )
+            )
+        })
+    ),
     vpc: Type.Optional(Type.Number()),
     total: Type.Number()
 });
