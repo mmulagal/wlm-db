@@ -12,12 +12,16 @@ import { FSX_DEPLOYMENT_MODE } from '../../../utils/consts';
 
 type Res = {
     data: {
-        compute: '';
-        connectivity: '';
-        storage: '';
-        throughput: '';
-        total: '';
-    };
+        compute: '',
+        storage: {
+            capacity: '',
+            throughput: '',
+            size: {
+                total: ''
+            }
+        },
+        total: ''
+    }
 };
 
 const EstimatedCost = () => {
@@ -41,6 +45,10 @@ const EstimatedCost = () => {
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS?.IOPSValue);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
+    const selectedZone1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode1);
+    const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
+    const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+
     const fsxVolThroughput = () => {
         const value = (throughputValue || '').split(' ');
         if (value.length === 2) {
@@ -51,6 +59,15 @@ const EstimatedCost = () => {
             }
         } else {
             return throughputValue;
+        }
+    };
+
+    const computeObj = (updatedStr: string) => {
+        return {
+            regionCode: updatedStr || '',
+            instanceType: instanceTypeName || '',
+            sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || '',
+            sqlDeploymentMode: deploymentModel?.value
         }
     };
 
@@ -66,27 +83,27 @@ const EstimatedCost = () => {
         ) {
             const splitRegion = regionValue?.value.split('|');
             const updatedStr = splitRegion[0].replace(/\s?$/, '');
-            const payload = {
-                compute: {
-                    regionCode: updatedStr || '',
-                    instanceType: instanceTypeName || '',
-                    sqlSoftwareType: sqlSoftwareTypeValue.value === 'Standard' ? 'SQL std' : 'SQL ent' || '',
-                    sqlDeploymentMode: deploymentModel?.value
-                },
-                storage: {
-                    regionCode: updatedStr || '',
-                    diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
-                    throughput: fsxVolThroughput(),
-                    iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
-                    deploymentOption:
-                        deploymentModel?.label === GENERAL.SINGLE_INSTANCE
-                            ? FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
-                            : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-                }
-                // vpc: {
-                //     regionCode: updatedStr || '',
-                // }
-            };
+            let payload;
+            
+            if(selectedFsxnType === GENERAL.CREATE_NEW_FSXN){
+                payload = {
+                    compute: computeObj(updatedStr),
+                    storage: {
+                        regionCode: updatedStr || '',
+                        diskSize: diskSizeUnit === 'TiB' ? 1024 * diskSize : Number(diskSize),
+                        throughput: fsxVolThroughput(),
+                        iops: iopsValueType === GENERAL.USER_PROVISIONED ? Number(iopsValue) : 0,
+                        deploymentOption:
+                            deploymentModel?.label === GENERAL.SINGLE_INSTANCE
+                                ? FSX_DEPLOYMENT_MODE.SINGLE_AZ_1
+                                : FSX_DEPLOYMENT_MODE.MULTI_AZ_1
+                    }
+                };
+            } else {
+                payload = {
+                    compute: computeObj(updatedStr)
+                };
+            }
             setIsLoading(true);
             getEstimationCost({ credentialId: selectedCredId, payload: payload })
                 .then((data: any) => {
@@ -118,7 +135,8 @@ const EstimatedCost = () => {
         throughputValue,
         iopsValueType,
         iopsValue,
-        deploymentModel
+        deploymentModel,
+        selectedFsxnType
     ]);
 
     //To open accordion if default account is present
@@ -140,7 +158,13 @@ const EstimatedCost = () => {
     // }, [fetchResult]);
 
     const setHeader = () => {
-        if (isLoading) {
+        if (!regionValue || !selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.ESTIMATED_COST_HEADER}
+                </Typography>
+            );
+        }else if (isLoading) {
             return <LoadingComponent />;
         } else if (isDisabled) {
             return (
@@ -148,21 +172,24 @@ const EstimatedCost = () => {
                     {GENERAL.COST_ERROR}
                 </Typography>
             );
-        } else if (!regionValue) {
-            return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                    {GENERAL.ESTIMATED_COST_HEADER}
-                </Typography>
-            );
         } else {
             return <Typography variant="Regular_14">{`$${Number(data?.data?.total).toFixed(2)}`}</Typography>;
         }
     };
+
+    const costDisableCheck = () => {
+        if(deploymentModel?.label === GENERAL.SINGLE_INSTANCE){
+            return isDisabled || !regionValue || !selectedZone1;
+        } else {
+            return isDisabled || !regionValue || !selectedZone1 || !selectedZone2;
+        }
+    };
+
     return (
         <div className={styles['estimated-cost']}>
             <AccordionCard
-                isDisabled={isDisabled || !regionValue}
-                isExpandDisabled={isDisabled || !regionValue}
+                isDisabled={costDisableCheck()}
+                isExpandDisabled={costDisableCheck()}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="24"
                 title={<div className={CommonStyles.title}>{GENERAL.ESTIMATED_COST}</div>}
@@ -208,47 +235,50 @@ const EstimatedCost = () => {
                             </div>
                         </div>
 
-                        <div className={styles.storageContainer}>
-                            <Typography variant="Semibold_14" className={styles.compute}>
-                                {GENERAL.STORAGE}
-                            </Typography>
-                            <div className={styles.secondRow}>
-                                <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
-                                <Typography variant="Regular_14">
-                                    {GENERAL.SIZE}: {diskSize || ''} {diskSizeUnit || ''}
+                        {selectedFsxnType === GENERAL.CREATE_NEW_FSXN &&
+                            <div className={styles.storageContainer}>
+                                <Typography variant="Semibold_14" className={styles.compute}>
+                                    {GENERAL.STORAGE}
                                 </Typography>
-                                <Typography variant="Regular_14">
-                                    {GENERAL.THROUGHPUT}: {throughputValue}
-                                </Typography>
-                            </div>
-                            <div className={styles.thirdRow}>
-                                <Typography variant="Regular_14" className={styles.costValue}>
-                                    {isLoading ? (
-                                        <div className={styles.loadingPlacement}>
-                                            <LoadingComponent />
-                                        </div>
-                                    ) : (
-                                        //@ts-ignore
-                                        `$${Number(data?.data?.storage?.capacity).toFixed(2)}` || ''
-                                    )}
-                                </Typography>
+                                <div className={styles.secondRow}>
+                                    <Typography variant="Regular_14">{GENERAL.TYPE}: FSx for NetApp ONTAP</Typography>
+                                    <Typography variant="Regular_14">
+                                        {GENERAL.SIZE}: {data?.data?.storage?.size?.total + ' GiB'}
+                                    </Typography>
+                                    <Typography variant="Regular_14">
+                                        {GENERAL.THROUGHPUT}: {throughputValue}
+                                    </Typography>
+                                </div>
+                                <div className={styles.thirdRow}>
+                                    <Typography variant="Regular_14" className={styles.costValue}>
+                                        {isLoading ? (
+                                            <div className={styles.loadingPlacement}>
+                                                <LoadingComponent />
+                                            </div>
+                                        ) : (
+                                            //@ts-ignore
+                                            `$${Number(data?.data?.storage?.capacity).toFixed(2)}` || ''
+                                        )}
+                                    </Typography>
 
-                                <Typography
-                                    variant="Regular_14"
-                                    style={{ marginTop: '28px' }}
-                                    className={styles.costValue}
-                                >
-                                    {isLoading ? (
-                                        <div className={styles.loadingPlacement}>
-                                            <LoadingComponent />
-                                        </div>
-                                    ) : (
-                                        //@ts-ignore
-                                        `$${Number(data?.data?.storage?.throughput).toFixed(2)}` || ''
-                                    )}
-                                </Typography>
+                                    <Typography
+                                        variant="Regular_14"
+                                        style={{ marginTop: '28px' }}
+                                        className={styles.costValue}
+                                    >
+                                        {isLoading ? (
+                                            <div className={styles.loadingPlacement}>
+                                                <LoadingComponent />
+                                            </div>
+                                        ) : (
+                                            //@ts-ignore
+                                            `$${Number(data?.data?.storage?.throughput).toFixed(2)}` || ''
+                                        )}
+                                    </Typography>
+                                </div>
                             </div>
-                        </div>
+                        }
+                        
 
                         {/* <div className={styles.connectivityContainer}>
                             <Typography variant="Semibold_14" className={styles.compute}>
