@@ -37,6 +37,7 @@ import {
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, listResources } from '../../../lib/database/db';
+import { generateHash } from '../../../utils/utils';
 
 const logger = getLogger();
 
@@ -374,7 +375,7 @@ async function getSqlServerDetails(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId: string,
+    standbyNodeInstanceId?: string,
     accountId?: string
 ) {
     logger.info('Getting SQL server details', { credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId });
@@ -406,15 +407,23 @@ async function getSqlServerDetails(
         resourceName: serverName
     };
 }
+
+function getMsSqlResourceId(activeNodeInstanceId: string, standbyNodeInstanceId?: string) {
+    logger.info('Get MS SQL resource ID:', { activeNodeInstanceId, standbyNodeInstanceId });
+    return standbyNodeInstanceId
+        ? generateHash(activeNodeInstanceId + standbyNodeInstanceId)
+        : generateHash(activeNodeInstanceId);
+}
+
 async function discoverMsSqlServer(
     accountId: string,
     credentialsId: string,
     region: string,
+    resourceType: string,
     activeNodeInstanceId: string,
     activeNodeInstanceName: string,
-    standbyNodeInstanceId: string,
-    standbyNodeInstanceName: string,
-    resourceType: string,
+    standbyNodeInstanceId?: string,
+    standbyNodeInstanceName?: string,
     fsxId?: string
 ) {
     logger.info('Save SQL Server details in database:', {
@@ -427,35 +436,13 @@ async function discoverMsSqlServer(
         fsxId
     });
 
-    const { id: resourceId, resourceName } = await getSqlServerDetails(
+    const resourceId = getMsSqlResourceId(activeNodeInstanceId, standbyNodeInstanceId);
+    const { resourceName } = await getSqlServerDetails(
         credentialsId,
         region,
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
-    // const resName = resourceName?.serverName;
-    // const workspaceId = getAsyncLocalStorageResource<string>(WORKSPACE_ID);
-    // const params: ServiceResourceRequest = {
-    //     name: resName,
-    //     resourceIdentifier: id,
-    //     resourceType,
-    //     workspacePublicId: workspaceId,
-    //     accountPublicId: accountId,
-    //     resourceClass: WLMDB_RESOURCE_CLASS,
-    //     metadata: {
-    //         propertyName: 'properties',
-    //         propertyValue: JSON.stringify({
-    //             location: CloudProviders.AWS,
-    //             credentialsId,
-    //             region,
-    //             activeNodeInstanceId: activeNodeInstanceId,
-    //             standbyNodeInstanceId: standbyNodeInstanceId,
-    //             deploymentState: DeploymentState.SUCCESS
-    //         })
-    //     }
-    // };
-
-    // await registerServiceResource(params); // todo: create resource record; add a new workspace column in resource table
     const [resourceDetails] = await listResources(accountId, resourceId);
     if (!isEmpty(resourceDetails)) {
         throw createError(409, 'MSSQL server already exists in your tenancy account');
@@ -489,5 +476,6 @@ export {
     getTablesSummary,
     discoverMsSqlServer,
     callSsmExecution,
-    getTablesCount
+    getTablesCount,
+    getMsSqlResourceId
 };
