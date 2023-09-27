@@ -8,7 +8,6 @@ import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
 import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
-import { API_ERRORS } from '../utils/consts';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
