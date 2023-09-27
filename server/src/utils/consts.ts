@@ -660,19 +660,31 @@ const SQL_TEMPLATES_ASSETS = [
     }
 ];
 
-const SQL_TEMPLATES_DISTRIBUTION = {
-    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
-    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml',
-    SQLSTANDALONE: './resources/mssql/templates/standalone-deployment.yaml'
-};
-
 enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
     VALIDATION = 'validation',
     SQLSTANDALONE = 'sqlstandalone'
 }
+
+const SQL_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/templates/vpc-ad-validation.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTACK,
+        location: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.MASTER,
+        location: './resources/mssql/templates/wlm-master.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/templates/standalone-deployment.yaml'
+    }
+];
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -713,6 +725,15 @@ const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
 const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 const SUCCESS = 'success';
 const ERROR = 'error';
+
+const MAX_READ_REQUEST_FSXN = 1000000;
+const MAX_WRITE_REQUEST_FSXN = 100000;
+const MIN_DISKSIZE = 1024;
+const MIN_THROUGHPUT = 128;
+const STANDALONE = 'standalone';
+const FCI = 'fci';
+const SINGLE_AZ = 'SINGLE_AZ_1';
+const MULTI_AZ = 'MULTI_AZ_1';
 
 export {
     WLMDB,
@@ -846,5 +867,13 @@ export {
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
     SUCCESS,
-    ERROR
+    ERROR,
+    MAX_READ_REQUEST_FSXN,
+    MAX_WRITE_REQUEST_FSXN,
+    MIN_DISKSIZE,
+    STANDALONE,
+    FCI,
+    SINGLE_AZ,
+    MULTI_AZ,
+    MIN_THROUGHPUT
 };

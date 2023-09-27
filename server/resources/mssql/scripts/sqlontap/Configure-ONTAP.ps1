@@ -70,6 +70,31 @@ function returncert{
 
 }
 
+function callGetOrDeleteApi{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$uri,
+    [Parameter(Mandatory=$true)]
+    [string]$region,
+    [Parameter(Mandatory=$true)]
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [string]$method
+    )
+    try{
+        $restcert = returncert -region $region
+        $Params = @{
+            "URI"     = "$uri"
+            "Method"  = "$method"
+            "Headers" = @{"Authorization" = "Basic $creds"}
+            "ContentType" = "application/json"
+        }
+        Invoke-RestMethod @Params -Certificate $restcert
+    }catch{
+        $_ | Write-AWSLaunchWizardException
+    }
+}
+
 function callrestapi{
     param(
     [Parameter(Mandatory=$true)]
@@ -106,6 +131,51 @@ function callrestapi{
         $_ | Write-AWSLaunchWizardException
     }
 }
+
+$LOGLUN = 'sqllog'
+$DATALUN = 'sqldata'
+$TLUN = 'tempdb'
+$QLUN = 'quorum'
+
+# delete lun mapping if exist
+$lunmapsUriDynamicPart = 'private/cli/lun/mapping'
+$URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
+$restcert = returncert -region $region
+$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+
+foreach ($perlunmap in $lunmappingdata) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlunmap.vserver)&path=$($perlunmap.path)&igroup=$($perlunmap.igroup)"
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+}
+Start-Sleep 5
+
+# delete luns if exists
+$lunUriDynamicPart='private/cli/lun'
+$URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
+$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+
+$lunPathList = @("/vol/$FSxQuorumVolumeName/$QLUN",  "/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+foreach ($perlun in $lunlist) {
+    if($lunPathList -contains $perlun.path) {
+        $DeleteURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)"
+        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+    }
+}
+
+Start-Sleep 5
+
+# delete igroup if exists
+$IGUriDynamicPart='private/cli/igroup'
+$URI = "https://$($MgmtDNS)/api/$($IGUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
+$igrouplist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records 
+
+foreach ($perigroup in $igrouplist) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($IGUriDynamicPart)?vserver=$($perigroup.vserver)&igroup=$($perigroup.igroup)"
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+}
+
+Start-Sleep 5
+
 #Start ONTAP configuration
 $VolUriDynamicPart='private/cli/volume'
 
@@ -251,7 +321,6 @@ Start-Sleep 5
 ##create data lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$DATALUN = 'sqldata'
 $DSIZE = $FSxDataLunSize+"M"
 $LUN_PATH = "/vol/$FSxDataVolumeName/$DATALUN"
 $Body = @{
@@ -278,7 +347,6 @@ callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -param
 ##create log lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$LOGLUN = 'sqllog'
 $LUN_PATH = "/vol/$FSxLogVolumeName/$LOGLUN"
 $loglunsize = [math]::Round([int]$FSxDataLunSize*0.25)
 $LSIZE = $loglunsize.ToString()+"M"
@@ -304,7 +372,6 @@ callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -param
 ##create tempDb lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$TLUN = 'tempdb'
 $LUN_PATH = "/vol/$FSxTempDBVolumeName/$TLUN"
 $templunsize = [math]::Round([int]$FSxDataLunSize*0.1)
 $TSIZE = $templunsize.ToString()+"M"
@@ -333,7 +400,6 @@ callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -param
 if ($FSxQuorumVolumeName -ne "") {
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$QLUN = 'quorum'
 $LUN_PATH = "/vol/$FSxQuorumVolumeName/$QLUN"
 $Body = @{
     "name" = "$LUN_PATH"

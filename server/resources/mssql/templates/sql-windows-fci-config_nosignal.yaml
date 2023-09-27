@@ -1447,6 +1447,22 @@ Resources:
                   FromPort: 135
                   ToPort: 135
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 137
+                  ToPort: 137
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 3343
+                  ToPort: 3343
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: tcp
+                  FromPort: 3343
+                  ToPort: 3343
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
+                - IpProtocol: udp
+                  FromPort: 1024
+                  ToPort: 65534
+                  CidrIp: !Sub '${ADDnsIpAddresses}/32'
                 - IpProtocol: tcp
                   FromPort: 445
                   ToPort: 445
@@ -1471,6 +1487,14 @@ Resources:
                   FromPort: 49152
                   ToPort: 65535
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
+    WorkloadSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        Properties:
+            GroupId: !Ref 'WorkloadSecurityGroup'
+            IpProtocol: -1
+            ToPort: -1
+            FromPort: -1
+            SourceSecurityGroupId: !Ref 'WorkloadSecurityGroup'
 Outputs:
     SQLFSx1InstanceIPMAD:
         Description: Private IP of SqlFSx Instance

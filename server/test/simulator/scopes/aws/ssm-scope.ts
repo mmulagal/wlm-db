@@ -11,7 +11,7 @@ const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\""
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value(\'(./Record/@id)[1]\',\'int\')AS record_id, \n                                record.value(\'(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]\',\'int\')AS [SystemIdle], \n                                record.value(\'(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]\',\'int\')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N\'RING_BUFFER_SCHEDULER_MONITOR\'AND record LIKE\'%%\')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH"'
     ]
 };
 const memeoryParams = {
@@ -44,6 +44,11 @@ const serNodesParams = {
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT SERVERPROPERTY(\'ComputerNamePhysicalNetBIOS\') as activeNode FOR JSON PATH"'
     ]
 };
+const clusterNameParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT cluster_name from sys.dm_hadr_cluster FOR JSON PATH"'
+    ]
+};
 const clusterNodesParams = {
     commands: [
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT NodeName, is_current_owner FROM sys.dm_os_cluster_nodes FOR JSON PATH"'
@@ -52,7 +57,7 @@ const clusterNodesParams = {
 
 const serStateParams = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'\""
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol \'QUERYSTATE\',\'MSSQLServer\'"'
     ]
 };
 const serVerParams = {
@@ -70,7 +75,7 @@ const tablesListParams = {
 };
 const diskSizeParams = {
     commands: [
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query 'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH'"
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH\''
     ]
 };
 
@@ -107,6 +112,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.serClusterCommandResponse)
     .on(SendCommandCommand, { Parameters: serNodesParams })
     .resolves(listSendCommandCommandResponse.serNodesCommandResponse)
+    .on(SendCommandCommand, { Parameters: clusterNameParams })
+    .resolves(listSendCommandCommandResponse.clusterNameCommandResponse)
     .on(SendCommandCommand, { Parameters: clusterNodesParams })
     .resolves(listSendCommandCommandResponse.clusterNodesCommandResponse)
     .on(SendCommandCommand, { Parameters: serStateParams })
@@ -139,6 +146,8 @@ ssmMock
     .resolves(getCommandInvocationResponse.tablesListInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serNodes' })
     .resolves(getCommandInvocationResponse.serNodesInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterName' })
+    .resolves(getCommandInvocationResponse.clusterNameInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNodes' })
     .resolves(getCommandInvocationResponse.clusterNodesInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serCluster' })

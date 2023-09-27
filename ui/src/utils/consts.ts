@@ -23,7 +23,7 @@ export const DATABASE_TYPE = 'sql';
 export const FSXADMIN = 'fsxadmin';
 
 // Default database name
-export const SQL_DATABASE = 'sqldatabase1';
+export const SQL_DATABASE = 'sqldatabase';
 export const SQL_USERNAME = 'sqlsa';
 
 // Active Directory scenario type

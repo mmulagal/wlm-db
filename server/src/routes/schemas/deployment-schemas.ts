@@ -3,7 +3,10 @@ import { AwsParamsWithRegion } from '../types/aws.types';
 import {
     CloudFormationTemplateRequestBody,
     CloudFormationTemplateResponse,
-    DeployTemplateResponse
+    DeployTemplateResponse,
+    DeploymentStatusListResponse,
+    DeploymentStatusResponse,
+    DeploymentStatusObjectParams
 } from '../types/deployment.types';
 
 // Base Request for Deployment Routes
@@ -32,4 +35,21 @@ const DeployTemplateSchema = {
     }
 };
 
-export { CreateCloudFormationTemplateSchema, DeployTemplateSchema };
+// Get status of all Cloudformation stacks
+const DeploymentStatusListSchema = {
+    ...baseRequest,
+    response: {
+        200: DeploymentStatusListResponse
+    }
+};
+
+// Get Cloudformation stack by id or name
+const DeploymentStatusSchema = {
+    ...baseRequest,
+    params: DeploymentStatusObjectParams,
+    response: {
+        200: DeploymentStatusResponse
+    }
+};
+
+export { CreateCloudFormationTemplateSchema, DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema };

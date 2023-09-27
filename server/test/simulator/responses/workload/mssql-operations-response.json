@@ -131,6 +131,7 @@
         "serverStatus": "Running",
         "activeConnections": 8,
         "deploymentModel": "Always On Failover Cluster Instance",
+        "clusterName":"EC2AMAZ-GAAT3OE\\DUMMY_SQL",
         "activeNode": "SQLNODE1-39362",
         "standbyNode": "SQLNODE2-39362"
     },

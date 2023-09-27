@@ -60,6 +60,7 @@ const ServerSummaryResponse = Type.Object({
     serverStatus: Type.String(),
     activeConnections: Type.Integer(),
     deploymentModel: Type.String(),
+    clusterName: Type.Optional(Type.String()),
     activeNode: Type.String(),
     standbyNode: Type.Optional(Type.String())
 });
