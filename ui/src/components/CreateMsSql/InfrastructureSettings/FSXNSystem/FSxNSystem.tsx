@@ -100,7 +100,7 @@ const FSxNSystem = () => {
         });
 
         return options;
-    }, [fsxnData, selectedZone1, selectedZone2]);
+    }, [fsxnData, selectedZone1, selectedZone2, deploymentMode]);
 
     useEffect(() => {
         if(!isLoadConfig){
