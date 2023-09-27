@@ -7,7 +7,8 @@ import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
-import { requiredFieldError } from '../utils/utilityFunctions';
+import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
+import { API_ERRORS } from '../utils/consts';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -30,6 +31,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         if(reqFieldChk){
             errorMsg = reqFieldChk + GENERAL.IS_REQUIRED_MSG;
         }
+
+        errorMsg = customErrorMessages(errorMsg);
         if(errorMsg && errorMsg.length > 250) {
             api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.QUERY_ERROR, 
                 additionalText: errorMsg }));

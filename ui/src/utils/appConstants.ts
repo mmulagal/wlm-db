@@ -18,7 +18,8 @@ export const SELECT_CONFIG = {
     NO_SAVED_CONFIG: 'There are no saved configurations.',
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
-        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
+        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
+    DUPLICATE_CONFIG_NAME: 'Save configuration name already exist. Try with different name.'
 };
 
 export const GENERAL = {
