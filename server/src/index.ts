@@ -10,7 +10,6 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import sensible from '@fastify/sensible';
 import SwaggerParser from '@apidevtools/swagger-parser';
-// import { GetBucketLifecycleConfigurationCommandOutput } from '@aws-sdk/client-s3';
 import getLogger from './utils/logger';
 import {
     ACCOUNT_ID,
