@@ -18,10 +18,11 @@ const newRule: LifecycleRule = {
 };
 
 async function checkAndCreateBucketLifecycleConfiguration() {
+    logger.debug('Checking and creating life cycle rule');
     const configurations = await getBucketLifecycleConfiguration(TEMPLATES.region, TEMPLATES.bucket);
     logger.debug('Existing configurations', configurations);
-    const currentLifecycleConfig = configurations ?? { Rules: [] };
-    const deletewlmdbRuleExists = currentLifecycleConfig?.Rules?.some(
+    const { Rules: currentLifecycleRules = [] } = configurations || {};
+    const deletewlmdbRuleExists = currentLifecycleRules.some(
         (rule: LifecycleRule) => rule.ID && rule.ID === 'DeleteWlmdbFolders'
     );
 
@@ -32,7 +33,7 @@ async function checkAndCreateBucketLifecycleConfiguration() {
 
     const updatedLifecycleConfig = {
         Bucket: TEMPLATES.bucket,
-        LifecycleConfiguration: { Rules: [...(currentLifecycleConfig?.Rules || []), newRule] }
+        LifecycleConfiguration: { Rules: [...(currentLifecycleRules || []), newRule] }
     };
 
     const response = await putBucketLifecycleConfiguration(TEMPLATES.region, updatedLifecycleConfig);

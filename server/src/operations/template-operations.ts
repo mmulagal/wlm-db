@@ -81,21 +81,21 @@ async function updateTemplateUrls(
     if (templateType === TEMPLATE_TYPES.MASTER) {
         const fsxNewTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXNewTemplate');
         const fsxExistingTemplatePath = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'FSXExistingTemplate');
-        const fsxNewTemplatesignedUrl = await getPreSignedUrl(region, fsxNewTemplatePath!.url);
-        const fsxExistingTemplatesignedUrl = await getPreSignedUrl(region, fsxExistingTemplatePath!.url);
-
-        await Promise.all([
-            signedUrls.set(fsxNewTemplatePath!.name, {
-                name: fsxNewTemplatePath!.name,
-                url: fsxNewTemplatesignedUrl,
-                location: fsxNewTemplatePath!.url
-            }),
-            signedUrls.set(fsxExistingTemplatePath!.name, {
-                name: fsxExistingTemplatePath!.name,
-                url: fsxExistingTemplatesignedUrl,
-                location: fsxNewTemplatePath!.url
-            })
+        const [fsxNewTemplatesignedUrl, fsxExistingTemplatesignedUrl] = await Promise.all([
+            getPreSignedUrl(region, fsxNewTemplatePath!.url),
+            getPreSignedUrl(region, fsxExistingTemplatePath!.url)
         ]);
+
+        signedUrls.set(fsxNewTemplatePath!.name, {
+            name: fsxNewTemplatePath!.name,
+            url: fsxNewTemplatesignedUrl,
+            location: fsxNewTemplatePath!.url
+        });
+        signedUrls.set(fsxExistingTemplatePath!.name, {
+            name: fsxExistingTemplatePath!.name,
+            url: fsxExistingTemplatesignedUrl,
+            location: fsxNewTemplatePath!.url
+        });
         const contents = template({
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
