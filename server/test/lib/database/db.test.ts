@@ -42,7 +42,8 @@ describe('List deployments', () => {
     });
 
     it('should return a list of resources', async () => {
-        await createResource(ACCOUNT_ID, {
+        await deleteResource(ACCOUNT_ID, 'i-1a2b3c4d5e');
+        const resource = await createResource(ACCOUNT_ID, {
             resourceId: 'i-1a2b3c4d5e',
             resourceName: 'sqlnode1',
             resourceType: 'MSSQL',
@@ -50,11 +51,11 @@ describe('List deployments', () => {
             cloudProviderName: 'AWS',
             region: DEFAULT_AWS_REGION
         });
-
         const resp = await listResources(ACCOUNT_ID);
-        expect(resp[0].account_id).toEqual(ACCOUNT_ID);
+        const createdResource = resp.find(res => res.resource_id === 'i-1a2b3c4d5e');
+        expect(createdResource).toBeDefined();
 
-        await deleteResource(ACCOUNT_ID, resp[0].resource_id);
+        await deleteResource(ACCOUNT_ID, resource.resource_id);
     });
 
     it('should return a list of configs', async () => {

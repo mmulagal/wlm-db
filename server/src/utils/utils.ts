@@ -4,6 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -187,6 +188,12 @@ async function sleep(ms: number) {
     });
 }
 
+function generateHash(value: string) {
+    const hash = crypto.createHash('sha256');
+    hash.update(value);
+    return hash.digest('hex');
+}
+
 function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     logger.debug('Converting size to GiB', { size });
 
@@ -215,6 +222,7 @@ export {
     derivePropertiesFromARN,
     sleep,
     getSnsArn,
+    generateHash,
     calculateFsxStorageCapacity,
     sizeInGigaBytes
 };

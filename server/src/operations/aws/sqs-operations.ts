@@ -32,7 +32,7 @@ import {
     upsertDeployment
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
-import { getSqlServerDetails } from '../workloads/mssql/mssql-operations';
+import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
 import { prepareDetailsToSendNotification } from '../cloud-manager/notification-operations';
 
 const logger = getLogger();
@@ -149,7 +149,8 @@ async function processCloudFormationMessages() {
                                                     FSxFileSystemId: fsxId,
                                                     FSxFileSystemName: fsxName,
                                                     ActiveInstanceIp: activeNodeInstanceIp,
-                                                    StandbyInstanceIp: standbyNodeInstanceIp
+                                                    StandbyInstanceIp: standbyNodeInstanceIp,
+                                                    ResourceName: resourceName
                                                 } = resourceProperties;
                                                 const [resourceDetails] = await listResources(
                                                     accountId,
@@ -167,15 +168,12 @@ async function processCloudFormationMessages() {
                                                         region
                                                     });
                                                 }
-                                                const { id, resourceName } = await getSqlServerDetails(
-                                                    credentialsId,
-                                                    region,
+                                                const resourceId = getMsSqlResourceId(
                                                     activeNodeInstanceId,
-                                                    standbyNodeInstanceId,
-                                                    accountId
+                                                    standbyNodeInstanceId
                                                 );
                                                 await createResource(accountId, {
-                                                    resourceId: id,
+                                                    resourceId,
                                                     resourceName,
                                                     cloudProviderAccountId,
                                                     cloudProviderName: CloudProviders.AWS,
