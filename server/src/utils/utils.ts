@@ -4,6 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -163,6 +164,12 @@ async function sleep(ms: number) {
     });
 }
 
+function generateHash(value: string) {
+    const hash = crypto.createHash('sha256');
+    hash.update(value);
+    return hash.digest('hex');
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -174,5 +181,6 @@ export {
     getQueueUrl,
     derivePropertiesFromARN,
     sleep,
-    getSnsArn
+    getSnsArn,
+    generateHash
 };
