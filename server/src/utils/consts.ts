@@ -693,11 +693,6 @@ const MASTER_TEMPLATE_DISTRIBUTION = {
     location: './resources/mssql/templates/wlm-master.yaml'
 };
 
-const TEMPLATES = {
-    bucket: 'staging.wlmdb.workloads.netapp.com',
-    region: 'us-east-1'
-};
-
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
     DISK = 'disk',
@@ -843,7 +838,6 @@ export {
     TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
     MASTER_TEMPLATE_DISTRIBUTION,
-    TEMPLATES,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
