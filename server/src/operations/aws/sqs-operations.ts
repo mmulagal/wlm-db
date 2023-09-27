@@ -7,7 +7,6 @@ import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
-    ACCOUNT_ID,
     ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
@@ -35,7 +34,6 @@ import {
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getSqlServerDetails } from '../workloads/mssql/mssql-operations';
 import { prepareDetailsToSendNotification } from '../cloud-manager/notification-operations';
-import { setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -169,12 +167,12 @@ async function processCloudFormationMessages() {
                                                         region
                                                     });
                                                 }
-                                                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                                                 const { id, resourceName } = await getSqlServerDetails(
                                                     credentialsId,
                                                     region,
                                                     activeNodeInstanceId,
-                                                    standbyNodeInstanceId
+                                                    standbyNodeInstanceId,
+                                                    accountId
                                                 );
                                                 await createResource(accountId, {
                                                     resourceId: id,

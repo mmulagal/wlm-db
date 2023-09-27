@@ -36,21 +36,14 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
 
-    const FSxDataLunSizeInMib = FSxDataLunSize * 1024;
-
-    // All these in MiB
-    const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
-    const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
-    const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
-    const FSxQuorumVolumeSize = 12000; // 12GB
-
-    // StorageCapacity in GiB
-    let FSxStorageCapacity = Math.ceil(
-        (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
-    );
-
-    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
-    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
+    const {
+        FSxDataLunSizeInMib,
+        FSxDataVolumeSize,
+        FSxLogVolumeSize,
+        FSxTempDbVolumeSize,
+        FSxQuorumVolumeSize,
+        FSxStorageCapacity
+    } = calculateFsxStorageCapacity(FSxDataLunSize);
 
     const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
     const netbios =
@@ -90,6 +83,37 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         };
     }
     return params;
+}
+
+function calculateFsxStorageCapacity(fsxDataLunSize: number) {
+    logger.info('Calculate FSX Storage capacity from the database size', { fsxDataLunSize });
+
+    const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
+
+    // All these in MiB
+    const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
+    const FSxLogVolumeSize = Math.ceil(0.25 * FSxDataVolumeSize); // 25% of FSxDataVolumeSize
+    const FSxTempDbVolumeSize = Math.ceil(0.1 * FSxDataVolumeSize); // 10% of FSxDataVolumeSize
+    const FSxQuorumVolumeSize = 12000; // 12GB
+
+    // StorageCapacity in GiB
+    let FSxStorageCapacity = Math.ceil(
+        (FSxDataVolumeSize + FSxLogVolumeSize + FSxTempDbVolumeSize + FSxQuorumVolumeSize) / 1024
+    );
+
+    FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
+    FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
+
+    logger.debug('FSx Storage Capacity', { FSxStorageCapacity });
+
+    return {
+        FSxDataLunSizeInMib,
+        FSxDataVolumeSize,
+        FSxLogVolumeSize,
+        FSxTempDbVolumeSize,
+        FSxQuorumVolumeSize,
+        FSxStorageCapacity
+    };
 }
 
 function generateRandomNumberInRange(min: number, max: number) {
@@ -174,5 +198,6 @@ export {
     getQueueUrl,
     derivePropertiesFromARN,
     sleep,
-    getSnsArn
+    getSnsArn,
+    calculateFsxStorageCapacity
 };
