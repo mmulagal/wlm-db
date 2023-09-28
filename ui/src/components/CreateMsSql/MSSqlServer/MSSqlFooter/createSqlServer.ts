@@ -1,4 +1,5 @@
 import { Dispatch } from '@reduxjs/toolkit';
+import { stringify } from 'querystring';
 import {
     setActiveDirectoryValue,
     setAZSelectedValue,
@@ -12,7 +13,7 @@ import {
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
-import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
+import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
 const createMssqlPayload = (state: any) => {
@@ -158,7 +159,7 @@ const createMssqlPayload = (state: any) => {
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
-        tags: state.mssqlForm.tags
+        tags: state.mssqlForm.tags.filter((tag:TagObj) => tag.key)
     };
     return payload;
 };
