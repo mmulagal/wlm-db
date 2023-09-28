@@ -151,7 +151,7 @@ export const fsxPassVal = (password: string) => {
     }
 };
 
-export const encodeAll = (text: string | (string | null)[] | null) => {
+export const encodeAll = (text: string) => {
     if (text && typeof text === 'string') {
         const internalEncoding = text
             .replace(/%/g, '%25')
