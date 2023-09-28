@@ -12,7 +12,6 @@ async function getPreSignedUrl(region: string, key?: string) {
         accessKeyId: SECRETS.SIGNURL_ACCESS_KEY as string,
         secretAccessKey: SECRETS.SIGNURL_SECRET_KEY as string
     };
-
     const s3 = new S3Client({ credentials, region });
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
