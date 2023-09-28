@@ -173,7 +173,7 @@ Resources:
         CreationPolicy:
             ResourceSignal:
                 Count: '1'
-                Timeout: PT30M
+                Timeout: PT45M
         Metadata:
             AWS::CloudFormation::Init:
                 configSets:
@@ -248,8 +248,11 @@ Resources:
                             command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
                                 Automatic"
                             waitAfterCompletion: '30'
-                        b-restartSSM:
-                            command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
+                        b-restartSSMScript:
+                            command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Continue}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
+                            waitAfterCompletion: '0'
+                        c-restartSSM:
+                            command: powershell.exe -Command C:/restart-ssm.ps1
                             waitAfterCompletion: '30'
                 FetchResources:
                     files:
@@ -424,8 +427,11 @@ Resources:
                             command: powershell.exe -Command "Set-Service -Name AmazonSSMAgent -StartupType
                                 Automatic"
                             waitAfterCompletion: '30'
-                        b-restartSSM:
-                            command: powershell.exe -Command "Restart-Service AmazonSSMAgent -Force"
+                        b-restartSSMScript:
+                            command: echo try{Restart-Service AmazonSSMAgent -Force -ErrorAction Continue}catch{Write-Host $_.exception} > C:/restart-ssm.ps1
+                            waitAfterCompletion: '0'
+                        c-restartSSM:
+                            command: powershell.exe -Command C:/restart-ssm.ps1
                             waitAfterCompletion: '30'
                 FetchResources:
                     files:

@@ -26,7 +26,6 @@ import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/const
 import { 
     selectDefaultEncryption, 
     selectDefaultInstanceType, 
-    selectDefaultKeyPair,
     selectDefaultThroughput,
     selectDefaultLicense,
     selectDefaultSecurityGroup
@@ -37,12 +36,10 @@ const PreviewDefault = () => {
     const dispatch = useDispatch();
 
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
-    const keyPairValue = useAppSelector(state => state.mssqlForm.keyPair.selectedKeyPair);
     const instanceValue = useAppSelector(state => state.mssqlForm.instanceType);
     const dbName = useAppSelector(state => state.mssqlForm.dbName);
     const throughputValue = useAppSelector(state => state.mssqlForm.throughput);
     const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
-    const keyPairData = useAppSelector(state => state.mssql.getKeyPairList?.keyPairData);
     const instanceTypeData = useAppSelector(state => state.mssql.getInstanceTypeList?.instanceTypeData);
     const kmsData = useAppSelector(state => state.mssql.getKmsList.kmsData);
     const amiData = useAppSelector(state => state.mssql.getAmiList.amiData);
@@ -76,7 +73,6 @@ const PreviewDefault = () => {
             );
             selectDefaultLicense(amiData, dispatch);
             dispatch(setDBName(generateRandomDBName()));
-            selectDefaultKeyPair(keyPairData, dispatch);
             selectDefaultInstanceType(instanceTypeData, dispatch);
             dispatch(setProvisionedType(GENERAL.AUTOMATIC));
             dispatch(setProvisionedIOPSValue(''));
@@ -87,6 +83,7 @@ const PreviewDefault = () => {
             dispatch(setSNSARN(''));
             dispatch(setCloudWatch(false));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);
 
     const data = [
@@ -122,7 +119,6 @@ const PreviewDefault = () => {
         },
         { accordionName: GENERAL.LICENSE, defaultValue: amiLicense?.value, editable: GENERAL.NO, id: '6' },
         { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
-        { accordionName: GENERAL.KEY_PAIR, defaultValue: keyPairValue?.value, editable: GENERAL.YES, id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
             defaultValue: instanceValue?.value,

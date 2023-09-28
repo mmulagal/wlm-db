@@ -42,10 +42,15 @@ async function pollCommandStatus(
     }
 }
 
-async function executeSSMDocument(credentialsId: string, region: string, params: SendCommandCommandInput) {
-    logger.info('Execute SSM document', { credentialsId, region, params });
+async function executeSSMDocument(
+    credentialsId: string,
+    region: string,
+    params: SendCommandCommandInput,
+    accountId?: string
+) {
+    logger.info('Execute SSM document', { credentialsId, region, params, accountId });
 
-    const commandId = await sendSSMCommand(credentialsId, region, params);
+    const commandId = await sendSSMCommand(credentialsId, region, params, accountId);
     const [instanceIds] = params?.InstanceIds ?? [];
     const pollParams = {
         CommandId: commandId,

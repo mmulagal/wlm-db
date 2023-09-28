@@ -33,7 +33,6 @@ import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
 import { 
     selectDefaultEncryption, 
     selectDefaultInstanceType,
-    selectDefaultKeyPair,
     selectDefaultLicense
  } from './MSSqlUtils';
 
@@ -334,9 +333,6 @@ const MssqlApis = () => {
             dispatch(addKeyPairList({ undefined, keyPairLoading, keyPairError }));
         } else {
             dispatch(addKeyPairList({ keyPairData, keyPairLoading, keyPairError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
-                selectDefaultKeyPair(keyPairData, dispatch);
-            }
         }
         if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KEYPAIR)){
             dispatch(setRefetchApiCountRan(API_NAME.KEYPAIR))

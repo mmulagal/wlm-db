@@ -24,7 +24,7 @@ const CreateAuditGroupSchema = Type.Object({
 
 const UpdateAuditGroupSchema = Type.Object({
     startTime: Type.Number(),
-    endTime: Type.Number(),
+    endTime: Type.Optional(Type.Number()),
     actionName: Type.String(),
     status: STATUS_TYPES,
     requestId: Type.String(),

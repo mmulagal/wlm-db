@@ -64,6 +64,7 @@ const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
+const AUDIT_EXCLUDE_LIST = ['/batch'];
 const DEFAULT_AWS_REGION = 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -164,7 +165,9 @@ const SECRETS: Record<string, string | undefined> = {
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
     CLIENT_SECRET: 'CLIENT_SECRET',
-    DATABASE_URL: 'DATABASE_URL'
+    DATABASE_URL: 'DATABASE_URL',
+    SIGNURL_ACCESS_KEY: 'SIGNURL_ACCESS_KEY',
+    SIGNURL_SECRET_KEY: 'SIGNURL_SECRET_KEY'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
@@ -534,26 +537,7 @@ const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 
-const SQL_TEMPLATES_ASSETS = [
-    {
-        name: 'FSXNewTemplate',
-        url: 'templates/fsx-new.yaml'
-    },
-
-    {
-        name: 'FSXExistingTemplate',
-        url: 'templates/fsx-existing.yaml'
-    },
-
-    {
-        name: 'ValidationTemplate',
-        url: 'templates/vpc-ad-validation.yaml'
-    },
-
-    {
-        name: 'SQLTemplate',
-        url: 'templates/sql-windows-fci-config_nosignal.yaml'
-    },
+const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
         url: 'DSC.zip'
@@ -651,14 +635,38 @@ const SQL_TEMPLATES_ASSETS = [
         url: 'validation/Restart-Computer.ps1'
     },
     {
-        name: 'SQLStandaloneTemplate',
-        url: 'templates/standalone-deployment.yaml'
-    },
-    {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
     }
 ];
+
+const SQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-ad-validation.yaml'
+    },
+
+    {
+        name: 'SQLTemplate',
+        url: 'templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
+    }
+];
+
+const SQL_TEMPLATE_TAGS_INDENTATION = 6;
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
@@ -677,14 +685,15 @@ const SQL_TEMPLATES_DISTRIBUTION = [
         location: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml'
     },
     {
-        name: TEMPLATE_TYPES.MASTER,
-        location: './resources/mssql/templates/wlm-master.yaml'
-    },
-    {
         name: TEMPLATE_TYPES.SQLSTANDALONE,
         location: './resources/mssql/templates/standalone-deployment.yaml'
     }
 ];
+
+const MASTER_TEMPLATE_DISTRIBUTION = {
+    name: TEMPLATE_TYPES.MASTER,
+    location: './resources/mssql/templates/wlm-master.yaml'
+};
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -725,6 +734,15 @@ const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
 const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 const SUCCESS = 'success';
 const ERROR = 'error';
+
+const MAX_READ_REQUEST_FSXN = 1000000;
+const MAX_WRITE_REQUEST_FSXN = 100000;
+const MIN_DISKSIZE = 1024;
+const MIN_THROUGHPUT = 128;
+const STANDALONE = 'standalone';
+const FCI = 'fci';
+const SINGLE_AZ = 'SINGLE_AZ_1';
+const MULTI_AZ = 'MULTI_AZ_1';
 
 export {
     WLMDB,
@@ -784,6 +802,7 @@ export {
     ACCOUNT_ID,
     AGENT_ID,
     AUDIT_GROUP,
+    AUDIT_EXCLUDE_LIST,
     WORKSPACE_ID,
     API_TITLE,
     APP_NAME,
@@ -815,6 +834,8 @@ export {
     INVALID_REGION_MESSAGE,
     AWS_FSX,
     SQL_TEMPLATES_ASSETS,
+    SQL_RESOURCE_ASSETS,
+    SQL_TEMPLATE_TAGS_INDENTATION,
     SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
@@ -827,6 +848,7 @@ export {
     WLMDB_RESOURCE_CLASS,
     TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
+    MASTER_TEMPLATE_DISTRIBUTION,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
@@ -858,5 +880,13 @@ export {
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
     SUCCESS,
-    ERROR
+    ERROR,
+    MAX_READ_REQUEST_FSXN,
+    MAX_WRITE_REQUEST_FSXN,
+    MIN_DISKSIZE,
+    STANDALONE,
+    FCI,
+    SINGLE_AZ,
+    MULTI_AZ,
+    MIN_THROUGHPUT
 };

@@ -46,6 +46,7 @@ import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
+import { getAllDeploymentStatus, getDeploymentStatusById } from './database/database-operations';
 import { prepareDetailsToSendNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
@@ -164,7 +165,8 @@ async function createCloudFormationTemplateForUserDeployment(
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
-    enableCloudWatch: boolean = false
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
 ): Promise<CloudFormationTemplateResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
@@ -173,7 +175,8 @@ async function createCloudFormationTemplateForUserDeployment(
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
-        sqlConfiguration
+        sqlConfiguration,
+        tags
     });
 
     const sameRoutes = isSameRoutetables(networkConfiguration);
@@ -217,10 +220,21 @@ async function createCloudFormationTemplateForUserDeployment(
         roleArn
     );
 
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
+    const customMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
 
-    const signedURL = encodeURIComponent(await getPreSignedUrl(ASSETS_BUCKET_REGION));
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        credentialsId,
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        derivedParams.StackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath
+    );
 
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
@@ -228,6 +242,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
@@ -259,7 +274,7 @@ async function createCloudFormationTemplateForUserDeployment(
         templateParams += `&param_${key}=${value}`;
     });
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedURL}&${templateParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedMasterTemplateUrl}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
@@ -275,7 +290,8 @@ async function deployCloudFormationTemplate(
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
-    enableCloudWatch: boolean = false
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
 ): Promise<{ cloudFormationStackId: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
@@ -284,7 +300,8 @@ async function deployCloudFormationTemplate(
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
-        sqlConfiguration
+        sqlConfiguration,
+        tags
     });
 
     const sameRoutes = isSameRoutetables(networkConfiguration);
@@ -302,13 +319,6 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, CF_QUOTA_REACHED);
     }
 
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(credentialsId, ASSETS_BUCKET_REGION, DatabaseTypes.MS_SQL_SERVER);
-
-    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, MASTER_TEMPLATE_PATH);
-
-    logger.info('Signed master url ', signedMasterTemplateUrl);
-
     const { stackName, templateParameters } = await formatTemplateParameters(
         credentialsId,
         region,
@@ -322,6 +332,22 @@ async function deployCloudFormationTemplate(
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
+
+    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        credentialsId,
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        stackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath
+    );
 
     const deployStackResponse = await createStack(
         credentialsId,
@@ -347,4 +373,20 @@ async function deployCloudFormationTemplate(
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
-export { createCloudFormationTemplateForUserDeployment, deployCloudFormationTemplate };
+async function deploymentStatus(accountId: string) {
+    logger.info('Fetching deployment status from database', accountId);
+    const data = await getAllDeploymentStatus(accountId);
+    return data;
+}
+
+async function deploymentStatusById(accountId: string, deploymentId: string) {
+    logger.info('Fetching deployment status by id from database ', accountId, deploymentId);
+    const data = await getDeploymentStatusById(accountId, deploymentId);
+    return data;
+}
+export {
+    createCloudFormationTemplateForUserDeployment,
+    deployCloudFormationTemplate,
+    deploymentStatus,
+    deploymentStatusById
+};

@@ -113,6 +113,20 @@ async function createAuditGroup(request: FastifyRequest, reply: FastifyReply) {
     }
 }
 
+async function updateAuditGroupResponse(request: FastifyRequest, payload?: any) {
+    logger.debug('Updating audit group response');
+    if ([HTTP_POST, HTTP_PUT, HTTP_DELETE].includes(request.raw.method as string)) {
+        const auditGroup = (await getAsyncLocalStorageResource(AUDIT_GROUP)) as UpdateAuditGroupSchemaType;
+        try {
+            auditGroup.responseData = payload;
+
+            validateSchema(auditGroup, UpdateAuditGroupSchema);
+            sendAudit({ json: { auditGroup } });
+        } catch (error) {
+            logger.error('Unable to update audit group response', auditGroup);
+        }
+    }
+}
 async function updateAuditGroup(request: FastifyRequest, reply: FastifyReply, payload?: any) {
     logger.debug('Updating audit group');
 
@@ -178,4 +192,4 @@ async function createAuditRecord(
     }
 }
 
-export { createAuditGroup, updateAuditGroup, createAuditRecord };
+export { createAuditGroup, updateAuditGroupResponse, updateAuditGroup, createAuditRecord };
