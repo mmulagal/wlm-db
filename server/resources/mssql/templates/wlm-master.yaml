@@ -931,3 +931,12 @@ Resources:
                 - ","
                 - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
+      ResourceName:
+          !If
+            - IsFailoverCluster
+            - !Ref SqlFSxFCIName
+            - Fn::Select:
+              - "0"
+              - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames

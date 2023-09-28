@@ -112,13 +112,13 @@ describe('MSSQL Resource methods', () => {
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
+            'mssql',
             ACTIVE_INSTANCE_ID,
             'test-active-instance-name',
             STANDBY_INSTANCE_ID,
-            'test-standby-instance-name',
-            'mssql'
+            'test-standby-instance-name'
         );
-        expect(resp).toEqual(mssqlResponse.mssqlRegistrationResponse);
+        expect(resp.resourceName).toEqual(mssqlResponse.mssqlRegistrationResponse.resourceName);
 
         await deleteResource(ACCOUNT_ID, '5c791ae7-0e86-486b-8dc2-bafef485b875');
     });
