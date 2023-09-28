@@ -374,7 +374,7 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: Yes
                 TieringPolicy:
                     Name: AUTO
                     CoolingPeriod: 2
@@ -391,7 +391,7 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: Yes
                 TieringPolicy:
                     Name: AUTO
                     CoolingPeriod: 2
@@ -408,7 +408,7 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: Yes
                 TieringPolicy:
                     Name: AUTO
                     CoolingPeriod: 2
@@ -426,7 +426,7 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: Yes
                 TieringPolicy:
                     Name: AUTO
                     CoolingPeriod: 2
