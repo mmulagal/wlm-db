@@ -1,6 +1,5 @@
 import { getWeRelationships } from '../../src/operations/working-environment-operations';
 import { ACCOUNT_ID } from '../utils/consts';
-import '../simulator/scopes/working-environment-scope';
 
 vi.mock('../../src/utils/async-local-storage.ts', () => ({
     getAsyncLocalStorageResource() {
