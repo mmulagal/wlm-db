@@ -2,7 +2,8 @@ import { createSecrets } from '../../src/operations/aws/secrets-manager-operatio
 import { DEFAULT_AWS_REGION } from '../../src/utils/consts';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
-import { checkAndRetrieveJsonObject } from '../../src/utils/utils';
+import { checkAndRetrieveJsonObject, generateHash } from '../../src/utils/utils';
+import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 vi.mock('../../src/lib/aws/secrets-manager', () => ({
@@ -29,5 +30,10 @@ describe(' Secrets Manager string', () => {
     it(' Check if valid json string - negative', async () => {
         const response = checkAndRetrieveJsonObject('[{ abcde,ghij }]');
         expect(response.isValid).toBeFalsy();
+    });
+
+    it('Generate hash', async () => {
+        const response = generateHash(ACTIVE_INSTANCE_ID + STANDBY_INSTANCE_ID);
+        expect(response).toBeDefined();
     });
 });

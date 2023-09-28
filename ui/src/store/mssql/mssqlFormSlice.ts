@@ -244,7 +244,7 @@ const mssqlFormSlice = createSlice({
         },
         //Save Config
         setSaveConfigName(state, action: PayloadAction<any>) {
-            state.saveConfigName = action.payload;
+            state.saveConfigName = action.payload.trim();
         },
         //Select config
         setSelectConfig(state, action: PayloadAction<any>) {
