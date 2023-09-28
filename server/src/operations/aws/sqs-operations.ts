@@ -184,13 +184,18 @@ async function processCloudFormationMessages() {
                                                         standbyNodeInstanceIp
                                                     }
                                                 });
+
                                                 await prepareDetailsToSendNotification(
                                                     'standard_deployment',
-                                                    'Cloud formation stack deployment successful',
-                                                    'Cloud formation stack deployment successful',
+                                                    'Microsoft SQL Server and FSxN for ONTAP deployment successful',
+                                                    `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been deployed successfully`,
                                                     { uiNotification: true, emailNotification: true },
                                                     ACTION_BUTTON_DASHBOARD,
-                                                    SUCCESS
+                                                    SUCCESS,
+                                                    undefined,
+                                                    undefined,
+                                                    undefined,
+                                                    accountId
                                                 );
                                             }
                                         }
@@ -207,9 +212,15 @@ async function processCloudFormationMessages() {
                                             });
                                             await prepareDetailsToSendNotification(
                                                 'standard_deployment',
-                                                'Cloud formation stack deployment failed',
-                                                'Cloud formation stack deployment failed',
-                                                { uiNotification: true, emailNotification: true }
+                                                'Microsoft SQL Server and FSxN for ONTAP deployment failed',
+                                                `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
+                                                { uiNotification: true, emailNotification: true },
+                                                undefined,
+                                                undefined,
+                                                undefined,
+                                                undefined,
+                                                undefined,
+                                                accountId
                                             );
                                         }
                                     }

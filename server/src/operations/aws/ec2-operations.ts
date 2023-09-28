@@ -394,11 +394,12 @@ async function getInstanceTypes(credentialsId: string, region: string) {
             ({ InstanceType }) =>
                 !EC2_INSTANCE_TYPE_EXCLUDE_LIST.some((excludedType: string) => InstanceType?.includes(excludedType))
         )
-        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo }) => ({
+        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo, ProcessorInfo }) => ({
             instanceType: InstanceType,
             iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
             vCpus: VCpuInfo?.DefaultVCpus,
-            ramInMib: MemoryInfo?.SizeInMiB
+            ramInMib: MemoryInfo?.SizeInMiB,
+            architecture: ProcessorInfo?.SupportedArchitectures
         }));
 
     return { instanceTypes: filteredInstances };

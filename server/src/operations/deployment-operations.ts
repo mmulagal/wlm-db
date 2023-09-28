@@ -337,8 +337,8 @@ async function deployCloudFormationTemplate(
 
     await prepareDetailsToSendNotification(
         'standard_deployment',
-        'Cloud formation standard deployment initiated',
-        'Cloud formation standard deployment initiated',
+        'Microsoft SQL Server and FSxN for ONTAP deployment initiated',
+        `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
         { uiNotification: true, emailNotification: true },
         ACTION_BUTTON_DASHBOARD,
         SUCCESS
