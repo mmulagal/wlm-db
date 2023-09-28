@@ -1,6 +1,8 @@
 import { 
     setEncryptionRow, 
     setInstanceType, 
+    setProvisionedIOPSValue, 
+    setProvisionedType, 
     setSelectedExistingSecurityGroup, 
     setSelectedKeyPair, 
     setSelectedLicenseId, 
@@ -54,11 +56,6 @@ export const selectDefaultEncryption = (kmsData: any, dispatch: any) => {
     }
 }
 
-export const selectDefaultThroughput = (throughputVal: string, dispatch: any) => {
-    const option = generateOptionType(throughputVal, throughputVal, '', false, '');
-    dispatch(setThroughputValue(option));
-}
-
 export const selectDefaultLicense = (amiData:any, dispatch: any) => {
     if(amiData && amiData?.amis?.length > 0) {
         const firstAmi = amiData?.amis[0];
@@ -67,5 +64,33 @@ export const selectDefaultLicense = (amiData:any, dispatch: any) => {
         const option = generateOptionType(amiVal, amiVal, amiName, false, '');
         dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
         dispatch(setSelectedLicenseId(option));
+    }
+}
+
+export const selectFsxThroughput = (selectedFsxnType: string, selectedExistingFsxnName:any, defaultVal: string, dispatch: any) => {
+    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
+        const throughput = selectedExistingFsxnName?.data?.throughput || '';
+        let val = '';
+        if(throughput <= '512'){
+            val = throughput + ' MBps';
+        } else {
+            val = (throughput/1000) + ' GBps';
+        }
+        const option = generateOptionType(val, val, '', false, '');
+        dispatch(setThroughputValue(option));
+    } else {
+        const option = generateOptionType(defaultVal, defaultVal, '', false, '');
+        dispatch(setThroughputValue(option));
+    }
+}
+
+export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName:any, dispatch: any) => {
+    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
+        const iops = selectedExistingFsxnName?.data?.iops || '';
+        dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
+        dispatch(setProvisionedIOPSValue(iops));
+    } else {
+        dispatch(setProvisionedType(GENERAL.AUTOMATIC));
+        dispatch(setProvisionedIOPSValue(''));
     }
 }
