@@ -1,14 +1,19 @@
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import getLogger from '../../utils/logger';
-import { BUCKET_NAME, MASTER_TEMPLATE_PATH, S3_BUCKET_SIGNED_URL_EXPIRY } from '../../utils/consts';
+import { BUCKET_NAME, MASTER_TEMPLATE_PATH, S3_BUCKET_SIGNED_URL_EXPIRY, SECRETS } from '../../utils/consts';
 
 const logger = getLogger();
 
 async function getPreSignedUrl(region: string, key?: string) {
     logger.info('Getting presigned url', { region });
 
-    const s3 = new S3Client({ region });
+    const credentials = {
+        accessKeyId: SECRETS.SIGNURL_ACCESS_KEY as string,
+        secretAccessKey: SECRETS.SIGNURL_SECRET_KEY as string
+    };
+
+    const s3 = new S3Client({ credentials, region });
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
         Key: key || MASTER_TEMPLATE_PATH
