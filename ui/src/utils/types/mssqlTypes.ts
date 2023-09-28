@@ -158,6 +158,11 @@ export interface AvailabilityZonesObj {
     [key: string]: Subnets[];
 }
 
+export interface TagObj {
+    key: string;
+    value: string;
+}
+
 
 export interface MssqlRequestBody {
     networkConfiguration: {
@@ -202,6 +207,6 @@ export interface MssqlRequestBody {
     }
     topicArn?: string;
     enableCloudWatch?: boolean,
-    tags?: Array<Object>
+    tags?: Array<TagObj>
 }
 
