@@ -64,6 +64,7 @@ const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
+const AUDIT_EXCLUDE_LIST = ['/batch'];
 const DEFAULT_AWS_REGION = 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -534,26 +535,7 @@ const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 
-const SQL_TEMPLATES_ASSETS = [
-    {
-        name: 'FSXNewTemplate',
-        url: 'templates/fsx-new.yaml'
-    },
-
-    {
-        name: 'FSXExistingTemplate',
-        url: 'templates/fsx-existing.yaml'
-    },
-
-    {
-        name: 'ValidationTemplate',
-        url: 'templates/vpc-ad-validation.yaml'
-    },
-
-    {
-        name: 'SQLTemplate',
-        url: 'templates/sql-windows-fci-config_nosignal.yaml'
-    },
+const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
         url: 'DSC.zip'
@@ -651,14 +633,38 @@ const SQL_TEMPLATES_ASSETS = [
         url: 'validation/Restart-Computer.ps1'
     },
     {
-        name: 'SQLStandaloneTemplate',
-        url: 'templates/standalone-deployment.yaml'
-    },
-    {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
     }
 ];
+
+const SQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-ad-validation.yaml'
+    },
+
+    {
+        name: 'SQLTemplate',
+        url: 'templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
+    }
+];
+
+const SQL_TEMPLATE_TAGS_INDENTATION = 6;
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
@@ -677,14 +683,15 @@ const SQL_TEMPLATES_DISTRIBUTION = [
         location: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml'
     },
     {
-        name: TEMPLATE_TYPES.MASTER,
-        location: './resources/mssql/templates/wlm-master.yaml'
-    },
-    {
         name: TEMPLATE_TYPES.SQLSTANDALONE,
         location: './resources/mssql/templates/standalone-deployment.yaml'
     }
 ];
+
+const MASTER_TEMPLATE_DISTRIBUTION = {
+    name: TEMPLATE_TYPES.MASTER,
+    location: './resources/mssql/templates/wlm-master.yaml'
+};
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -793,6 +800,7 @@ export {
     ACCOUNT_ID,
     AGENT_ID,
     AUDIT_GROUP,
+    AUDIT_EXCLUDE_LIST,
     WORKSPACE_ID,
     API_TITLE,
     APP_NAME,
@@ -824,6 +832,8 @@ export {
     INVALID_REGION_MESSAGE,
     AWS_FSX,
     SQL_TEMPLATES_ASSETS,
+    SQL_RESOURCE_ASSETS,
+    SQL_TEMPLATE_TAGS_INDENTATION,
     SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
@@ -836,6 +846,7 @@ export {
     WLMDB_RESOURCE_CLASS,
     TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
+    MASTER_TEMPLATE_DISTRIBUTION,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,

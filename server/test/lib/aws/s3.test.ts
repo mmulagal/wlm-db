@@ -3,7 +3,12 @@ import '../../simulator/scopes/aws/s3-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { getPreSignedUrl, putObjectBucket } from '../../../src/lib/aws/s3';
+import {
+    getPreSignedUrl,
+    putObjectBucket,
+    getBucketLifecycleConfiguration,
+    putBucketLifecycleConfiguration
+} from '../../../src/lib/aws/s3';
 
 const credentialsId = `${faker.string.alpha(20)}`;
 
@@ -14,6 +19,14 @@ describe('S3 Lib', () => {
     });
     it('Put object to bucket', async () => {
         const response = await putObjectBucket(credentialsId, DEFAULT_AWS_REGION, 'sample', 'sample.yaml', 'sample');
+        expect(response).toBeDefined();
+    });
+    it('Get Bucket Lifecycle Configuration', async () => {
+        const response = await getBucketLifecycleConfiguration(DEFAULT_AWS_REGION, 'sample');
+        expect(response).toBeDefined();
+    });
+    it('Get Bucket Lifecycle Configuration', async () => {
+        const response = await putBucketLifecycleConfiguration(DEFAULT_AWS_REGION, 'sample');
         expect(response).toBeDefined();
     });
 });
