@@ -165,7 +165,9 @@ const SECRETS: Record<string, string | undefined> = {
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
     CLIENT_SECRET: 'CLIENT_SECRET',
-    DATABASE_URL: 'DATABASE_URL'
+    DATABASE_URL: 'DATABASE_URL',
+    SIGNURL_ACCESS_KEY: 'SIGNURL_ACCESS_KEY',
+    SIGNURL_SECRET_KEY: 'SIGNURL_SECRET_KEY'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
