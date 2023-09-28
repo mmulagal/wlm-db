@@ -40,11 +40,11 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             accountId,
             credentialsId,
             region,
+            DatabaseTypes.MS_SQL_SERVER,
             activeNodeInstanceId,
             activeNodeInstanceName,
             standbyNodeInstanceId, // FIXME: To conclude whether this has to be user input or programmatically detected.
             standbyNodeInstanceName,
-            DatabaseTypes.MS_SQL_SERVER,
             fsxId
         );
         return reply.send(response);

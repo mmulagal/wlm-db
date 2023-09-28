@@ -70,7 +70,8 @@
         "nanoid": "^4.0.2",
         "patch-package": "^8.0.0",
         "prisma": "^5.2.0",
-        "randomatic": "^3.1.1"
+        "randomatic": "^3.1.1",
+        "yaml": "^2.3.2"
     },
     "devDependencies": {
         "@aws-sdk/types": "^3.391.0",
