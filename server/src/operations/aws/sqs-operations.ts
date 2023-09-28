@@ -210,6 +210,7 @@ async function processCloudFormationMessages() {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()
                                             });
+
                                             await prepareDetailsToSendNotification(
                                                 'standard_deployment',
                                                 'Microsoft SQL Server and FSxN for ONTAP deployment failed',
