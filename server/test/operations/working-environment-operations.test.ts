@@ -1,11 +1,4 @@
 import { getWeRelationships } from '../../src/operations/working-environment-operations';
-import { ACCOUNT_ID } from '../utils/consts';
-
-vi.mock('../../src/utils/async-local-storage.ts', () => ({
-    getAsyncLocalStorageResource() {
-        return ACCOUNT_ID;
-    }
-}));
 
 vi.mock('../../src/lib/database/db.ts', () => ({
     listRelationshipsResources() {
