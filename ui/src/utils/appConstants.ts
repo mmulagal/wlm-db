@@ -308,5 +308,7 @@ export const GENERAL = {
     NO: 'No',
     PD_CREATE_SECURITY: 'Create a security group for the user',
     PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
-    FIRST_IN_THE_LIST: 'First in the list'
+    FIRST_IN_THE_LIST: 'First in the list',
+    THROUGHPUT_DISABLE_TEXT: 'Throughput can\'t be changed, value is taken from the selected FSx for ONTAP.',
+    IOPS_DISABLE_TEXT: 'Provisioned IOPS can\'t be changed, value is taken from the selected FSx for ONTAP.'
 };
