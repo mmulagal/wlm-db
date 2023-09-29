@@ -82,8 +82,8 @@ export interface FSxN {
         throughputCapacity?: string;
         preferredSubnetId?: string;
         diskIopsConfiguration?: {
-            iops: string,
-            mode: string,
+            iops: string;
+            mode: string;
         }
     }
 }
