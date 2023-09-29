@@ -13,15 +13,6 @@ interface WorkingEnvironment {
     deploymentState: string;
 }
 
-interface WeRelationships {
-    source: {
-        id: string;
-    };
-    target: {
-        id: string;
-    };
-}
-
 const logger = getLogger();
 async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
@@ -83,23 +74,20 @@ async function getWorkingEnvironment(id: string) {
     }
 }
 
-async function getWeRelationships() {
-    logger.info('Get relations between working environments ');
+async function getResourceRelationships() {
+    logger.info('Get relations between resources ');
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const relationshipResources = await listRelationshipsResources(accountId);
 
-    const relationData: WeRelationships[] = relationshipResources.map(
-        ({ resource_id: resourceId, co_relation_id: coRelationId }) => ({
-            source: {
-                id: resourceId
-            },
-            target: {
-                id: coRelationId!
-            }
-        })
-    );
-    return relationData;
+    return relationshipResources.map(({ resource_id: resourceId, co_relation_id: coRelationId }) => ({
+        source: {
+            id: resourceId
+        },
+        target: {
+            id: coRelationId!
+        }
+    }));
 }
 
-export { getWorkingEnvironments, getWorkingEnvironment, getWeRelationships };
+export { getWorkingEnvironments, getWorkingEnvironment, getResourceRelationships };

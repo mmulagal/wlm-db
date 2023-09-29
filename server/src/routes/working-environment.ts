@@ -6,7 +6,7 @@ import {
     GetWorkingEnvironmentsSchema
 } from './schemas/working-environment-schemas';
 import {
-    getWeRelationships,
+    getResourceRelationships,
     getWorkingEnvironment,
     getWorkingEnvironments
 } from '../operations/working-environment-operations';
@@ -35,7 +35,7 @@ export default function workingEnvironmentRoutes(fastify: FastifyInstance) {
     );
 
     server.get(`${API_PATH_RELATIONSHIP}`, { schema: GetRelationshipsSchema }, async () => {
-        const relationships = await getWeRelationships();
+        const relationships = await getResourceRelationships();
         return { relationships };
     });
 }
