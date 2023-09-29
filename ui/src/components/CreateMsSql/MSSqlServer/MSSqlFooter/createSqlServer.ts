@@ -1,5 +1,4 @@
 import { Dispatch } from '@reduxjs/toolkit';
-import { stringify } from 'querystring';
 import {
     setActiveDirectoryValue,
     setAZSelectedValue,
@@ -123,9 +122,9 @@ const createMssqlPayload = (state: any) => {
             availabilityZone1: state.mssqlForm.availabilityZones.selectedAzNode1?.value || '',
             privateSubnet1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.id || '',
             routeTable1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.routeTableId || '',
-            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value || '',
-            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id || '',
-            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId || ''
+            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value,
+            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id,
+            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId
         },
         ec2Configuration: {
             workloadInstanceType: state.mssqlForm.instanceType?.value || '',

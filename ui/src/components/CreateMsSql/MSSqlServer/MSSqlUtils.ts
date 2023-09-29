@@ -68,10 +68,10 @@ export const selectDefaultLicense = (amiData:any, dispatch: any) => {
 }
 
 export const selectFsxThroughput = (selectedFsxnType: string, selectedExistingFsxnName:any, defaultVal: string, dispatch: any) => {
-    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
-        const throughput = selectedExistingFsxnName?.data?.throughput || '';
+    const throughput = selectedExistingFsxnName?.data?.throughput || 0;
+    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName && throughput !== 0){
         let val = '';
-        if(throughput <= '512'){
+        if(throughput <= 512){
             val = throughput + ' MBps';
         } else {
             val = (throughput/1000) + ' GBps';
@@ -85,8 +85,8 @@ export const selectFsxThroughput = (selectedFsxnType: string, selectedExistingFs
 }
 
 export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName:any, dispatch: any) => {
-    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
-        const iops = selectedExistingFsxnName?.data?.iops || '';
+    const iops = selectedExistingFsxnName?.data?.iops || 0;
+    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName && iops !== 0){
         dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
         dispatch(setProvisionedIOPSValue(iops));
     } else {

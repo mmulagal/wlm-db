@@ -94,7 +94,8 @@ const FSxNSystem = () => {
                     fileSystemName: val?.name,
                     securityGroups: val?.securityGroups,
                     throughput: val?.ontapConfiguration?.throughputCapacity,
-                    iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops
+                    iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
+                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);
@@ -109,7 +110,7 @@ const FSxNSystem = () => {
         if(!isLoadConfig){
             dispatch(setExistingFsxnName(generateExistingFsx[0]));
             dispatch(setFsxNExistingUserName(FSXADMIN));
-        }
+        } 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 

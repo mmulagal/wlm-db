@@ -80,9 +80,10 @@ export interface FSxN {
     ontapConfiguration?: {
         deploymentType?: string;
         throughputCapacity?: string;
+        preferredSubnetId?: string;
         diskIopsConfiguration?: {
             iops: string,
-            mode: string
+            mode: string,
         }
     }
 }
