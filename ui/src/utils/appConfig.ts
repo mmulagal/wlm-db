@@ -13,6 +13,7 @@ import {
     updateWorkspaceId 
 } from '../store/authSlice';
 import { DATABASE_SERVICE_PATH } from './consts';
+import { encodeAll } from './utilityFunctions';
 
 const navigateToCanvas = (pathname: string) => {
     postBlueXPMessage({
@@ -47,11 +48,12 @@ const useInitialize = () => {
         }
 
         const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
+        const storageNameAsString = (Array.isArray(storageName) ? storageName[0] : storageName) || '';
         if (pathnameAsString) {
             if(pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH){
-                navigate(`${storage}/${storageId}/${storageName}`);
+                navigate(`${storage}/${storageId}/${encodeAll(storageNameAsString)}`);
                 dispatch(updateResourceId(storageId));
-                dispatch(updateResourceName(storageName));
+                dispatch(updateResourceName(storageNameAsString));
             } else {
                 navigate(`${pathnameAsString}`, { replace: true });
             }
@@ -72,7 +74,7 @@ const useInitialize = () => {
                 const storageId = initialData?.storageId;
                 const storageName = initialData?.storageName;
                 const workspaceId = initialData?.workspaceId;
-                navigate(`${storage}/${storageId}/${storageName}`);
+                navigate(`${storage}/${storageId}/${encodeAll(storageName)}`);
                 dispatch(updateResourceId(storageId));
                 dispatch(updateResourceName(storageName));
                 dispatch(updateWorkspaceId(workspaceId));

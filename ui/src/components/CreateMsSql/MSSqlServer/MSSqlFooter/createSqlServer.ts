@@ -12,7 +12,7 @@ import {
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
-import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
+import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
 const createMssqlPayload = (state: any) => {
@@ -122,9 +122,9 @@ const createMssqlPayload = (state: any) => {
             availabilityZone1: state.mssqlForm.availabilityZones.selectedAzNode1?.value || '',
             privateSubnet1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.id || '',
             routeTable1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.routeTableId || '',
-            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value || '',
-            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id || '',
-            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId || ''
+            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value,
+            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id,
+            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId
         },
         ec2Configuration: {
             workloadInstanceType: state.mssqlForm.instanceType?.value || '',
@@ -158,7 +158,7 @@ const createMssqlPayload = (state: any) => {
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
-        tags: state.mssqlForm.tags
+        tags: state.mssqlForm.tags.filter((tag:TagObj) => tag.key)
     };
     return payload;
 };

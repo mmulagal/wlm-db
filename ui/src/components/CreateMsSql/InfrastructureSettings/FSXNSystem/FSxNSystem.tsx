@@ -92,7 +92,10 @@ const FSxNSystem = () => {
                 const data = {
                     fileSystemId: val?.fileSystemId,
                     fileSystemName: val?.name,
-                    securityGroups: val?.securityGroups
+                    securityGroups: val?.securityGroups,
+                    throughput: val?.ontapConfiguration?.throughputCapacity,
+                    iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
+                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);
@@ -100,13 +103,14 @@ const FSxNSystem = () => {
         });
 
         return options;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fsxnData, selectedZone1, selectedZone2, deploymentMode]);
 
     useEffect(() => {
         if(!isLoadConfig){
             dispatch(setExistingFsxnName(generateExistingFsx[0]));
             dispatch(setFsxNExistingUserName(FSXADMIN));
-        }
+        } 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 
