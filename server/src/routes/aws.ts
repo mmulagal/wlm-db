@@ -15,7 +15,7 @@ import {
 import {
     getAmiList,
     getVpcsList,
-    getFSxAvailableRegionsList,
+    getFSxOntapRegionsList,
     getKeyPairsList,
     getInstanceTypes
 } from '../operations/aws/ec2-operations';
@@ -86,7 +86,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
             params: { credentialsId }
         } = request;
 
-        const response = await getFSxAvailableRegionsList(credentialsId);
+        const response = await getFSxOntapRegionsList(credentialsId);
         return reply.send(response);
     });
 

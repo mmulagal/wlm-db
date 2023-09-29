@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import {
     getAmiList,
     getVpcsList,
-    getFSxAvailableRegionsList,
+    getFSxOntapRegionsList,
     getInstanceTypes,
     getKeyPairsList,
     getWindowsServerBaseAmi
@@ -83,7 +83,7 @@ describe('EC2 Operations', () => {
     });
 
     it('List of Amazon FSx for NetApp ONTAP regions', async () => {
-        const fsxRegionsResponse = {
+        const fsxOntapRegionsResponse = {
             regions: [
                 {
                     regionCode: 'ap-south-2',
@@ -194,8 +194,8 @@ describe('EC2 Operations', () => {
 
         const credentialsType = DEFAULT_AWS_CREDENTIALS_TYPE;
 
-        const response = await getFSxAvailableRegionsList(credentialsType);
-        expect(response).toEqual(fsxRegionsResponse);
+        const response = await getFSxOntapRegionsList(credentialsType);
+        expect(response).toEqual(fsxOntapRegionsResponse);
     });
 
     it('should return a lsist EC2 instance types forn specific region', async () => {

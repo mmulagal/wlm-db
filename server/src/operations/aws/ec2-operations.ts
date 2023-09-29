@@ -6,12 +6,12 @@ import {
     DescribeNetworkInterfacesCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
+import { AWSQueryFields, AWS_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
     describeSubnets,
-    describeRegions,
+    describeFSxOntapRegions,
     getAmis,
     describeRouteTable,
     describeKeyPairs,
@@ -19,7 +19,7 @@ import {
     describeNetworkInterfaces
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
-import { KeyPairsSchema } from '../../routes/types/aws.types';
+import { FSxAvailableRegionType, KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
@@ -61,11 +61,6 @@ interface NetworkInterface {
     subnetId?: string;
     securityGroups?: Array<string>;
     availabilityZone?: string;
-}
-
-interface FSxAvailableRegions {
-    regionCode: string;
-    regionName: string;
 }
 
 type KeyPairType = Static<typeof KeyPairsSchema>;
@@ -350,31 +345,20 @@ function findResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
-async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
+async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
 
-    const input = {
-        AllRegions: false, // Describe only the regions enabled for the account
-        DryRun: false,
-        Filter: {
-            RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys()) // Limit describe to known FSx regions only
+    const response = await describeFSxOntapRegions(credentialsId);
+    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+
+    response.forEach(({ Value: regionCode }) => {
+        if (regionCode) {
+            fsxRegionsList.push({
+                regionCode,
+                regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+            });
         }
-    };
-
-    const { Regions: regions } = await describeRegions(input, credentialsId);
-
-    const fsxRegionsList: Array<FSxAvailableRegions> = [];
-
-    if (regions?.length) {
-        regions.forEach(({ RegionName: code }) => {
-            if (code && FSX_SUPPORTED_REGIONS.has(code)) {
-                fsxRegionsList.push({
-                    regionCode: code,
-                    regionName: FSX_SUPPORTED_REGIONS.get(code)!
-                });
-            }
-        });
-    }
+    });
 
     return { regions: fsxRegionsList };
 }
@@ -439,7 +423,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
 }
 export {
     getVpcsList,
-    getFSxAvailableRegionsList,
+    getFSxOntapRegionsList,
     getAmiList,
     getKeyPairsList,
     getInstanceTypes,

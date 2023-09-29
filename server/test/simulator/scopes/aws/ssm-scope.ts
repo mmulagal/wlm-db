@@ -5,6 +5,7 @@
 import { GetCommandInvocationCommand, SendCommandCommand, SSMClient } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
+import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 
 const ssmMock = mockClient(SSMClient);
@@ -131,7 +132,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: serGUIDParams })
     .resolves(listSendCommandCommandResponse.serGUIDCommandResponse)
     .on(SendCommandCommand, { Parameters: serNameParams })
-    .resolves(listSendCommandCommandResponse.serNameCommandResponse);
+    .resolves(listSendCommandCommandResponse.serNameCommandResponse)
+    .on(DescribeParametersCommand)
+    .resolves(listFsxOntapRegionsResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)

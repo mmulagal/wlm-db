@@ -1,4 +1,4 @@
-import { Type } from '@fastify/type-provider-typebox';
+import { Type, Static } from '@fastify/type-provider-typebox';
 
 // AWS request parameters
 const AwsParams = Type.Object({
@@ -258,6 +258,9 @@ const FSxFileSystemsResponse = Type.Object({
     filesystems: Type.Array(FSxFileSystemSchema)
 });
 
+type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
+type FSxAvailableRegionType = FSxRegionsResponseType['regions'][0];
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -269,6 +272,8 @@ export {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
+    FSxRegionsResponseType,
+    FSxAvailableRegionType,
     FSxFileSystemParams,
     FSxFileSystemSchema,
     FSxFileSystemsResponse,

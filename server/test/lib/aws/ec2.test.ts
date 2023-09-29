@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import {
     getAmis,
     describeRegions,
+    describeFSxOntapRegions,
     describeKeyPairs,
     describeVpc,
     describeSecurityGroups,
@@ -9,13 +10,14 @@ import {
     describeInstanceTypes,
     describeRouteTable
 } from '../../../src/lib/aws/ec2';
-import { SQL_AMI_NAMES, FSX_SUPPORTED_REGIONS, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
 import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
+import fsxOntapRegions from '../../simulator/responses/aws/list-fsx-ontap-regions.json';
 import routeTables from '../../simulator/responses/aws/list-route-tables.json';
 import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
@@ -78,17 +80,19 @@ describe('EC2 Lib', () => {
         expect(response).toEqual(routeTables);
     });
 
-    it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
+    it('List of AWS regions', async () => {
         const input = {
             AllRegions: false, // Describe only the regions enabled for the account
-            DryRun: false,
-            Filter: {
-                RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys()) // Limit describe to known FSx regions only
-            }
+            DryRun: false
         };
 
         const response = await describeRegions(input, DEFAULT_AWS_CREDENTIALS_TYPE);
         expect(response).toEqual(fsxRegions);
+    });
+
+    it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
+        const response = await describeFSxOntapRegions(DEFAULT_AWS_CREDENTIALS_TYPE);
+        expect(response).toEqual(fsxOntapRegions);
     });
 
     it('List EC2 instance types forn specific region', async () => {
