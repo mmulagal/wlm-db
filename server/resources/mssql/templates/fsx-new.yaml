@@ -374,10 +374,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: Yes
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxLogVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -391,10 +391,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: Yes
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxTempDbVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -408,10 +408,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: Yes
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxClusterQuorumVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -426,10 +426,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: Yes
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
 Outputs:
     FSxFileSystemLogicalId:
