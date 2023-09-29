@@ -54,7 +54,7 @@ export const GENERAL = {
     TAGS: 'Tags',
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
-    SAVE_FORM_AS_CLOUD: 'Save this configuration as a CloudFormation template',
+    SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
@@ -308,5 +308,7 @@ export const GENERAL = {
     NO: 'No',
     PD_CREATE_SECURITY: 'Create a security group for the user',
     PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
-    FIRST_IN_THE_LIST: 'First in the list'
+    FIRST_IN_THE_LIST: 'First in the list',
+    THROUGHPUT_DISABLE_TEXT: 'Throughput can\'t be changed, value is taken from the selected FSx for ONTAP.',
+    IOPS_DISABLE_TEXT: 'Provisioned IOPS can\'t be changed, value is taken from the selected FSx for ONTAP.'
 };

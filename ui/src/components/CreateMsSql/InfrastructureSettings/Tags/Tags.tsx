@@ -18,7 +18,7 @@ const Tags = () => {
     const tags = useAppSelector((state: any) => state.mssqlForm.tags);
 
     const emptyTagItems = useMemo(() => {
-        return tags.filter((tag: Tag) => !tag.key || !tag.value);
+        return tags.filter((tag: Tag) => !tag.key);
     }, [tags]);
 
     //Set the Header text here
