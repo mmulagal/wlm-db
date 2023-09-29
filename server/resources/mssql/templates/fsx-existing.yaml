@@ -124,8 +124,8 @@ Resources:
                 SnapshotPolicy: default
                 StorageEfficiencyEnabled: Yes
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxLogVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -141,8 +141,8 @@ Resources:
                 SnapshotPolicy: default
                 StorageEfficiencyEnabled: Yes
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxTempDbVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -158,8 +158,8 @@ Resources:
                 SnapshotPolicy: default
                 StorageEfficiencyEnabled: Yes
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxClusterQuorumVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -176,8 +176,8 @@ Resources:
                 SnapshotPolicy: default
                 StorageEfficiencyEnabled: Yes
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
 Outputs:
     FSxFileSystemId:
