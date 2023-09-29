@@ -699,17 +699,7 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        c-delete-secrets:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\common\Cleanup-Secrets.ps1
-                                  - ' -DomainAdminSecretName '
-                                  - !Ref 'DomainAdminSecretName'
-                                  - ' -FsxAdminPassword '
-                                  - !Ref 'FsxAdminPassword'
-                                  - ' -SQLServiceAccountSecret '
-                                  - !Ref 'SQLServiceAccountSecret'
-                                  - '"'
+                        
                 Cleanup:
                     commands:
                         b-disable-credssp:
