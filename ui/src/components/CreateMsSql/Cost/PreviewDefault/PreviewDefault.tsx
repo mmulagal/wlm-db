@@ -10,8 +10,6 @@ import {
     setCloudWatch, 
     setDBName, 
     setDBVersion, 
-    setProvisionedIOPSValue, 
-    setProvisionedType, 
     setSelectConfig, 
     setSelectedDBDeploymentModel, 
     setSelectedDBEdition, 
@@ -26,10 +24,10 @@ import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/const
 import { 
     selectDefaultEncryption, 
     selectDefaultInstanceType, 
-    selectDefaultKeyPair,
-    selectDefaultThroughput,
     selectDefaultLicense,
-    selectDefaultSecurityGroup
+    selectDefaultSecurityGroup,
+    selectFsxIops,
+    selectFsxThroughput
 } from '../../MSSqlServer/MSSqlUtils';
 import { generateRandomDBName } from '../../../../utils/utilityFunctions';
 
@@ -37,15 +35,16 @@ const PreviewDefault = () => {
     const dispatch = useDispatch();
 
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
-    const keyPairValue = useAppSelector(state => state.mssqlForm.keyPair.selectedKeyPair);
     const instanceValue = useAppSelector(state => state.mssqlForm.instanceType);
     const dbName = useAppSelector(state => state.mssqlForm.dbName);
     const throughputValue = useAppSelector(state => state.mssqlForm.throughput);
+    const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.IOPSValue);
     const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
-    const keyPairData = useAppSelector(state => state.mssql.getKeyPairList?.keyPairData);
     const instanceTypeData = useAppSelector(state => state.mssql.getInstanceTypeList?.instanceTypeData);
     const kmsData = useAppSelector(state => state.mssql.getKmsList.kmsData);
     const amiData = useAppSelector(state => state.mssql.getAmiList.amiData);
+    const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+    const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
 
     useEffect(() => {
         if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
@@ -76,18 +75,21 @@ const PreviewDefault = () => {
             );
             selectDefaultLicense(amiData, dispatch);
             dispatch(setDBName(generateRandomDBName()));
-            selectDefaultKeyPair(keyPairData, dispatch);
             selectDefaultInstanceType(instanceTypeData, dispatch);
-            dispatch(setProvisionedType(GENERAL.AUTOMATIC));
-            dispatch(setProvisionedIOPSValue(''));
-            selectDefaultThroughput('128 MBps', dispatch);
             selectDefaultEncryption(kmsData, dispatch);
             dispatch(setTags([{ key: '', value: '' }]));
             dispatch(setSNSState(false));
             dispatch(setSNSARN(''));
             dispatch(setCloudWatch(false));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);
+
+    useEffect(() => {
+        selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, '128 MBps', dispatch);
+        selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedFsxnType, selectedExistingFsxnName]);
 
     const data = [
         {
@@ -122,14 +124,13 @@ const PreviewDefault = () => {
         },
         { accordionName: GENERAL.LICENSE, defaultValue: amiLicense?.value, editable: GENERAL.NO, id: '6' },
         { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
-        { accordionName: GENERAL.KEY_PAIR, defaultValue: keyPairValue?.value, editable: GENERAL.YES, id: '8' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
             defaultValue: instanceValue?.value,
             editable: GENERAL.NO,
             id: '9'
         },
-        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
+        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: iopsValue || GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
         {
             accordionName: GENERAL.THROUGHPUT_CAPACITY,
             defaultValue: throughputValue?.value,

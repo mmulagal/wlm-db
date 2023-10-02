@@ -18,7 +18,8 @@ export const SELECT_CONFIG = {
     NO_SAVED_CONFIG: 'There are no saved configurations.',
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
-        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
+        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
+    DUPLICATE_CONFIG_NAME: 'A saved configuration with that name already exists. Try again with a different name.'
 };
 
 export const GENERAL = {
@@ -53,7 +54,7 @@ export const GENERAL = {
     TAGS: 'Tags',
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
-    SAVE_FORM_AS_CLOUD: 'Save this configuration as a CloudFormation template',
+    SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
@@ -236,7 +237,7 @@ export const GENERAL = {
     EXPIRATION_DATE: 'Expiration date',
     ORIGIN: 'Origin',
     ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.',
-    TAGS_HEADING_MSG: 'You can add upto 50 tags',
+    TAGS_HEADING_MSG: 'You can add upto 40 tags',
     ADD_NEW_TAG: '+ Add new tag',
     TAG_KEY: 'Tag key',
     TAG_VALUE: 'Tag value',
@@ -307,5 +308,7 @@ export const GENERAL = {
     NO: 'No',
     PD_CREATE_SECURITY: 'Create a security group for the user',
     PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
-    FIRST_IN_THE_LIST: 'First in the list'
+    FIRST_IN_THE_LIST: 'First in the list',
+    THROUGHPUT_DISABLE_TEXT: 'Throughput can\'t be changed, value is taken from the selected FSx for ONTAP.',
+    IOPS_DISABLE_TEXT: 'Provisioned IOPS can\'t be changed, value is taken from the selected FSx for ONTAP.'
 };

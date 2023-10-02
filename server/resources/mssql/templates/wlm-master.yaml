@@ -518,6 +518,7 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
+      {{Tags}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
@@ -559,6 +560,7 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
+      {{Tags}}
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
@@ -640,7 +642,8 @@ Resources:
         Fn::If:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]     
+          - [Ref: SnsServiceToken]
+      {{Tags}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: ExistingOntapFsx
@@ -675,6 +678,7 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
+      {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
@@ -786,6 +790,7 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
+      {{Tags}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
     Condition: IsStandalone
@@ -881,6 +886,7 @@ Resources:
           - IncludeNotification
           - [Ref: NotificationARN, Ref: SnsServiceToken]
           - [Ref: SnsServiceToken]
+      {{Tags}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
@@ -931,3 +937,12 @@ Resources:
                 - ","
                 - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
+      ResourceName:
+          !If
+            - IsFailoverCluster
+            - !Ref SqlFSxFCIName
+            - Fn::Select:
+              - "0"
+              - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames

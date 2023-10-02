@@ -699,6 +699,7 @@ Resources:
                                   - !Ref 'SqlFSxServerNetBIOSName'
                                   - '''"'
                             waitAfterCompletion: '0'
+                        
                 Cleanup:
                     commands:
                         b-disable-credssp:

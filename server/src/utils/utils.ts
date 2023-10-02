@@ -4,6 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -187,6 +188,28 @@ async function sleep(ms: number) {
     });
 }
 
+function generateHash(value: string) {
+    const hash = crypto.createHash('sha256');
+    hash.update(value);
+    return hash.digest('hex');
+}
+
+function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
+    logger.debug('Converting size to GiB', { size });
+
+    if (Number.isNaN(size)) {
+        return 0;
+    }
+
+    switch (currentUnit.toLocaleUpperCase()) {
+        case 'MB':
+        case 'MIB':
+            return size / 1024;
+        default:
+            return size;
+    }
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -199,5 +222,7 @@ export {
     derivePropertiesFromARN,
     sleep,
     getSnsArn,
-    calculateFsxStorageCapacity
+    generateHash,
+    calculateFsxStorageCapacity,
+    sizeInGigaBytes
 };
