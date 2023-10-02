@@ -26,10 +26,12 @@ $LocaliSCSIAddress = $data.Content
 Foreach ($TargetPortalAddress in $TargetPortalAddresses){
 New-IscsiTargetPortal -TargetPortalAddress $TargetPortalAddress -TargetPortalPortNumber 3260 -InitiatorPortalAddress $LocaliSCSIAddress
 }
+
+
 #Add MPIO support for iSCSI
 New-MSDSMSupportedHW -VendorId MSFT2005 -ProductId iSCSIBusType_0x9
-#Establish iSCSI connection
-1..3 | %{Foreach($TargetPortalAddress in $TargetPortalAddresses){Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true} }
+#Establish iSCSI connection. Creating 5 iSCSI sessions per target interface for optimum performance
+1..5 | %{Foreach($TargetPortalAddress in $TargetPortalAddresses){Get-IscsiTarget | Connect-IscsiTarget -IsMultipathEnabled $true -TargetPortalAddress $TargetPortalAddress -InitiatorPortalAddress $LocaliSCSIAddress -IsPersistent $true} }
 #Set the MPIO Policy to Round Robin
 Set-MSDSMGlobalDefaultLoadBalancePolicy -Policy RR
 }catch{
