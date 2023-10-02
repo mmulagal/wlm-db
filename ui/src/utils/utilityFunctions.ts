@@ -112,6 +112,9 @@ export const dbPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
+        if(state.auth.isDemoFlag) {
+            return '';
+        }
         const categories = [
             /[A-Z]/, // uppercase letters
             /[a-z]/, // lowercase letters
@@ -132,6 +135,9 @@ export const dbPassVal = (password: string) => {
 export const fsxPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
+        if(state.auth.isDemoFlag) {
+            return '';
+        }
         let fsxUserName = '';
         if (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX) {
             fsxUserName = state.mssqlForm.fsxN.fsxNExistingUserName;
