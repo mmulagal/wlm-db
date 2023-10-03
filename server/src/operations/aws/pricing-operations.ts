@@ -1,6 +1,6 @@
 import { GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
-import { compact } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
 import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
@@ -396,6 +396,11 @@ function parseResponse(response: GetProductsCommandOutput): number {
         }]
      */
 
+    if (isEmpty(response?.PriceList)) {
+        logger.error('Invalid AWS SDK response:', { data: response?.PriceList });
+        return 0;
+    }
+
     const [serializedResponse]: Product[] = (response?.PriceList || []).map(k =>
         (k as LazyJsonString).deserializeJSON()
     );
@@ -540,8 +545,6 @@ async function calculatePrice(
         // In cases where the input is total FSx Storage capacity, we don't this calculation.
         fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
         storage.diskSize = fsxDiskSizes.FSxStorageCapacity;
-
-        logger.debug(fsxStorageRate, fsxThroughputRate, fsxIopsRate, fsxReadRequestsRate, fsxWriteRequestsRate);
 
         const fsxDisksize = storage?.diskSize || MIN_DISKSIZE;
         const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
