@@ -548,9 +548,15 @@ async function calculatePrice(
 
         const fsxDisksize = storage?.diskSize || MIN_DISKSIZE;
         const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
-        const fsxIops = storage?.iops || 3 * fsxDisksize;
+        let fsxIops = storage?.iops || 3 * fsxDisksize;
 
         fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
+
+        if (fsxIops > 3 * fsxDisksize) {
+            fsxIops -= 3 * fsxDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
+        } else {
+            fsxIops = 0; // Iops cost is 0 if it is less than or equal to  3 * diskSize
+        }
 
         fsxThroughputCost = calculateFsxThroughputCost(
             fsxThroughputRate,
