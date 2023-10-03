@@ -37,7 +37,10 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_ACCOUNT_ID,
     SUCCESS,
-    ACTION_BUTTON_DASHBOARD
+    ACTION_BUTTON_DASHBOARD,
+    REDIRECT_URL,
+    STANDARD_DEPLOYMENT_ACTION,
+    SQL_DEPLOYMENET_INITIATED_SUBJECT
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -47,7 +50,7 @@ import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusById } from './database/database-operations';
-import { prepareDetailsToSendNotification } from './cloud-manager/notification-operations';
+import { handleNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
 
@@ -361,14 +364,16 @@ async function deployCloudFormationTemplate(
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
-    await prepareDetailsToSendNotification(
-        'standard_deployment',
-        'Microsoft SQL Server and FSxN for ONTAP deployment initiated',
-        `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
-        { uiNotification: true, emailNotification: true },
-        ACTION_BUTTON_DASHBOARD,
-        SUCCESS
-    );
+    const notificationData = {
+        notificationAction: STANDARD_DEPLOYMENT_ACTION,
+        subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
+        uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
+        actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
+        redirectURL: REDIRECT_URL,
+        label: ACTION_BUTTON_DASHBOARD,
+        priority: SUCCESS
+    };
+    await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
