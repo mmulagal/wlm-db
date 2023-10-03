@@ -35,6 +35,7 @@ const RegionVpc = () => {
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     //Function to generate the options for Select Field
@@ -108,7 +109,7 @@ const RegionVpc = () => {
     // On VPC selection needs to check if 2 availability zones are available or not
     useEffect(() => {
         const azData = selectedVPCData?.data?.availabilityZones;
-        if (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && azData && Object.keys(azData).length < 2) {
+        if (!isDemoMode && deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && azData && Object.keys(azData).length < 2) {
             dispatch(
                 addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.MULTI_AZ_CHECK_MESSAGE })
             );

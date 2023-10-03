@@ -6,6 +6,7 @@ import queryString from 'query-string';
 import { 
     updateAccountId, 
     updateAuthSuccess, 
+    updateIsDemoMode, 
     updateIsLoading, 
     updatePathname, 
     updateResourceId, 
@@ -30,10 +31,12 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken, pathname, storage, storageId, storageName, workspaceId } = search;
+        const { accountId, accessToken, pathname, storage, storageId, storageName, workspaceId, isDemoMode } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
+        const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
+        dispatch(updateIsDemoMode(isDemoFlag === 'true'? true: false));
 
         if(accountIdAsString){
             dispatch(updateAccountId(accountIdAsString || ''));
@@ -64,10 +67,11 @@ const useInitialize = () => {
 
     useBlueXP({
         onReady: (initialData: any) => {
-            const {accessToken, accountId } = initialData;
+            const {accessToken, accountId, isDemoMode } = initialData;
             dispatch(updateAuthSuccess({accessToken: accessToken}));
             dispatch(updateAccountId(accountId));
             dispatch(updateIsLoading(false));
+            dispatch(updateIsDemoMode(isDemoMode));
             
             if(initialData?.pathname && initialData.pathname.split('/')[1] === DATABASE_SERVICE_PATH){
                 const storage = initialData?.storage;

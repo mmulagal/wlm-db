@@ -11,7 +11,7 @@ import {
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { AWS_MANAGED_AD, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
@@ -131,7 +131,7 @@ const createMssqlPayload = (state: any) => {
             keyPairName: state.mssqlForm.keyPair.selectedKeyPair?.value || ''
         },
         adConfiguration: {
-            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || '',
+            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || AWS_MANAGED_AD,
             domainUsername: state.mssqlForm.activeDirectory?.userName || '',
             domainPassword: state.mssqlForm.activeDirectory?.password || '',
             domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value || '',
@@ -168,93 +168,98 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     dispatch(setCreatePressed(true));
     dispatch(setCreateHit(Math.random()));
 
-    const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
-
-    const azStateValue =
-        (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER && 
-            (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
-            !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
-            !state.mssqlForm.availabilityZones.selectedAzNode2 ||
-            !state.mssqlForm.availabilityZones.selectedSubnetNode2)) || 
-            (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE && 
-                (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
-                !state.mssqlForm.availabilityZones.selectedSubnetNode1));
-
-    const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
-
-    const adStateValue =
-        !state.mssqlForm.activeDirectory.domainAddress ||
-        !state.mssqlForm.activeDirectory.domainName ||
-        !state.mssqlForm.activeDirectory.userName ||
-        !state.mssqlForm.activeDirectory.password;
-
-    const fsxStateValue =
-        (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNPassword) ||
-        (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !state.mssqlForm.fsxN.fsxNExistingName);
-
-    const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
-    //Check for VPC values
-    if (vpcStateValue) {
-        dispatch(setVPCSelectedValue(false));
-    } else {
-        dispatch(setVPCSelectedValue(true));
-    }
-    //Check for AZ values
-    if (azStateValue) {
-        dispatch(setAZSelectedValue(false));
-    } else {
-        dispatch(setAZSelectedValue(true));
-    }
-
-    //Check for DB cred password
-    dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
-    const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
-
-    //Check of AD values
-    if (adStateValue) {
-        dispatch(setActiveDirectoryValue(false));
-    } else {
-        dispatch(setActiveDirectoryValue(true));
-    }
-
-    //Check for FsxN Name
-    dispatch(setFSXNNameValue(fsxStateValue ? false : true));
-
-    //Check for DB Name - InvalidName
-    const input = state.mssqlForm.dbName;
-    const dataBaseNameValue =
-        input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-    const isDBValueValid = dataBaseNameValue ? true : false;
-    if (dataBaseNameValue) {
-        dispatch(setDBNameValue(false));
-    } else {
-        dispatch(setDBNameValue(true));
-    }
-
-    //Check for License ID
-    if (licenseIdCheck) {
-        dispatch(setLicenseIdValue(false));
-    } else {
-        dispatch(setLicenseIdValue(true));
-    }
-
-    //Proceed for post call
-    if (
-        !vpcStateValue &&
-        !azStateValue &&
-        !dbCredStateValue &&
-        !adStateValue &&
-        !fsxStateValue &&
-        !isDBValueValid &&
-        !licenseIdCheck &&
-        !checkForUserName &&
-        !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
-        !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
-    ) {
+    if(state.auth.isDemoMode) {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {
-        console.log('Action required');
+        const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
+
+        const azStateValue =
+            (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER && 
+                (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
+                !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
+                !state.mssqlForm.availabilityZones.selectedAzNode2 ||
+                !state.mssqlForm.availabilityZones.selectedSubnetNode2)) || 
+                (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE && 
+                    (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
+                    !state.mssqlForm.availabilityZones.selectedSubnetNode1));
+
+        const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
+
+        const adStateValue =
+            !state.mssqlForm.activeDirectory.domainAddress ||
+            !state.mssqlForm.activeDirectory.domainName ||
+            !state.mssqlForm.activeDirectory.userName ||
+            !state.mssqlForm.activeDirectory.password;
+
+        const fsxStateValue =
+            (state.mssqlForm.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN && !state.mssqlForm.fsxN.fsxNPassword) ||
+            (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX && !state.mssqlForm.fsxN.fsxNExistingName);
+
+        const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
+        //Check for VPC values
+        if (vpcStateValue) {
+            dispatch(setVPCSelectedValue(false));
+        } else {
+            dispatch(setVPCSelectedValue(true));
+        }
+        //Check for AZ values
+        if (azStateValue) {
+            dispatch(setAZSelectedValue(false));
+        } else {
+            dispatch(setAZSelectedValue(true));
+        }
+
+        //Check for DB cred password
+        dispatch(setDBCredentialPasswordValue(dbCredStateValue ? false : true));
+        const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
+
+        //Check of AD values
+        if (adStateValue) {
+            dispatch(setActiveDirectoryValue(false));
+        } else {
+            dispatch(setActiveDirectoryValue(true));
+        }
+
+        //Check for FsxN Name
+        dispatch(setFSXNNameValue(fsxStateValue ? false : true));
+
+        //Check for DB Name - InvalidName
+        const input = state.mssqlForm.dbName;
+        const dataBaseNameValue =
+            input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
+        const isDBValueValid = dataBaseNameValue ? true : false;
+        if (dataBaseNameValue) {
+            dispatch(setDBNameValue(false));
+        } else {
+            dispatch(setDBNameValue(true));
+        }
+
+        //Check for License ID
+        if (licenseIdCheck) {
+            dispatch(setLicenseIdValue(false));
+        } else {
+            dispatch(setLicenseIdValue(true));
+        }
+
+        //Proceed for post call
+        if (
+            !vpcStateValue &&
+            !azStateValue &&
+            !dbCredStateValue &&
+            !adStateValue &&
+            !fsxStateValue &&
+            !isDBValueValid &&
+            !licenseIdCheck &&
+            !checkForUserName &&
+            !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
+            !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
+        ) {
+            payload = createMssqlPayload(state);
+            console.log('Deploy Payload', payload);
+        } else {
+            console.log('Action required');
+        }
     }
     return payload;
 };
