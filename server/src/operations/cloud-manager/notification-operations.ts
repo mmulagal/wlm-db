@@ -16,6 +16,21 @@ import getLogger from '../../utils/logger.js';
 
 const logger = getLogger();
 
+interface Notification {
+    notificationAction: string;
+    subject: string;
+    uiNotificationDescription: string;
+    mailNotificationDescription?: string;
+    actionLabel: string;
+    redirectURL: string;
+    label: string;
+    priority?: string;
+    params?: any;
+    persist?: boolean;
+    errors?: any;
+    accountId?: string;
+}
+
 async function prepareDetailsToSendNotification(
     action: string,
     subject: string,
@@ -25,7 +40,8 @@ async function prepareDetailsToSendNotification(
     priority?: string,
     redirectURL: string = '/database-services',
     mailNotificationDescription?: string,
-    params?: any
+    params?: any,
+    accountId?: string
 ) {
     if (process.env.ENV_WLMDB_BUILD_MODE !== 'demo') {
         logger.info('Prepare details to send notificaiton', {
@@ -37,7 +53,8 @@ async function prepareDetailsToSendNotification(
             redirectURL,
             label,
             mailNotificationDescription,
-            params
+            params,
+            accountId
         });
         const data = {
             notificationAction: action,
@@ -48,7 +65,8 @@ async function prepareDetailsToSendNotification(
             redirectURL,
             label,
             priority,
-            params
+            params,
+            accountId
         };
         const notificationResponse = await handleNotification(data, notification);
         return notificationResponse;
@@ -56,19 +74,7 @@ async function prepareDetailsToSendNotification(
 }
 
 async function handleNotification(
-    data: {
-        notificationAction: string;
-        subject: string;
-        uiNotificationDescription: string;
-        mailNotificationDescription?: string;
-        actionLabel: string;
-        redirectURL: string;
-        label: string;
-        priority?: string;
-        params?: any;
-        persist?: boolean;
-        errors?: any;
-    },
+    data: Notification,
     notifications: { uiNotification: boolean; emailNotification: boolean }
 ) {
     logger.info('handling notification', { data, notifications });
@@ -87,7 +93,7 @@ async function handleNotification(
         const requestBody = [
             {
                 type: PUBLISH,
-                accountId: getAsyncLocalStorageResource(ACCOUNT_ID) || process.env.ACCOUNT_ID,
+                accountId: data.accountId || getAsyncLocalStorageResource(ACCOUNT_ID) || process.env.ACCOUNT_ID,
                 resourceType: WLMDB_RESOURCE_CLASS,
                 resourceId: RESOURCE_ID, // can be changed later on
                 action: data.notificationAction,

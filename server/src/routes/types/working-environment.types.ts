@@ -39,10 +39,26 @@ const WorkingEnvironmentResponse = Type.Optional(
     })
 );
 
+const RelationshipsResponse = Type.Object({
+    relationships: Type.Optional(
+        Type.Array(
+            Type.Object({
+                source: Type.Object({
+                    id: Type.String()
+                }),
+                target: Type.Object({
+                    id: Type.Optional(Type.String())
+                })
+            })
+        )
+    )
+});
+
 export {
     WorkingEnvironmentsResponse,
     WorkingEnvironmentResponse,
     WorkinEnvironmentHeaders,
     AccountIdParams,
-    AccountIdAndWorkingEnvironmentIdParams
+    AccountIdAndWorkingEnvironmentIdParams,
+    RelationshipsResponse
 };

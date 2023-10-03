@@ -737,6 +737,11 @@ const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
 const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 const SUCCESS = 'success';
 const ERROR = 'error';
+const REDIRECT_URL = '/database-services';
+const STANDARD_DEPLOYMENT_ACTION = 'standard_deployment';
+const SQL_DEPLOYMENT_FAILED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment failed';
+const SQL_DEPLOYMENT_COMPLETED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment successful';
+const SQL_DEPLOYMENET_INITIATED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment initiated';
 
 const MAX_READ_REQUEST_FSXN = 1000000;
 const MAX_WRITE_REQUEST_FSXN = 100000;
@@ -891,5 +896,10 @@ export {
     FCI,
     SINGLE_AZ,
     MULTI_AZ,
-    MIN_THROUGHPUT
+    MIN_THROUGHPUT,
+    REDIRECT_URL,
+    STANDARD_DEPLOYMENT_ACTION,
+    SQL_DEPLOYMENT_FAILED_SUBJECT,
+    SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+    SQL_DEPLOYMENET_INITIATED_SUBJECT
 };

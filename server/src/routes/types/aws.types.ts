@@ -20,7 +20,8 @@ const InstanceTypes = Type.Object({
             instanceType: Type.Optional(Type.String()),
             vCpus: Type.Optional(Type.Number()),
             ramInMib: Type.Optional(Type.Number()),
-            iopsInMbps: Type.Optional(Type.Number())
+            iopsInMbps: Type.Optional(Type.Number()),
+            architecture: Type.Optional(Type.Array(Type.String()))
         })
     )
 });
