@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
+import moment from 'moment';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -20,6 +21,7 @@ const TOKEN_EXPIRATION_TIME = 'TOKEN_EXPIRATION_TIME';
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
 const FSX_STORAGE_TYPE = 'SSD';
 const FSX_RESOURCE_TYPE = 'FSX_ONTAP';
+const FSX_BATCH_CONCURRENCY_VALUE = 10;
 
 enum FileSystemDeploymentType {
     SINGLE_AZ_1,
@@ -62,6 +64,7 @@ const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
+const AUDIT_EXCLUDE_LIST = ['/batch'];
 const DEFAULT_AWS_REGION = 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -71,6 +74,7 @@ const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
 const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
+const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 
@@ -111,7 +115,8 @@ enum RouteTags {
     DEPLOYMENT = 'Deployment',
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
-    BATCH = 'Batch'
+    BATCH = 'Batch',
+    PRICING = 'Pricing'
 }
 
 enum HttpErrorCodes {
@@ -153,12 +158,16 @@ const SECRETS: Record<string, string | undefined> = {
         ? process.env.CLIENT_SECRET
         : config.has('service-token.client_secret')
         ? config.get('service-token.client_secret')
-        : undefined
+        : undefined,
+    DATABASE_URL: process.env.DATABASE_URL
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
-    CLIENT_SECRET: 'CLIENT_SECRET'
+    CLIENT_SECRET: 'CLIENT_SECRET',
+    DATABASE_URL: 'DATABASE_URL',
+    SIGNURL_ACCESS_KEY: 'SIGNURL_ACCESS_KEY',
+    SIGNURL_SECRET_KEY: 'SIGNURL_SECRET_KEY'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
@@ -225,7 +234,8 @@ enum AWSQueryFields {
 }
 
 enum RESOURCESTYPE {
-    MSSQL = 'MSSQL'
+    MSSQL = 'MSSQL',
+    FSX = 'FSX'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -399,6 +409,7 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['eu-west-1', 'Europe (Ireland)'],
     ['eu-west-2', 'Europe (London)'],
     ['eu-west-3', 'Europe (Paris)'],
+    ['il-central-1', 'Israel (Tel Aviv)'],
     ['me-central-1', 'Middle East (UAE)'],
     ['me-south-1', 'Middle East (Bahrain)'],
     ['sa-east-1', 'South America (Sao Paulo)'],
@@ -458,12 +469,14 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
 
+    fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
     encryptionKey: 'FileSystemEncryptionKeyId',
 
+    sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
     sqlFciName: 'SqlFSxFCIName',
@@ -500,7 +513,9 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
-const S3_BUCKET_SIGNED_URL_EXPIRTY = 21600;
+
+// Signed URL Valid for 24 hours
+const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry-hours')}`, 'hours').asSeconds();
 
 // HTTP Request types
 const HTTP_GET = 'GET';
@@ -516,27 +531,13 @@ const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
     `Error creating signed url for ${url} in region ${region}. ${error}`;
 
 const AWS_FSX = 'aws/fsx';
+const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
+const TEMPLATE_JWT_TOKEN = 'JwtToken';
+const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
+const TEMPLATE_ACCOUNT_ID = 'AccountId';
+const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 
-const SQL_TEMPLATES_ASSETS = [
-    {
-        name: 'FSXNewTemplate',
-        url: 'templates/fsx-new.yaml'
-    },
-
-    {
-        name: 'FSXExistingTemplate',
-        url: 'templates/fsx-existing.yaml'
-    },
-
-    {
-        name: 'ValidationTemplate',
-        url: 'templates/vpc-ad-validation.yaml'
-    },
-
-    {
-        name: 'SQLTemplate',
-        url: 'templates/sql-windows-fci-config_nosignal.yaml'
-    },
+const SQL_RESOURCE_ASSETS = [
     {
         name: 'DSC',
         url: 'DSC.zip'
@@ -632,20 +633,67 @@ const SQL_TEMPLATES_ASSETS = [
     {
         name: 'ScriptRestartComputer',
         url: 'validation/Restart-Computer.ps1'
+    },
+    {
+        name: 'ScriptAdValidation',
+        url: 'validation/Validate-Credentials.ps1'
     }
 ];
 
-const SQL_TEMPLATES_DISTRIBUTION = {
-    VALIDATION: './resources/mssql/templates/vpc-ad-validation.yaml',
-    SQLSTACK: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml',
-    MASTER: './resources/mssql/templates/wlm-master.yaml'
-};
+const SQL_TEMPLATES_ASSETS = [
+    {
+        name: 'FSXNewTemplate',
+        url: 'templates/fsx-new.yaml'
+    },
+
+    {
+        name: 'FSXExistingTemplate',
+        url: 'templates/fsx-existing.yaml'
+    },
+
+    {
+        name: 'ValidationTemplate',
+        url: 'templates/vpc-ad-validation.yaml'
+    },
+
+    {
+        name: 'SQLTemplate',
+        url: 'templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: 'SQLStandaloneTemplate',
+        url: 'templates/standalone-deployment.yaml'
+    }
+];
+
+const SQL_TEMPLATE_TAGS_INDENTATION = 6;
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
     SQLSTACK = 'sqlstack',
-    VALIDATION = 'validation'
+    VALIDATION = 'validation',
+    SQLSTANDALONE = 'sqlstandalone'
 }
+
+const SQL_TEMPLATES_DISTRIBUTION = [
+    {
+        name: TEMPLATE_TYPES.VALIDATION,
+        location: './resources/mssql/templates/vpc-ad-validation.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTACK,
+        location: './resources/mssql/templates/sql-windows-fci-config_nosignal.yaml'
+    },
+    {
+        name: TEMPLATE_TYPES.SQLSTANDALONE,
+        location: './resources/mssql/templates/standalone-deployment.yaml'
+    }
+];
+
+const MASTER_TEMPLATE_DISTRIBUTION = {
+    name: TEMPLATE_TYPES.MASTER,
+    location: './resources/mssql/templates/wlm-master.yaml'
+};
 
 enum DATABASE_METRIC_TYPE {
     CPU = 'cpu',
@@ -658,8 +706,43 @@ enum SSM_QUERY_EXECUTION_STATUS {
     SUCCESS = 'Success'
 }
 
+enum CF_CUSTOM_RESOURCE_CODES {
+    CREATE = 'Create',
+    DELETE = 'Delete',
+    FAILED = 'FAILED',
+    SUCCESS = 'SUCCESS'
+}
+
+const TRACK_STATUS_CUSTOM_RESOURCE = 'TrackStackDeployment';
+const JWKS_FULL_NAME = 'http://cloud.netapp.com/full_name';
+
+const CF_NOTIFICATION = 'AWS CloudFormation Notification';
+const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQueue';
+const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
+
+const FCI_STACKNAME = 'SQLFCIStack';
+const STANDALONE_STACKNAME = 'Standalone';
+
+// Notification
+const CRITICAL = 'critical';
+const RESOURCE_ID = 'WLMDB-Resource-1';
+const PUBLISH = 'publish';
+const MOREINFO = 'More information';
+const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
+const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
+const SUCCESS = 'success';
+const ERROR = 'error';
+
+const MAX_READ_REQUEST_FSXN = 1000000;
+const MAX_WRITE_REQUEST_FSXN = 100000;
+const MIN_DISKSIZE = 1024;
+const MIN_THROUGHPUT = 128;
+const STANDALONE = 'standalone';
+const FCI = 'fci';
+const SINGLE_AZ = 'SINGLE_AZ_1';
+const MULTI_AZ = 'MULTI_AZ_1';
 
 export {
     WLMDB,
@@ -669,6 +752,7 @@ export {
     SERVICE_QUOTAS,
     FSX_ACTION_NAMES,
     FSX,
+    FSX_BATCH_CONCURRENCY_VALUE,
     RESOURCE_GROUPS_ACTION_NAMES,
     SNS_ACTION_NAMES,
     SNS,
@@ -718,6 +802,7 @@ export {
     ACCOUNT_ID,
     AGENT_ID,
     AUDIT_GROUP,
+    AUDIT_EXCLUDE_LIST,
     WORKSPACE_ID,
     API_TITLE,
     APP_NAME,
@@ -738,7 +823,7 @@ export {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
-    S3_BUCKET_SIGNED_URL_EXPIRTY,
+    S3_BUCKET_SIGNED_URL_EXPIRY,
     HTTP_GET,
     HTTP_POST,
     HTTP_DELETE,
@@ -749,6 +834,8 @@ export {
     INVALID_REGION_MESSAGE,
     AWS_FSX,
     SQL_TEMPLATES_ASSETS,
+    SQL_RESOURCE_ASSETS,
+    SQL_TEMPLATE_TAGS_INDENTATION,
     SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
@@ -761,14 +848,45 @@ export {
     WLMDB_RESOURCE_CLASS,
     TEMPLATE_TYPES,
     SQL_TEMPLATES_DISTRIBUTION,
+    MASTER_TEMPLATE_DISTRIBUTION,
     DATABASE_METRIC_TYPE,
     SSM_QUERY_EXECUTION_STATUS,
     SqlServerDeploymentModel,
+    TEMPLATE_CLOUD_PROVIDER_ID,
+    TEMPLATE_JWT_TOKEN,
+    TEMPLATE_CREDENTIALS_ID,
     DeploymentState,
     SIGNED_URL_ERROR_MESSAGE,
+    TRACK_STATUS_CUSTOM_RESOURCE,
+    JWKS_FULL_NAME,
+    CF_CUSTOM_RESOURCE_CODES,
+    TEMPLATE_ACCOUNT_ID,
+    TEMPLATE_SNS_SERVICE_TOKEN,
+    CF_NOTIFICATION,
+    ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
+    ERROR_CODE_SQS_INVALID_TOKEN,
     METHODS_WITH_PAYLOAD,
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
     WLMDB_ENDPOINT,
-    BATCH_API_CONCURRENCY_LIMIT
+    BATCH_API_CONCURRENCY_LIMIT,
+    FCI_STACKNAME,
+    STANDALONE_STACKNAME,
+    CRITICAL,
+    PUBLISH,
+    MOREINFO,
+    ACTION_BUTTON_DASHBOARD,
+    ACTION_BUTTON_DATABASE,
+    RESOURCE_ID,
+    WLMDB_ABSOLUTE_ENDPOINT,
+    SUCCESS,
+    ERROR,
+    MAX_READ_REQUEST_FSXN,
+    MAX_WRITE_REQUEST_FSXN,
+    MIN_DISKSIZE,
+    STANDALONE,
+    FCI,
+    SINGLE_AZ,
+    MULTI_AZ,
+    MIN_THROUGHPUT
 };

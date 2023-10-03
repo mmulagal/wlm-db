@@ -1,5 +1,6 @@
 import config from 'config';
 import randomize from 'randomatic';
+import { JwtPayload } from 'jsonwebtoken';
 import './utils/tracer';
 import fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
@@ -14,11 +15,13 @@ import {
     ACCOUNT_ID,
     API_PATH_HEALTH,
     API_TITLE,
+    AUDIT_EXCLUDE_LIST,
     HEADERS,
     REQUEST_ID,
     USER_TOKEN,
     VERSION,
-    WORKSPACE_ID
+    WORKSPACE_ID,
+    JWKS_FULL_NAME
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -26,12 +29,22 @@ import errorHandler from './utils/error-handler';
 import systemRoutes from './routes/system';
 import credentialsRoutes from './routes/credentials';
 import awsRoutes from './routes/aws';
+import formConfigRoutes from './routes/form-config';
 import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
-import { createAuditGroup, updateAuditGroup } from './operations/cloud-manager/audit-operations';
+import pricingRoutes from './routes/pricing';
+import {
+    createAuditGroup,
+    updateAuditGroup,
+    updateAuditGroupResponse
+} from './operations/cloud-manager/audit-operations';
+import { checkAndCreateBucketLifecycleConfiguration } from './operations/aws/s3-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
+import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
+import { processCloudFormationMessages } from './operations/aws/sqs-operations';
+import { execute, initializeDatabase } from './utils/prisma-utils';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -135,7 +148,8 @@ const app = fastify({
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
-                            await verifyToken(authorization.replace('Bearer ', ''));
+                            const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();
@@ -148,9 +162,11 @@ const app = fastify({
             awsRoutes(instance);
             credentialsRoutes(instance);
             deploymentRoutes(instance);
+            formConfigRoutes(instance);
             workingEnvironmentRoutes(instance);
             msSqlServerRoutes(instance);
             batchRoutes(instance);
+            pricingRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
@@ -177,7 +193,10 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
-                createAuditGroup(request, reply);
+                const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+                if (!requestUrl) {
+                    createAuditGroup(request, reply);
+                }
                 done();
             });
         }
@@ -193,9 +212,31 @@ const app = fastify({
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
         if (reply.statusCode !== 202) {
             updateAuditGroup(request, reply, payload);
+        } else if (request.url.includes('cloudformation/stack')) {
+            updateAuditGroupResponse(request, payload);
         }
         return payload;
     });
+
+try {
+    await createAndSubscribeToSnsTopicInAllRegions();
+    processCloudFormationMessages();
+} catch (error) {
+    logger.error('Failed to setup SNS-SQS infra', error);
+}
+
+try {
+    initializeDatabase();
+    await execute('node_modules/prisma/build/index.js migrate deploy');
+} catch (error) {
+    logger.error('Failed to initialize database', error);
+}
+
+try {
+    await checkAndCreateBucketLifecycleConfiguration();
+} catch (error) {
+    logger.error('Failed to check and create S3 bucket lifecycle');
+}
 
 app.listen({ port, host }, err => {
     if (err) {

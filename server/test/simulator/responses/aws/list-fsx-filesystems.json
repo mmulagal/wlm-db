@@ -1,12 +1,4 @@
 {
-    "$metadata": {
-        "httpStatusCode": 200,
-        "requestId": "e0e74955-62ff-4025-b0b0-43649f776f00",
-        "extendedRequestId": "undefined",
-        "cfId": "undefined",
-        "attempts": 1,
-        "totalRetryDelay": 0
-    },
     "FileSystems": [
         {
             "CreationTime": "2023-07-26T07:27:48.159Z",

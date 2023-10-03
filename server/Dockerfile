@@ -1,4 +1,4 @@
-FROM public.ecr.aws/k3z1v4d2/node:20-alpine
+FROM node:alpine3.18
 
 # Create a new user "netappuser" with UID 1000 and group name "netappgroup"
 RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
@@ -19,7 +19,12 @@ COPY config/log4js.json ./config/log4js.json
 COPY resources/mssql/templates/wlm-master.yaml ./resources/mssql/templates/wlm-master.yaml
 COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/templates/vpc-ad-validation.yaml
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
+COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/templates/standalone-deployment.yaml
 COPY dist/src ./
+
+COPY prisma ./prisma/
+
+COPY patches ./patches/
 
 RUN npm ci --omit=dev
 
@@ -37,4 +42,4 @@ ENV ENV_WLMDB_BUILD_GIT $ARG_WLMDB_BUILD_GIT
 ENV ENV_WLMDB_BUILD_TC $ARG_WLMDB_BUILD_TC
 ENV ENV_WLMDB_BUILD_MODE $ARG_WLMDB_BUILD_MODE
 
-CMD ["node", "--loader", "@esbuild-kit/esm-loader", "index.js"]
+CMD ["node", "--loader", "./utils/loader.js", "index.js"]

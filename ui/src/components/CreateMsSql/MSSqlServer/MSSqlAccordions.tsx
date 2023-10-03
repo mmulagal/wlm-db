@@ -115,7 +115,7 @@ const MSSqlAccordions = () => {
                     </Typography>
                 </div>
                 {/* Connectivity accordions */}
-                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <KeyPair />}
+                <KeyPair />
 
                 <ActiveDirectory />
                 {/* Ends here */}

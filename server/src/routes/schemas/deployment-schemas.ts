@@ -1,15 +1,18 @@
 import { RouteTags } from '../../utils/consts';
-import { AwsParams } from '../types/aws.types';
+import { AwsParamsWithRegion } from '../types/aws.types';
 import {
     CloudFormationTemplateRequestBody,
     CloudFormationTemplateResponse,
-    DeployTemplateResponse
+    DeployTemplateResponse,
+    DeploymentStatusListResponse,
+    DeploymentStatusResponse,
+    DeploymentStatusObjectParams
 } from '../types/deployment.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
     tags: [RouteTags.DEPLOYMENT],
-    params: AwsParams
+    params: AwsParamsWithRegion
 };
 
 // Create cloud formation template for user deployment Schema
@@ -32,4 +35,21 @@ const DeployTemplateSchema = {
     }
 };
 
-export { CreateCloudFormationTemplateSchema, DeployTemplateSchema };
+// Get status of all Cloudformation stacks
+const DeploymentStatusListSchema = {
+    ...baseRequest,
+    response: {
+        200: DeploymentStatusListResponse
+    }
+};
+
+// Get Cloudformation stack by id or name
+const DeploymentStatusSchema = {
+    ...baseRequest,
+    params: DeploymentStatusObjectParams,
+    response: {
+        200: DeploymentStatusResponse
+    }
+};
+
+export { CreateCloudFormationTemplateSchema, DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema };

@@ -1,19 +1,14 @@
 param(
     [Parameter(Mandatory=$true)]
-    [string]$Query
+    [string]$Query,
+    [Parameter(Mandatory=$false)]
+    [string]$Database
 )
- 
-$results = Invoke-Sqlcmd -Query $Query | ConvertTo-Json
-$objects = ConvertFrom-Json $results
-$objects | ForEach-Object {
 
-    $_.PSObject.Properties.Remove('RowError')
-    $_.PSObject.Properties.Remove('RowState')
-    $_.PSObject.Properties.Remove('Table')
-    $_.PSObject.Properties.Remove('ItemArray')
-    $_.PSObject.Properties.Remove('HasErrors')
-
+if($DATABASE){
+$results = sqlcmd -d $Database -Q $Query -y 0
 }
-
-$updatedJson = $objects | ConvertTo-Json
-Write-Output $updatedJson
+else{
+$results = sqlcmd -Q $Query -y 0
+}
+Write-Output $results 

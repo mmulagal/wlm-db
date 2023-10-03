@@ -1,7 +1,13 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { isArray } from 'lodash-es';
+import {
+    PrismaClientInitializationError,
+    PrismaClientKnownRequestError,
+    PrismaClientValidationError
+} from '@prisma/client/runtime/library.js';
 import { isHTTPError, isTimeoutError } from './got';
 import { INVALID_REGION_AWS, INVALID_REGION_MESSAGE, HttpErrorCodes } from './consts';
+
 import getLogger from './logger';
 
 const logger = getLogger();
@@ -36,6 +42,27 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
         reply.status(statusCode).send({ responseMessage });
     } else if (isTimeoutError(error)) {
         reply.gatewayTimeout();
+    } else if (error instanceof PrismaClientValidationError) {
+        logger.error('Error of type PrismaClientValidationError occured', error);
+        reply
+            .status(500)
+            .send({ message: 'The request to update database failed due to bad request.Please contact support' });
+    } else if (error instanceof PrismaClientInitializationError) {
+        logger.error('Error of type PrismaClientInitializationError occured', error);
+        reply
+            .status(500)
+            .send({ message: 'We are unable to establish connection with database. Please contact support' });
+    } else if (error instanceof PrismaClientKnownRequestError) {
+        logger.error('Error of type PrismaClientKnownRequestError occured', error);
+        reply.status(500).send({
+            message: `An error occurred in DB query engine.${
+                error?.meta?.cause
+                    ? error?.meta?.cause
+                    : error?.meta?.target
+                    ? `An unique key constraint violated ${error?.meta?.target}`
+                    : ''
+            }`
+        });
     } else {
         reply.status(statusCode).send({ message });
     }

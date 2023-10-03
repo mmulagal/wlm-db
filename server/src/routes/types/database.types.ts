@@ -1,8 +1,8 @@
-import { Type } from '@fastify/type-provider-typebox';
+import { Static, Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const DatabaseHeaders = Type.Object({
-    [HEADERS.WORKSPACE_ID_HEADER]: Type.String({ minLength: 1 })
+    [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String({ minLength: 1 }))
 });
 
 const DatabaseParams = Type.Object({
@@ -19,7 +19,7 @@ const Tablesparams = Type.Object({
 const MsSqlServerDiscoveryParams = Type.Object({
     accountId: Type.String(),
     credentialsId: Type.String(),
-    regionId: Type.String()
+    region: Type.String()
 });
 
 const MsSqlServerDiscoveryResponse = Type.Object({
@@ -28,8 +28,11 @@ const MsSqlServerDiscoveryResponse = Type.Object({
 });
 
 const MsSqlServerDiscoverRequestBody = Type.Object({
-    activeInstanceId: Type.String(),
-    standbyInstanceId: Type.String()
+    activeNodeInstanceId: Type.String(),
+    standbyNodeInstanceId: Type.Optional(Type.String()),
+    activeNodeInstanceName: Type.String(),
+    standbyNodeInstanceName: Type.Optional(Type.String()),
+    fsxId: Type.String()
 });
 
 const DatabasesResponseBody = Type.Object({
@@ -57,8 +60,9 @@ const ServerSummaryResponse = Type.Object({
     serverStatus: Type.String(),
     activeConnections: Type.Integer(),
     deploymentModel: Type.String(),
+    clusterName: Type.Optional(Type.String()),
     activeNode: Type.String(),
-    standbyNode: Type.String()
+    standbyNode: Type.Optional(Type.String())
 });
 
 const UtilisationResponseBody = Type.Object({
@@ -67,6 +71,8 @@ const UtilisationResponseBody = Type.Object({
     total: Type.String(),
     remaining: Type.String()
 });
+
+type UtilisationResponseBodyInterface = Static<typeof UtilisationResponseBody>;
 
 const TablesResponseBody = Type.Object({
     tables: Type.Array(
@@ -84,6 +90,7 @@ export {
     DatabaseParams,
     DatabasesResponseBody,
     UtilisationResponseBody,
+    UtilisationResponseBodyInterface,
     ServerSummaryResponse,
     Tablesparams,
     TablesResponseBody,

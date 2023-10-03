@@ -14,10 +14,22 @@ param(
     [string]$AdminSecret,
 
     [Parameter(Mandatory=$true)]
-    [string]$DomainAdminUser
+    [string]$DomainAdminUser,
+
+    [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname   
 
 )
 #Requires -Modules xFailOverCluster,PSDscResources,xActiveDirectory
+
+#get Instance ID
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
+
 try {
 Start-Transcript -Path C:\cfn\log\node1ONTAPClusterConfig.ps1.txt -Append
 $ErrorActionPreference = "Stop"
@@ -125,5 +137,7 @@ Node1ClusterConfig -OutputPath 'C:\cfn\dsc\Node1ClusterConfig' -ConfigurationDat
 Start-DscConfiguration 'C:\cfn\dsc\Node1ClusterConfig' -Wait -Verbose -Force
 
 } catch{
+    Write-Output "Configuring shared disks for Windows cluster failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }

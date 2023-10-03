@@ -1,8 +1,8 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
-import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST } from './consts';
+import { GENERAL, SELECT_CONFIG } from './appConstants';
+import { API_ERRORS, DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST, SQL_DATABASE } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
@@ -151,7 +151,7 @@ export const fsxPassVal = (password: string) => {
     }
 };
 
-export const encodeAll = (text: string | (string | null)[] | null) => {
+export const encodeAll = (text: string) => {
     if (text && typeof text === 'string') {
         const internalEncoding = text
             .replace(/%/g, '%25')
@@ -166,6 +166,9 @@ export const encodeAll = (text: string | (string | null)[] | null) => {
 };
 
 export const requiredFieldError = (inputString: string) => {
+    if(!inputString){
+        return null;
+    }
     const regex = /'([^']+)'/;
     const match = inputString.match(regex);
     const subStr = 'must have required property';
@@ -176,6 +179,16 @@ export const requiredFieldError = (inputString: string) => {
     }
 };
 
+export const customErrorMessages = (inputString: string) => {
+    if(!inputString){
+        return null;
+    }
+    if(inputString.includes(API_ERRORS.DUPLICATE_CONFIG_NAME)){
+        return SELECT_CONFIG.DUPLICATE_CONFIG_NAME;
+    }
+    return inputString;
+}
+
 export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
 
@@ -183,6 +196,11 @@ export const formatDate = (date: string | number) => {
     const dateStr = date.toString();
     const timeStamp = dateStr.substring(6,dateStr.length-2);
     return moment(new Date(parseInt(timeStamp))).format('LL');
+};
+
+export const formatDateWithTime = (date: string | number) => {
+    const dateStr = date.toString();
+    return moment(new Date(parseInt(dateStr))).format('LL HH:mm');
 };
 
 export const isNotNumberOrNA = (value: string | number) => {
@@ -236,11 +254,20 @@ export const isValidUserName = (userName: string) => {
 };
 
 
-export const sortListOfDict = (dataList: any, field: string) => {
-    if(dataList && dataList.length < 2){
+export const sortListOfDict = (dataList: any, field: string, ascOrder=true) => {
+    if(!dataList || (dataList && dataList.length < 2)){
         return dataList;
     };
-    const newDBList = dataList.slice().sort((a:any, b:any) => a[field].localeCompare(b[field]));
+    let newDBList = [];
+    try{
+        if(ascOrder){
+            newDBList = dataList.slice().sort((a:any, b:any) => a[field].toString().localeCompare(b[field].toString()));
+        } else {
+            newDBList = dataList.slice().sort((a:any, b:any) => b[field].toString().localeCompare(a[field].toString()));
+        }
+    } catch {
+        return dataList;
+    }
     return newDBList;
 };
 
@@ -256,4 +283,8 @@ export const formatSizeSplit = (value: number | string) => {
 
 export const displayFormattedValue = (value: number, msg: string) => {
     return `${formatSize(value)} ${msg}`;
+};
+
+export const generateRandomDBName = () => {
+    return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 }

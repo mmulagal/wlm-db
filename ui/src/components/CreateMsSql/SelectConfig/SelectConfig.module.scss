@@ -2,11 +2,14 @@
     display: flex;
     gap: 24px;
     .standard-create {
-        display: flex;
         width: 520px;
         height: 136px;
         padding: 24px 0 24px 24px;
         background-color: var(--white);
+
+        .level {
+            display: flex;
+        }
 
         .standard-create-content {
             display: flex;
@@ -26,6 +29,7 @@
                 font-size: 13px;
                 font-style: normal;
                 font-weight: 400;
+                height: 60px;
                 color: var(--grey-50);
                 font-family: -apple-system, 'system-ui';
                 width: 328px;
@@ -39,15 +43,21 @@
     }
 
     .tick-placement {
-        padding-left: 60px;
+        text-align: end;
+        position: relative;
+        bottom: 96px;
+        right: 16px;
     }
 
     .easy-create {
-        display: flex;
         width: 520px;
         height: 136px;
         padding: 24px 0 24px 24px;
         background-color: var(--white);
+
+        .level {
+            display: flex;
+        }
 
         .easy-create-content {
             display: flex;
@@ -67,7 +77,8 @@
                 font-size: 13px;
                 font-style: normal;
                 font-weight: 400;
-                width: 328px;
+                width: 319px;
+                height: 60px;
                 text-align: left;
                 color: var(--grey-50);
             }

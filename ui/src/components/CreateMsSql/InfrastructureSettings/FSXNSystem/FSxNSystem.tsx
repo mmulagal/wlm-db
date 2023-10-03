@@ -22,7 +22,7 @@ import {
     setFsxNType,
     setFsxNExistingUserName
 } from '../../../../store/mssql/mssqlFormSlice';
-import { FSXADMIN } from '../../../../utils/consts';
+import { FSXADMIN, FSX_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
@@ -46,34 +46,56 @@ const FSxNSystem = () => {
     const isFsxNotFilled = useAppSelector(state => state.msSqlAction.fsxNNameSelected);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const deploymentMode = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
 
     const [password, setPassword] = useState('');
 
     const fsxNameRef = useRef(null);
 
+    const fsxCheck = (val: any) => {
+        const svmCount = val?.storageVirtualMachines ? val.storageVirtualMachines.length : 0;
+        const throughputCapacity = val?.ontapConfiguration?.throughputCapacity;
+        const fsxType = val?.ontapConfiguration?.deploymentType;
+        const lifecycle = val?.lifecycle;
+        const fsxSubnets = val?.subnetIds || [];
+        const node1SubnetsList = selectedZone1?.data?.subnets || [];
+        const node2SubnetsList = selectedZone2?.data?.subnets || [];
+        let svmCheck = false;
+        if(throughputCapacity === 128 || throughputCapacity === 256) {
+            svmCheck = svmCount < 6 ? true : false;
+        } else if(throughputCapacity === 512 || throughputCapacity === 1024) {
+            svmCheck = svmCount < 14 ? true : false;
+        } else if(throughputCapacity === 2048 || throughputCapacity === 4096) {
+            svmCheck = svmCount < 24 ? true : false;
+        } else {
+            svmCheck = true;
+        }
+        if(lifecycle && lifecycle === 'AVAILABLE') {
+            if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1) {
+                return svmCheck && fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
+            } else if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+                return svmCheck && fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
-        //  MSSQL deployment is supported for Multi Availability Zone
-        const supportedFsxType = 'MULTI_AZ_1';
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            const fsxType = val?.ontapConfiguration?.deploymentType;
-            const lifecycle = val?.lifecycle;
-            const fsxSubnets = val?.subnetIds || [];
-            const node1SubnetsList = selectedZone1?.data?.subnets || [];
-            const node2SubnetsList = selectedZone2?.data?.subnets || [];
-            if (
-                fsxType &&
-                fsxType === supportedFsxType &&
-                lifecycle &&
-                lifecycle === 'AVAILABLE' &&
-                fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
-            ) {
-                const value = (val?.name || '-') + ' | ' + val?.fileSystemId;
+            if (fsxCheck(val)) {
+                const value = (val?.name ? val.name + ' | ' : '') + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
                     fileSystemName: val?.name,
-                    securityGroups: val?.securityGroups
+                    securityGroups: val?.securityGroups,
+                    throughput: val?.ontapConfiguration?.throughputCapacity,
+                    iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
+                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);
@@ -81,13 +103,14 @@ const FSxNSystem = () => {
         });
 
         return options;
-    }, [fsxnData, selectedZone1, selectedZone2]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fsxnData, selectedZone1, selectedZone2, deploymentMode]);
 
     useEffect(() => {
         if(!isLoadConfig){
             dispatch(setExistingFsxnName(generateExistingFsx[0]));
             dispatch(setFsxNExistingUserName(FSXADMIN));
-        }
+        } 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 
@@ -111,7 +134,8 @@ const FSxNSystem = () => {
             );
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        } else if (!selectedZone1 || !selectedZone2) {
+        } else if ((deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (!selectedZone1 || !selectedZone2)) || 
+            (deploymentMode?.label === GENERAL.SINGLE_INSTANCE && !selectedZone1)) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_AZ}
@@ -140,14 +164,23 @@ const FSxNSystem = () => {
         }
     };
 
+    const disableCheck = (() => {
+        if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER){
+            return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+            || !selectedZone1 || !selectedZone2;
+        } else {
+            return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+            || !selectedZone1;
+        }
+        
+    })();
+
     return (
         <div className={styles.fsx}>
             <AccordionCard
                 isLoading={fsxnLoading}
-                isDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
-                    || !selectedZone1 || !selectedZone2}
-                isExpandDisabled={!credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
-                    || !selectedZone1 || !selectedZone2}
+                isDisabled={disableCheck}
+                isExpandDisabled={disableCheck}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="15"
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}

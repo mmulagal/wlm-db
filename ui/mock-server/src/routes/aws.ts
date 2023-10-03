@@ -1,6 +1,16 @@
 import { BASE_URL, generateResponse } from '../utils/appUtils';
 
-import { AdsRes, AmisRes, FsxnRes, InstanceTypeRes, KeyPairRes, KmsKeysRes, RegionRes, SnsTopicsRes, VpcRes } from '../types/awsTypes';
+import {
+    AdsRes,
+    AmisRes,
+    FsxnRes,
+    InstanceTypeRes,
+    KeyPairRes,
+    KmsKeysRes,
+    RegionRes,
+    SnsTopicsRes,
+    VpcRes
+} from '../types/awsTypes';
 
 import vpcsData from '../data/vpcs.json';
 import regionsData from '../data/regions.json';
@@ -11,6 +21,7 @@ import kmsKeysData from '../data/kms-keys.json';
 import keyPairData from '../data/key-pairs.json';
 import instanceTypeData from '../data/instance-types.json';
 import fsxnData from '../data/fsxn.json';
+import pricingData from '../data/pricing.json';
 
 const router = require('express').Router();
 
@@ -39,10 +50,13 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/amis`, asy
 });
 
 // Get SNS mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/snsTopics`, async (req: {}, res: SnsTopicsRes) => {
-    const retData = snsTopicsData;
-    generateResponse(res, 200, retData);
-});
+router.get(
+    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/snsTopics`,
+    async (req: {}, res: SnsTopicsRes) => {
+        const retData = snsTopicsData;
+        generateResponse(res, 200, retData);
+    }
+);
 
 // Get KMS mock response
 router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/kmsKeys`, async (req: {}, res: KmsKeysRes) => {
@@ -57,14 +71,26 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/keyPairs`,
 });
 
 // Get Instance Type mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instanceTypes`, async (req: {}, res: InstanceTypeRes) => {
-    const retData = instanceTypeData;
-    generateResponse(res, 200, retData);
-});
+router.get(
+    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instanceTypes`,
+    async (req: {}, res: InstanceTypeRes) => {
+        const retData = instanceTypeData;
+        generateResponse(res, 200, retData);
+    }
+);
 
 // Get FSxN mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/fsx/regions/:region/vpcs/:vpcId/filesystems`, async (req: {}, res: FsxnRes) => {
-    const retData = fsxnData;
+router.get(
+    `${BASE_URL}/v1/credentials/:credentialsId/fsx/regions/:region/vpcs/:vpcId/filesystems`,
+    async (req: {}, res: FsxnRes) => {
+        const retData = fsxnData;
+        generateResponse(res, 200, retData);
+    }
+);
+
+//Get Pricing Data
+router.post(`${BASE_URL}/v1/credentials/:credentialsId/pricing`, async (req: {}, res: any) => {
+    const retData = pricingData;
     generateResponse(res, 200, retData);
 });
 

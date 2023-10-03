@@ -1,0 +1,96 @@
+import { createDeployment, deleteConfig, deleteDeployment } from '../../../src/lib/database/db';
+import {
+    getSavedConfig,
+    getAllSavedConfig,
+    saveConfig,
+    deleteSavedConfig,
+    getAllDeploymentStatus,
+    getDeploymentStatusById
+} from '../../../src/operations/database/database-operations';
+import { ACCOUNT_ID } from '../../utils/consts';
+
+describe('Database operations', () => {
+    it('Get saved config', async () => {
+        const response = await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
+            subnetId: 'test-subnet',
+            vpcId: 'test-vpc'
+        });
+        const resp = await getSavedConfig(ACCOUNT_ID, response.id);
+        expect(resp.accountId).toEqual(ACCOUNT_ID);
+        expect(resp.data.subnetId).toEqual('test-subnet');
+
+        await deleteConfig(ACCOUNT_ID, response.id);
+    });
+
+    it('Get all saved config', async () => {
+        await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
+            subnetId: 'test-subnet',
+            vpcId: 'test-vpc'
+        });
+        const resp = await getAllSavedConfig(ACCOUNT_ID);
+        expect(resp[0].accountId).toEqual(ACCOUNT_ID);
+        expect(resp[0].name).toEqual('testname');
+
+        await deleteConfig(ACCOUNT_ID, resp[0].id);
+    });
+    it('Delete saved config', async () => {
+        const { id } = await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
+            subnetId: 'test-subnet',
+            vpcId: 'test-vpc'
+        });
+        const response = await deleteSavedConfig(ACCOUNT_ID, id);
+        expect(response).toBeUndefined();
+    });
+    it('Get all deployment status', async () => {
+        const response = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-12345',
+            deploymentName: 'wlmdb-12345',
+            deploymentStatus: 'CREATE_COMPLETE',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-12345-sql',
+            deploymentName: 'wlmdb-12345-sql',
+            parentDeploymentId: 'wlmdb-12345',
+            deploymentStatus: 'CREATE_COMPLETE',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        const resp = await getAllDeploymentStatus(ACCOUNT_ID);
+        expect(response.deployment_id).toEqual(resp[0].deploymentId);
+
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-12345');
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-12345-sql');
+    });
+    it('Get deployment status by id', async () => {
+        const response = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-2345',
+            deploymentName: 'wlmdb-2345',
+            deploymentStatus: 'CREATE_COMPLETE',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        const response1 = await createDeployment(ACCOUNT_ID, {
+            deploymentId: 'wlmdb-45678',
+            deploymentName: 'wlmdb-45678',
+            deploymentStatus: 'CREATE_FAILED',
+            credentialsId: '',
+            startTime: 0,
+            region: ''
+        });
+        let resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-2345');
+        expect(response.deployment_id).toEqual(resp.deploymentId);
+        expect(response.deployment_status).toEqual(resp.deploymentStatus);
+
+        resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-45678');
+        expect(response1.deployment_id).toEqual(resp.deploymentId);
+        expect(response1.deployment_status).toEqual(resp.deploymentStatus);
+
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-2345');
+        await deleteDeployment(ACCOUNT_ID, 'wlmdb-45678');
+    });
+});

@@ -26,11 +26,13 @@ const AvailabilityZone = () => {
     const selectedZone2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedAzNode2);
     const selectedSubnet1 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode1);
     const selectedSubnet2 = useAppSelector(state => state.mssqlForm.availabilityZones.selectedSubnetNode2);
+    const deploymentMode = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
+
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
-
+    
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
 
@@ -52,6 +54,14 @@ const AvailabilityZone = () => {
         
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
+
+    useEffect(() => {
+        if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+            dispatch(setSelectedAzNode2(null));
+            dispatch(setSelectedSubnetNode2(null));
+            setRouteTable2(undefined);
+        }
+    }, [deploymentMode]);
 
     //Function to generate the options for Select Field for Zone 1
     const generateZones1 = useMemo<optionType[]>((): optionType[] => {
@@ -113,7 +123,9 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone1]);
 
     useEffect(() => {
-        dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet1Options]);
 
@@ -165,7 +177,9 @@ const AvailabilityZone = () => {
     }, [selectedVPCData, selectedZone2]);
 
     useEffect(() => {
-        dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        if(!isLoadConfig){
+            dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateSubnet2Options]);
 
@@ -180,21 +194,37 @@ const AvailabilityZone = () => {
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
         }
-        if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
-            return <ActionRequired error={!isAZNotFilled ? true : false} />;
+
+        if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
+            if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
+                return <ActionRequired error={!isAZNotFilled ? true : false} />;
+            } else {
+                return (
+                    <div className={CommonStyles.setHeaderStyle}>
+                        <div className={CommonStyles.regular}>
+                            Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
+                        </div>
+                        <div className={CommonStyles.separator} />
+                        <div className={CommonStyles.regular}>
+                            Node 2:{selectedZone2?.label} ({selectedSubnet2?.label})
+                        </div>
+                    </div>
+                );
+            }
         } else {
-            return (
-                <div className={CommonStyles.setHeaderStyle}>
-                    <div className={CommonStyles.regular}>
-                        Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
+            if (!selectedZone1?.label || !selectedSubnet1?.label) {
+                return <ActionRequired error={!isAZNotFilled ? true : false} />;
+            } else {
+                return (
+                    <div className={CommonStyles.setHeaderStyle}>
+                        <div className={CommonStyles.regular}>
+                            Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
+                        </div>
                     </div>
-                    <div className={CommonStyles.separator} />
-                    <div className={CommonStyles.regular}>
-                        Node 2:{selectedZone2?.label} ({selectedSubnet2?.label})
-                    </div>
-                </div>
-            );
+                );
+            }
         }
+        
     };
 
     useEffect(() => {
@@ -282,64 +312,68 @@ const AvailabilityZone = () => {
                             />
                         </div>
 
-                        <div className={styles.firstContainer}>
-                            <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_2}</Typography>
-                            <SelectField
-                                label={GENERAL.AZ_Zone}
-                                placeholder="Select an availability zone"
-                                ref={az2Ref}
-                                isClearable={false}
-                                value={selectedZone2 ? selectedZone2 : undefined}
-                                error={!isAZNotFilled && !selectedZone2 ? GENERAL.ACTION_REQUIRED : ''}
-                                //@ts-ignore
-                                isErrorPrefixHidden
-                                customErrorWarningIcon={
-                                    <WarningIcon
-                                        style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            //@ts-ignore
-                                            '--icon-primary-color': 'var(--error'
-                                        }}
-                                    />
-                                }
-                                onChange={(selectedOptions: any): void => {
-                                    dispatch(setSelectedAzNode2(selectedOptions));
-                                }}
-                                isSearchable={generateZones2.length > 5}
-                                options={generateZones2}
-                                className={styles.selectField}
-                            />
+                        {
+                            deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && 
+                            <div className={styles.firstContainer}>
+                                <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_2}</Typography>
+                                <SelectField
+                                    label={GENERAL.AZ_Zone}
+                                    placeholder="Select an availability zone"
+                                    ref={az2Ref}
+                                    isClearable={false}
+                                    value={selectedZone2 ? selectedZone2 : undefined}
+                                    error={!isAZNotFilled && !selectedZone2 ? GENERAL.ACTION_REQUIRED : ''}
+                                    //@ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--error'
+                                            }}
+                                        />
+                                    }
+                                    onChange={(selectedOptions: any): void => {
+                                        dispatch(setSelectedAzNode2(selectedOptions));
+                                    }}
+                                    isSearchable={generateZones2.length > 5}
+                                    options={generateZones2}
+                                    className={styles.selectField}
+                                />
 
-                            <SelectField
-                                label={GENERAL.SUBNET}
-                                placeholder="Select a subnet"
-                                isClearable={false}
-                                ref={sub2Ref}
-                                value={selectedSubnet2 ? selectedSubnet2 : undefined}
-                                error={!isAZNotFilled && !selectedSubnet2 ? GENERAL.ACTION_REQUIRED : ''}
-                                //@ts-ignore
-                                isErrorPrefixHidden
-                                customErrorWarningIcon={
-                                    <WarningIcon
-                                        style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            //@ts-ignore
-                                            '--icon-primary-color': 'var(--error'
-                                        }}
-                                    />
-                                }
-                                onChange={(selectedOptions: any): void => {
-                                    dispatch(setSelectedSubnetNode2(selectedOptions));
-                                    setRouteTable2(selectedOptions?.data?.routeTableId);
-                                }}
-                                isSearchable={generateSubnet2Options.length > 5}
-                                options={generateSubnet2Options}
-                                className={styles.selectField}
-                                variant="two-lines"
-                            />
-                        </div>
+                                <SelectField
+                                    label={GENERAL.SUBNET}
+                                    placeholder="Select a subnet"
+                                    isClearable={false}
+                                    ref={sub2Ref}
+                                    value={selectedSubnet2 ? selectedSubnet2 : undefined}
+                                    error={!isAZNotFilled && !selectedSubnet2 ? GENERAL.ACTION_REQUIRED : ''}
+                                    //@ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--error'
+                                            }}
+                                        />
+                                    }
+                                    onChange={(selectedOptions: any): void => {
+                                        dispatch(setSelectedSubnetNode2(selectedOptions));
+                                        setRouteTable2(selectedOptions?.data?.routeTableId);
+                                    }}
+                                    isSearchable={generateSubnet2Options.length > 5}
+                                    options={generateSubnet2Options}
+                                    className={styles.selectField}
+                                    variant="two-lines"
+                                />
+                            </div>
+                        }
+                        
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

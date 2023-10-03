@@ -23,7 +23,7 @@ function hideSecretsValues(obj: any) {
             }
         });
     }
-    return obj;
+    return JSON.stringify(obj);
 }
 
 function getActiveTraceId() {

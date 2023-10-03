@@ -7,7 +7,7 @@ import mssqlFormSlice from './mssql/mssqlFormSlice';
 import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
-import { requiredFieldError } from '../utils/utilityFunctions';
+import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -24,17 +24,14 @@ const rootReducer = combineReducers({
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
-        let errorMsg = action.payload.error || action.payload.data?.message;
-
-        // Added temporary to avoid error message for save and load config
-        if(errorMsg.includes('api/v1/config')){
-            return
-        }
+        let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
         const reqFieldChk = requiredFieldError(errorMsg);
         if(reqFieldChk){
             errorMsg = reqFieldChk + GENERAL.IS_REQUIRED_MSG;
         }
+
+        errorMsg = customErrorMessages(errorMsg);
         if(errorMsg && errorMsg.length > 250) {
             api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.QUERY_ERROR, 
                 additionalText: errorMsg }));

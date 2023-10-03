@@ -6,24 +6,90 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
 import { useDispatch } from 'react-redux';
-import { setSelectConfig, setThroughputValue } from '../../../../store/mssql/mssqlFormSlice';
+import { 
+    setCloudWatch, 
+    setDBName, 
+    setDBVersion, 
+    setSelectConfig, 
+    setSelectedDBDeploymentModel, 
+    setSelectedDBEdition, 
+    setSelectedOperatingSystem, 
+    setSNSARN, 
+    setSNSState, 
+    setTags 
+} from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { generateOptionType } from '../../../../utils/utilityFunctions';
-import { DEFAULT_MASTER_KEY, SQL_DATABASE } from '../../../../utils/consts';
+import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { 
+    selectDefaultEncryption, 
+    selectDefaultInstanceType, 
+    selectDefaultLicense,
+    selectDefaultSecurityGroup,
+    selectFsxIops,
+    selectFsxThroughput
+} from '../../MSSqlServer/MSSqlUtils';
+import { generateRandomDBName } from '../../../../utils/utilityFunctions';
 
 const PreviewDefault = () => {
     const dispatch = useDispatch();
 
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const instanceValue = useAppSelector(state => state.mssqlForm.instanceType);
+    const dbName = useAppSelector(state => state.mssqlForm.dbName);
+    const throughputValue = useAppSelector(state => state.mssqlForm.throughput);
+    const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.IOPSValue);
+    const amiLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
+    const instanceTypeData = useAppSelector(state => state.mssql.getInstanceTypeList?.instanceTypeData);
+    const kmsData = useAppSelector(state => state.mssql.getKmsList.kmsData);
+    const amiData = useAppSelector(state => state.mssql.getAmiList.amiData);
+    const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+    const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
 
     useEffect(() => {
-        if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
-            const throughputVal = '128 MBps';
-            const option = generateOptionType(throughputVal, throughputVal, '', false, '');
-            dispatch(setThroughputValue(option));
+        if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
+            selectDefaultSecurityGroup(dispatch);
+            dispatch(
+                setSelectedOperatingSystem({
+                    label: GENERAL.WIN_SERVER_2016,
+                    value: GENERAL.WIN_SERVER_2016_VERSION
+                })
+            );
+            dispatch(
+                setSelectedDBDeploymentModel({
+                    label: GENERAL.FAILOVER_CLUSTER,
+                    value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                })
+            );
+            dispatch(
+                setSelectedDBEdition({
+                    label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+                    value: GENERAL.SQL_SERVER_STANDARD
+                })
+            );
+            dispatch(
+                setDBVersion({
+                    value: GENERAL.SQL_SERVER_2019_VERSION,
+                    label: GENERAL.SQL_SERVER_2019
+                })
+            );
+            selectDefaultLicense(amiData, dispatch);
+            dispatch(setDBName(generateRandomDBName()));
+            selectDefaultInstanceType(instanceTypeData, dispatch);
+            selectDefaultEncryption(kmsData, dispatch);
+            dispatch(setTags([{ key: '', value: '' }]));
+            dispatch(setSNSState(false));
+            dispatch(setSNSARN(''));
+            dispatch(setCloudWatch(false));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);
+
+    useEffect(() => {
+        selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, '128 MBps', dispatch);
+        selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedFsxnType, selectedExistingFsxnName]);
 
     const data = [
         {
@@ -56,26 +122,30 @@ const PreviewDefault = () => {
             editable: GENERAL.PD_UPGRADED_MANUALLY,
             id: '5'
         },
-        { accordionName: GENERAL.LICENSE, defaultValue: GENERAL.LICENSE_INCLUDED_AMI, editable: GENERAL.NO, id: '6' },
-        { accordionName: GENERAL.DATABASE_NAME, defaultValue: SQL_DATABASE, editable: GENERAL.YES, id: '7' },
-        { accordionName: GENERAL.KEY_PAIR, defaultValue: GENERAL.FIRST_IN_THE_LIST, editable: GENERAL.YES, id: '8' },
+        { accordionName: GENERAL.LICENSE, defaultValue: amiLicense?.value, editable: GENERAL.NO, id: '6' },
+        { accordionName: GENERAL.DATABASE_NAME, defaultValue: dbName, editable: GENERAL.YES, id: '7' },
         {
             accordionName: GENERAL.INSTANCE_TYPE,
-            defaultValue: GENERAL.PD_AUTO_CREATE,
+            defaultValue: instanceValue?.value,
             editable: GENERAL.NO,
             id: '9'
         },
-        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
-        { accordionName: GENERAL.THROUGHPUT_CAPACITY, defaultValue: '128 MBps', editable: GENERAL.YES, id: '11' },
+        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: iopsValue || GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
+        {
+            accordionName: GENERAL.THROUGHPUT_CAPACITY,
+            defaultValue: throughputValue?.value,
+            editable: GENERAL.YES,
+            id: '11'
+        },
         { accordionName: GENERAL.ENCRYPTION, defaultValue: DEFAULT_MASTER_KEY, editable: GENERAL.YES, id: '12' },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
             accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,
             defaultValue: GENERAL.PD_DISABLED,
-            editable: '-',
+            editable: 'N/A',
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: '-', id: '15' }
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: 'N/A', id: '15' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
@@ -117,6 +187,13 @@ const PreviewDefault = () => {
 
     const handleConfig = () => {
         dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+        setTimeout(() => {
+            document.querySelector('#easy-create')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+            });
+        }, 500);
     };
     return (
         <div className={styles['preview-default']}>

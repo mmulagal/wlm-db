@@ -16,13 +16,16 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
+    DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
-        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.'
+        'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
+    DUPLICATE_CONFIG_NAME: 'A saved configuration with that name already exists. Try again with a different name.'
 };
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
+    COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
     NO_CREDENTIALS: 'No credentials are available',
     ACTION_REQUIRED: 'Action Required',
@@ -51,7 +54,7 @@ export const GENERAL = {
     TAGS: 'Tags',
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
-    SAVE_FORM_AS_CLOUD: 'Save this configuration as a CloudFormation template',
+    SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
@@ -93,7 +96,7 @@ export const GENERAL = {
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
-    CLOUDFORMATION_TEMPLATE_URL: 'CloudFormation template URL',
+    CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
     SAME_ROUTE_SUBNET_ERROR: 'AWS FSx requires route tables to be different for subnets in multi-zone deployment.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
@@ -234,7 +237,7 @@ export const GENERAL = {
     EXPIRATION_DATE: 'Expiration date',
     ORIGIN: 'Origin',
     ONLY_ENABLED_KEYS: 'Only enabled keys are displayed.',
-    TAGS_HEADING_MSG: 'You can add upto 50 tags',
+    TAGS_HEADING_MSG: 'You can add upto 40 tags',
     ADD_NEW_TAG: '+ Add new tag',
     TAG_KEY: 'Tag key',
     TAG_VALUE: 'Tag value',
@@ -246,7 +249,9 @@ export const GENERAL = {
     CLOUD_FORMATION_URL_TEXT: 'The CloudFormation URL can be loaded using the',
     PASSWORD_ERROR_CHECK: 'Check password criteria',
     CREATE_INFO_MESSAGE: [
-        'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. You can track the progress using the ',
+        'Microsoft SQL Server and FSxN for ONTAP deployment ',
+        'with stack name ',
+        ' has been triggered. You can track the progress using the ',
         'Timeline',
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
@@ -313,5 +318,7 @@ export const GENERAL = {
     CONFIG_CLOUDWATCH: 'Configure CloudWatch monitoring',
     PROTECT_AWS_BACKUP: 'Protect with AWS Backup',
     CONNECT_TO_AWS_SAGE: 'Connect to AWS SageMaker',
-    CONNECT_TO_AD: 'Connect to Active Directory'
+    CONNECT_TO_AD: 'Connect to Active Directory',
+    THROUGHPUT_DISABLE_TEXT: "Throughput can't be changed, value is taken from the selected FSx for ONTAP.",
+    IOPS_DISABLE_TEXT: "Provisioned IOPS can't be changed, value is taken from the selected FSx for ONTAP."
 };

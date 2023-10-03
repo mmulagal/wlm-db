@@ -2,10 +2,21 @@
  * This file contains the utility functions
  * These functions can be re-used at different places and act as helper functions
  */
-import { trimEnd, trimStart } from 'lodash-es';
+import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getAsyncLocalStorageResource } from './async-local-storage';
-import { SQL_AMI_NAMES, WLMDB, USER_TOKEN, FSX_SSD_MIN_SIZE, FSX_SSD_MAX_SIZE } from './consts';
+
+import {
+    SQL_AMI_NAMES,
+    WLMDB,
+    USER_TOKEN,
+    DEFAULT_AWS_REGION,
+    FSX_SSD_MIN_SIZE,
+    FSX_SSD_MAX_SIZE,
+    FCI_STACKNAME,
+    STANDALONE_STACKNAME
+} from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
@@ -21,12 +32,64 @@ function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: strin
         .filter(ami => (dbEdition ? ami.toLowerCase().includes(dbEdition.toLowerCase()) : true));
 }
 
-function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean) {
+function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean, sqlDeploymentType: string = 'fci') {
     const prefix = WLMDB;
     const suffix = Date.now();
     const randomDigits = generateRandomNumberInRange(10000, 99999);
 
-    const FSxDataLunSizeInMib = FSxDataLunSize * 1024;
+    const {
+        FSxDataLunSizeInMib,
+        FSxDataVolumeSize,
+        FSxLogVolumeSize,
+        FSxTempDbVolumeSize,
+        FSxQuorumVolumeSize,
+        FSxStorageCapacity
+    } = calculateFsxStorageCapacity(FSxDataLunSize);
+
+    const stacknameSubstring = sqlDeploymentType === 'fci' ? FCI_STACKNAME : STANDALONE_STACKNAME;
+    const netbios =
+        sqlDeploymentType === 'fci'
+            ? [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`]
+            : [`sqlnode-${randomDigits}`];
+
+    let params = {
+        UniqueID: suffix,
+        StackName: `${prefix.toUpperCase()}-${stacknameSubstring}-${suffix}`,
+        // VpcName: `${prefix}-vpc-${suffix}`,
+        FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
+        FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
+        FSxDataVolumeSize,
+        FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
+        FSxLogVolumeSize, // 25% of FSxDataVolumeSize
+        FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
+        FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
+        FSxSvmName: `${prefix}_svm_${suffix}`,
+        SQLigroupname: `${prefix}_sqligroup_${suffix}`,
+        SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
+        NodeNetBIOSNames: netbios,
+        DomainAdminSecretName: `${prefix}-domain-${suffix}`,
+        FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
+        SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
+        FSxStorageCapacity,
+        FSxDataLunSize: FSxDataLunSizeInMib
+    };
+    if (sqlDeploymentType === 'fci') {
+        params = {
+            ...params,
+            ...{
+                SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
+                FSxQuorumVolumeName: `${prefix}_quorum_${suffix}`,
+                FSxQuorumVolumeSize
+            }
+        };
+    }
+    return params;
+}
+
+function calculateFsxStorageCapacity(fsxDataLunSize: number) {
+    logger.info('Calculate FSX Storage capacity from the database size', { fsxDataLunSize });
+
+    const FSxDataLunSizeInMib = fsxDataLunSize * 1024;
 
     // All these in MiB
     const FSxDataVolumeSize = Math.ceil(1.1 * FSxDataLunSizeInMib); // FSxDataLunSize + 10% of FSxDataLunSize
@@ -42,29 +105,15 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
     FSxStorageCapacity = Math.max(FSxStorageCapacity, FSX_SSD_MIN_SIZE);
     FSxStorageCapacity = Math.min(FSxStorageCapacity, FSX_SSD_MAX_SIZE);
 
+    logger.debug('FSx Storage Capacity', { FSxStorageCapacity });
+
     return {
-        UniqueID: suffix,
-        StackName: `${prefix.toUpperCase()}-SQLFCIStack-${suffix}`,
-        // VpcName: `${prefix}-vpc-${suffix}`,
-        SqlFSxWSFCName: `WLMWSFC-${randomDigits}`,
-        FSxFileSystemName: isExistingFSx ? '' : `${prefix}-fsx-${suffix}`,
-        FSxDataVolumeName: `${prefix}_sqldata_${suffix}`,
+        FSxDataLunSizeInMib,
         FSxDataVolumeSize,
-        FSxLogVolumeName: `${prefix}_sqllog_${suffix}`,
-        FSxLogVolumeSize, // 25% of FSxDataVolumeSize
-        FSxTempDbVolumeName: `${prefix}_sqltemp_${suffix}`,
-        FSxTempDbVolumeSize, // 10% of FSxDataVolumeSize
-        FSxQuorumVolumeName: `${prefix}_quorum_${suffix}`,
+        FSxLogVolumeSize,
+        FSxTempDbVolumeSize,
         FSxQuorumVolumeSize,
-        FSxSvmName: `${prefix}_svm_${suffix}`,
-        SQLigroupname: `${prefix}_sqligroup_${suffix}`,
-        SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
-        NodeNetBIOSNames: [`sqlnode1-${randomDigits}`, `sqlnode2-${randomDigits}`],
-        DomainAdminSecretName: `${prefix}-domain-${suffix}`,
-        FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
-        SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
-        FSxStorageCapacity,
-        FSxDataLunSize: FSxDataLunSizeInMib
+        FSxStorageCapacity
     };
 }
 
@@ -89,10 +138,76 @@ function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
     );
 }
 
+function checkAndRetrieveJsonObject(str: string | undefined) {
+    try {
+        if (str) {
+            const result = attempt(JSON.parse, str);
+            if (result instanceof Error) {
+                return { isValid: false };
+            }
+            return { isValid: true, message: result };
+        }
+        return { isValid: false };
+    } catch (err) {
+        return { isValid: false };
+    }
+}
+
+function getQueueArn(accountId: string, queueName: string) {
+    return `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+}
+
+function getSnsArn(accountId: string, region: string, snsName: string) {
+    return `arn:aws:sns:${region}:${accountId}:${snsName}`;
+}
+
+function getQueueUrl(accountId: string, queueName: string) {
+    return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
+}
+
+function derivePropertiesFromARN(awsResourceArn: string) {
+    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.*):(?<awsAccountId>.+):(?<resourceName>.+)/;
+    if (ARN_FORMAT.test(awsResourceArn)) {
+        const matchResult = awsResourceArn.match(ARN_FORMAT);
+        if (matchResult && matchResult.groups) {
+            const { awsServiceName, region, awsAccountId, resourceName } = matchResult.groups;
+
+            return {
+                awsServiceName,
+                region,
+                awsAccountId,
+                resourceName
+            };
+        }
+    }
+}
+
 async function sleep(ms: number) {
     await new Promise(resolve => {
         setTimeout(resolve, ms);
     });
+}
+
+function generateHash(value: string) {
+    const hash = crypto.createHash('sha256');
+    hash.update(value);
+    return hash.digest('hex');
+}
+
+function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
+    logger.debug('Converting size to GiB', { size });
+
+    if (Number.isNaN(size)) {
+        return 0;
+    }
+
+    switch (currentUnit.toLocaleUpperCase()) {
+        case 'MB':
+        case 'MIB':
+            return size / 1024;
+        default:
+            return size;
+    }
 }
 
 export {
@@ -101,5 +216,13 @@ export {
     getSubjectFromBearerToken,
     hideSecretsValues,
     isSameRoutetables,
-    sleep
+    checkAndRetrieveJsonObject,
+    getQueueArn,
+    getQueueUrl,
+    derivePropertiesFromARN,
+    sleep,
+    getSnsArn,
+    generateHash,
+    calculateFsxStorageCapacity,
+    sizeInGigaBytes
 };

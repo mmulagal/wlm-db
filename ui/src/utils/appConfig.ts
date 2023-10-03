@@ -13,6 +13,7 @@ import {
     updateWorkspaceId 
 } from '../store/authSlice';
 import { DATABASE_SERVICE_PATH } from './consts';
+import { encodeAll } from './utilityFunctions';
 
 const navigateToCanvas = (pathname: string) => {
     postBlueXPMessage({
@@ -29,9 +30,10 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken, pathname, storage, storageId, storageName } = search;
+        const { accountId, accessToken, pathname, storage, storageId, storageName, workspaceId } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
+        const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
 
         if(accountIdAsString){
             dispatch(updateAccountId(accountIdAsString || ''));
@@ -41,12 +43,17 @@ const useInitialize = () => {
             dispatch(updateAuthSuccess({accessToken: accessTokenAsString || ''}));
         }
 
+        if(workspaceIdAsString){
+            dispatch(updateWorkspaceId(workspaceIdAsString));
+        }
+
         const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
+        const storageNameAsString = (Array.isArray(storageName) ? storageName[0] : storageName) || '';
         if (pathnameAsString) {
             if(pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH){
-                navigate(`${storage}/${storageId}/${storageName}`);
+                navigate(`${storage}/${storageId}/${encodeAll(storageNameAsString)}`);
                 dispatch(updateResourceId(storageId));
-                dispatch(updateResourceName(storageName));
+                dispatch(updateResourceName(storageNameAsString));
             } else {
                 navigate(`${pathnameAsString}`, { replace: true });
             }
@@ -66,9 +73,11 @@ const useInitialize = () => {
                 const storage = initialData?.storage;
                 const storageId = initialData?.storageId;
                 const storageName = initialData?.storageName;
-                navigate(`${storage}/${storageId}/${storageName}`);
+                const workspaceId = initialData?.workspaceId;
+                navigate(`${storage}/${storageId}/${encodeAll(storageName)}`);
                 dispatch(updateResourceId(storageId));
                 dispatch(updateResourceName(storageName));
+                dispatch(updateWorkspaceId(workspaceId));
             } else {
                 navigate(`${initialData?.pathname}`, { replace: true });
             }

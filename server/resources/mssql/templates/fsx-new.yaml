@@ -9,6 +9,7 @@ Metadata:
             - Label:
                   default: Amazon FSx for NetApp ONTAP file system configuration
               Parameters:
+                  - DeploymentMode
                   - FSxFileSystemName
                   - FSxAdministratorPasswordSecret
                   - FSxDiskIops
@@ -41,6 +42,8 @@ Metadata:
                   - PreferredRouteTableId
                   - StandbyRouteTableId
         ParameterLabels:
+            DeploymentMode:
+                default: File system deployment mode
             FSxFileSystemName:
                 default: File system name
             FSxAdministratorPasswordSecret:
@@ -87,6 +90,12 @@ Metadata:
                 default: Standby VPC route table
 
 Parameters:
+    DeploymentMode:
+        Description: File system deployment mode
+        Type: String
+        Default: MULTI_AZ_1
+        AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1]
+
     FSxFileSystemName:
         Description: Name of Amazon FSx for NetApp ONTAP file system .
         Type: String
@@ -187,7 +196,8 @@ Parameters:
 
     StandbySubnetId:
         Description: Specify the standby subnet for your file system.
-        Type: AWS::EC2::Subnet::Id
+        Type: String
+        Default: subnet-123456
 
     PreferredRouteTableId:
         Description: Preferred VPC route tables to associate with your file system.
@@ -196,10 +206,12 @@ Parameters:
     StandbyRouteTableId:
         Description: Standby VPC route tables to associate with your file system.
         Type: String
+        Default: rtb-123456
 
 Conditions:
     FSxIsProvisionModeAutomatic: !Equals [!Ref FSxDiskIops, '3']
     FSxIsKmsKeyIdEmpty: !Equals [!Ref FSxKmsKeyId, '']
+    FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
 
 Resources:
     ONTAPSecurityGroup:
@@ -209,10 +221,6 @@ Resources:
             VpcId:
                 Ref: VPCID
             SecurityGroupIngress:
-                - IpProtocol: -1
-                  FromPort: -1
-                  ToPort: -1
-                  CidrIp: !Ref VPCCIDR
                 - IpProtocol: ICMP
                   FromPort: -1
                   ToPort: -1
@@ -327,17 +335,23 @@ Resources:
                 - Ref: ONTAPSecurityGroup
             StorageCapacity: !Ref FSxStorageCapacity
             StorageType: SSD # This is the only type supported for FSx/ONTAP.
-            SubnetIds: [!Ref PreferredSubnetId, !Ref StandbySubnetId]
+            SubnetIds:
+                !If [FSxIsMultiZoneDeployment, [!Ref PreferredSubnetId, !Ref StandbySubnetId], [!Ref PreferredSubnetId]]
             OntapConfiguration:
                 AutomaticBackupRetentionDays: 0 # Disable automatic backups.
                 WeeklyMaintenanceStartTime: !Ref FSxWeeklyMaintenanceStartTime
-                DeploymentType: MULTI_AZ_1
+                DeploymentType: !Ref DeploymentMode
                 DiskIopsConfiguration:
                     Iops: !If [FSxIsProvisionModeAutomatic, !Ref AWS::NoValue, !Ref FSxDiskIops]
                     Mode: !If [FSxIsProvisionModeAutomatic, AUTOMATIC, USER_PROVISIONED]
                 FsxAdminPassword: !Sub '{{resolve:secretsmanager:${FSxAdministratorPasswordSecret}:SecretString:password}}'
                 PreferredSubnetId: !Ref PreferredSubnetId
-                RouteTableIds: [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId]
+                RouteTableIds:
+                    !If [
+                        FSxIsMultiZoneDeployment,
+                        [!Ref PreferredRouteTableId, !Ref StandbyRouteTableId],
+                        !Ref AWS::NoValue
+                    ]
                 ThroughputCapacity: !Ref FSxVolumeThroughputCapacity
 
     FSxSvmConfiguration:
@@ -360,10 +374,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxDataVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxLogVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -377,10 +391,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxLogVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxTempDbVolumeConfiguration:
         Type: AWS::FSx::Volume
@@ -394,13 +408,14 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxTempDbVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
     FSxClusterQuorumVolumeConfiguration:
         Type: AWS::FSx::Volume
+        Condition: FSxIsMultiZoneDeployment
         Properties:
             Name: !Ref FSxClusterQuorumVolumeName
             VolumeType: ONTAP
@@ -411,10 +426,10 @@ Resources:
                 JunctionPath: !Join ['', [/, !Ref FSxClusterQuorumVolumeName]]
                 OntapVolumeType: RW
                 SnapshotPolicy: default
-                StorageEfficiencyEnabled: No
+                StorageEfficiencyEnabled: true
                 TieringPolicy:
-                    Name: AUTO
-                    CoolingPeriod: 2
+                    Name: SNAPSHOT_ONLY
+                    CoolingPeriod: 7
 
 Outputs:
     FSxFileSystemLogicalId:
@@ -522,18 +537,22 @@ Outputs:
         Value: !Ref FSxClusterQuorumVolumeConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeLogicalId
+        Condition: FSxIsMultiZoneDeployment
     FSxClusterQuorumVolumeArn:
         Description: ARN of FSx data volume
         Value: !GetAtt FSxClusterQuorumVolumeConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeArn
+        Condition: FSxIsMultiZoneDeployment
     FSxClusterQuorumVolumeId:
         Description: System generated ID of volume
         Value: !GetAtt FSxClusterQuorumVolumeConfiguration.VolumeId
         Export:
             Name: !Sub ${AWS::StackName}--FSxClusterQuorumVolumeId
+        Condition: FSxIsMultiZoneDeployment
     FSxClusterQuorumVolumeUuid:
         Description: System generated UUID of volume
         Value: !GetAtt FSxClusterQuorumVolumeConfiguration.UUID
         Export:
             Name: !Sub ${AWS::StackName}-FSxClusterQuorumVolumeUuid
+        Condition: FSxIsMultiZoneDeployment

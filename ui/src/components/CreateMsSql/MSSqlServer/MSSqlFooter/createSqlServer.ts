@@ -10,8 +10,9 @@ import {
     setLicenseIdValue,
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
-import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
-import { MssqlRequestBody } from '../../../../utils/types/mssqlTypes';
+import { GENERAL } from '../../../../utils/appConstants';
+import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
 const createMssqlPayload = (state: any) => {
@@ -105,6 +106,15 @@ const createMssqlPayload = (state: any) => {
         return ontapSgGroupList;
     })();
 
+    const fsxDeploymentMode = (() => {
+        const deploymentType = state.mssqlForm.dbDeploymentModel?.value;
+        if(deploymentType === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+            return FSX_DEPLOYMENT_MODE.SINGLE_AZ_1;
+        } else {
+            return FSX_DEPLOYMENT_MODE.MULTI_AZ_1;
+        }
+    })();
+
     payload = {
         networkConfiguration: {
             vpcId: state.mssqlForm.regionAndVpc.selectedVPC?.data?.id || '',
@@ -112,9 +122,9 @@ const createMssqlPayload = (state: any) => {
             availabilityZone1: state.mssqlForm.availabilityZones.selectedAzNode1?.value || '',
             privateSubnet1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.id || '',
             routeTable1Id: state.mssqlForm.availabilityZones.selectedSubnetNode1?.data?.routeTableId || '',
-            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value || '',
-            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id || '',
-            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId || ''
+            availabilityZone2: state.mssqlForm.availabilityZones.selectedAzNode2?.value,
+            privateSubnet2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.id,
+            routeTable2Id: state.mssqlForm.availabilityZones.selectedSubnetNode2?.data?.routeTableId
         },
         ec2Configuration: {
             workloadInstanceType: state.mssqlForm.instanceType?.value || '',
@@ -129,6 +139,7 @@ const createMssqlPayload = (state: any) => {
             securityGroupId: state.mssqlForm.activeDirectory?.domainName?.data?.securityGroupId || ''
         },
         fsxConfiguration: {
+            fsxDeploymentMode: fsxDeploymentMode,
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
             fsxUsername: fileSystem?.fsxUsername,
             fsxPassword: fileSystem?.fsxPassword,
@@ -139,6 +150,7 @@ const createMssqlPayload = (state: any) => {
             encryptionKey: encryptionKey || ''
         },
         sqlConfiguration: {
+            sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
             sqlAmiId: licenseId || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
             serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
@@ -146,7 +158,7 @@ const createMssqlPayload = (state: any) => {
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
-        tags: state.mssqlForm.tags
+        tags: state.mssqlForm.tags.filter((tag:TagObj) => tag.key)
     };
     return payload;
 };
@@ -159,10 +171,14 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
 
     const azStateValue =
-        !state.mssqlForm.availabilityZones.selectedAzNode1 ||
-        !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
-        !state.mssqlForm.availabilityZones.selectedAzNode2 ||
-        !state.mssqlForm.availabilityZones.selectedSubnetNode2;
+        (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER && 
+            (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
+            !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
+            !state.mssqlForm.availabilityZones.selectedAzNode2 ||
+            !state.mssqlForm.availabilityZones.selectedSubnetNode2)) || 
+            (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE && 
+                (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
+                !state.mssqlForm.availabilityZones.selectedSubnetNode1));
 
     const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
 
@@ -208,8 +224,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     const input = state.mssqlForm.dbName;
     const dataBaseNameValue =
         input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
-    const isDBValueValid = input.length > 0 && dataBaseNameValue ? true : false;
-    if (input.length > 0 && dataBaseNameValue) {
+    const isDBValueValid = dataBaseNameValue ? true : false;
+    if (dataBaseNameValue) {
         dispatch(setDBNameValue(false));
     } else {
         dispatch(setDBNameValue(true));

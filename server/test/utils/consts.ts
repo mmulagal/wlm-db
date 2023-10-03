@@ -1,3 +1,5 @@
+import { faker } from '@faker-js/faker';
+
 const DEFAULT_AWS_VPC_ID = 'vpc-84b3afe6';
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 const DEFAULT_AWS_CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
@@ -28,6 +30,7 @@ const AD_CONFIGURATION = {
 };
 
 const FSX_CONFIGURATION = {
+    fsxDeploymentMode: 'MULTI_AZ_1',
     fsxFileSystemId: 'fs-05a228ef446b34d27',
     fsxUsername: 'fsxadmin',
     fsxPassword: 'netapp1!',
@@ -39,12 +42,33 @@ const FSX_CONFIGURATION = {
 };
 
 const SQL_CONFIGURATION = {
+    sqlDeploymentMode: 'fci',
     sqlAmiId: 'ami-0e0f179ddde359def',
     serviceAccountName: 'sqladmin',
     serviceAccountPassword: 'netapp1!',
     sqlFciName: 'SampleFci'
 };
 
+const SSM_PARAMS = {
+    DocumentName: 'AWS-RunPowerShellScript',
+    Documentversion: '1',
+    Parameters: {
+        commands: [
+            ' C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SELECT\n' +
+                '                                (processmem.physical_memory_in_use_kb * 1024) AS used,\n' +
+                '                                (sysmem.total_physical_memory_kb * 1024) AS total,\n' +
+                '                                ((sysmem.total_physical_memory_kb * 1024)-(processmem.physical_memory_in_use_kb * 1024)) as remaining,\n' +
+                '                                 ((processmem.physical_memory_in_use_kb/1024) * 100 / (sysmem.total_physical_memory_kb/1024)) as percentUsed\n' +
+                '                                 FROM sys.dm_os_process_memory as processmem, sys.dm_os_sys_memory as sysmem;"'
+        ]
+    },
+    InstanceIds: ['i-07e76a4b916548dc0']
+};
+
+const ACCOUNT_ID = 'account-test';
+const CREDENTIALS_ID = `${faker.string.alphanumeric(20)}`;
+const ACTIVE_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
+const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 export {
     SQL_CONFIGURATION,
     FSX_CONFIGURATION,
@@ -54,5 +78,10 @@ export {
     DEFAULT_AWS_VPC_ID,
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_CREDENTIALS_ID,
-    DEFAULT_AWS_REGION
+    DEFAULT_AWS_REGION,
+    SSM_PARAMS,
+    ACCOUNT_ID,
+    CREDENTIALS_ID,
+    ACTIVE_INSTANCE_ID,
+    STANDBY_INSTANCE_ID
 };

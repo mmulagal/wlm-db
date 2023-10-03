@@ -1,5 +1,12 @@
-import {BaseQueryFn, createApi, FetchArgs, fetchBaseQuery, FetchBaseQueryError, retry} from '@reduxjs/toolkit/query/react';
-import {BaseQueryApi} from '@reduxjs/toolkit/dist/query/baseQueryTypes';
+import {
+    BaseQueryFn,
+    createApi,
+    FetchArgs,
+    fetchBaseQuery,
+    FetchBaseQueryError,
+    retry
+} from '@reduxjs/toolkit/query/react';
+import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
@@ -10,10 +17,13 @@ const prepareHeaders = (
     headers: Headers,
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
-    const {getState} = api;
-    const {accessToken} = (getState() as RootState).auth;
+    const { getState } = api;
+    const { accessToken, workspaceId } = (getState() as RootState).auth;
     if (accessToken) {
         headers.set('authorization', accessToken);
+    }
+    if (workspaceId) {
+        headers.set('x-workspace-id', workspaceId);
     }
     return headers;
 };
@@ -24,91 +34,96 @@ const rawBaseQuery = fetchBaseQuery({
 });
 
 export const buildBaseUrl = (api: BaseQueryApi): string => {
-    const {auth} = api.getState() as RootState;
-    const {accountId } = auth;
+    const { auth } = api.getState() as RootState;
+    const { accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
     return `${apiHost}/wlmdb/accounts/${accountId}/api/v1`;
 };
 
-export const getUrlFixedInArg = (arg:BatchEntry[], baseUrl: string) : BatchEntry[] => {
+export const getUrlFixedInArg = (arg: BatchEntry[], baseUrl: string): BatchEntry[] => {
     return arg.map((request: BatchEntry) => {
-        const {url, inputs, key, ...rest} = request;
+        const { url, inputs, key, ...rest } = request;
         return {
             ...rest,
             url: `${baseUrl}/${url}`
-        }
+        };
     });
 };
 
 //Build the baseUrl based on the environment
-const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = retry(async (args, api, extraOptions) => {
-    const baseUrl = buildBaseUrl(api);
-    const url = typeof args === 'string' ? args : args.url;
-    const adjustedUrl = `${baseUrl}/${url}`;
-    const adjustedArgs =
-        typeof args === 'string' ? adjustedUrl : {...args, url: adjustedUrl};
-    // provide the amended url and other params to the raw base query
-    const result = await rawBaseQuery(adjustedArgs, api, extraOptions);
-    if (result.error && result.error?.status !== 504) {
-        retry.fail(result.error)
-    }
-    return result;
-}, {maxRetries: API_MAX_RETRIES});
+const dynamicBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = retry(
+    async (args, api, extraOptions) => {
+        const baseUrl = buildBaseUrl(api);
+        const url = typeof args === 'string' ? args : args.url;
+        const adjustedUrl = `${baseUrl}/${url}`;
+        const adjustedArgs = typeof args === 'string' ? adjustedUrl : { ...args, url: adjustedUrl };
+        // provide the amended url and other params to the raw base query
+        const result = await rawBaseQuery(adjustedArgs, api, extraOptions);
+        if (result.error && result.error?.status !== 504) {
+            retry.fail(result.error);
+        }
+        return result;
+    },
+    { maxRetries: API_MAX_RETRIES }
+);
 
 async function handleRemoveWE(path: string, baseQuery: any, queryApi: BaseQueryApi) {
-    const result = await baseQuery({url: path, method: 'DELETE'});
+    const result = await baseQuery({ url: path, method: 'DELETE' });
     if (result.error) {
-        return ({error: result.error as FetchBaseQueryError});
+        return { error: result.error as FetchBaseQueryError };
     }
-    return {data: result}
+    return { data: result };
 }
 
 async function handleRootListItems<T extends DatabaseTables>(
     queryApi: BaseQueryApi,
     arg: BatchEntry[][],
     baseQuery: any,
-    action: ((arg0: T[]) => any),
-    key:"tables") {
+    action: (arg0: T[]) => any,
+    key: 'tables'
+) {
     const results: any[] = [];
     for (const batchEntryArray of arg) {
-        const {dispatch} = queryApi;
+        const { dispatch } = queryApi;
         const baseUrl = buildBaseUrl(queryApi);
         const urlFixedInArg = getUrlFixedInArg(batchEntryArray, baseUrl);
-        const result = await baseQuery({url: 'batch', method: 'POST', body: urlFixedInArg});
-        if (result.error) { //error on the batch request itself - will be handled in the error middleware
-            return ({error: result.error as FetchBaseQueryError});
+        const result = await baseQuery({ url: 'batch', method: 'POST', body: urlFixedInArg });
+        if (result.error) {
+            //error on the batch request itself - will be handled in the error middleware
+            return { error: result.error as FetchBaseQueryError };
         }
         if (!Array.isArray(result.data)) throw new Error(`Response is not an array: ${result.data}`);
 
         const fixed: T[] = [];
-        result.data.map((value: { data?: any, error?: any }, index: number) => {
+        result.data.map((value: { data?: any; error?: any }, index: number) => {
             if (value.data) {
                 if (key) {
                     const resultArray = value.data[`${key}`].map((resultInArray: T) => {
                         return {
                             ...resultInArray,
                             ...batchEntryArray[index].inputs
-                        }
+                        };
                     });
-                    fixed.push(...resultArray)
+                    fixed.push(...resultArray);
                 } else {
-                    fixed.push({...value.data, ...batchEntryArray[index].inputs})
+                    fixed.push({ ...value.data, ...batchEntryArray[index].inputs });
                 }
             } else if (value.error) {
-                let message = "";
+                let message = '';
                 if (value.error.message) {
-                    message = value.error.message
+                    message = value.error.message;
                 } else if (value.error.error) {
                     message = value.error.error.message;
                 } else {
                     message = value.error;
-                }            }
+                }
+            }
         });
         dispatch(action(fixed));
         results.push(...fixed);
     }
-    return {data: results}
+    return { data: results };
 }
 
 export const awsApi = createApi({
@@ -117,51 +132,75 @@ export const awsApi = createApi({
     endpoints: builder => {
         return {
             getCredentials: builder.query({
-                query: ({credentialsType}) => ({url: `credentials/${credentialsType}`})
+                query: ({ credentialsType }) => ({ url: `credentials/${credentialsType}` })
             }),
             getRegions: builder.query({
-                query: ({credentialId}) => ({url: `credentials/${credentialId}/fsx/regions`})
+                query: ({ credentialId }) => ({ url: `credentials/${credentialId}/fsx/regions` })
             }),
             getVPCList: builder.query({
-                query: ({credentialId, region, fields}) => ({url: `credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`})
+                query: ({ credentialId, region, fields }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/vpcs?fields=${fields}`
+                })
             }),
             getAdsList: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/ads`})
+                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/ads` })
             }),
             getAmiList: builder.query({
-                query: ({credentialId, region, osType, osVersion, databaseType, databaseEdition, databaseVersion}) => 
-                ({url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&osVersion=${osVersion}&databaseType=${databaseType}&databaseEdition=${databaseEdition}&databaseVersion=${databaseVersion}`})
+                query: ({
+                    credentialId,
+                    region,
+                    osType,
+                    osVersion,
+                    databaseType,
+                    databaseEdition,
+                    databaseVersion
+                }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&osVersion=${osVersion}&databaseType=${databaseType}&databaseEdition=${databaseEdition}&databaseVersion=${databaseVersion}`
+                })
             }),
             getSnsTopics: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/snsTopics`})
+                query: ({ credentialId, region }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/snsTopics`
+                })
             }),
             getKmsKeys: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/kmsKeys`})
+                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/kmsKeys` })
             }),
             getKeyPairs: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/keyPairs`})
+                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/keyPairs` })
             }),
             getInstanceTypes: builder.query({
-                query: ({credentialId, region}) => ({url: `credentials/${credentialId}/regions/${region}/instanceTypes`})
+                query: ({ credentialId, region }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/instanceTypes`
+                })
             }),
             getFsxnList: builder.query({
-                query: ({credentialId, region, vpcId}) => ({url: `credentials/${credentialId}/fsx/regions/${region}/vpcs/${vpcId}/filesystems`})
+                query: ({ credentialId, region, vpcId }) => ({
+                    url: `credentials/${credentialId}/fsx/regions/${region}/vpcs/${vpcId}/filesystems`
+                })
             }),
             createSqlTemplate: builder.mutation({
-                query: ({credentialId, region, payload}) => ({
+                query: ({ credentialId, region, payload }) => ({
                     url: `credentials/${credentialId}/regions/${region}/cloudformation/url`,
                     method: 'POST',
-                    body: payload,
+                    body: payload
                 })
             }),
             deploySqlTemplate: builder.mutation({
-                query: ({credentialId, region, payload}) => ({
+                query: ({ credentialId, region, payload }) => ({
                     url: `credentials/${credentialId}/regions/${region}/cloudformation/stack`,
                     method: 'POST',
-                    body: payload,
+                    body: payload
                 })
             }),
-        }
+            getEstimationCost: builder.mutation({
+                query: ({ credentialId, payload }) => ({
+                    url: `credentials/${credentialId}/pricing`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
+        };
     }
 });
 
@@ -172,30 +211,36 @@ export const resourceApi = createApi({
         return {
             removeMSSQL: builder.mutation({
                 async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return await handleRemoveWE(`mssql/resources/${id}`, baseQuery, queryApi)
+                    return await handleRemoveWE(`mssql/resources/${id}`, baseQuery, queryApi);
                 }
             }),
             getMSSQLDatabases: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/databases`})
+                query: id => ({ url: `mssql/resources/${id}/databases` })
             }),
             getMSSQLSummary: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/summary`})
+                query: id => ({ url: `mssql/resources/${id}/summary` })
             }),
             getMSSQLCpuUtilization: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/utilization/cpu`})
+                query: id => ({ url: `mssql/resources/${id}/utilization/cpu` })
             }),
             getMSSQLDiskUtilization: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/utilization/disk`})
+                query: id => ({ url: `mssql/resources/${id}/utilization/disk` })
             }),
             getMSSQLMemoryUtilization: builder.query({
-                query: (id) => ({url: `mssql/resources/${id}/utilization/memory`})
+                query: id => ({ url: `mssql/resources/${id}/utilization/memory` })
             }),
             batchTables: builder.mutation<DatabaseTables[], BatchEntry[][]>({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return await handleRootListItems<DatabaseTables>(queryApi, arg, baseQuery, setResourceTables, 'tables');
+                    return await handleRootListItems<DatabaseTables>(
+                        queryApi,
+                        arg,
+                        baseQuery,
+                        setResourceTables,
+                        'tables'
+                    );
                 }
-            }),
-        }
+            })
+        };
     }
 });
 
@@ -205,36 +250,53 @@ export const configApi = createApi({
     endpoints: builder => {
         return {
             getConfigList: builder.query({
-                query: () => ({url: `config`})
+                query: () => ({ url: `config` })
             }),
             getConfigData: builder.query({
-                query: ({configId}) => ({url: `config/${configId}`})
+                query: ({ configId }) => ({ url: `config/${configId}` })
             }),
             saveConfigData: builder.mutation({
-                query: ({payload}) => ({
+                query: ({ payload }) => ({
                     url: `config`,
                     method: 'POST',
-                    body: payload,
+                    body: payload
                 })
             }),
             deleteConfig: builder.mutation({
-                query: ({configId}) => ({
+                query: ({ configId }) => ({
                     url: `config/${configId}`,
-                    method: 'DELETE',
+                    method: 'DELETE'
                 })
-            }),
-        }
+            })
+        };
     }
 });
 
-export const { useGetCredentialsQuery, useGetRegionsQuery, useGetVPCListQuery, useGetAdsListQuery, 
-    useGetAmiListQuery, useGetSnsTopicsQuery, useGetKmsKeysQuery, useGetKeyPairsQuery, useGetInstanceTypesQuery, 
-    useGetFsxnListQuery, useCreateSqlTemplateMutation,  useDeploySqlTemplateMutation } = awsApi;
+export const {
+    useGetCredentialsQuery,
+    useGetRegionsQuery,
+    useGetVPCListQuery,
+    useGetAdsListQuery,
+    useGetAmiListQuery,
+    useGetSnsTopicsQuery,
+    useGetKmsKeysQuery,
+    useGetKeyPairsQuery,
+    useGetInstanceTypesQuery,
+    useGetFsxnListQuery,
+    useCreateSqlTemplateMutation,
+    useDeploySqlTemplateMutation,
+    useGetEstimationCostMutation
+} = awsApi;
 
 export const {
-    useRemoveMSSQLMutation, useGetMSSQLDatabasesQuery, useGetMSSQLSummaryQuery, useGetMSSQLCpuUtilizationQuery,
-        useGetMSSQLDiskUtilizationQuery, useGetMSSQLMemoryUtilizationQuery, useBatchTablesMutation
+    useRemoveMSSQLMutation,
+    useGetMSSQLDatabasesQuery,
+    useGetMSSQLSummaryQuery,
+    useGetMSSQLCpuUtilizationQuery,
+    useGetMSSQLDiskUtilizationQuery,
+    useGetMSSQLMemoryUtilizationQuery,
+    useBatchTablesMutation
 } = resourceApi;
 
-export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, 
-    useDeleteConfigMutation } = configApi;
+export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
+    configApi;

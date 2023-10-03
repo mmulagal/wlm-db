@@ -23,7 +23,7 @@ export const DATABASE_TYPE = 'sql';
 export const FSXADMIN = 'fsxadmin';
 
 // Default database name
-export const SQL_DATABASE = 'sqldatabase1';
+export const SQL_DATABASE = 'sqldatabase';
 export const SQL_USERNAME = 'sqlsa';
 
 // Active Directory scenario type
@@ -35,6 +35,9 @@ export const ENABLED_STATE = 'Enabled';
 export const DISABLED_STATE = 'Disabled';
 export const PENDING_DELETION = 'PendingDeletion';
 export const DEFAULT_MASTER_KEY = 'aws/fsx';
+
+// Default instance type
+export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
 // Add credentials link
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
@@ -88,4 +91,34 @@ export const REGIONS_CODE_LIST = [
 
 export const DATABASE_SERVICE_PATH = 'database-services';
 
-export const CONFIG_DIALOG = 'config';
+export const FROM_DIALOG = {
+    LOAD_CONFIG: 'load_config',
+    SAVE_CONFIG: 'save_config',
+    HEADER_CROSS: 'header_cross'
+};
+
+export const API_NAME = {
+    REGION: 'region',
+    VPC: 'vpc',
+    ADS: 'ads',
+    SNS: 'sns',
+    KMS: 'kms',
+    KEYPAIR: 'keypair',
+    INSTANCE: 'instance',
+    AMI: 'ami',
+    FSXN: 'fsxn'
+};
+
+export const FSX_DEPLOYMENT_MODE = {
+    SINGLE_AZ_1: 'SINGLE_AZ_1',
+    MULTI_AZ_1: 'MULTI_AZ_1'
+};
+
+export const SQL_DEPLOYMENT_MODE = {
+    FAILOVER_CLUSTER_VALUE: 'fci',
+    SINGLE_INSTANCE_VALUE: 'standalone'
+};
+
+export const API_ERRORS = {
+    DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user'
+}

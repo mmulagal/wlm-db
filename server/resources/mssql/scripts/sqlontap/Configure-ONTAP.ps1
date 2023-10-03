@@ -20,16 +20,24 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$FSxTempDBVolumeName,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$FSxQuorumVolumeName,    
 
     [Parameter(Mandatory=$true)]
     [string]$FSxDataLunSize,
 
     [Parameter(Mandatory=$true)]
-    [string]$IGROUP
+    [string]$IGROUP,
+
+    [Parameter(Mandatory=$true)]
+    [string]$ResourceID,   
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname
+
 )
 Start-Transcript -Path C:\cfn\log\configureontap.ps1.txt -Append
+
 $ErrorActionPreference = "Stop"
 
 $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminSecret).SecretString
@@ -43,8 +51,13 @@ $region = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/place
 $pair = "$($username):$($password)"
 $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
 $base64 = [System.Convert]::ToBase64String($bytes)
+
 #get management IP
 $nodeiqn = (Get-InitiatorPort).NodeAddress
+
+#get Instance ID
+$instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
+
 function returncert{
     param(
     [Parameter(Mandatory=$true)]
@@ -55,6 +68,31 @@ function returncert{
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     return Get-ChildItem -Path Cert:\LocalMachine\Root|?{$_.Subject -like $cert.Subject}
 
+}
+
+function callGetOrDeleteApi{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$uri,
+    [Parameter(Mandatory=$true)]
+    [string]$region,
+    [Parameter(Mandatory=$true)]
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [string]$method
+    )
+    try{
+        $restcert = returncert -region $region
+        $Params = @{
+            "URI"     = "$uri"
+            "Method"  = "$method"
+            "Headers" = @{"Authorization" = "Basic $creds"}
+            "ContentType" = "application/json"
+        }
+        Invoke-RestMethod @Params -Certificate $restcert
+    }catch{
+        $_ | Write-AWSLaunchWizardException
+    }
 }
 
 function callrestapi{
@@ -68,7 +106,13 @@ function callrestapi{
     [Parameter(Mandatory=$true)]
     [Hashtable]$parambody,
     [Parameter(Mandatory=$true)]
-    [string]$creds
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [string]$resource,    
+    [Parameter(Mandatory=$true)]
+    [string]$stack,
+    [Parameter(Mandatory=$true)]
+    [string]$instanceId
     )
     try{
         $restcert = returncert -region $region
@@ -83,9 +127,55 @@ function callrestapi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
+        Send-CFNResourceSignal -StackName $stack -Status FAILURE -LogicalResourceId $resource -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
     }
 }
+
+$LOGLUN = 'sqllog'
+$DATALUN = 'sqldata'
+$TLUN = 'tempdb'
+$QLUN = 'quorum'
+
+# delete lun mapping if exist
+$lunmapsUriDynamicPart = 'private/cli/lun/mapping'
+$URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
+$restcert = returncert -region $region
+$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+
+foreach ($perlunmap in $lunmappingdata) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlunmap.vserver)&path=$($perlunmap.path)&igroup=$($perlunmap.igroup)"
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+}
+Start-Sleep 5
+
+# delete luns if exists
+$lunUriDynamicPart='private/cli/lun'
+$URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
+$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+
+$lunPathList = @("/vol/$FSxQuorumVolumeName/$QLUN",  "/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+foreach ($perlun in $lunlist) {
+    if($lunPathList -contains $perlun.path) {
+        $DeleteURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)"
+        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+    }
+}
+
+Start-Sleep 5
+
+# delete igroup if exists
+$IGUriDynamicPart='private/cli/igroup'
+$URI = "https://$($MgmtDNS)/api/$($IGUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
+$igrouplist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records 
+
+foreach ($perigroup in $igrouplist) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($IGUriDynamicPart)?vserver=$($perigroup.vserver)&igroup=$($perigroup.igroup)"
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+}
+
+Start-Sleep 5
+
 #Start ONTAP configuration
 $VolUriDynamicPart='private/cli/volume'
 
@@ -119,7 +209,8 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    #$_ | Write-AWSLaunchWizardException
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
@@ -149,6 +240,7 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
@@ -179,10 +271,12 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
+if ($FSxQuorumVolumeName -ne "") {
 $URI=@"
 https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FSxQuorumVolumeName)
 "@
@@ -204,7 +298,9 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
+}
 }
 Start-Sleep 5
 ##create igroup
@@ -219,13 +315,12 @@ $Body = @{
     "initiators"= @(@{"name" = "$nodeiqn"})
 }
 
-callrestapi -MgmtDNS $MgmtDNS -uri $IGUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $IGUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 Start-Sleep 5
  
 ##create data lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$DATALUN = 'sqldata'
 $DSIZE = $FSxDataLunSize+"M"
 $LUN_PATH = "/vol/$FSxDataVolumeName/$DATALUN"
 $Body = @{
@@ -235,7 +330,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$DSIZE"}       
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 
@@ -247,12 +342,11 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 ##create log lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$LOGLUN = 'sqllog'
 $LUN_PATH = "/vol/$FSxLogVolumeName/$LOGLUN"
 $loglunsize = [math]::Round([int]$FSxDataLunSize*0.25)
 $LSIZE = $loglunsize.ToString()+"M"
@@ -263,7 +357,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$LSIZE"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 ##mapping log lun
@@ -273,12 +367,11 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 ##create tempDb lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$TLUN = 'tempdb'
 $LUN_PATH = "/vol/$FSxTempDBVolumeName/$TLUN"
 $templunsize = [math]::Round([int]$FSxDataLunSize*0.1)
 $TSIZE = $templunsize.ToString()+"M"
@@ -290,7 +383,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$TSIZE"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 ##mapping tempDb lun
@@ -301,12 +394,12 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 ##create quorum lun
+if ($FSxQuorumVolumeName -ne "") {
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$QLUN = 'quorum'
 $LUN_PATH = "/vol/$FSxQuorumVolumeName/$QLUN"
 $Body = @{
     "name" = "$LUN_PATH"
@@ -315,7 +408,7 @@ $Body = @{
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "10G"}   
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64
+callrestapi -MgmtDNS $MgmtDNS -uri $lunUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
 Start-Sleep 5
 ##mapping quorum lun
@@ -326,8 +419,8 @@ $Body = @{
     "lun" = @{"name" = "$LUN_PATH"}
     "igroup" = @{"name" = "$IGROUP"}
 }
-callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64
-
+callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
+}
  
  
  

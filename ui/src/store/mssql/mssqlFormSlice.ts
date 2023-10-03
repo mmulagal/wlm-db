@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
-import { FSXADMIN } from '../../utils/consts';
+import { FSXADMIN, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
 
 const initialState: any = {
     awsAccount: {
@@ -25,10 +25,13 @@ const initialState: any = {
         value: GENERAL.WIN_SERVER_2016_VERSION
     },
     dbVersion: {
-        value: GENERAL.SQL_SERVER_2016_VERSION,
-        label: GENERAL.SQL_SERVER_2016
+        value: GENERAL.SQL_SERVER_2019_VERSION,
+        label: GENERAL.SQL_SERVER_2019
     },
-    dbDeploymentModel: GENERAL.FAILOVER_CLUSTER,
+    dbDeploymentModel: {
+        label: GENERAL.FAILOVER_CLUSTER,
+        value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+    },
     dbEdition: {
         label: GENERAL.SQL_SERVER_STANDARD_EDITION,
         value: GENERAL.SQL_SERVER_STANDARD
@@ -40,7 +43,7 @@ const initialState: any = {
     },
     dbName: '',
     dbCredentials: {
-        name: '',
+        name: SQL_USERNAME,
         password: ''
     },
     keyPair: {
@@ -241,7 +244,7 @@ const mssqlFormSlice = createSlice({
         },
         //Save Config
         setSaveConfigName(state, action: PayloadAction<any>) {
-            state.saveConfigName = action.payload;
+            state.saveConfigName = action.payload.trim();
         },
         //Select config
         setSelectConfig(state, action: PayloadAction<any>) {

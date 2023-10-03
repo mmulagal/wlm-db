@@ -60,6 +60,8 @@ export interface KeyPairs {
 export interface SavedConfiguration {
     id: string;
     name: string;
+    user: string;
+    creationTime: number;
 }
 
 export interface InstanceType {
@@ -77,6 +79,12 @@ export interface FSxN {
     subnetIds?: Array<string>;
     ontapConfiguration?: {
         deploymentType?: string;
+        throughputCapacity?: string;
+        preferredSubnetId?: string;
+        diskIopsConfiguration?: {
+            iops: string;
+            mode: string;
+        }
     }
 }
 
@@ -151,6 +159,11 @@ export interface AvailabilityZonesObj {
     [key: string]: Subnets[];
 }
 
+export interface TagObj {
+    key: string;
+    value: string;
+}
+
 
 export interface MssqlRequestBody {
     networkConfiguration: {
@@ -176,6 +189,7 @@ export interface MssqlRequestBody {
         securityGroupId: string;
     },
     fsxConfiguration: {
+        fsxDeploymentMode: string,
         fsxFileSystemId: string;
         fsxUsername: string;
         fsxPassword: string;
@@ -186,6 +200,7 @@ export interface MssqlRequestBody {
         encryptionKey: string;
     },
     sqlConfiguration: {
+        sqlDeploymentMode: string,
         sqlAmiId: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
@@ -193,6 +208,6 @@ export interface MssqlRequestBody {
     }
     topicArn?: string;
     enableCloudWatch?: boolean,
-    tags?: Array<Object>
+    tags?: Array<TagObj>
 }
 

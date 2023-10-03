@@ -2,7 +2,7 @@ import { Type } from '@fastify/type-provider-typebox';
 import { HEADERS } from '../../utils/consts';
 
 const WorkinEnvironmentHeaders = Type.Object({
-    [HEADERS.WORKSPACE_ID_HEADER]: Type.String({ minLength: 1 })
+    [HEADERS.WORKSPACE_ID_HEADER]: Type.Optional(Type.String({ minLength: 1 }))
 });
 
 const AccountIdParams = Type.Object({
@@ -21,7 +21,8 @@ const WorkingEnvironmentsResponse = Type.Object({
                 id: Type.Optional(Type.String()),
                 name: Type.Optional(Type.String()),
                 provider: Type.Optional(Type.String()),
-                deploymentState: Type.Optional(Type.String())
+                deploymentState: Type.Optional(Type.String()),
+                location: Type.Optional(Type.String())
             })
         )
     )
