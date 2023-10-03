@@ -1,9 +1,11 @@
-import { Typography } from '@netapp/design-system';
+import { Button, Typography } from '@netapp/design-system';
 import { useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
 import DatabaseHost from './DatabaseHost/DatabaseHost';
+import StorageSavings from './StorageSavings/StorageSavings';
+import EstimatedCost from './EstimatedCost/EstimatedCost';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -14,9 +16,15 @@ const DatabaseHomePage = () => {
     return (
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
-                <Typography variant="Regular_24" className={styles.heading}>
-                    {GENERAL.DATABASES}
-                </Typography>
+                <div className={styles.topContainer}>
+                    <Typography variant="Regular_24" className={styles.heading}>
+                        {GENERAL.DATABASES}
+                    </Typography>
+                    <div>
+                        <Button variant="primary">Deploy new database</Button>
+                    </div>
+                </div>
+
                 <div className={styles.secondLevelContainer}>
                     <DatabaseHost />
                 </div>
@@ -25,9 +33,13 @@ const DatabaseHomePage = () => {
                 <div className={styles.fourthLevelContainer}>
                     {/* Bar lines */}
                     <div className={styles.barContainer}>
-                        <div className={styles.commonContainer}></div>
+                        <div className={styles.commonContainer}>
+                            <StorageSavings />
+                        </div>
 
-                        <div className={styles.commonContainer}></div>
+                        <div className={styles.commonContainer}>
+                            <EstimatedCost />
+                        </div>
                     </div>
 
                     {/* Job status */}
