@@ -112,7 +112,7 @@ export const dbPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
-        if(state.auth.isDemoFlag) {
+        if(state.auth.isDemoMode) {
             return '';
         }
         const categories = [
@@ -135,7 +135,7 @@ export const dbPassVal = (password: string) => {
 export const fsxPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
-        if(state.auth.isDemoFlag) {
+        if(state.auth.isDemoMode) {
             return '';
         }
         let fsxUserName = '';

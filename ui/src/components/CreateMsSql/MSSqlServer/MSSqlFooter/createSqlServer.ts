@@ -11,7 +11,7 @@ import {
     setVPCSelectedValue
 } from '../../../../store/mssql/msSqlActionSlice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { AWS_MANAGED_AD, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 
@@ -131,7 +131,7 @@ const createMssqlPayload = (state: any) => {
             keyPairName: state.mssqlForm.keyPair.selectedKeyPair?.value || ''
         },
         adConfiguration: {
-            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || '',
+            adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || AWS_MANAGED_AD,
             domainUsername: state.mssqlForm.activeDirectory?.userName || '',
             domainPassword: state.mssqlForm.activeDirectory?.password || '',
             domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value || '',
@@ -168,8 +168,8 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     dispatch(setCreatePressed(true));
     dispatch(setCreateHit(Math.random()));
 
-    if(state.auth.isDemoFlag) {
-        // payload = createMssqlPayload(state);
+    if(state.auth.isDemoMode) {
+        payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {
         const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;

@@ -9,7 +9,7 @@ interface AuthState {
     workspaceId?: string;
     pathname?: string;
     loading?: boolean;
-    isDemoFlag?: boolean;
+    isDemoMode?: boolean;
 }
 
 interface PayloadAuthSuccess {
@@ -24,7 +24,7 @@ const initialState: AuthState = {
     workspaceId: '',
     pathname: '',
     loading: true,
-    isDemoFlag: false
+    isDemoMode: false
 };
 
 const authSlice = createSlice({
@@ -57,8 +57,8 @@ const authSlice = createSlice({
         updateIsLoading: (state, action: PayloadAction<boolean>) => {
             state.loading = action.payload;
         },
-        updateIsDemoFlag: (state, action: PayloadAction<boolean>) => {
-            state.isDemoFlag = action.payload;
+        updateIsDemoMode: (state, action: PayloadAction<boolean>) => {
+            state.isDemoMode = action.payload;
         }
     }
 });
@@ -71,7 +71,7 @@ export const {
     updateWorkspaceId,
     updatePathname,
     updateIsLoading,
-    updateIsDemoFlag
+    updateIsDemoMode
 } = authSlice.actions;
 
 export default authSlice;

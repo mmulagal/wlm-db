@@ -6,7 +6,7 @@ import queryString from 'query-string';
 import { 
     updateAccountId, 
     updateAuthSuccess, 
-    updateIsDemoFlag, 
+    updateIsDemoMode, 
     updateIsLoading, 
     updatePathname, 
     updateResourceId, 
@@ -36,6 +36,7 @@ const useInitialize = () => {
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
         const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
+        dispatch(updateIsDemoMode(isDemoFlag === 'true'? true: false));
 
         if(accountIdAsString){
             dispatch(updateAccountId(accountIdAsString || ''));
@@ -48,8 +49,6 @@ const useInitialize = () => {
         if(workspaceIdAsString){
             dispatch(updateWorkspaceId(workspaceIdAsString));
         }
-
-        dispatch(updateIsDemoFlag(isDemoFlag === 'true'? true: false));
 
         const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
         const storageNameAsString = (Array.isArray(storageName) ? storageName[0] : storageName) || '';
@@ -72,7 +71,7 @@ const useInitialize = () => {
             dispatch(updateAuthSuccess({accessToken: accessToken}));
             dispatch(updateAccountId(accountId));
             dispatch(updateIsLoading(false));
-            dispatch(updateIsDemoFlag(isDemoMode));
+            dispatch(updateIsDemoMode(isDemoMode));
             
             if(initialData?.pathname && initialData.pathname.split('/')[1] === DATABASE_SERVICE_PATH){
                 const storage = initialData?.storage;

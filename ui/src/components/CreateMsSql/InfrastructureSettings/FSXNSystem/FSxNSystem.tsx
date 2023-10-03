@@ -47,7 +47,7 @@ const FSxNSystem = () => {
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const deploymentMode = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
-    const isDemoFlag = useAppSelector(state => state.auth.isDemoFlag);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [password, setPassword] = useState('');
 
@@ -88,7 +88,7 @@ const FSxNSystem = () => {
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         fsxnData?.filesystems?.map((val, idx: number) => {
-            if (isDemoFlag || fsxCheck(val)) {
+            if (isDemoMode || fsxCheck(val)) {
                 const value = (val?.name ? val.name + ' | ' : '') + val?.fileSystemId;
                 const data = {
                     fileSystemId: val?.fileSystemId,
