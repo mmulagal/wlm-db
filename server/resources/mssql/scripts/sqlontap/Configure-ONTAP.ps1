@@ -91,6 +91,7 @@ function callGetOrDeleteApi{
         }
         Invoke-RestMethod @Params -Certificate $restcert
     }catch{
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
     }
 }
@@ -216,8 +217,6 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
@@ -237,8 +236,6 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
@@ -258,8 +255,6 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
@@ -292,8 +287,6 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 }
 Start-Sleep 5
@@ -444,8 +437,6 @@ foreach ($perlun in $lunPathlist) {
         }
         catch{
         Write-Output "LUN modification failed"
-        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-        $_ | Write-AWSLaunchWizardException
         }
         Start-Sleep 2
         $Body = @{
@@ -465,8 +456,6 @@ foreach ($perlun in $lunPathlist) {
         }
         catch{
         Write-Output "LUN modification failed"
-        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-        $_ | Write-AWSLaunchWizardException
         }
         Start-Sleep 3
     }
