@@ -2,17 +2,22 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
-import { GetCommandInvocationCommand, SendCommandCommand, SSMClient } from '@aws-sdk/client-ssm';
+import {
+    GetCommandInvocationCommand,
+    SendCommandCommand,
+    SSMClient,
+    GetParametersByPathCommand
+} from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
-import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
+import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 
 const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value(\'(./Record/@id)[1]\',\'int\')AS record_id, \n                                record.value(\'(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]\',\'int\')AS [SystemIdle], \n                                record.value(\'(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]\',\'int\')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N\'RING_BUFFER_SCHEDULER_MONITOR\'AND record LIKE\'%%\')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH"'
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\""
     ]
 };
 const memeoryParams = {
@@ -58,7 +63,7 @@ const clusterNodesParams = {
 
 const serStateParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol \'QUERYSTATE\',\'MSSQLServer\'"'
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'\""
     ]
 };
 const serVerParams = {
@@ -76,7 +81,7 @@ const tablesListParams = {
 };
 const diskSizeParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH\''
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query 'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH'"
     ]
 };
 
@@ -132,9 +137,7 @@ ssmMock
     .on(SendCommandCommand, { Parameters: serGUIDParams })
     .resolves(listSendCommandCommandResponse.serGUIDCommandResponse)
     .on(SendCommandCommand, { Parameters: serNameParams })
-    .resolves(listSendCommandCommandResponse.serNameCommandResponse)
-    .on(DescribeParametersCommand)
-    .resolves(listFsxOntapRegionsResponse);
+    .resolves(listSendCommandCommandResponse.serNameCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -169,3 +172,5 @@ ssmMock
     .resolves(getCommandInvocationResponse.servGUIDInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serName' })
     .resolves(getCommandInvocationResponse.serNameInvocationResponse);
+
+ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

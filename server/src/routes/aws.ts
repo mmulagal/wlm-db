@@ -12,17 +12,12 @@ import {
     GetKeyPairsSchema,
     GetFSxFileSystemsSchema
 } from './schemas/aws-schemas';
-import {
-    getAmiList,
-    getVpcsList,
-    getFSxOntapRegionsList,
-    getKeyPairsList,
-    getInstanceTypes
-} from '../operations/aws/ec2-operations';
+import { getAmiList, getVpcsList, getKeyPairsList, getInstanceTypes } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
 import { getKmsKeysList } from '../operations/aws/kms-operations';
+import { getFSxOntapRegionsList } from '../operations/aws/ssm-operations';
 
 const REGION_AGNOSTIC_PREFIX_PATH = '/v1/credentials/:credentialsId';
 const FSX_PREFIX_PATH = `${REGION_AGNOSTIC_PREFIX_PATH}/fsx`;

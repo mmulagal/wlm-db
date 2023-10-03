@@ -6,12 +6,11 @@ import {
     DescribeNetworkInterfacesCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, AWS_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
+import { AWSQueryFields, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
     describeSubnets,
-    describeFSxOntapRegions,
     getAmis,
     describeRouteTable,
     describeKeyPairs,
@@ -19,7 +18,7 @@ import {
     describeNetworkInterfaces
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
-import { FSxAvailableRegionType, KeyPairsSchema } from '../../routes/types/aws.types';
+import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
 
 const logger = getLogger();
@@ -345,24 +344,6 @@ function findResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
-async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
-    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
-
-    const response = await describeFSxOntapRegions(credentialsId);
-    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-
-    response.forEach(({ Value: regionCode }) => {
-        if (regionCode) {
-            fsxRegionsList.push({
-                regionCode,
-                regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
-            });
-        }
-    });
-
-    return { regions: fsxRegionsList };
-}
-
 async function getInstanceTypes(credentialsId: string, region: string) {
     logger.info('List Ec2 Instance Types in region', { credentialsId, region });
 
@@ -424,7 +405,6 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
 }
 export {
     getVpcsList,
-    getFSxOntapRegionsList,
     getAmiList,
     getKeyPairsList,
     getInstanceTypes,

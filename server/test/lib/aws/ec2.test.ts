@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 import {
     getAmis,
     describeRegions,
-    describeFSxOntapRegions,
     describeKeyPairs,
     describeVpc,
     describeSecurityGroups,
@@ -17,7 +16,7 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
 import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
-import fsxOntapRegions from '../../simulator/responses/aws/list-fsx-ontap-regions.json';
+
 import routeTables from '../../simulator/responses/aws/list-route-tables.json';
 import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
@@ -88,11 +87,6 @@ describe('EC2 Lib', () => {
 
         const response = await describeRegions(input, DEFAULT_AWS_CREDENTIALS_TYPE);
         expect(response).toEqual(fsxRegions);
-    });
-
-    it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
-        const response = await describeFSxOntapRegions(DEFAULT_AWS_CREDENTIALS_TYPE);
-        expect(response).toEqual(fsxOntapRegions);
     });
 
     it('List EC2 instance types forn specific region', async () => {
