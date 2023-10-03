@@ -6,6 +6,8 @@ import Sidebar from './Sidebar/Sidebar';
 import DatabaseHost from './DatabaseHost/DatabaseHost';
 import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
+import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
+import ProtectionSection from './ProtectSection/ProtectionSection';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,7 +30,9 @@ const DatabaseHomePage = () => {
                 <div className={styles.secondLevelContainer}>
                     <DatabaseHost />
                 </div>
-                <div className={styles.ProtectionContainer}></div>
+                <div className={styles.ProtectionContainer}>
+                    <ProtectionSection />
+                </div>
 
                 <div className={styles.fourthLevelContainer}>
                     {/* Bar lines */}
