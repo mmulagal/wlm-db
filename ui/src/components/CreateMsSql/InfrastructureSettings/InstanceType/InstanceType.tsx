@@ -16,6 +16,7 @@ const InstanceType = () => {
     //Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(state => state.mssql.getInstanceTypeList);
     const selectedInstanceType = useAppSelector(state => state.mssqlForm.instanceType);
+    const selectedLicense = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
@@ -24,6 +25,7 @@ const InstanceType = () => {
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
         let options: optionType[] = [];
         let default_instance_item = null;
+        const archVal = selectedLicense?.data?.architecture;
         instanceTypeData?.instanceTypes?.map((val, idx: number) => {
             const value = val?.instanceType || '';
             let label2 = '';
@@ -39,7 +41,7 @@ const InstanceType = () => {
             const option = generateOptionType(value, value, label2, false, '', val);
             if(value === DEAFULT_INSTANCE_VALUE){
                 default_instance_item = option;
-            } else{
+            } else if(!archVal || (archVal && val?.architecture && (val.architecture).includes(archVal))){
                 options.push(option);
             }
         });
@@ -49,7 +51,7 @@ const InstanceType = () => {
             options.unshift(default_instance_item);
         }
         return options;
-    }, [instanceTypeData]);
+    }, [instanceTypeData, selectedLicense]);
 
     useEffect(() => {
         if(!isLoadConfig){
