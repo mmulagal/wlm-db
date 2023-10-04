@@ -671,10 +671,6 @@ const DEFAULT_TAGS = [
     {
         Key: 'created_by_flow',
         Value: 'WLMDB'
-    },
-    {
-        Key: 'Test',
-        Value: 'Test'
     }
 ];
 
