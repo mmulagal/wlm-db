@@ -1,6 +1,7 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
+import { resource } from '@prisma/client';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
@@ -55,11 +56,18 @@ async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const resourceResponse = await listResources(accountId, resourceId, DatabaseTypes.MS_SQL_SERVER);
-    if (resourceResponse.length === 0) {
+    let metadata;
+    let region;
+
+    try {
+        [{ metadata, region }] = (await listResources(
+            accountId,
+            resourceId,
+            DatabaseTypes.MS_SQL_SERVER
+        )) as resource[];
+    } catch (error) {
         throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
-    const [{ metadata, region }] = resourceResponse;
     let credentialsId;
     let activeNodeInstanceId;
     let standbyNodeInstanceId;
