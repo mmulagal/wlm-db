@@ -37,7 +37,7 @@ export const PENDING_DELETION = 'PendingDeletion';
 export const DEFAULT_MASTER_KEY = 'aws/fsx';
 
 // Default instance type
-export const DEAFULT_INSTANCE_VALUE = 'r5.xlarge';
+export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
 // Add credentials link
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
@@ -118,3 +118,7 @@ export const SQL_DEPLOYMENT_MODE = {
     FAILOVER_CLUSTER_VALUE: 'fci',
     SINGLE_INSTANCE_VALUE: 'standalone'
 };
+
+export const API_ERRORS = {
+    DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user'
+}

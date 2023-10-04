@@ -165,7 +165,9 @@ const SECRETS: Record<string, string | undefined> = {
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
     CLIENT_ID: 'CLIENT_ID',
     CLIENT_SECRET: 'CLIENT_SECRET',
-    DATABASE_URL: 'DATABASE_URL'
+    DATABASE_URL: 'DATABASE_URL',
+    SIGNURL_ACCESS_KEY: 'SIGNURL_ACCESS_KEY',
+    SIGNURL_SECRET_KEY: 'SIGNURL_SECRET_KEY'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
@@ -734,6 +736,20 @@ const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
 const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 const SUCCESS = 'success';
 const ERROR = 'error';
+const REDIRECT_URL = '/database-services';
+const STANDARD_DEPLOYMENT_ACTION = 'standard_deployment';
+const SQL_DEPLOYMENT_FAILED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment failed';
+const SQL_DEPLOYMENT_COMPLETED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment successful';
+const SQL_DEPLOYMENET_INITIATED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment initiated';
+
+const MAX_READ_REQUEST_FSXN = 1000000;
+const MAX_WRITE_REQUEST_FSXN = 100000;
+const MIN_DISKSIZE = 1024;
+const MIN_THROUGHPUT = 128;
+const STANDALONE = 'standalone';
+const FCI = 'fci';
+const SINGLE_AZ = 'SINGLE_AZ_1';
+const MULTI_AZ = 'MULTI_AZ_1';
 
 export {
     WLMDB,
@@ -873,5 +889,18 @@ export {
     RESOURCE_ID,
     WLMDB_ABSOLUTE_ENDPOINT,
     SUCCESS,
-    ERROR
+    ERROR,
+    MAX_READ_REQUEST_FSXN,
+    MAX_WRITE_REQUEST_FSXN,
+    MIN_DISKSIZE,
+    STANDALONE,
+    FCI,
+    SINGLE_AZ,
+    MULTI_AZ,
+    MIN_THROUGHPUT,
+    REDIRECT_URL,
+    STANDARD_DEPLOYMENT_ACTION,
+    SQL_DEPLOYMENT_FAILED_SUBJECT,
+    SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+    SQL_DEPLOYMENET_INITIATED_SUBJECT
 };

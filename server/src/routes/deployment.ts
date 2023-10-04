@@ -2,9 +2,16 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
     createCloudFormationTemplateForUserDeployment,
-    deployCloudFormationTemplate
+    deployCloudFormationTemplate,
+    deploymentStatus,
+    deploymentStatusById
 } from '../operations/deployment-operations';
-import { CreateCloudFormationTemplateSchema, DeployTemplateSchema } from './schemas/deployment-schemas';
+import {
+    CreateCloudFormationTemplateSchema,
+    DeploymentStatusListSchema,
+    DeploymentStatusSchema,
+    DeployTemplateSchema
+} from './schemas/deployment-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 
@@ -71,5 +78,27 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 tags
             );
             return reply.code(202).send(response);
-        });
+        })
+        .get(
+            `${API_PREFIX_PATH}/cloudformation/stacks/status`,
+            { schema: DeploymentStatusListSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId }
+                } = request;
+                const response = await deploymentStatus(accountId);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/cloudformation/stacks/:stackId/status`,
+            { schema: DeploymentStatusSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, stackId }
+                } = request;
+                const response = await deploymentStatusById(accountId, stackId);
+                return reply.send(response);
+            }
+        );
 }

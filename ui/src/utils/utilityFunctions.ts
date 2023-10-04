@@ -1,8 +1,8 @@
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
-import { GENERAL } from './appConstants';
-import { DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST, SQL_DATABASE } from './consts';
+import { GENERAL, SELECT_CONFIG } from './appConstants';
+import { API_ERRORS, DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST, SQL_DATABASE } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
 const moment = require('moment');
@@ -112,6 +112,9 @@ export const dbPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
+        if(state.auth.isDemoMode) {
+            return '';
+        }
         const categories = [
             /[A-Z]/, // uppercase letters
             /[a-z]/, // lowercase letters
@@ -132,6 +135,9 @@ export const dbPassVal = (password: string) => {
 export const fsxPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
+        if(state.auth.isDemoMode) {
+            return '';
+        }
         let fsxUserName = '';
         if (state.mssqlForm.fsxN.fsxNType === GENERAL.SELECT_EXISTING_FSX) {
             fsxUserName = state.mssqlForm.fsxN.fsxNExistingUserName;
@@ -151,7 +157,7 @@ export const fsxPassVal = (password: string) => {
     }
 };
 
-export const encodeAll = (text: string | (string | null)[] | null) => {
+export const encodeAll = (text: string) => {
     if (text && typeof text === 'string') {
         const internalEncoding = text
             .replace(/%/g, '%25')
@@ -178,6 +184,16 @@ export const requiredFieldError = (inputString: string) => {
         return null;
     }
 };
+
+export const customErrorMessages = (inputString: string) => {
+    if(!inputString){
+        return null;
+    }
+    if(inputString.includes(API_ERRORS.DUPLICATE_CONFIG_NAME)){
+        return SELECT_CONFIG.DUPLICATE_CONFIG_NAME;
+    }
+    return inputString;
+}
 
 export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);

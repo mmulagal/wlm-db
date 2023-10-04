@@ -27,4 +27,6 @@ describe('Batch operations', () => {
         ]);
         expect(resp).toBeDefined();
     });
+}, {
+    timeout: 10000,
 });

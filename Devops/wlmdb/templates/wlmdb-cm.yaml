@@ -6,3 +6,6 @@ data:
   AUTH0_ENDPOINT: staging-netapp-cloud-account.auth0.com
   SECRET_NAME: wlmdb
   REGION: us-east-1
+  isActive: "{{ .Values.global.isActive }}"
+  isPrimary: "{{ .Values.global.isPrimary }}"
+  TRACE_EXPORTER_URL: http://signoz-otel-collector.signoz.svc.cluster.local:4318

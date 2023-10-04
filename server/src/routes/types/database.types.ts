@@ -29,9 +29,9 @@ const MsSqlServerDiscoveryResponse = Type.Object({
 
 const MsSqlServerDiscoverRequestBody = Type.Object({
     activeNodeInstanceId: Type.String(),
-    standbyNodeInstanceId: Type.String(),
+    standbyNodeInstanceId: Type.Optional(Type.String()),
     activeNodeInstanceName: Type.String(),
-    standbyNodeInstanceName: Type.String(),
+    standbyNodeInstanceName: Type.Optional(Type.String()),
     fsxId: Type.String()
 });
 
@@ -60,6 +60,7 @@ const ServerSummaryResponse = Type.Object({
     serverStatus: Type.String(),
     activeConnections: Type.Integer(),
     deploymentModel: Type.String(),
+    clusterName: Type.Optional(Type.String()),
     activeNode: Type.String(),
     standbyNode: Type.Optional(Type.String())
 });

@@ -129,12 +129,12 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, confi
             .then((data: any) => {
                 if (!data?.error) {
                     dispatch(setSavedConfig(state.mssqlForm));
-                    dispatch(setIsSaveConfigLoading(false));
                     dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
                         message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
                     configListRefetch();
                 }
                 closeSaveDialog(dialogFrom, closeDialog);
+                dispatch(setIsSaveConfigLoading(false));
             })
             .catch((error: any) => {
                 console.log("Error while saving data - ",error);

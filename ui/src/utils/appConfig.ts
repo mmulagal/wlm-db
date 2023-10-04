@@ -6,6 +6,7 @@ import queryString from 'query-string';
 import { 
     updateAccountId, 
     updateAuthSuccess, 
+    updateIsDemoMode, 
     updateIsLoading, 
     updatePathname, 
     updateResourceId, 
@@ -13,6 +14,7 @@ import {
     updateWorkspaceId 
 } from '../store/authSlice';
 import { DATABASE_SERVICE_PATH } from './consts';
+import { encodeAll } from './utilityFunctions';
 
 const navigateToCanvas = (pathname: string) => {
     postBlueXPMessage({
@@ -29,10 +31,12 @@ const useInitialize = () => {
 
     useEffect(() => {
         const search = queryString.parse(window.location.search) || {};
-        const { accountId, accessToken, pathname, storage, storageId, storageName, workspaceId } = search;
+        const { accountId, accessToken, pathname, storage, storageId, storageName, workspaceId, isDemoMode } = search;
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
+        const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
+        dispatch(updateIsDemoMode(isDemoFlag === 'true'? true: false));
 
         if(accountIdAsString){
             dispatch(updateAccountId(accountIdAsString || ''));
@@ -47,11 +51,12 @@ const useInitialize = () => {
         }
 
         const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
+        const storageNameAsString = (Array.isArray(storageName) ? storageName[0] : storageName) || '';
         if (pathnameAsString) {
             if(pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH){
-                navigate(`${storage}/${storageId}/${storageName}`);
+                navigate(`${storage}/${storageId}/${encodeAll(storageNameAsString)}`);
                 dispatch(updateResourceId(storageId));
-                dispatch(updateResourceName(storageName));
+                dispatch(updateResourceName(storageNameAsString));
             } else {
                 navigate(`${pathnameAsString}`, { replace: true });
             }
@@ -62,17 +67,18 @@ const useInitialize = () => {
 
     useBlueXP({
         onReady: (initialData: any) => {
-            const {accessToken, accountId } = initialData;
+            const {accessToken, accountId, isDemoMode } = initialData;
             dispatch(updateAuthSuccess({accessToken: accessToken}));
             dispatch(updateAccountId(accountId));
             dispatch(updateIsLoading(false));
+            dispatch(updateIsDemoMode(isDemoMode));
             
             if(initialData?.pathname && initialData.pathname.split('/')[1] === DATABASE_SERVICE_PATH){
                 const storage = initialData?.storage;
                 const storageId = initialData?.storageId;
                 const storageName = initialData?.storageName;
                 const workspaceId = initialData?.workspaceId;
-                navigate(`${storage}/${storageId}/${storageName}`);
+                navigate(`${storage}/${storageId}/${encodeAll(storageName)}`);
                 dispatch(updateResourceId(storageId));
                 dispatch(updateResourceName(storageName));
                 dispatch(updateWorkspaceId(workspaceId));

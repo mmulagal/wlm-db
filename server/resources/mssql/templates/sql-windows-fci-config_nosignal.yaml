@@ -691,7 +691,15 @@ Resources:
                         f-open-WSFC-ports:
                             command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\OpenWSFCPorts.ps1"
                             waitAfterCompletion: '0'
-                        g-add-domadmin-user-to-group:
+                        g-update-securitygroup-rules:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Update-SecurityGroup.ps1
+                                    -SGID '
+                                  - !Ref 'WorkloadSecurityGroup'
+                                  - '''"'
+                            waitAfterCompletion: '0'
+                        h-add-domadmin-user-to-group:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe '
@@ -701,7 +709,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
-                        h-create-sql-account:
+                        i-create-sql-account:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\Create-ADServiceAccount.ps1
@@ -717,7 +725,7 @@ Resources:
                                   - !Ref 'SQLServiceAccountSecret'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        i-wait-for-ad-replication:
+                        j-wait-for-ad-replication:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe '
@@ -727,7 +735,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - ''' -Wait -TimeoutMinutes 30 -IntervalMinutes 1"'
                             waitAfterCompletion: '0'
-                        j-add-sqlservice-user-to-group:
+                        k-add-sqlservice-user-to-group:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe '
@@ -1216,7 +1224,15 @@ Resources:
                         e-open-WSFC-ports:
                             command: powershell.exe -ExecutionPolicy RemoteSigned -Command "C:\cfn\scripts\common\OpenWSFCPorts.ps1"
                             waitAfterCompletion: '0'
-                        f-add-domadmin-user-to-group:
+                        f-update-securitygroup-rules:
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\common\Update-SecurityGroup.ps1
+                                    -SGID '
+                                  - !Ref 'WorkloadSecurityGroup'
+                                  - '''"'   
+                            waitAfterCompletion: '0'
+                        g-add-domadmin-user-to-group:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe '
@@ -1226,7 +1242,7 @@ Resources:
                                   - !Ref 'DomainAdminUser'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
-                        g-add-sqlservice-user-to-group:
+                        h-add-sqlservice-user-to-group:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe '
@@ -1236,7 +1252,7 @@ Resources:
                                   - !Ref 'SQLAdminAccounts'
                                   - ''' -GroupName ''Administrators''"'
                             waitAfterCompletion: '0'
-                        h-update-dnssuffixlist:
+                        i-update-dnssuffixlist:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Update-DNSSuffixSearchList.ps1
@@ -1487,6 +1503,7 @@ Resources:
                   FromPort: 49152
                   ToPort: 65535
                   CidrIp: !Sub '${ADDnsIpAddresses}/32'
+
 Outputs:
     SQLFSx1InstanceIPMAD:
         Description: Private IP of SqlFSx Instance

@@ -1,4 +1,4 @@
-import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, Popover, RadioButton, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './ProvisionedIOPS.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -7,22 +7,55 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { setProvisionedIOPSValue, setProvisionedType } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { useEffect, useState } from 'react';
+import { selectFsxIops } from '../../MSSqlServer/MSSqlUtils';
 
 const ProvisionedIOPS = () => {
     const dispatch = useDispatch();
 
     const provisionValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.provisionedType);
     const iopsValue = useAppSelector(state => state.mssqlForm.provisionedIOPS.IOPSValue);
+    const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+    const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+
+    const [isDisable, setIsDisable] = useState(false);
+
+    useEffect(() => {
+        if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
+            setIsDisable(true);
+        } else {
+            setIsDisable(false);
+        }
+        selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedFsxnType, selectedExistingFsxnName]);
 
     //Set the Header text here
     const setHeader = () => {
         if (checkError()) {
             return <AccordionError />;
         }
-        if (provisionValue === GENERAL.AUTOMATIC) {
-            return <Typography variant="Regular_14">{GENERAL.AUTOMATIC}</Typography>;
+        if(isDisable){
+            return (
+                <Popover
+                    popoverClass={styles['popover']}
+                    children={GENERAL.IOPS_DISABLE_TEXT}
+                    trigger="hover"
+                    container={
+                        <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                            {provisionValue === GENERAL.AUTOMATIC ? GENERAL.AUTOMATIC : iopsValue}
+                        </Typography>
+                    }
+                />
+            );
+
+        } else {
+            return (
+                <Typography variant="Regular_14">
+                    {provisionValue === GENERAL.AUTOMATIC ? GENERAL.AUTOMATIC : iopsValue}
+                </Typography>
+            );
         }
-        return <Typography variant="Regular_14">{iopsValue}</Typography>;
     };
 
     const checkError = () => {
@@ -37,6 +70,8 @@ const ProvisionedIOPS = () => {
     return (
         <div className={styles.provisioned}>
             <AccordionCard
+                isDisabled={isDisable}
+                isExpandDisabled={isDisable}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="17"
                 title={<div className={CommonStyles.title}>{GENERAL.PROVISIONED_IOPS}</div>}

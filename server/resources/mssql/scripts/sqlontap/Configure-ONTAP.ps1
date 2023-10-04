@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+  #Requires -Version 7.0
 #Requires -Module AWS.Tools.FSX,AWS.Tools.secretsmanager
 [CmdletBinding()]
 param(
@@ -70,6 +70,32 @@ function returncert{
 
 }
 
+function callGetOrDeleteApi{
+    param(
+    [Parameter(Mandatory=$true)]
+    [string]$uri,
+    [Parameter(Mandatory=$true)]
+    [string]$region,
+    [Parameter(Mandatory=$true)]
+    [string]$creds,
+    [Parameter(Mandatory=$true)]
+    [string]$method
+    )
+    try{
+        $restcert = returncert -region $region
+        $Params = @{
+            "URI"     = "$uri"
+            "Method"  = "$method"
+            "Headers" = @{"Authorization" = "Basic $creds"}
+            "ContentType" = "application/json"
+        }
+        Invoke-RestMethod @Params -Certificate $restcert
+    }catch{
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+        $_ | Write-AWSLaunchWizardException
+    }
+}
+
 function callrestapi{
     param(
     [Parameter(Mandatory=$true)]
@@ -106,6 +132,56 @@ function callrestapi{
         $_ | Write-AWSLaunchWizardException
     }
 }
+
+$LOGLUN = 'sqllog'
+$DATALUN = 'sqldata'
+$TLUN = 'tempdb'
+$QLUN = 'quorum'
+
+# delete lun mapping if exist
+$lunmapsUriDynamicPart = 'private/cli/lun/mapping'
+$URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
+$restcert = returncert -region $region
+$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+
+foreach ($perlunmap in $lunmappingdata) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlunmap.vserver)&path=$($perlunmap.path)&igroup=$($perlunmap.igroup)"
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+}
+Start-Sleep 5
+
+# delete luns if exists
+$lunUriDynamicPart='private/cli/lun'
+$URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
+$lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+if ($FSxQuorumVolumeName -ne "") {
+$lunPathList = @("/vol/$FSxQuorumVolumeName/$QLUN",  "/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+}
+else {
+$lunPathList = @("/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+}
+
+foreach ($perlun in $lunlist) {
+    if($lunPathList -contains $perlun.path) {
+        $DeleteURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)"
+        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+    }
+}
+
+Start-Sleep 5
+
+# delete igroup if exists
+$IGUriDynamicPart='private/cli/igroup'
+$URI = "https://$($MgmtDNS)/api/$($IGUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
+$igrouplist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records 
+
+foreach ($perigroup in $igrouplist) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($IGUriDynamicPart)?vserver=$($perigroup.vserver)&igroup=$($perigroup.igroup)"
+    callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+}
+
+Start-Sleep 5
+
 #Start ONTAP configuration
 $VolUriDynamicPart='private/cli/volume'
 
@@ -119,11 +195,13 @@ https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FS
 $Body = @{
     "fractional-reserve" = "0"
     "space-guarantee" = "none"
-    "space-mgmt-try-first"= "snap_delete"
+    "space-mgmt-try-first"= "volume_grow"
     "percent-snapshot-space" = "0"
     "read-realloc" = "on"
     "tiering-policy" = "snapshot-only"
+    "tiering-minimum-cooling-days" = "7"
     "snapshot-policy" = "none"
+    "autosize-mode" = "grow"
 }
 
 $JsonBody = $Body | ConvertTo-Json
@@ -139,25 +217,13 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
 $URI=@"
 https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FSxLogVolumeName)
 "@
-$Body = @{
-    "fractional-reserve" = "0"
-    "space-guarantee" = "none"
-    "space-mgmt-try-first"= "snap_delete"
-    "percent-snapshot-space" = "0"
-    "read-realloc" = "on"
-    "tiering-policy" = "snapshot-only"
-    "snapshot-policy" = "none"
-}
 
-$JsonBody = $Body | ConvertTo-Json
 $Params = @{
     "URI"     = "$URI"
     "Method"  = "PATCH"
@@ -170,25 +236,13 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
 $URI=@"
 https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FSxTempDbVolumeName)
 "@
-$Body = @{
-    "fractional-reserve" = "0"
-    "space-guarantee" = "none"
-    "space-mgmt-try-first"= "snap_delete"
-    "percent-snapshot-space" = "0"
-    "read-realloc" = "on"
-    "tiering-policy" = "snapshot-only"
-    "snapshot-policy" = "none"
-}
 
-$JsonBody = $Body | ConvertTo-Json
 $Params = @{
     "URI"     = "$URI"
     "Method"  = "PATCH"
@@ -201,8 +255,6 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 Start-Sleep 5
 
@@ -212,7 +264,14 @@ https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FS
 "@
 $Body = @{
     "fractional-reserve" = "0"
-     "space-mgmt-try-first"= "snap_delete"
+    "space-guarantee" = "none"
+    "space-mgmt-try-first"= "volume_grow"
+    "percent-snapshot-space" = "0"
+    "read-realloc" = "on"
+    "tiering-policy" = "snapshot-only"
+    "tiering-minimum-cooling-days" = "7"
+    "snapshot-policy" = "none"
+    "autosize-mode" = "grow"
 }
 
 $JsonBody = $Body | ConvertTo-Json
@@ -228,8 +287,6 @@ try{
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
     Write-Output "Volume modification failed"
-    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
-    $_ | Write-AWSLaunchWizardException
 }
 }
 Start-Sleep 5
@@ -251,12 +308,11 @@ Start-Sleep 5
 ##create data lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$DATALUN = 'sqldata'
 $DSIZE = $FSxDataLunSize+"M"
 $LUN_PATH = "/vol/$FSxDataVolumeName/$DATALUN"
 $Body = @{
     "name" = "$LUN_PATH"
-    "os_type" = "windows_2008"    
+    "os_type" = "windows_2008"
     "location"= @{"volume"=@{"name" = "$FSxDataVolumeName"}}
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$DSIZE"}       
@@ -275,16 +331,17 @@ $Body = @{
 }
 callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 
+
+
 ##create log lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$LOGLUN = 'sqllog'
 $LUN_PATH = "/vol/$FSxLogVolumeName/$LOGLUN"
 $loglunsize = [math]::Round([int]$FSxDataLunSize*0.25)
 $LSIZE = $loglunsize.ToString()+"M"
 $Body = @{
     "name" = "$LUN_PATH"
-    "os_type" = "windows_2008"    
+    "os_type" = "windows_2008"       
     "location"= @{"volume"=@{"name" = "$FSxLogVolumeName"}}
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$LSIZE"}   
@@ -304,14 +361,13 @@ callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -param
 ##create tempDb lun
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$TLUN = 'tempdb'
 $LUN_PATH = "/vol/$FSxTempDBVolumeName/$TLUN"
 $templunsize = [math]::Round([int]$FSxDataLunSize*0.1)
 $TSIZE = $templunsize.ToString()+"M"
 
 $Body = @{
     "name" = "$LUN_PATH"
-    "os_type" = "windows_2008"    
+    "os_type" = "windows_2008"
     "location"= @{"volume"=@{"name" = "$FSxTempDbVolumeName"}}
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "$TSIZE"}   
@@ -333,11 +389,10 @@ callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -param
 if ($FSxQuorumVolumeName -ne "") {
 $lunUriDynamicPart='storage/luns'
 $URI = "https://$MgmtDNS/api/$lunUriDynamicPart"
-$QLUN = 'quorum'
 $LUN_PATH = "/vol/$FSxQuorumVolumeName/$QLUN"
 $Body = @{
     "name" = "$LUN_PATH"
-    "os_type" = "windows_2008"    
+    "os_type" = "windows_2008"
     "location"= @{"volume"=@{"name" = "$FSxQuorumVolumeName"}}
     "svm" = @{"name" = "$SQLVMName"} 
     "space" = @{"size" = "10G"}   
@@ -356,5 +411,53 @@ $Body = @{
 callrestapi -MgmtDNS $MgmtDNS -uri $lunmapsUriDynamicPart -region $region -parambody $Body -creds $base64 -resource $ResourceID -stack $Stackname -instanceId $instanceId
 }
  
+ 
+##modify luns
+$lunUriDynamicPart='private/cli/lun'
+
+
+
+#$lunPathList = @("/vol/$FSxQuorumVolumeName/$QLUN",  "/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+foreach ($perlun in $lunPathlist) {
+        $UpdateLUNURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)&path=$($perlun)"
+        $Body = @{
+         "space-reserve" = "enabled"
+          }
+          $JsonBody = $Body | ConvertTo-Json
+        $Params = @{
+        "URI"     = "$UpdateLUNURI"
+        "Method"  = "PATCH"
+        "Headers" = @{"Authorization" = "Basic $base64"}
+        "Body" =  "$JsonBody"
+        "ContentType" = "application/json"
+        }
+        try{
+        $restcert = returncert -region $region
+        Invoke-RestMethod @Params -Certificate $restcert
+        }
+        catch{
+        Write-Output "LUN modification failed"
+        }
+        Start-Sleep 2
+        $Body = @{
+         "space-allocation" = "enabled"
+          }
+          $JsonBody = $Body | ConvertTo-Json
+        $Params = @{
+        "URI"     = "$UpdateLUNURI"
+        "Method"  = "PATCH"
+        "Headers" = @{"Authorization" = "Basic $base64"}
+        "Body" =  "$JsonBody"
+        "ContentType" = "application/json"
+        }
+        try{
+        $restcert = returncert -region $region
+        Invoke-RestMethod @Params -Certificate $restcert
+        }
+        catch{
+        Write-Output "LUN modification failed"
+        }
+        Start-Sleep 3
+    }
  
  

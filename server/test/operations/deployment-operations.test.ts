@@ -25,6 +25,8 @@ import { SECRETS } from '../../src/utils/consts';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;
 SECRETS.CLIENT_ID = `${faker.string.alphanumeric(20)}`;
+SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+SECRETS.SIGNURL_SECRET_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 describe('Cloud formation operations', () => {
     it('Create the cloud formation template url for user deployment', async () => {
