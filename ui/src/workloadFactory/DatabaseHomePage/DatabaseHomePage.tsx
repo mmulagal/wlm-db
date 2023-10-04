@@ -4,6 +4,7 @@ import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
 import DatabaseHost from './DatabaseHost/DatabaseHost';
+import DatabaseTable from './DatabaseTable/DatabaseTable';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,18 +21,22 @@ const DatabaseHomePage = () => {
                 <div className={styles.secondLevelContainer}>
                     <DatabaseHost />
                 </div>
-                <div className={styles.ProtectionContainer}></div>
+                {/* <div className={styles.ProtectionContainer}></div> */}
 
                 <div className={styles.fourthLevelContainer}>
                     {/* Bar lines */}
-                    <div className={styles.barContainer}>
+                    {/* <div className={styles.barContainer}>
                         <div className={styles.commonContainer}></div>
 
                         <div className={styles.commonContainer}></div>
-                    </div>
+                    </div> */}
 
                     {/* Job status */}
-                    <div className={styles.jobContainer}></div>
+                    {/* <div className={styles.jobContainer}></div> */}
+                </div>
+
+                <div className={styles.secondLevelContainer}>
+                    <DatabaseTable />
                 </div>
             </div>
 
