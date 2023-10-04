@@ -41,7 +41,7 @@ const InstanceType = () => {
             const option = generateOptionType(value, value, label2, false, '', val);
             if(value === DEAFULT_INSTANCE_VALUE){
                 default_instance_item = option;
-            } else if(!archVal || (archVal && val?.architecture && (val?.architecture).includes(archVal))){
+            } else if(!archVal || (archVal && val?.architecture && (val.architecture).includes(archVal))){
                 options.push(option);
             }
         });
