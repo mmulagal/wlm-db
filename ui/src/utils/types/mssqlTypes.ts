@@ -35,6 +35,7 @@ export interface AD {
 export interface Ami {
     name: string;
     imageId: string;
+    architecture?: string;
 }
 
 export interface SNS {
@@ -69,6 +70,7 @@ export interface InstanceType {
     vCpus?: number;
     ramInMib?: number;
     iopsInMbps?: number;
+    architecture?: Array<string>;
 }
 
 export interface FSxN {

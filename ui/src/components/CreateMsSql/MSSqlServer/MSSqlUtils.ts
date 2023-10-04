@@ -61,7 +61,12 @@ export const selectDefaultLicense = (amiData:any, dispatch: any) => {
         const firstAmi = amiData?.amis[0];
         const amiVal = firstAmi?.imageId;
         const amiName = firstAmi?.name;
-        const option = generateOptionType(amiVal, amiVal, amiName, false, '');
+        const data = {
+            architecture: firstAmi?.architecture,
+            amiVal : firstAmi?.imageId,
+            amiName : firstAmi?.name
+        }
+        const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
         dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
         dispatch(setSelectedLicenseId(option));
     }

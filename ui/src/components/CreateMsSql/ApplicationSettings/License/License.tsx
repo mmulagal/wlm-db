@@ -51,7 +51,12 @@ const License = () => {
         amiData?.amis?.map((val, idx: number) => {
             const amiVal = val?.imageId;
             const amiName = val?.name;
-            const option = generateOptionType(amiVal, amiVal, amiName, false, '');
+            const data = {
+                architecture: val?.architecture,
+                amiVal : val?.imageId,
+                amiName : val?.name
+            }
+            const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
             options.push(option);
         });
         return options;
