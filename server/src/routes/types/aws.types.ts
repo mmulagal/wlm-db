@@ -1,4 +1,4 @@
-import { Type } from '@fastify/type-provider-typebox';
+import { Type, Static } from '@fastify/type-provider-typebox';
 
 // AWS request parameters
 const AwsParams = Type.Object({
@@ -139,13 +139,13 @@ const AdsResponse = Type.Object({
 });
 
 // Regions supporting FSx for ONTAP response
+const FSxAvailableRegion = Type.Object({
+    regionCode: Type.String(),
+    regionName: Type.String()
+});
+
 const FSxRegionsResponse = Type.Object({
-    regions: Type.Array(
-        Type.Object({
-            regionCode: Type.String(),
-            regionName: Type.String()
-        })
-    )
+    regions: Type.Array(FSxAvailableRegion)
 });
 
 // KMS Keys List Request and Response
@@ -259,6 +259,9 @@ const FSxFileSystemsResponse = Type.Object({
     filesystems: Type.Array(FSxFileSystemSchema)
 });
 
+type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
+type FSxAvailableRegionType = Static<typeof FSxAvailableRegion>;
+
 export {
     AwsVpcQueryString,
     AwsParams,
@@ -270,6 +273,8 @@ export {
     AdsResponse,
     SnsResponse,
     FSxRegionsResponse,
+    FSxRegionsResponseType,
+    FSxAvailableRegionType,
     FSxFileSystemParams,
     FSxFileSystemSchema,
     FSxFileSystemsResponse,
