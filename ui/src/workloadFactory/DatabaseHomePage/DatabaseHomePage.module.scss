@@ -7,9 +7,15 @@
         height: 100%;
     }
 
-    .heading {
+    .topContainer {
+        display: flex;
+        width: 1066px;
+        justify-content: space-between;
         margin-top: 38px;
         margin-left: 120px;
+        .heading {
+            line-height: unset;
+        }
     }
 
     .secondLevelContainer {
@@ -28,6 +34,7 @@
     .fourthLevelContainer {
         margin-left: 120px;
         margin-top: 24px;
+        margin-bottom: 40px; //Temporary
         display: flex;
         gap: 24px;
 
