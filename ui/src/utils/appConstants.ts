@@ -202,7 +202,7 @@ export const GENERAL = {
     VPC: 'VPC',
     //Availability zone
     AZ_TEXT:
-        'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
+        'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled. The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
