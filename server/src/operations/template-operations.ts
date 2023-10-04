@@ -14,8 +14,7 @@ import {
     MASTER_TEMPLATE_DISTRIBUTION,
     SIGNED_URL_ERROR_MESSAGE,
     HttpErrorCodes,
-    WLMDB_DEFAULT_KEY,
-    WLMDB_DEFAULT_VALUE
+    DEFAULT_TAGS
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -90,9 +89,7 @@ async function updateTemplateUrls(
             url: fsxExistingTemplatesignedUrl,
             location: fsxNewTemplatePath!.url
         });
-        tags = tags
-            ? [...tags, { Key: WLMDB_DEFAULT_KEY, Value: WLMDB_DEFAULT_VALUE }]
-            : [{ Key: WLMDB_DEFAULT_KEY, Value: WLMDB_DEFAULT_VALUE }];
+        tags = tags ? tags.concat(DEFAULT_TAGS) : DEFAULT_TAGS;
 
         const yamlStr = yaml.stringify(
             {

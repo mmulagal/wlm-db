@@ -667,8 +667,16 @@ const SQL_TEMPLATES_ASSETS = [
 ];
 
 const SQL_TEMPLATE_TAGS_INDENTATION = 6;
-const WLMDB_DEFAULT_KEY = 'created_by_flow';
-const WLMDB_DEFAULT_VALUE = 'WLMDB';
+const DEFAULT_TAGS = [
+    {
+        Key: 'created_by_flow',
+        Value: 'WLMDB'
+    },
+    {
+        Key: 'Test',
+        Value: 'Test'
+    }
+];
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
@@ -843,8 +851,7 @@ export {
     SQL_TEMPLATES_ASSETS,
     SQL_RESOURCE_ASSETS,
     SQL_TEMPLATE_TAGS_INDENTATION,
-    WLMDB_DEFAULT_KEY,
-    WLMDB_DEFAULT_VALUE,
+    DEFAULT_TAGS,
     SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
