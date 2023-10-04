@@ -13,7 +13,9 @@ import {
     SQL_TEMPLATES_DISTRIBUTION,
     MASTER_TEMPLATE_DISTRIBUTION,
     SIGNED_URL_ERROR_MESSAGE,
-    HttpErrorCodes
+    HttpErrorCodes,
+    WLMDB_DEFAULT_KEY,
+    WLMDB_DEFAULT_VALUE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -68,14 +70,6 @@ async function updateTemplateUrls(
     templatePath?: string
 ) {
     logger.info('Updating templates and uploading to bucket', credentialsId, region, templateFilepath, templateType);
-    const yamlStr = yaml.stringify(
-        {
-            Tags: tags
-        },
-        {
-            indent: SQL_TEMPLATE_TAGS_INDENTATION // !IMP: This is a workaround until we find a better solution, it should be changed if the indentation changes in master yaml file
-        }
-    );
     const source = readFileSync(templateFilepath).toString();
     const template = Handlebars.compile(source, { noEscape: true });
     if (templateType === TEMPLATE_TYPES.MASTER) {
@@ -96,6 +90,18 @@ async function updateTemplateUrls(
             url: fsxExistingTemplatesignedUrl,
             location: fsxNewTemplatePath!.url
         });
+        tags = tags
+            ? [...tags, { Key: WLMDB_DEFAULT_KEY, Value: WLMDB_DEFAULT_VALUE }]
+            : [{ Key: WLMDB_DEFAULT_KEY, Value: WLMDB_DEFAULT_VALUE }];
+
+        const yamlStr = yaml.stringify(
+            {
+                Tags: tags
+            },
+            {
+                indent: SQL_TEMPLATE_TAGS_INDENTATION // !IMP: This is a workaround until we find a better solution, it should be changed if the indentation changes in master yaml file
+            }
+        );
         const contents = template({
             ValidationTemplate: decodeURI(signedUrls.get('ValidationTemplate')?.url || ''),
             FSXNewTemplate: decodeURI(signedUrls.get('FSXNewTemplate')?.url || ''),
