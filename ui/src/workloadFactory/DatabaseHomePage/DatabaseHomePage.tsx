@@ -8,6 +8,7 @@ import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
 import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
 import ProtectionSection from './ProtectSection/ProtectionSection';
+import JobStatus from './JobStatus/JobStatus';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -47,7 +48,9 @@ const DatabaseHomePage = () => {
                     </div>
 
                     {/* Job status */}
-                    <div className={styles.jobContainer}></div>
+                    <div className={styles.jobContainer}>
+                        <JobStatus />
+                    </div>
                 </div>
             </div>
 

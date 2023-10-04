@@ -42,6 +42,53 @@ const ProtectionSection = () => {
                             <Typography variant="Regular_14">6 Databases</Typography>
                         </div>
                     </div>
+                    <div className={styles.separatorProtection} />
+                </div>
+
+                {/* 3rd Row */}
+                <div className={styles.secondLevel}>
+                    <Typography variant="Semibold_14">Protected database distribution</Typography>
+                    <div className={styles.separatorProtection} />
+                    <div className={styles.row}>
+                        <div className={styles.firstPart}>
+                            <div className={styles.square} style={{ backgroundColor: '#012CAD' }} />
+                            <Typography variant="Regular_14">AWS backup</Typography>
+                        </div>
+
+                        <div className={styles.secondPart}>
+                            <Typography variant="Semibold_14">20 %</Typography>
+                            <div className={styles.separatorSecondPart} />
+                            <Typography variant="Regular_14">5 Databases</Typography>
+                        </div>
+                    </div>
+
+                    <div className={styles.separatorProtection} />
+                    <div className={styles.row}>
+                        <div className={styles.firstPart}>
+                            <div className={styles.square} style={{ backgroundColor: '#A815F3' }} />
+                            <Typography variant="Regular_14">FSx ONTAP Snapshots</Typography>
+                        </div>
+
+                        <div className={styles.secondPart}>
+                            <Typography variant="Semibold_14">20 %</Typography>
+                            <div className={styles.separatorSecondPart} />
+                            <Typography variant="Regular_14">4 Databases</Typography>
+                        </div>
+                    </div>
+                    <div className={styles.separatorProtection} />
+                    <div className={styles.row}>
+                        <div className={styles.firstPart}>
+                            <div className={styles.square} style={{ backgroundColor: '#0BAFFC' }} />
+                            <Typography variant="Regular_14">Native SQL server backup</Typography>
+                        </div>
+
+                        <div className={styles.secondPart}>
+                            <Typography variant="Semibold_14">40 %</Typography>
+                            <div className={styles.separatorSecondPart} />
+                            <Typography variant="Regular_14">9 Databases</Typography>
+                        </div>
+                    </div>
+                    <div className={styles.separatorProtection} />
                 </div>
             </div>
         </div>
