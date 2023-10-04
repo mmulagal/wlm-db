@@ -139,13 +139,13 @@ const AdsResponse = Type.Object({
 });
 
 // Regions supporting FSx for ONTAP response
+const FSxAvailableRegion = Type.Object({
+    regionCode: Type.String(),
+    regionName: Type.String()
+});
+
 const FSxRegionsResponse = Type.Object({
-    regions: Type.Array(
-        Type.Object({
-            regionCode: Type.String(),
-            regionName: Type.String()
-        })
-    )
+    regions: Type.Array(FSxAvailableRegion)
 });
 
 // KMS Keys List Request and Response
@@ -260,7 +260,7 @@ const FSxFileSystemsResponse = Type.Object({
 });
 
 type FSxRegionsResponseType = Static<typeof FSxRegionsResponse>;
-type FSxAvailableRegionType = FSxRegionsResponseType['regions'][0];
+type FSxAvailableRegionType = Static<typeof FSxAvailableRegion>;
 
 export {
     AwsVpcQueryString,
