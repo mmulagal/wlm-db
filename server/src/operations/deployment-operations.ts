@@ -227,7 +227,8 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
 
-    logger.info('Signed master url ', signedMasterTemplateUrl);
+    const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
+    logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
@@ -277,7 +278,7 @@ async function createCloudFormationTemplateForUserDeployment(
         templateParams += `&param_${key}=${value}`;
     });
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${signedMasterTemplateUrl}&${templateParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
