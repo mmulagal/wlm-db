@@ -56,11 +56,18 @@ async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const [{ metadata, region }] = (await listResources(
-        accountId,
-        resourceId,
-        DatabaseTypes.MS_SQL_SERVER
-    )) as resource[];
+    let metadata;
+    let region;
+
+    try {
+        [{ metadata, region }] = (await listResources(
+            accountId,
+            resourceId,
+            DatabaseTypes.MS_SQL_SERVER
+        )) as resource[];
+    } catch (error) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
+    }
     let credentialsId;
     let activeNodeInstanceId;
     let standbyNodeInstanceId;
