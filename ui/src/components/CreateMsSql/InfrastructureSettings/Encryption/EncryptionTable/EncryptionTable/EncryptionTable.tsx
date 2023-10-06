@@ -24,7 +24,6 @@ const EncryptionTable = () => {
             accessor: 'name',
             id: '1',
             isSortable: false,
-            
             width: '180px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
