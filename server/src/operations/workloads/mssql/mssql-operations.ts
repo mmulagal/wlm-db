@@ -36,7 +36,7 @@ import {
     ACCOUNT_ID
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, listResources } from '../../../lib/database/db';
+import { createResource, listResources, deleteResource } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
 
 const logger = getLogger();
@@ -479,6 +479,26 @@ async function discoverMsSqlServer(
     });
     return { resourceId, resourceName };
 }
+async function deleteResourceById(accountId: string, resourceId: string) {
+    logger.info('Delete Resource:', { resourceId });
+
+    try {
+        const response = await deleteResource(accountId, resourceId);
+        logger.info('Remove resource response:', response);
+
+        if (response.count === 1) {
+            return { message: 'Resource successfully deleted' };
+        }
+
+        throw new Error('Resource does not exist for tenancy account');
+    } catch (err: any) {
+        logger.error('Failed to remove resource. Reason:', err.message);
+
+        return err.message === 'Resource does not exist for tenancy account'
+            ? createError(HttpErrorCodes.NOT_FOUND, err.message)
+            : createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, err);
+    }
+}
 
 export {
     getSqlServerDetails,
@@ -491,5 +511,6 @@ export {
     discoverMsSqlServer,
     callSsmExecution,
     getTablesCount,
-    getMsSqlResourceId
+    getMsSqlResourceId,
+    deleteResourceById
 };
