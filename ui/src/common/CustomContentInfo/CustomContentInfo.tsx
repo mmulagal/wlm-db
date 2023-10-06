@@ -9,10 +9,7 @@ const CustomContentInfo = ({
 }) => {
   return (
     <>
-    <TooltipInfo className={styles.infoTooltip}>
-            {tooltipText}
-          </TooltipInfo>
-      {/* {isToolTip ? (
+      {isToolTip ? (
         <div style={customStyle}>
           <TooltipInfo className={styles.infoTooltip}>
             {tooltipText}
@@ -20,7 +17,7 @@ const CustomContentInfo = ({
         </div>
       ) : (
         CustomContent && CustomContent
-      )} */}
+      )}
     </>
   );
 };
