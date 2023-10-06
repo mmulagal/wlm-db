@@ -45,7 +45,6 @@
     
             li {
                 padding: 12px 24px 12px 24px;
-                // border-bottom: 1px solid #e0e0e0;
                 height: 48px;
                 display: flex;
                 align-items: center;
@@ -66,12 +65,10 @@
     
             .menuInfoHover {
                 padding: 12px 24px 12px 24px;
-                //border-bottom: 1px solid #e0e0e0;
                 height: 48px;
                 display: flex;
                 position: relative;
                 align-items: center;
-                // color: var(--grey-25);
             }
         }
     }
@@ -105,7 +102,6 @@
   
 .menuPointerDisabled {
     font-weight: 600;
-    // color: #b7b7b7;
     font-size: 22px;
     width: 32px;
     display: flex;
@@ -113,7 +109,6 @@
     justify-content: center;
     border-radius: 9px;
     height: 16px;
-    // border: 1.5px solid #b7b7b7;
   
     .menuPointer {
         height: 40px;
