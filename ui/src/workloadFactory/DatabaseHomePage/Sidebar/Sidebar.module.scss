@@ -13,96 +13,20 @@
         display: flex;
         padding: 16px 40px;
         justify-content: space-between;
+
+        .rightSection {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
     }
 
-    .color {
+    .colorAutomation {
         color: var(--white);
     }
 
-    .secondLevelContainer {
-        margin-top: 40px;
-        padding-left: 40px;
-
-        .automationStyle {
-            margin-top: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            .tile {
-                width: 558px;
-                height: 48px;
-                background: var(--dark-background-content-background, #2b323d);
-                display: flex;
-                gap: 8px;
-                padding: 12px 24px;
-
-                svg {
-                    position: relative;
-                    top: 3px;
-                }
-            }
-
-            .firstChild {
-                svg {
-                    path {
-                        fill: #6eb8df;
-                    }
-                }
-
-                div {
-                    color: #6eb8df;
-                }
-            }
-        }
-    }
-
-    .thirdLevelContainer {
-        margin-top: 40px;
-        padding-left: 40px;
-        .containerBar {
-            width: 558px;
-            height: 54px;
-            background: var(--dark-background-table-header-background, #4d5765);
-
-            .color {
-                padding-top: 16px;
-                padding-left: 40px;
-            }
-        }
-
-        .jsonBar {
-            width: 558px;
-            height: 394px;
-            border-radius: 4px;
-            background: var(--dark-background-content-background, #2b323d);
-
-            .color {
-                padding-left: 40px;
-                padding-top: 40px;
-            }
-        }
-    }
-
-    .footerContainer {
-        height: 64px;
-        width: 637px;
-        background: var(--dark-background-content-background, #2b323d);
-        position: fixed;
-        bottom: 0;
-
-        display: flex;
-        justify-content: space-between;
-
-        button {
-            height: 32px !important;
-            border-radius: 2px;
-            background: var(--dark-buttons-button-secondary, #84b0ff);
-        }
-
-        .buttonDesign {
-            padding-top: 16px;
-            padding-right: 40px;
-        }
+    .color {
+        color: #84b0ff;
     }
 }
 
