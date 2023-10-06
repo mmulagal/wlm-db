@@ -56,11 +56,18 @@ async function getResourceDetails(resourceId: string) {
     logger.info('Gettng resource details of resource', resourceId);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const [{ metadata, region }] = (await listResources(
-        accountId,
-        resourceId,
-        DatabaseTypes.MS_SQL_SERVER
-    )) as resource[];
+    let metadata;
+    let region;
+
+    try {
+        [{ metadata, region }] = (await listResources(
+            accountId,
+            resourceId,
+            DatabaseTypes.MS_SQL_SERVER
+        )) as resource[];
+    } catch (error) {
+        throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
+    }
     let credentialsId;
     let activeNodeInstanceId;
     let standbyNodeInstanceId;
@@ -103,11 +110,19 @@ async function callSsmExecution(
         InstanceIds: [activeNodeInstanceId]
     };
     try {
+        logger.debug('SSM query execution from primary node', credentialsId, region, activeNodeInstanceId);
         response = await executeSSMDocument(credentialsId, region, params, accountId);
+        if (response?.StandardErrorContent) {
+            logger.error(
+                'SSM query execution from primary node failed',
+                activeNodeInstanceId,
+                response?.StandardErrorContent
+            );
+            throw new Error('SSM query execution from primary node failed');
+        }
     } catch (error) {
-        logger.error('Fetching database summary from primary node failed', activeNodeInstanceId, error);
         if (standbyNodeInstanceId) {
-            logger.info('Fetching database summary from secondary', credentialsId, region, standbyNodeInstanceId);
+            logger.debug('SSM query execution from secondary node', credentialsId, region, standbyNodeInstanceId);
             params = {
                 ...defaultParams,
                 InstanceIds: [standbyNodeInstanceId]
@@ -115,11 +130,7 @@ async function callSsmExecution(
             try {
                 response = await executeSSMDocument(credentialsId, region, params, accountId);
             } catch (secondError) {
-                logger.error(
-                    'Fetching database summary from secondary node failed',
-                    standbyNodeInstanceId,
-                    secondError
-                );
+                logger.error('SSM query execution from secondary node failed', standbyNodeInstanceId, secondError);
                 throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Query execution failed ${secondError}`);
             }
         } else {
@@ -127,8 +138,11 @@ async function callSsmExecution(
         }
     }
     if (response?.StandardErrorContent) {
-        logger.debug('Error:', response?.StandardErrorContent);
-        throw new Error(response?.StandardErrorContent);
+        logger.debug('Query Execution failed on both nodes. Error:', response?.StandardErrorContent);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Query Execution failed on both nodes. Error:${response?.StandardErrorContent}`
+        );
     }
     return response?.StandardOutputContent;
 }
@@ -348,7 +362,7 @@ async function getServerSummary(resourceId: string) {
         if (isClustered && clusterNodesInfo) {
             const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
-            if (node1?.is_current_owner === 'True') {
+            if (node1?.is_current_owner) {
                 activeNode = node1?.NodeName;
                 standbyNode = node2?.NodeName;
             } else {
