@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Typography, SearchInput, SelectField } from '@netapp/design-system';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
+import Highlighter from '../Highlighter/Highlighter';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
 
 const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
+    const [searchInput, setSearchInput] = useState('');
 
     const handleToggle = (key: any) => {
         setOpenKey(openKey !== key ? key : null);
@@ -108,14 +110,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     />
                                 </div>
                             </div>
-                            <SearchInput onChange={function noRefCheck() {}} />
+                            <SearchInput onChange={e => setSearchInput(e)} />
                         </div>
                         {/* Search bar input code ends here */}
 
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
                             <Typography variant="Regular_14" style={{ color: '#fff' }}>
-                                Coming Soon
+                                <Highlighter highlight={searchInput}>Coming Soon</Highlighter>
                             </Typography>
                         </div>
                     </div>
