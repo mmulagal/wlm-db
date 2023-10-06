@@ -4,6 +4,7 @@ import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
 import DatabaseHost from './DatabaseHost/DatabaseHost';
+import DatabaseTable from './DatabaseTable/DatabaseTable';
 import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
 import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
@@ -51,6 +52,9 @@ const DatabaseHomePage = () => {
                     <div className={styles.jobContainer}>
                         <JobStatus />
                     </div>
+                </div>
+                <div className={styles.secondLevelContainer}>
+                    <DatabaseTable />
                 </div>
             </div>
 
