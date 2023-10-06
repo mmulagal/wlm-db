@@ -1,8 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { sendSSMCommand, getCommandInvocation } from '../../../src/lib/aws/ssm';
-import { SSM_PARAMS } from '../../utils/consts';
+
+import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions } from '../../../src/lib/aws/ssm';
+import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-response.json';
 import ssmResponse from '../../simulator/responses/aws/ssm-response.json';
+import fsxOntapRegions from '../../simulator/responses/aws/list-fsx-ontap-regions.json';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
@@ -23,5 +25,10 @@ describe('sendSSMCommand', () => {
         };
         const resp = await getCommandInvocation(credentialsId, 'us-east-1', params);
         expect(resp).toEqual(ssmResponse.ssmResponse);
+    });
+
+    it('List of AWS regions supporting Amazon FSx for NetApp ONTAP', async () => {
+        const response = await describeFSxOntapRegions(DEFAULT_AWS_CREDENTIALS_TYPE);
+        expect(response).toEqual(fsxOntapRegions.Parameters);
     });
 });

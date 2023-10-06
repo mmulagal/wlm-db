@@ -385,15 +385,16 @@ const AWS_RESOURCES_ACTION_MAP = {
     [FSX]: FSX_ACTION_NAMES,
     [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
 };
-// List of regions having "Amazon FSx for NetApp ONTAP" service.
-// List taken from https://www.aws-services.info/fsx-ontap.html
-const FSX_SUPPORTED_REGIONS = new Map<string, string>([
+
+// List of AWS regions - taken from https://www.aws-services.info/regions.html
+const AWS_REGIONS = new Map<string, string>([
     // "Region Code"    "Region Name"
     // -------------    -------------
     ['af-south-1', 'Africa (Cape Town)'],
     ['ap-east-1', 'Asia Pacific (Hong Kong)'],
     ['ap-northeast-1', 'Asia Pacific (Tokyo)'],
     ['ap-northeast-2', 'Asia Pacific (Seoul)'],
+    ['ap-northeast-3', 'Asia Pacific (Osaka)'],
     ['ap-south-1', 'Asia Pacific (Mumbai)'],
     ['ap-south-2', 'Asia Pacific (Hyderabad)'],
     ['ap-southeast-1', 'Asia Pacific (Singapore)'],
@@ -401,6 +402,8 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['ap-southeast-3', 'Asia Pacific (Jakarta)'],
     ['ap-southeast-4', 'Asia Pacific (Melbourne)'],
     ['ca-central-1', 'Canada (Central)'],
+    ['cn-north-1', 'China (Beijing)	'],
+    ['cn-north-1', 'China (Beijing)'],
     ['eu-central-1', 'Europe (Frankfurt)'],
     ['eu-central-2', 'Europe (Zurich)'],
     ['eu-north-1', 'Europe (Stockholm)'],
@@ -667,6 +670,12 @@ const SQL_TEMPLATES_ASSETS = [
 ];
 
 const SQL_TEMPLATE_TAGS_INDENTATION = 6;
+const DEFAULT_TAGS = [
+    {
+        Key: 'created_by_flow',
+        Value: 'WLMDB'
+    }
+];
 
 enum TEMPLATE_TYPES {
     MASTER = 'master',
@@ -734,6 +743,11 @@ const ACTION_BUTTON_DASHBOARD = 'Go to Dashboard';
 const ACTION_BUTTON_DATABASE = 'WLMDB - Database';
 const SUCCESS = 'success';
 const ERROR = 'error';
+const REDIRECT_URL = '/database-services';
+const STANDARD_DEPLOYMENT_ACTION = 'standard_deployment';
+const SQL_DEPLOYMENT_FAILED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment failed';
+const SQL_DEPLOYMENT_COMPLETED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment successful';
+const SQL_DEPLOYMENET_INITIATED_SUBJECT = 'Microsoft SQL Server and FSxN for ONTAP deployment initiated';
 
 const MAX_READ_REQUEST_FSXN = 1000000;
 const MAX_WRITE_REQUEST_FSXN = 100000;
@@ -746,7 +760,7 @@ const MULTI_AZ = 'MULTI_AZ_1';
 
 export {
     WLMDB,
-    FSX_SUPPORTED_REGIONS,
+    AWS_REGIONS,
     AWS_RESOURCES_ACTION_MAP,
     SERVICE_QUOTAS_ACTION_NAMES,
     SERVICE_QUOTAS,
@@ -836,6 +850,7 @@ export {
     SQL_TEMPLATES_ASSETS,
     SQL_RESOURCE_ASSETS,
     SQL_TEMPLATE_TAGS_INDENTATION,
+    DEFAULT_TAGS,
     SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
@@ -888,5 +903,10 @@ export {
     FCI,
     SINGLE_AZ,
     MULTI_AZ,
-    MIN_THROUGHPUT
+    MIN_THROUGHPUT,
+    REDIRECT_URL,
+    STANDARD_DEPLOYMENT_ACTION,
+    SQL_DEPLOYMENT_FAILED_SUBJECT,
+    SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+    SQL_DEPLOYMENET_INITIATED_SUBJECT
 };

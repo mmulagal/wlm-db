@@ -2,10 +2,16 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
-import { GetCommandInvocationCommand, SendCommandCommand, SSMClient } from '@aws-sdk/client-ssm';
+import {
+    GetCommandInvocationCommand,
+    SendCommandCommand,
+    SSMClient,
+    GetParametersByPathCommand
+} from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
+import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -166,3 +172,5 @@ ssmMock
     .resolves(getCommandInvocationResponse.servGUIDInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serName' })
     .resolves(getCommandInvocationResponse.serNameInvocationResponse);
+
+ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

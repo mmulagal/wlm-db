@@ -316,6 +316,22 @@ async function deleteConfig(accountId: string, id: string) {
     });
 }
 
+async function listRelationshipsResources(accountId: string) {
+    logger.info('Listing resources which has relation', { accountId });
+    return prisma.client.resource.findMany({
+        where: {
+            account_id: accountId,
+            co_relation_id: {
+                not: null
+            }
+        },
+        select: {
+            resource_id: true,
+            co_relation_id: true
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -329,5 +345,6 @@ export {
     deleteResource,
     listConfig,
     createConfig,
-    deleteConfig
+    deleteConfig,
+    listRelationshipsResources
 };

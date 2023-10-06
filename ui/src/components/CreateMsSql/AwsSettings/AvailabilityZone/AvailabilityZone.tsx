@@ -32,6 +32,7 @@ const AvailabilityZone = () => {
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
@@ -228,7 +229,7 @@ const AvailabilityZone = () => {
     };
 
     useEffect(() => {
-        if (routeTable1 && routeTable2 && routeTable1 === routeTable2) {
+        if (!isDemoMode && routeTable1 && routeTable2 && routeTable1 === routeTable2) {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,

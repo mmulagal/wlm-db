@@ -10,11 +10,16 @@ import {
     ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
+    CRITICAL,
     CloudProviders,
     DEFAULT_AWS_REGION,
     ERROR_CODE_SQS_INVALID_TOKEN,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
+    REDIRECT_URL,
     RESOURCESTYPE,
+    SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+    SQL_DEPLOYMENT_FAILED_SUBJECT,
+    STANDARD_DEPLOYMENT_ACTION,
     SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB
@@ -33,7 +38,7 @@ import {
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
-import { prepareDetailsToSendNotification } from '../cloud-manager/notification-operations';
+import { handleNotification } from '../cloud-manager/notification-operations';
 
 const logger = getLogger();
 
@@ -201,14 +206,20 @@ async function processCloudFormationMessages() {
                                                             standbyNodeInstanceIp
                                                         }
                                                     });
-                                                    await prepareDetailsToSendNotification(
-                                                        'standard_deployment',
-                                                        'Cloud formation stack deployment successful',
-                                                        'Cloud formation stack deployment successful',
-                                                        { uiNotification: true, emailNotification: true },
-                                                        ACTION_BUTTON_DASHBOARD,
-                                                        SUCCESS
-                                                    );
+                                                    const notificationData = {
+                                                        notificationAction: STANDARD_DEPLOYMENT_ACTION,
+                                                        subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+                                                        uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been deployed successfully`,
+                                                        actionLabel: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+                                                        redirectURL: REDIRECT_URL,
+                                                        label: ACTION_BUTTON_DASHBOARD,
+                                                        priority: SUCCESS,
+                                                        accountId
+                                                    };
+                                                    await handleNotification(notificationData, {
+                                                        uiNotification: true,
+                                                        emailNotification: true
+                                                    });
                                                 }
                                             }
                                         } else {
@@ -222,12 +233,21 @@ async function processCloudFormationMessages() {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                     endTime: Date.now()
                                                 });
-                                                await prepareDetailsToSendNotification(
-                                                    'standard_deployment',
-                                                    'Cloud formation stack deployment failed',
-                                                    'Cloud formation stack deployment failed',
-                                                    { uiNotification: true, emailNotification: true }
-                                                );
+
+                                                const notificationData = {
+                                                    notificationAction: STANDARD_DEPLOYMENT_ACTION,
+                                                    subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                                    uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
+                                                    actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                                    redirectURL: REDIRECT_URL,
+                                                    label: ACTION_BUTTON_DASHBOARD,
+                                                    priority: CRITICAL,
+                                                    accountId
+                                                };
+                                                await handleNotification(notificationData, {
+                                                    uiNotification: true,
+                                                    emailNotification: true
+                                                });
                                             }
                                         }
                                     } catch (error) {
@@ -237,6 +257,20 @@ async function processCloudFormationMessages() {
                                             await updateDeployment(accountId, masterStackDeployment.id, {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()
+                                            });
+                                            const notificationData = {
+                                                notificationAction: STANDARD_DEPLOYMENT_ACTION,
+                                                subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                                uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
+                                                actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                                redirectURL: REDIRECT_URL,
+                                                label: ACTION_BUTTON_DASHBOARD,
+                                                priority: CRITICAL,
+                                                accountId
+                                            };
+                                            await handleNotification(notificationData, {
+                                                uiNotification: true,
+                                                emailNotification: true
                                             });
                                         }
                                     }

@@ -18,6 +18,7 @@ const DatabaseName = () => {
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction.dbNameSelected);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [databaseName, setDatabaseName] = useState(selectedDBName ? selectedDBName : generateRandomDBName());
 
@@ -38,6 +39,9 @@ const DatabaseName = () => {
     }, [!isDBClusterNameFilled, isCreateHit]);
 
     function isValidDBName() {
+        if(isDemoMode){
+            return '';
+        }
         const firstChar = databaseName.charAt(0);
         // Check if the instance name is 16 characters or less in length
 

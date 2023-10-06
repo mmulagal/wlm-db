@@ -12,17 +12,12 @@ import {
     GetKeyPairsSchema,
     GetFSxFileSystemsSchema
 } from './schemas/aws-schemas';
-import {
-    getAmiList,
-    getVpcsList,
-    getFSxAvailableRegionsList,
-    getKeyPairsList,
-    getInstanceTypes
-} from '../operations/aws/ec2-operations';
+import { getAmiList, getVpcsList, getKeyPairsList, getInstanceTypes } from '../operations/aws/ec2-operations';
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
 import { getKmsKeysList } from '../operations/aws/kms-operations';
+import { getFSxOntapRegionsList } from '../operations/aws/ssm-operations';
 
 const REGION_AGNOSTIC_PREFIX_PATH = '/v1/credentials/:credentialsId';
 const FSX_PREFIX_PATH = `${REGION_AGNOSTIC_PREFIX_PATH}/fsx`;
@@ -86,7 +81,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
             params: { credentialsId }
         } = request;
 
-        const response = await getFSxAvailableRegionsList(credentialsId);
+        const response = await getFSxOntapRegionsList(credentialsId);
         return reply.send(response);
     });
 
