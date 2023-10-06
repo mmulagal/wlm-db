@@ -34,7 +34,7 @@ const InformationPane = ({mssqlSummary}: InformationPaneProps) => {
         { label: 'SQL Server version', value: mssqlSummary.serverVersion, showCopy: true },
         { label: 'Status', value: mssqlSummary.serverStatus, showCopy: true },
         { label: 'Cluster name', value: mssqlSummary.clusterName, showCopy: true },
-        { label: 'Node 1 name (active)', value: mssqlSummary.activeNode, showCopy: true },
+        { label: `Node 1 name${mssqlSummary.standbyNode ? ' (active)' : ''}`, value: mssqlSummary.activeNode, showCopy: true },
         { label: 'Node 2 name', value: mssqlSummary.standbyNode, showCopy: true },
         { label: 'ID', value: mssqlSummary.serverId, showCopy: true },
         { label: 'Connections', value: mssqlSummary.activeConnections, showCopy: false }

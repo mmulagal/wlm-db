@@ -1,6 +1,6 @@
 import { GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
-import { compact } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
 import getLogger from '../../utils/logger';
 import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils';
@@ -396,6 +396,11 @@ function parseResponse(response: GetProductsCommandOutput): number {
         }]
      */
 
+    if (isEmpty(response?.PriceList)) {
+        logger.error('Invalid AWS SDK response:', { data: response?.PriceList });
+        return 0;
+    }
+
     const [serializedResponse]: Product[] = (response?.PriceList || []).map(k =>
         (k as LazyJsonString).deserializeJSON()
     );
@@ -541,13 +546,17 @@ async function calculatePrice(
         fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
         storage.diskSize = fsxDiskSizes.FSxStorageCapacity;
 
-        logger.debug(fsxStorageRate, fsxThroughputRate, fsxIopsRate, fsxReadRequestsRate, fsxWriteRequestsRate);
-
         const fsxDisksize = storage?.diskSize || MIN_DISKSIZE;
         const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
-        const fsxIops = storage?.iops || 3 * fsxDisksize;
+        let fsxIops = storage?.iops || 3 * fsxDisksize;
 
         fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
+
+        if (fsxIops > 3 * fsxDisksize) {
+            fsxIops -= 3 * fsxDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
+        } else {
+            fsxIops = 0; // Iops cost is 0 if it is less than or equal to  3 * diskSize
+        }
 
         fsxThroughputCost = calculateFsxThroughputCost(
             fsxThroughputRate,

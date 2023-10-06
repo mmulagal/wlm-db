@@ -6,12 +6,11 @@ import {
     DescribeNetworkInterfacesCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, FSX_SUPPORTED_REGIONS, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
+import { AWSQueryFields, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
     describeSubnets,
-    describeRegions,
     getAmis,
     describeRouteTable,
     describeKeyPairs,
@@ -61,11 +60,6 @@ interface NetworkInterface {
     subnetId?: string;
     securityGroups?: Array<string>;
     availabilityZone?: string;
-}
-
-interface FSxAvailableRegions {
-    regionCode: string;
-    regionName: string;
 }
 
 type KeyPairType = Static<typeof KeyPairsSchema>;
@@ -350,35 +344,6 @@ function findResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
-async function getFSxAvailableRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegions[] }> {
-    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
-
-    const input = {
-        AllRegions: false, // Describe only the regions enabled for the account
-        DryRun: false,
-        Filter: {
-            RegionNames: Array.from(FSX_SUPPORTED_REGIONS.keys()) // Limit describe to known FSx regions only
-        }
-    };
-
-    const { Regions: regions } = await describeRegions(input, credentialsId);
-
-    const fsxRegionsList: Array<FSxAvailableRegions> = [];
-
-    if (regions?.length) {
-        regions.forEach(({ RegionName: code }) => {
-            if (code && FSX_SUPPORTED_REGIONS.has(code)) {
-                fsxRegionsList.push({
-                    regionCode: code,
-                    regionName: FSX_SUPPORTED_REGIONS.get(code)!
-                });
-            }
-        });
-    }
-
-    return { regions: fsxRegionsList };
-}
-
 async function getInstanceTypes(credentialsId: string, region: string) {
     logger.info('List Ec2 Instance Types in region', { credentialsId, region });
 
@@ -394,11 +359,12 @@ async function getInstanceTypes(credentialsId: string, region: string) {
             ({ InstanceType }) =>
                 !EC2_INSTANCE_TYPE_EXCLUDE_LIST.some((excludedType: string) => InstanceType?.includes(excludedType))
         )
-        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo }) => ({
+        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo, ProcessorInfo }) => ({
             instanceType: InstanceType,
             iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
             vCpus: VCpuInfo?.DefaultVCpus,
-            ramInMib: MemoryInfo?.SizeInMiB
+            ramInMib: MemoryInfo?.SizeInMiB,
+            architecture: ProcessorInfo?.SupportedArchitectures
         }));
 
     return { instanceTypes: filteredInstances };
@@ -439,7 +405,6 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
 }
 export {
     getVpcsList,
-    getFSxAvailableRegionsList,
     getAmiList,
     getKeyPairsList,
     getInstanceTypes,

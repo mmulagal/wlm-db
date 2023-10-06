@@ -4,9 +4,11 @@ import {
     SendCommandCommandInput,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
-    GetCommandInvocationCommand
+    GetCommandInvocationCommand,
+    paginateGetParametersByPath,
+    GetParametersByPathCommandInput
 } from '@aws-sdk/client-ssm';
-
+import { DEFAULT_AWS_REGION } from '../../utils/consts';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -48,4 +50,27 @@ async function getCommandInvocation(credentialsId: string, region: string, param
     return response;
 }
 
-export { getSSMClient, sendSSMCommand, getCommandInvocation };
+async function describeFSxOntapRegions(credentialsId: string) {
+    logger.info('Describe AWS regions:', { credentialsId });
+
+    const ssmClient = await getSSMClient(credentialsId, DEFAULT_AWS_REGION);
+
+    const parametersInput: GetParametersByPathCommandInput = {
+        Path: '/aws/service/global-infrastructure/services/fsx-ontap/regions',
+        Recursive: false,
+        WithDecryption: true
+    };
+
+    const paginator = paginateGetParametersByPath({ client: ssmClient }, parametersInput);
+    const fsxRegionParameters = [];
+    for await (const page of paginator) {
+        if (page.Parameters?.length) {
+            fsxRegionParameters.push(...page.Parameters);
+        }
+    }
+    logger.debug('Describe AWS FSx regions response:', fsxRegionParameters);
+
+    return fsxRegionParameters;
+}
+
+export { getSSMClient, sendSSMCommand, getCommandInvocation, describeFSxOntapRegions };

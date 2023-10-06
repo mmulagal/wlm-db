@@ -202,7 +202,7 @@ export const GENERAL = {
     VPC: 'VPC',
     //Availability zone
     AZ_TEXT:
-        'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled.',
+        'Select an Availability Zone and subnet for each node. Ensure that each of the selected private subnets have outbound connectivity enabled. The subnet for node 1 must be in the primary Availability Zone for the FSx for ONTAP file system.',
     CLUSTER_CONFIG_NODE_1: 'Cluster configuration - Node 1:',
     CLUSTER_CONFIG_NODE_2: 'Cluster configuration - Node 2:',
     AZ_Zone: 'Availability zone',
@@ -320,8 +320,8 @@ export const GENERAL = {
     PROTECT_AWS_BACKUP: 'Protect with AWS Backup',
     CONNECT_TO_AWS_SAGE: 'Connect to AWS SageMaker',
     CONNECT_TO_AD: 'Connect to Active Directory',
-    THROUGHPUT_DISABLE_TEXT: "Throughput can't be changed, value is taken from the selected FSx for ONTAP.",
-    IOPS_DISABLE_TEXT: "Provisioned IOPS can't be changed, value is taken from the selected FSx for ONTAP.",
+    THROUGHPUT_DISABLE_TEXT: 'Throughput capacity is already set on the FSx for ONTAP file system. You can\'t change this value.',
+    IOPS_DISABLE_TEXT: 'Provisioned IOPS is already set on the FSx for ONTAP file system. You can\'t change this value.',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -335,5 +335,4 @@ export const GENERAL = {
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
     DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
-    
 };

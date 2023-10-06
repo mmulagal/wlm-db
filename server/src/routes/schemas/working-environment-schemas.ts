@@ -3,7 +3,8 @@ import {
     WorkingEnvironmentResponse,
     WorkingEnvironmentsResponse,
     AccountIdParams,
-    AccountIdAndWorkingEnvironmentIdParams
+    AccountIdAndWorkingEnvironmentIdParams,
+    RelationshipsResponse
 } from '../types/working-environment.types';
 
 const GetWorkingEnvironmentsSchema = {
@@ -24,4 +25,13 @@ const GetWorkingEnvironmentSchema = {
     }
 };
 
-export { GetWorkingEnvironmentsSchema, GetWorkingEnvironmentSchema };
+const GetRelationshipsSchema = {
+    tags: [RouteTags.WORKING_ENVIRONMENT],
+    description: 'Get relationships of working environments',
+    params: AccountIdParams,
+    response: {
+        200: RelationshipsResponse
+    }
+};
+
+export { GetWorkingEnvironmentsSchema, GetWorkingEnvironmentSchema, GetRelationshipsSchema };
