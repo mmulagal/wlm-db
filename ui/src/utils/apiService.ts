@@ -272,6 +272,18 @@ export const configApi = createApi({
     }
 });
 
+export const databaseHomeApi = createApi({
+    reducerPath: 'databaseHomeApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getDatabaseHosts: builder.query({
+                query: () => ({ url: `database-hosts` })
+            }),
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -300,3 +312,7 @@ export const {
 
 export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
     configApi;
+
+export const {
+    useGetDatabaseHostsQuery
+} = databaseHomeApi;
