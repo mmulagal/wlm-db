@@ -79,6 +79,7 @@ export interface FSxN {
     lifecycle?: string;
     securityGroups?: Array<string>;
     subnetIds?: Array<string>;
+    kmsKeyId?: string;
     ontapConfiguration?: {
         deploymentType?: string;
         throughputCapacity?: string;

@@ -310,5 +310,6 @@ export const GENERAL = {
     PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
     FIRST_IN_THE_LIST: 'First in the list',
     THROUGHPUT_DISABLE_TEXT: 'Throughput capacity is already set on the FSx for ONTAP file system. You can\'t change this value.',
-    IOPS_DISABLE_TEXT: 'Provisioned IOPS is already set on the FSx for ONTAP file system. You can\'t change this value.'
+    IOPS_DISABLE_TEXT: 'Provisioned IOPS is already set on the FSx for ONTAP file system. You can\'t change this value.',
+    KMS_DISABLE_TEXT: 'Encryption Key is already set on the FSx for ONTAP file system. You can\'t change this value.'
 };
