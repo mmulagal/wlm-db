@@ -9,7 +9,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-1",
                 "ec2Details": [
@@ -23,13 +23,13 @@
             "protection":
             {
                 "isAwsBackUpEnabled": true,
-                "isFsxOntapSnapshotsEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -53,7 +53,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-2",
                 "ec2Details": [
@@ -67,13 +67,13 @@
             "protection":
             {
                 "isAwsBackUpEnabled": true,
-                "isFsxOntapSnapshotsEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -97,7 +97,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-3",
                 "ec2Details": [
@@ -117,7 +117,7 @@
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -141,7 +141,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-4",
                 "ec2Details": [
@@ -161,7 +161,7 @@
             "performance": 
             { 
                 "latency": 100,
-                "assessment": "low"
+                "assessment": "Low"
             },
             "storage":
             {
@@ -185,7 +185,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-5",
                 "ec2Details": [
@@ -198,14 +198,14 @@
             },
             "protection":
             {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 20,
-                "assessment": "medium"
+                "assessment": "Medium"
             },
             "storage":
             {
@@ -229,7 +229,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-6",
                 "ec2Details": [
@@ -243,13 +243,13 @@
             "protection":
             {
                 "isAwsBackUpEnabled": false,
-                "isFsxOntapSnapshotsEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
             "performance": 
             { 
                 "latency": 20,
-                "assessment": "medium"
+                "assessment": "Medium"
             },
             "storage":
             {
@@ -273,7 +273,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-7",
                 "ec2Details": [
@@ -287,13 +287,13 @@
             "protection":
             {
                 "isAwsBackUpEnabled": false,
-                "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -317,7 +317,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-8",
                 "ec2Details": [
@@ -330,14 +330,14 @@
             },
             "protection":
             {
-                "isAwsBackUpEnabled": false,
-                "isFsxOntapSnapshotsEnabled": false,
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -361,7 +361,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-1",
                 "ec2Details": [
@@ -376,12 +376,12 @@
             {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -405,7 +405,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-2",
                 "ec2Details": [
@@ -418,14 +418,14 @@
             },
             "protection":
             {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 100,
-                "assessment": "low"
+                "assessment": "Low"
             },
             "storage":
             {
@@ -449,7 +449,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-3",
                 "ec2Details": [
@@ -463,13 +463,13 @@
             "protection":
             {
                 "isAwsBackUpEnabled": false,
-                "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 100,
-                "assessment": "low"
+                "assessment": "Low"
             },
             "storage":
             {
@@ -493,7 +493,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-4",
                 "ec2Details": [
@@ -506,14 +506,14 @@
             },
             "protection":
             {
-                "isAwsBackUpEnabled": false,
-                "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 20,
-                "assessment": "medium"
+                "assessment": "Medium"
             },
             "storage":
             {
@@ -537,7 +537,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-5",
                 "ec2Details": [
@@ -557,7 +557,7 @@
             "performance": 
             { 
                 "latency": 20,
-                "assessment": "medium"
+                "assessment": "Medium"
             },
             "storage":
             {
@@ -581,7 +581,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-6",
                 "ec2Details": [
@@ -601,7 +601,7 @@
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -625,7 +625,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "standalone",
+                "serverMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-7",
                 "ec2Details": [
@@ -638,14 +638,14 @@
             },
             "protection":
             {
-                "isAwsBackUpEnabled": false,
+                "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": false,
-                "isSqlNativeEnabled": false
+                "isSqlNativeEnabled": true
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
@@ -669,7 +669,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "fci",
+                "serverMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-8",
                 "ec2Details": [
@@ -683,13 +683,13 @@
             "protection":
             {
                 "isAwsBackUpEnabled": false,
-                "isFsxOntapSnapshotsEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
             "performance": 
             { 
                 "latency": 10,
-                "assessment": "high"
+                "assessment": "High"
             },
             "storage":
             {
