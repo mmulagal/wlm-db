@@ -36,7 +36,7 @@ import {
     ACCOUNT_ID
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, listResources, deleteResource } from '../../../lib/database/db';
+import { createResource, listResources, deleteResource, getFsxId, getFsxIdCount } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
 
 const logger = getLogger();
@@ -483,9 +483,15 @@ async function deleteResourceById(accountId: string, resourceId: string) {
     logger.info('Delete Resource:', { resourceId });
 
     try {
-        const response = await deleteResource(accountId, resourceId);
-        logger.info('Remove resource response:', response);
+        const fsxId = await getFsxId(accountId, resourceId);
+        if (fsxId?.co_relation_id) {
+            const fsxCount = await getFsxIdCount(accountId, fsxId.co_relation_id);
+            if (fsxCount === 1) {
+                await deleteResource(accountId, fsxId.co_relation_id);
+            }
+        }
 
+        const response = await deleteResource(accountId, resourceId);
         if (response.count === 1) {
             return { message: 'Resource successfully deleted' };
         }
@@ -494,9 +500,10 @@ async function deleteResourceById(accountId: string, resourceId: string) {
     } catch (err: any) {
         logger.error('Failed to remove resource. Reason:', err.message);
 
-        return err.message === 'Resource does not exist for tenancy account'
-            ? createError(HttpErrorCodes.NOT_FOUND, err.message)
-            : createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, err);
+        const errorMessage = 'Resource does not exist for tenancy account';
+        const statusCode =
+            err.message === errorMessage ? HttpErrorCodes.NOT_FOUND : HttpErrorCodes.INTERNAL_SERVER_ERROR;
+        return createError(statusCode, err.message);
     }
 }
 
