@@ -46,7 +46,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.OTHER}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {data?.other}
+                    {data?.others}
                 </Typography>
             </div>
 
@@ -55,7 +55,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.ESTIMATED_MONTHLY_COST}
                 </Typography>
                 <Typography variant="Semibold_13" className={styles.totalCost}>
-                    {data?.total}
+                    {data?.totalCost}
                 </Typography>
             </div>
         </div>
