@@ -10,13 +10,17 @@ import EstimatedCost from './EstimatedCost/EstimatedCost';
 import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
+import DatabaseHomeApis from './DatabaseHomeApis';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    DatabaseHomeApis();
+
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
+    
     return (
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
