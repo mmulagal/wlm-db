@@ -21,7 +21,6 @@ const Encryption = () => {
     const accountSelected = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionType);
     const anotherAccArn = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionArn);
 
-    const [kmsKey, setKmsKey] = useState('');
     const [isDisable, setIsDisable] = useState(false);
 
     // To select aws/fsx row if present
@@ -34,10 +33,6 @@ const Encryption = () => {
 
     useEffect(() => {
         if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
-            const kmsKeyId = selectedExistingFsxnName?.data?.kmsKeyId;
-            if(kmsKeyId && kmsKeyId.includes('/')){
-                setKmsKey(kmsKeyId.split('/')[1]);
-            }
             setIsDisable(true);
         } else {
             setIsDisable(false);
@@ -56,7 +51,7 @@ const Encryption = () => {
                     trigger="hover"
                     container={
                         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                            {kmsKey}
+                            {anotherAccArn}
                         </Typography>
                     }
                 />
