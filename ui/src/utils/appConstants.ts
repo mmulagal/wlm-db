@@ -320,8 +320,9 @@ export const GENERAL = {
     PROTECT_AWS_BACKUP: 'Protect with AWS Backup',
     CONNECT_TO_AWS_SAGE: 'Connect to AWS SageMaker',
     CONNECT_TO_AD: 'Connect to Active Directory',
-    THROUGHPUT_DISABLE_TEXT: 'Throughput capacity is already set on the FSx for ONTAP file system. You can\'t change this value.',
-    IOPS_DISABLE_TEXT: 'Provisioned IOPS is already set on the FSx for ONTAP file system. You can\'t change this value.',
+    THROUGHPUT_DISABLE_TEXT:
+        "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
+    IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -335,4 +336,5 @@ export const GENERAL = {
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
     DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
+    KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value."
 };

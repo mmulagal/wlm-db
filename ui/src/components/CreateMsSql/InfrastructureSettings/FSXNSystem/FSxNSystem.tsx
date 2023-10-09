@@ -99,7 +99,8 @@ const FSxNSystem = () => {
                     securityGroups: val?.securityGroups,
                     throughput: val?.ontapConfiguration?.throughputCapacity,
                     iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
-                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId
+                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId,
+                    kmsKeyId: val?.kmsKeyId
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);

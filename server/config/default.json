@@ -44,7 +44,7 @@
     },
     "sqs-poll-interval": "30s",
     "jwt-token-expiry": "6h",
-    "signed-url-expiry-hours": "24",
+    "signed-url-expiry-hours": "48",
     "templates": {
         "bucket": "staging.wlmdb.workloads.netapp.com",
         "region": "us-east-1"

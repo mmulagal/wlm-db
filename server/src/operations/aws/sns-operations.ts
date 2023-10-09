@@ -30,10 +30,12 @@ async function getSnsTopics(credentialsId: string, region: string) {
         return { topics: [] };
     }
     const regexPattern = /(?<=:)[^:]+$/;
-    const updatedTopics = Topics.map(({ TopicArn }) => ({
-        topicArn: TopicArn,
-        topicName: TopicArn?.match(regexPattern)?.[0] || '-'
-    }));
+    const updatedTopics = Topics.filter(({ TopicArn }) => TopicArn && !TopicArn.endsWith('.fifo')).map(
+        ({ TopicArn }) => ({
+            topicArn: TopicArn,
+            topicName: TopicArn?.match(regexPattern)?.[0] || '-'
+        })
+    );
 
     return { topics: updatedTopics };
 }
