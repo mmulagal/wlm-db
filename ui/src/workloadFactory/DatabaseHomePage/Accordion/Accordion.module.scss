@@ -22,6 +22,19 @@
                     display: flex;
                     align-items: center;
                     gap: 16px;
+
+                    .accordionMenuPopover {
+                        [class*='MenuPopover_menuIcon'] {
+                            color: #fff;
+                        }
+                        [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
+                            border: 1.5px solid var(--white);
+                        }
+
+                        [class*='MenuPopover_menuIcon']:hover {
+                            border: 1.5px solid var(--white);
+                        }
+                    }
                 }
             }
 

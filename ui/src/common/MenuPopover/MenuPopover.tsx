@@ -24,6 +24,7 @@ type MenuPopoverType = {
     disabledText?: string;
     prefferedLocation?: Popover.PopoverPlace;
     isSubmenu?: boolean;
+    isBlackLayout?: boolean;
 };
 
 function MenuPopover({
@@ -34,7 +35,8 @@ function MenuPopover({
     CustomMenu,
     disabledText,
     prefferedLocation,
-    isSubmenu
+    isSubmenu,
+    isBlackLayout = false
 }: MenuPopoverType) {
     const refMenuContent = useRef<HTMLDivElement>(null);
     const refParent = useRef<HTMLDivElement>(null);
@@ -110,6 +112,14 @@ function MenuPopover({
         };
     });
 
+    const ContentClass = () => {
+        if (isBlackLayout) {
+            return `${styles.content} ${styles.blackContent}`;
+        } else {
+            return `${styles.content}`;
+        }
+    };
+
     return (
         <>
             <Popover
@@ -119,7 +129,7 @@ function MenuPopover({
                     isMenuOpen && (
                         <div className={styles.menuPopoverContainer}>
                             <div className={`${styles.reactPopover} ${styles.infoTooltip}`}>
-                                <div ref={refMenuContent} className={styles.content}>
+                                <div ref={refMenuContent} className={ContentClass()}>
                                     <ul>
                                         {menuItems.map((menuItem, index) => {
                                             const {
