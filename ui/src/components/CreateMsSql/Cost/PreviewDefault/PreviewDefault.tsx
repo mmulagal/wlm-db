@@ -27,6 +27,7 @@ import {
     selectDefaultLicense,
     selectDefaultSecurityGroup,
     selectFsxIops,
+    selectFsxKmsKey,
     selectFsxThroughput
 } from '../../MSSqlServer/MSSqlUtils';
 import { generateRandomDBName } from '../../../../utils/utilityFunctions';
@@ -45,6 +46,9 @@ const PreviewDefault = () => {
     const amiData = useAppSelector(state => state.mssql.getAmiList.amiData);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+    const encryptionType = useAppSelector(state => state.mssqlForm.encryption?.encryptionType);
+    const encryptionArn = useAppSelector(state => state.mssqlForm.encryption?.encryptionArn);
+
 
     useEffect(() => {
         if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
@@ -88,6 +92,7 @@ const PreviewDefault = () => {
     useEffect(() => {
         selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, '128 MBps', dispatch);
         selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
+        selectFsxKmsKey(selectedFsxnType, selectedExistingFsxnName, dispatch);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
@@ -137,7 +142,12 @@ const PreviewDefault = () => {
             editable: GENERAL.YES,
             id: '11'
         },
-        { accordionName: GENERAL.ENCRYPTION, defaultValue: DEFAULT_MASTER_KEY, editable: GENERAL.YES, id: '12' },
+        { 
+            accordionName: GENERAL.ENCRYPTION, 
+            defaultValue: encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT ? encryptionArn: DEFAULT_MASTER_KEY, 
+            editable: GENERAL.YES, 
+            id: '12' 
+        },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
             accordionName: GENERAL.SIMPLE_NOTIFICATION_SERVICE,
