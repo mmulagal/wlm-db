@@ -278,6 +278,7 @@ export const GENERAL = {
     INSTANCE_TYPE_EC: 'Instance type',
     QUANTITY: 'Quantity',
     STORAGE: 'Storage',
+    OTHER: 'Other',
     TYPE: 'Type',
     SIZE: 'Size',
     ESTIMATED_MONTHLY_COST: 'Estimated monthly cost',
@@ -309,7 +310,31 @@ export const GENERAL = {
     PD_CREATE_SECURITY: 'Create a security group for the user',
     PD_UPGRADED_MANUALLY: 'Yes (can be upgraded manually)',
     FIRST_IN_THE_LIST: 'First in the list',
-    THROUGHPUT_DISABLE_TEXT: 'Throughput capacity is already set on the FSx for ONTAP file system. You can\'t change this value.',
-    IOPS_DISABLE_TEXT: 'Provisioned IOPS is already set on the FSx for ONTAP file system. You can\'t change this value.',
-    KMS_DISABLE_TEXT: 'Encryption Key is already set on the FSx for ONTAP file system. You can\'t change this value.'
+    ACTIONS: 'Actions',
+    DEPLOY: 'Deploy',
+    MIGRATE: 'Migrate',
+    CLONE: 'Clone',
+    PROTECT: 'Protect',
+    AWS_INTEGRATION: 'AWS Integration',
+    CONFIG_CLOUDWATCH: 'Configure CloudWatch monitoring',
+    PROTECT_AWS_BACKUP: 'Protect with AWS Backup',
+    CONNECT_TO_AWS_SAGE: 'Connect to AWS SageMaker',
+    CONNECT_TO_AD: 'Connect to Active Directory',
+    THROUGHPUT_DISABLE_TEXT:
+        "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
+    IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
+    // Constants for workload factory database host
+    DATABASE_HOST: 'Database host',
+    DATABASE_HOSTS: 'Database hosts',
+    // database host headers
+    DATABASE_HOST_NAME: 'Database host name',
+    DB_HOST_PROTECTION: 'Protection',
+    DB_HOST_PERFORMANCE: 'Performance',
+    DB_HOST_STORAGE_SAVINGS: 'Storage savings',
+    DB_HOST_ESTIMATED_COST: 'Estimated Cost',
+    DB_HOST_TYPE: 'Type',
+    DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
+    DB_HOST_REGION: 'Region',
+    DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
+    KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value."
 };

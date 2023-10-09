@@ -30,7 +30,8 @@
         "redux-mock-store": "^1.5.4",
         "sanitize-html": "^2.11.0",
         "typescript": "^5.2.2",
-        "web-vitals": "^3.5.0"
+        "web-vitals": "^3.5.0",
+        "react-popover": "^0.5.10"
     },
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
