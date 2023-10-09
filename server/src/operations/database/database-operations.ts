@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import moment from 'moment';
 import { createConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
 import {
@@ -7,6 +8,7 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
+import { HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -93,21 +95,24 @@ async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStat
 async function getDeploymentStatusById(accountId: string, id: string): Promise<DeploymentStatusResponseType> {
     logger.info(' Deployment status by id', accountId, id);
 
-    const [
-        {
-            deployment_id: deploymentId,
-            deployment_name: deploymentName,
-            deployment_status: deploymentStatus,
-            deployment_status_reason: reason
-        }
-    ] = await listDeployments(accountId, id);
-
-    return {
-        deploymentId,
-        deploymentName,
-        deploymentStatus,
-        deploymentReason: reason || ''
-    };
+    try {
+        const [
+            {
+                deployment_id: deploymentId,
+                deployment_name: deploymentName,
+                deployment_status: deploymentStatus,
+                deployment_status_reason: reason
+            }
+        ] = await listDeployments(accountId, id, id);
+        return {
+            deploymentId,
+            deploymentName,
+            deploymentStatus,
+            deploymentReason: reason || ''
+        };
+    } catch (error) {
+        throw createError(HttpErrorCodes.NOT_FOUND, STACK_NOT_FOUND(id));
+    }
 }
 
 export {
