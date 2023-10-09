@@ -1,0 +1,22 @@
+.bread-crumbs {
+  display: flex;
+  .bread-crumbs-item {
+    display: flex;
+    align-items: center;
+    svg {
+      height: 12px;
+      width: 5px;
+      margin-left: 10px;
+      margin-right: 8px;
+      path {
+        fill: var(--text-primary);
+      }
+    }
+    .title {
+      &.link:hover {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+    }
+  }
+}
