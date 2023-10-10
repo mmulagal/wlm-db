@@ -1,4 +1,4 @@
-import { Button, Header, useDialog } from '@netapp/design-system';
+import { Button, Header, useDialog, Popover } from '@netapp/design-system';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
@@ -6,7 +6,7 @@ import { setSaveConfigName } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useSaveConfigDataMutation, useLazyGetConfigDataQuery, useGetConfigListQuery } from '../../../../utils/apiService';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
-import { FROM_DIALOG } from '../../../../utils/consts';
+import { FROM_DIALOG, MAX_SAVED_CONFIG } from '../../../../utils/consts';
 import { LoadConfiguration, resetChecksAfterLoad, resetRefetchApiCheck, SaveConfiguration } from '../../Configuration/LoadConfiguration';
 import LoadConfig from '../../LoadConfig/LoadConfig';
 import SaveConfig from '../../SaveConfig/SaveConfig';
@@ -93,7 +93,11 @@ const MSSqlHeader = () => {
     return (
         <Header
             closeButtonProps={{
-                onClick: () => handleSaveConfig(FROM_DIALOG.HEADER_CROSS)
+                onClick: () => {
+                    configData.length < MAX_SAVED_CONFIG ?
+                    handleSaveConfig(FROM_DIALOG.HEADER_CROSS) :
+                    navigateToCanvas('/');
+                }
             }}
             title={SELECT_CONFIG.WIZARD_HEADING}
         >
@@ -107,9 +111,23 @@ const MSSqlHeader = () => {
                 </Button>
                 }
                 <div className={styles.separator}></div>
-                <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
-                    {SELECT_CONFIG.SAVE_CONFIG}
-                </Button>
+                {configData.length >= MAX_SAVED_CONFIG && 
+                    <Popover
+                        popoverClass={styles['popover']}
+                        children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
+                        trigger="hover"
+                        container={
+                            <Button Component="button" variant="text" isDisabled={true} >
+                                {SELECT_CONFIG.SAVE_CONFIG}
+                            </Button>
+                        }
+                    />
+                }
+                {configData.length < MAX_SAVED_CONFIG && 
+                    <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
+                        {SELECT_CONFIG.SAVE_CONFIG}
+                    </Button>
+                }
             </div>
         </Header>
     );
