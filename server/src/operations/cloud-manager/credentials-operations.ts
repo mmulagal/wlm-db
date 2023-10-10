@@ -1,8 +1,40 @@
-import { getAllCredentials, getCredentialDetails } from '../../lib/cloud-manager/credentials';
+import {
+    getAllBxpCredentials,
+    getAllWfCredentials,
+    getBxpCredentialDetails,
+    getWfAwsCredentialDetails,
+    getWfCredentialDetails
+} from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
+import { WF } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
+
+interface WorkloadFactoryCredentials {
+    credentials: string;
+    id: string;
+    type: string;
+    metadata: {
+        name: string;
+        externalId?: string;
+    };
+}
+async function getAllCredentialsRecursive(
+    credentialsType: string,
+    credentialsList: WorkloadFactoryCredentials[] = [],
+    cursor?: string
+): Promise<WorkloadFactoryCredentials[]> {
+    const { items, nextToken } = await getAllWfCredentials(credentialsType, cursor);
+    credentialsList.push(...items);
+    if (nextToken) {
+        cursor = nextToken;
+        return getAllCredentialsRecursive(credentialsType, credentialsList, nextToken);
+    }
+
+    return credentialsList;
+}
 
 /**
  * Returns array of aws assume role
@@ -10,8 +42,16 @@ const logger = getLogger();
  */
 async function getCredentials(credentialsType: string): Promise<CredentialsResponseType> {
     logger.info('Getting credentials ', credentialsType);
-
-    const data = await getAllCredentials(credentialsType);
+    if (getAsyncLocalStorageResource('REFERER') === WF) {
+        const credentialsList = await getAllCredentialsRecursive(credentialsType);
+        return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
+            credentialsId: id,
+            name,
+            arn: credentials,
+            providerAccountId: credentials.match(/\d+/)?.[0] || ''
+        }));
+    }
+    const data = await getAllBxpCredentials(credentialsType);
     return data.map(({ credentialsId, extra: { name, arn } }) => ({
         credentialsId,
         name,
@@ -20,8 +60,16 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
     }));
 }
 
-async function getRoleName(credentialsId: string) {
-    const data = await getCredentialDetails(credentialsId);
+async function getRoleDetails(credentialsId: string) {
+    if (getAsyncLocalStorageResource('REFERER') === WF) {
+        const data = await getWfAwsCredentialDetails(credentialsId);
+        return {
+            roleName: data.credentials.match(/role\/(.*)/)?.[1] || '',
+            roleArn: data.credentials,
+            providerAccountId: data.credentials.match(/\d+/)?.[0] || ''
+        };
+    }
+    const data = await getBxpCredentialDetails(credentialsId);
     return {
         roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '',
         roleArn: data.extra.arn,
@@ -29,4 +77,20 @@ async function getRoleName(credentialsId: string) {
     };
 }
 
-export { getCredentials, getRoleName };
+async function getCredentialsDetails(credentialsId: string, accountId?: string) {
+    if (getAsyncLocalStorageResource('REFERER') === WF) {
+        const {
+            credentials: { accessKeyId, secretAccessKey, sessionToken }
+        } = await getWfCredentialDetails(credentialsId, accountId);
+
+        return {
+            credentials: {
+                accessKey: accessKeyId,
+                secretKey: secretAccessKey,
+                sessionId: sessionToken
+            }
+        };
+    }
+    return getBxpCredentialDetails(credentialsId);
+}
+export { getCredentials, getRoleDetails, getCredentialsDetails };

@@ -73,7 +73,7 @@ const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
-const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
+const WORKLOAD_FACTORY_ENDPOINT: string = config.get<string>('urls.workload-factory');
 const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
@@ -758,6 +758,7 @@ const FCI = 'fci';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
+const WF = 'WORKLOAD_FACTORY';
 export {
     WLMDB,
     AWS_REGIONS,
@@ -883,7 +884,7 @@ export {
     METHODS_WITH_PAYLOAD,
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
-    WLMDB_ENDPOINT,
+    WORKLOAD_FACTORY_ENDPOINT,
     BATCH_API_CONCURRENCY_LIMIT,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
@@ -908,5 +909,6 @@ export {
     STANDARD_DEPLOYMENT_ACTION,
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT
+    SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    WF
 };

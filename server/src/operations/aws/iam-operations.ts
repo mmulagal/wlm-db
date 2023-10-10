@@ -1,8 +1,8 @@
 import { SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
-import { getCredentialDetails } from '../../lib/cloud-manager/credentials';
+import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { AWS_RESOURCES_ACTION_MAP } from '../../utils/consts';
-import { getPermissionsList } from '../../lib/aws/iam';
+import getPermissionsList from '../../lib/aws/iam';
 
 const logger = getLogger();
 
@@ -13,12 +13,10 @@ export default async function getMissingPermissionsList(
 ) {
     logger.info('Get missing permissions List', { credentialsId, region, skipResources });
 
-    const {
-        extra: { arn }
-    } = await getCredentialDetails(credentialsId);
+    const { roleArn } = await getRoleDetails(credentialsId);
 
     const command: SimulatePrincipalPolicyCommandInput = {
-        PolicySourceArn: arn,
+        PolicySourceArn: roleArn,
         ActionNames: Object.keys(AWS_RESOURCES_ACTION_MAP)
             .filter(key => !skipResources?.includes(key))
             .map(key => AWS_RESOURCES_ACTION_MAP[key as keyof typeof AWS_RESOURCES_ACTION_MAP])

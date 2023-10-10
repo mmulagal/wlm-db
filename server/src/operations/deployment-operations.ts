@@ -44,7 +44,7 @@ import {
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
-import { getRoleName } from './cloud-manager/credentials-operations';
+import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
@@ -69,7 +69,7 @@ async function formatTemplateParameters(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleDetails(credentialsId);
 
     await createSecrets(
         credentialsId,
@@ -198,7 +198,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = await getRoleDetails(credentialsId);
 
     await createSecrets(
         credentialsId,

@@ -6,7 +6,7 @@ import {
     DescribeStorageVirtualMachinesCommand
 } from '@aws-sdk/client-fsx';
 
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -16,7 +16,7 @@ async function getFSxClient(credentialsId: string, region: string) {
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
     return new FSxClient({ credentials, region });
 }
