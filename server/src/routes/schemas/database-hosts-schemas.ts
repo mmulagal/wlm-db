@@ -1,6 +1,10 @@
 import { RouteTags } from '../../utils/consts';
-import { AwsAccountParams, AwsVpcQueryString } from '../types/aws.types';
-import { DatabaseHostObjectParams, DatabaseHostSummaryListResponse } from '../types/database-hosts.types';
+import { AwsAccountParams } from '../types/aws.types';
+import {
+    DatabaseHostObjectParams,
+    DatabaseHostQueryString,
+    DatabaseHostSummaryListResponse
+} from '../types/database-hosts.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
@@ -12,7 +16,7 @@ const baseRequest = {
 const DatabaseHostsSummarySchema = {
     ...baseRequest,
     params: DatabaseHostObjectParams,
-    querystring: AwsVpcQueryString,
+    querystring: DatabaseHostQueryString,
     response: {
         200: DatabaseHostSummaryListResponse
     }
