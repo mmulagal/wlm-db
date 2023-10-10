@@ -128,7 +128,7 @@ enum HttpErrorCodes {
 }
 
 enum SqlServerDeploymentModel {
-    SQL_STANDALONE = 'Standalone instance',
+    SQL_STANDALONE = 'Standalone Instance',
     SQL_FCI = 'Always On Failover Cluster Instance'
 }
 
