@@ -1,0 +1,20 @@
+.cardContainer {
+    width: 248px;
+    height: 184px;
+    box-shadow: 2px 2px 6px 0px #e0e0e0;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .imageContainer {
+        padding-top: 24px;
+        padding-left: 84px;
+    }
+    .buttonContainer {
+        padding-left: 48px;
+        button {
+            height: 32px !important;
+        }
+    }
+}

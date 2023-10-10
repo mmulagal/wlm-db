@@ -1,0 +1,59 @@
+.databaseHome {
+    height: 100vh;
+    background-color: var(--main-background);
+
+    .leftSide {
+        overflow-y: auto;
+        height: 100%;
+    }
+
+    .topContainer {
+        display: flex;
+        width: 1066px;
+        justify-content: space-between;
+        margin-top: 38px;
+        margin-left: 120px;
+        .heading {
+            line-height: unset;
+        }
+    }
+
+    .secondLevelContainer {
+        margin-left: 120px;
+        display: flex;
+    }
+
+    .ProtectionContainer {
+        margin-left: 120px;
+        margin-top: 24px;
+        height: 360px;
+        width: 1064px;
+        background-color: var(--white);
+    }
+
+    .fourthLevelContainer {
+        margin-left: 120px;
+        margin-top: 24px;
+        margin-bottom: 40px; //Temporary
+        display: flex;
+        gap: 24px;
+
+        .barContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+
+            .commonContainer {
+                background-color: var(--white);
+                height: 244px;
+                width: 656px;
+            }
+        }
+
+        .jobContainer {
+            width: 384px;
+            height: 512px;
+            background-color: var(--white);
+        }
+    }
+}

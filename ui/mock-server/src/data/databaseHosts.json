@@ -1,0 +1,710 @@
+{
+    "count": 16,
+    "items": [
+        { 
+            "id": "resource-id-1",
+            "name": "Database hostname 1",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "FSx Windows",
+                "fsxFilesystemId": "fsx-id-1",
+                "ec2Details": [
+                    {
+                        "id": "id1",
+                        "name": "ec2-name1",
+                        "ebsVolumeId": "ebs-volume1"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-2",
+            "name": "Database hostname 2",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "FSx ONTAP",
+                "fsxFilesystemId": "fsx-id-2",
+                "ec2Details": [
+                    {
+                        "id": "id2",
+                        "name": "ec2-name2",
+                        "ebsVolumeId": "ebs-volume2"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-3",
+            "name": "Database hostname 3",
+            "status": "down",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "EBS",
+                "fsxFilesystemId": "fsx-id-3",
+                "ec2Details": [
+                    {
+                        "id": "id3",
+                        "name": "ec2-name3",
+                        "ebsVolumeId": "ebs-volume3"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-4",
+            "name": "Database hostname 4",
+            "status": "down",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "EBS",
+                "fsxFilesystemId": "fsx-id-4",
+                "ec2Details": [
+                    {
+                        "id": "id4",
+                        "name": "ec2-name4",
+                        "ebsVolumeId": "ebs-volume4"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 100,
+                "assessment": "Low"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-5",
+            "name": "Database hostname 5",
+            "status": "initializing",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "FSx ONTAP",
+                "fsxFilesystemId": "fsx-id-5",
+                "ec2Details": [
+                    {
+                        "id": "id5",
+                        "name": "ec2-name5",
+                        "ebsVolumeId": "ebs-volume5"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 20,
+                "assessment": "Medium"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-6",
+            "name": "Database hostname 6",
+            "status": "initializing",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "EBS",
+                "fsxFilesystemId": "fsx-id-6",
+                "ec2Details": [
+                    {
+                        "id": "id6",
+                        "name": "ec2-name6",
+                        "ebsVolumeId": "ebs-volume6"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 20,
+                "assessment": "Medium"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-7",
+            "name": "Database hostname 7",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "FSx Windows",
+                "fsxFilesystemId": "fsx-id-7",
+                "ec2Details": [
+                    {
+                        "id": "id7",
+                        "name": "ec2-name7",
+                        "ebsVolumeId": "ebs-volume7"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-8",
+            "name": "Database hostname 8",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "FSx ONTAP",
+                "fsxFilesystemId": "fsx-id-8",
+                "ec2Details": [
+                    {
+                        "id": "id8",
+                        "name": "ec2-name8",
+                        "ebsVolumeId": "ebs-volume8"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-9",
+            "name": "Database hostname 9",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "FSx ONTAP",
+                "fsxFilesystemId": "fsx-id-1",
+                "ec2Details": [
+                    {
+                        "id": "id9",
+                        "name": "ec2-name9",
+                        "ebsVolumeId": "ebs-volume9"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-10",
+            "name": "Database hostname 10",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "FSx ONTAP",
+                "fsxFilesystemId": "fsx-id-2",
+                "ec2Details": [
+                    {
+                        "id": "id10",
+                        "name": "ec2-name10",
+                        "ebsVolumeId": "ebs-volume10"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 100,
+                "assessment": "Low"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-11",
+            "name": "Database hostname 11",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "FSx Windows",
+                "fsxFilesystemId": "fsx-id-3",
+                "ec2Details": [
+                    {
+                        "id": "id11",
+                        "name": "ec2-name11",
+                        "ebsVolumeId": "ebs-volume11"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 100,
+                "assessment": "Low"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-12",
+            "name": "Database hostname 12",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "FSx Windows",
+                "fsxFilesystemId": "fsx-id-4",
+                "ec2Details": [
+                    {
+                        "id": "id12",
+                        "name": "ec2-name12",
+                        "ebsVolumeId": "ebs-volume12"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 20,
+                "assessment": "Medium"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-13",
+            "name": "Database hostname 13",
+            "status": "down",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "EBS",
+                "fsxFilesystemId": "fsx-id-5",
+                "ec2Details": [
+                    {
+                        "id": "id13",
+                        "name": "ec2-name13",
+                        "ebsVolumeId": "ebs-volume13"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 20,
+                "assessment": "Medium"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-14",
+            "name": "Database hostname 14",
+            "status": "down",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "FSx ONTAP",
+                "fsxFilesystemId": "fsx-id-6",
+                "ec2Details": [
+                    {
+                        "id": "id14",
+                        "name": "ec2-name14",
+                        "ebsVolumeId": "ebs-volume14"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-15",
+            "name": "Database hostname 15",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "Standalone",
+                "fileSystemType": "FSx Windows",
+                "fsxFilesystemId": "fsx-id-7",
+                "ec2Details": [
+                    {
+                        "id": "id15",
+                        "name": "ec2-name15",
+                        "ebsVolumeId": "ebs-volume15"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        },
+        { 
+            "id": "resource-id-16",
+            "name": "Database hostname 16",
+            "status": "up",
+            "topology": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverMode": "FCI",
+                "fileSystemType": "EBS",
+                "fsxFilesystemId": "fsx-id-8",
+                "ec2Details": [
+                    {
+                        "id": "id16",
+                        "name": "ec2-name16",
+                        "ebsVolumeId": "ebs-volume16"
+                    }
+                ]
+            },
+            "protection":
+            {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false
+            },
+            "performance": 
+            { 
+                "latency": 10,
+                "assessment": "High"
+            },
+            "storage":
+            {
+                "allocated": 120,
+                "used": 30,
+                "savings": 90                       
+            },
+            "estimatedUsageCost":
+            {
+                "compute": 700,
+                "storage": 200,
+                "connectivity": 100,
+                "others": 24
+            }
+        }
+    ], 
+    "nextToken": null
+}

@@ -1,0 +1,90 @@
+.accordions {
+    .addBorder {
+        border-left: 8px solid #84b0ff;
+    }
+    .accordionContainer {
+        width: 558px;
+
+        background: #2b323d;
+
+        .accordionHeader {
+            padding: 16px 24px;
+            display: flex;
+            height: 84px;
+            flex-direction: column;
+
+            .firstLevel {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+                .rightMenu {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+
+                    .accordionMenuPopover {
+                        [class*='MenuPopover_menuIcon'] {
+                            color: #fff;
+                        }
+                        [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
+                            border: 1.5px solid var(--white);
+                        }
+
+                        [class*='MenuPopover_menuIcon']:hover {
+                            border: 1.5px solid var(--white);
+                        }
+                    }
+                }
+            }
+
+            .secondLevel {
+                color: #fff;
+            }
+
+            .accordionHeading {
+                font-size: 14px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif,
+                    'Apple Color Emoji', 'Segoe UI Emoji';
+                line-height: 24px;
+                color: #fff;
+                font-weight: 590;
+            }
+
+            .addColor {
+                color: #84b0ff;
+            }
+        }
+
+        .panel-collapse {
+            svg {
+                fill: #a7a7a7;
+
+                &:hover {
+                    fill: #006dc9;
+                }
+
+                &.arrow-up {
+                    transform: rotate(-180deg);
+                    -webkit-transform: rotate(-180deg);
+                }
+            }
+        }
+    }
+
+    .contentArea {
+        background: #2b323d;
+
+        .contentText {
+            padding: 16px 0;
+            color: var(--white);
+            border-top: 1px solid #4d5765;
+            border-bottom: 1px solid #4d5765;
+            margin: 0 24px;
+        }
+
+        .extraSpace {
+            height: 16px;
+        }
+    }
+}
