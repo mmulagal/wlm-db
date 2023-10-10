@@ -72,7 +72,7 @@ const DatabaseHostSummaryResponse = Type.Object({
 const DatabaseHostSummaryListResponse = Type.Object({
     count: Type.Number(),
     items: Type.Array(DatabaseHostSummaryResponse),
-    nextToken: Type.Null()
+    nextToken: Type.String()
 });
 
 type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
