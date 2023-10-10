@@ -59,7 +59,7 @@ async function getDatabaseHostsSummary(
 
     logger.debug('Database hosts details', databaseHosts);
 
-    return databaseHosts;
+    return { count: databaseHosts.length, items: databaseHosts, nextToken: null };
 }
 
 export default getDatabaseHostsSummary;

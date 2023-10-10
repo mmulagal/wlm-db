@@ -69,7 +69,11 @@ const DatabaseHostSummaryResponse = Type.Object({
     storage: Type.Optional(StorageResponse),
     estimatedUsageCost: Type.Optional(UsageCostResponse)
 });
-const DatabaseHostSummaryListResponse = Type.Array(DatabaseHostSummaryResponse);
+const DatabaseHostSummaryListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(DatabaseHostSummaryResponse),
+    nextToken: Type.Null()
+});
 
 type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
 type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
