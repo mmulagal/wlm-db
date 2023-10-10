@@ -91,7 +91,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionC
                         variant="Regular_13"
                         className={open ? `${styles.secondLevel} ${styles.addColor}` : `${styles.secondLevel}`}
                     >
-                        {subHeading}
+                        Creation date: {subHeading}
                     </Typography>
                 </div>
                 {open && (
