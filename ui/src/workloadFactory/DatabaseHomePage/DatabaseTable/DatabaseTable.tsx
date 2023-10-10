@@ -8,7 +8,6 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
-// import DatabaseHostJson from './DatabaseHost.json';
 import { useAppSelector } from '../../../store/storeHooks';
 import { STATUS_CONST } from '../../../utils/consts';
 
