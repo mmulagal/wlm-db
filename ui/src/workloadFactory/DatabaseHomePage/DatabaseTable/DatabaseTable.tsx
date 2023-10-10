@@ -8,17 +8,16 @@ import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
-import DatabaseHostJson from './DatabaseHost.json';
+import { useAppSelector } from '../../../store/storeHooks';
+import { STATUS_CONST } from '../../../utils/consts';
 
 const DatabaseTable = () => {
 
+    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
-  
-
-    // This data will get from API
-    const databaseTableData: any[] = DatabaseHostJson;
-
+    
     const menuItems = [
         {
             id: '1',
@@ -41,7 +40,7 @@ const DatabaseTable = () => {
     const protectionTooltipText = (data: any) => {
         return (
             <div className={styles.protectionTooltip}>
-                <Typography variant="Semibold_13" className={styles.textHeight}>Protected By:</Typography>
+                <Typography variant="Semibold_13" className={styles.textHeight}>{GENERAL.PROTECTED_BY}:</Typography>
                 {
                     data.map((val:any) => 
                         (<Typography variant="Regular_13" className={styles.textHeight}>{val}</Typography>)
@@ -88,14 +87,13 @@ const DatabaseTable = () => {
             width: '56px',
             isSticky: true
         };
-      };
-    
+    };
 
     const DatabasesColDefs: ColumnProps[] = [
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'databaseHostName',
+            accessor: 'name',
             isSortable: true,
             width:'280px',
             isSticky:true,
@@ -103,21 +101,21 @@ const DatabaseTable = () => {
                 return(
                     <div>
                         <Typography variant="Semibold_14">
-                            {rowData?.databaseHostName}
+                            {rowData?.name}
                         </Typography>
                         <div className={styles.colText}>
-                            {rowData?.status === 'Up' && (
+                            {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
                             )}
-                            {rowData?.status === 'Down' && (
+                            {rowData?.status === STATUS_CONST.DOWN && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['down']}`}></div>
                             )}
-                            {rowData?.status === 'Initializing' && (
+                            {rowData?.status === STATUS_CONST.INITIALIZING && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['initializing']}`}></div>
                             )}
                             <Typography variant="Regular_13">{rowData?.status}</Typography>
                             <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{rowData?.type}</Typography>
+                            <Typography variant="Regular_13">{rowData?.topology?.serverType}</Typography>
                         </div>
                     </div>
                 )
@@ -130,11 +128,25 @@ const DatabaseTable = () => {
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
-            renderCell: (cellData: string, rowData: any) => {
+            renderCell: (cellData: any) => {
+                let protectedChk = false;
+                if(cellData?.isAwsBackUpEnabled || cellData?.isFsxOntapSnapshotsEnabled || cellData?.isSqlNativeEnabled) {
+                    protectedChk = true
+                };
+                let protectedByList = [];
+                if(cellData?.isFsxOntapSnapshotsEnabled){
+                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+                }
+                if(cellData?.isAwsBackUpEnabled){
+                    protectedByList.push(GENERAL.AWS_BACKUP);
+                }
+                if(cellData?.isSqlNativeEnabled){
+                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
+                }
                 return (
                     <div className={styles.colText}>
                         <div className={styles.protection}>
-                            {cellData === 'Protected' && (
+                            {protectedChk && (
                                 <ProtectedIcon 
                                     style={{
                                         //@ts-ignore
@@ -142,7 +154,7 @@ const DatabaseTable = () => {
                                     }}
                                 />
                             )}
-                            {cellData === 'Not protected' && (
+                            {!protectedChk && (
                                 <NotProtectedIcon 
                                     style={{
                                         //@ts-ignore
@@ -150,11 +162,11 @@ const DatabaseTable = () => {
                                     }}
                                 />
                             )}
-                            <Typography variant="Regular_14">{cellData}</Typography>
+                            <Typography variant="Regular_14">{protectedChk ? GENERAL.PROTECTED: GENERAL.NOT_PROTECTED}</Typography>
                         </div>
-                        {cellData === 'Protected' && (
+                        {protectedChk && (
                             <TooltipInfo onVisibleChange={function noRefCheck(){}}>
-                                    {protectionTooltipText(rowData?.protectedBy)}
+                                    {protectionTooltipText(protectedByList)}
                             </TooltipInfo>
                         )}
                     </div>
@@ -168,27 +180,43 @@ const DatabaseTable = () => {
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return (
+                    <Typography variant="Regular_13" className={styles.colText}>
+                        {cellData?.assessment  + ' ( <' + cellData?.latency + ' ms )'}
+                    </Typography>
+                );
+            }
         },
         {
             id: '4',
             Header: GENERAL.DB_HOST_STORAGE_SAVINGS,
-            accessor: 'storageSavings',
+            accessor: 'storage',
             isSortable: true,
-            width:'184px'
+            width:'184px',
+            renderCell: (cellData: any) => {
+                const percentVal = (cellData.savings/cellData.allocated) * 100;
+                return (
+                    <Typography variant="Regular_13" className={styles.colText}>
+                        {percentVal  + '% (' + cellData?.savings + ' GiB)'}
+                    </Typography>
+                );
+            }
         },
         {
             id: '5',
             Header: GENERAL.DB_HOST_ESTIMATED_COST,
-            accessor: 'estimatedCost',
+            accessor: 'estimatedUsageCost',
             isSortable: true,
             width:'184px',
-            renderCell: (cellData: string, rowData: any) => {
+            renderCell: (cellData: any) => {
+                const totalCost = cellData?.compute + cellData?.storage + cellData?.connectivity + cellData?.others;
                 return (
                     <div className={styles.cost}>
                         <TooltipInfo onVisibleChange={function noRefCheck(){}}>
-                            {DatabaseEstimatedCost(rowData?.cost)}
+                            {DatabaseEstimatedCost({...cellData, totalCost: totalCost})}
                         </TooltipInfo>
-                        <Typography variant='Regular_14'>{cellData}</Typography>
+                        <Typography variant='Regular_14'>{totalCost}</Typography>
                     </div>
                 )
             }
@@ -196,7 +224,7 @@ const DatabaseTable = () => {
         {
             id: '6',
             Header: GENERAL.DB_HOST_TYPE,
-            accessor: 'type',
+            accessor: 'topology.serverType',
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
@@ -204,7 +232,7 @@ const DatabaseTable = () => {
         {
             id: '7',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'deploymentModel',
+            accessor: 'topology.serverMode',
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
@@ -212,7 +240,7 @@ const DatabaseTable = () => {
         {
             id: '8',
             Header: GENERAL.DB_HOST_REGION,
-            accessor: 'region',
+            accessor: 'topology.region',
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
@@ -220,7 +248,7 @@ const DatabaseTable = () => {
         {
             id: '9',
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
-            accessor: 'fileSystemType',
+            accessor: 'topology.fileSystemType',
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
@@ -231,11 +259,16 @@ const DatabaseTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseTableData,
+        rows: databaseHostsData?.items || [],
         pageSize: 10,
         selectionType: 'none',
         isHorizontalScroll:true,
+        isLazyLoading: databaseHostsLoading
     });
+
+    const tableComponentProps = {
+        lazyLoadingText: 'Loading'
+    };
 
     return (
         <>
@@ -248,6 +281,7 @@ const DatabaseTable = () => {
                         singularTitle={GENERAL.DATABASE_HOST}
                     />
                     <Table
+                        {...tableComponentProps}
                         //@ts-ignore
                         tableProps={tableProps}
                         isDoubleRow={true}
