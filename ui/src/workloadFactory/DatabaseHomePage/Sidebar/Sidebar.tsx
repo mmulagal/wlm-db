@@ -7,16 +7,25 @@ import Highlighter from '../Highlighter/Highlighter';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, generateOptionType } from '../../../utils/utilityFunctions';
+import { useGetConfigListQuery } from '../../../utils/apiService';
 
 const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState('');
     const [searchInput, setSearchInput] = useState('');
 
+    const {
+        data: configData,
+
+        isFetching: configLoading,
+
+        isError: configError
+    } = useGetConfigListQuery({});
+
     useEffect(() => {
-        setOpenedItem('Heading');
-    }, []);
+        setOpenedItem(configData[0].name);
+    }, [configData]);
 
     const handleToggle = (key: any) => {
         if (!isOpen) {
@@ -51,41 +60,39 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </div>
             </div>
 
-            {!isOpen && (
+            {configData && !isOpen && (
                 <div className={styles.accordionStructure}>
-                    <Accordion
-                        heading="Heading"
-                        subHeading=" Creation date: Sep 20, 2023, 00:00:00"
-                        toggle={handleToggle}
-                        open={openKey === 'Heading'}
-                    />
-                    <Accordion
-                        heading="Heading2"
-                        subHeading=" Creation date: Sep 20, 2023, 00:00:00"
-                        toggle={handleToggle}
-                        open={openKey === 'Heading2'}
-                    />
+                    <Typography variant="Semibold_14" className={styles.templateHeading}>
+                        My Templates
+                    </Typography>
+                    {configData.map((item: any, i: number) => (
+                        <div key={i}>
+                            <Accordion
+                                heading={item.name}
+                                subHeading={formatDateWithTime(item.creationTime)}
+                                toggle={handleToggle}
+                                open={openKey === item.name}
+                            />
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {isOpen && (
+            {configData && isOpen && (
                 <div className={styles.openView}>
                     <div className={styles.leftSideView}>
                         <div className={styles.accordionStructure}>
-                            <Accordion
-                                heading="Heading"
-                                subHeading=" Creation date: Sep 20, 2023, 00:00:00"
-                                toggle={handleToggle}
-                                open={openKey === 'Heading'}
-                                openedItem={openedItem}
-                            />
-                            <Accordion
-                                heading="Heading2"
-                                subHeading=" Creation date: Sep 20, 2023, 00:00:00"
-                                toggle={handleToggle}
-                                open={openKey === 'Heading2'}
-                                openedItem={openedItem}
-                            />
+                            {configData.map((item: any, i: number) => (
+                                <div key={i}>
+                                    <Accordion
+                                        heading={item.name}
+                                        subHeading={formatDateWithTime(item.creationTime)}
+                                        toggle={handleToggle}
+                                        open={openKey === item.name}
+                                        openedItem={openedItem}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
 
