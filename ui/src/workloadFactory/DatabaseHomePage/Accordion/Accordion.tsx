@@ -10,9 +10,10 @@ type AccordionContent = {
     subHeading: string;
     toggle: any;
     open: boolean;
+    openedItem?: any;
 };
 
-const Accordion = ({ heading, subHeading, toggle, open }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionContent) => {
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
 
@@ -36,7 +37,13 @@ const Accordion = ({ heading, subHeading, toggle, open }: AccordionContent) => {
     ];
     return (
         <div className={styles.accordions}>
-            <div className={open ? `${styles.accordionContainer} ${styles.addBorder}` : `${styles.accordionContainer}`}>
+            <div
+                className={
+                    open || openedItem === heading
+                        ? `${styles.accordionContainer} ${styles.addBorder}`
+                        : `${styles.accordionContainer}`
+                }
+            >
                 <div
                     className={styles.accordionHeader}
                     onClick={() => {
