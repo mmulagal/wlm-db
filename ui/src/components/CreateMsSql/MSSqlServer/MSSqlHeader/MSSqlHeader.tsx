@@ -111,7 +111,7 @@ const MSSqlHeader = () => {
                 </Button>
                 }
                 <div className={styles.separator}></div>
-                {configData.length >= MAX_SAVED_CONFIG && 
+                {configData?.length >= MAX_SAVED_CONFIG && 
                     <Popover
                         popoverClass={styles['popover']}
                         children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
@@ -123,7 +123,7 @@ const MSSqlHeader = () => {
                         }
                     />
                 }
-                {configData.length < MAX_SAVED_CONFIG && 
+                {(!configData || configData?.length < MAX_SAVED_CONFIG) && 
                     <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Button>
