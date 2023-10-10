@@ -39,6 +39,7 @@ $AdminUser = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId $AdminS
 $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
 # Creating Credential Object for Administrator
 $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
+$HostName = hostname
 
 $ConfigurationData = @{
     AllNodes = @(
@@ -92,7 +93,20 @@ Configuration AddSecondaryNode  {
 }
 
 AddSecondaryNode -OutputPath 'C:\cfn\dsc\AddSecondaryNode' -ConfigurationData $ConfigurationData -Credentials $Credentials
-
+##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
+    Start-Sleep -Seconds 15
+ $Nodes = Invoke-Command -scriptblock {
+    param($wincluster)
+    $clusnodes = (Get-ClusterNode -Cluster $wincluster) | Out-String
+    Write-Output $clusnodes
+    $clusnodes
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $ClusterName
+    if ($Nodes -notmatch $HostName) {
+    Start-Sleep -Seconds 120
+    Invoke-Command -scriptblock {
+        Get-Cluster -Name $ClusterName | Add-ClusterNode -Name $HostName
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    }
 Start-DscConfiguration 'C:\cfn\dsc\AddSecondaryNode' -Wait -Verbose -Force
 } catch {
     Write-Output "Adding secondary node for Windows clusterfailed"

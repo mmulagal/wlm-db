@@ -109,6 +109,20 @@ try
     Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
 
 } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+
+##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
+    Start-Sleep -Seconds 30
+    $ClusterResource = Invoke-Command -scriptblock {
+    $clusresources = Get-ClusterResource | Out-String
+    $clusresources
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    if ($ClusterResource -notmatch "SQL Server") {
+    Start-Sleep -Seconds 300
+    Invoke-Command -scriptblock {
+    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    }
+
 } catch {
         Write-Output "Failed to run complete Failover cluster action for SQL installation"
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
