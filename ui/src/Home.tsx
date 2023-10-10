@@ -11,7 +11,6 @@ import Tables from './components/Resource/Tables/Tables';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
-import DatabaseHomePage from './workloadFactory/DatabaseHomePage/DatabaseHomePage';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -33,7 +32,7 @@ const Home = () => {
                     <Route path={'databases'} element={<Databases />} />
                     <Route path={'tables'} element={<Tables />} />
                 </Route>
-                <Route path="*" element={<DatabaseHomePage />} />
+                <Route path="*" element={<MainComponent />} />
             </Routes>
 
             {/* To Display the notification */}
