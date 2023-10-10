@@ -1,19 +1,41 @@
-import { useState } from 'react';
-import { Typography, SearchInput, SelectField } from '@netapp/design-system';
+import { useState, useEffect, useMemo } from 'react';
+import { Typography, SearchInput } from '@netapp/design-system';
+import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import Highlighter from '../Highlighter/Highlighter';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
+import { generateOptionType } from '../../../utils/utilityFunctions';
 
 const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
+    const [openedItem, setOpenedItem] = useState('');
     const [searchInput, setSearchInput] = useState('');
 
+    useEffect(() => {
+        setOpenedItem('Heading');
+    }, []);
+
     const handleToggle = (key: any) => {
-        setOpenKey(openKey !== key ? key : null);
+        if (!isOpen) {
+            setOpenKey(openKey !== key ? key : null);
+        } else {
+            setOpenedItem(key);
+        }
     };
+
+    //Function to generate the options for Select Field for License
+    const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
+        const arr = ['AWS CLI', 'REST API'];
+        const options: optionType[] = [];
+        arr?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '');
+            options.push(option);
+        });
+        return options;
+    }, []);
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
@@ -55,12 +77,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 subHeading=" Creation date: Sep 20, 2023, 00:00:00"
                                 toggle={handleToggle}
                                 open={openKey === 'Heading'}
+                                openedItem={openedItem}
                             />
                             <Accordion
                                 heading="Heading2"
                                 subHeading=" Creation date: Sep 20, 2023, 00:00:00"
                                 toggle={handleToggle}
                                 open={openKey === 'Heading2'}
+                                openedItem={openedItem}
                             />
                         </div>
                     </div>
@@ -97,16 +121,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         onChange={function noRefCheck() {}}
                                         isSearchable={false}
                                         variant="underline"
-                                        options={[
-                                            {
-                                                label: 'label1',
-                                                value: 'value1'
-                                            },
-                                            {
-                                                label: 'label2',
-                                                value: 'value2'
-                                            }
-                                        ]}
+                                        options={generateCLIOptions}
+                                        defaultValue={[generateCLIOptions[1]]}
                                     />
                                 </div>
                             </div>
