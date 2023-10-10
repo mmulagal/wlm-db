@@ -39,7 +39,7 @@ async function pollCommandStatus(
             return pollCommandStatus(credentialsId, region, pollParams);
         }
         logger.error('Error fetching command status:', error);
-        throw new Error('Error fetching command status:');
+        throw new Error(`Error fetching command status:${error}`);
     }
 }
 
