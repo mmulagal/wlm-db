@@ -22,7 +22,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SSM_QUERY_CONCURRENCY_LIMIT
+    SSM_QUERY_CONCURRENCY_LIMIT,
+    SERVER_IO_LATENCY
 } from './const';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -33,7 +34,8 @@ import {
     SqlServerDeploymentModel,
     HttpErrorCodes,
     CloudProviders,
-    ACCOUNT_ID
+    ACCOUNT_ID,
+    RESOURCE_RETRIVAL_ERROR
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, listResources } from '../../../lib/database/db';
@@ -480,6 +482,31 @@ async function discoverMsSqlServer(
     return { resourceId, resourceName };
 }
 
+async function getServerIOLatency(resourceId: string) {
+    logger.info('Fetch SQL server IO latency for resource', resourceId);
+
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+    }
+
+    const commands = [`${PSSCRIPT} -Query "${SERVER_IO_LATENCY}"`];
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!
+    );
+
+    logger.debug('SQL server IO latency response', response);
+
+    if (response) {
+        return sqlResponseParsing(response)[0];
+    }
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -491,5 +518,6 @@ export {
     discoverMsSqlServer,
     callSsmExecution,
     getTablesCount,
-    getMsSqlResourceId
+    getMsSqlResourceId,
+    getServerIOLatency
 };

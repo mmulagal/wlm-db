@@ -16,6 +16,7 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
+    MAX_CONFIG_LIMIT: 'Maximum configuration limit of 50 reached. Delete old configurations to save new ones.',
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
@@ -323,9 +324,16 @@ export const GENERAL = {
     THROUGHPUT_DISABLE_TEXT:
         "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
+    KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
+    PROTECTED: 'Protected',
+    NOT_PROTECTED: 'Not protected',
+    AWS_BACKUP: 'AWS backup',
+    FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
+    SQL_SERVER_BACKUP: 'Native SQL server backup',
+    PROTECTED_BY: 'Protected By',
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
@@ -335,6 +343,5 @@ export const GENERAL = {
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
-    DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
-    KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value."
+    DB_HOST_FILE_SYSTEM_TYPE: 'File system type'
 };
