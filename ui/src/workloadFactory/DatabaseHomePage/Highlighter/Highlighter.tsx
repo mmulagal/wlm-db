@@ -4,8 +4,15 @@ import styles from './Highlighter.module.scss';
 const Highlighter = ({ children, highlight }: any) => {
     if (!highlight || highlight.length < 2) return children;
     const regexp = new RegExp(highlight, 'g');
-    const matches = children.match(regexp);
-    var parts = children.split(new RegExp(`${highlight.replace()}`, 'g'));
+    let content = '';
+    if (children?.props?.children) {
+        content = children.props.children;
+    } else {
+        content = children;
+    }
+
+    const matches = content.match(regexp)!;
+    var parts = content.split(new RegExp(`${highlight.replace()}`, 'g'));
 
     for (var i = 0; i < parts.length; i++) {
         if (i !== parts.length - 1) {
@@ -19,6 +26,7 @@ const Highlighter = ({ children, highlight }: any) => {
                 }
             }
 
+            //@ts-ignore
             parts[i] = (
                 <React.Fragment key={i}>
                     {parts[i]}
@@ -27,7 +35,11 @@ const Highlighter = ({ children, highlight }: any) => {
             );
         }
     }
-    return <div className={styles['highlighter']}>{parts}</div>;
+    return (
+        <div className={styles['highlighter']}>
+            <pre>{parts}</pre>
+        </div>
+    );
 };
 
 export default Highlighter;

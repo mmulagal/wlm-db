@@ -8,12 +8,17 @@ import Highlighter from '../Highlighter/Highlighter';
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
 import { formatDateWithTime, generateOptionType } from '../../../utils/utilityFunctions';
-import { useGetConfigListQuery } from '../../../utils/apiService';
+import { useGetConfigListQuery, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 
 const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState('');
     const [searchInput, setSearchInput] = useState('');
+
+    const [rightPanelResponse, setRightPanelResponse] = useState('');
+
+    const [loadConfigDataExe] = useLazyGetConfigDataQuery();
 
     const {
         data: configData,
@@ -23,15 +28,30 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         isError: configError
     } = useGetConfigListQuery({});
 
+    const getRestResponse = (id: string) => {
+        loadConfigDataExe({ configId: id }).then(data => {
+            const actualData = data?.data?.data;
+            const changeObjectForm = {
+                mssqlForm: actualData
+            };
+            const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
+            setRightPanelResponse(res);
+        });
+    };
+
     useEffect(() => {
-        setOpenedItem(configData[0].name);
+        if (configData) {
+            setOpenedItem(configData[0].name);
+            getRestResponse(configData[0].id);
+        }
     }, [configData]);
 
-    const handleToggle = (key: any) => {
+    const handleToggle = (key: any, id: string) => {
         if (!isOpen) {
             setOpenKey(openKey !== key ? key : null);
         } else {
             setOpenedItem(key);
+            getRestResponse(id);
         }
     };
 
@@ -72,6 +92,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 subHeading={formatDateWithTime(item.creationTime)}
                                 toggle={handleToggle}
                                 open={openKey === item.name}
+                                id={item.id}
                             />
                         </div>
                     ))}
@@ -82,6 +103,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 <div className={styles.openView}>
                     <div className={styles.leftSideView}>
                         <div className={styles.accordionStructure}>
+                            <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                My Templates
+                            </Typography>
                             {configData.map((item: any, i: number) => (
                                 <div key={i}>
                                     <Accordion
@@ -90,6 +114,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         toggle={handleToggle}
                                         open={openKey === item.name}
                                         openedItem={openedItem}
+                                        id={item.id}
                                     />
                                 </div>
                             ))}
@@ -140,7 +165,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
                             <Typography variant="Regular_14" style={{ color: '#fff' }}>
-                                <Highlighter highlight={searchInput}>Coming Soon</Highlighter>
+                                <Highlighter highlight={searchInput}>
+                                    <pre>{rightPanelResponse}</pre>
+                                </Highlighter>
                             </Typography>
                         </div>
                     </div>
