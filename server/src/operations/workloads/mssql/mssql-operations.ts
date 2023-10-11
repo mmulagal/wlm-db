@@ -507,6 +507,29 @@ async function getServerIOLatency(resourceId: string) {
     }
 }
 
+async function getServerState(resourceId: string) {
+    logger.info('Fetch SQL server state for resource', resourceId);
+
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+    }
+
+    const commands = [`${PSSCRIPT} -Query "${SERVER_STATE}"`];
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!
+    );
+
+    logger.debug('SQL server state response', response);
+
+    return response!.replace(/[\r\n.]/g, '');
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -519,5 +542,6 @@ export {
     callSsmExecution,
     getTablesCount,
     getMsSqlResourceId,
-    getServerIOLatency
+    getServerIOLatency,
+    getServerState
 };

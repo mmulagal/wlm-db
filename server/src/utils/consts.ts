@@ -759,6 +759,13 @@ const FCI = 'fci';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
+enum DatabaseHostsQueryFields {
+    PERFORMANCE = 'performance',
+    PROTECTION = 'protection',
+    STORAGE = 'storage',
+    USAGE_ESTIMATION = 'usageEstimation'
+}
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -910,5 +917,6 @@ export {
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
-    RESOURCE_RETRIVAL_ERROR
+    RESOURCE_RETRIVAL_ERROR,
+    DatabaseHostsQueryFields
 };

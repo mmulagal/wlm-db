@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Static, Type } from '@fastify/type-provider-typebox';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -10,22 +10,20 @@ const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String())
 });
 
-const InstanceDetailsResponse = Type.Object({
+const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
     ebsVolumeId: Type.String()
 });
-type InstanceDetailsResponseType = Static<typeof InstanceDetailsResponse>;
+type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
 
 const TopologyResponse = Type.Object({
     region: Type.String(),
-    serverType: Type.String({ description: 'Database server type like Microsoft SQL Server, PostgreSQL, etc' }),
-    serverInstallationMode: Type.String({
-        description: 'Database server installtion type like (FCI/Standalone) SQL Server'
-    }),
+    serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
+    serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx Windows', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
-    ec2Details: Type.Array(InstanceDetailsResponse)
+    ec2Details: Type.Array(EC2InstanceDetailsResponse)
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;
 
@@ -45,7 +43,7 @@ type PerformanceResponseType = Static<typeof PerformanceResponse>;
 const StorageResponse = Type.Object({
     size: Type.Number({ description: 'Database server space allocated in GiB' }),
     used: Type.Number({ description: 'Database server used space in GiB' }),
-    space_savings: Type.Number({ description: 'Database server space savings in MiB/GiB' })
+    spaceSavings: Type.Number({ description: 'Database server space savings in MiB/GiB' })
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
@@ -62,7 +60,7 @@ type UsageCostResponseType = Static<typeof UsageCostResponse>;
 const DatabaseHostSummaryResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    status: Type.String({ enum: ['Up', 'Down', 'NA/A'] }),
+    status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
     topology: Type.Optional(TopologyResponse),
     protection: Type.Optional(ProtectionResponse),
     performance: Type.Optional(PerformanceResponse),
@@ -86,8 +84,8 @@ export {
     DatabaseHostSummaryResponseType,
     DatabaseHostSummaryListResponse,
     DatabaseHostSummaryListResponseType,
-    InstanceDetailsResponse,
-    InstanceDetailsResponseType,
+    EC2InstanceDetailsResponse,
+    EC2InstanceDetailsResponseType,
     TopologyResponse,
     TopologyResponseType,
     PerformanceResponse,
