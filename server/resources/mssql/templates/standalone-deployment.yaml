@@ -346,6 +346,8 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName'
+                - Key: SQLServerName
+                  Value: !Ref 'SqlServerName'
     SqlNode:
         Type: AWS::EC2::Instance
         CreationPolicy:
