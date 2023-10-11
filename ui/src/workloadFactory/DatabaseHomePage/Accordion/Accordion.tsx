@@ -11,9 +11,10 @@ type AccordionContent = {
     toggle: any;
     open: boolean;
     openedItem?: any;
+    id?: string;
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem, id }: AccordionContent) => {
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
 
@@ -47,7 +48,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionC
                 <div
                     className={styles.accordionHeader}
                     onClick={() => {
-                        toggle(heading);
+                        toggle(heading, id);
                     }}
                 >
                     <div className={styles.firstLevel}>
