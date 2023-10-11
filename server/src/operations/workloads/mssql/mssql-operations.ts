@@ -503,7 +503,7 @@ async function getServerIOLatency(resourceId: string) {
     logger.debug('SQL server IO latency response', response);
 
     if (response) {
-        return sqlResponseParsing(response);
+        return sqlResponseParsing(response)[0];
     }
 }
 

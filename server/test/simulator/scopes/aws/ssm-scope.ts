@@ -17,7 +17,8 @@ const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value(\'(./Record/@id)[1]\',\'int\')AS record_id, \n                                record.value(\'(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]\',\'int\')AS [SystemIdle], \n                                record.value(\'(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]\',\'int\')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N\'RING_BUFFER_SCHEDULER_MONITOR\'AND record LIKE\'%%\')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH"'
+        // eslint-disable-next-line quotes
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\""
     ]
 };
 const memeoryParams = {
@@ -63,7 +64,8 @@ const clusterNodesParams = {
 
 const serStateParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol \'QUERYSTATE\',\'MSSQLServer\'"'
+        // eslint-disable-next-line quotes
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'\""
     ]
 };
 const serVerParams = {
@@ -81,7 +83,8 @@ const tablesListParams = {
 };
 const diskSizeParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH\''
+        // eslint-disable-next-line quotes
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query 'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH'"
     ]
 };
 
@@ -98,6 +101,12 @@ const serGUIDParams = {
 const serNameParams = {
     commands: [
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT @@SERVERNAME as serverName FOR JSON PATH"'
+    ]
+};
+const serverIOLatencyParams = {
+    commands: [
+        // eslint-disable-next-line quotes
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; WITH DatabaseLatency as (SELECT \n                                            [ServerIOLatency] =\n                                                CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)\n                                                    THEN 0 ELSE (SUM(io_stall) / (SUM(num_of_reads) + SUM(num_of_writes))) END\n                                            FROM\n                                                sys.dm_io_virtual_file_stats (NULL,NULL)\n                                            )\n                                            select ServerIOLatency as latency,\n                                            [assessment] = \n                                                    CASE \n                                                        WHEN ServerIOLatency = 0 THEN 'N/A' \n                                                        ELSE \n                                                            CASE WHEN ServerIOLatency < 10 THEN 'High'\n                                                                WHEN ServerIOLatency < 20 THEN 'Medium'\n                                                                WHEN ServerIOLatency < 100 THEN 'Low'      \n                                                            END \n                                                    END\n                                            from DatabaseLatency\n                                FOR JSON PATH\""
     ]
 };
 
@@ -137,7 +146,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: serGUIDParams })
     .resolves(listSendCommandCommandResponse.serGUIDCommandResponse)
     .on(SendCommandCommand, { Parameters: serNameParams })
-    .resolves(listSendCommandCommandResponse.serNameCommandResponse);
+    .resolves(listSendCommandCommandResponse.serNameCommandResponse)
+    .on(SendCommandCommand, { Parameters: serverIOLatencyParams })
+    .resolves(listSendCommandCommandResponse.serverIoLatencyCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -171,6 +182,8 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serGUID' })
     .resolves(getCommandInvocationResponse.servGUIDInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serName' })
-    .resolves(getCommandInvocationResponse.serNameInvocationResponse);
+    .resolves(getCommandInvocationResponse.serNameInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serverIoLatency' })
+    .resolves(getCommandInvocationResponse.serverIoLatencyInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
