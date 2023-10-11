@@ -36,7 +36,7 @@ import {
     ACCOUNT_ID
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, listResources, deleteResource, getFsxId, getFsxIdCount } from '../../../lib/database/db';
+import { createResource, listResources, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
 
 const logger = getLogger();
@@ -483,11 +483,13 @@ async function deleteResourceById(accountId: string, resourceId: string) {
     logger.info('Delete Resource:', { resourceId });
 
     try {
-        const fsxId = await getFsxId(accountId, resourceId);
-        if (fsxId?.co_relation_id) {
-            const fsxCount = await getFsxIdCount(accountId, fsxId.co_relation_id);
+        const relationshipResp = await listRelationshipsResources(accountId, resourceId);
+        if (relationshipResp.length !== 0) {
+            const fsxId = relationshipResp[0].co_relation_id;
+            const countResp = await listRelationshipsResources(accountId);
+            const fsxCount = countResp.filter(obj => obj.co_relation_id === fsxId).length;
             if (fsxCount === 1) {
-                await deleteResource(accountId, fsxId.co_relation_id);
+                await deleteResource(accountId, fsxId!);
             }
         }
 

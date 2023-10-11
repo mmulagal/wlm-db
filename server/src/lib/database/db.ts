@@ -316,14 +316,15 @@ async function deleteConfig(accountId: string, id: string) {
     });
 }
 
-async function listRelationshipsResources(accountId: string) {
+async function listRelationshipsResources(accountId: string, resourceId?: string) {
     logger.info('Listing resources which has relation', { accountId });
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
             co_relation_id: {
                 not: null
-            }
+            },
+            ...(resourceId && { resource_id: resourceId })
         },
         select: {
             resource_id: true,
@@ -332,29 +333,6 @@ async function listRelationshipsResources(accountId: string) {
     });
 }
 
-async function getFsxId(accountId: string, resourceId: string) {
-    logger.info('FSX Id for mssql resource', { accountId, resourceId });
-    return prisma.client.resource.findFirst({
-        where: {
-            account_id: accountId,
-            resource_id: resourceId
-        },
-        select: {
-            co_relation_id: true
-        }
-    });
-}
-
-async function getFsxIdCount(accountId: string, fsxId: string) {
-    logger.info('FSX ID count', { accountId, fsxId });
-    return prisma.client.resource.count({
-        where: {
-            co_relation_id: {
-                equals: fsxId
-            }
-        }
-    });
-}
 export {
     Resource,
     listDeployments,
@@ -369,7 +347,5 @@ export {
     listConfig,
     createConfig,
     deleteConfig,
-    listRelationshipsResources,
-    getFsxId,
-    getFsxIdCount
+    listRelationshipsResources
 };
