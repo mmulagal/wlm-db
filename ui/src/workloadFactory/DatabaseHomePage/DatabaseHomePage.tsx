@@ -1,5 +1,5 @@
 import { Button, Typography } from '@netapp/design-system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
@@ -16,7 +16,7 @@ const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     DatabaseHomeApis();
-
+    
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };

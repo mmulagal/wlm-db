@@ -13,7 +13,9 @@ import { STATUS_CONST } from '../../../utils/consts';
 
 const DatabaseTable = () => {
 
-    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -89,6 +91,14 @@ const DatabaseTable = () => {
         };
     };
 
+    const notAvailable = () => {
+        return (
+            <Typography variant="Regular_13" className={styles.colText}>
+                N/A
+            </Typography>
+        )
+    };
+
     const DatabasesColDefs: ColumnProps[] = [
         {
             id: '1',
@@ -144,32 +154,37 @@ const DatabaseTable = () => {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }
                 return (
-                    <div className={styles.colText}>
-                        <div className={styles.protection}>
-                            {protectedChk && (
-                                <ProtectedIcon 
-                                    style={{
-                                        //@ts-ignore
-                                        '--icon-primary-color': 'var(--green-60)',
-                                    }}
-                                />
-                            )}
-                            {!protectedChk && (
-                                <NotProtectedIcon 
-                                    style={{
-                                        //@ts-ignore
-                                        '--icon-primary-color': 'var(--grey-45)'
-                                    }}
-                                />
-                            )}
-                            <Typography variant="Regular_14">{protectedChk ? GENERAL.PROTECTED: GENERAL.NOT_PROTECTED}</Typography>
-                        </div>
-                        {protectedChk && (
-                            <TooltipInfo onVisibleChange={function noRefCheck(){}}>
-                                    {protectionTooltipText(protectedByList)}
-                            </TooltipInfo>
-                        )}
-                    </div>
+                    <>
+                        {cellData && 
+                            <div className={styles.colText}>
+                                <div className={styles.protection}>
+                                    {protectedChk && (
+                                        <ProtectedIcon 
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--green-60)',
+                                            }}
+                                        />
+                                    )}
+                                    {!protectedChk && (
+                                        <NotProtectedIcon 
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--grey-45)'
+                                            }}
+                                        />
+                                    )}
+                                    <Typography variant="Regular_14">{protectedChk ? GENERAL.PROTECTED: GENERAL.NOT_PROTECTED}</Typography>
+                                </div>
+                                {protectedChk && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck(){}}>
+                                            {protectionTooltipText(protectedByList)}
+                                    </TooltipInfo>
+                                )}
+                            </div>
+                        }
+                        {!cellData && notAvailable()}
+                    </>
                 )
             }
         },
@@ -182,9 +197,15 @@ const DatabaseTable = () => {
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 return (
-                    <Typography variant="Regular_13" className={styles.colText}>
-                        {cellData?.assessment  + ' ( <' + cellData?.latency + ' ms )'}
-                    </Typography>
+                    <>
+                        {cellData && 
+                            <Typography variant="Regular_13" className={styles.colText}>
+                                {cellData?.assessment  + ' ( <' + cellData?.latency + ' ms )'}
+                            </Typography>
+                        }
+                        {!cellData && notAvailable()}
+                    </>
+                    
                 );
             }
         },
@@ -197,9 +218,15 @@ const DatabaseTable = () => {
             renderCell: (cellData: any) => {
                 const percentVal = (cellData.savings/cellData.allocated) * 100;
                 return (
-                    <Typography variant="Regular_13" className={styles.colText}>
-                        {percentVal  + '% (' + cellData?.savings + ' GiB)'}
-                    </Typography>
+                    <>
+                        {cellData && 
+                            <Typography variant="Regular_13" className={styles.colText}>
+                                {percentVal  + '% (' + cellData?.savings + ' GiB)'}
+                            </Typography>
+                        }
+                        {!cellData && notAvailable()}
+                    </>
+                    
                 );
             }
         },
@@ -212,12 +239,17 @@ const DatabaseTable = () => {
             renderCell: (cellData: any) => {
                 const totalCost = cellData?.compute + cellData?.storage + cellData?.connectivity + cellData?.others;
                 return (
-                    <div className={styles.cost}>
-                        <TooltipInfo onVisibleChange={function noRefCheck(){}}>
-                            {DatabaseEstimatedCost({...cellData, totalCost: totalCost})}
-                        </TooltipInfo>
-                        <Typography variant='Regular_14'>{totalCost}</Typography>
-                    </div>
+                    <>
+                        {cellData && 
+                            <div className={styles.cost}>
+                                <TooltipInfo onVisibleChange={function noRefCheck(){}}>
+                                    {DatabaseEstimatedCost({...cellData, totalCost: totalCost})}
+                                </TooltipInfo>
+                                <Typography variant='Regular_14'>{totalCost}</Typography>
+                            </div>
+                        }
+                        {!cellData && notAvailable()}
+                    </>
                 )
             }
         },
@@ -232,7 +264,7 @@ const DatabaseTable = () => {
         {
             id: '7',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'topology.serverMode',
+            accessor: 'topology.serverInstallationMode',
             isSortable: true,
             width:'184px',
             filterOptions: 'auto',
@@ -259,11 +291,11 @@ const DatabaseTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseHostsData?.items || [],
+        rows: databaseHostsList || [],
         pageSize: 10,
         selectionType: 'none',
         isHorizontalScroll:true,
-        isLazyLoading: databaseHostsLoading
+        isLazyLoading: databaseHostsLoading || databaseJobsLoading
     });
 
     const tableComponentProps = {

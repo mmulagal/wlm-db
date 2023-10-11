@@ -7,6 +7,18 @@ const initialState: DatabaseHostsEntities = {
         databaseHostsLoading: false,
         databaseHostsError: null
     },
+    getDatabaseJobs: {
+        databaseJobsData: null,
+        databaseJobsLoading: false,
+        databaseJobsError: null
+    },
+    getJobsSummary: {
+        jobsSummaryData: null,
+        jobsSummaryLoading: false,
+        jobsSummaryError: null
+    },
+    databaseHostsList: null,
+
 };
 
 const databaseHomeSlice = createSlice({
@@ -16,11 +28,23 @@ const databaseHomeSlice = createSlice({
         addDatabaseHosts: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts = action.payload;
         },
+        addDatabaseJobs: (state, action: PayloadAction<any>) => {
+            state.getDatabaseJobs = action.payload;
+        },
+        addJobsSummary: (state, action: PayloadAction<any>) => {
+            state.getJobsSummary = action.payload;
+        },
+        addDatabaseHostsList: (state, action: PayloadAction<any>) => {
+            state.databaseHostsList = action.payload;
+        },
     }
 });
 
 export const {
-    addDatabaseHosts
+    addDatabaseHosts,
+    addDatabaseJobs,
+    addJobsSummary,
+    addDatabaseHostsList
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;

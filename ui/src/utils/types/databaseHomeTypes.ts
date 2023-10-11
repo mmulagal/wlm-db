@@ -33,10 +33,39 @@ export interface DatabaseHostItem {
     }
 }
 
+export interface DatabaseJobsItem {
+    id: string;
+    name: string;
+    status: string;
+    metadata: {
+        region: string;
+        serverType: string;
+        serverMode: string;
+        fileSystemType: string;
+    };
+}
+
+export interface JobsSummaryRes {
+    success: string;
+    failed: string;
+    initializing: string;
+}
+
 export interface DatabaseHostsEntities {
     getDatabaseHosts: {
-        databaseHostsData: { items?: DatabaseHostItem[] } | null;
+        databaseHostsData: DatabaseHostItem[] | null;
         databaseHostsLoading: false;
         databaseHostsError: null;
     };
+    getDatabaseJobs: {
+        databaseJobsData: DatabaseJobsItem[] | null;
+        databaseJobsLoading: false;
+        databaseJobsError: null;
+    },
+    getJobsSummary: {
+        jobsSummaryData: JobsSummaryRes | null,
+        jobsSummaryLoading: false,
+        jobsSummaryError: null
+    },
+    databaseHostsList: null
 }

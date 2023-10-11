@@ -9,7 +9,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-1",
                 "ec2Details": [
@@ -53,7 +53,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-2",
                 "ec2Details": [
@@ -97,7 +97,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-3",
                 "ec2Details": [
@@ -141,7 +141,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-4",
                 "ec2Details": [
@@ -180,12 +180,12 @@
         { 
             "id": "resource-id-5",
             "name": "Database hostname 5",
-            "status": "initializing",
+            "status": "up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-5",
                 "ec2Details": [
@@ -224,12 +224,12 @@
         { 
             "id": "resource-id-6",
             "name": "Database hostname 6",
-            "status": "initializing",
+            "status": "down",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-6",
                 "ec2Details": [
@@ -273,7 +273,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-7",
                 "ec2Details": [
@@ -317,7 +317,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-8",
                 "ec2Details": [
@@ -361,7 +361,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-1",
                 "ec2Details": [
@@ -405,7 +405,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-2",
                 "ec2Details": [
@@ -449,7 +449,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-3",
                 "ec2Details": [
@@ -493,7 +493,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-4",
                 "ec2Details": [
@@ -537,7 +537,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-5",
                 "ec2Details": [
@@ -581,7 +581,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-6",
                 "ec2Details": [
@@ -625,7 +625,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "Standalone",
+                "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-7",
                 "ec2Details": [
@@ -669,7 +669,7 @@
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
-                "serverMode": "FCI",
+                "serverInstallationMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-8",
                 "ec2Details": [
