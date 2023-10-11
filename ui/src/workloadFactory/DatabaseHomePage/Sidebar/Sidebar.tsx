@@ -17,6 +17,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [searchInput, setSearchInput] = useState('');
 
     const [rightPanelResponse, setRightPanelResponse] = useState('');
+    const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
 
@@ -29,6 +30,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     } = useGetConfigListQuery({});
 
     const getRestResponse = (id: string) => {
+        setIsRightPanelDataLoading(true);
         loadConfigDataExe({ configId: id }).then(data => {
             const actualData = data?.data?.data;
             const changeObjectForm = {
@@ -36,6 +38,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             };
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
             setRightPanelResponse(res);
+            setIsRightPanelDataLoading(false);
         });
     };
 
@@ -79,6 +82,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {isOpen && <ArrowLeft />}
                 </div>
             </div>
+
+            {configLoading && (
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    Loading...
+                </Typography>
+            )}
 
             {configData && !isOpen && (
                 <div className={styles.accordionStructure}>
@@ -165,9 +174,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
                             <Typography variant="Regular_14" style={{ color: '#fff' }}>
-                                <Highlighter highlight={searchInput}>
-                                    <pre>{rightPanelResponse}</pre>
-                                </Highlighter>
+                                {isRightPanelDataLoading ? (
+                                    <Typography variant="Semibold_14" className={styles.loading}>
+                                        Loading...
+                                    </Typography>
+                                ) : (
+                                    <Highlighter highlight={searchInput}>
+                                        <pre>{rightPanelResponse}</pre>
+                                    </Highlighter>
+                                )}
                             </Typography>
                         </div>
                     </div>
