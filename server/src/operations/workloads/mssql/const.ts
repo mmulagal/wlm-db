@@ -87,6 +87,26 @@ const TABLES_QUERY = (offset: number, rowscount: number) =>
                         t.Name offset ${offset} rows fetch next ${rowscount} rows only ${FOR_JSON_PATH}`;
 const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables ${FOR_JSON_PATH}`;
 
+const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT 
+                                            [ServerIOLatency] =
+                                                CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)
+                                                    THEN 0 ELSE (SUM(io_stall) / (SUM(num_of_reads) + SUM(num_of_writes))) END
+                                            FROM
+                                                sys.dm_io_virtual_file_stats (NULL,NULL)
+                                            )
+                                            select ServerIOLatency as latency,
+                                            [assessment] = 
+                                                    CASE 
+                                                        WHEN ServerIOLatency = 0 THEN 'N/A' 
+                                                        ELSE 
+                                                            CASE WHEN ServerIOLatency < 10 THEN 'High'
+                                                                WHEN ServerIOLatency < 20 THEN 'Medium'
+                                                                WHEN ServerIOLatency < 100 THEN 'Low'      
+                                                            END 
+                                                    END
+                                            from DatabaseLatency
+                                ${FOR_JSON_PATH}`;
+
 export {
     DB_ROWS_COUNT,
     SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -108,5 +128,6 @@ export {
     SERVER_NODE,
     CLUSTER_NODES,
     DB_SIZE,
-    SSM_QUERY_CONCURRENCY_LIMIT
+    SSM_QUERY_CONCURRENCY_LIMIT,
+    SERVER_IO_LATENCY
 };
