@@ -8,6 +8,12 @@
     background-color: #111925;
     transition: right 0.3s rase-in-out;
 
+    .loading {
+        margin-top: 40px;
+        margin-left: 24px;
+        color: var(--white);
+    }
+
     .topBar {
         height: 60px;
         background-color: #2b323d;
