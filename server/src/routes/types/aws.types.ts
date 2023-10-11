@@ -6,6 +6,11 @@ const AwsParams = Type.Object({
     credentialsId: Type.String()
 });
 
+// AWS accountid parameters
+const AwsAccountParams = Type.Object({
+    accountId: Type.String()
+});
+
 // AWS request parameters wth region
 const AwsParamsWithRegion = Type.Object({
     accountId: Type.String(),
@@ -280,5 +285,6 @@ export {
     FSxFileSystemsResponse,
     KmsKeysListResponse,
     KeyPairsSchema,
-    KeyPairsResponse
+    KeyPairsResponse,
+    AwsAccountParams
 };
