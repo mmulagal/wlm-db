@@ -154,7 +154,7 @@ const createMssqlPayload = (state: any) => {
             sqlAmiId: licenseId || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
             serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
-            sqlFciName: state.mssqlForm.dbName || ''
+            sqlServerName: state.mssqlForm.dbName || ''
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
