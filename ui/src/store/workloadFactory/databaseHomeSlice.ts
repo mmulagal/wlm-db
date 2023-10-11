@@ -18,7 +18,6 @@ const initialState: DatabaseHostsEntities = {
         jobsSummaryError: null
     },
     databaseHostsList: null,
-
 };
 
 const databaseHomeSlice = createSlice({

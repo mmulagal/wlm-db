@@ -205,7 +205,6 @@ const DatabaseTable = () => {
                         }
                         {!cellData && notAvailable()}
                     </>
-                    
                 );
             }
         },
@@ -226,7 +225,6 @@ const DatabaseTable = () => {
                         }
                         {!cellData && notAvailable()}
                     </>
-                    
                 );
             }
         },

@@ -16,7 +16,7 @@ const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     DatabaseHomeApis();
-    
+
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
