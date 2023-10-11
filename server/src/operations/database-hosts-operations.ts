@@ -3,12 +3,12 @@ import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
-    DatabaseHostSummaryListResponseType
+    DatabaseHostSummaryListResponseType,
+    PerformanceResponseType
 } from '../routes/types/database-hosts.types';
-import { HttpErrorCodes } from '../utils/consts';
+import { DatabaseHostsQueryFields, HttpErrorCodes } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { callSsmExecution, getResourceDetails } from './workloads/mssql/mssql-operations';
-import { PSSCRIPT, SERVER_STATE } from './workloads/mssql/const';
+import { getServerIOLatency, getServerState } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -24,29 +24,43 @@ async function getDatabaseHostsSummary(
         throw createError(HttpErrorCodes.NOT_FOUND, `No database hosts found for account ${accountId}.`);
     }
 
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
         await Promise.all(
             resourceDetails.map(async resource => {
                 const { resource_id: resourceId, resource_name: resourceName } = resource;
 
-                const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
-                    resourceId
-                );
+                // Fetch server status
                 let serverStatus = 'N/A';
                 try {
-                    const serverStatusInfo = await callSsmExecution(
-                        credentialsId!,
-                        region!,
-                        [`${PSSCRIPT} -Query "${SERVER_STATE}"`],
-                        activeNodeInstanceId!,
-                        standbyNodeInstanceId!
-                    );
-                    serverStatus = serverStatusInfo!.replace(/[\r\n.]/g, '');
+                    serverStatus = await getServerState(resourceId);
                 } catch (error) {
                     logger.error('Error while fetching status for server ', accountId, resourceId, error);
                 }
-                databaseHosts.push({ id: resourceId, name: resourceName || '', status: serverStatus });
+
+                // Fetch io latency data
+                let performanceData: PerformanceResponseType;
+                if (fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE)) {
+                    try {
+                        performanceData = await getServerIOLatency(resourceId);
+                    } catch (error) {
+                        logger.error('Error while fetching io latency for server ', accountId, resourceId, error);
+                    }
+                }
+
+                databaseHosts.push({
+                    id: resourceId,
+                    name: resourceName || '',
+                    status: serverStatus,
+                    performance: performanceData!
+                });
             })
         );
     } catch (error) {
