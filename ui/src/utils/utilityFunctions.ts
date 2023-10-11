@@ -5,6 +5,7 @@ import { GENERAL, SELECT_CONFIG } from './appConstants';
 import { API_ERRORS, DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST, SQL_DATABASE } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
+import { DatabaseHostItem, DatabaseJobsItem } from './types/databaseHomeTypes';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -294,3 +295,28 @@ export const displayFormattedValue = (value: number, msg: string) => {
 export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 }
+
+export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, jobsData: DatabaseJobsItem[] | null) => {
+    if(!hostsData && !jobsData){
+        return [];
+    }
+    let uniqueIds: Array<String> = [];
+    const mergedList: any[] = [];
+    jobsData?.map((val) => {
+        if(!uniqueIds.includes(val?.id)){
+            val = {
+                ...val,
+                topology: val?.metadata
+            }
+            mergedList.push(val);
+            uniqueIds.push(val?.id);
+        }
+    });
+    hostsData?.map((val) => {
+        if(!uniqueIds.includes(val?.id)){
+            mergedList.push(val);
+            uniqueIds.push(val?.id);
+        }
+    })
+    return mergedList;
+};
