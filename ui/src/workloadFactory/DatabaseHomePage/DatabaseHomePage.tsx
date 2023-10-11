@@ -1,5 +1,5 @@
 import { Button, Typography } from '@netapp/design-system';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';

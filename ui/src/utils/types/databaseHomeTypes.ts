@@ -43,6 +43,12 @@ export interface DatabaseJobsItem {
         serverMode: string;
         fileSystemType: string;
     };
+    topology?: {
+        region: string;
+        serverType: string;
+        serverMode: string;
+        fileSystemType: string;
+    };
 }
 
 export interface JobsSummaryRes {
