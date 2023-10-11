@@ -26,7 +26,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
         isFetching: configLoading,
 
-        isError: configError
+        isError: configError,
+        refetch: configRefetch
     } = useGetConfigListQuery({});
 
     const getRestResponse = (id: string) => {
@@ -102,6 +103,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 toggle={handleToggle}
                                 open={openKey === item.name}
                                 id={item.id}
+                                configRefetch={configRefetch}
                             />
                         </div>
                     ))}
@@ -124,6 +126,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         open={openKey === item.name}
                                         openedItem={openedItem}
                                         id={item.id}
+                                        configRefetch={configRefetch}
                                     />
                                 </div>
                             ))}
