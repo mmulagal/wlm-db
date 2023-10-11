@@ -46,7 +46,7 @@ const SQL_CONFIGURATION = {
     sqlAmiId: 'ami-0e0f179ddde359def',
     serviceAccountName: 'sqladmin',
     serviceAccountPassword: 'netapp1!',
-    sqlFciName: 'SampleFci'
+    sqlServerName: 'SampleFci'
 };
 
 const SSM_PARAMS = {

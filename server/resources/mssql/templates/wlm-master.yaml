@@ -66,7 +66,7 @@ Metadata:
           - SQLServiceAccountName
           - SQLServiceAccountSecret
           - SqlFSxWSFCName
-          - SqlFSxFCIName
+          - SqlServerName
       - Label:
           default: CloudWatch, SNS Topic and Resource Tags configuration
         Parameters:
@@ -122,8 +122,8 @@ Metadata:
         default: Secrets Manager Secret for of Service Account Password
       SQLigroupname:
         default: SQL igroup Name
-      SqlFSxFCIName:
-        default: SQL Failover Cluster Instance Name
+      SqlServerName:
+        default: SQL Server Name
       VPCName:
         default: Name your VPC
       VPCCIDR:
@@ -283,8 +283,8 @@ Parameters:
     Description: SQL igroupname
     Type: String
 
-  SqlFSxFCIName:
-    Description: SQL Failover Cluster Instance Name
+  SqlServerName:
+    Description: SQL Server Name
     Type: String
 
   SqlFSxWSFCName:
@@ -731,7 +731,7 @@ Resources:
         SqlFSxWSFCName:
           Ref: SqlFSxWSFCName
         SqlFSxFCIName:
-          Ref: SqlFSxFCIName
+          Ref: SqlServerName
         SQLAdminAccounts:
           Ref: SQLServiceAccountName
         SQLServiceAccountSecret:
@@ -881,6 +881,8 @@ Resources:
           Ref: FSxLogVolumeName
         ParentStackName:
           Ref: AWS::StackName
+        SqlServerName:
+          Ref: SqlServerName
       NotificationARNs:
         Fn::If:
           - IncludeNotification
@@ -937,12 +939,10 @@ Resources:
                 - ","
                 - Ref: NodeNetBIOSNames
             - !Ref AWS::NoValue
-      ResourceName:
+      ResourceName: !Ref 'SqlServerName'
+      SQLDeploymentType: 
           !If
             - IsFailoverCluster
-            - !Ref SqlFSxFCIName
-            - Fn::Select:
-              - "0"
-              - Fn::Split:
-                - ","
-                - Ref: NodeNetBIOSNames
+            - 'FCI'
+            - 'Standalone'
+      FileSystemType: 'FSx ONTAP'
