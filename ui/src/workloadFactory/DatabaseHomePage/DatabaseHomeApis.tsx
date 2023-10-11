@@ -6,7 +6,7 @@ import {
     useGetDatabaseJobsQuery, 
     useGetJobsSummaryQuery 
 } from "../../utils/apiService";
-import { mergeDatabaseHostsData } from "./DatabaseHomeUtils";
+import { mergeDatabaseHostsData } from "../../utils/utilityFunctions";
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
