@@ -1,4 +1,4 @@
-[CmdletBinding()]
+ [CmdletBinding()]
 param(
 
     [Parameter(Mandatory=$true)]
@@ -104,12 +104,14 @@ AddSecondaryNode -OutputPath 'C:\cfn\dsc\AddSecondaryNode' -ConfigurationData $C
     if ($Nodes -notmatch $HostName) {
     Start-Sleep -Seconds 120
     Invoke-Command -scriptblock {
-        Get-Cluster -Name $ClusterName | Add-ClusterNode -Name $HostName
-    } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    param($wincluster,$hostname)
+   
+    Get-Cluster -Name $wincluster | Add-ClusterNode -Name $hostname
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $ClusterName,$HostName
     }
 Start-DscConfiguration 'C:\cfn\dsc\AddSecondaryNode' -Wait -Verbose -Force
 } catch {
-    Write-Output "Adding secondary node for Windows clusterfailed"
+    Write-Output "Adding secondary node for Windows cluster failed"
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 }
