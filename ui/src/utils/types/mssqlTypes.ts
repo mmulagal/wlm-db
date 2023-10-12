@@ -35,6 +35,7 @@ export interface AD {
 export interface Ami {
     name: string;
     imageId: string;
+    architecture?: string;
 }
 
 export interface SNS {
@@ -69,6 +70,7 @@ export interface InstanceType {
     vCpus?: number;
     ramInMib?: number;
     iopsInMbps?: number;
+    architecture?: Array<string>;
 }
 
 export interface FSxN {
@@ -77,6 +79,7 @@ export interface FSxN {
     lifecycle?: string;
     securityGroups?: Array<string>;
     subnetIds?: Array<string>;
+    kmsKeyId?: string;
     ontapConfiguration?: {
         deploymentType?: string;
         throughputCapacity?: string;
@@ -204,7 +207,7 @@ export interface MssqlRequestBody {
         sqlAmiId: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
-        sqlFciName: string;
+        sqlServerName: string;
     }
     topicArn?: string;
     enableCloudWatch?: boolean,

@@ -128,7 +128,7 @@ enum HttpErrorCodes {
 }
 
 enum SqlServerDeploymentModel {
-    SQL_STANDALONE = 'Non-clustered',
+    SQL_STANDALONE = 'Standalone Instance',
     SQL_FCI = 'Always On Failover Cluster Instance'
 }
 
@@ -385,15 +385,16 @@ const AWS_RESOURCES_ACTION_MAP = {
     [FSX]: FSX_ACTION_NAMES,
     [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
 };
-// List of regions having "Amazon FSx for NetApp ONTAP" service.
-// List taken from https://www.aws-services.info/fsx-ontap.html
-const FSX_SUPPORTED_REGIONS = new Map<string, string>([
+
+// List of AWS regions - taken from https://www.aws-services.info/regions.html
+const AWS_REGIONS = new Map<string, string>([
     // "Region Code"    "Region Name"
     // -------------    -------------
     ['af-south-1', 'Africa (Cape Town)'],
     ['ap-east-1', 'Asia Pacific (Hong Kong)'],
     ['ap-northeast-1', 'Asia Pacific (Tokyo)'],
     ['ap-northeast-2', 'Asia Pacific (Seoul)'],
+    ['ap-northeast-3', 'Asia Pacific (Osaka)'],
     ['ap-south-1', 'Asia Pacific (Mumbai)'],
     ['ap-south-2', 'Asia Pacific (Hyderabad)'],
     ['ap-southeast-1', 'Asia Pacific (Singapore)'],
@@ -401,6 +402,8 @@ const FSX_SUPPORTED_REGIONS = new Map<string, string>([
     ['ap-southeast-3', 'Asia Pacific (Jakarta)'],
     ['ap-southeast-4', 'Asia Pacific (Melbourne)'],
     ['ca-central-1', 'Canada (Central)'],
+    ['cn-north-1', 'China (Beijing)	'],
+    ['cn-north-1', 'China (Beijing)'],
     ['eu-central-1', 'Europe (Frankfurt)'],
     ['eu-central-2', 'Europe (Zurich)'],
     ['eu-north-1', 'Europe (Stockholm)'],
@@ -479,7 +482,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
-    sqlFciName: 'SqlFSxFCIName',
+    sqlServerName: 'SqlServerName',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -757,7 +760,7 @@ const MULTI_AZ = 'MULTI_AZ_1';
 
 export {
     WLMDB,
-    FSX_SUPPORTED_REGIONS,
+    AWS_REGIONS,
     AWS_RESOURCES_ACTION_MAP,
     SERVICE_QUOTAS_ACTION_NAMES,
     SERVICE_QUOTAS,

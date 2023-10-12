@@ -61,6 +61,7 @@ const FSxNSystem = () => {
         const fsxSubnets = val?.subnetIds || [];
         const node1SubnetsList = selectedZone1?.data?.subnets || [];
         const node2SubnetsList = selectedZone2?.data?.subnets || [];
+        const primarySubnet = val?.ontapConfiguration?.preferredSubnetId;
         let svmCheck = false;
         if(throughputCapacity === 128 || throughputCapacity === 256) {
             svmCheck = svmCount < 6 ? true : false;
@@ -73,9 +74,11 @@ const FSxNSystem = () => {
         }
         if(lifecycle && lifecycle === 'AVAILABLE') {
             if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1) {
-                return svmCheck && fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
+                return svmCheck && node1SubnetsList.includes(primarySubnet) && 
+                    fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
             } else if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
-                return svmCheck && fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
+                return svmCheck && node1SubnetsList.includes(primarySubnet) &&
+                    fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
             } else {
                 return false;
             }
@@ -96,7 +99,8 @@ const FSxNSystem = () => {
                     securityGroups: val?.securityGroups,
                     throughput: val?.ontapConfiguration?.throughputCapacity,
                     iops: val?.ontapConfiguration?.diskIopsConfiguration?.iops,
-                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId
+                    preferredSubnetId: val?.ontapConfiguration?.preferredSubnetId,
+                    kmsKeyId: val?.kmsKeyId
                 };
                 const option = generateOptionType(value, value, '', false, '', data);
                 options.push(option);

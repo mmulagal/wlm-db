@@ -1,0 +1,82 @@
+.databaseHost {
+    margin-top: 40px;
+    width: 1063px;
+    height: 176px;
+    background-color: var(--white);
+
+    .leftContainer {
+        margin-top: 40px;
+        margin-left: 40px;
+        display: flex;
+
+        .databaseHostsContainer {
+            margin-left: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            .databaseNumber {
+                line-height: unset;
+            }
+
+            .databaseText {
+                line-height: unset;
+            }
+        }
+
+        .dbHostSeparator {
+            margin-left: 111px;
+            height: 96px;
+            background: #e0e0e0;
+            width: 1px;
+        }
+
+        .databaseHostStatusContainer {
+            margin-left: 40px;
+            margin-top: -16px;
+            display: flex;
+            flex-direction: column;
+
+            .statusContainer {
+                display: flex;
+                margin-top: 5px;
+                gap: 8px;
+
+                .layout {
+                    border-radius: 2px;
+                    background: rgba(232, 238, 253, 0.4);
+                    padding: 12px 0px 12px 40px;
+                    width: 200px;
+                    height: 84px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+
+                    .firstRow {
+                        display: flex;
+                        gap: 8px;
+
+                        svg {
+                            position: relative;
+                            top: 2px;
+                        }
+                    }
+
+                    .secondRow {
+                        line-height: unset;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .databaseHost {
+        width: 1012px !important;
+
+        .dbHostSeparator {
+            margin-left: 60px !important;
+        }
+    }
+}

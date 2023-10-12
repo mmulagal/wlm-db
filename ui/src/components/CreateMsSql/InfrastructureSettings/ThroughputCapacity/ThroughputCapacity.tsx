@@ -29,27 +29,27 @@ const ThroughputCapacity = () => {
         });
 
         return options;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         dispatch(setThroughputValue(generateThroughputUnits[0]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateThroughputUnits]);
 
     useEffect(() => {
-        if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
+        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
             setIsDisable(true);
         } else {
             setIsDisable(false);
         }
         selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, units[0], dispatch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
-    
+
     //Set the Header text here
     const setHeader = () => {
-        if(isDisable){
+        if (isDisable) {
             return (
                 <Popover
                     popoverClass={styles['popover']}
@@ -81,7 +81,7 @@ const ThroughputCapacity = () => {
                             <SelectField
                                 label={GENERAL.THROUGHPUT}
                                 isClearable={false}
-                                defaultValue={[generateThroughputUnits[0]]}
+                                defaultValue={selectedThroughput ? selectedThroughput : [generateThroughputUnits[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setThroughputValue(selectedOptions));
                                 }}

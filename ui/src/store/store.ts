@@ -1,6 +1,6 @@
 import { configureStore, combineReducers, MiddlewareAPI, isRejectedWithValue, Middleware } from '@reduxjs/toolkit';
 import notificationSlice, { addNotification, NOTIFICATION_TYPES } from './notificationSlice';
-import { awsApi, configApi, resourceApi } from '../utils/apiService';
+import { awsApi, configApi, databaseHomeApi, resourceApi } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
@@ -8,6 +8,7 @@ import msSqlActionSlice from './mssql/msSqlActionSlice';
 import resourceSlice from './resource/resourceSlice';
 import { GENERAL } from '../utils/appConstants';
 import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
+import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -18,12 +19,21 @@ const rootReducer = combineReducers({
     [mssqlFormSlice.name]: mssqlFormSlice.reducer,
     [msSqlActionSlice.name]: msSqlActionSlice.reducer,
     [resourceSlice.name]: resourceSlice.reducer,
-    [configApi.reducerPath]: configApi.reducer
+    [configApi.reducerPath]: configApi.reducer,
+    [databaseHomeApi.reducerPath]: databaseHomeApi.reducer,
+    [databaseHomeSlice.name]: databaseHomeSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
+        const apiName = action?.meta?.arg?.queryCacheKey;
+
+        // TBD - Will remove once APIs will be available 
+        if(apiName.includes('getDatabaseHosts') || apiName.includes('getDatabaseJobs') || apiName.includes('getJobsSummary')){
+            return;
+        }
+
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
         const reqFieldChk = requiredFieldError(errorMsg);
@@ -32,6 +42,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         }
 
         errorMsg = customErrorMessages(errorMsg);
+
         if(errorMsg && errorMsg.length > 250) {
             api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.QUERY_ERROR, 
                 additionalText: errorMsg }));
@@ -46,7 +57,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
 const store = configureStore({
     reducer: rootReducer,
     middleware: getDefaultMiddleware =>
-        getDefaultMiddleware({ serializableCheck: false }).concat(awsApi.middleware).concat(resourceApi.middleware).concat(configApi.middleware).concat(rtkQueryErrorLogger)
+        getDefaultMiddleware({ serializableCheck: false }).concat(awsApi.middleware).concat(resourceApi.middleware).concat(configApi.middleware)
+        .concat(databaseHomeApi.middleware).concat(rtkQueryErrorLogger)
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

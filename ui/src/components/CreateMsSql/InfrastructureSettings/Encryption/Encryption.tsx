@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
+import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography, Popover } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './Encryption.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -7,6 +7,7 @@ import EncryptionTable from './EncryptionTable/EncryptionTable/EncryptionTable';
 import { useDispatch } from 'react-redux';
 import { setEncryptionARN, setEncryptionRow, setEncryptionType } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { selectFsxKmsKey } from '../../MSSqlServer/MSSqlUtils';
 
 const Encryption = () => {
     const dispatch = useDispatch();
@@ -14,9 +15,13 @@ const Encryption = () => {
     const { kmsData, kmsLoading } = useAppSelector(state => state.mssql.getKmsList);
     const selectedRow = useAppSelector((state: any) => state.mssqlForm.encryption.selectedRow);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
+    const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
 
     const accountSelected = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionType);
     const anotherAccArn = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionArn);
+
+    const [isDisable, setIsDisable] = useState(false);
 
     // To select aws/fsx row if present
     useEffect(() => {
@@ -26,17 +31,44 @@ const Encryption = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [kmsData]);
 
+    useEffect(() => {
+        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
+            setIsDisable(true);
+        } else {
+            setIsDisable(false);
+        }
+        selectFsxKmsKey(selectedFsxnType, selectedExistingFsxnName, dispatch);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedFsxnType, selectedExistingFsxnName]);
+
     //Set the Header text here
     const setHeader = () => {
-        if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
-            return <Typography variant="Regular_14">{anotherAccArn}</Typography>;
+        if(isDisable){
+            return (
+                <Popover
+                    popoverClass={styles['popover']}
+                    children={GENERAL.KMS_DISABLE_TEXT}
+                    trigger="hover"
+                    container={
+                        <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                            {anotherAccArn}
+                        </Typography>
+                    }
+                />
+            );
         } else {
-            return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
+            if (accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT) {
+                return <Typography variant="Regular_14">{anotherAccArn}</Typography>;
+            } else {
+                return <Typography variant="Regular_14">{selectedRow && selectedRow[0]?.name}</Typography>;
+            }
         }
     };
     return (
         <div className={styles.encryption}>
             <AccordionCard
+                isDisabled={isDisable}
+                isExpandDisabled={isDisable}
                 isLoading={kmsLoading}
                 ValueContent={() => <div className={CommonStyles['heading-content']}>{setHeader()}</div>}
                 id="19"

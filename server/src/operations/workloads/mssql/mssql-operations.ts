@@ -362,7 +362,7 @@ async function getServerSummary(resourceId: string) {
         if (isClustered && clusterNodesInfo) {
             const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
-            if (node1?.is_current_owner === 'True') {
+            if (node1?.is_current_owner) {
                 activeNode = node1?.NodeName;
                 standbyNode = node2?.NodeName;
             } else {

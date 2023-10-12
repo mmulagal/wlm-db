@@ -42,13 +42,16 @@ const Tags = () => {
     };
 
     const handleChange = (idx: number, prop: string, value: string) => {
-        const updatedTags = [
-            ...tags.map((tag: Tag) => {
-                return { key: tag.key, value: tag.value };
-            })
-        ];
-        updatedTags[idx][prop] = value;
-        dispatch(setTags(updatedTags));
+        const re = /^([a-zA-Z0-9_.:/=+-@]*)$/;
+        if(!value || re.test(value)){
+            const updatedTags = [
+                ...tags.map((tag: Tag) => {
+                    return { key: tag.key, value: tag.value };
+                })
+            ];
+            updatedTags[idx][prop] = value;
+            dispatch(setTags(updatedTags));
+        }
     };
 
     const handleDeleteTag = (idx: number) => {

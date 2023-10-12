@@ -4,10 +4,11 @@ import {
     InvocationDoesNotExist,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { sendSSMCommand, getCommandInvocation } from '../../lib/aws/ssm';
+import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions } from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
-import { SSM_QUERY_EXECUTION_STATUS } from '../../utils/consts';
+import { SSM_QUERY_EXECUTION_STATUS, AWS_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
+import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 
 const logger = getLogger();
 
@@ -63,4 +64,21 @@ async function executeSSMDocument(
     return response;
 }
 
-export { executeSSMDocument };
+async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions: FSxAvailableRegionType[] }> {
+    logger.info('List regions supporting Amazon FSx for NetApp ONTAP', { credentialsId });
+
+    const response = await describeFSxOntapRegions(credentialsId);
+    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+
+    response.forEach(({ Value: regionCode }) => {
+        if (regionCode) {
+            fsxRegionsList.push({
+                regionCode,
+                regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
+            });
+        }
+    });
+
+    return { regions: fsxRegionsList };
+}
+export { executeSSMDocument, getFSxOntapRegionsList };
