@@ -14,13 +14,18 @@ async function getDeploymentJobsCount(accountId: string, duration: number) {
     );
     const currentDate = new Date();
     const fromDate = new Date(currentDate.getTime() - duration * 24 * 60 * 60 * 1000);
-    const resp = await deploymentJobsCount(accountId, fromDate, DEPLOYMENT_JOBS_STATUS_FILTER);
+
     try {
-        // eslint-disable-next-line camelcase
-        const formattedCounts = resp.reduce((count, { deployment_status, _count }) => {
-            // eslint-disable-next-line camelcase
-            count[deployment_status] = _count.deployment_status;
-            return count;
+        const resp = await deploymentJobsCount(accountId, fromDate, DEPLOYMENT_JOBS_STATUS_FILTER);
+
+        const result = resp.map(item => ({
+            deploymentStatus: item.deployment_status,
+            count: item._count.deployment_status
+        }));
+
+        const formattedCounts = result.reduce((counts, { deploymentStatus, count }) => {
+            counts[deploymentStatus] = count;
+            return counts;
         }, {} as { [key: string]: number });
 
         return {
