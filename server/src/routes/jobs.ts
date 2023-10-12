@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import DeploymentJobsSummarySchema from './schemas/deployment-jobs-schemas';
-import { getDeploymentJobsCount } from '../operations/deployment-jobs-operations';
+import DeploymentJobsSummarySchema from './schemas/jobs-schemas';
+import { getDeploymentJobsCount } from '../operations/jobs-operations';
 
 const DEPLOYMENT_JOBS_API_PATH: string = '/v1//jobs';
 

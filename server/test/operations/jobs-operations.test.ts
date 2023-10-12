@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getDeploymentJobsCount } from '../../src/operations/deployment-jobs-operations';
+import { getDeploymentJobsCount } from '../../src/operations/jobs-operations';
 import jobsCountResposne from '../simulator/responses/deployment/deployment-jobs-count-response.json';
 import { DEPLOYMENT_JOBS_COUNT_RESPONSE } from '../utils/consts';
 

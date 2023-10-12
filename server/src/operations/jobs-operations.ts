@@ -1,4 +1,5 @@
 import createError from 'http-errors';
+import moment from 'moment';
 import { deploymentJobsCount } from '../lib/database/db';
 import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes } from '../utils/consts';
 import getLogger from '../utils/logger';
@@ -12,8 +13,8 @@ async function getDeploymentJobsCount(accountId: string, duration: number = 90) 
         duration,
         DEPLOYMENT_JOBS_STATUS_FILTER
     );
-    const currentDate = new Date();
-    const fromDate = new Date(currentDate.getTime() - duration * 24 * 60 * 60 * 1000);
+    const currentDate = moment();
+    const fromDate = moment(currentDate).subtract(duration, 'days').toDate();
 
     try {
         const resp = await deploymentJobsCount(accountId, fromDate, DEPLOYMENT_JOBS_STATUS_FILTER);

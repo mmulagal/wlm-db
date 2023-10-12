@@ -34,7 +34,7 @@ import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
-import deploymentJobsRoutes from './routes/deployment-jobs';
+import deploymentJobsRoutes from './routes/jobs';
 import {
     createAuditGroup,
     updateAuditGroup,

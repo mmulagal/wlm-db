@@ -1,5 +1,5 @@
 import { RouteTags } from '../../utils/consts';
-import { DeploymentJobsResponse, DeploymentJobsQueryString } from '../types/deployment-jobs.types';
+import { DeploymentJobsResponse, DeploymentJobsQueryString } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes

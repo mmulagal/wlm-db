@@ -332,15 +332,15 @@ async function listRelationshipsResources(accountId: string) {
     });
 }
 
-async function deploymentJobsCount(accountId: string, fromDate: Date, status: any) {
-    logger.info('Deployment jobs count', accountId, fromDate, status);
+async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: any) {
+    logger.info('Deployment jobs count', accountId, fromDate, statuses);
     return prisma.client.deployment.groupBy({
         by: ['deployment_status'],
         where: {
             account_id: accountId,
             parent_deployment_id: null,
             deployment_status: {
-                in: status
+                in: statuses
             },
             start_time: {
                 gte: fromDate.toISOString()
