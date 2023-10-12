@@ -11,8 +11,11 @@ import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
+import { useNavigate } from 'react-router-dom';
 
 const DatabaseHomePage = () => {
+
+    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     DatabaseHomeApis();
@@ -29,7 +32,9 @@ const DatabaseHomePage = () => {
                         {GENERAL.DATABASES}
                     </Typography>
                     <div>
-                        <Button variant="primary">Deploy new database</Button>
+                        <Button variant="primary" onClick={() => {
+                            navigate(`../add-working-environment/database-services/mssql/create`)
+                            }}>{GENERAL.DEPLOY_NEW_DATABASE}</Button>
                     </div>
                 </div>
 

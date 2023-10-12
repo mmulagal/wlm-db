@@ -52,9 +52,51 @@ export interface DatabaseJobsItem {
 }
 
 export interface JobsSummaryRes {
-    success: string;
-    failed: string;
-    initializing: string;
+    success: number;
+    failed: number;
+    initializing: number;
+    totalJobs?: number;
+    successPercent?: number;
+    failedPercent?: number;
+    initializingPercent?: number;
+}
+
+export interface AggregatedHostsCountRes {
+    totalHosts: number;
+    totalUpHosts: number;
+    totalInitializingHosts: number;
+    totalDownHosts: number;
+}
+
+export interface AggregatedProtectionDbCountRes {
+    protectedDb: number;
+    unprotectedDb: number;
+    protectedPercent: number;
+    unprotectedPercent: number;
+    awsBackupDb: number;
+    awsBackupPercent: number;
+    fsxOntapSnapshotsDb: number;
+    fsxOntapSnapshotsPercent: number;
+    sqlServerBackupDb: number;
+    sqlServerBackupPercent: number;
+}
+
+export interface AggregatedStorageSavingsRes {
+    storageConsumes: string;
+    storageSavings: string;
+    storageSavingsPercent: number;
+}
+
+export interface AggregatedCostsRes {
+    storageCost: number;
+    computeCost: number;
+    connectivityCost: number;
+    otherCost: number;
+    totalCost: number;
+    storageCostPercent: number;
+    computeCostPercent: number;
+    connectivityCostPercent: number;
+    otherCostPercent: number;
 }
 
 export interface DatabaseHostsEntities {
@@ -67,11 +109,15 @@ export interface DatabaseHostsEntities {
         databaseJobsData: DatabaseJobsItem[] | null;
         databaseJobsLoading: false;
         databaseJobsError: null;
-    },
+    };
     getJobsSummary: {
-        jobsSummaryData: JobsSummaryRes | null,
-        jobsSummaryLoading: false,
-        jobsSummaryError: null
-    },
-    databaseHostsList: null
+        jobsSummaryData: JobsSummaryRes | null;
+        jobsSummaryLoading: false;
+        jobsSummaryError: null;
+    };
+    databaseHostsList: null;
+    aggregatedHostsCount: AggregatedHostsCountRes | null;
+    aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
+    aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
+    aggregatedCosts: AggregatedCostsRes | null;
 }
