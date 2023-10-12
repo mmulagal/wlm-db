@@ -170,6 +170,45 @@ async function removeResource(resourceIdentifier: string) {
     }
 }
 
+interface TenancyUserPermissions {
+    role: string;
+    permissions: [string];
+}
+async function getPermissionsForUser(token: string, accountId: string): Promise<TenancyUserPermissions> {
+    logger.info('Getting permissions for a user in tenancy account:', { accountId });
+
+    return gotInstanceForInternalRequest
+        .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/account/${accountId}/permissions-for-user`, {
+            headers: {
+                authorization: token
+            }
+        })
+        .json<TenancyUserPermissions>();
+}
+
+interface Account {
+    accountPublicId: string;
+    accountName: string;
+    isSaas: boolean;
+    isGov: boolean;
+    isPrivatePreviewEnabled: boolean;
+    is3rdPartyServicesEnabled: boolean;
+    accountSerial: string;
+    userRole: string;
+}
+
+async function getTenancyAccounts(token: string): Promise<Array<Account>> {
+    logger.info('Getting tenancy accounts based on JWT token:');
+
+    return gotInstanceForInternalRequest
+        .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/account`, {
+            headers: {
+                authorization: token
+            }
+        })
+        .json<Account[]>();
+}
+
 export {
     registerServiceResource,
     getTenancyResourcesByType,
@@ -178,6 +217,9 @@ export {
     getServiceToken,
     generateAuthToken,
     verifyAuthToken,
+    getPermissionsForUser,
+    getTenancyAccounts,
     ServiceResourceRequest,
-    MetaData
+    MetaData,
+    Account
 };

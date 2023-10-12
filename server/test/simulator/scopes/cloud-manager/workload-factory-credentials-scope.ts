@@ -61,8 +61,7 @@ const genericCredentials = {
 };
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .persist(true)
-    .get(/^\/accounts\/(.+)\/credentials\/v1\/credentials$/)
-    .query(queryObj => queryObj?.type === 'AWS_ASSUME_ROLE')
+    .get(/^\/accounts\/(.+)\/credentials\/v1\/credentials/)
     .reply(() => [200, allCredentials])
     .get(/^\/accounts\/(.+)\/credentials\/v1\/assume-role\/(.+)$/)
     .query(true)
@@ -74,4 +73,4 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .query(queryObj => Boolean(queryObj?.decrypt) === false)
     .reply(() => [200, genericCredentials]);
 
-export { allCredentials, genericDecryptedCredentials, credentialsId };
+export { allCredentials, awsCredentials, genericDecryptedCredentials, credentialsId };

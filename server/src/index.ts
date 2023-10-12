@@ -49,7 +49,7 @@ import { execute, initializeDatabase } from './utils/prisma-utils';
 const logger = getLogger();
 const accessLogger = getLogger('access');
 
-const { verifyToken } = jwtOperation;
+const { verifyToken, authorizeJwt } = jwtOperation;
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
@@ -143,12 +143,14 @@ const app = fastify({
                 'onRequest',
                 async (request: FastifyRequest<{ Headers: Headers; Params: Params }>, reply: FastifyReply) => {
                     const {
-                        headers: { authorization }
+                        headers: { authorization },
+                        params: { accountId }
                     } = request;
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
                             const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            await authorizeJwt(authorization, payload, accountId);
                             request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
