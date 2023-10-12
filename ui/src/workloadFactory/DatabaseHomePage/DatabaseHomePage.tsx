@@ -7,14 +7,12 @@ import DatabaseHost from './DatabaseHost/DatabaseHost';
 import DatabaseTable from './DatabaseTable/DatabaseTable';
 import StorageSavings from './StorageSavings/StorageSavings';
 import EstimatedCost from './EstimatedCost/EstimatedCost';
-import MultiRingDoughnut from './MultiRingDoughnut/MultiRingDoughnut';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
 import { useNavigate } from 'react-router-dom';
 
 const DatabaseHomePage = () => {
-
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -23,7 +21,7 @@ const DatabaseHomePage = () => {
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
-    
+
     return (
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
@@ -32,9 +30,14 @@ const DatabaseHomePage = () => {
                         {GENERAL.DATABASES}
                     </Typography>
                     <div>
-                        <Button variant="primary" onClick={() => {
-                            navigate(`../add-working-environment/database-services/mssql/create`)
-                            }}>{GENERAL.DEPLOY_NEW_DATABASE}</Button>
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                navigate(`../add-working-environment/database-services/mssql/create`);
+                            }}
+                        >
+                            {GENERAL.DEPLOY_NEW_DATABASE}
+                        </Button>
                     </div>
                 </div>
 

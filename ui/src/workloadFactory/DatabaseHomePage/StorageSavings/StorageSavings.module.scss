@@ -1,7 +1,7 @@
 .storageSaving {
     .headSection {
         display: flex;
-        width: 656px;
+        // width: 656px;
         height: 72px;
         padding: 12px 40px;
         align-items: center;
@@ -51,6 +51,18 @@
             width: 1px;
             height: 48px;
             background-color: #e0e0e0;
+        }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .storageSaving {
+        .headSection {
+            padding: 12px 32px 12px 32px !important;
+        }
+
+        .mainSection {
+            padding-left: 32px !important;
         }
     }
 }
