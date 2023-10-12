@@ -6,7 +6,7 @@ import getLogger from '../utils/logger';
 const logger = getLogger();
 
 async function getDeploymentJobsCount(accountId: string, duration: number) {
-    logger.debug(
+    logger.info(
         'Getting deployment status job count based on filter',
         accountId,
         duration,
