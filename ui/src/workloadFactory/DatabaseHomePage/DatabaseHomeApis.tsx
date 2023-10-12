@@ -1,12 +1,26 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { addDatabaseHosts, addDatabaseHostsList, addDatabaseJobs, addJobsSummary } from "../../store/workloadFactory/databaseHomeSlice";
+import { 
+    addAggregatedProtectionDbCount, 
+    addAggregatedStorageSavings, 
+    addAggregateHostsCountData, 
+    addDatabaseHosts, 
+    addDatabaseHostsList, 
+    addDatabaseJobs, 
+    addJobsSummary 
+} from "../../store/workloadFactory/databaseHomeSlice";
 import { 
     useGetDatabaseHostsQuery, 
     useGetDatabaseJobsQuery, 
     useGetJobsSummaryQuery 
 } from "../../utils/apiService";
-import { mergeDatabaseHostsData } from "../../utils/utilityFunctions";
+import { 
+    getAggrProtection,
+    getAggrStorageSavings,
+    getHostStatusCount, 
+    jobStatusPercent, 
+    mergeDatabaseHostsData 
+} from "../../utils/utilityFunctions";
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -67,7 +81,7 @@ const DatabaseHomeApis = () => {
         if(jobsSummaryError) {
             dispatch(addJobsSummary({undefined, jobsSummaryLoading, jobsSummaryError}));
         } else {
-            dispatch(addJobsSummary({jobsSummaryData, jobsSummaryLoading, jobsSummaryError}));
+            dispatch(addJobsSummary({jobsSummaryData: jobStatusPercent(jobsSummaryData), jobsSummaryLoading, jobsSummaryError}));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
@@ -76,6 +90,16 @@ const DatabaseHomeApis = () => {
     useEffect(() => {
         const mergedData = mergeDatabaseHostsData(databaseHostsData, databaseJobsData);
         dispatch(addDatabaseHostsList(mergedData));
+
+        const hostStatusCount = getHostStatusCount(mergedData);
+        dispatch(addAggregateHostsCountData(hostStatusCount));
+
+        const aggrProtection = getAggrProtection(mergedData);
+        dispatch(addAggregatedProtectionDbCount(aggrProtection));
+
+        const aggrStorage = getAggrStorageSavings(mergedData);
+        dispatch(addAggregatedStorageSavings(aggrStorage));
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsData, databaseJobsData]);
 
