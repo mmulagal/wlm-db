@@ -1,5 +1,5 @@
 import { RouteTags } from '../../utils/consts';
-import { DeploymentJobsObjectParams, DeploymentJobsResponse } from '../types/deployment-jobs.types';
+import { DeploymentJobsResponse, DeploymentJobsQueryString } from '../types/deployment-jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
@@ -12,7 +12,7 @@ const baseRequest = {
 const DeploymentJobsSummarySchema = {
     ...baseRequest,
     description: 'API to get deplyment jobs count for given duration in days',
-    params: DeploymentJobsObjectParams,
+    querystring: DeploymentJobsQueryString,
     response: {
         200: DeploymentJobsResponse
     }

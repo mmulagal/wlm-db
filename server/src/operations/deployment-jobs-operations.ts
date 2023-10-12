@@ -5,7 +5,7 @@ import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
-async function getDeploymentJobsCount(accountId: string, duration: number) {
+async function getDeploymentJobsCount(accountId: string, duration: number = 90) {
     logger.info(
         'Getting deployment status job count based on filter',
         accountId,
@@ -29,9 +29,9 @@ async function getDeploymentJobsCount(accountId: string, duration: number) {
         }, {} as { [key: string]: number });
 
         return {
-            success: formattedCounts.UPDATE_COMPLETE + formattedCounts.CREATE_COMPLETE,
-            initializing: formattedCounts.CREATE_IN_PROGRESS + formattedCounts.UPDATE_IN_PROGRESS,
-            failed: formattedCounts.CREATE_FAILED
+            success: (formattedCounts.UPDATE_COMPLETE || 0) + (formattedCounts.CREATE_COMPLETE || 0),
+            initializing: (formattedCounts.CREATE_IN_PROGRESS || 0) + (formattedCounts.UPDATE_IN_PROGRESS || 0),
+            failed: formattedCounts.CREATE_FAILED || 0
         };
     } catch (error) {
         logger.error('Unable to get deployment jobs counr:', error);

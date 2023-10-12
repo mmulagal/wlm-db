@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import DeploymentJobsSummarySchema from './schemas/deployment-jobs-schemas';
 import { getDeploymentJobsCount } from '../operations/deployment-jobs-operations';
 
-const DEPLOYMENT_JOBS_API_PATH: string = '/v1/duration/:duration/jobs';
+const DEPLOYMENT_JOBS_API_PATH: string = '/v1//jobs';
 
 export default function deploymentJobsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -13,7 +13,8 @@ export default function deploymentJobsRoutes(fastify: FastifyInstance) {
         { schema: DeploymentJobsSummarySchema },
         async (request, reply) => {
             const {
-                params: { accountId, duration }
+                params: { accountId },
+                query: { duration }
             } = request;
             const response = await getDeploymentJobsCount(accountId, duration);
             return reply.send(response);
