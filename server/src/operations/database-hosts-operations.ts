@@ -1,16 +1,106 @@
+import { resource } from '@prisma/client';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
     DatabaseHostSummaryListResponseType,
-    PerformanceResponseType
+    PerformanceResponseType,
+    TopologyResponseType
 } from '../routes/types/database-hosts.types';
-import { DatabaseHostsQueryFields, HttpErrorCodes } from '../utils/consts';
+import {
+    DatabaseHostsQueryFields,
+    FileSystemTypes,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    ServerState,
+    SERVER_TYPE_MAPPING,
+    SqlServerDeploymentModel
+} from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getServerIOLatency, getServerState } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
+
+async function getTopology(
+    accountId: string,
+    region: string,
+    resourceId: string,
+    resourceData: resource
+): Promise<TopologyResponseType> {
+    logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
+
+    if (isEmpty(resourceData)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No data found for resource ${resourceId} in account ${accountId}.`
+        );
+    }
+
+    const { resource_type: resourceType, co_relation_id: fileSystemId, metadata } = resourceData;
+
+    let topologyData: TopologyResponseType = {
+        region,
+        serverType: resourceType,
+        serverInstallationMode: '',
+        fileSystemId: fileSystemId!,
+        fileSystemType: '',
+        ec2Details: []
+    };
+
+    let activeNodeInstanceId: string;
+    let standbyNodeInstanceId;
+    let activeNodeInstanceName: string;
+    let standbyNodeInstanceName;
+    let sqlDeploymentType;
+    let fileSystemType;
+    if (!isEmpty(metadata)) {
+        ({
+            activeNodeInstanceId,
+            activeNodeInstanceName,
+            standbyNodeInstanceId,
+            standbyNodeInstanceName,
+            sqlDeploymentType,
+            fileSystemType
+        } = metadata as {
+            activeNodeInstanceId: string;
+            activeNodeInstanceName: string;
+            standbyNodeInstanceId?: string;
+            standbyNodeInstanceName?: string;
+            sqlDeploymentType?: string;
+            fileSystemType?: string;
+            fsxId: string;
+        });
+
+        // Fetch topology data
+        topologyData = {
+            region,
+            serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
+            serverInstallationMode:
+                sqlDeploymentType !== undefined
+                    ? sqlDeploymentType
+                    : standbyNodeInstanceId
+                    ? SqlServerDeploymentModel.SQL_FCI_SHORT
+                    : SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
+            fileSystemType:
+                fileSystemType !== undefined
+                    ? fileSystemType
+                    : fileSystemId
+                    ? FileSystemTypes.FSXONTAP
+                    : FileSystemTypes.EBS,
+            fileSystemId: fileSystemId!,
+            ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
+        };
+        if (standbyNodeInstanceId) {
+            topologyData.ec2Details.push({
+                id: standbyNodeInstanceId!,
+                name: standbyNodeInstanceName!,
+                ebsVolumeId: ''
+            });
+        }
+    }
+    return topologyData;
+}
 
 async function getDatabaseHostsSummary(
     accountId: string,
@@ -34,34 +124,46 @@ async function getDatabaseHostsSummary(
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
         await Promise.all(
-            resourceDetails.map(async resource => {
-                const { resource_id: resourceId, resource_name: resourceName } = resource;
+            resourceDetails
+                .filter(resourceDetail => resourceDetail.resource_type !== RESOURCESTYPE.FSX)
+                .map(async resourceDetail => {
+                    const { resource_id: resourceId, resource_name: resourceName, region } = resourceDetail;
 
-                // Fetch server status
-                let serverStatus = 'N/A';
-                try {
-                    serverStatus = await getServerState(resourceId);
-                } catch (error) {
-                    logger.error('Error while fetching status for server ', accountId, resourceId, error);
-                }
-
-                // Fetch io latency data
-                let performanceData: PerformanceResponseType;
-                if (fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE)) {
+                    // Fetch server status
+                    let serverStatus = 'N/A';
                     try {
-                        performanceData = await getServerIOLatency(resourceId);
+                        serverStatus = await getServerState(resourceId);
+                        serverStatus = serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
                     } catch (error) {
-                        logger.error('Error while fetching io latency for server ', accountId, resourceId, error);
+                        logger.error('Error while fetching status for resource ', accountId, resourceId, error);
                     }
-                }
 
-                databaseHosts.push({
-                    id: resourceId,
-                    name: resourceName || '',
-                    status: serverStatus,
-                    performance: performanceData!
-                });
-            })
+                    // Fetch topology data
+                    let topologyData: TopologyResponseType;
+                    try {
+                        topologyData = await getTopology(accountId, region!, resourceId, resourceDetail);
+                    } catch (error) {
+                        logger.error('Error while fetching topology data for resource ', accountId, resourceId, error);
+                    }
+
+                    // Fetch io latency data
+                    let performanceData: PerformanceResponseType;
+                    if (fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE)) {
+                        try {
+                            performanceData = await getServerIOLatency(resourceId);
+                        } catch (error) {
+                            logger.error('Error while fetching io latency for resource ', accountId, resourceId, error);
+                        }
+                    }
+
+                    databaseHosts.push({
+                        id: resourceId,
+                        name: resourceName || '',
+                        status: serverStatus,
+                        topology: topologyData!,
+                        performance: performanceData!
+                    });
+                })
         );
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);

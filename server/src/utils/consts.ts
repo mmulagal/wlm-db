@@ -129,7 +129,9 @@ enum HttpErrorCodes {
 
 enum SqlServerDeploymentModel {
     SQL_STANDALONE = 'Standalone Instance',
-    SQL_FCI = 'Always On Failover Cluster Instance'
+    SQL_FCI = 'Always On Failover Cluster Instance',
+    SQL_STANDALONE_SHORT = 'Standalone',
+    SQL_FCI_SHORT = 'FCI'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -236,6 +238,14 @@ enum AWSQueryFields {
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX'
+}
+
+const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
+
+enum FileSystemTypes {
+    EBS = 'EBS',
+    FSXONTAP = 'FSx ONTAP',
+    FSXWINDOWS = 'FSx Windows'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -766,6 +776,11 @@ enum DatabaseHostsQueryFields {
     USAGE_ESTIMATION = 'usageEstimation'
 }
 
+enum ServerState {
+    UP = 'Up',
+    DOWN = 'Down'
+}
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -918,5 +933,8 @@ export {
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
     RESOURCE_RETRIVAL_ERROR,
-    DatabaseHostsQueryFields
+    DatabaseHostsQueryFields,
+    ServerState,
+    SERVER_TYPE_MAPPING,
+    FileSystemTypes
 };
