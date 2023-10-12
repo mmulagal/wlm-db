@@ -309,7 +309,7 @@ export const formatFractionalNumber = (value: number | undefined, precision: num
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
       return value.toFixed(precision);
     }
-    return 0;
+    return value;
 }
 
 export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, jobsData: DatabaseJobsItem[] | null) => {
@@ -438,5 +438,41 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[])  => {
         storageConsumes: formatFractionalNumber(storageConsumes/1024) || 'N/A',
         storageSavings: formatFractionalNumber(storageSavings/1024) || 'N/A',
         storageSavingsPercent: (storageSavings/totalSize) * 100 || 0,
+    }
+};
+
+export const getAggrCost = (data: DatabaseHostItem[]) => {
+    let storageCost = 0;
+    let computeCost = 0;
+    let connectivityCost = 0;
+    let otherCost = 0;
+
+    data?.map(val => {
+        if(val?.estimatedUsageCost?.compute) {
+            storageCost += val.estimatedUsageCost.compute;
+        }
+        if(val?.estimatedUsageCost?.storage) {
+            computeCost += val.estimatedUsageCost.storage;
+        }
+        if(val?.estimatedUsageCost?.connectivity) {
+            connectivityCost += val.estimatedUsageCost.connectivity;
+        }
+        if(val?.estimatedUsageCost?.others) {
+            otherCost += val.estimatedUsageCost.others;
+        }
+    });
+
+    const totalCost = (storageCost + computeCost + connectivityCost + otherCost);
+
+    return {
+        storageCost: storageCost,
+        computeCost: computeCost,
+        connectivityCost: connectivityCost,
+        otherCost: otherCost,
+        totalCost: totalCost,
+        storageCostPercent: (storageCost/totalCost) * 100,
+        computeCostPercent: (computeCost/totalCost) * 100,
+        connectivityCostPercent: (connectivityCost/totalCost) * 100,
+        otherCostPercent: (otherCost/totalCost) * 100
     }
 };
