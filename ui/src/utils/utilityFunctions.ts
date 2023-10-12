@@ -2,10 +2,19 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
-import { API_ERRORS, DEFAULT_MASTER_KEY, DISABLED_STATE, ENABLED_STATE, PENDING_DELETION, REGIONS_CODE_LIST, SQL_DATABASE } from './consts';
+import { 
+    API_ERRORS, 
+    DEFAULT_MASTER_KEY, 
+    DISABLED_STATE, 
+    ENABLED_STATE, 
+    PENDING_DELETION, 
+    REGIONS_CODE_LIST, 
+    SQL_DATABASE, 
+    STATUS_CONST 
+} from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
-import { DatabaseHostItem, DatabaseJobsItem } from './types/databaseHomeTypes';
+import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -296,6 +305,13 @@ export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
 }
 
+export const formatFractionalNumber = (value: number | undefined, precision: number = 1) => {
+    if (value && typeof value === 'number' && !Number.isInteger(value)) {
+      return value.toFixed(precision);
+    }
+    return 0;
+}
+
 export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, jobsData: DatabaseJobsItem[] | null) => {
     if(!hostsData && !jobsData){
         return [];
@@ -319,4 +335,108 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
         }
     })
     return mergedList;
+};
+
+
+export const jobStatusPercent = (data: JobsSummaryRes) => {
+    if(!data){
+        return null;
+    }
+    const totalJobs = (data?.failed || 0) + (data?.initializing || 0) + (data?.success || 0);
+    const newData = {
+        ...data,
+        totalJobs: totalJobs,
+        successPercent: data?.success ? (data.success/totalJobs) * 100 : 0,
+        failedPercent: data?.failed ? (data.failed/totalJobs) * 100 : 0,
+        initializingPercent: data?.initializing ? (data.initializing/totalJobs) * 100 : 0
+    }
+    return newData;
+};
+
+export const getHostStatusCount = (data: DatabaseHostItem[]) => {
+    let totalUpHosts = 0;
+    let totalInitializingHosts = 0;
+    let totalDownHosts = 0;
+
+    data?.map(val => {
+        if(val?.status === STATUS_CONST.UP) {
+            totalUpHosts += 1;
+        } else if(val?.status === STATUS_CONST.INITIALIZING) {
+            totalInitializingHosts += 1;
+        } else if(val?.status === STATUS_CONST.DOWN) {
+            totalDownHosts += 1;
+        }
+    });
+    return {
+        totalHosts: data?.length || 0,
+        totalUpHosts: totalUpHosts,
+        totalInitializingHosts: totalInitializingHosts,
+        totalDownHosts: totalDownHosts,
+    };
+};
+
+export const getAggrProtection = (data: DatabaseHostItem[]) => {
+    let protectedDb = 0;
+    let unprotectedDb = 0;
+    let awsBackupDb = 0;
+    let fsxOntapSnapshotsDb = 0;
+    let sqlServerBackupDb = 0;
+
+    data?.map(val => {
+        if(val?.protection?.isAwsBackUpEnabled || 
+            val?.protection?.isFsxOntapSnapshotsEnabled || 
+            val?.protection?.isSqlNativeEnabled) {
+            protectedDb += 1;
+        } else {
+            unprotectedDb += 1;
+        }
+        if(val?.protection?.isFsxOntapSnapshotsEnabled){
+            fsxOntapSnapshotsDb += 1;
+        }
+        if(val?.protection?.isAwsBackUpEnabled){
+            awsBackupDb += 1;
+        }
+        if(val?.protection?.isSqlNativeEnabled){
+            sqlServerBackupDb += 1;
+        }
+    });
+
+    const totalHost = protectedDb + unprotectedDb;
+
+    return {
+        protectedDb: protectedDb,
+        unprotectedDb: unprotectedDb,
+        protectedPercent: (protectedDb/(totalHost)) * 100 || 0,
+        unprotectedPercent: (unprotectedDb/(totalHost)) * 100 || 0,
+        awsBackupDb: awsBackupDb,
+        awsBackupPercent: (awsBackupDb/(totalHost)) * 100 || 0,
+        fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
+        fsxOntapSnapshotsPercent: (fsxOntapSnapshotsDb/(totalHost)) * 100 || 0,
+        sqlServerBackupDb: sqlServerBackupDb,
+        sqlServerBackupPercent: (sqlServerBackupDb/(totalHost)) * 100 || 0,
+    }
+};
+
+export const getAggrStorageSavings = (data: DatabaseHostItem[])  => {
+    let storageConsumes = 0;
+    let storageSavings = 0;
+    let totalSize = 0;
+
+    data?.map(val => {
+        if(val?.storage?.allocated) {
+            totalSize += val.storage.allocated;
+        }
+        if(val?.storage?.used) {
+            storageConsumes += val.storage.used;
+        }
+        if(val?.storage?.savings) {
+            storageSavings += val.storage.savings;
+        }
+    });
+
+    return {
+        storageConsumes: formatFractionalNumber(storageConsumes/1024) || 'N/A',
+        storageSavings: formatFractionalNumber(storageSavings/1024) || 'N/A',
+        storageSavingsPercent: (storageSavings/totalSize) * 100 || 0,
+    }
 };
