@@ -325,6 +325,7 @@ export const GENERAL = {
         "Throughput capacity is already set on the FSx for ONTAP file system. You can't change this value.",
     IOPS_DISABLE_TEXT: "Provisioned IOPS is already set on the FSx for ONTAP file system. You can't change this value.",
     KMS_DISABLE_TEXT: "Encryption Key is already set on the FSx for ONTAP file system. You can't change this value.",
+    NOT_AVAILABLE: 'N/A',
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
@@ -334,6 +335,7 @@ export const GENERAL = {
     FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
+    DEPLOY_NEW_DATABASE: 'Deploy new database',
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
@@ -343,5 +345,22 @@ export const GENERAL = {
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
-    DB_HOST_FILE_SYSTEM_TYPE: 'File system type'
+    DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
+    // Job Status constants
+    JOB_STATUS_DAYS: 'Last 90 days',
+    JOB_STATUS_SUCCESS: 'Success',
+    JOB_STATUS_FAILED: 'Failed',
+    JOB_STATUS_INITIALIZING: 'Initializing',
+    JOB_STATUS_JOBS: ' Jobs',
+    // Database Host constants
+    DATABASE_HOST_STATUS: 'Database host status',
+    DB_HOST_UP: 'Up',
+    DB_HOST_DOWN: 'Down',
+    DB_HOST_INITIALIZING: 'Initializing',
+    // Database Host protection constants
+    DATABASE_PROTECTION: 'Database protection',
+    DB_HOST_PROTECTED: 'Protected',
+    DB_HOST_UNPROTECTED: 'Unprotected',
+    PROTECTED_DB_DISTRIBUTION: 'Protected database distribution'
+
 };

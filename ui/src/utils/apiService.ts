@@ -316,8 +316,12 @@ export const {
     useBatchTablesMutation
 } = resourceApi;
 
-export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
-    configApi;
+export const { 
+    useGetConfigListQuery, 
+    useLazyGetConfigDataQuery, 
+    useSaveConfigDataMutation, 
+    useDeleteConfigMutation 
+} = configApi;
 
 export const {
     useGetDatabaseHostsQuery,
