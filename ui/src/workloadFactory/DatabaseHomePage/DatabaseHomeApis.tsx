@@ -1,12 +1,32 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { addDatabaseHosts, addDatabaseHostsList, addDatabaseJobs, addJobsSummary } from "../../store/workloadFactory/databaseHomeSlice";
+import { 
+    addAggregatedCosts,
+    addAggregatedProtectionDbCount, 
+    addAggregatedStorageSavings, 
+    addAggregateHostsCountData, 
+    addDatabaseHosts, 
+    addDatabaseHostsList, 
+    addDatabaseJobs, 
+    addJobsSummary 
+} from "../../store/workloadFactory/databaseHomeSlice";
 import { 
     useGetDatabaseHostsQuery, 
     useGetDatabaseJobsQuery, 
     useGetJobsSummaryQuery 
 } from "../../utils/apiService";
-import { mergeDatabaseHostsData } from "../../utils/utilityFunctions";
+import { 
+    getAggrCost,
+    getAggrProtection,
+    getAggrStorageSavings,
+    getHostStatusCount, 
+    jobStatusPercent, 
+    mergeDatabaseHostsData 
+} from "../../utils/utilityFunctions";
+
+import databaseHosts from './DatabaseHomeJson/databaseHosts.json';
+import databaseJobs from './DatabaseHomeJson/databaseJobs.json';
+import jobsSummaryData from './DatabaseHomeJson/jobsSummary.json'
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -17,21 +37,26 @@ const DatabaseHomeApis = () => {
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
 
+    // Temporary code to read data from json
+    const databaseHostsLoading = false;
+    const databaseJobsLoading = false;
+    const jobsSummaryLoading = false;
+
     const {
-        data: databaseHosts,
-        isFetching: databaseHostsLoading,
+        // data: databaseHosts,
+        // isFetching: databaseHostsLoading,
         isError: databaseHostsError
     } = useGetDatabaseHostsQuery({nextToken: hostCursor});
 
     const {
-        data: databaseJobs,
-        isFetching: databaseJobsLoading,
+        // data: databaseJobs,
+        // isFetching: databaseJobsLoading,
         isError: databaseJobsError
     } = useGetDatabaseJobsQuery({nextToken: jobsCursor});
 
     const {
-        data: jobsSummaryData,
-        isFetching: jobsSummaryLoading,
+        // data: jobsSummaryData,
+        // isFetching: jobsSummaryLoading,
         isError: jobsSummaryError
     } = useGetJobsSummaryQuery('');
 
@@ -67,7 +92,7 @@ const DatabaseHomeApis = () => {
         if(jobsSummaryError) {
             dispatch(addJobsSummary({undefined, jobsSummaryLoading, jobsSummaryError}));
         } else {
-            dispatch(addJobsSummary({jobsSummaryData, jobsSummaryLoading, jobsSummaryError}));
+            dispatch(addJobsSummary({jobsSummaryData: jobStatusPercent(jobsSummaryData), jobsSummaryLoading, jobsSummaryError}));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [jobsSummaryData, jobsSummaryLoading, jobsSummaryError]);
@@ -76,6 +101,19 @@ const DatabaseHomeApis = () => {
     useEffect(() => {
         const mergedData = mergeDatabaseHostsData(databaseHostsData, databaseJobsData);
         dispatch(addDatabaseHostsList(mergedData));
+
+        const hostStatusCount = getHostStatusCount(mergedData);
+        dispatch(addAggregateHostsCountData(hostStatusCount));
+
+        const aggrProtection = getAggrProtection(mergedData);
+        dispatch(addAggregatedProtectionDbCount(aggrProtection));
+
+        const aggrStorage = getAggrStorageSavings(mergedData);
+        dispatch(addAggregatedStorageSavings(aggrStorage));
+
+        const aggrCost = getAggrCost(mergedData);
+        dispatch(addAggregatedCosts(aggrCost));
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsData, databaseJobsData]);
 

@@ -4,10 +4,15 @@ import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './MultiRingDoughnut.module.scss';
 import { Typography } from '@netapp/design-system';
+import { useAppSelector } from '../../../store/storeHooks';
+import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 Chart.register(...registerables);
 
 const MultiRingDoughnut = () => {
+
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+    
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -25,10 +30,11 @@ const MultiRingDoughnut = () => {
         data: {
             datasets: [
                 {
-                    data: [80, 20],
+                    data: [hostData?.protectedPercent, hostData?.unprotectedPercent],
                     backgroundColor: ['#68C6B3', '#FDC300']
                 },
                 {
+                    // TBD - In discussion
                     data: [20, 20, 40, 20],
                     backgroundColor: ['#012CAD', '#A815F3', '#0BAFFC', '#FFF']
                 }
@@ -47,12 +53,12 @@ const MultiRingDoughnut = () => {
         return () => {
             myDoughnut.destroy();
         };
-    }, []);
+    }, [hostData]);
     return (
         <div className={styles.chartItem} id="chart-item">
             <div className={styles['center-text']}>
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                    80%
+                    {formatFractionalNumber(hostData?.protectedPercent)}%
                 </Typography>
                 <Typography variant="Regular_14">Protection</Typography>
             </div>

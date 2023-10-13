@@ -94,7 +94,7 @@ const DatabaseTable = () => {
     const notAvailable = () => {
         return (
             <Typography variant="Regular_13" className={styles.colText}>
-                N/A
+                {GENERAL.NOT_AVAILABLE}
             </Typography>
         )
     };

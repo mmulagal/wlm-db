@@ -178,3 +178,38 @@
     right: 0;
     width: 100%;
 }
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .sidebar {
+        width: 570px !important;
+
+        .topBar {
+            padding: 16px 32px 16px 32px !important;
+        }
+
+        .accordionStructure {
+            margin: 40px 32px 40px 32px !important;
+        }
+
+        .openView {
+            gap: 0px !important;
+
+            .rightSideView {
+                .rightSideTopBar {
+                    width: 1000px !important;
+                }
+                .secondBar {
+                    width: 1000px !important;
+                }
+                .thirdBar {
+                    height: 540px !important;
+                    width: 1000px !important;
+                }
+            }
+        }
+    }
+
+    .open {
+        width: 100% !important;
+    }
+}
