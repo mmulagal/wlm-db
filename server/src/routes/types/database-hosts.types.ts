@@ -21,7 +21,7 @@ const TopologyResponse = Type.Object({
     region: Type.String(),
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
-    fileSystemType: Type.String({ enum: ['EBS', 'FSx Windows', 'FSx ONTAP'] }),
+    fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
     ec2Details: Type.Array(EC2InstanceDetailsResponse)
 });

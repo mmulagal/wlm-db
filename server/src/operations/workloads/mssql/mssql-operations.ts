@@ -2,15 +2,13 @@ import Promise from 'bluebird';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
     MEMORY_UTILISATION,
     DATABASES,
-    SSM_RUN_POWERSHELL_SCRIPT_DOC,
-    PSSCRIPT,
     DATABASES_COUNT,
-    DB_ROWS_COUNT,
     SERVER_NAME,
     SERVER_GUID,
     DB_SIZE,
@@ -22,9 +20,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SSM_QUERY_CONCURRENCY_LIMIT,
     SERVER_IO_LATENCY
-} from './const';
+} from './queries';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';

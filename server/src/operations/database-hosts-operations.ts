@@ -10,17 +10,24 @@ import {
 } from '../routes/types/database-hosts.types';
 import {
     DatabaseHostsQueryFields,
-    FileSystemTypes,
     HttpErrorCodes,
     RESOURCESTYPE,
     ServerState,
-    SERVER_TYPE_MAPPING,
-    SqlServerDeploymentModel
+    SERVER_TYPE_MAPPING
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getServerIOLatency, getServerState } from './workloads/mssql/mssql-operations';
 
 const logger = getLogger();
+
+interface Topology {
+    activeNodeInstanceId: string;
+    activeNodeInstanceName: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeInstanceName?: string;
+    sqlDeploymentType?: string;
+    fileSystemType?: string;
+}
 
 async function getTopology(
     accountId: string,
@@ -62,32 +69,14 @@ async function getTopology(
             standbyNodeInstanceName,
             sqlDeploymentType,
             fileSystemType
-        } = metadata as {
-            activeNodeInstanceId: string;
-            activeNodeInstanceName: string;
-            standbyNodeInstanceId?: string;
-            standbyNodeInstanceName?: string;
-            sqlDeploymentType?: string;
-            fileSystemType?: string;
-            fsxId: string;
-        });
+        } = metadata as unknown as Topology);
 
         // Fetch topology data
         topologyData = {
             region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
-            serverInstallationMode:
-                sqlDeploymentType !== undefined
-                    ? sqlDeploymentType
-                    : standbyNodeInstanceId
-                    ? SqlServerDeploymentModel.SQL_FCI_SHORT
-                    : SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
-            fileSystemType:
-                fileSystemType !== undefined
-                    ? fileSystemType
-                    : fileSystemId
-                    ? FileSystemTypes.FSXONTAP
-                    : FileSystemTypes.EBS,
+            serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
+            fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
             ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
         };
