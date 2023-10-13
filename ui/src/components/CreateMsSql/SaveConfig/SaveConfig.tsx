@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
 import { GENERAL } from '../../../utils/appConstants';
+//@ts-ignore
+import sanitizeHTML from 'sanitize-html';
 import styles from './SaveConfig.module.scss';
 
 const SaveConfig = () => {
@@ -19,8 +21,8 @@ const SaveConfig = () => {
             <TextField
                 label={GENERAL.CONFIG_NAME}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setConfigName(e.target.value);
-                    dispatch(setSaveConfigName(e.target.value));
+                    setConfigName(sanitizeHTML(e.target.value));
+                    dispatch(setSaveConfigName(sanitizeHTML(e.target.value)));
                 }}
                 value={configName}
                 className={styles.textField}

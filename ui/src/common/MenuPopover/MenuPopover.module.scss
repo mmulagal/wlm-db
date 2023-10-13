@@ -1,0 +1,135 @@
+.menuPopoverContainer {
+    .reactPopover.infoTooltip .content {
+        line-height: 1.77;
+        letter-spacing: normal;
+        text-align: justify;
+        color: var(--grey-50);
+        font-size: 13px;
+        text-align: left;
+        padding: 0px;
+        min-width: 182px;
+        padding: 8px 0px 8px 0px;
+    }
+
+    .subMenuContainer {
+        padding: 0;
+        margin-right: 20px;
+    }
+    .subMenuContainerWithArrow {
+        width: 100%;
+        margin-right: -24px;
+        .menuWithArrow {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    }
+
+    .content {
+        border-radius: 2px;
+        box-shadow: 2px -2px 6px 0 var(--drop-shadow);
+        box-shadow: 2px 2px 6px 0 var(--drop-shadow);
+        border: solid 1px var(--grey-15);
+        border-radius: 2px;
+        background-color: var(--white);
+
+        ul {
+            margin-block-start: 0;
+            margin-block-end: 0;
+            margin-inline-start: 0;
+            margin-inline-end: 0;
+            padding-inline-start: 0;
+            list-style: none;
+            width: 100%;
+
+            li {
+                padding: 12px 24px 12px 24px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+
+                &:hover {
+                    background-color: var(--blue-10);
+                    cursor: pointer;
+                }
+
+                &.menuDisabled {
+                    color: var(--grey-25);
+                    pointer-events: none;
+                }
+                &.submenu {
+                    padding-right: 12px;
+                }
+            }
+
+            .menuInfoHover {
+                padding: 12px 24px 12px 24px;
+                height: 48px;
+                display: flex;
+                position: relative;
+                align-items: center;
+            }
+        }
+    }
+
+    .blackContent {
+        background: var(--dark-background-main-background, #111925);
+
+        /* Dark/Drop shadow/level 2 */
+        box-shadow: 4px 4px 12px 0px rgba(17, 25, 37, 0.3);
+        border: none;
+        color: #fff !important;
+
+        ul {
+            li:hover {
+                background-color: #3a4454;
+            }
+        }
+    }
+}
+
+.menuIcon {
+    font-weight: 600;
+    color: var(--blue-70);
+    font-size: 22px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+
+    &.selected {
+        border: 1.5px solid var(--blue-70);
+        border-radius: 9px;
+    }
+
+    &:hover {
+        cursor: pointer;
+        border: 1.5px solid var(--blue-70);
+        border-radius: 9px;
+    }
+
+    .menuPointer {
+        height: 40px;
+    }
+}
+
+.menuPointerDisabled {
+    font-weight: 600;
+    font-size: 22px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    height: 16px;
+
+    .menuPointer {
+        height: 40px;
+    }
+}
+
+.popover {
+    z-index: 9999999;
+}

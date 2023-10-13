@@ -79,6 +79,7 @@ export interface FSxN {
     lifecycle?: string;
     securityGroups?: Array<string>;
     subnetIds?: Array<string>;
+    kmsKeyId?: string;
     ontapConfiguration?: {
         deploymentType?: string;
         throughputCapacity?: string;
@@ -206,7 +207,7 @@ export interface MssqlRequestBody {
         sqlAmiId: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
-        sqlFciName: string;
+        sqlServerName: string;
     }
     topicArn?: string;
     enableCloudWatch?: boolean,

@@ -1,0 +1,21 @@
+{
+    "name": "Databases",
+    "id": "databases",
+    "to": "/databases",
+    "hasMenuItem": true,
+    "hasPolicies": false,
+    "stageIntegrations": [{
+       "path": "/",
+       "renderType": "iframe/v2",
+       "iframeUrl": "https://staging-components.console.workloads.netapp.com/wlmdb/index.html"
+    }],
+    "homepage": {
+       "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.",
+       "primaryCtaLabel": "Deploy database",
+       "primaryCtaTo": "",
+       "secondaryCtaLabel": "Manage workload",
+       "secondaryCtaTo": "",
+       "isComingSoon": false,
+       "dataUrl": ""
+    }
+ }
