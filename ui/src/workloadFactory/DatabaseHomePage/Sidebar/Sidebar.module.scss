@@ -11,7 +11,7 @@
     .loading {
         margin-top: 40px;
         margin-left: 24px;
-        color: var(--content-background);
+        color: var(--white);
     }
 
     .topBar {
@@ -30,11 +30,11 @@
 
     .templateHeading {
         margin-bottom: 14px;
-        color: var(--content-background);
+        color: var(--white);
     }
 
     .colorAutomation {
-        color: var(--content-background);
+        color: var(--white);
     }
 
     .color {
@@ -69,7 +69,7 @@
                 padding: 16px 24px 16px 40px;
 
                 .rightSideHeading {
-                    color: var(--content-background);
+                    color: var(--white);
                 }
 
                 .menuContainer {
@@ -99,7 +99,7 @@
                     margin-top: 35px;
 
                     [class*='design-system-select__single-value'] {
-                        color: var(--content-background);
+                        color: var(--white);
                     }
                     [class*='design-system-select__menu'] {
                         box-shadow: none;
@@ -107,7 +107,7 @@
 
                     [class*='design-system-select__option'] {
                         background-color: var(--grey-70);
-                        color: var(--content-background);
+                        color: var(--white);
                     }
 
                     [class*='Select-module_multiselect-menu'] {
@@ -131,7 +131,7 @@
 
                     [class*='design-system-select__control'] {
                         svg {
-                            --icon-primary-color: var(--content-background);
+                            --icon-primary-color: var(--white);
                         }
                     }
                 }
@@ -139,11 +139,11 @@
 
             [class*='SearchInput-module_base'] {
                 svg {
-                    --icon-primary-color: var(--content-background);
+                    --icon-primary-color: var(--white);
                 }
 
                 input {
-                    color: var(--content-background);
+                    color: var(--white);
                 }
             }
         }
