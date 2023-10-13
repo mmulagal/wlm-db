@@ -142,5 +142,6 @@
     "mssqlIOLatencyResponse": {
         "latency": 2,
         "assessment": "High"
-    }
+    },
+    "mssqlServerStateResponse": "Running"
 }
