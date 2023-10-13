@@ -5,15 +5,25 @@ import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const StorageSavings = () => {
     
     const hostData = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     return (
         <div className={styles.storageSaving}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">{GENERAL.DB_HOST_STORAGE_SAVINGS}</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.DB_HOST_STORAGE_SAVINGS}
+                    {(databaseHostsLoading || databaseJobsLoading) && 
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent/>
+                        </div>
+                    }
+                </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
                     {formatFractionalNumber(hostData?.storageSavingsPercent)}%
                 </Typography>

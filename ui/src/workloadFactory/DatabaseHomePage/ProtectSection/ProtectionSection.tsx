@@ -5,15 +5,25 @@ import MultiRingDoughnut from '../MultiRingDoughnut/MultiRingDoughnut';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const ProtectionSection = () => {
     
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     return (
         <div className={styles.protectionSection}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">{GENERAL.DB_HOST_PROTECTION}</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.DB_HOST_PROTECTION}
+                    {(databaseHostsLoading || databaseJobsLoading) && 
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent/>
+                        </div>
+                    }
+                </Typography>
             </div>
 
             <div className={styles.secondContainer}>
