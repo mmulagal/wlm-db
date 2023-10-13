@@ -8,7 +8,6 @@ import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const StorageSavings = () => {
-    
     const hostData = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
@@ -32,30 +31,40 @@ const StorageSavings = () => {
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
                 <div className={styles.progressBar}>
-                    {hostData?.storageSavingsPercent !== 0 && 
-                    <>
-                        <div
-                            className={`${styles.progress} ${styles.leftCurveBar}`}
-                            style={{
-                                width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
-                                backgroundColor: '#A815F3'
-                            }}
-                        ></div><div className={styles.separator}></div><div
-                            className={`${styles.progress} ${styles.rightCurveBar}`}
-                            style={{
-                                width: `${hostData?.storageSavingsPercent}%`,
-                                backgroundColor: '#68C6B3'
-                            }}
-                        ></div>
-                    </>
-                    }
+                    {hostData?.storageSavingsPercent !== 0 && (
+                        <>
+                            <div
+                                className={`${styles.progress} ${styles.leftCurveBar}`}
+                                style={{
+                                    width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
+                                    backgroundColor: 'var(--chart-9)'
+                                }}
+                            ></div>
+                            <div className={styles.separator}></div>
+                            <div
+                                className={`${styles.progress} ${styles.rightCurveBar}`}
+                                style={{
+                                    width: `${hostData?.storageSavingsPercent}%`,
+                                    backgroundColor: 'var(--chart-4)'
+                                }}
+                            ></div>
+                        </>
+                    )}
                 </div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
-                    <SquareComponent value={hostData?.storageConsumes + ' TiB'} color="#a815f3" text={'Storage Consumes'} />
+                    <SquareComponent
+                        value={hostData?.storageConsumes + ' TiB'}
+                        color="var(--chart-9)"
+                        text={'Storage Consumes'}
+                    />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value={hostData?.storageSavings + ' TiB'} color="#68C6B3" text={'Storage Savings'} />
+                    <SquareComponent
+                        value={hostData?.storageSavings + ' TiB'}
+                        color="var(--chart-4)"
+                        text={'Storage Savings'}
+                    />
                 </div>
             </div>
         </div>
