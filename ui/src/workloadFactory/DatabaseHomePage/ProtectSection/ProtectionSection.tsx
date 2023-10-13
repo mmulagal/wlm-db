@@ -7,7 +7,6 @@ import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const ProtectionSection = () => {
-    
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
     return (
@@ -24,7 +23,7 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#68C6B3' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
                             <Typography variant="Regular_14">{GENERAL.DB_HOST_PROTECTED}</Typography>
                         </div>
 
@@ -40,7 +39,7 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#FDC300' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
                             <Typography variant="Regular_14">{GENERAL.DB_HOST_UNPROTECTED}</Typography>
                         </div>
 
@@ -61,7 +60,7 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#012CAD' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-1)' }} />
                             <Typography variant="Regular_14">{GENERAL.AWS_BACKUP}</Typography>
                         </div>
 
@@ -77,7 +76,7 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#A815F3' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-9)' }} />
                             <Typography variant="Regular_14">{GENERAL.FSX_ONTAP_SNAPSHOTS}</Typography>
                         </div>
 
@@ -92,7 +91,7 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#0BAFFC' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
                             <Typography variant="Regular_14">{GENERAL.SQL_SERVER_BACKUP}</Typography>
                         </div>
 
