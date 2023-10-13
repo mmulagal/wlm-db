@@ -2,15 +2,15 @@ import { optionType } from '@netapp/design-system/dist/components/Select';
 import { TableProps } from '@netapp/design-system/dist/components/Table';
 import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
-import { 
-    API_ERRORS, 
-    DEFAULT_MASTER_KEY, 
-    DISABLED_STATE, 
-    ENABLED_STATE, 
-    PENDING_DELETION, 
-    REGIONS_CODE_LIST, 
-    SQL_DATABASE, 
-    STATUS_CONST 
+import {
+    API_ERRORS,
+    DEFAULT_MASTER_KEY,
+    DISABLED_STATE,
+    ENABLED_STATE,
+    PENDING_DELETION,
+    REGIONS_CODE_LIST,
+    SQL_DATABASE,
+    STATUS_CONST
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
 import store from '../store/store';
@@ -85,7 +85,7 @@ export const formatSize = (value: number, passedformat?: string) => {
 export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
     let newData: KmsKeys[] = [];
     data?.keys
-        ?.filter((key: KmsKeys) => (key?.state === ENABLED_STATE || key?.state === PENDING_DELETION))
+        ?.filter((key: KmsKeys) => key?.state === ENABLED_STATE || key?.state === PENDING_DELETION)
         .map((val: KmsKeys) => {
             if (val?.state === DISABLED_STATE) {
                 val = {
@@ -98,7 +98,7 @@ export const formatKmsData = (data: { keys?: KmsKeys[] }) => {
             if (val?.name === DEFAULT_MASTER_KEY) {
                 val = { ...val, default: true };
                 newData.unshift(val);
-            } else{
+            } else {
                 newData.push(val);
             }
         });
@@ -122,7 +122,7 @@ export const dbPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
-        if(state.auth.isDemoMode) {
+        if (state.auth.isDemoMode) {
             return '';
         }
         const categories = [
@@ -145,7 +145,7 @@ export const dbPassVal = (password: string) => {
 export const fsxPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
-        if(state.auth.isDemoMode) {
+        if (state.auth.isDemoMode) {
             return '';
         }
         let fsxUserName = '';
@@ -182,7 +182,7 @@ export const encodeAll = (text: string) => {
 };
 
 export const requiredFieldError = (inputString: string) => {
-    if(!inputString){
+    if (!inputString) {
         return null;
     }
     const regex = /'([^']+)'/;
@@ -196,21 +196,21 @@ export const requiredFieldError = (inputString: string) => {
 };
 
 export const customErrorMessages = (inputString: string) => {
-    if(!inputString){
+    if (!inputString) {
         return null;
     }
-    if(inputString.includes(API_ERRORS.DUPLICATE_CONFIG_NAME)){
+    if (inputString.includes(API_ERRORS.DUPLICATE_CONFIG_NAME)) {
         return SELECT_CONFIG.DUPLICATE_CONFIG_NAME;
     }
     return inputString;
-}
+};
 
 export const getCssVariableValue = (variableName: string) =>
     getComputedStyle(document.body).getPropertyValue(variableName);
 
 export const formatDate = (date: string | number) => {
     const dateStr = date.toString();
-    const timeStamp = dateStr.substring(6,dateStr.length-2);
+    const timeStamp = dateStr.substring(6, dateStr.length - 2);
     return moment(new Date(parseInt(timeStamp))).format('LL');
 };
 
@@ -269,17 +269,20 @@ export const isValidUserName = (userName: string) => {
     }
 };
 
-
-export const sortListOfDict = (dataList: any, field: string, ascOrder=true) => {
-    if(!dataList || (dataList && dataList.length < 2)){
+export const sortListOfDict = (dataList: any, field: string, ascOrder = true) => {
+    if (!dataList || (dataList && dataList.length < 2)) {
         return dataList;
-    };
+    }
     let newDBList = [];
-    try{
-        if(ascOrder){
-            newDBList = dataList.slice().sort((a:any, b:any) => a[field].toString().localeCompare(b[field].toString()));
+    try {
+        if (ascOrder) {
+            newDBList = dataList
+                .slice()
+                .sort((a: any, b: any) => a[field].toString().localeCompare(b[field].toString()));
         } else {
-            newDBList = dataList.slice().sort((a:any, b:any) => b[field].toString().localeCompare(a[field].toString()));
+            newDBList = dataList
+                .slice()
+                .sort((a: any, b: any) => b[field].toString().localeCompare(a[field].toString()));
         }
     } catch {
         return dataList;
@@ -294,7 +297,7 @@ export const formatSizeSplit = (value: number | string) => {
     const splitted = formatted.split(' ');
     const actualValue = splitted[0];
     const format = splitted[1];
-    return {value: actualValue, format}
+    return { value: actualValue, format };
 };
 
 export const displayFormattedValue = (value: number, msg: string) => {
@@ -303,53 +306,52 @@ export const displayFormattedValue = (value: number, msg: string) => {
 
 export const generateRandomDBName = () => {
     return SQL_DATABASE + Array.from(Array(4), () => Math.floor(Math.random() * 36).toString(36)).join('');
-}
+};
 
 export const formatFractionalNumber = (value: number | undefined, precision: number = 1) => {
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
-      return value.toFixed(precision);
+        return value.toFixed(precision);
     }
     return value;
-}
+};
 
 export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, jobsData: DatabaseJobsItem[] | null) => {
-    if(!hostsData && !jobsData){
+    if (!hostsData && !jobsData) {
         return [];
     }
     let uniqueIds: Array<String> = [];
     const mergedList: any[] = [];
-    jobsData?.map((val) => {
-        if(!uniqueIds.includes(val?.id)){
+    jobsData?.map(val => {
+        if (!uniqueIds.includes(val?.id)) {
             val = {
                 ...val,
                 topology: val?.metadata
-            }
+            };
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
     });
-    hostsData?.map((val) => {
-        if(!uniqueIds.includes(val?.id)){
+    hostsData?.map(val => {
+        if (!uniqueIds.includes(val?.id)) {
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
-    })
+    });
     return mergedList;
 };
 
-
 export const jobStatusPercent = (data: JobsSummaryRes) => {
-    if(!data){
+    if (!data) {
         return null;
     }
     const totalJobs = (data?.failed || 0) + (data?.initializing || 0) + (data?.success || 0);
     const newData = {
         ...data,
         totalJobs: totalJobs,
-        successPercent: data?.success ? (data.success/totalJobs) * 100 : 0,
-        failedPercent: data?.failed ? (data.failed/totalJobs) * 100 : 0,
-        initializingPercent: data?.initializing ? (data.initializing/totalJobs) * 100 : 0
-    }
+        successPercent: data?.success ? (data.success / totalJobs) * 100 : 0,
+        failedPercent: data?.failed ? (data.failed / totalJobs) * 100 : 0,
+        initializingPercent: data?.initializing ? (data.initializing / totalJobs) * 100 : 0
+    };
     return newData;
 };
 
@@ -359,11 +361,11 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     let totalDownHosts = 0;
 
     data?.map(val => {
-        if(val?.status === STATUS_CONST.UP) {
+        if (val?.status === STATUS_CONST.UP) {
             totalUpHosts += 1;
-        } else if(val?.status === STATUS_CONST.INITIALIZING) {
+        } else if (val?.status === STATUS_CONST.INITIALIZING) {
             totalInitializingHosts += 1;
-        } else if(val?.status === STATUS_CONST.DOWN) {
+        } else if (val?.status === STATUS_CONST.DOWN) {
             totalDownHosts += 1;
         }
     });
@@ -371,7 +373,7 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
         totalHosts: data?.length || 0,
         totalUpHosts: totalUpHosts,
         totalInitializingHosts: totalInitializingHosts,
-        totalDownHosts: totalDownHosts,
+        totalDownHosts: totalDownHosts
     };
 };
 
@@ -383,20 +385,22 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
     let sqlServerBackupDb = 0;
 
     data?.map(val => {
-        if(val?.protection?.isAwsBackUpEnabled || 
-            val?.protection?.isFsxOntapSnapshotsEnabled || 
-            val?.protection?.isSqlNativeEnabled) {
+        if (
+            val?.protection?.isAwsBackUpEnabled ||
+            val?.protection?.isFsxOntapSnapshotsEnabled ||
+            val?.protection?.isSqlNativeEnabled
+        ) {
             protectedDb += 1;
         } else {
             unprotectedDb += 1;
         }
-        if(val?.protection?.isFsxOntapSnapshotsEnabled){
+        if (val?.protection?.isFsxOntapSnapshotsEnabled) {
             fsxOntapSnapshotsDb += 1;
         }
-        if(val?.protection?.isAwsBackUpEnabled){
+        if (val?.protection?.isAwsBackUpEnabled) {
             awsBackupDb += 1;
         }
-        if(val?.protection?.isSqlNativeEnabled){
+        if (val?.protection?.isSqlNativeEnabled) {
             sqlServerBackupDb += 1;
         }
     });
@@ -406,39 +410,39 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
     return {
         protectedDb: protectedDb,
         unprotectedDb: unprotectedDb,
-        protectedPercent: (protectedDb/(totalHost)) * 100 || 0,
-        unprotectedPercent: (unprotectedDb/(totalHost)) * 100 || 0,
+        protectedPercent: (protectedDb / totalHost) * 100 || 0,
+        unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
-        awsBackupPercent: (awsBackupDb/(totalHost)) * 100 || 0,
+        awsBackupPercent: (awsBackupDb / totalHost) * 100 || 0,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        fsxOntapSnapshotsPercent: (fsxOntapSnapshotsDb/(totalHost)) * 100 || 0,
+        fsxOntapSnapshotsPercent: (fsxOntapSnapshotsDb / totalHost) * 100 || 0,
         sqlServerBackupDb: sqlServerBackupDb,
-        sqlServerBackupPercent: (sqlServerBackupDb/(totalHost)) * 100 || 0,
-    }
+        sqlServerBackupPercent: (sqlServerBackupDb / totalHost) * 100 || 0
+    };
 };
 
-export const getAggrStorageSavings = (data: DatabaseHostItem[])  => {
+export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
     let storageConsumes = 0;
     let storageSavings = 0;
     let totalSize = 0;
 
     data?.map(val => {
-        if(val?.storage?.allocated) {
+        if (val?.storage?.allocated) {
             totalSize += val.storage.allocated;
         }
-        if(val?.storage?.used) {
+        if (val?.storage?.used) {
             storageConsumes += val.storage.used;
         }
-        if(val?.storage?.savings) {
+        if (val?.storage?.savings) {
             storageSavings += val.storage.savings;
         }
     });
 
     return {
-        storageConsumes: formatFractionalNumber(storageConsumes/1024) || 'N/A',
-        storageSavings: formatFractionalNumber(storageSavings/1024) || 'N/A',
-        storageSavingsPercent: (storageSavings/totalSize) * 100 || 0,
-    }
+        storageConsumes: formatFractionalNumber(storageConsumes / 1024) || 'N/A',
+        storageSavings: formatFractionalNumber(storageSavings / 1024) || 'N/A',
+        storageSavingsPercent: (storageSavings / totalSize) * 100 || 0
+    };
 };
 
 export const getAggrCost = (data: DatabaseHostItem[]) => {
@@ -448,21 +452,21 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     let otherCost = 0;
 
     data?.map(val => {
-        if(val?.estimatedUsageCost?.compute) {
+        if (val?.estimatedUsageCost?.compute) {
             storageCost += val.estimatedUsageCost.compute;
         }
-        if(val?.estimatedUsageCost?.storage) {
+        if (val?.estimatedUsageCost?.storage) {
             computeCost += val.estimatedUsageCost.storage;
         }
-        if(val?.estimatedUsageCost?.connectivity) {
+        if (val?.estimatedUsageCost?.connectivity) {
             connectivityCost += val.estimatedUsageCost.connectivity;
         }
-        if(val?.estimatedUsageCost?.others) {
+        if (val?.estimatedUsageCost?.others) {
             otherCost += val.estimatedUsageCost.others;
         }
     });
 
-    const totalCost = (storageCost + computeCost + connectivityCost + otherCost);
+    const totalCost = storageCost + computeCost + connectivityCost + otherCost;
 
     return {
         storageCost: storageCost,
@@ -470,9 +474,50 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
         connectivityCost: connectivityCost,
         otherCost: otherCost,
         totalCost: totalCost,
-        storageCostPercent: (storageCost/totalCost) * 100,
-        computeCostPercent: (computeCost/totalCost) * 100,
-        connectivityCostPercent: (connectivityCost/totalCost) * 100,
-        otherCostPercent: (otherCost/totalCost) * 100
-    }
+        storageCostPercent: (storageCost / totalCost) * 100,
+        computeCostPercent: (computeCost / totalCost) * 100,
+        connectivityCostPercent: (connectivityCost / totalCost) * 100,
+        otherCostPercent: (otherCost / totalCost) * 100
+    };
+};
+
+export const wrapContext = (question?: string) => {
+    return `\n\nHuman: ${question} \n\nAssistant:`;
+};
+
+export const getWlmdbPayload = (params: any) => {
+    return {
+        region: params.region || '',
+        networkConfiguration: {
+            vpcCidr: params.vpcCidr || '',
+            availabilityZone1: params.availabilityZone1 || ''
+        },
+        ec2Configuration: {
+            workloadInstanceType: params.workloadInstanceType || '',
+            keyPairName: params.keyPairName || ''
+        },
+        adConfiguration: {
+            adScenarioType: params.adScenarioType || '',
+            domainUsername: params.domainUsername || '',
+            domainPassword: params.domainPassword ? '********' : '',
+            domainDnsname: params.domainDnsname || '',
+            dnsIpaddress: params.dnsIpaddress || ''
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: params.sqlDeploymentMode || '',
+            sqlAmiId: params.sqlAmiId || '',
+            serviceAccountName: params.serviceAccountName || '',
+            serviceAccountPassword: params.serviceAccountPassword ? '********' : '',
+            sqlFciName: params.sqlFciName || ''
+        },
+        fsxConfiguration: {
+            fsxDeploymentMode: params.fsxDeploymentMode || '',
+            fsxUsername: params.fsxUsername || '',
+            fsxPassword: params.fsxPassword ? '********' : '',
+            databaseSize: params.databaseSize || '',
+            fsxVolThroughput: params.fsxVolThroughput || '',
+            fsxIOPS: params.fsxIOPS || '',
+            ontapSgGroupId: params.ontapSgGroupId || ''
+        }
+    };
 };

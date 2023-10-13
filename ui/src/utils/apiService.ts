@@ -278,14 +278,14 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({nextToken = null}) => `database-hosts?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `database-hosts?nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
-                query: ({nextToken = null}) => `jobs?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
-            }),
+            })
         };
     }
 });
@@ -316,15 +316,7 @@ export const {
     useBatchTablesMutation
 } = resourceApi;
 
-export const { 
-    useGetConfigListQuery, 
-    useLazyGetConfigDataQuery, 
-    useSaveConfigDataMutation, 
-    useDeleteConfigMutation 
-} = configApi;
+export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
+    configApi;
 
-export const {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery
-} = databaseHomeApi;
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery } = databaseHomeApi;
