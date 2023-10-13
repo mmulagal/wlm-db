@@ -190,5 +190,25 @@
         .accordionStructure {
             margin: 40px 32px 40px 32px !important;
         }
+
+        .openView {
+            gap: 0px !important;
+
+            .rightSideView {
+                .rightSideTopBar {
+                    width: 1000px !important;
+                }
+                .secondBar {
+                    width: 1000px !important;
+                }
+                .thirdBar {
+                    width: 1000px !important;
+                }
+            }
+        }
+    }
+
+    .open {
+        width: 100% !important;
     }
 }
