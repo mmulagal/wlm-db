@@ -6,7 +6,7 @@
         align-items: center;
         justify-content: space-between;
         flex-shrink: 0;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid var(-border);
     }
 
     .mainSection {
@@ -17,7 +17,7 @@
 
         .jobSeparator {
             width: 300px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border);
         }
 
         .rowData {

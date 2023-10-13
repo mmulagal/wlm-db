@@ -156,10 +156,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* Code for Search bar and input */}
                         <div className={styles.secondBar}>
                             <div className={styles.inputPart}>
-                                <Typography variant="Regular_14" style={{ color: '#fff' }}>
+                                <Typography variant="Regular_14" style={{ color: 'var(--content-background' }}>
                                     Show code as:
                                 </Typography>
-                                <div className={styles.inputBox} style={{ color: '#fff' }}>
+                                <div className={styles.inputBox} style={{ color: 'var(--content-background)' }}>
                                     <SelectField
                                         isClearable={false}
                                         onChange={function noRefCheck() {}}
@@ -176,7 +176,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
-                            <Typography variant="Regular_14" style={{ color: '#fff' }}>
+                            <Typography variant="Regular_14" style={{ color: 'var(--content-background)' }}>
                                 {isRightPanelDataLoading ? (
                                     <Typography variant="Semibold_14" className={styles.loading}>
                                         Loading...
