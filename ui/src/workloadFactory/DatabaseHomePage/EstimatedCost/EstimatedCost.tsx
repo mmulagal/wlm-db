@@ -3,14 +3,24 @@ import { Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const EstimatedCost = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
-
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    
     return (
         <div className={styles.estimatedCost}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">{GENERAL.ESTIMATED_MONTHLY_COST}</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.ESTIMATED_MONTHLY_COST}
+                    {(databaseHostsLoading || databaseJobsLoading) && 
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent/>
+                        </div>
+                    }
+                </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
                     $ {hostData?.totalCost}
                 </Typography>

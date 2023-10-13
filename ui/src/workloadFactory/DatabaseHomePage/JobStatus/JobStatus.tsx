@@ -3,6 +3,7 @@ import styles from './JobStatus.module.scss';
 import JobDoughnutChart from './JobDoughnut/JobDoughnutChart';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const JobStatus = () => {
     const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
@@ -10,7 +11,14 @@ const JobStatus = () => {
     return (
         <div className={styles.jobStatus}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">Job status</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.JOB_STATUS}
+                    {jobsSummaryLoading && 
+                    <div className={styles.loadingPlacement}>
+                        <LoadingComponent/>
+                    </div>}
+                </Typography>
+                
                 <Typography variant="Regular_13" style={{ lineHeight: 'unset' }}>
                     {GENERAL.JOB_STATUS_DAYS}
                 </Typography>

@@ -347,6 +347,7 @@ export const GENERAL = {
     DB_HOST_REGION: 'Region',
     DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
     // Job Status constants
+    JOB_STATUS: 'Job status',
     JOB_STATUS_DAYS: 'Last 90 days',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',

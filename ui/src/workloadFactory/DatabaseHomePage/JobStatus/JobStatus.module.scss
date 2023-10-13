@@ -9,6 +9,15 @@
         border-bottom: 1px solid var(-border);
     }
 
+    .title {
+        display: flex;
+    }
+
+    .loadingPlacement {
+        display: flex;
+        padding-left: 15px;
+    }
+
     .mainSection {
         padding: 24px 40px 24px 22px;
         display: flex;

@@ -9,6 +9,14 @@
         flex-shrink: 0;
         border-bottom: 1px solid var(--border);
     }
+    .title {
+        display: flex;
+    }
+
+    .loadingPlacement {
+        display: flex;
+        padding-left: 15px;
+    }
 
     .mainSection {
         padding: 40px;
