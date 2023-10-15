@@ -26,10 +26,8 @@ const initialState: AuthState = {
     loading: true,
     isDemoMode: false,
     features: {
-        byKey: {
-            'Platform.BlueXP/DarkTheme': {
-                active: false
-            }
+        active: {
+            'Platform.BlueXP/DarkTheme': false
         }
     }
 };
