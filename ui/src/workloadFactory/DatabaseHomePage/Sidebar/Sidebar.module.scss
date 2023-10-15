@@ -75,6 +75,49 @@
                 .menuContainer {
                     display: flex;
                     gap: 32px;
+                    align-items: center;
+
+                    .menuItem {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                    }
+
+                    .sideBarMenuPopover {
+                        [class*='MenuPopover_menuIcon'] {
+                            color: var(--white);
+                        }
+                        [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
+                            border: 1.5px solid var(--white);
+                        }
+
+                        [class*='MenuPopover_menuIcon']:hover {
+                            border: 1.5px solid var(--white);
+                        }
+                    }
+
+                    .copy {
+                        width: 100px;
+                        display: flex;
+                        justify-content: flex-end;
+                        // height: 20px;
+                        .copy-popover {
+                            width: 140px;
+                            font-size: 13px;
+                            line-height: 20px;
+                            text-align: center;
+                            padding: 2px 2px;
+                            box-shadow: none;
+                        }
+
+                        svg {
+                            cursor: pointer;
+                            &:hover {
+                                fill: var(--grey-50);
+                            }
+                        }
+                    }
                 }
             }
         }

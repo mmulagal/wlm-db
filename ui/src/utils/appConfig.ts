@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { postBlueXPMessage, BlueXPListeners, useBlueXP } from '@netapp/design-system';
 import { useAppDispatch } from '../store/storeHooks';
 import queryString from 'query-string';
-import { 
-    updateAccountId, 
-    updateAuthSuccess, 
-    updateIsDemoMode, 
-    updateIsLoading, 
-    updatePathname, 
-    updateResourceId, 
-    updateResourceName, 
-    updateWorkspaceId 
+import {
+    updateAccountId,
+    updateAuthSuccess,
+    updateFeatures,
+    updateIsDemoMode,
+    updateIsLoading,
+    updatePathname,
+    updateResourceId,
+    updateResourceName,
+    updateWorkspaceId
 } from '../store/authSlice';
 import { DATABASE_SERVICE_PATH } from './consts';
 import { encodeAll } from './utilityFunctions';
@@ -36,24 +37,24 @@ const useInitialize = () => {
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
         const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
-        dispatch(updateIsDemoMode(isDemoFlag === 'true'? true: false));
+        dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
 
-        if(accountIdAsString){
+        if (accountIdAsString) {
             dispatch(updateAccountId(accountIdAsString || ''));
         }
 
-        if(accessTokenAsString){
-            dispatch(updateAuthSuccess({accessToken: accessTokenAsString || ''}));
+        if (accessTokenAsString) {
+            dispatch(updateAuthSuccess({ accessToken: accessTokenAsString || '' }));
         }
 
-        if(workspaceIdAsString){
+        if (workspaceIdAsString) {
             dispatch(updateWorkspaceId(workspaceIdAsString));
         }
 
         const pathnameAsString = Array.isArray(pathname) ? pathname[0] : pathname;
         const storageNameAsString = (Array.isArray(storageName) ? storageName[0] : storageName) || '';
         if (pathnameAsString) {
-            if(pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH){
+            if (pathnameAsString.includes('/') && pathnameAsString.split('/')[1] === DATABASE_SERVICE_PATH) {
                 navigate(`${storage}/${storageId}/${encodeAll(storageNameAsString)}`);
                 dispatch(updateResourceId(storageId));
                 dispatch(updateResourceName(storageNameAsString));
@@ -67,13 +68,14 @@ const useInitialize = () => {
 
     useBlueXP({
         onReady: (initialData: any) => {
-            const {accessToken, accountId, isDemoMode } = initialData;
-            dispatch(updateAuthSuccess({accessToken: accessToken}));
+            const { accessToken, accountId, isDemoMode, features } = initialData;
+            dispatch(updateFeatures(features));
+            dispatch(updateAuthSuccess({ accessToken: accessToken }));
             dispatch(updateAccountId(accountId));
             dispatch(updateIsLoading(false));
             dispatch(updateIsDemoMode(isDemoMode));
-            
-            if(initialData?.pathname && initialData.pathname.split('/')[1] === DATABASE_SERVICE_PATH){
+
+            if (initialData?.pathname && initialData.pathname.split('/')[1] === DATABASE_SERVICE_PATH) {
                 const storage = initialData?.storage;
                 const storageId = initialData?.storageId;
                 const storageName = initialData?.storageName;
@@ -91,14 +93,14 @@ const useInitialize = () => {
             dispatch(updateWorkspaceId(workspaceId));
         },
         onTokenUpdate: function (accessToken: string, userMetadata: any): void {
-            dispatch(updateAuthSuccess({accessToken: accessToken}));
+            dispatch(updateAuthSuccess({ accessToken: accessToken }));
         },
         onNssAdded: function (): void {},
         onNssAddingFailed: function (): void {},
         onLocationChange: function (pathname: string, hash: string, search: string): void {
             dispatch(updatePathname(pathname));
         }
-      });
-}
+    });
+};
 
 export { useInitialize, navigateToCanvas };
