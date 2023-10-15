@@ -9,20 +9,20 @@ import { useEffect, useState } from 'react';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);
-    const [darkTheme, setDarkTheme] = useState(false);
+    // const [darkTheme, setDarkTheme] = useState(false);
 
     useInitialize();
 
     //@ts-ignore
-    const isDarkTheme = useAppSelector(state => state?.features?.byKey['Platform.BlueXP/DarkTheme'].active);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.byKey['Platform.BlueXP/DarkTheme'].active);
 
-    useEffect(() => {
-        setDarkTheme(isDarkTheme);
-    }, [isDarkTheme]);
+    // useEffect(() => {
+    //     setDarkTheme(isDarkTheme);
+    // }, [isDarkTheme]);
 
     return (
         <>
-            <ThemeProvider isIframe={true} theme={darkTheme ? 'dark' : 'light'}>
+            <ThemeProvider isIframe={true} theme={isDarkTheme ? 'dark' : 'light'}>
                 <FullStoryComp />
                 {loading && (
                     <div className="App">
