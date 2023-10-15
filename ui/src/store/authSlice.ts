@@ -25,7 +25,13 @@ const initialState: AuthState = {
     pathname: '',
     loading: true,
     isDemoMode: false,
-    features: {}
+    features: {
+        byKey: {
+            'Platform.BlueXP/DarkTheme': {
+                active: false
+            }
+        }
+    }
 };
 
 const authSlice = createSlice({
