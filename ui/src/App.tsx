@@ -14,7 +14,7 @@ function App() {
     useInitialize();
 
     //@ts-ignore
-    const isDarkTheme = useAppSelector(state => state?.auth?.features?.byKey['Platform.BlueXP/DarkTheme'].active);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     // useEffect(() => {
     //     setDarkTheme(isDarkTheme);
