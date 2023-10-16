@@ -19,9 +19,11 @@ type AccordionContent = {
     openedItem?: any;
     id?: string;
     configRefetch?: any;
+    isExpanded?: boolean;
+    expand?: any;
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand }: AccordionContent) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -31,7 +33,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
 
     const menuItems = [
         {
-            id: '1',
+            id: 'viewCode',
             displayName: 'View Code'
         },
         {
@@ -62,6 +64,13 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         navigate(WLF_TO_FORM_NAVIGATE);
         LoadConfiguration(dispatch, loadConfigDataExe, null, id);
     };
+
+    const handleViewCode = () => {
+        if(!isExpanded){
+            expand();
+        }
+        toggle(heading, id);
+    }
 
     return (
         <div className={styles.accordions}>
@@ -107,6 +116,8 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                                                 handleDelete();
                                             } else if (menuId === 'loadWizard') {
                                                 handleLoadWizard();
+                                            } else if (menuId === 'viewCode') {
+                                                handleViewCode();
                                             }
                                         }
                                     }}
