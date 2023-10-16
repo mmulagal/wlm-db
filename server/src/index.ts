@@ -34,6 +34,7 @@ import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
+import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
 import {
     createAuditGroup,
@@ -168,6 +169,7 @@ const app = fastify({
             msSqlServerRoutes(instance);
             batchRoutes(instance);
             pricingRoutes(instance);
+            databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
             next();
         },

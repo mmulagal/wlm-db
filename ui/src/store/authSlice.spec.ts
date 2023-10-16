@@ -1,13 +1,14 @@
 import authSlice, { updateAuthSuccess } from './authSlice'; // Update the import path based on your project structure
 
 describe('authSlice reducers', () => {
-    let initialState: { 
-        accountId: string,
-        accessToken: string; 
-        resourceId: '', 
-        resourceName: '',
-        workspaceId: string,
-        pathname: string 
+    let initialState: {
+        accountId: string;
+        accessToken: string;
+        resourceId: '';
+        resourceName: '';
+        workspaceId: string;
+        pathname: string;
+        features: {};
     };
 
     beforeEach(() => {
@@ -17,7 +18,8 @@ describe('authSlice reducers', () => {
             resourceId: '',
             resourceName: '',
             workspaceId: '',
-            pathname: ''
+            pathname: '',
+            features: {}
         };
     });
 
@@ -26,7 +28,7 @@ describe('authSlice reducers', () => {
         const action = updateAuthSuccess({ accessToken });
 
         const newState = authSlice.reducer(initialState, action);
-        expect(newState.accessToken).toEqual(`Bearer ${accessToken}`); 
+        expect(newState.accessToken).toEqual(`Bearer ${accessToken}`);
     });
 
     it('should return initial state for unknown action', () => {

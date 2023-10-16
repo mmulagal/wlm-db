@@ -2,7 +2,7 @@
     margin-top: 40px;
     width: 1063px;
     height: 176px;
-    background-color: var(--white);
+    background-color: var(--content-background);
 
     .leftContainer {
         margin-top: 40px;
@@ -27,7 +27,7 @@
         .dbHostSeparator {
             margin-left: 111px;
             height: 96px;
-            background: #e0e0e0;
+            background: var(--border);
             width: 1px;
         }
 
