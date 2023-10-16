@@ -18,7 +18,11 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 /*
 This function is used to load config data on click on config load. 
 */
-export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any, selectedConfig:string | undefined) => {
+export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any, selectedConfig?:string | undefined) => {
+    if(!selectedConfig){
+        const state = store.getState();
+        selectedConfig = state.mssqlForm.loadConfig;
+    }
     resetRefetchApiCheck(dispatch);
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })

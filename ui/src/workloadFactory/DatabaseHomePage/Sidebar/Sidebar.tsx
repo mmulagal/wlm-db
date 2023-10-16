@@ -32,7 +32,6 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const dispatch = useDispatch();
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
-    // const [openedItemId, setOpenedItemId] = useState('');
     const [searchInput, setSearchInput] = useState('');
 
     // For expanded menu
@@ -94,12 +93,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     }, [configData, openKey]);
 
     const handleToggle = (key: any, id: string) => {
-        if (!isOpen) {
-            setOpenKey(openKey !== key ? key : null);
-        } else {
-            setOpenedItem({name: key, id: id});
-            getRestResponse(id);
-        }
+        setOpenKey(openKey !== key ? key : null);
+        setOpenedItem({name: key, id: id});
+        getRestResponse(id);
     };
 
     //To expand collapse side bar

@@ -22,7 +22,6 @@ const MSSqlHeader = () => {
     const [isConfig, setIsConfig] = useState(false);
 
     const { configData} = useAppSelector(state => state.mssql.getSavedConfigList);
-    const selectedConfig = useAppSelector(state => state.mssqlForm.loadConfig);
 
     const [saveConfigData] = useSaveConfigDataMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
@@ -61,7 +60,7 @@ const MSSqlHeader = () => {
                 primaryButton={GENERAL.LOAD}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    LoadConfiguration(dispatch, loadConfigDataExe, closeDialog, selectedConfig);
+                    LoadConfiguration(dispatch, loadConfigDataExe, closeDialog);
                 }}
                 closeCallback={() => {
                     dispatch(setIsLoadConfig(false));
