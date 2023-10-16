@@ -19,9 +19,12 @@ type AccordionContent = {
     openedItem?: any;
     id?: string;
     configRefetch?: any;
+    isExpanded?: boolean;
+    expand?: any;
+    viewCode?: any;
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand, viewCode }: AccordionContent) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -31,7 +34,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
 
     const menuItems = [
         {
-            id: '1',
+            id: 'viewCode',
             displayName: 'View Code'
         },
         {
@@ -40,7 +43,8 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         },
         {
             id: '3',
-            displayName: 'Rename'
+            displayName: 'Rename',
+            disabled: true
         },
         {
             id: 'delete',
@@ -62,6 +66,13 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         navigate(WLF_TO_FORM_NAVIGATE);
         LoadConfiguration(dispatch, loadConfigDataExe, null, id);
     };
+
+    const handleViewCode = () => {
+        if(!isExpanded){
+            expand();
+        }
+        viewCode(heading, id);
+    }
 
     return (
         <div className={styles.accordions}>
@@ -107,6 +118,8 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                                                 handleDelete();
                                             } else if (menuId === 'loadWizard') {
                                                 handleLoadWizard();
+                                            } else if (menuId === 'viewCode') {
+                                                handleViewCode();
                                             }
                                         }
                                     }}
