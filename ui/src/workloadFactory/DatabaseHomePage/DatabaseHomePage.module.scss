@@ -28,7 +28,7 @@
         margin-top: 24px;
         height: 360px;
         width: 1064px;
-        background-color: var(--white);
+        background-color: var(--content-background);
     }
 
     .fourthLevelContainer {
@@ -44,7 +44,7 @@
             gap: 24px;
 
             .commonContainer {
-                background-color: var(--white);
+                background-color: var(--content-background);
                 height: 244px;
                 width: 656px;
             }
@@ -53,7 +53,37 @@
         .jobContainer {
             width: 384px;
             height: 512px;
-            background-color: var(--white);
+            background-color: var(--content-background);
+        }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .databaseHome {
+        .topContainer {
+            margin-left: 37px !important;
+            width: 1012px !important;
+        }
+
+        .secondLevelContainer {
+            margin-left: 37px !important;
+        }
+
+        .ProtectionContainer {
+            margin-left: 37px !important;
+            width: 1012px !important;
+        }
+
+        .fourthLevelContainer {
+            margin-left: 37px !important;
+
+            .commonContainer {
+                width: 633px !important;
+            }
+
+            .jobContainer {
+                width: 355px !important;
+            }
         }
     }
 }

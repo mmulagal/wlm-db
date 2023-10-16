@@ -129,4 +129,4 @@ export const STATUS_CONST = {
     INITIALIZING: 'initializing'
 };
 
-export const MAX_SAVED_CONFIG = 50;
+export const MAX_SAVED_CONFIG = 100;

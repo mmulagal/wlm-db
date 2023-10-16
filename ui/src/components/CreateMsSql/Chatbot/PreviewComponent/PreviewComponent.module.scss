@@ -1,0 +1,64 @@
+.preview-container {
+    height: 100%;
+
+    .preview-component {
+        background-color: black;
+        width: 400px;
+        height: 100%;
+        color: white;
+
+        .preview-header {
+            height: 64px;
+            background: #2b323d;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
+        }
+
+        .preview-content {
+            height: calc(100% - 128px);
+            padding-left: 20px;
+            overflow-y: scroll;
+        }
+
+        .preview-footer {
+            height: 64px;
+            background: #2b323d;
+            display: flex;
+            align-items: flex-end;
+            flex-direction: column;
+            justify-content: center;
+            padding-right: 20px;
+
+            .footer-button {
+                background: #84b0ff;
+                padding: 4px 24px 4px 24px;
+                font-weight: 600;
+                font-size: 14px;
+                color: white;
+                border-radius: 2px;
+                border: none;
+                cursor: pointer;
+            }
+
+            .footer-button:disabled {
+                background-color: gray;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .top-portion {
+        height: calc(100% - 184px);
+    }
+
+    .topology-container {
+        width: 400px;
+    }
+
+    .topology-image {
+        width: 400px;
+    }
+}

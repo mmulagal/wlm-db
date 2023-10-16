@@ -2,15 +2,13 @@ import Promise from 'bluebird';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
     MEMORY_UTILISATION,
     DATABASES,
-    SSM_RUN_POWERSHELL_SCRIPT_DOC,
-    PSSCRIPT,
     DATABASES_COUNT,
-    DB_ROWS_COUNT,
     SERVER_NAME,
     SERVER_GUID,
     DB_SIZE,
@@ -22,9 +20,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SSM_QUERY_CONCURRENCY_LIMIT,
     SERVER_IO_LATENCY
-} from './const';
+} from './queries';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
@@ -38,7 +35,7 @@ import {
     RESOURCE_RETRIVAL_ERROR
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, listResources } from '../../../lib/database/db';
+import { createResource, listResources, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
 
 const logger = getLogger();
@@ -481,6 +478,35 @@ async function discoverMsSqlServer(
     });
     return { resourceId, resourceName };
 }
+async function deleteResourceById(accountId: string, resourceId: string) {
+    logger.info('Delete Resource:', { resourceId });
+
+    try {
+        const relationshipResp = await listRelationshipsResources(accountId, resourceId);
+        if (relationshipResp.length !== 0) {
+            const fsxId = relationshipResp[0].co_relation_id;
+            const countResp = await listRelationshipsResources(accountId);
+            const fsxCount = countResp.filter(obj => obj.co_relation_id === fsxId).length;
+            if (fsxCount === 1) {
+                await deleteResource(accountId, fsxId!);
+            }
+        }
+
+        const response = await deleteResource(accountId, resourceId);
+        if (response.count === 1) {
+            return { message: 'Resource successfully deleted' };
+        }
+
+        throw new Error('Resource does not exist for tenancy account');
+    } catch (err: any) {
+        logger.error('Failed to remove resource. Reason:', err.message);
+
+        const errorMessage = 'Resource does not exist for tenancy account';
+        const statusCode =
+            err.message === errorMessage ? HttpErrorCodes.NOT_FOUND : HttpErrorCodes.INTERNAL_SERVER_ERROR;
+        return createError(statusCode, err.message);
+    }
+}
 
 async function getServerIOLatency(resourceId: string) {
     logger.info('Fetch SQL server IO latency for resource', resourceId);
@@ -542,6 +568,7 @@ export {
     callSsmExecution,
     getTablesCount,
     getMsSqlResourceId,
+    deleteResourceById,
     getServerIOLatency,
     getServerState
 };

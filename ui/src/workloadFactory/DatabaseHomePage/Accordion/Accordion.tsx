@@ -4,6 +4,7 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { ReactComponent as ActionDots } from '../../../assets/table action icon.svg';
 import { Typography } from '@netapp/design-system';
 import styles from './Accordion.module.scss';
+import { useDeleteConfigMutation } from '../../../utils/apiService';
 
 type AccordionContent = {
     heading: string;
@@ -11,30 +12,42 @@ type AccordionContent = {
     toggle: any;
     open: boolean;
     openedItem?: any;
+    id?: string;
+    configRefetch?: any;
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch }: AccordionContent) => {
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
+    const [deleteConfigApi] = useDeleteConfigMutation();
 
     const menuItems = [
         {
             id: '1',
-            displayName: 'View full info'
+            displayName: 'View Code'
         },
         {
             id: '2',
-            displayName: 'Clone'
+            displayName: 'Load (Wizard)'
         },
         {
             id: '3',
-            displayName: 'Migrate'
+            displayName: 'Rename'
         },
         {
-            id: '4',
-            displayName: 'Protect'
+            id: 'delete',
+            displayName: 'Delete'
         }
     ];
+
+    const handleDelete = () => {
+        deleteConfigApi({ configId: id }).then((data: any) => {
+            configRefetch();
+            // if (!data?.error) {
+            //     configListRefetch();
+            // }
+        });
+    };
     return (
         <div className={styles.accordions}>
             <div
@@ -47,7 +60,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionC
                 <div
                     className={styles.accordionHeader}
                     onClick={() => {
-                        toggle(heading);
+                        toggle(heading, id);
                     }}
                 >
                     <div className={styles.firstLevel}>
@@ -74,6 +87,10 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem }: AccordionC
                                         } else if (toggleType === 'selectedOption') {
                                             menuOpenedRowDetail.current = null;
                                             setOpenedRow(null);
+
+                                            if (menuId === 'delete') {
+                                                handleDelete();
+                                            }
                                         }
                                     }}
                                     CustomMenu={undefined}

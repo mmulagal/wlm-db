@@ -2,42 +2,69 @@ import React from 'react';
 import styles from './StorageSavings.module.scss';
 import { Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
+import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
+import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const StorageSavings = () => {
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+
     return (
         <div className={styles.storageSaving}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">Storage savings</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.DB_HOST_STORAGE_SAVINGS}
+                    {(databaseHostsLoading || databaseJobsLoading) && 
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent/>
+                        </div>
+                    }
+                </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    82%
+                    {formatFractionalNumber(hostData?.storageSavingsPercent)}%
                 </Typography>
             </div>
 
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
                 <div className={styles.progressBar}>
-                    <div
-                        className={`${styles.progress} ${styles.leftCurveBar}`}
-                        style={{
-                            width: `30%`,
-                            backgroundColor: '#A815F3'
-                        }}
-                    ></div>
-                    <div className={styles.separator}></div>
-                    <div
-                        className={`${styles.progress} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `70%`,
-                            backgroundColor: '#68C6B3'
-                        }}
-                    ></div>
+                    {hostData?.storageSavingsPercent !== 0 && (
+                        <>
+                            <div
+                                className={`${styles.progress} ${styles.leftCurveBar}`}
+                                style={{
+                                    width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
+                                    backgroundColor: 'var(--chart-9)'
+                                }}
+                            ></div>
+                            <div className={styles.separator}></div>
+                            <div
+                                className={`${styles.progress} ${styles.rightCurveBar}`}
+                                style={{
+                                    width: `${hostData?.storageSavingsPercent}%`,
+                                    backgroundColor: 'var(--chart-4)'
+                                }}
+                            ></div>
+                        </>
+                    )}
                 </div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
-                    <SquareComponent value="0.18 Tib" color="#a815f3" text={'Storage Consumes'} />
+                    <SquareComponent
+                        value={hostData?.storageConsumes + ' TiB'}
+                        color="var(--chart-9)"
+                        text={'Storage Consumes'}
+                    />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value="0.82 Tib" color="#68C6B3" text={'Storage Savings'} />
+                    <SquareComponent
+                        value={hostData?.storageSavings + ' TiB'}
+                        color="var(--chart-4)"
+                        text={'Storage Savings'}
+                    />
                 </div>
             </div>
         </div>

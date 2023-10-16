@@ -1,13 +1,21 @@
 .jobStatus {
     .headSection {
         display: flex;
-        width: 384px;
         height: 72px;
         padding: 12px 40px;
         align-items: center;
         justify-content: space-between;
         flex-shrink: 0;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid var(-border);
+    }
+
+    .title {
+        display: flex;
+    }
+
+    .loadingPlacement {
+        display: flex;
+        padding-left: 15px;
     }
 
     .mainSection {
@@ -18,7 +26,7 @@
 
         .jobSeparator {
             width: 300px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border);
         }
 
         .rowData {
@@ -38,5 +46,15 @@
                 }
             }
         }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .headSection {
+        padding: 12px 32px !important;
+    }
+
+    .mainSection {
+        padding: 24px 32px 24px 24px !important;
     }
 }
