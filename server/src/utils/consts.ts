@@ -780,6 +780,14 @@ enum ServerState {
     DOWN = 'Down'
 }
 
+const DEPLOYMENT_JOBS_STATUS_FILTER = [
+    'CREATE_IN_PROGRESS',
+    'CREATE_COMPLETE',
+    'CREATE_FAILED',
+    'UPDATE_IN_PROGRESS',
+    'UPDATE_COMPLETE'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -935,5 +943,6 @@ export {
     DatabaseHostsQueryFields,
     ServerState,
     SERVER_TYPE_MAPPING,
-    FileSystemTypes
+    FileSystemTypes,
+    DEPLOYMENT_JOBS_STATUS_FILTER
 };
