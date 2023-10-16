@@ -4,7 +4,12 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { ReactComponent as ActionDots } from '../../../assets/table action icon.svg';
 import { Typography } from '@netapp/design-system';
 import styles from './Accordion.module.scss';
-import { useDeleteConfigMutation } from '../../../utils/apiService';
+import { useDeleteConfigMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import { useDispatch } from 'react-redux';
+import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { useNavigate } from 'react-router-dom';
+import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 
 type AccordionContent = {
     heading: string;
@@ -17,9 +22,12 @@ type AccordionContent = {
 };
 
 const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch }: AccordionContent) => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
     const [deleteConfigApi] = useDeleteConfigMutation();
+    const [loadConfigDataExe] = useLazyGetConfigDataQuery();
 
     const menuItems = [
         {
@@ -27,7 +35,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
             displayName: 'View Code'
         },
         {
-            id: '2',
+            id: 'loadWizard',
             displayName: 'Load (Wizard)'
         },
         {
@@ -48,6 +56,13 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
             // }
         });
     };
+
+    const handleLoadWizard = () => {
+        dispatch(setIsLoading(true));
+        navigate(WLF_TO_FORM_NAVIGATE);
+        LoadConfiguration(dispatch, loadConfigDataExe, null, id);
+    };
+
     return (
         <div className={styles.accordions}>
             <div
@@ -90,6 +105,8 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
 
                                             if (menuId === 'delete') {
                                                 handleDelete();
+                                            } else if (menuId === 'loadWizard') {
+                                                handleLoadWizard();
                                             }
                                         }
                                     }}
