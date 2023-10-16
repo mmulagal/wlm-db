@@ -91,6 +91,9 @@ describe('List deployments', () => {
         expect(resp[0].resource_id).toEqual('i-1a2b3c4d5e');
         expect(resp[0].co_relation_id).toEqual('fsx-1234');
 
+        const respWithId = await listRelationshipsResources(ACCOUNT_ID, 'i-1a2b3c4d5e');
+        expect(respWithId[0].resource_id).toEqual('i-1a2b3c4d5e');
+        expect(respWithId[0].co_relation_id).toEqual('fsx-1234');
         await deleteResource(ACCOUNT_ID, resp[0].resource_id);
     });
 });

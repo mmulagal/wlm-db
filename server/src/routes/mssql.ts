@@ -13,9 +13,9 @@ import {
     getResourceUtilisation,
     getServerSummary,
     getTablesSummary,
-    discoverMsSqlServer
+    discoverMsSqlServer,
+    deleteResourceById
 } from '../operations/workloads/mssql/mssql-operations';
-import { removeTenancyResource } from '../operations/tenancy-operations';
 import { DATABASE_METRIC_TYPE /* DatabaseTypes */, DatabaseTypes } from '../utils/consts';
 
 const MSSQL_DISCOVER_API_PATH: string = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -52,10 +52,10 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async (request, reply) => {
         const {
-            params: { resourceId }
+            params: { accountId, resourceId }
         } = request;
 
-        const response = await removeTenancyResource(resourceId);
+        const response = await deleteResourceById(accountId, resourceId);
         return reply.send(response);
     });
 
