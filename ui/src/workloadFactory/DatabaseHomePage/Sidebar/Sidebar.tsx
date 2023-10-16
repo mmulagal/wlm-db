@@ -96,6 +96,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         getRestResponse(id);
     };
 
+    const handleViewCode = (key: any, id: string) => {
+        setOpenKey(openKey !== key ? key : openKey);
+        setOpenedItem({name: key, id: id});
+        getRestResponse(id);
+    };
+
     //To expand collapse side bar
     const handleClose = () => {
         onClose();
@@ -181,6 +187,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 configRefetch={configRefetch}
                                 isExpanded={isOpen}
                                 expand={handleClose}
+                                viewCode={handleViewCode}
                             />
                         </div>
                     ))}
@@ -207,6 +214,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         configRefetch={configRefetch}
                                         isExpanded={isOpen}
                                         expand={handleClose}
+                                        viewCode={handleViewCode}
                                     />
                                 </div>
                             ))}

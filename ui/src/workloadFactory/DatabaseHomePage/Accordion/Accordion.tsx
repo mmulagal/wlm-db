@@ -21,9 +21,10 @@ type AccordionContent = {
     configRefetch?: any;
     isExpanded?: boolean;
     expand?: any;
+    viewCode?: any;
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand, viewCode }: AccordionContent) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -42,7 +43,8 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         },
         {
             id: '3',
-            displayName: 'Rename'
+            displayName: 'Rename',
+            disabled: true
         },
         {
             id: 'delete',
@@ -69,7 +71,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         if(!isExpanded){
             expand();
         }
-        toggle(heading, id);
+        viewCode(heading, id);
     }
 
     return (
