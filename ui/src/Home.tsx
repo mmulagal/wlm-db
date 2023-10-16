@@ -26,7 +26,7 @@ const Home = () => {
 
     return (
         <div className={styles['app-layout']}>
-            <div className={`${showPanel && showChatbot ? styles['left-pane'] : ''}`}>
+            <div style={{ height: '100%' }} className={`${showPanel && showChatbot ? styles['left-pane'] : ''}`}>
                 <Routes>
                     <Route
                         path={`add-working-environment/database-services/:storage/create`}
