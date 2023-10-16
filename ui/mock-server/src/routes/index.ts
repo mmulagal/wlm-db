@@ -4,6 +4,7 @@ import mssql from './mssql';
 import resource from './resource';
 import config from './config';
 import databaseHosts from './databaseHosts';
+import chatbot from './chatbot';
 
 const routes = {
     credentials,
@@ -11,6 +12,7 @@ const routes = {
     mssql,
     resource,
     config,
-    databaseHosts
+    databaseHosts,
+    chatbot
 };
 export default routes;

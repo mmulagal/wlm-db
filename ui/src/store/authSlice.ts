@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-
 interface AuthState {
     accountId: string;
     accessToken: string;
@@ -10,6 +9,7 @@ interface AuthState {
     pathname?: string;
     loading?: boolean;
     isDemoMode?: boolean;
+    features: any;
 }
 
 interface PayloadAuthSuccess {
@@ -24,20 +24,25 @@ const initialState: AuthState = {
     workspaceId: '',
     pathname: '',
     loading: true,
-    isDemoMode: false
+    isDemoMode: false,
+    features: {
+        active: {
+            'Platform.BlueXP/DarkTheme': false
+        }
+    }
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        updateFeatures: (state, action: PayloadAction<string>) => {
+            state.features = action.payload;
+        },
         updateAccountId: (state, action: PayloadAction<string>) => {
             state.accountId = action.payload;
         },
-        updateAuthSuccess: (
-            state,
-            action: PayloadAction<PayloadAuthSuccess>
-        ) => {
+        updateAuthSuccess: (state, action: PayloadAction<PayloadAuthSuccess>) => {
             const { accessToken } = action.payload;
             const loginToken = `Bearer ${accessToken}`;
             state.accessToken = loginToken;
@@ -63,15 +68,16 @@ const authSlice = createSlice({
     }
 });
 
-export const { 
-    updateAccountId, 
-    updateAuthSuccess, 
-    updateResourceId, 
-    updateResourceName ,
+export const {
+    updateAccountId,
+    updateAuthSuccess,
+    updateResourceId,
+    updateResourceName,
     updateWorkspaceId,
     updatePathname,
     updateIsLoading,
-    updateIsDemoMode
+    updateIsDemoMode,
+    updateFeatures
 } = authSlice.actions;
 
 export default authSlice;

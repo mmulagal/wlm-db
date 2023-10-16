@@ -16,7 +16,7 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
-    MAX_CONFIG_LIMIT: 'Maximum configuration limit of 100 reached. Delete old configurations to save new ones.',
+    MAX_CONFIG_LIMIT: 'You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you\'ll need to delete an old configuration first.',
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
@@ -347,6 +347,7 @@ export const GENERAL = {
     DB_HOST_REGION: 'Region',
     DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
     // Job Status constants
+    JOB_STATUS: 'Job status',
     JOB_STATUS_DAYS: 'Last 90 days',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',

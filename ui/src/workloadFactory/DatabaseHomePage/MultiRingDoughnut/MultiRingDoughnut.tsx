@@ -10,9 +10,8 @@ import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 Chart.register(...registerables);
 
 const MultiRingDoughnut = () => {
-
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-    
+
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 

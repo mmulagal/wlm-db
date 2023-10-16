@@ -2,15 +2,13 @@ import Promise from 'bluebird';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
+import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
     DISK_UTILISATION,
     MEMORY_UTILISATION,
     DATABASES,
-    SSM_RUN_POWERSHELL_SCRIPT_DOC,
-    PSSCRIPT,
     DATABASES_COUNT,
-    DB_ROWS_COUNT,
     SERVER_NAME,
     SERVER_GUID,
     DB_SIZE,
@@ -22,8 +20,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SSM_QUERY_CONCURRENCY_LIMIT
-} from './const';
+    SERVER_IO_LATENCY
+} from './queries';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
@@ -33,7 +31,8 @@ import {
     SqlServerDeploymentModel,
     HttpErrorCodes,
     CloudProviders,
-    ACCOUNT_ID
+    ACCOUNT_ID,
+    RESOURCE_RETRIVAL_ERROR
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, listResources, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
@@ -509,6 +508,54 @@ async function deleteResourceById(accountId: string, resourceId: string) {
     }
 }
 
+async function getServerIOLatency(resourceId: string) {
+    logger.info('Fetch SQL server IO latency for resource', resourceId);
+
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+    }
+
+    const commands = [`${PSSCRIPT} -Query "${SERVER_IO_LATENCY}"`];
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!
+    );
+
+    logger.debug('SQL server IO latency response', response);
+
+    if (response) {
+        return sqlResponseParsing(response)[0];
+    }
+}
+
+async function getServerState(resourceId: string) {
+    logger.info('Fetch SQL server state for resource', resourceId);
+
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+    }
+
+    const commands = [`${PSSCRIPT} -Query "${SERVER_STATE}"`];
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!
+    );
+
+    logger.debug('SQL server state response', response);
+
+    return response!.replace(/[\r\n.]/g, '');
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -521,5 +568,7 @@ export {
     callSsmExecution,
     getTablesCount,
     getMsSqlResourceId,
-    deleteResourceById
+    deleteResourceById,
+    getServerIOLatency,
+    getServerState
 };

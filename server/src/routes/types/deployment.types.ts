@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Static, Type } from '@fastify/type-provider-typebox';
 
 const CFNetworkConfiguration = Type.Object({
     vpcId: Type.Optional(Type.String()),
