@@ -129,7 +129,9 @@ enum HttpErrorCodes {
 
 enum SqlServerDeploymentModel {
     SQL_STANDALONE = 'Standalone Instance',
-    SQL_FCI = 'Always On Failover Cluster Instance'
+    SQL_FCI = 'Always On Failover Cluster Instance',
+    SQL_STANDALONE_SHORT = 'Standalone',
+    SQL_FCI_SHORT = 'FCI'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -236,6 +238,13 @@ enum AWSQueryFields {
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX'
+}
+
+const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
+
+enum FileSystemTypes {
+    EBS = 'EBS',
+    FSXONTAP = 'FSx ONTAP'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -532,6 +541,7 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
     `Error creating signed url for ${url} in region ${region}. ${error}`;
+const RESOURCE_RETRIVAL_ERROR = 'Unable to fetch credentials, region, server instance id details.';
 
 const AWS_FSX = 'aws/fsx';
 const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
@@ -758,6 +768,18 @@ const FCI = 'fci';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
+enum DatabaseHostsQueryFields {
+    PERFORMANCE = 'performance',
+    PROTECTION = 'protection',
+    STORAGE = 'storage',
+    USAGE_ESTIMATION = 'usageEstimation'
+}
+
+enum ServerState {
+    UP = 'Up',
+    DOWN = 'Down'
+}
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -908,5 +930,10 @@ export {
     STANDARD_DEPLOYMENT_ACTION,
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT
+    SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    RESOURCE_RETRIVAL_ERROR,
+    DatabaseHostsQueryFields,
+    ServerState,
+    SERVER_TYPE_MAPPING,
+    FileSystemTypes
 };
