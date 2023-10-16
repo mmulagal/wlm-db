@@ -17,8 +17,8 @@
         "outdated": "npx npm-check-updates",
         "unused": "npx depcheck",
         "build:dev": "npm run build && npm run start",
-        "test": "vitest --coverage",
-        "test:nowatch": "vitest --run --silent",
+        "test": "cross-env NODE_ENV=simulator vitest --coverage",
+        "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent",
         "postinstall": "patch-package"
     },
     "repository": {
