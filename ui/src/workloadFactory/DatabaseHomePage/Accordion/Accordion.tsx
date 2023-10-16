@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
+import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 
 type AccordionContent = {
     heading: string;
@@ -58,7 +59,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
 
     const handleLoadWizard = () => {
         dispatch(setIsLoading(true));
-        navigate(`../add-working-environment/database-services/mssql/create`);
+        navigate(WLF_TO_FORM_NAVIGATE);
         LoadConfiguration(dispatch, loadConfigDataExe, null, id);
     };
 

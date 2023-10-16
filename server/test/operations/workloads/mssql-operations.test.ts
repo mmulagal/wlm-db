@@ -1,4 +1,4 @@
-import { beforeEach, afterEach } from 'vitest';
+import { afterAll, beforeAll } from 'vitest';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/opentelemetry-scope';
@@ -21,17 +21,18 @@ import {
     getTablesSummary,
     getServerSummary,
     discoverMsSqlServer,
+    deleteResourceById,
     getServerIOLatency,
     getServerState
 } from '../../../src/operations/workloads/mssql/mssql-operations';
-import { createResource, deleteResource } from '../../../src/lib/database/db';
+import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 
-beforeEach(async () => {
+beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
         resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
         resourceName: 'test-resource',
         resourceType: 'MSSQL',
-        coRelationId: 'test-fsx',
+        coRelationId: 'fs-f6082f35c1db',
         cloudProviderAccountId: 'test-aws-account',
         cloudProviderName: 'AWS',
         region: 'ap-southeast-1',
@@ -45,17 +46,24 @@ beforeEach(async () => {
             standbyNodeInstanceIp: '10.0.0.1'
         }
     });
+    await createResource(ACCOUNT_ID, {
+        resourceId: 'fs-f6082f35c1db',
+        resourceName: 'test-fsx-resource',
+        resourceType: 'FSX',
+        cloudProviderAccountId: 'test-aws-account',
+        cloudProviderName: 'AWS',
+        region: 'ap-southeast-1'
+    });
 });
 
-afterEach(async () => {
+afterAll(async () => {
     await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+    await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
 });
 describe('MSSQL Resource methods', () => {
     it('Get memory utilization', async () => {
         const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.MEMORY);
         expect(resp.percentUsed).toEqual(mssqlResponse.getResourceUtilizationResponse.percentUsed);
-
-        await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
     });
 
     it('Get cpu utilization', async () => {
@@ -132,6 +140,16 @@ describe('MSSQL Resource methods', () => {
         );
         expect(resp.resourceName).toEqual(mssqlResponse.mssqlRegistrationResponse.resourceName);
 
-        await deleteResource(ACCOUNT_ID, '5c791ae7-0e86-486b-8dc2-bafef485b875');
+        await deleteResource(ACCOUNT_ID, resp.resourceId);
+    });
+
+    it('Delete MSSQL resource', async () => {
+        const resp = await deleteResourceById(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
+        expect(resp.message).toEqual('Resource successfully deleted');
+        const listResp = await listResources(ACCOUNT_ID);
+        const mssqlResource = listResp.find(res => res.resource_id === '36E53042-04E8-40C9-AE69-26E56CB0D216');
+        expect(mssqlResource).toBeUndefined();
+        const fsxResource = listResp.find(res => res.resource_id === 'fs-f6082f35c1db');
+        expect(fsxResource).toBeUndefined();
     });
 });

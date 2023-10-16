@@ -20,13 +20,19 @@ import { useDispatch } from 'react-redux';
 import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+
+type ConfigType = {
+    id?: string;
+    name?: string;
+}
 
 const Sidebar = ({ isOpen, onClose }: any) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [openKey, setOpenKey] = useState();
-    const [openedItem, setOpenedItem] = useState('');
-    const [openedItemId, setOpenedItemId] = useState('');
+    const [openedItem, setOpenedItem] = useState<ConfigType>({});
+    // const [openedItemId, setOpenedItemId] = useState('');
     const [searchInput, setSearchInput] = useState('');
 
     // For expanded menu
@@ -76,20 +82,29 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     useEffect(() => {
         if (configData && configData.length) {
-            setOpenedItem(configData[0].name);
-            setOpenedItemId(configData[0].id);
-            getRestResponse(configData[0].id);
+            if (openKey) {
+                const updatedConfigData = configData.filter((item: any) => item.name === openKey);
+                setOpenedItem(updatedConfigData[0]);
+                getRestResponse(updatedConfigData[0].id);
+            } else {
+                setOpenedItem(configData[0]);
+                getRestResponse(configData[0].id);
+            }
         }
-    }, [configData]);
+    }, [configData, openKey]);
 
     const handleToggle = (key: any, id: string) => {
         if (!isOpen) {
             setOpenKey(openKey !== key ? key : null);
         } else {
-            setOpenedItem(key);
-            setOpenedItemId(id);
+            setOpenedItem({name: key, id: id});
             getRestResponse(id);
         }
+    };
+
+    //To expand collapse side bar
+    const handleClose = () => {
+        onClose();
     };
 
     //Function to generate the options for Select Field for License
@@ -130,8 +145,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const loadWizard = async () => {
         dispatch(setIsLoading(true));
-        navigate(`../add-working-environment/database-services/mssql/create`);
-        LoadConfiguration(dispatch, loadConfigDataExe, null, openedItemId);
+        navigate(WLF_TO_FORM_NAVIGATE);
+        LoadConfiguration(dispatch, loadConfigDataExe, null, openedItem?.id);
     };
 
     return (
@@ -142,7 +157,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </Typography>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
-                    <Typography variant="Regular_16" className={styles.color} onClick={onClose}>
+                    <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
                         {!isOpen ? 'Expand' : 'Collapse'}
                     </Typography>
                     {isOpen && <ArrowLeft />}
@@ -191,7 +206,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         subHeading={formatDateWithTime(item.creationTime)}
                                         toggle={handleToggle}
                                         open={openKey === item.name}
-                                        openedItem={openedItem}
+                                        openedItem={openedItem?.name}
                                         id={item.id}
                                         configRefetch={configRefetch}
                                     />
