@@ -4,6 +4,7 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../store/notification
 import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
 import { 
     setIsLoadConfig,
+    setIsLoading,
     setIsSaveConfigLoading, 
     setRefetchApiCountExpected, 
     setRefetchApiCountLoading, 
@@ -17,9 +18,7 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 /*
 This function is used to load config data on click on config load. 
 */
-export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any) => {
-    const state = store.getState();
-    const selectedConfig = state.mssqlForm.loadConfig;
+export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any, selectedConfig:string | undefined) => {
     resetRefetchApiCheck(dispatch);
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
@@ -34,7 +33,10 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
                 dispatch(setMssqlForm(data?.data?.data));
             } else {
                 dispatch(setIsLoadConfig(false));
-                closeDialog();
+                dispatch(setIsLoading(false));
+                if(closeDialog){
+                    closeDialog();
+                }
                 dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
                     message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
             }
@@ -42,9 +44,12 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
         .catch((error: any) => {
             console.log("Error while loading data - ", error);
             dispatch(setIsLoadConfig(false));
-            closeDialog();
+            dispatch(setIsLoading(false));
+            if(closeDialog){
+                closeDialog();
+            }
         });
-    return '';
+    return;
 };
 
 /* 
@@ -52,6 +57,7 @@ This function is used to reset all load config related action states once data i
 */
 export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any) => {
     dispatch(setIsLoadConfig(false));
+    dispatch(setIsLoading(false));
     closeDialog();
     dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
         message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));

@@ -362,6 +362,6 @@ export const GENERAL = {
     DATABASE_PROTECTION: 'Database protection',
     DB_HOST_PROTECTED: 'Protected',
     DB_HOST_UNPROTECTED: 'Unprotected',
-    PROTECTED_DB_DISTRIBUTION: 'Protected database distribution'
-
+    PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
+    SIDEBAR_LOAD_WIZARD: 'Load Wizard'
 };

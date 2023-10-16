@@ -15,10 +15,18 @@ import { formatDateWithTime, generateOptionType } from '../../../utils/utilityFu
 import { useGetConfigListQuery, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import { GENERAL } from '../../../utils/appConstants';
+import { useDispatch } from 'react-redux';
+import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { useNavigate } from 'react-router-dom';
+import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 
 const Sidebar = ({ isOpen, onClose }: any) => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState('');
+    const [openedItemId, setOpenedItemId] = useState('');
     const [searchInput, setSearchInput] = useState('');
 
     // For expanded menu
@@ -69,6 +77,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     useEffect(() => {
         if (configData && configData.length) {
             setOpenedItem(configData[0].name);
+            setOpenedItemId(configData[0].id);
             getRestResponse(configData[0].id);
         }
     }, [configData]);
@@ -78,6 +87,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             setOpenKey(openKey !== key ? key : null);
         } else {
             setOpenedItem(key);
+            setOpenedItemId(id);
             getRestResponse(id);
         }
     };
@@ -117,6 +127,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
         }
     };
+
+    const loadWizard = async () => {
+        dispatch(setIsLoading(true));
+        navigate(`../add-working-environment/database-services/mssql/create`);
+        LoadConfiguration(dispatch, loadConfigDataExe, null, openedItemId);
+    };
+
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
@@ -211,10 +228,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     />
                                 </div>
 
-                                <div className={styles.menuItem}>
+                                <div className={styles.menuItem} onClick={loadWizard}>
                                     <LoadIcon />
                                     <Typography variant="Semibold_14" className={styles.rightSideHeading}>
-                                        Load Wizard
+                                        {GENERAL.SIDEBAR_LOAD_WIZARD}
                                     </Typography>
                                 </div>
 
