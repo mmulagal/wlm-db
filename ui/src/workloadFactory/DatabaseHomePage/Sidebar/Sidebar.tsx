@@ -68,10 +68,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     useEffect(() => {
         if (configData && configData.length) {
-            setOpenedItem(configData[0].name);
-            getRestResponse(configData[0].id);
+            if (openKey) {
+                const updatedConfigData = configData.filter((item: any) => item.name === openKey);
+                setOpenedItem(updatedConfigData[0].name);
+                getRestResponse(updatedConfigData[0].id);
+            } else {
+                setOpenedItem(configData[0].name);
+                getRestResponse(configData[0].id);
+            }
         }
-    }, [configData]);
+    }, [configData, openKey]);
 
     const handleToggle = (key: any, id: string) => {
         if (!isOpen) {
@@ -80,6 +86,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             setOpenedItem(key);
             getRestResponse(id);
         }
+    };
+
+    //To expand collapse side bar
+    const handleClose = () => {
+        onClose();
     };
 
     //Function to generate the options for Select Field for License
@@ -125,7 +136,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </Typography>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
-                    <Typography variant="Regular_16" className={styles.color} onClick={onClose}>
+                    <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
                         {!isOpen ? 'Expand' : 'Collapse'}
                     </Typography>
                     {isOpen && <ArrowLeft />}
