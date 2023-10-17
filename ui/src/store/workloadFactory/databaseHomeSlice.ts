@@ -23,6 +23,7 @@ const initialState: DatabaseHostsEntities = {
         totalUpHosts: 0,
         totalInitializingHosts: 0,
         totalDownHosts: 0,
+        totalFailedHosts: 0,
     },
     aggregatedProtectionDbCount: {
         protectedDb: 0,
