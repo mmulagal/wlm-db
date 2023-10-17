@@ -21,6 +21,14 @@
     .cost {
         display: flex;
         gap: 16px;
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
     }
 
     .statusIcon {

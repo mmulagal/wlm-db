@@ -33,6 +33,10 @@
         color: var(--white);
     }
 
+    .recTemplateHeading {
+        display: flex;
+    }
+
     .colorAutomation {
         color: var(--white);
     }
@@ -114,7 +118,7 @@
                         svg {
                             cursor: pointer;
                             &:hover {
-                                fill: var(--grey-50);
+                                fill: var(--text-primary);
                             }
                         }
                     }

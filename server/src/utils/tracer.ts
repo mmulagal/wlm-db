@@ -2,6 +2,7 @@ import opentelemetry from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
+import { PrismaInstrumentation } from '@prisma/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import getLogger from './logger';
@@ -14,7 +15,7 @@ const logger = getLogger();
 const traceExporter = new OTLPTraceExporter({ url: SIGNOZ_ENDPOINT });
 const sdk = new opentelemetry.NodeSDK({
     traceExporter,
-    instrumentations: [new HttpInstrumentation(), new FastifyInstrumentation()],
+    instrumentations: [new HttpInstrumentation(), new FastifyInstrumentation(), new PrismaInstrumentation()],
     resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: WLMDB
     })
