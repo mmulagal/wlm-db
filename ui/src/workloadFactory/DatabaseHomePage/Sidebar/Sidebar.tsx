@@ -15,10 +15,23 @@ import { formatDateWithTime, generateOptionType } from '../../../utils/utilityFu
 import { useGetConfigListQuery, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import { GENERAL } from '../../../utils/appConstants';
+import { useDispatch } from 'react-redux';
+import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { useNavigate } from 'react-router-dom';
+import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+
+type ConfigType = {
+    id?: string;
+    name?: string;
+}
 
 const Sidebar = ({ isOpen, onClose }: any) => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [openKey, setOpenKey] = useState();
-    const [openedItem, setOpenedItem] = useState('');
+    const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
     // For expanded menu
@@ -46,9 +59,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const {
         data: configData,
-
         isFetching: configLoading,
-
         isError: configError,
         refetch: configRefetch
     } = useGetConfigListQuery({});
@@ -68,18 +79,32 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     useEffect(() => {
         if (configData && configData.length) {
-            setOpenedItem(configData[0].name);
-            getRestResponse(configData[0].id);
+            if (openKey) {
+                const updatedConfigData = configData.filter((item: any) => item.name === openKey);
+                setOpenedItem(updatedConfigData[0]);
+                getRestResponse(updatedConfigData[0].id);
+            } else {
+                setOpenedItem(configData[0]);
+                getRestResponse(configData[0].id);
+            }
         }
-    }, [configData]);
+    }, [configData, openKey]);
 
     const handleToggle = (key: any, id: string) => {
-        if (!isOpen) {
-            setOpenKey(openKey !== key ? key : null);
-        } else {
-            setOpenedItem(key);
-            getRestResponse(id);
-        }
+        setOpenKey(openKey !== key ? key : null);
+        setOpenedItem({name: key, id: id});
+        getRestResponse(id);
+    };
+
+    const handleViewCode = (key: any, id: string) => {
+        setOpenKey(openKey !== key ? key : openKey);
+        setOpenedItem({name: key, id: id});
+        getRestResponse(id);
+    };
+
+    //To expand collapse side bar
+    const handleClose = () => {
+        onClose();
     };
 
     //Function to generate the options for Select Field for License
@@ -117,6 +142,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
         }
     };
+
+    const loadWizard = async () => {
+        dispatch(setIsLoading(true));
+        navigate(WLF_TO_FORM_NAVIGATE);
+        LoadConfiguration(dispatch, loadConfigDataExe, null, openedItem?.id);
+    };
+
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
@@ -125,7 +157,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </Typography>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
-                    <Typography variant="Regular_16" className={styles.color} onClick={onClose}>
+                    <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
                         {!isOpen ? 'Expand' : 'Collapse'}
                     </Typography>
                     {isOpen && <ArrowLeft />}
@@ -153,6 +185,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 open={openKey === item.name}
                                 id={item.id}
                                 configRefetch={configRefetch}
+                                isExpanded={isOpen}
+                                expand={handleClose}
+                                viewCode={handleViewCode}
                             />
                         </div>
                     ))}
@@ -174,9 +209,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         subHeading={formatDateWithTime(item.creationTime)}
                                         toggle={handleToggle}
                                         open={openKey === item.name}
-                                        openedItem={openedItem}
+                                        openedItem={openedItem?.name}
                                         id={item.id}
                                         configRefetch={configRefetch}
+                                        isExpanded={isOpen}
+                                        expand={handleClose}
+                                        viewCode={handleViewCode}
                                     />
                                 </div>
                             ))}
@@ -211,10 +249,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     />
                                 </div>
 
-                                <div className={styles.menuItem}>
+                                <div className={styles.menuItem} onClick={loadWizard}>
                                     <LoadIcon />
                                     <Typography variant="Semibold_14" className={styles.rightSideHeading}>
-                                        Load Wizard
+                                        {GENERAL.SIDEBAR_LOAD_WIZARD}
                                     </Typography>
                                 </div>
 

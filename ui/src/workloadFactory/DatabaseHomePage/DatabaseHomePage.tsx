@@ -11,6 +11,7 @@ import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
 import { useNavigate } from 'react-router-dom';
+import { WLF_TO_FORM_NAVIGATE } from '../../utils/consts';
 
 const DatabaseHomePage = () => {
     const navigate = useNavigate();
@@ -33,7 +34,7 @@ const DatabaseHomePage = () => {
                         <Button
                             variant="primary"
                             onClick={() => {
-                                navigate(`../add-working-environment/database-services/mssql/create`);
+                                navigate(WLF_TO_FORM_NAVIGATE);
                             }}
                         >
                             {GENERAL.DEPLOY_NEW_DATABASE}
