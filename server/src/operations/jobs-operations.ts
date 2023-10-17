@@ -1,6 +1,8 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { deploymentJobsCount } from '../lib/database/db';
+import { isEmpty } from 'lodash-es';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { deploymentJobsCount, listDeployments } from '../lib/database/db';
 import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -40,4 +42,52 @@ async function getDeploymentJobsCount(accountId: string, duration: number = 90) 
     }
 }
 
-export { getDeploymentJobsCount };
+async function getDeploymentJobsSummary(accountId: string, status?: string) {
+    logger.info('Getting deployment jobs summary based on statuses', accountId, status);
+
+    let deploymentStatuses: Array<DEPLOYMENT_STATUS> | undefined;
+
+    if (status) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        deploymentStatuses = status?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
+    } else {
+        deploymentStatuses = undefined;
+    }
+    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses);
+
+    if (isEmpty(deploymentDetails)) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No deployments found for account ${accountId} with statuses ${status}`
+        );
+    }
+    try {
+        const response = deploymentDetails.map(item => ({
+            deploymentId: item.deployment_id,
+            deploymentStatus: item.deployment_status,
+            deploymentModel: item.deployment_model,
+            region: item.region,
+            data: item.data
+        }));
+
+        const extractedValues = response.map(({ deploymentId, deploymentStatus, deploymentModel, region, data }) => ({
+            id: deploymentId,
+            name: (data as any).resourceName,
+            status: deploymentStatus,
+            metadata: {
+                region: region!,
+                serverType: (data as any).databaseType,
+                fileSystemType: (data as any).fileSystemType,
+                serverInstallationMode: deploymentModel
+            }
+        }));
+
+        const responseValue = { count: extractedValues.length, items: extractedValues, nextToken: '' };
+        return responseValue;
+    } catch (error) {
+        logger.error(error);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error fetching deployment jobs summary ${error}`);
+    }
+}
+
+export { getDeploymentJobsCount, getDeploymentJobsSummary };

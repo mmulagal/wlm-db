@@ -1,5 +1,10 @@
 import { RouteTags } from '../../utils/consts';
-import { DeploymentJobsResponse, DeploymentJobsQueryString } from '../types/jobs.types';
+import {
+    DeploymentJobsCountResponse,
+    DeploymentJobsCountQueryString,
+    DeploymentJobsSummaryQueryString,
+    DeploymentJobsSummaryListResponse
+} from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
@@ -9,13 +14,22 @@ const baseRequest = {
 };
 
 // Get Deployment jobs summary details
-const DeploymentJobsSummarySchema = {
+const DeploymentJobsCountSchema = {
     ...baseRequest,
     description: 'API to get deplyment jobs count for given duration in days',
-    querystring: DeploymentJobsQueryString,
+    querystring: DeploymentJobsCountQueryString,
     response: {
-        200: DeploymentJobsResponse
+        200: DeploymentJobsCountResponse
     }
 };
 
-export default DeploymentJobsSummarySchema;
+const DeploymentJobsSummaryListSchema = {
+    ...baseRequest,
+    description: 'API to get deplyment jobs summary for given deployment status types',
+    querystring: DeploymentJobsSummaryQueryString,
+    response: {
+        200: DeploymentJobsSummaryListResponse
+    }
+};
+
+export { DeploymentJobsCountSchema, DeploymentJobsSummaryListSchema };

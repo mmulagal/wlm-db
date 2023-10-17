@@ -21,6 +21,7 @@ model deployment {
   region                    String            @db.VarChar(30)
   credentials_id            String            @db.VarChar(80)
   deployment_status         DEPLOYMENT_STATUS
+  deployment_model          DEPLOYMENT_MODEL
   deployment_status_reason  String?           @db.Text
   start_time                DateTime          @db.DateTime(0)
   end_time                  DateTime?         @db.DateTime(0)
@@ -95,9 +96,14 @@ enum DEPLOYMENT_STATUS {
   UPDATE_COMPLETE
   UPDATE_COMPLETE_CLEANUP_IN_PROGRESS
   UPDATE_IN_PROGRESS
-  UPADTE_FAILED
+  UPDATE_FAILED
   UPDATE_ROLLBACK_COMPLETE
   UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
   UPDATE_ROLLBACK_FAILED
   UPDATE_ROLLBACK_IN_PROGRESS
+}
+
+enum DEPLOYMENT_MODEL {
+  FCI
+  Standalone
 }

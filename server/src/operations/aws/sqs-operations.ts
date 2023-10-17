@@ -96,7 +96,11 @@ async function processCloudFormationMessages() {
                                 RequestType: requestType,
                                 ResponseURL: responseUrl,
                                 ResourceProperties: resourceProperties,
-                                LogicalResourceId: logicalResourceId
+                                LogicalResourceId: logicalResourceId,
+                                SQLDeploymentType: sqlDeploymentType,
+                                datbaseType: DatabaseType,
+                                resourceName: ResourceName,
+                                fileSystemType: FileSystemType
                             } = jsonMessage;
                             if (
                                 requestType === CF_CUSTOM_RESOURCE_CODES.CREATE ||
@@ -140,7 +144,13 @@ async function processCloudFormationMessages() {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
                                                     startTime: new Date(messageTimestamp).valueOf(),
                                                     region,
-                                                    deploymentName: stackName
+                                                    deploymentName: stackName,
+                                                    deploymentModel: sqlDeploymentType,
+                                                    data: {
+                                                        datbaseType: DatabaseType,
+                                                        resourceName: ResourceName,
+                                                        fileSystemType: FileSystemType
+                                                    }
                                                 });
                                             } else {
                                                 // Post deployment completion another custom resource is Created, to mark the successful completion of deployment
@@ -167,7 +177,6 @@ async function processCloudFormationMessages() {
                                                         ActiveInstanceIp: activeNodeInstanceIp,
                                                         StandbyInstanceIp: standbyNodeInstanceIp,
                                                         ResourceName: resourceName,
-                                                        SQLDeploymentType: sqlDeploymentType,
                                                         FileSystemType: fileSystemType
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await listResources(
@@ -302,8 +311,14 @@ async function processCloudFormationMessages() {
                                 EventId: eventId,
                                 ResourceStatus: resourceStatus,
                                 ResourceStatusReason: resourceStatusReason,
-                                ResourceProperties: resourceProperties
+                                ResourceProperties: resourceProperties,
+                                SQLDeploymentType: stackSqlDeploymentType,
+                                datbaseType: DatabaseType,
+                                resourceName: ResourceName,
+                                fileSystemType: FileSystemType
                             } = stackMessage;
+                            const sqlDeploymentType: any = stackSqlDeploymentType;
+
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
                                 const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
@@ -346,7 +361,13 @@ async function processCloudFormationMessages() {
                                             parentDeploymentId:
                                                 masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
                                             credentialsId,
-                                            startTime: new Date(timestamp).valueOf()
+                                            startTime: new Date(timestamp).valueOf(),
+                                            deploymentModel: sqlDeploymentType,
+                                            data: {
+                                                datbaseType: DatabaseType,
+                                                resourceName: ResourceName,
+                                                fileSystemType: FileSystemType
+                                            }
                                         });
                                         if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
                                             // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED

@@ -478,6 +478,14 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
+      ResourceName: !Ref 'SqlServerName'
+      SQLDeploymentType: 
+          !If
+            - IsFailoverCluster
+            - 'FCI'
+            - 'Standalone'
+      FileSystemType: 'FSx ONTAP'
+      DatabaseType: 'Microsoft SQL server'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
