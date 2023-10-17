@@ -9,28 +9,24 @@ import '../simulator/scopes/aws/service-quota-scope';
 import '../simulator/scopes/opentelemetry-scope';
 import '../simulator/scopes/batch-scope';
 
-describe(
-    'Batch operations',
-    () => {
-        it('Executing the batch api calls', async () => {
-            const resp = await executeBatchApiCalls([
-                {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Aaronview/tables',
-                    method: 'GET'
-                },
-                {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Amandaberg/tables',
-                    method: 'GET'
-                },
-                {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Adamsview/tables',
-                    method: 'GET'
-                }
-            ]);
-            expect(resp).toBeDefined();
-        });
-    },
-    {
-        timeout: 10000
-    }
-);
+describe('Batch operations', () => {
+    it('Executing the batch api calls', async () => {
+        const resp = await executeBatchApiCalls([
+            {
+                url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Aaronview/tables',
+                method: 'GET'
+            },
+            {
+                url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Amandaberg/tables',
+                method: 'GET'
+            },
+            {
+                url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Adamsview/tables',
+                method: 'GET'
+            }
+        ]);
+        expect(resp).toBeDefined();
+    });
+}, {
+    timeout: 10000,
+});
