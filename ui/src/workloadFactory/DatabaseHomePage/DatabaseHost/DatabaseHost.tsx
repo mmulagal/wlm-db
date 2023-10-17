@@ -3,6 +3,7 @@ import { ReactComponent as DatabaseIllustration } from '../../../assets/Database
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
+import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import styles from './DatabaseHost.module.scss';
 import { Typography } from '@netapp/design-system';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -55,6 +56,15 @@ const DatabaseHost = () => {
                             </div>
                             <Typography variant="Regular_14" className={styles.secondRow}>
                                 {GENERAL.DB_HOST_DOWN}
+                            </Typography>
+                        </div>
+                        <div className={styles.layout}>
+                            <div className={styles.firstRow}>
+                                <ErrorIcon />
+                                <Typography variant="Semibold_14">{hostData?.totalFailedHosts}</Typography>
+                            </div>
+                            <Typography variant="Regular_14" className={styles.secondRow}>
+                                {GENERAL.DB_HOST_FAILED}
                             </Typography>
                         </div>
                     </div>
