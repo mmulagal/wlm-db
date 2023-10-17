@@ -32,7 +32,7 @@ async function getDeploymentJobsCount(accountId: string, duration: number = 90) 
         return {
             success: (formattedCounts.UPDATE_COMPLETE || 0) + (formattedCounts.CREATE_COMPLETE || 0),
             initializing: (formattedCounts.CREATE_IN_PROGRESS || 0) + (formattedCounts.UPDATE_IN_PROGRESS || 0),
-            failed: formattedCounts.CREATE_FAILED || 0
+            failed: (formattedCounts.CREATE_FAILED || 0) + (formattedCounts.UPDATE_FAILED || 0)
         };
     } catch (error) {
         logger.error('Unable to get deployment jobs counr:', error);
