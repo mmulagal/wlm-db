@@ -21,20 +21,27 @@ const DatabaseTable = () => {
 
     const menuItems = [
         {
-            id: '1',
-            displayName: 'View full info'
+            id: 'resourceView',
+            displayName: 'View resource details'
         },
         {
-            id: '2',
-            displayName: 'Clone'
+            id: 'clone',
+            displayName: 'Clone',
+            disabled: true
         },
         {
-            id: '3',
-            displayName: 'Migrate'
+            id: 'migrate',
+            displayName: 'Migrate',
+            disabled: true
         },
         {
-            id: '4',
-            displayName: 'Protect'
+            id: 'protect',
+            displayName: 'Protect',
+            disabled: true
+        },
+        {
+            id: 'remove',
+            displayName: 'Remove'
         }
     ];
 
