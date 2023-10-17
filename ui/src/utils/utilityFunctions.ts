@@ -8,8 +8,10 @@ import {
     DISABLED_STATE,
     ENABLED_STATE,
     PENDING_DELETION,
+    RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
     SQL_DATABASE,
+    SQL_DEPLOYMENT_MODE,
     STATUS_CONST
 } from './consts';
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
@@ -520,4 +522,67 @@ export const getWlmdbPayload = (params: any) => {
             ontapSgGroupId: params.ontapSgGroupId || ''
         }
     };
+};
+
+/*
+This function is used to set recommended values for recommended templates load.
+Type dev is for Dev/Test template and type prod is for Prod template
+*/
+export const setRecommendedValues = (initialFormData: any, type: string) => {
+    let result = {...initialFormData};
+    if(type === RECOMMENDED_TEMPLATES.DEV_ID) {
+        result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
+        // setting instance type 
+        const value = 'm5.xlarge';
+        const label2 = '2vCPU, 8 GiB RAM, 4750Mbps';
+        const data = {
+            instanceType: 'm5.xlarge',
+            vCpus: 2,
+            ramInMib: 8192,
+            iopsInMbps: 4750,
+            architecture: [
+                'x86_64'
+            ]
+        }
+        const option = generateOptionType(value, value, label2, false, '', data);
+        result.instanceType = option;
+        // setting database edition 
+        result.dbEdition = {
+            label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+            value: GENERAL.SQL_SERVER_STANDARD
+        }
+        // setting deployment mode
+        result.dbDeploymentModel = {
+            label: GENERAL.SINGLE_INSTANCE,
+            value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+        }
+    } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
+        result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
+        // setting instance type 
+        const value = 'r5.xlarge';
+        const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
+        const data = {
+            instanceType: 'r5.xlarge',
+            vCpus: 4,
+            ramInMib: 32768,
+            iopsInMbps: 4750,
+            architecture: [
+                'x86_64'
+            ]
+        }
+        const option = generateOptionType(value, value, label2, false, '', data);
+        result.instanceType = option;
+        // setting database edition 
+        result.dbEdition = {
+            label: GENERAL.SQL_SERVER_STANDARD_EDITION,
+            value: GENERAL.SQL_SERVER_STANDARD
+        }
+        // setting deployment mode
+        result.dbDeploymentModel = {
+            label: GENERAL.FAILOVER_CLUSTER,
+            value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+        }
+    }
+    
+    return result;
 };

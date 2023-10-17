@@ -6,10 +6,12 @@ import { Typography } from '@netapp/design-system';
 import styles from './Accordion.module.scss';
 import { useDeleteConfigMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { useDispatch } from 'react-redux';
-import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
+import { LoadConfiguration, LoadRecommendedConfig } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { useAppSelector } from '../../../store/storeHooks';
+import { setRecommendedValues } from '../../../utils/utilityFunctions';
 
 type AccordionContent = {
     heading: string;
@@ -22,16 +24,19 @@ type AccordionContent = {
     isExpanded?: boolean;
     expand?: any;
     viewCode?: any;
+    recommended?: boolean; //recommended templates check
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand, viewCode }: AccordionContent) => {
+const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand, viewCode, recommended }: AccordionContent) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
     const [deleteConfigApi] = useDeleteConfigMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+    const initialMssqlState = useAppSelector((state:any) => state.mssqlForm);
 
+    // Default menu items applicable for all
     const menuItems = [
         {
             id: 'viewCode',
@@ -40,31 +45,42 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         {
             id: 'loadWizard',
             displayName: 'Load (Wizard)'
-        },
-        {
-            id: '3',
-            displayName: 'Rename',
-            disabled: true
-        },
-        {
-            id: 'delete',
-            displayName: 'Delete'
         }
     ];
+
+    // Add rename and delete if it is saved config but not recommended template
+    const savedConfigMenu = () => {
+        if(!recommended){
+            menuItems.push({
+                id: 'rename',
+                displayName: 'Rename'
+            })
+            menuItems.push({
+                id: 'delete',
+                displayName: 'Delete'
+            })
+        }
+        return menuItems;
+    };
 
     const handleDelete = () => {
         deleteConfigApi({ configId: id }).then((data: any) => {
             configRefetch();
-            // if (!data?.error) {
-            //     configListRefetch();
-            // }
         });
     };
 
     const handleLoadWizard = () => {
         dispatch(setIsLoading(true));
         navigate(WLF_TO_FORM_NAVIGATE);
-        LoadConfiguration(dispatch, loadConfigDataExe, null, id);
+        if(recommended){
+            // Load config by setting recommended data in initial state
+            const data = setRecommendedValues(initialMssqlState, id || '');
+            dispatch(setIsRecommendedInstance(data?.instanceType));
+            LoadRecommendedConfig(dispatch, data);
+        } else {
+            // Load config by getting data from load config API and update in form
+            LoadConfiguration(dispatch, loadConfigDataExe, null, id);
+        }
     };
 
     const handleViewCode = () => {
@@ -101,7 +117,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                             <div className={styles.accordionMenuPopover} onClick={e => e.stopPropagation()}>
                                 <MenuPopover
                                     isMenuOpen={menuOpenedRowDetail.current === heading || menuOpenedRow === heading}
-                                    menuItems={menuItems}
+                                    menuItems={savedConfigMenu()}
                                     toggleMenu={(toggleType: string, menuId: string) => {
                                         if (toggleType === 'close') {
                                             menuOpenedRowDetail.current = null;
@@ -133,13 +149,15 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                             </div>
                         </div>
                     </div>
-
-                    <Typography
-                        variant="Regular_13"
-                        className={open ? `${styles.secondLevel} ${styles.addColor}` : `${styles.secondLevel}`}
-                    >
-                        Creation date: {subHeading}
-                    </Typography>
+                    {/* Creation date will be shown only for saved config but not for recommended templates*/}
+                    {!recommended && 
+                        <Typography
+                            variant="Regular_13"
+                            className={open ? `${styles.secondLevel} ${styles.addColor}` : `${styles.secondLevel}`}
+                        >
+                            Creation date: {subHeading}
+                        </Typography>
+                    }
                 </div>
                 {open && (
                     <div className={styles.contentArea}>
