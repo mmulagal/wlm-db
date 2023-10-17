@@ -257,6 +257,9 @@ const mssqlFormSlice = createSlice({
         //Update full form
         setMssqlForm(state, action: PayloadAction<any>) {
             return { ...state, ...action.payload };
+        },
+        setMssqlFormInitialState(state, action: PayloadAction<any>) {
+            state = initialState;
         }
     }
 });

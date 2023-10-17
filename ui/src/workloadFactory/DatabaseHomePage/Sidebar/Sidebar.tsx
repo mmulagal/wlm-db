@@ -11,7 +11,7 @@ import Highlighter from '../Highlighter/Highlighter';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
-import { formatDateWithTime, generateOptionType } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, generateOptionType, setRecommendedValues } from '../../../utils/utilityFunctions';
 import { useGetConfigListQuery, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
@@ -21,10 +21,12 @@ import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { useAppSelector } from '../../../store/storeHooks';
 
 type ConfigType = {
     id?: string;
     name?: string;
+    data?: any;
 }
 
 const Sidebar = ({ isOpen, onClose }: any) => {
@@ -33,6 +35,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
+
+    const initialMssqlState = useAppSelector(state => state.mssqlForm);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -43,6 +47,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [rightPanelResponse, setRightPanelResponse] = useState('');
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
+    const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
 
@@ -60,27 +65,57 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const {
         data: configData,
         isFetching: configLoading,
-        isError: configError,
         refetch: configRefetch
     } = useGetConfigListQuery({});
 
+    useEffect(() => {
+        const recList = [
+            {
+                name: 'Dev/Test',
+                id: '0',
+                data: setRecommendedValues(initialMssqlState, 'dev')
+            },
+            {
+                name: 'Production',
+                id: '1',
+                data: setRecommendedValues(initialMssqlState, 'prod')
+            }
+        ]
+        setRecommendedData(recList);
+    }, []);
+
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
-        loadConfigDataExe({ configId: id }).then(data => {
-            const actualData = data?.data?.data;
+        if(id === '0' || id === '1'){
+            const actualData = recommendedData.filter((item: any) => item.id === id);
             const changeObjectForm = {
-                mssqlForm: actualData
+                mssqlForm: actualData[0].data
             };
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
             setRightPanelResponse(res);
             setIsRightPanelDataLoading(false);
-        });
+        } else {
+            loadConfigDataExe({ configId: id }).then(data => {
+                const actualData = data?.data?.data;
+                const changeObjectForm = {
+                    mssqlForm: actualData
+                };
+                const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
+                setRightPanelResponse(res);
+                setIsRightPanelDataLoading(false);
+            });
+        }
     };
 
     useEffect(() => {
         if (configData && configData.length) {
-            if (openKey) {
-                const updatedConfigData = configData.filter((item: any) => item.name === openKey);
+            if (openKey && (openKey === '0' || openKey === '1')){
+                const recList = recommendedData.filter((item: any) => item.id === openKey);
+                setOpenedItem(recList[0]);
+                getRestResponse(openKey);
+            }
+            else if (openKey) {
+                const updatedConfigData = configData.filter((item: any) => item.id === openKey);
                 setOpenedItem(updatedConfigData[0]);
                 getRestResponse(updatedConfigData[0].id);
             } else {
@@ -90,14 +125,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     }, [configData, openKey]);
 
-    const handleToggle = (key: any, id: string) => {
-        setOpenKey(openKey !== key ? key : null);
+    const handleToggle = (key: any, id: any) => {
+        setOpenKey(openKey !== id ? id : null);
         setOpenedItem({name: key, id: id});
         getRestResponse(id);
     };
 
-    const handleViewCode = (key: any, id: string) => {
-        setOpenKey(openKey !== key ? key : openKey);
+    const handleViewCode = (key: any, id: any) => {
+        setOpenKey(openKey !== id ? id : openKey);
         setOpenedItem({name: key, id: id});
         getRestResponse(id);
     };
@@ -170,7 +205,37 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </Typography>
             )}
 
-            {/* when code box in collapse state */}
+            {/* Recommended templates when code box in collapse state */}
+            {!isOpen && (
+                <div className={styles.accordionStructure}>
+                    <div className={styles.recTemplateHeading}>
+                        <Typography variant="Semibold_14" className={styles.templateHeading}>
+                            Recommended Templates - 
+                        </Typography>
+                        <Typography variant="Regular_14" className={styles.templateHeading}>
+                            Microsoft SQL server deployment
+                        </Typography>
+                    </div>
+                    {recommendedData.map((item: any, i: number) => (
+                        <div key={i}>
+                            <Accordion
+                                heading={item.name}
+                                subHeading={''}
+                                toggle={handleToggle}
+                                open={openKey === item.id}
+                                id={item.id}
+                                configRefetch={configRefetch}
+                                isExpanded={isOpen}
+                                expand={handleClose}
+                                viewCode={handleViewCode}
+                                recommended={true}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Saved templates when code box in collapse state */}
             {configData && !isOpen && (
                 <div className={styles.accordionStructure}>
                     <Typography variant="Semibold_14" className={styles.templateHeading}>
@@ -182,12 +247,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 heading={item.name}
                                 subHeading={formatDateWithTime(item.creationTime)}
                                 toggle={handleToggle}
-                                open={openKey === item.name}
+                                open={openKey === item.id}
                                 id={item.id}
                                 configRefetch={configRefetch}
                                 isExpanded={isOpen}
                                 expand={handleClose}
                                 viewCode={handleViewCode}
+                                recommended={false}
                             />
                         </div>
                     ))}
@@ -195,32 +261,65 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             )}
 
             {/* when code box in expanded state */}
-            {configData && isOpen && (
+            { isOpen && (
                 <div className={styles.openView}>
                     <div className={styles.leftSideView}>
-                        <div className={styles.accordionStructure}>
-                            <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                My Templates
-                            </Typography>
-                            {configData.map((item: any, i: number) => (
-                                <div key={i}>
-                                    <Accordion
-                                        heading={item.name}
-                                        subHeading={formatDateWithTime(item.creationTime)}
-                                        toggle={handleToggle}
-                                        open={openKey === item.name}
-                                        openedItem={openedItem?.name}
-                                        id={item.id}
-                                        configRefetch={configRefetch}
-                                        isExpanded={isOpen}
-                                        expand={handleClose}
-                                        viewCode={handleViewCode}
-                                    />
+                        {/* recommended templates list when code box in expanded state */}
+                        {isOpen && 
+                            <div className={styles.accordionStructure}>
+                                <div className={styles.recTemplateHeading}>
+                                    <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                        Recommended Templates - 
+                                    </Typography>
+                                    <Typography variant="Regular_14" className={styles.templateHeading}>
+                                        Microsoft SQL server deployment
+                                    </Typography>
                                 </div>
-                            ))}
-                        </div>
+                                {recommendedData.map((item: any, i: number) => (
+                                    <div key={i}>
+                                        <Accordion
+                                            heading={item.name}
+                                            subHeading={''}
+                                            toggle={handleToggle}
+                                            open={openKey === item.id}
+                                            openedItem={openedItem?.name}
+                                            id={item.id}
+                                            configRefetch={configRefetch}
+                                            isExpanded={isOpen}
+                                            expand={handleClose}
+                                            viewCode={handleViewCode}
+                                            recommended={true}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        }
+                        {/* saved templates list when code box in expanded state */}
+                        {configData && isOpen && 
+                            <div className={styles.accordionStructure}>
+                                <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                    My Templates
+                                </Typography>
+                                {configData.map((item: any, i: number) => (
+                                    <div key={i}>
+                                        <Accordion
+                                            heading={item.name}
+                                            subHeading={formatDateWithTime(item.creationTime)}
+                                            toggle={handleToggle}
+                                            open={openKey === item.id}
+                                            openedItem={openedItem?.name}
+                                            id={item.id}
+                                            configRefetch={configRefetch}
+                                            isExpanded={isOpen}
+                                            expand={handleClose}
+                                            viewCode={handleViewCode}
+                                            recommended={false}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        }
                     </div>
-
                     {/* Right side panel in expanded code box */}
                     <div className={styles.rightSideView}>
                         {/* Code for top bar here */}

@@ -56,6 +56,20 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
     return;
 };
 
+export const LoadRecommendedConfig = (dispatch: Dispatch, mssqlFormData: any) => {
+    resetRefetchApiCheck(dispatch);
+    if(mssqlFormData){
+        dispatch(setMssqlForm(mssqlFormData));
+        dispatch(setIsLoading(false));
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
+            message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+    } else {
+        dispatch(setIsLoading(false));
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
+            message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));     
+    }
+};
+
 /* 
 This function is used to reset all load config related action states once data is loaded.
 */
