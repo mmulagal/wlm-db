@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import DeploymentJobsSummarySchema from './schemas/jobs-schemas';
 import { getDeploymentJobsCount } from '../operations/jobs-operations';
 
-const DEPLOYMENT_JOBS_API_PATH: string = '/v1//jobs';
+const DEPLOYMENT_JOBS_API_PATH: string = '/v1/jobs';
 
 export default function deploymentJobsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
