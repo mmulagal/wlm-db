@@ -6,7 +6,8 @@ import {
     DatabaseHostSummaryResponseType,
     DatabaseHostSummaryListResponseType,
     PerformanceResponseType,
-    TopologyResponseType
+    TopologyResponseType,
+    StorageResponseType
 } from '../routes/types/database-hosts.types';
 import {
     DatabaseHostsQueryFields,
@@ -17,6 +18,7 @@ import {
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getServerIOLatency, getServerState } from './workloads/mssql/mssql-operations';
+import { getVolumesUuids, getStorageDataUsingSSM } from './aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -28,6 +30,34 @@ interface Topology {
     sqlDeploymentType?: string;
     fileSystemType?: string;
 }
+
+type VolumeSpaceRecord = {
+    uuid: string;
+    name: string;
+    efficiency: {
+        space_savings: {
+            total: number;
+            total_percent: number;
+        };
+    };
+    space: {
+        size: number;
+        used: number;
+    };
+};
+
+type ResourceDetails = {
+    id: string;
+    account_id: string;
+    resource_id: string;
+    resource_name: string | null;
+    resource_type: string;
+    co_relation_id: string | null;
+    cloud_provider_account_id: string | null;
+    cloud_provider_name: string | null;
+    region: string | null;
+    metadata: unknown;
+};
 
 async function getTopology(
     accountId: string,
@@ -91,6 +121,53 @@ async function getTopology(
     return topologyData;
 }
 
+async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageResponseType> {
+    logger.info('Getting storage data:', { resourceDetail });
+
+    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+        credentialsId: string;
+        activeNodeInstanceId: string;
+        standbyNodeInstanceId: string;
+    };
+
+    const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
+    const volumeUuidList = volumeUuids.join(',');
+
+    const info = await getStorageDataUsingSSM(
+        credentialsId,
+        region!,
+        fileSystemId!,
+        'storage/volumes',
+        `uuid=${volumeUuidList}`,
+        'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    let totalSize = 0;
+    let totalUsed = 0;
+    let totalSpaceSavings = 0;
+    let totalSpaceSavingsPercent = 0;
+    info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
+        const { size, used } = space;
+        const { total, total_percent: totalPercent } = efficiency.space_savings;
+
+        totalSize += size;
+        totalUsed += used;
+        totalSpaceSavings += total;
+        totalSpaceSavingsPercent += totalPercent;
+    });
+
+    return {
+        size: totalSize,
+        used: totalUsed,
+        spaceSavings: totalSpaceSavings,
+        spaceSavingsPercent: totalSpaceSavingsPercent
+    };
+}
+
 async function getDatabaseHostsSummary(
     accountId: string,
     fields?: string
@@ -145,12 +222,23 @@ async function getDatabaseHostsSummary(
                         }
                     }
 
+                    // Fetch storage savings data
+                    let storageData: StorageResponseType;
+                    if (fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE)) {
+                        try {
+                            storageData = await getStorageData(resourceDetail);
+                        } catch (error) {
+                            logger.error('Failed to get storage savings for resource ', accountId, resourceId, error);
+                        }
+                    }
+
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
                         status: serverStatus,
                         topology: topologyData!,
-                        performance: performanceData!
+                        performance: performanceData!,
+                        storage: storageData!
                     });
                 })
         );

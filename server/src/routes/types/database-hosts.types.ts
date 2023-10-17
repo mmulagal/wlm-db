@@ -41,9 +41,14 @@ const PerformanceResponse = Type.Object({
 type PerformanceResponseType = Static<typeof PerformanceResponse>;
 
 const StorageResponse = Type.Object({
-    size: Type.Number({ description: 'Database server space allocated in GiB' }),
-    used: Type.Number({ description: 'Database server used space in GiB' }),
-    spaceSavings: Type.Number({ description: 'Database server space savings in MiB/GiB' })
+    size: Type.Number({ description: 'Provisioned size, in bytes' }),
+    used: Type.Number({ description: 'The virtual space used before storage efficiency, in bytes.' }),
+    spaceSavings: Type.Number({
+        description: 'Total disk space saved in the volume due to storage efficiency, in bytes.'
+    }),
+    spaceSavingsPercent: Type.Number({
+        description: 'Percentage of total disk space saved in the volume due to storage efficiency'
+    })
 });
 type StorageResponseType = Static<typeof StorageResponse>;
 
@@ -69,8 +74,8 @@ const DatabaseHostSummaryResponse = Type.Object({
 });
 const DatabaseHostSummaryListResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(DatabaseHostSummaryResponse),
-    nextToken: Type.String()
+    nextToken: Type.String(),
+    items: Type.Array(DatabaseHostSummaryResponse)
 });
 
 type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;

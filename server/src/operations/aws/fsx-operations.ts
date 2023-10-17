@@ -11,6 +11,7 @@ import {
     FSX_BATCH_CONCURRENCY_VALUE
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
+import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 
 const logger = getLogger();
 
@@ -146,4 +147,63 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     return { filesystems: ontapFSxFilesystems };
 }
 
-export { getFSxFileSystemsList };
+async function getVolumesUuids(credentialsId: string, region: string, fsxId: string) {
+    logger.info('Getting UUIDs of volumes:', { credentialsId, region, fsxId });
+
+    const volumeUuidList: string[] = [];
+    const volumeList = await describeFSxVolumes(credentialsId, region, fsxId);
+
+    volumeList.Volumes?.forEach(volume => {
+        if (volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.OntapConfiguration?.UUID) {
+            volumeUuidList.push(volume.OntapConfiguration.UUID);
+        }
+    });
+
+    return volumeUuidList;
+}
+
+async function getStorageDataUsingSSM(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    apiEndpoint: string,
+    apiFilter: string,
+    apiQuery: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId);
+
+    // FIXME: Use AWS secrets instead of passing FSx username/password.
+
+    // NOTE TO REVIEWERS:
+    // FSx password isn't stored in WLMDB. However, it is necessary for making
+    // REST API calls. For now we are using the hardcoded credentials.
+    //
+    // Though we can store the passwords in the secrets manager, the same needs
+    // to be updated upon password updation.
+    //
+    // Moreover, secrets have a limit (though it seems big enough).  So in the
+    // unfortunate case of consuming the whole quota, we won't be able to make
+    // REST calls with a secret.
+    //
+    // Once we have a reliable way of storing FSx password, the
+    // username/password can be saved as secret in AWS.
+
+    const commands = [
+        `C:\\SSM\\OntapRestGet.ps1 -FSxUserName fsxadmin -FSxPassword netapp1! -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+    ];
+
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    const cleanResponse = response?.replaceAll('\r\n', '');
+    const jsonResponse = JSON.parse(cleanResponse!);
+    return jsonResponse;
+}
+export { getFSxFileSystemsList, getVolumesUuids, getStorageDataUsingSSM };
