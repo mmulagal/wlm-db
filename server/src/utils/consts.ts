@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 import moment from 'moment';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -780,6 +781,15 @@ enum ServerState {
     DOWN = 'Down'
 }
 
+const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
+    'CREATE_IN_PROGRESS',
+    'CREATE_COMPLETE',
+    'CREATE_FAILED',
+    'UPDATE_IN_PROGRESS',
+    'UPDATE_COMPLETE',
+    'UPDATE_FAILED'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -935,5 +945,6 @@ export {
     DatabaseHostsQueryFields,
     ServerState,
     SERVER_TYPE_MAPPING,
-    FileSystemTypes
+    FileSystemTypes,
+    DEPLOYMENT_JOBS_STATUS_FILTER
 };
