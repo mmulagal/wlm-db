@@ -108,7 +108,7 @@ try
     Invoke-Command -scriptblock {
     Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
 
-} -Credential $Credentials -ComputerName $HostName -Authentication credssp
+} -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
 
 ##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
     Start-Sleep -Seconds 30
