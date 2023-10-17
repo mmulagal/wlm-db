@@ -126,7 +126,8 @@ export const API_ERRORS = {
 export const STATUS_CONST = {
     UP: 'up',
     DOWN: 'down',
-    INITIALIZING: 'initializing'
+    INITIALIZING: 'initializing',
+    FAILED: 'failed'
 };
 
 export const MAX_SAVED_CONFIG = 100;
