@@ -77,14 +77,14 @@ const DeploymentStatusResponse = Type.Object({
     deploymentId: Type.String(),
     deploymentName: Type.String(),
     deploymentStatus: Type.String(),
-    deploymentReason: Type.Optional(Type.String())
+    deploymentFailureReason: Type.Optional(Type.String())
 });
 
 const DeploymentStatusObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     credentialsId: Type.String({ minLength: 1 }),
     region: Type.String({ minLength: 1 }),
-    stackId: Type.String({ minLength: 1 })
+    stackName: Type.String({ minLength: 1 })
 });
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 

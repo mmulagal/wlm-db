@@ -87,13 +87,13 @@ async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStat
                 deploymentId,
                 deploymentName,
                 deploymentStatus,
-                deploymentReason: reason || ''
+                deploymentFailureReason: reason || ''
             })
         );
 }
 
-async function getDeploymentStatusById(accountId: string, id: string): Promise<DeploymentStatusResponseType> {
-    logger.info(' Deployment status by id', accountId, id);
+async function getDeploymentStatusByName(accountId: string, name: string): Promise<DeploymentStatusResponseType> {
+    logger.info(' Deployment status by id', accountId, name);
 
     try {
         const [
@@ -103,15 +103,15 @@ async function getDeploymentStatusById(accountId: string, id: string): Promise<D
                 deployment_status: deploymentStatus,
                 deployment_status_reason: reason
             }
-        ] = await listDeployments(accountId, id, id);
+        ] = await listDeployments(accountId, undefined, name);
         return {
             deploymentId,
             deploymentName,
             deploymentStatus,
-            deploymentReason: reason || ''
+            deploymentFailureReason: reason || ''
         };
     } catch (error) {
-        throw createError(HttpErrorCodes.NOT_FOUND, STACK_NOT_FOUND(id));
+        throw createError(HttpErrorCodes.NOT_FOUND, STACK_NOT_FOUND(name));
     }
 }
 
@@ -121,5 +121,5 @@ export {
     saveConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
-    getDeploymentStatusById
+    getDeploymentStatusByName
 };

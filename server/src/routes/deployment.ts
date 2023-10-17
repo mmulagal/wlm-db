@@ -4,7 +4,7 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
-    deploymentStatusById
+    deploymentStatusByName
 } from '../operations/deployment-operations';
 import {
     CreateCloudFormationTemplateSchema,
@@ -91,13 +91,13 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/cloudformation/stacks/:stackId/status`,
+            `${API_PREFIX_PATH}/cloudformation/stacks/:stackName/status`,
             { schema: DeploymentStatusSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, stackId }
+                    params: { accountId, stackName }
                 } = request;
-                const response = await deploymentStatusById(accountId, stackId);
+                const response = await deploymentStatusByName(accountId, stackName);
                 return reply.send(response);
             }
         );
