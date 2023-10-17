@@ -66,8 +66,8 @@ async function getTenancyUserPermissions(
 async function authorizeJwt(authToken: string, decodedToken: JwtPayload, accountId: string) {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
 
-    const tokenSub = decodedToken?.payload?.sub;
-    if (!tokenSub.endsWith('@clients')) {
+    const tokenSub = decodedToken?.sub;
+    if (tokenSub && !tokenSub.endsWith('@clients')) {
         // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests
         const unauthorizedErrorMessage = 'You do not have permission to access this resource';
 
