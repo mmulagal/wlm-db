@@ -7,8 +7,8 @@ import {
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
-    FSX_DEPLOYMENT_MODE,
     PENDING_DELETION,
+    RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
     SQL_DATABASE,
     SQL_DEPLOYMENT_MODE,
@@ -524,9 +524,13 @@ export const getWlmdbPayload = (params: any) => {
     };
 };
 
+/*
+This function is used to set recommended values for recommended templates load.
+Type dev is for Dev/Test template and type prod is for Prod template
+*/
 export const setRecommendedValues = (initialFormData: any, type: string) => {
     let result = {...initialFormData};
-    if(type === 'dev') {
+    if(type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type 
         const value = 'm5.xlarge';
@@ -552,7 +556,7 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.SINGLE_INSTANCE,
             value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
         }
-    } else if (type === 'prod') {
+    } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type 
         const value = 'r5.xlarge';

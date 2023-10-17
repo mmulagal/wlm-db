@@ -56,6 +56,7 @@ const InstanceType = () => {
     }, [instanceTypeData, selectedLicense]);
 
     useEffect(() => {
+        // If isRecommendedInstance is present that set that value as default. This case is when we load recommended templates.
         if(isRecommendedInstance && instanceTypeData && instanceTypeData?.instanceTypes) {
             dispatch(setInstanceType(isRecommendedInstance));
             dispatch(setIsRecommendedInstance(null));

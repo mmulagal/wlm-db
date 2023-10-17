@@ -56,6 +56,9 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
     return;
 };
 
+/*
+This function is used to load recommended config data
+*/
 export const LoadRecommendedConfig = (dispatch: Dispatch, mssqlFormData: any) => {
     resetRefetchApiCheck(dispatch);
     if(mssqlFormData){

@@ -24,7 +24,7 @@ type AccordionContent = {
     isExpanded?: boolean;
     expand?: any;
     viewCode?: any;
-    recommended?: boolean;
+    recommended?: boolean; //recommended templates check
 };
 
 const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand, viewCode, recommended }: AccordionContent) => {
@@ -36,6 +36,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const initialMssqlState = useAppSelector((state:any) => state.mssqlForm);
 
+    // Default menu items applicable for all
     const menuItems = [
         {
             id: 'viewCode',
@@ -47,7 +48,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         }
     ];
 
-    // Add rename and delete if it is saved config 
+    // Add rename and delete if it is saved config but not recommended template
     const savedConfigMenu = () => {
         if(!recommended){
             menuItems.push({
@@ -71,13 +72,14 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
     const handleLoadWizard = () => {
         dispatch(setIsLoading(true));
         navigate(WLF_TO_FORM_NAVIGATE);
-        if(!recommended){
-            LoadConfiguration(dispatch, loadConfigDataExe, null, id);
-        } else {
-            const type = (id === '0') ? 'dev' : 'prod';
-            const data = setRecommendedValues(initialMssqlState, type);
+        if(recommended){
+            // Load config by setting recommended data in initial state
+            const data = setRecommendedValues(initialMssqlState, id || '');
             dispatch(setIsRecommendedInstance(data?.instanceType));
             LoadRecommendedConfig(dispatch, data);
+        } else {
+            // Load config by getting data from load config API and update in form
+            LoadConfiguration(dispatch, loadConfigDataExe, null, id);
         }
     };
 
@@ -147,6 +149,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                             </div>
                         </div>
                     </div>
+                    {/* Creation date will be shown only for saved config but not for recommended templates*/}
                     {!recommended && 
                         <Typography
                             variant="Regular_13"

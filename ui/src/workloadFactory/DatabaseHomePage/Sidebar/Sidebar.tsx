@@ -17,10 +17,10 @@ import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
-import { LoadConfiguration } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import { LoadConfiguration, LoadRecommendedConfig } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
-import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
+import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 
 type ConfigType = {
@@ -71,14 +71,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     useEffect(() => {
         const recList = [
             {
-                name: 'Dev/Test',
-                id: '0',
-                data: setRecommendedValues(initialMssqlState, 'dev')
+                name: RECOMMENDED_TEMPLATES.DEV_NAME,
+                id: RECOMMENDED_TEMPLATES.DEV_ID,
+                data: setRecommendedValues(initialMssqlState, RECOMMENDED_TEMPLATES.DEV_ID)
             },
             {
-                name: 'Production',
-                id: '1',
-                data: setRecommendedValues(initialMssqlState, 'prod')
+                name: RECOMMENDED_TEMPLATES.PROD_NAME,
+                id: RECOMMENDED_TEMPLATES.PROD_ID,
+                data: setRecommendedValues(initialMssqlState, RECOMMENDED_TEMPLATES.PROD_ID)
             }
         ]
         setRecommendedData(recList);
@@ -86,7 +86,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
-        if(id === '0' || id === '1'){
+        if(id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID){
+            // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
             const changeObjectForm = {
                 mssqlForm: actualData[0].data
@@ -95,6 +96,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             setRightPanelResponse(res);
             setIsRightPanelDataLoading(false);
         } else {
+            // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
                 const actualData = data?.data?.data;
                 const changeObjectForm = {
@@ -108,13 +110,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     };
 
     useEffect(() => {
-        if (configData && configData.length) {
-            if (openKey && (openKey === '0' || openKey === '1')){
-                const recList = recommendedData.filter((item: any) => item.id === openKey);
-                setOpenedItem(recList[0]);
-                getRestResponse(openKey);
-            }
-            else if (openKey) {
+        if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)){
+            const recList = recommendedData.filter((item: any) => item.id === openKey);
+            setOpenedItem(recList[0]);
+            getRestResponse(openKey);
+        } else if (configData && configData.length) {
+            if (openKey) {
                 const updatedConfigData = configData.filter((item: any) => item.id === openKey);
                 setOpenedItem(updatedConfigData[0]);
                 getRestResponse(updatedConfigData[0].id);
@@ -181,7 +182,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const loadWizard = async () => {
         dispatch(setIsLoading(true));
         navigate(WLF_TO_FORM_NAVIGATE);
-        LoadConfiguration(dispatch, loadConfigDataExe, null, openedItem?.id);
+        const key = openedItem?.id || '';
+        if(key === RECOMMENDED_TEMPLATES.DEV_ID || key === RECOMMENDED_TEMPLATES.PROD_ID){
+            // Load config by setting recommended data in initial state
+            const data = setRecommendedValues(initialMssqlState, key);
+            dispatch(setIsRecommendedInstance(data?.instanceType));
+            LoadRecommendedConfig(dispatch, data);
+        } else {
+            // Load config by getting data from load config API and update in form
+            LoadConfiguration(dispatch, loadConfigDataExe, null, key);
+        }
     };
 
     return (

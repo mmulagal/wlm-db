@@ -20,7 +20,7 @@ const initialState: any = {
         ran: [],
         isLoading: false
     },
-    isRecommendedInstance: null,
+    isRecommendedInstance: null, // To load default instance type on recommended templates load
 };
 
 const msSqlActionSlice = createSlice({
