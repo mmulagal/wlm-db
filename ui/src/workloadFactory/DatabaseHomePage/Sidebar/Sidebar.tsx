@@ -325,7 +325,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* Code for top bar here */}
                         <div className={styles.rightSideTopBar}>
                             <Typography variant="Semibold_14" className={styles.rightSideHeading}>
-                                Dev/Test
+                                {openedItem?.name}
                             </Typography>
                             <div className={styles.menuContainer}>
                                 <div className={styles['copy']}>
