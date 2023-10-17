@@ -109,7 +109,7 @@ $Nodes = Invoke-Command -scriptblock {
    $clusnodes
      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $ClusterName
    if ($Nodes -notmatch $HostName) {   
-   Write-Output "Failed to add node to Cluster name. This could be network issue or cluster creation failed in node 1 or node1 still joining cluster"
+   Write-Output "Failed to add node to Cluster. This could be network issue or cluster creation failed in node 1 or node1 still joining cluster"
    Write-Output "Retrying after 3 minutes using native Add-ClusterNode cmdlet"
    Start-Sleep -Seconds 180
    Invoke-Command -scriptblock {
