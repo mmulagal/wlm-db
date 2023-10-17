@@ -7,6 +7,7 @@ import EncryptionTable from './EncryptionTable/EncryptionTable/EncryptionTable';
 import { useDispatch } from 'react-redux';
 import { setEncryptionARN, setEncryptionRow, setEncryptionType } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { selectFsxKmsKey } from '../../MSSqlServer/MSSqlUtils';
 
 const Encryption = () => {
     const dispatch = useDispatch();
@@ -20,7 +21,6 @@ const Encryption = () => {
     const accountSelected = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionType);
     const anotherAccArn = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionArn);
 
-    const [kmsKey, setKmsKey] = useState('');
     const [isDisable, setIsDisable] = useState(false);
 
     // To select aws/fsx row if present
@@ -32,20 +32,13 @@ const Encryption = () => {
     }, [kmsData]);
 
     useEffect(() => {
-        if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
-            const kmsKeyId = selectedExistingFsxnName?.data?.kmsKeyId;
-            if(kmsKeyId && kmsKeyId.includes('/')){
-                setKmsKey(kmsKeyId.split('/')[1]);
-            }
+        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
             setIsDisable(true);
-            dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT));
-            dispatch(setEncryptionARN(kmsKey));
         } else {
             setIsDisable(false);
-            dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT));
-            dispatch(setEncryptionARN(''));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        selectFsxKmsKey(selectedFsxnType, selectedExistingFsxnName, dispatch);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
     //Set the Header text here
@@ -58,7 +51,7 @@ const Encryption = () => {
                     trigger="hover"
                     container={
                         <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
-                            {kmsKey}
+                            {anotherAccArn}
                         </Typography>
                     }
                 />

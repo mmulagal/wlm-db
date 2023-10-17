@@ -166,7 +166,9 @@ async function processCloudFormationMessages() {
                                                         FSxFileSystemName: fsxName,
                                                         ActiveInstanceIp: activeNodeInstanceIp,
                                                         StandbyInstanceIp: standbyNodeInstanceIp,
-                                                        ResourceName: resourceName
+                                                        ResourceName: resourceName,
+                                                        SQLDeploymentType: sqlDeploymentType,
+                                                        FileSystemType: fileSystemType
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await listResources(
                                                         accountId,
@@ -203,7 +205,9 @@ async function processCloudFormationMessages() {
                                                             activeNodeInstanceName,
                                                             standbyNodeInstanceName,
                                                             activeNodeInstanceIp,
-                                                            standbyNodeInstanceIp
+                                                            standbyNodeInstanceIp,
+                                                            sqlDeploymentType,
+                                                            fileSystemType
                                                         }
                                                     });
                                                     const notificationData = {

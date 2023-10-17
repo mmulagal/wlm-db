@@ -316,18 +316,39 @@ async function deleteConfig(accountId: string, id: string) {
     });
 }
 
-async function listRelationshipsResources(accountId: string) {
+async function listRelationshipsResources(accountId: string, resourceId?: string) {
     logger.info('Listing resources which has relation', { accountId });
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
             co_relation_id: {
                 not: null
-            }
+            },
+            ...(resourceId && { resource_id: resourceId })
         },
         select: {
             resource_id: true,
             co_relation_id: true
+        }
+    });
+}
+
+async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: Array<DEPLOYMENT_STATUS>) {
+    logger.info('Deployment jobs count', accountId, fromDate, statuses);
+    return prisma.client.deployment.groupBy({
+        by: ['deployment_status'],
+        where: {
+            account_id: accountId,
+            parent_deployment_id: null,
+            deployment_status: {
+                in: statuses
+            },
+            start_time: {
+                gte: fromDate.toISOString()
+            }
+        },
+        _count: {
+            deployment_status: true
         }
     });
 }
@@ -346,5 +367,6 @@ export {
     listConfig,
     createConfig,
     deleteConfig,
-    listRelationshipsResources
+    listRelationshipsResources,
+    deploymentJobsCount
 };

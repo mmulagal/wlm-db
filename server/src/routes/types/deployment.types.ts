@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Static, Type } from '@fastify/type-provider-typebox';
 
 const CFNetworkConfiguration = Type.Object({
     vpcId: Type.Optional(Type.String()),
@@ -42,7 +42,7 @@ const SQLConfiguration = Type.Object({
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
     serviceAccountPassword: Type.String(),
-    sqlFciName: Type.String()
+    sqlServerName: Type.String()
 });
 
 // Cloud formation template creation Request and Response

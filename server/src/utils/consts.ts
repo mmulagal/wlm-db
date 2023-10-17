@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 import moment from 'moment';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -128,8 +129,10 @@ enum HttpErrorCodes {
 }
 
 enum SqlServerDeploymentModel {
-    SQL_STANDALONE = 'Non-clustered',
-    SQL_FCI = 'Always On Failover Cluster Instance'
+    SQL_STANDALONE = 'Standalone Instance',
+    SQL_FCI = 'Always On Failover Cluster Instance',
+    SQL_STANDALONE_SHORT = 'Standalone',
+    SQL_FCI_SHORT = 'FCI'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -236,6 +239,13 @@ enum AWSQueryFields {
 enum RESOURCESTYPE {
     MSSQL = 'MSSQL',
     FSX = 'FSX'
+}
+
+const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
+
+enum FileSystemTypes {
+    EBS = 'EBS',
+    FSXONTAP = 'FSx ONTAP'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -482,7 +492,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
-    sqlFciName: 'SqlFSxFCIName',
+    sqlServerName: 'SqlServerName',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -534,6 +544,7 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
     `Error creating signed url for ${url} in region ${region}. ${error}`;
+const RESOURCE_RETRIVAL_ERROR = 'Unable to fetch credentials, region, server instance id details.';
 
 const AWS_FSX = 'aws/fsx';
 const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
@@ -760,6 +771,27 @@ const FCI = 'fci';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
+enum DatabaseHostsQueryFields {
+    PERFORMANCE = 'performance',
+    PROTECTION = 'protection',
+    STORAGE = 'storage',
+    USAGE_ESTIMATION = 'usageEstimation'
+}
+
+enum ServerState {
+    UP = 'Up',
+    DOWN = 'Down'
+}
+
+const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
+    'CREATE_IN_PROGRESS',
+    'CREATE_COMPLETE',
+    'CREATE_FAILED',
+    'UPDATE_IN_PROGRESS',
+    'UPDATE_COMPLETE',
+    'UPDATE_FAILED'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -911,5 +943,11 @@ export {
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
-    STACK_NOT_FOUND
+    STACK_NOT_FOUND,
+    RESOURCE_RETRIVAL_ERROR,
+    DatabaseHostsQueryFields,
+    ServerState,
+    SERVER_TYPE_MAPPING,
+    FileSystemTypes,
+    DEPLOYMENT_JOBS_STATUS_FILTER
 };

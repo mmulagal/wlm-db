@@ -46,7 +46,7 @@ const SQL_CONFIGURATION = {
     sqlAmiId: 'ami-0e0f179ddde359def',
     serviceAccountName: 'sqladmin',
     serviceAccountPassword: 'netapp1!',
-    sqlFciName: 'SampleFci'
+    sqlServerName: 'SampleFci'
 };
 
 const SSM_PARAMS = {
@@ -64,6 +64,39 @@ const SSM_PARAMS = {
     },
     InstanceIds: ['i-07e76a4b916548dc0']
 };
+
+const DEPLOYMENT_JOBS_COUNT_RESPONSE = [
+    {
+        _count: {
+            deployment_status: 31
+        },
+        deployment_status: 'UPDATE_COMPLETE'
+    },
+    {
+        _count: {
+            deployment_status: 39
+        },
+        deployment_status: 'CREATE_IN_PROGRESS'
+    },
+    {
+        _count: {
+            deployment_status: 28
+        },
+        deployment_status: 'CREATE_COMPLETE'
+    },
+    {
+        _count: {
+            deployment_status: 27
+        },
+        deployment_status: 'UPDATE_IN_PROGRESS'
+    },
+    {
+        _count: {
+            deployment_status: 21
+        },
+        deployment_status: 'CREATE_FAILED'
+    }
+];
 
 const ACCOUNT_ID = 'account-test';
 const CREDENTIALS_ID = `${faker.string.alphanumeric(20)}`;
@@ -83,5 +116,6 @@ export {
     ACCOUNT_ID,
     CREDENTIALS_ID,
     ACTIVE_INSTANCE_ID,
-    STANDBY_INSTANCE_ID
+    STANDBY_INSTANCE_ID,
+    DEPLOYMENT_JOBS_COUNT_RESPONSE
 };

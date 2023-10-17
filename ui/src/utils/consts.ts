@@ -121,4 +121,21 @@ export const SQL_DEPLOYMENT_MODE = {
 
 export const API_ERRORS = {
     DUPLICATE_CONFIG_NAME: 'An unique key constraint violated uk_wlmdb_config_account_id_name_user'
-}
+};
+
+export const STATUS_CONST = {
+    UP: 'up',
+    DOWN: 'down',
+    INITIALIZING: 'initializing'
+};
+
+export const MAX_SAVED_CONFIG = 100;
+
+export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
+
+export const RECOMMENDED_TEMPLATES = {
+    DEV_ID: '0',
+    PROD_ID: '1',
+    DEV_NAME: 'Dev/Test',
+    PROD_NAME: 'Production'
+};

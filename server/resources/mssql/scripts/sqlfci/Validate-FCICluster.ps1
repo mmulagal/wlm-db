@@ -1,4 +1,4 @@
-    [CmdletBinding()]
+     [CmdletBinding()]
 param (
     [Parameter(Mandatory=$true)]
     [string]$AdminSecret,
@@ -60,14 +60,26 @@ try {
     $ClusterAdminUser = $DomainNetBIOSName + '\' + $DomainAdminUser
     $Credentials = (New-Object PSCredential($ClusterAdminUser,(ConvertTo-SecureString $AdminUser.Password -AsPlainText -Force)))
 
-
+    try {
     $Nodes = Invoke-Command -scriptblock {
     param($wincluster)
     $clusnodes = (Get-ClusterNode -Cluster $wincluster) | Out-String
     Write-Output $clusnodes
     $clusnodes
-      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $WFCName
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $WFCName -ErrorAction SilentlyContinue -ErrorVariable errs
 
+  } catch {
+  Write-Output $errs
+  }
+    if ($Nodes -eq "") {
+    Write-Output "Failed to get nodes using Cluster name. Check problem RPC service, network connection or Firewall. Attempting to fetch nodes with Get-ClusterNode only..."
+    $Nodes = Invoke-Command -scriptblock {
+    $clusnodes = Get-ClusterNode | Out-String
+    Write-Output $clusnodes
+    $clusnodes
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp 
+    }
+    Write-Output $Nodes
     $ClusterResource = Invoke-Command -scriptblock {
     $clusresources = Get-ClusterResource | Out-String
     Write-Output $clusresources
@@ -127,7 +139,5 @@ catch {
     Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
     $_ | Write-AWSLaunchWizardException
 } 
- 
- 
  
  

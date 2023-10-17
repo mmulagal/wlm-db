@@ -1,0 +1,33 @@
+.json-renderer {
+  font-size: 12px;
+}
+
+.level-0 {
+  margin-left: 20px;
+}
+
+.level-1 {
+  margin-left: 40px;
+}
+
+.level-2 {
+  margin-left: 60px;
+}
+
+.json-line {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+.json-key {
+  margin-right: 4px;
+  color: rgb(115, 216, 244);
+}
+
+.json-value {
+  color: rgb(125, 248, 125);
+}
+
+.empty-json-value {
+  color: rgb(248, 120, 120);
+}

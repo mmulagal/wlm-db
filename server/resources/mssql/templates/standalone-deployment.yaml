@@ -48,6 +48,7 @@ Metadata:
                   - SQLServiceAccountSecret
                   - AMIID
                   - BYOLAMI
+                  - SqlServerName
             - Label:
                   default: AWS Configuration
               Parameters:
@@ -122,6 +123,8 @@ Metadata:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
                 default: Stack name for parent cloud formation stack
+            SqlServerName:
+                default: SQL Server Name
 Parameters:
     ParentStackName:
         Description: Stack name for parent cloud formation stack
@@ -277,6 +280,9 @@ Parameters:
     FsxAdminPassword:
         Description: Secret arn for Fsx Admin Password
         Type: String
+    SqlServerName:
+        Description: SQL Server Name
+        Type: String
 Conditions:
     ADSGNotSelected: !Equals
         - !Ref 'DomainMemberSGID'
@@ -340,6 +346,8 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName'
+                - Key: SQLServerName
+                  Value: !Ref 'SqlServerName'
     SqlNode:
         Type: AWS::EC2::Instance
         CreationPolicy:
@@ -516,7 +524,7 @@ Resources:
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Rename-Computer.ps1
                                     -Restart -NewName '
-                                  - !Ref 'SqlFSxServerNetBIOSName'
+                                  - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: 0
                         g-restart-computer:
@@ -672,7 +680,7 @@ Resources:
                                   - "' -SQLServiceAccountPasswordKey '"
                                   - !Ref 'SQLServiceAccountSecret'
                                   - "' -NetBIOSName '"
-                                  - !Ref 'SqlFSxServerNetBIOSName'
+                                  - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
                 Configure:
@@ -685,7 +693,7 @@ Resources:
                                   - "' -DomainAdminPasswordKey '"
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -NetBIOSName '"
-                                  - !Ref 'SqlFSxServerNetBIOSName'
+                                  - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
                         b-set-sqlinstancename:
@@ -696,10 +704,10 @@ Resources:
                                   - "' -DomainAdminPasswordKey '"
                                   - !Ref 'DomainAdminSecretName'
                                   - "' -NetBIOSName '"
-                                  - !Ref 'SqlFSxServerNetBIOSName'
+                                  - !Ref 'SqlServerName'
                                   - '''"'
                             waitAfterCompletion: '0'
-                        
+
                 Cleanup:
                     commands:
                         b-disable-credssp:

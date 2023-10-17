@@ -272,6 +272,24 @@ export const configApi = createApi({
     }
 });
 
+export const databaseHomeApi = createApi({
+    reducerPath: 'databaseHomeApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getDatabaseHosts: builder.query({
+                query: ({ nextToken = null }) => `database-hosts?nextToken=${nextToken}`
+            }),
+            getDatabaseJobs: builder.query({
+                query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
+            }),
+            getJobsSummary: builder.query({
+                query: () => `jobs/summary`
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -300,3 +318,5 @@ export const {
 
 export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
     configApi;
+
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery } = databaseHomeApi;

@@ -1,0 +1,262 @@
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    width: 637px;
+    height: 100%;
+    background-color: var(--grey-70);
+    transition: right 0.3s rase-in-out;
+
+    .loading {
+        margin-top: 40px;
+        margin-left: 24px;
+        color: var(--white);
+    }
+
+    .topBar {
+        height: 60px;
+        background-color: var(--grey-65);
+        display: flex;
+        padding: 16px 40px;
+        justify-content: space-between;
+
+        .rightSection {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    }
+
+    .templateHeading {
+        margin-bottom: 14px;
+        color: var(--white);
+    }
+
+    .recTemplateHeading {
+        display: flex;
+    }
+
+    .colorAutomation {
+        color: var(--white);
+    }
+
+    .color {
+        color: var(--blue-40);
+    }
+
+    .accordionStructure {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 40px;
+    }
+
+    .openView {
+        display: flex;
+        gap: 40px;
+
+        .leftSideView {
+            width: 638px;
+        }
+
+        .rightSideView {
+            width: 1170px;
+            padding: 80px 40px;
+
+            .rightSideTopBar {
+                width: 1090px;
+                height: 56px;
+                background-color: var(--grey-55);
+                display: flex;
+                justify-content: space-between;
+                padding: 16px 24px 16px 40px;
+
+                .rightSideHeading {
+                    color: var(--white);
+                }
+
+                .menuContainer {
+                    display: flex;
+                    gap: 32px;
+                    align-items: center;
+
+                    .menuItem {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                    }
+
+                    .sideBarMenuPopover {
+                        [class*='MenuPopover_menuIcon'] {
+                            color: var(--white);
+                        }
+                        [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
+                            border: 1.5px solid var(--white);
+                        }
+
+                        [class*='MenuPopover_menuIcon']:hover {
+                            border: 1.5px solid var(--white);
+                        }
+                    }
+
+                    .copy {
+                        width: 100px;
+                        display: flex;
+                        justify-content: flex-end;
+                        // height: 20px;
+                        .copy-popover {
+                            width: 140px;
+                            font-size: 13px;
+                            line-height: 20px;
+                            text-align: center;
+                            padding: 2px 2px;
+                            box-shadow: none;
+                        }
+
+                        svg {
+                            cursor: pointer;
+                            &:hover {
+                                fill: var(--text-primary);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .secondBar {
+            width: 1090px;
+            height: 67px;
+            padding: 16px 24px 16px 40px;
+            background-color: var(--grey-65);
+            box-shadow: 0px -1px 0px 0px var(--grey-55) inset;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .inputPart {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+
+                .inputBox {
+                    width: 146px;
+                    margin-top: 35px;
+
+                    [class*='design-system-select__single-value'] {
+                        color: var(--white);
+                    }
+                    [class*='design-system-select__menu'] {
+                        box-shadow: none;
+                    }
+
+                    [class*='design-system-select__option'] {
+                        background-color: var(--grey-70);
+                        color: var(--white);
+                    }
+
+                    [class*='Select-module_multiselect-menu'] {
+                        background-color: var(--grey-70);
+                    }
+                    [class*='design-system-select__option--is-focused'] {
+                        color: var(--blue-40);
+                        background-color: var(--grey-60);
+                    }
+                    [class*='design-system-select__control']:hover {
+                        box-shadow: 0 1px 0 var(--header-netapp-text-hover);
+
+                        div {
+                            color: var(--header-netapp-text-hover);
+                        }
+
+                        svg {
+                            --icon-primary-color: var(--header-netapp-text-hover);
+                        }
+                    }
+
+                    [class*='design-system-select__control'] {
+                        svg {
+                            --icon-primary-color: var(--white);
+                        }
+                    }
+                }
+            }
+
+            [class*='SearchInput-module_base'] {
+                svg {
+                    --icon-primary-color: var(--white);
+                }
+
+                input {
+                    color: var(--white);
+                }
+            }
+        }
+
+        .thirdBar {
+            width: 1090px;
+            background-color: var(--grey-65);
+            height: 672px;
+            overflow-y: auto;
+            padding: 24px 40px 0 40px;
+        }
+    }
+
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 4px;
+        background-color: #858c95;
+        width: 4px;
+        -webkit-box-shadow: inset 0 0 6px var(--grey-25);
+        box-shadow: inset 0 0 6px var(--grey-25);
+    }
+
+    ::-webkit-scrollbar-track {
+        background-color: var(--grey-65);
+    }
+}
+
+.open {
+    right: 0;
+    width: 100%;
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .sidebar {
+        width: 570px !important;
+
+        .topBar {
+            padding: 16px 32px 16px 32px !important;
+        }
+
+        .accordionStructure {
+            margin: 40px 32px 40px 32px !important;
+        }
+
+        .openView {
+            gap: 0px !important;
+
+            .rightSideView {
+                .rightSideTopBar {
+                    width: 1000px !important;
+                }
+                .secondBar {
+                    width: 1000px !important;
+                }
+                .thirdBar {
+                    height: 540px !important;
+                    width: 1000px !important;
+                }
+            }
+        }
+    }
+
+    .open {
+        width: 100% !important;
+    }
+}

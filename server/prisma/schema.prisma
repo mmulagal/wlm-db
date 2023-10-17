@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["tracing"]
 }
 
 datasource db {
@@ -95,6 +96,7 @@ enum DEPLOYMENT_STATUS {
   UPDATE_COMPLETE
   UPDATE_COMPLETE_CLEANUP_IN_PROGRESS
   UPDATE_IN_PROGRESS
+  UPDATE_FAILED
   UPDATE_ROLLBACK_COMPLETE
   UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS
   UPDATE_ROLLBACK_FAILED

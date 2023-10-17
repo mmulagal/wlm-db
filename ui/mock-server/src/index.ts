@@ -11,7 +11,9 @@ app.use('', routers.credentials);
 app.use('', routers.aws);
 app.use('', routers.mssql);
 app.use('', routers.resource);
-app.use('', routers.config)
+app.use('', routers.config);
+app.use('', routers.databaseHosts);
+app.use('', routers.chatbot);
 
 const server = app.listen(process.env.PORT || 8061, () => {
     const { port } = server.address() as AddressInfo;

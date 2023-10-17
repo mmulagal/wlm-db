@@ -1,5 +1,7 @@
 import { 
+    setEncryptionARN,
     setEncryptionRow, 
+    setEncryptionType, 
     setInstanceType, 
     setProvisionedIOPSValue, 
     setProvisionedType, 
@@ -97,5 +99,20 @@ export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName
     } else {
         dispatch(setProvisionedType(GENERAL.AUTOMATIC));
         dispatch(setProvisionedIOPSValue(''));
+    }
+}
+
+export const selectFsxKmsKey = (selectedFsxnType: string, selectedExistingFsxnName:any, dispatch: any) => {
+    if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
+        const kmsKeyId = selectedExistingFsxnName?.data?.kmsKeyId;
+        let kmsKeyVal = ''
+        if(kmsKeyId && kmsKeyId.includes('/')){
+            kmsKeyVal = kmsKeyId.split('/')[1];
+        }
+        dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT));
+        dispatch(setEncryptionARN(kmsKeyVal));
+    } else {
+        dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT));
+        dispatch(setEncryptionARN(''));
     }
 }

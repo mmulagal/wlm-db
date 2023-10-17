@@ -28,14 +28,14 @@
     font-size: 14px;
     font-style: normal;
     font-weight: 400;
-    color: var(--grey-50);
+    color: var(--text-primary);
 }
 
 .setHeaderStyle {
     display: flex;
     gap: 16px;
     font-size: 14px;
-    color: var(--grey-50);
+    color: var(--text-primary);
     line-height: none !important;
 }
 
@@ -53,6 +53,6 @@
 
 @media screen and (min-width: 1351px) and (max-width: 1520px) {
     .accordion-group {
-        width: 1128px;
+        width: 794px;
     }
 }

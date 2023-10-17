@@ -1,7 +1,7 @@
 .load-config {
     max-height: 336px;
     .content {
-        color: var(--light-text-text-primary, var(--grey-50));
+        color: var(--text-primary);
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
@@ -58,4 +58,3 @@
         width: 280px !important;
     }
 }
-

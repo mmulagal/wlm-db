@@ -108,7 +108,23 @@ try
     Invoke-Command -scriptblock {
     Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:arguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt 
 
-} -Credential $Credentials -ComputerName $HostName -Authentication credssp
+} -Credential $Credentials -ComputerName $HostName -Authentication credssp -ErrorAction SilentlyContinue -ErrorVariable errs
+
+##Re-attempt once if previous step failed to install due to synchronization with second node prepare-fci and reboot
+    Start-Sleep -Seconds 30
+    $ClusterResource = Invoke-Command -scriptblock {
+    $clusresources = Get-ClusterResource | Out-String
+    $clusresources
+      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    if ($ClusterResource -notmatch "SQL Server") {
+    Start-Sleep -Seconds 300
+    Write-Output "There are errors or failures in the cluster verification report. This could happen when other node restarted during test for the deployment. Skipping cluster verify errors.Confirm that cluster configuration is fine by running tests later"
+    $skipclusterarguments = '/QUIET /ACTION=CompleteFailoverCluster /SkipRules=Cluster_VerifyForErrors /InstanceName=MSSQLSERVER /INDICATEPROGRESS=TRUE /FAILOVERCLUSTERNETWORKNAME={0} /FAILOVERCLUSTERIPADDRESSES="IPv4;{1};Cluster Network 1;{2}" "IPv4;{3};Cluster Network 2;{4}" /CONFIRMIPDEPENDENCYCHANGE=TRUE /FAILOVERCLUSTERGROUP="SQL Server (MSSQLSERVER)" /FAILOVERCLUSTERDISKS="SQL-DATA" "SQL-LOG" "SQL-TEMPDB" /INSTALLSQLDATADIR="C:\Program Files\Microsoft SQL Server" /SQLCOLLATION="SQL_Latin1_General_CP1_CI_AS" /SQLSYSADMINACCOUNTS={5} /INSTALLSQLDATADIR={6} /SQLUSERDBDIR={7} /SQLUSERDBLOGDIR={8} /SQLTEMPDBDIR={9}' -f $FCIName, $Node1FciIp, $Node1SubnetMask, $Node2FciIp, $Node2SubnetMask, $AdminGroup, $sqlRootPath, $sqlDataPath, $sqlLogPath, $sqlTempPath
+    Invoke-Command -scriptblock {
+    Start-Process -FilePath C:\SQLServerSetup\setup.exe -ArgumentList $Using:skipclusterarguments -Wait -NoNewWindow -RedirectStandardOutput C:\cfn\log\completefci_output.txt -RedirectStandardError C:\cfn\log\completefci_error.txt
+    } -Credential $Credentials -ComputerName $HostName -Authentication credssp
+    }
+
 } catch {
         Write-Output "Failed to run complete Failover cluster action for SQL installation"
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
