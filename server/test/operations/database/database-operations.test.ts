@@ -5,7 +5,7 @@ import {
     saveConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
-    getDeploymentStatusById
+    getDeploymentStatusByName
 } from '../../../src/operations/database/database-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 
@@ -82,12 +82,12 @@ describe('Database operations', () => {
             startTime: 0,
             region: ''
         });
-        let resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-2345');
-        expect(response.deployment_id).toEqual(resp.deploymentId);
+        let resp = await getDeploymentStatusByName(ACCOUNT_ID, 'wlmdb-2345');
+        expect(response.deployment_name).toEqual(resp.deploymentName);
         expect(response.deployment_status).toEqual(resp.deploymentStatus);
 
-        resp = await getDeploymentStatusById(ACCOUNT_ID, 'wlmdb-45678');
-        expect(response1.deployment_id).toEqual(resp.deploymentId);
+        resp = await getDeploymentStatusByName(ACCOUNT_ID, 'wlmdb-45678');
+        expect(response1.deployment_name).toEqual(resp.deploymentName);
         expect(response1.deployment_status).toEqual(resp.deploymentStatus);
 
         await deleteDeployment(ACCOUNT_ID, 'wlmdb-2345');
