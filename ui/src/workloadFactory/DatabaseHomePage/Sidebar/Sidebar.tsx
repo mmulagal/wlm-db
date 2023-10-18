@@ -17,7 +17,10 @@ import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
-import { LoadConfiguration, LoadRecommendedConfig } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import {
+    LoadConfiguration,
+    LoadRecommendedConfig
+} from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
 import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
@@ -27,7 +30,7 @@ type ConfigType = {
     id?: string;
     name?: string;
     data?: any;
-}
+};
 
 const Sidebar = ({ isOpen, onClose }: any) => {
     const navigate = useNavigate();
@@ -62,11 +65,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     ];
 
-    const {
-        data: configData,
-        isFetching: configLoading,
-        refetch: configRefetch
-    } = useGetConfigListQuery({});
+    const { data: configData, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
 
     useEffect(() => {
         const recList = [
@@ -80,13 +79,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 id: RECOMMENDED_TEMPLATES.PROD_ID,
                 data: setRecommendedValues(initialMssqlState, RECOMMENDED_TEMPLATES.PROD_ID)
             }
-        ]
+        ];
         setRecommendedData(recList);
     }, []);
 
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
-        if(id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID){
+        if (id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID) {
             // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
             const changeObjectForm = {
@@ -110,7 +109,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     };
 
     useEffect(() => {
-        if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)){
+        if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
             const recList = recommendedData.filter((item: any) => item.id === openKey);
             setOpenedItem(recList[0]);
             getRestResponse(openKey);
@@ -128,13 +127,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const handleToggle = (key: any, id: any) => {
         setOpenKey(openKey !== id ? id : null);
-        setOpenedItem({name: key, id: id});
+        setOpenedItem({ name: key, id: id });
         getRestResponse(id);
     };
 
     const handleViewCode = (key: any, id: any) => {
         setOpenKey(openKey !== id ? id : openKey);
-        setOpenedItem({name: key, id: id});
+        setOpenedItem({ name: key, id: id });
         getRestResponse(id);
     };
 
@@ -183,7 +182,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         dispatch(setIsLoading(true));
         navigate(WLF_TO_FORM_NAVIGATE);
         const key = openedItem?.id || '';
-        if(key === RECOMMENDED_TEMPLATES.DEV_ID || key === RECOMMENDED_TEMPLATES.PROD_ID){
+        if (key === RECOMMENDED_TEMPLATES.DEV_ID || key === RECOMMENDED_TEMPLATES.PROD_ID) {
             // Load config by setting recommended data in initial state
             const data = setRecommendedValues(initialMssqlState, key);
             dispatch(setIsRecommendedInstance(data?.instanceType));
@@ -209,77 +208,80 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </div>
             </div>
 
-            {configLoading && (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    Loading...
-                </Typography>
-            )}
-
-            {/* Recommended templates when code box in collapse state */}
             {!isOpen && (
-                <div className={styles.accordionStructure}>
-                    <div className={styles.recTemplateHeading}>
-                        <Typography variant="Semibold_14" className={styles.templateHeading}>
-                            Recommended Templates - 
-                        </Typography>
-                        <Typography variant="Regular_14" className={styles.templateHeading}>
-                            Microsoft SQL server deployment
-                        </Typography>
-                    </div>
-                    {recommendedData.map((item: any, i: number) => (
-                        <div key={i}>
-                            <Accordion
-                                heading={item.name}
-                                subHeading={''}
-                                toggle={handleToggle}
-                                open={openKey === item.id}
-                                id={item.id}
-                                configRefetch={configRefetch}
-                                isExpanded={isOpen}
-                                expand={handleClose}
-                                viewCode={handleViewCode}
-                                recommended={true}
-                            />
-                        </div>
-                    ))}
-                </div>
-            )}
+                <div className={styles.accordionMainContainer}>
+                    {/* Recommended templates when code box in collapse state */}
 
-            {/* Saved templates when code box in collapse state */}
-            {configData && !isOpen && (
-                <div className={styles.accordionStructure}>
-                    <Typography variant="Semibold_14" className={styles.templateHeading}>
-                        My Templates
-                    </Typography>
-                    {configData.map((item: any, i: number) => (
-                        <div key={i}>
-                            <Accordion
-                                heading={item.name}
-                                subHeading={formatDateWithTime(item.creationTime)}
-                                toggle={handleToggle}
-                                open={openKey === item.id}
-                                id={item.id}
-                                configRefetch={configRefetch}
-                                isExpanded={isOpen}
-                                expand={handleClose}
-                                viewCode={handleViewCode}
-                                recommended={false}
-                            />
+                    <div className={styles.accordionStructure}>
+                        <div className={styles.recTemplateHeading}>
+                            <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                Recommended Templates -
+                            </Typography>
+                            <Typography variant="Regular_14" className={styles.templateHeading}>
+                                Microsoft SQL server deployment
+                            </Typography>
                         </div>
-                    ))}
+                        {recommendedData.map((item: any, i: number) => (
+                            <div key={i}>
+                                <Accordion
+                                    heading={item.name}
+                                    subHeading={''}
+                                    toggle={handleToggle}
+                                    open={openKey === item.id}
+                                    id={item.id}
+                                    configRefetch={configRefetch}
+                                    isExpanded={isOpen}
+                                    expand={handleClose}
+                                    viewCode={handleViewCode}
+                                    recommended={true}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {configLoading && (
+                        <Typography variant="Semibold_14" className={styles.loading}>
+                            Loading...
+                        </Typography>
+                    )}
+
+                    {/* Saved templates when code box in collapse state */}
+                    {configData && (
+                        <div className={styles.accordionStructure}>
+                            <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                My Templates
+                            </Typography>
+                            {configData.map((item: any, i: number) => (
+                                <div key={i}>
+                                    <Accordion
+                                        heading={item.name}
+                                        subHeading={formatDateWithTime(item.creationTime)}
+                                        toggle={handleToggle}
+                                        open={openKey === item.id}
+                                        id={item.id}
+                                        configRefetch={configRefetch}
+                                        isExpanded={isOpen}
+                                        expand={handleClose}
+                                        viewCode={handleViewCode}
+                                        recommended={false}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
             {/* when code box in expanded state */}
-            { isOpen && (
+            {isOpen && (
                 <div className={styles.openView}>
                     <div className={styles.leftSideView}>
                         {/* recommended templates list when code box in expanded state */}
-                        {isOpen && 
+                        {isOpen && (
                             <div className={styles.accordionStructure}>
                                 <div className={styles.recTemplateHeading}>
                                     <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                        Recommended Templates - 
+                                        Recommended Templates -
                                     </Typography>
                                     <Typography variant="Regular_14" className={styles.templateHeading}>
                                         Microsoft SQL server deployment
@@ -303,9 +305,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     </div>
                                 ))}
                             </div>
-                        }
+                        )}
                         {/* saved templates list when code box in expanded state */}
-                        {configData && isOpen && 
+                        {configData && isOpen && (
                             <div className={styles.accordionStructure}>
                                 <Typography variant="Semibold_14" className={styles.templateHeading}>
                                     My Templates
@@ -328,7 +330,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     </div>
                                 ))}
                             </div>
-                        }
+                        )}
                     </div>
                     {/* Right side panel in expanded code box */}
                     <div className={styles.rightSideView}>
