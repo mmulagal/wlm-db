@@ -366,3 +366,24 @@ export const GENERAL = {
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard'
 };
+
+export const CODE_VIEWER = {
+    REST_API: 'REST API',
+    CLOUDFORMATION: 'CLoudFormation',
+    AWS_CLI: 'AWS CLI',
+    VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
+    DOWNLOAD_YAML: 'Download YAML file ',
+    RECOMMENDED_DEV: 'Dev/Test',
+    RECOMMENDED_PROD: 'Production',
+    NO_DATA_MSG: 'No data found', 
+    LOADING: 'Loading...',
+    AUTOMATIONS: 'Automations',
+    EXPAND: 'Expand',
+    COLLAPSE: 'Collapse',
+    RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL server deployment'],
+    MY_TEMPLATES: 'My Templates',
+    COPY: 'Copy',
+    COPIED_TO_CLIPBOARD: 'Copied to clipboard',
+    SIDEBAR_LOAD_WIZARD: 'Load Wizard',
+    VIEW_CODE: 'View Code'
+}
