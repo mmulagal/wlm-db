@@ -43,7 +43,7 @@ import {
     STANDARD_DEPLOYMENT_ACTION,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
     BUCKET_NAME,
-    CLOUD_FORMATION_CLI
+    CLOUD_FORMATION_CLI_COMMAND
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -224,11 +224,11 @@ async function getCloudformationTemplate(
             cliParams += ` ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}"`;
         }
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
 
     return {
-        templateAsYaml: masterTemplateContents || '',
-        templateAsCli: cloudFormationCli
+        template: masterTemplateContents || '',
+        cliCommand: cloudFormationCli
     };
 }
 

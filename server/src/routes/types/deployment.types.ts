@@ -70,8 +70,8 @@ const CloudFormationTemplateResponse = Type.Object({
 });
 
 const CloudFormationTemplateYamlResponse = Type.Object({
-    templateAsYaml: Type.String(),
-    templateAsCli: Type.String()
+    template: Type.String(),
+    cliCommand: Type.String()
 });
 
 const DeployTemplateResponse = Type.Object({
