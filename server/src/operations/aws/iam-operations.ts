@@ -31,13 +31,12 @@ export default async function getMissingPermissionsList(
             .flat(),
         MaxItems: 500
     };
-    logger.info('command', command);
+
     const { EvaluationResults: results } = await getPermissionsList(credentialsId, region, command);
     const permissions =
         results
             ?.filter(({ EvalDecision }) => EvalDecision === 'implicitDeny')
             .map(({ EvalActionName }) => EvalActionName as string) || [];
 
-    logger.info('policy missing', permissions);
     return { permissions };
 }

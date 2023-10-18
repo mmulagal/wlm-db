@@ -360,14 +360,10 @@ const IAM_ACTION_NAMES = [
 ].map(action => `${IAM}:${action}`);
 
 const SNS = 'sns';
-const SNS_ACTION_NAMES = [
-    'ListSubscriptionsByTopic',
-    'Publish',
-    'CreateTopic',
-    'DeleteTopic',
-    'Subscribe',
-    'Unsubscribe'
-].map(action => `${SNS}:${action}`);
+const SNS_ACTION_NAMES = ['ListSubscriptionsByTopic', 'CreateTopic', 'Subscribe', 'Unsubscribe'].map(
+    action => `${SNS}:${action}`
+);
+const SNS_STRICT_ACTION_NAMES = ['Publish', 'DeleteTopic'].map(action => `${SNS}:${action}`);
 
 const RESOURCE_GROUPS = 'resource-groups';
 const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'Get*'].map(action => `${RESOURCE_GROUPS}:${action}`);
@@ -404,7 +400,8 @@ const AWS_RESOURCES_ACTION_MAP = {
 const AWS_RESOURCES_STRICT_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_STRICT_ACTION_NAMES,
     [CLOUDFORMATION]: CLOUDFORMATION_STRICT_ACTION_NAMES,
-    [RESOURCE_GROUPS]: RESOURCE_GROUPS_STRICT_ACTION_NAMES
+    [RESOURCE_GROUPS]: RESOURCE_GROUPS_STRICT_ACTION_NAMES,
+    [SNS]: SNS_STRICT_ACTION_NAMES
 };
 
 const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
@@ -415,6 +412,7 @@ const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
 const SECRET_MANAGER_ARN = 'arn:aws:secretsmanager:*:*:secret:wlmdb*';
 const CLOUD_FORMATION_ARN = 'arn:aws:cloudformation:*:*:stack/WLMDB*';
 const RESOURCE_GROUP_ARN = 'arn:aws:resource-groups:*:*:group/WLMDB*';
+const SNS_ARN = 'arn:aws:sns:*:*:wlmdb';
 const EC2_TAG_CONDITION = 'ec2:ResourceTag/aws:cloudformation:stack-name';
 const FSX_TAG_CONDITION = 'aws:ResourceTag/aws:cloudformation:stack-name';
 
@@ -980,5 +978,7 @@ export {
     CLOUD_FORMATION_ARN,
     RESOURCE_GROUP_ARN,
     EC2_TAG_CONDITION,
-    FSX_TAG_CONDITION
+    FSX_TAG_CONDITION,
+    SNS_ARN,
+    SNS_STRICT_ACTION_NAMES
 };

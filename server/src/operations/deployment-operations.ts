@@ -49,7 +49,8 @@ import {
     EC2_TAG_CONDITION,
     WLMDB_RESOURCE_CLASS,
     FSX_TAG_CONDITION,
-    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP
+    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+    SNS_ARN
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -202,7 +203,7 @@ async function createCloudFormationTemplateForUserDeployment(
         credentialsId,
         region,
         AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN]
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
     );
     const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
         credentialsId,
@@ -357,7 +358,7 @@ async function deployCloudFormationTemplate(
         credentialsId,
         region,
         AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN]
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
     );
     const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
         credentialsId,
