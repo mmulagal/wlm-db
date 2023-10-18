@@ -5,7 +5,8 @@ import {
     S3Client,
     PutObjectCommand,
     GetBucketLifecycleConfigurationCommand,
-    PutBucketLifecycleConfigurationCommand
+    PutBucketLifecycleConfigurationCommand,
+    GetObjectCommand
 } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 
@@ -14,3 +15,4 @@ const s3Mock = mockClient(S3Client);
 s3Mock.on(PutObjectCommand).resolves({});
 s3Mock.on(GetBucketLifecycleConfigurationCommand).resolves({});
 s3Mock.on(PutBucketLifecycleConfigurationCommand).resolves({});
+s3Mock.on(GetObjectCommand).resolves({});
