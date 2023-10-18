@@ -290,6 +290,22 @@ export const databaseHomeApi = createApi({
     }
 });
 
+export const chatbotApi = createApi({
+    reducerPath: 'chatbotApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            sendMsg: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `chatbot/prompt`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
+        };
+    }
+});
+
 export const {
     useGetCredentialsQuery,
     useGetRegionsQuery,
@@ -320,3 +336,5 @@ export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDa
     configApi;
 
 export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery } = databaseHomeApi;
+
+export const { useSendMsgMutation } = chatbotApi;

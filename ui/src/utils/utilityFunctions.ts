@@ -537,10 +537,10 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
     if(type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type 
-        const value = 'm5.xlarge';
+        const value = 'm5.large';
         const label2 = '2vCPU, 8 GiB RAM, 4750Mbps';
         const data = {
-            instanceType: 'm5.xlarge',
+            instanceType: 'm5.large',
             vCpus: 2,
             ramInMib: 8192,
             iopsInMbps: 4750,
