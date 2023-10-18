@@ -385,5 +385,11 @@ export const CODE_VIEWER = {
     COPY: 'Copy',
     COPIED_TO_CLIPBOARD: 'Copied to clipboard',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    VIEW_CODE: 'View Code'
+    MENU_LOAD_WIZARD: 'Load (Wizard)',
+    SHOW_CODE_AS: 'Show code as:',
+    VIEW_CODE: 'View Code',
+    RENAME: 'Rename',
+    DELETE: 'Delete',
+    CREATION_DATE: 'Creation date:',
+    DEPLOYMENT: 'Deployment:'
 }

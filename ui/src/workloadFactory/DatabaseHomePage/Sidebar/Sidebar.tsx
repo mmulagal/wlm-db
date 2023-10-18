@@ -74,7 +74,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         },
         {
             id: 'downloadYaml',
-            displayName: 'Download YAML file '
+            displayName: CODE_VIEWER.DOWNLOAD_YAML
         }
     ];
 
@@ -143,15 +143,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const recList = recommendedData.filter((item: any) => item.id === openKey);
             setOpenedItem(recList[0]);
             getRestResponse(openKey);
-        } else if (configData && configData.length) {
-            if (openKey) {
-                const updatedConfigData = configData.filter((item: any) => item.id === openKey);
-                setOpenedItem(updatedConfigData[0]);
-                getRestResponse(updatedConfigData[0].id);
-            } else {
-                setOpenedItem(configData[0]);
-                getRestResponse(configData[0].id);
-            }
+        } else if (openKey && configData && configData.length) {
+            const updatedConfigData = configData.filter((item: any) => item.id === openKey);
+            setOpenedItem(updatedConfigData[0]);
+            getRestResponse(updatedConfigData[0].id);
+        } else if (!openKey && recommendedData && recommendedData.length) {
+            setOpenedItem(recommendedData[0]);
+            getRestResponse(recommendedData[0].id || '');
+        } else if (!openKey && configData && configData.length) {
+            setOpenedItem(configData[0]);
+            getRestResponse(configData[0].id);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, openKey]);
@@ -442,7 +443,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     menuOpenedRowDetail.current = null;
                                                     setOpenedRow(null);
                                                     if (menuId === 'downloadYaml') {
-                                                        handleDownloadYAML(rightPanelTemplateResponse?.templateAsYaml);
+                                                        handleDownloadYAML(rightPanelTemplateResponse?.templateAsYaml, openedItem?.name);
                                                     }
                                                 }
                                             }}
@@ -460,7 +461,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         <div className={styles.secondBar}>
                             <div className={styles.inputPart}>
                                 <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                    Show code as:
+                                    {CODE_VIEWER.SHOW_CODE_AS}
                                 </Typography>
                                 <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                                     <SelectField
