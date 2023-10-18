@@ -6,7 +6,8 @@ import {
     DeployTemplateResponse,
     DeploymentStatusListResponse,
     DeploymentStatusResponse,
-    DeploymentStatusObjectParams
+    DeploymentStatusObjectParams,
+    CloudFormationTemplateYamlResponse
 } from '../types/deployment.types';
 
 // Base Request for Deployment Routes
@@ -22,6 +23,16 @@ const CreateCloudFormationTemplateSchema = {
     body: CloudFormationTemplateRequestBody,
     response: {
         200: CloudFormationTemplateResponse
+    }
+};
+
+// Cloud formation template
+const CloudFormationTemplateSchema = {
+    ...baseRequest,
+    description: 'Cloud Formation template in yaml and cli format for user deployment',
+    body: CloudFormationTemplateRequestBody,
+    response: {
+        200: CloudFormationTemplateYamlResponse
     }
 };
 
@@ -52,4 +63,10 @@ const DeploymentStatusSchema = {
     }
 };
 
-export { CreateCloudFormationTemplateSchema, DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema };
+export {
+    CreateCloudFormationTemplateSchema,
+    DeployTemplateSchema,
+    DeploymentStatusListSchema,
+    DeploymentStatusSchema,
+    CloudFormationTemplateSchema
+};

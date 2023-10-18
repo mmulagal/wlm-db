@@ -69,6 +69,11 @@ const CloudFormationTemplateResponse = Type.Object({
     warningMessage: Type.Optional(Type.String())
 });
 
+const CloudFormationTemplateYamlResponse = Type.Object({
+    template: Type.String(),
+    cliCommand: Type.String()
+});
+
 const DeployTemplateResponse = Type.Object({
     cloudFormationStackId: Type.String()
 });
@@ -98,6 +103,7 @@ type ADConfigurationType = Static<typeof ADConfiguration>;
 type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationTemplateResponseType = Static<typeof CloudFormationTemplateResponse>;
+type CloudFormationTemplateYamlResponseType = Static<typeof CloudFormationTemplateYamlResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -114,5 +120,7 @@ export {
     DeploymentStatusListResponseType,
     DeploymentStatusResponseType,
     DeploymentStatusObjectParams,
-    DeploymentStatusObjectParamsType
+    DeploymentStatusObjectParamsType,
+    CloudFormationTemplateYamlResponse,
+    CloudFormationTemplateYamlResponseType
 };

@@ -463,6 +463,7 @@ const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 180;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
@@ -947,5 +948,6 @@ export {
     ServerState,
     SERVER_TYPE_MAPPING,
     FileSystemTypes,
+    CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER
 };

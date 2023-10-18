@@ -50,6 +50,22 @@ async function putObjectBucket(
     return response;
 }
 
+async function getObjectBucket(credentialId: string, region: string, bucketName: string, objectName: string) {
+    logger.info('Reading from bucket ', { credentialId, region, bucketName, objectName });
+
+    const s3 = new S3Client({ region });
+    const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: objectName
+    });
+
+    const response = await s3.send(command);
+
+    logger.debug('getObjectBucket response:', response);
+
+    return response;
+}
+
 async function putBucketLifecycleConfiguration(region: string, config: any) {
     logger.info('Creating bucket lifcycle configuration', { region, config });
     const s3 = new S3Client({ region });
@@ -76,4 +92,10 @@ async function getBucketLifecycleConfiguration(region: string, bucketName: strin
     }
 }
 
-export { getPreSignedUrl, putObjectBucket, putBucketLifecycleConfiguration, getBucketLifecycleConfiguration };
+export {
+    getPreSignedUrl,
+    putObjectBucket,
+    putBucketLifecycleConfiguration,
+    getBucketLifecycleConfiguration,
+    getObjectBucket
+};
