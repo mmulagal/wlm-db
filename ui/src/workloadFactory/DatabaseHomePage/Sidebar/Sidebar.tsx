@@ -11,7 +11,12 @@ import Highlighter from '../Highlighter/Highlighter';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
-import { formatDateWithTime, generateOptionType, setRecommendedValues } from '../../../utils/utilityFunctions';
+import {
+    formatDateWithTime,
+    generateOptionType,
+    handleDownloadYAML,
+    setRecommendedValues
+} from '../../../utils/utilityFunctions';
 import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
@@ -68,7 +73,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             displayName: 'View in AWS CloudFormation'
         },
         {
-            id: 'download yaml',
+            id: 'downloadYaml',
             displayName: 'Download YAML file '
         }
     ];
@@ -93,17 +98,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any) => {
-        loadTemplateData({ payload: payload })
-            .then((data: any) => {
-                if (data?.data) {
-                    setRightPanelTemplateResponse(data?.data);
-                    setIsRightPanelTemplateLoading(false);
-                } else {
-                    setRightPanelTemplateResponse(null);
-                    setIsRightPanelTemplateLoading(false);
-                }
-            })
-    }
+        loadTemplateData({ payload: payload }).then((data: any) => {
+            if (data?.data) {
+                setRightPanelTemplateResponse(data?.data);
+                setIsRightPanelTemplateLoading(false);
+            } else {
+                setRightPanelTemplateResponse(null);
+                setIsRightPanelTemplateLoading(false);
+            }
+        });
+    };
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
@@ -170,7 +174,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = ['CLoudFormation', 'AWS CLI', 'REST API'];
+        const arr = ['CloudFormation', 'AWS CLI', 'REST API'];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -181,36 +185,36 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //To set the data that will be displayed after selecting the drop down option in code box
     const setDisplayedDataInCodeBox = () => {
-        if (dropDownValue === 'CLoudFormation') {
-            return (
-                isRightPanelTemplateLoading ? 
+        if (dropDownValue === 'CloudFormation') {
+            return isRightPanelTemplateLoading ? (
                 <Typography variant="Semibold_14" className={styles.loading}>
                     Loading...
-                </Typography> :
+                </Typography>
+            ) : (
                 <Highlighter highlight={searchInput}>
                     <pre className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.templateAsYaml || 'No data found'}
                     </pre>
                 </Highlighter>
-            )
+            );
         }
         if (dropDownValue === 'REST API') {
-            return (
-                isRightPanelDataLoading ? 
+            return isRightPanelDataLoading ? (
                 <Typography variant="Semibold_14" className={styles.loading}>
                     Loading...
-                </Typography> :
+                </Typography>
+            ) : (
                 <Highlighter highlight={searchInput}>
                     <pre>{rightPanelResponse}</pre>
                 </Highlighter>
             );
         }
         if (dropDownValue === 'AWS CLI') {
-            return (
-                isRightPanelTemplateLoading ? 
+            return isRightPanelTemplateLoading ? (
                 <Typography variant="Semibold_14" className={styles.loading}>
                     Loading...
-                </Typography> :
+                </Typography>
+            ) : (
                 <Highlighter highlight={searchInput}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.templateAsCli || 'No data found'}
@@ -237,7 +241,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     // To copy response based on dropdown selection
     const copyResponseData = () => {
-        if (dropDownValue === 'CLoudFormation') {
+        if (dropDownValue === 'CloudFormation') {
             return rightPanelTemplateResponse?.templateAsYaml;
         } else if (dropDownValue === 'REST API') {
             return rightPanelResponse;
@@ -420,7 +424,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     </Typography>
                                 </div>
 
-                                {dropDownValue === 'CLoudFormation' && (
+                                {dropDownValue === 'CloudFormation' && (
                                     <div className={styles.sideBarMenuPopover} onClick={e => e.stopPropagation()}>
                                         <MenuPopover
                                             isMenuOpen={menuOpenedRowDetail.current === '' || menuOpenedRow === ''}
@@ -436,6 +440,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 } else if (toggleType === 'selectedOption') {
                                                     menuOpenedRowDetail.current = null;
                                                     setOpenedRow(null);
+                                                    if (menuId === 'downloadYaml') {
+                                                        handleDownloadYAML(rightPanelTemplateResponse?.templateAsYaml);
+                                                    }
                                                 }
                                             }}
                                             CustomMenu={undefined}
