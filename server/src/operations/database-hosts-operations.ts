@@ -119,7 +119,7 @@ async function getDatabaseHostsSummary(
                     const { resource_id: resourceId, resource_name: resourceName, region } = resourceDetail;
 
                     // Fetch server status
-                    let serverStatus = 'N/A';
+                    let serverStatus: string = ServerState.DOWN;
                     try {
                         serverStatus = await getServerState(resourceId);
                         serverStatus = serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
