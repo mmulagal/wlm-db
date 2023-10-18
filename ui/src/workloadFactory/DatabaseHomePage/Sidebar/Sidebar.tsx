@@ -11,7 +11,12 @@ import Highlighter from '../Highlighter/Highlighter';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
-import { formatDateWithTime, generateOptionType, setRecommendedValues } from '../../../utils/utilityFunctions';
+import {
+    formatDateWithTime,
+    generateOptionType,
+    handleDownloadYAML,
+    setRecommendedValues
+} from '../../../utils/utilityFunctions';
 import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
@@ -68,8 +73,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION
         },
         {
-            id: 'download yaml',
-            displayName: CODE_VIEWER.DOWNLOAD_YAML
+            id: 'downloadYaml',
+            displayName: 'Download YAML file '
         }
     ];
 
@@ -93,17 +98,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any) => {
-        loadTemplateData({ payload: payload })
-            .then((data: any) => {
-                if (data?.data) {
-                    setRightPanelTemplateResponse(data?.data);
-                    setIsRightPanelTemplateLoading(false);
-                } else {
-                    setRightPanelTemplateResponse(null);
-                    setIsRightPanelTemplateLoading(false);
-                }
-            })
-    }
+        loadTemplateData({ payload: payload }).then((data: any) => {
+            if (data?.data) {
+                setRightPanelTemplateResponse(data?.data);
+                setIsRightPanelTemplateLoading(false);
+            } else {
+                setRightPanelTemplateResponse(null);
+                setIsRightPanelTemplateLoading(false);
+            }
+        });
+    };
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
@@ -183,35 +187,35 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     //To set the data that will be displayed after selecting the drop down option in code box
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            return (
-                isRightPanelTemplateLoading ? 
+            return isRightPanelTemplateLoading ? (
                 <Typography variant="Semibold_14" className={styles.loading}>
                     {CODE_VIEWER.LOADING}
-                </Typography> :
+                </Typography>
+            ) : (
                 <Highlighter highlight={searchInput}>
                     <pre className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.templateAsYaml || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
                 </Highlighter>
-            )
+            );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
-            return (
-                isRightPanelDataLoading ? 
+            return isRightPanelDataLoading ? (
                 <Typography variant="Semibold_14" className={styles.loading}>
                     {CODE_VIEWER.LOADING}
-                </Typography> :
+                </Typography>
+            ) : (
                 <Highlighter highlight={searchInput}>
                     <pre>{rightPanelResponse}</pre>
                 </Highlighter>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
-            return (
-                isRightPanelTemplateLoading ? 
+            return isRightPanelTemplateLoading ? (
                 <Typography variant="Semibold_14" className={styles.loading}>
                     {CODE_VIEWER.LOADING}
-                </Typography> :
+                </Typography>
+            ) : (
                 <Highlighter highlight={searchInput}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.templateAsCli || CODE_VIEWER.NO_DATA_MSG}
@@ -437,6 +441,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 } else if (toggleType === 'selectedOption') {
                                                     menuOpenedRowDetail.current = null;
                                                     setOpenedRow(null);
+                                                    if (menuId === 'downloadYaml') {
+                                                        handleDownloadYAML(rightPanelTemplateResponse?.templateAsYaml);
+                                                    }
                                                 }
                                             }}
                                             CustomMenu={undefined}
