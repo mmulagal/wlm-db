@@ -12,7 +12,7 @@ import Highlighter from '../Highlighter/Highlighter';
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
 import { formatDateWithTime, generateOptionType, setRecommendedValues } from '../../../utils/utilityFunctions';
-import { useGetConfigListQuery, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { GENERAL } from '../../../utils/appConstants';
@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
 import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
+import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 
 type ConfigType = {
     id?: string;
@@ -48,11 +49,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     //For selected option from dropdown
     const [dropDownValue, setDropdownValue] = useState('REST API');
 
+    // For selected config REST API response
     const [rightPanelResponse, setRightPanelResponse] = useState('');
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
+
+    // For selected config CloudFormation and AWS CLI response
+    const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
+
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+    const [loadTemplateData] = useGetTemplatesMutation();
 
     const menuItems = [
         {
@@ -83,8 +91,24 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         setRecommendedData(recList);
     }, []);
 
+    // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
+    const getTemplateResponse = (payload: any) => {
+        loadTemplateData({ payload: payload })
+            .then((data: any) => {
+                if (data?.data) {
+                    setRightPanelTemplateResponse(data?.data);
+                    setIsRightPanelTemplateLoading(false);
+                } else {
+                    setRightPanelTemplateResponse(null);
+                    setIsRightPanelTemplateLoading(false);
+                }
+            })
+    }
+
+    // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
+        setIsRightPanelTemplateLoading(true);
         if (id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID) {
             // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
@@ -94,6 +118,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
             setRightPanelResponse(res);
             setIsRightPanelDataLoading(false);
+            getTemplateResponse(res);
         } else {
             // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
@@ -104,6 +129,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
                 setRightPanelResponse(res);
                 setIsRightPanelDataLoading(false);
+                getTemplateResponse(res);
             });
         }
     };
@@ -157,13 +183,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === 'CLoudFormation') {
             return (
-                <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    Coming Soon
-                </Typography>
-            );
+                isRightPanelTemplateLoading ? 
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    Loading...
+                </Typography> :
+                <Highlighter highlight={searchInput}>
+                    <pre className={styles.colorAutomation}>
+                        {rightPanelTemplateResponse?.templateAsYaml || 'No data found'}
+                    </pre>
+                </Highlighter>
+            )
         }
         if (dropDownValue === 'REST API') {
             return (
+                isRightPanelDataLoading ? 
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    Loading...
+                </Typography> :
                 <Highlighter highlight={searchInput}>
                     <pre>{rightPanelResponse}</pre>
                 </Highlighter>
@@ -171,9 +207,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         if (dropDownValue === 'AWS CLI') {
             return (
-                <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    Coming Soon
-                </Typography>
+                isRightPanelTemplateLoading ? 
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    Loading...
+                </Typography> :
+                <Highlighter highlight={searchInput}>
+                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                        {rightPanelTemplateResponse?.templateAsCli || 'No data found'}
+                    </Typography>
+                </Highlighter>
             );
         }
     };
@@ -190,6 +232,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         } else {
             // Load config by getting data from load config API and update in form
             LoadConfiguration(dispatch, loadConfigDataExe, null, key);
+        }
+    };
+
+    // To copy response based on dropdown selection
+    const copyResponseData = () => {
+        if (dropDownValue === 'CLoudFormation') {
+            return rightPanelTemplateResponse?.templateAsYaml;
+        } else if (dropDownValue === 'REST API') {
+            return rightPanelResponse;
+        } else if (dropDownValue === 'AWS CLI') {
+            return rightPanelTemplateResponse?.templateAsCli;
         }
     };
 
@@ -345,7 +398,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         popoverClass={styles['copy-popover']}
                                         children={'Copied to clipboard'}
                                         container={
-                                            <CopyToClipboard text={rightPanelResponse}>
+                                            <CopyToClipboard text={copyResponseData()}>
                                                 <div className={styles.menuItem}>
                                                     <Copy />
                                                     <Typography
@@ -421,13 +474,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
                             <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                {isRightPanelDataLoading ? (
-                                    <Typography variant="Semibold_14" className={styles.loading}>
-                                        Loading...
-                                    </Typography>
-                                ) : (
-                                    setDisplayedDataInCodeBox()
-                                )}
+                                {setDisplayedDataInCodeBox()}
                             </Typography>
                         </div>
                     </div>
