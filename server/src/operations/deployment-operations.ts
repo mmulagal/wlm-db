@@ -40,7 +40,16 @@ import {
     ACTION_BUTTON_DASHBOARD,
     REDIRECT_URL,
     STANDARD_DEPLOYMENT_ACTION,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT
+    SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    AWS_RESOURCES_ACTION_MAP,
+    AWS_RESOURCES_STRICT_ACTION_MAP,
+    SECRET_MANAGER_ARN,
+    CLOUD_FORMATION_ARN,
+    RESOURCE_GROUP_ARN,
+    EC2_TAG_CONDITION,
+    WLMDB_RESOURCE_CLASS,
+    FSX_TAG_CONDITION,
+    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -187,10 +196,39 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    const { permissions } = await getMissingPermissionsList(credentialsId, region);
+    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
+    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
+    const { permissions: strictPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_ACTION_MAP,
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN]
+    );
+    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+        undefined,
+        [
+            {
+                // ContextEntry
+                ContextKeyName: EC2_TAG_CONDITION,
+                ContextKeyValues: [
+                    // ContextKeyValueListType
+                    WLMDB_RESOURCE_CLASS
+                ],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: FSX_TAG_CONDITION,
+                ContextKeyValues: ['WLMDB*'],
+                ContextKeyType: 'string'
+            }
+        ]
+    );
 
     let errMsg = '';
-    if (permissions?.length) {
+    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
         errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
         logger.error(errMsg);
     }
@@ -313,8 +351,38 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    const { permissions } = await getMissingPermissionsList(credentialsId, region);
-    if (permissions?.length) {
+    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
+    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
+    const { permissions: strictPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_ACTION_MAP,
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN]
+    );
+    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+        undefined,
+        [
+            {
+                // ContextEntry
+                ContextKeyName: EC2_TAG_CONDITION,
+                ContextKeyValues: [
+                    // ContextKeyValueListType
+                    WLMDB_RESOURCE_CLASS
+                ],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: FSX_TAG_CONDITION,
+                ContextKeyValues: ['WLMDB*'],
+                ContextKeyType: 'string'
+            }
+        ]
+    );
+
+    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
