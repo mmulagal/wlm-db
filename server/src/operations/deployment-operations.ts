@@ -218,11 +218,9 @@ async function getCloudformationTemplate(
     const response = await getObjectBucket(credentialsId, ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
     const masterTemplateContents = await response.Body?.transformToString();
 
-    let cliParams = `ParameterKey='${templateParameters[0].ParameterKey}',ParameterValue='${templateParameters[0].ParameterValue}'`;
+    let cliParams: string = '';
     templateParameters.forEach(e => {
-        if (e.ParameterKey !== 'Ec2RoleName') {
-            cliParams += ` ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}"`;
-        }
+        cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
 
