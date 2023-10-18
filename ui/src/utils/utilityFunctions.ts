@@ -587,7 +587,7 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
     return result;
 };
 
-export const handleDownloadYAML = (data: any) => {
+export const handleDownloadYAML = (data: any, name = 'data') => {
     const yamlData = data;
     const blob = new Blob([yamlData], { type: 'application/x-yaml' });
     const url = window.URL.createObjectURL(blob);
@@ -595,7 +595,7 @@ export const handleDownloadYAML = (data: any) => {
     // Create a link element and trigger a click to download the YAML file.
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'data.yaml';
+    a.download = name + '.yaml';
     a.click();
 
     // Clean up by revoking the object URL.

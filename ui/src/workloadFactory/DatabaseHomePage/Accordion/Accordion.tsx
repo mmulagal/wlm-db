@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
+import { CODE_VIEWER } from '../../../utils/appConstants';
 
 type AccordionContent = {
     heading: string;
@@ -40,11 +41,11 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
     const menuItems = [
         {
             id: 'viewCode',
-            displayName: 'View Code'
+            displayName: CODE_VIEWER.VIEW_CODE
         },
         {
             id: 'loadWizard',
-            displayName: 'Load (Wizard)'
+            displayName: CODE_VIEWER.MENU_LOAD_WIZARD
         }
     ];
 
@@ -53,11 +54,11 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
         if(!recommended){
             menuItems.push({
                 id: 'rename',
-                displayName: 'Rename'
+                displayName: CODE_VIEWER.RENAME
             })
             menuItems.push({
                 id: 'delete',
-                displayName: 'Delete'
+                displayName: CODE_VIEWER.DELETE
             })
         }
         return menuItems;
@@ -155,14 +156,14 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                             variant="Regular_13"
                             className={open ? `${styles.secondLevel} ${styles.addColor}` : `${styles.secondLevel}`}
                         >
-                            Creation date: {subHeading}
+                            {CODE_VIEWER.CREATION_DATE} {subHeading}
                         </Typography>
                     }
                 </div>
                 {open && (
                     <div className={styles.contentArea}>
                         <Typography variant="Regular_13" className={styles.contentText}>
-                            Deployment: Number of Execution
+                            {CODE_VIEWER.DEPLOYMENT} Number of Execution
                         </Typography>
                         <div className={styles.extraSpace} />
                     </div>
