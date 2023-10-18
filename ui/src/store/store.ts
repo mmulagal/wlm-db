@@ -32,7 +32,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         const apiName = action?.meta?.arg?.queryCacheKey;
 
         // TBD - Will remove once APIs will be available 
-        if(apiName.includes('getDatabaseHosts') || apiName.includes('getDatabaseJobs') || apiName.includes('getJobsSummary')){
+        if(apiName && (apiName.includes('getDatabaseHosts') || apiName.includes('getDatabaseJobs') || apiName.includes('getJobsSummary'))){
             return;
         }
 
