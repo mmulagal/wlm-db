@@ -48,6 +48,9 @@
         &.initializing {
             background-color: var(--cyan-30);
         }
+        &.failed {
+            background-color: var(--red-30);
+        }
     }
 
     .protectionTooltip {

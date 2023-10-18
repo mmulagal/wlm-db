@@ -4,9 +4,11 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
-    deploymentStatusByName
+    deploymentStatusByName,
+    getCloudformationTemplate
 } from '../operations/deployment-operations';
 import {
+    CloudFormationTemplateSchema,
     CreateCloudFormationTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
@@ -37,6 +39,38 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     }
                 } = request;
                 const response = await createCloudFormationTemplateForUserDeployment(
+                    credentialsId,
+                    region,
+                    networkConfiguration,
+                    ec2Configuration,
+                    adConfiguration,
+                    fsxConfiguration,
+                    sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch,
+                    tags
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/cloudformation/template`,
+            { schema: CloudFormationTemplateSchema },
+            async (request, reply) => {
+                const {
+                    params: { credentialsId, region },
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        adConfiguration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags
+                    }
+                } = request;
+                const response = await getCloudformationTemplate(
                     credentialsId,
                     region,
                     networkConfiguration,

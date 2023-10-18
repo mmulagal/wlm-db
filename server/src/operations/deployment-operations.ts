@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getPreSignedUrl } from '../lib/aws/s3';
+import { getObjectBucket, getPreSignedUrl } from '../lib/aws/s3';
 import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
@@ -11,7 +11,8 @@ import {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    CloudFormationTemplateResponseType
+    CloudFormationTemplateResponseType,
+    CloudFormationTemplateYamlResponseType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -40,7 +41,9 @@ import {
     ACTION_BUTTON_DASHBOARD,
     REDIRECT_URL,
     STANDARD_DEPLOYMENT_ACTION,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT
+    SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    BUCKET_NAME,
+    CLOUD_FORMATION_CLI_COMMAND
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -157,6 +160,74 @@ async function formatTemplateParameters(
     });
 
     return { stackName, templateParameters: templateParams };
+}
+
+async function getCloudformationTemplate(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
+): Promise<CloudFormationTemplateYamlResponseType> {
+    logger.info('Cloud formation template ', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        tags
+    });
+
+    const { stackName, templateParameters } = await formatTemplateParameters(
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch
+    );
+
+    logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
+
+    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        credentialsId,
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        stackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath
+    );
+
+    const response = await getObjectBucket(credentialsId, ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
+    const masterTemplateContents = await response.Body?.transformToString();
+
+    let cliParams: string = '';
+    templateParameters.forEach(e => {
+        cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+    });
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
+
+    return {
+        template: masterTemplateContents || '',
+        cliCommand: cloudFormationCli
+    };
 }
 
 async function createCloudFormationTemplateForUserDeployment(
@@ -394,5 +465,6 @@ export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
-    deploymentStatusByName
+    deploymentStatusByName,
+    getCloudformationTemplate
 };
