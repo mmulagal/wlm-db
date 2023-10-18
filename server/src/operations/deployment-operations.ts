@@ -45,7 +45,7 @@ import {
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND
 } from '../utils/consts';
-import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
@@ -214,6 +214,9 @@ async function getCloudformationTemplate(
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
         customMasterTemplatePath
     );
+
+    // Sleep for 2 seconds for master template to be uploaded
+    await sleep(2000);
 
     const response = await getObjectBucket(credentialsId, ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
     const masterTemplateContents = await response.Body?.transformToString();
