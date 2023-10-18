@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getWlmdbPayload, wrapContext } from '../../../utils/utilityFunctions';
-import axios from 'axios';
 
 import styles from './Chatbot.module.scss';
 import ChatBox from './ChatBox/Chatbox';
 import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
-import { useAppDispatch } from '../../../store/storeHooks';
+import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
+import { useSendMsgMutation } from '../../../utils/apiService';
 type optionsType = {
     value?: string | number;
     label?: string;
@@ -30,6 +30,10 @@ const Chatbot = () => {
     const [payloadContent, setPayloadContent] = useState<any>('');
     const dispatch = useAppDispatch();
 
+    const [sendMsgToBot] = useSendMsgMutation();
+
+    const selectedCredId = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId);
+
     const sendMsg = async (msg?: string, add: boolean = true, msgs = messages) => {
         setIsBotReplying(true);
         let updatedMessages = msgs ? [...msgs] : [];
@@ -38,54 +42,61 @@ const Chatbot = () => {
             updatedMessages = [...updatedMessages, { sender: 'user', msg: msg }];
         }
 
-        const res = await axios.post(`http://localhost:8061/wlmdb/accounts/${123}/api/chatbot`, {
-            prompt:
-                (currentIntent?.type
-                    ? wrapContext(
-                          `${currentIntent.type} with params ${JSON.stringify({
-                              ...currentIntent.params
-                          })}`
-                      ) + 'Sure!'
-                    : '') + wrapContext(msg),
-            ...(currentIntent && {
-                intent: currentIntent?.type,
-                params: currentIntent.params
+        sendMsgToBot({
+            payload: {
+                prompt:
+                    (currentIntent?.type
+                        ? wrapContext(
+                              `${currentIntent.type} with params ${JSON.stringify({
+                                  ...currentIntent.params
+                              })}`
+                          ) + 'Sure!'
+                        : '') + wrapContext(msg),
+                ...(currentIntent && {
+                    intent: currentIntent?.type,
+                    params: currentIntent.params
+                })
+            }
+        })
+            .then((res: any) => {
+                if (res.data) {
+                    const { message, key, allowedValues, intent, type, errors } = res.data;
+                    if (intent) {
+                        setCurrentIntent(intent);
+                        if (!intent.complete) {
+                            setPayloadContent(getWlmdbPayload(intent.params));
+                        } else {
+                            setPayloadContent(intent.validatedJson);
+                        }
+                        setIsPayloadReady(intent.complete);
+                    }
+
+                    updatedMessages = [
+                        ...updatedMessages,
+                        {
+                            sender: 'bot',
+                            msg: message,
+                            key: key,
+                            list: allowedValues,
+                            intent: intent,
+                            type: type,
+                            active: true,
+                            errors: errors
+                        }
+                    ];
+
+                    if (currentIntent && !intent) {
+                        updatedMessages[updatedMessages.length - 3].active = false;
+                    }
+
+                    setMessages(updatedMessages);
+                    setIsBotReplying(false);
+                }
             })
-            // }),
-        });
-        if (res.data) {
-            const { message, key, allowedValues, intent, type, errors } = res.data;
-            if (intent) {
-                setCurrentIntent(intent);
-                if (!intent.complete) {
-                    setPayloadContent(getWlmdbPayload(intent.params));
-                } else {
-                    setPayloadContent(intent.validatedJson);
-                }
-                setIsPayloadReady(intent.complete);
-            }
-
-            updatedMessages = [
-                ...updatedMessages,
-                {
-                    sender: 'bot',
-                    msg: message,
-                    key: key,
-                    list: allowedValues,
-                    intent: intent,
-                    type: type,
-                    active: true,
-                    errors: errors
-                }
-            ];
-
-            if (currentIntent && !intent) {
-                updatedMessages[updatedMessages.length - 3].active = false;
-            }
-
-            setMessages(updatedMessages);
-            setIsBotReplying(false);
-        }
+            .catch((error: any) => {
+                setIsBotReplying(false);
+                console.log('Error while fetching data - ', error);
+            });
     };
 
     useEffect(() => {

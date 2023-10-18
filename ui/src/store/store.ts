@@ -1,6 +1,6 @@
 import { configureStore, combineReducers, MiddlewareAPI, isRejectedWithValue, Middleware } from '@reduxjs/toolkit';
 import notificationSlice, { addNotification, NOTIFICATION_TYPES } from './notificationSlice';
-import { awsApi, configApi, databaseHomeApi, resourceApi } from '../utils/apiService';
+import { awsApi, chatbotApi, configApi, databaseHomeApi, resourceApi } from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
@@ -22,6 +22,7 @@ const rootReducer = combineReducers({
     [resourceSlice.name]: resourceSlice.reducer,
     [configApi.reducerPath]: configApi.reducer,
     [databaseHomeApi.reducerPath]: databaseHomeApi.reducer,
+    [chatbotApi.reducerPath]: chatbotApi.reducer,
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
     [previewPanelSlice.name]: previewPanelSlice.reducer
 });
@@ -29,10 +30,14 @@ const rootReducer = combineReducers({
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
-        const apiName = action?.meta?.arg?.queryCacheKey;
+        const apiName = action?.meta?.arg?.queryCacheKey || '';
 
-        // TBD - Will remove once APIs will be available 
-        if(apiName && (apiName.includes('getDatabaseHosts') || apiName.includes('getDatabaseJobs') || apiName.includes('getJobsSummary'))){
+        // TBD - Will remove once APIs will be available
+        if (
+            apiName.includes('getDatabaseHosts') ||
+            apiName.includes('getDatabaseJobs') ||
+            apiName.includes('getJobsSummary')
+        ) {
             return;
         }
 
@@ -68,6 +73,7 @@ const store = configureStore({
             .concat(resourceApi.middleware)
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
+            .concat(chatbotApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

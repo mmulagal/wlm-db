@@ -44,6 +44,11 @@
                 cursor: pointer;
             }
 
+            .selected {
+                background-color: #0067c5;
+                -webkit-box-shadow: inset 0px 0px 0px 2px white;
+            }
+
             .select-button-text {
                 max-width: 600px;
                 overflow-x: hidden;
