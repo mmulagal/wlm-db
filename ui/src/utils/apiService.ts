@@ -285,6 +285,13 @@ export const databaseHomeApi = createApi({
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
+            }),
+            getTemplates: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `template`,
+                    method: 'POST',
+                    body: payload
+                })
             })
         };
     }
@@ -335,6 +342,7 @@ export const {
 export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
     configApi;
 
-export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery } = databaseHomeApi;
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
+    databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;

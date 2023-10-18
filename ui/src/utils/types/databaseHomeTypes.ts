@@ -122,3 +122,8 @@ export interface DatabaseHostsEntities {
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
 }
+
+export interface TemplateRes {
+    templateAsCli: String;
+    templateAsYaml: String;
+}
