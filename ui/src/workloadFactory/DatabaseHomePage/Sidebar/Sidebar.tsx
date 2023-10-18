@@ -49,9 +49,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     //For selected option from dropdown
     const [dropDownValue, setDropdownValue] = useState('REST API');
 
+    // For selected config REST API response
     const [rightPanelResponse, setRightPanelResponse] = useState('');
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
 
+    // For selected config CloudFormation and AWS CLI response
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
@@ -89,7 +91,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         setRecommendedData(recList);
     }, []);
 
-    const getTemplateResponse = (id: string, payload: any) => {
+    // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
+    const getTemplateResponse = (payload: any) => {
         loadTemplateData({ payload: payload })
             .then((data: any) => {
                 if (data?.data) {
@@ -102,6 +105,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             })
     }
 
+    // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
         setIsRightPanelTemplateLoading(true);
@@ -114,7 +118,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
             setRightPanelResponse(res);
             setIsRightPanelDataLoading(false);
-            getTemplateResponse(id, res);
+            getTemplateResponse(res);
         } else {
             // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
@@ -125,7 +129,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
                 setRightPanelResponse(res);
                 setIsRightPanelDataLoading(false);
-                getTemplateResponse(id, res);
+                getTemplateResponse(res);
             });
         }
     };
@@ -231,6 +235,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    // To copy response based on dropdown selection
     const copyResponseData = () => {
         if (dropDownValue === 'CLoudFormation') {
             return rightPanelTemplateResponse?.templateAsYaml;
