@@ -39,6 +39,7 @@ import {
 } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
+import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
 type ConfigType = {
     id?: string;
@@ -53,7 +54,6 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
-    const initialMssqlState = useAppSelector(state => state.mssqlForm);
     const accountId = useAppSelector(state => state?.auth?.accountId);
 
     // For expanded menu
@@ -73,17 +73,21 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
+    const [disableCopy, setDisableCopy] = useState(true);
+
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const menuItems = [
         {
-            id: 'view in aws cloudFormation',
-            displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION
+            id: 'viewAwsCloudFormation',
+            displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true: false
         },
         {
             id: 'downloadYaml',
-            displayName: CODE_VIEWER.DOWNLOAD_YAML
+            displayName: CODE_VIEWER.DOWNLOAD_YAML,
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true: false
         }
     ];
 
@@ -105,8 +109,34 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         setRecommendedData(recList);
     }, []);
 
+    // This is to set disableCopy flag value
+    useEffect(() => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            if (!rightPanelTemplateResponse?.templateAsYaml || isRightPanelTemplateLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            if (!rightPanelResponse || isRightPanelDataLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            if (!rightPanelTemplateResponse?.templateAsCli || isRightPanelTemplateLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else {
+            setDisableCopy(true);
+        }
+    }, [dropDownValue, rightPanelResponse, isRightPanelDataLoading, rightPanelTemplateResponse, isRightPanelTemplateLoading]);
+
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any) => {
+        // TBD - to add code to get credentials and pass in request body
         loadTemplateData({ payload: payload }).then((data: any) => {
             if (data?.data) {
                 setRightPanelTemplateResponse(data?.data);
@@ -295,6 +325,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    const handleViewInAwsCloudFormation = () => {
+        if (rightPanelTemplateResponse?.cloudFormationUrl) {
+            window.open(rightPanelTemplateResponse?.cloudFormationUrl, '_blank', 'noopener');
+        }
+    };
+
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
@@ -443,23 +479,36 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             </Typography>
                             <div className={styles.menuContainer}>
                                 <div className={styles['copy']}>
-                                    <Popover
-                                        popoverClass={styles['copy-popover']}
-                                        children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                                        container={
-                                            <CopyToClipboard text={copyResponseData()}>
-                                                <div className={styles.menuItem}>
-                                                    <Copy />
-                                                    <Typography
-                                                        variant="Semibold_14"
-                                                        className={styles.rightSideHeading}
-                                                    >
-                                                        {CODE_VIEWER.COPY}
-                                                    </Typography>
-                                                </div>
-                                            </CopyToClipboard>
-                                        }
-                                    />
+                                    {disableCopy ? 
+                                        // Disabled copy button 
+                                        (<div className={styles.menuItemDisabled}>
+                                            <Copy />
+                                            <Typography
+                                                variant="Semibold_14"
+                                                className={styles.rightSideHeadingDisabled}
+                                            >
+                                                {CODE_VIEWER.COPY}
+                                            </Typography>
+                                        </div>) :
+                                        // Enabled copy button
+                                        (<Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                            container={
+                                                <CopyToClipboard text={copyResponseData()}>
+                                                    <div className={styles.menuItem}>
+                                                        <Copy />
+                                                        <Typography
+                                                            variant="Semibold_14"
+                                                            className={styles.rightSideHeading}
+                                                        >
+                                                            {CODE_VIEWER.COPY}
+                                                        </Typography>
+                                                    </div>
+                                                </CopyToClipboard>
+                                            }
+                                        />)
+                                    } 
                                 </div>
 
                                 <div className={styles.menuItem} onClick={loadWizard}>
@@ -490,6 +539,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                             rightPanelTemplateResponse?.templateAsYaml,
                                                             openedItem?.name
                                                         );
+                                                    } else if (menuId === 'viewAwsCloudFormation') {
+                                                        handleViewInAwsCloudFormation();
                                                     }
                                                 }
                                             }}
