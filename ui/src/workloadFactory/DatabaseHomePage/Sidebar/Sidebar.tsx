@@ -14,6 +14,7 @@ import Accordion from '../Accordion/Accordion';
 import {
     formatDateWithTime,
     generateOptionType,
+    getCredDetails,
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
@@ -28,7 +29,7 @@ import {
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
-import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE, CURL_REQ_TEMPLATE, CRED_PLACEHOLDERS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 
@@ -46,6 +47,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [searchInput, setSearchInput] = useState('');
 
     const initialMssqlState = useAppSelector(state => state.mssqlForm);
+    const accountId = useAppSelector(state => state?.auth?.accountId);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -60,7 +62,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     // For selected config CloudFormation and AWS CLI response
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
-    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
+    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false); 
 
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
@@ -120,18 +122,32 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 mssqlForm: actualData[0].data
             };
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
-            setRightPanelResponse(res);
+            // To set REST API response as deploy API curl request. Passing accountId, credentialId and region placeholder for recommended configs.
+            setRightPanelResponse(CURL_REQ_TEMPLATE(
+                accountId || CRED_PLACEHOLDERS.ACCOUNT_ID, 
+                CRED_PLACEHOLDERS.CRED_ID, 
+                CRED_PLACEHOLDERS.REGION, 
+                CRED_PLACEHOLDERS.TOKEN,
+                res));
             setIsRightPanelDataLoading(false);
             getTemplateResponse(res);
         } else {
             // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
                 const actualData = data?.data?.data;
+                // To get accountid, credid and region from saved config
+                const credDetails = getCredDetails(actualData);
                 const changeObjectForm = {
                     mssqlForm: actualData
                 };
                 const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
-                setRightPanelResponse(res);
+                // To set REST API response as deploy API curl request
+                setRightPanelResponse(CURL_REQ_TEMPLATE(
+                    accountId || CRED_PLACEHOLDERS.ACCOUNT_ID, 
+                    credDetails.credId || CRED_PLACEHOLDERS.CRED_ID, 
+                    credDetails.region || CRED_PLACEHOLDERS.REGION, 
+                    CRED_PLACEHOLDERS.TOKEN,
+                    res));
                 setIsRightPanelDataLoading(false);
                 getTemplateResponse(res);
             });

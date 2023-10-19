@@ -601,3 +601,14 @@ export const handleDownloadYAML = (data: any, name = 'data') => {
     // Clean up by revoking the object URL.
     window.URL.revokeObjectURL(url);
 };
+
+// To get credential id and region for saved config
+export const getCredDetails = (data: any) => {
+    const state = store.getState();
+    const result = {
+        accountId: state?.auth?.accountId || '',
+        credId: data?.awsAccount?.selectedCredential?.data?.credentialsId || '',
+        region: data?.regionAndVpc?.selectedRegion?.data?.regionCode || ''
+    };
+    return result;
+};
