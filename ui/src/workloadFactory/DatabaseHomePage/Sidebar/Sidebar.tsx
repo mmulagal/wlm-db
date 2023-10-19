@@ -136,6 +136,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any) => {
+        // TBD - to add code to get credentials and pass in request body
         loadTemplateData({ payload: payload }).then((data: any) => {
             if (data?.data) {
                 setRightPanelTemplateResponse(data?.data);
@@ -479,6 +480,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             <div className={styles.menuContainer}>
                                 <div className={styles['copy']}>
                                     {disableCopy ? 
+                                        // Disabled copy button 
                                         (<div className={styles.menuItemDisabled}>
                                             <Copy />
                                             <Typography
@@ -488,6 +490,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 {CODE_VIEWER.COPY}
                                             </Typography>
                                         </div>) :
+                                        // Enabled copy button
                                         (<Popover
                                             popoverClass={styles['copy-popover']}
                                             children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
