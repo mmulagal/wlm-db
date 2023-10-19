@@ -268,35 +268,9 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
-    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
-    const { permissions: strictPermissions } = await getMissingPermissionsList(
+    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
         credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
-    );
-    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-        undefined,
-        [
-            {
-                // ContextEntry
-                ContextKeyName: EC2_TAG_CONDITION,
-                ContextKeyValues: [
-                    // ContextKeyValueListType
-                    WLMDB_RESOURCE_CLASS
-                ],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: ['WLMDB*'],
-                ContextKeyType: 'string'
-            }
-        ]
+        region
     );
 
     let errMsg = '';
@@ -423,35 +397,9 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
-    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
-    const { permissions: strictPermissions } = await getMissingPermissionsList(
+    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
         credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
-    );
-    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-        undefined,
-        [
-            {
-                // ContextEntry
-                ContextKeyName: EC2_TAG_CONDITION,
-                ContextKeyValues: [
-                    // ContextKeyValueListType
-                    WLMDB_RESOURCE_CLASS
-                ],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: ['WLMDB*'],
-                ContextKeyType: 'string'
-            }
-        ]
+        region
     );
 
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
@@ -530,6 +478,42 @@ async function deploymentStatusById(accountId: string, deploymentId: string) {
     const data = await getDeploymentStatusById(accountId, deploymentId);
     return data;
 }
+
+async function checkAllMissingPermissions(credentialsId: string, region: string) {
+    logger.info('check all missing permissions', credentialsId, region);
+    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
+    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
+    const { permissions: strictPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_ACTION_MAP,
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
+    );
+    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+        undefined,
+        [
+            {
+                // ContextEntry
+                ContextKeyName: EC2_TAG_CONDITION,
+                ContextKeyValues: [
+                    // ContextKeyValueListType
+                    WLMDB_RESOURCE_CLASS
+                ],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: FSX_TAG_CONDITION,
+                ContextKeyValues: ['WLMDB*'],
+                ContextKeyType: 'string'
+            }
+        ]
+    );
+    return { permissions, strictPermissions, strictConditionPermissions };
+}
+
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
