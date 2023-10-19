@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import moment from 'moment';
 import { createConfig, updateConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
 import {
@@ -8,6 +9,7 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
+import { HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -109,29 +111,32 @@ async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStat
                 deploymentId,
                 deploymentName,
                 deploymentStatus,
-                deploymentReason: reason || ''
+                deploymentFailureReason: reason || ''
             })
         );
 }
 
-async function getDeploymentStatusById(accountId: string, id: string): Promise<DeploymentStatusResponseType> {
-    logger.info(' Deployment status by id', accountId, id);
+async function getDeploymentStatusByName(accountId: string, name: string): Promise<DeploymentStatusResponseType> {
+    logger.info(' Deployment status by id', accountId, name);
 
-    const [
-        {
-            deployment_id: deploymentId,
-            deployment_name: deploymentName,
-            deployment_status: deploymentStatus,
-            deployment_status_reason: reason
-        }
-    ] = await listDeployments(accountId, id);
-
-    return {
-        deploymentId,
-        deploymentName,
-        deploymentStatus,
-        deploymentReason: reason || ''
-    };
+    try {
+        const [
+            {
+                deployment_id: deploymentId,
+                deployment_name: deploymentName,
+                deployment_status: deploymentStatus,
+                deployment_status_reason: reason
+            }
+        ] = await listDeployments(accountId, undefined, name);
+        return {
+            deploymentId,
+            deploymentName,
+            deploymentStatus,
+            deploymentFailureReason: reason || ''
+        };
+    } catch (error) {
+        throw createError(HttpErrorCodes.NOT_FOUND, STACK_NOT_FOUND(name));
+    }
 }
 
 export {
@@ -141,5 +146,5 @@ export {
     modifyConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
-    getDeploymentStatusById
+    getDeploymentStatusByName
 };

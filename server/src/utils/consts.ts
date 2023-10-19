@@ -526,6 +526,8 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
+const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
+
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
 // Signed URL Valid for 24 hours
@@ -942,6 +944,7 @@ export {
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    STACK_NOT_FOUND,
     RESOURCE_RETRIVAL_ERROR,
     DatabaseHostsQueryFields,
     ServerState,

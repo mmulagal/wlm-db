@@ -45,14 +45,14 @@ import {
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND
 } from '../utils/consts';
-import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { getAllDeploymentStatus, getDeploymentStatusById } from './database/database-operations';
+import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
@@ -214,6 +214,9 @@ async function getCloudformationTemplate(
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
         customMasterTemplatePath
     );
+
+    // Sleep for 2 seconds for master template to be uploaded
+    await sleep(2000);
 
     const response = await getObjectBucket(credentialsId, ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
     const masterTemplateContents = await response.Body?.transformToString();
@@ -456,15 +459,15 @@ async function deploymentStatus(accountId: string) {
     return data;
 }
 
-async function deploymentStatusById(accountId: string, deploymentId: string) {
-    logger.info('Fetching deployment status by id from database ', accountId, deploymentId);
-    const data = await getDeploymentStatusById(accountId, deploymentId);
+async function deploymentStatusByName(accountId: string, deploymentName: string) {
+    logger.info('Fetching deployment status by id from database ', accountId, deploymentName);
+    const data = await getDeploymentStatusByName(accountId, deploymentName);
     return data;
 }
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
-    deploymentStatusById,
+    deploymentStatusByName,
     getCloudformationTemplate
 };
