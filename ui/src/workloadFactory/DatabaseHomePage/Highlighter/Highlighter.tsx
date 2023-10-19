@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Highlighter.module.scss';
 
-const Highlighter = ({ children, highlight }: any) => {
+const HighlighterWord = ({ children, highlight }: any) => {
     if (!highlight || highlight.length < 2) return children;
     const regexp = new RegExp(highlight, 'g');
     let content = '';
@@ -42,4 +42,4 @@ const Highlighter = ({ children, highlight }: any) => {
     );
 };
 
-export default Highlighter;
+export default HighlighterWord;
