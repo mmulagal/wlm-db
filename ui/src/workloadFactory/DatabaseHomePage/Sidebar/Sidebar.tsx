@@ -7,7 +7,9 @@ import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
 import { ReactComponent as LoadIcon } from '../../../assets/ic_restore.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import Highlighter from '../Highlighter/Highlighter';
+import HighlighterWord from '../Highlighter/Highlighter';
+//@ts-ignore
+import Highlighter from 'react-highlight-words';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
@@ -29,7 +31,12 @@ import {
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
-import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE, CURL_REQ_TEMPLATE, CRED_PLACEHOLDERS } from '../../../utils/consts';
+import {
+    RECOMMENDED_TEMPLATES,
+    WLF_TO_FORM_NAVIGATE,
+    CURL_REQ_TEMPLATE,
+    CRED_PLACEHOLDERS
+} from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 
@@ -57,12 +64,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
     // For selected config REST API response
-    const [rightPanelResponse, setRightPanelResponse] = useState('');
+    const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
 
     // For selected config CloudFormation and AWS CLI response
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
-    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false); 
+    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
@@ -123,12 +130,22 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             };
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
             // To set REST API response as deploy API curl request. Passing accountId, credentialId and region placeholder for recommended configs.
-            setRightPanelResponse(CURL_REQ_TEMPLATE(
-                accountId || CRED_PLACEHOLDERS.ACCOUNT_ID, 
-                CRED_PLACEHOLDERS.CRED_ID, 
-                CRED_PLACEHOLDERS.REGION, 
-                CRED_PLACEHOLDERS.TOKEN,
-                res));
+            const highlightedString = (
+                <Highlighter
+                    highlightClassName="highlightClass"
+                    searchWords={['<Token>']}
+                    autoEscape={true}
+                    textToHighlight={CURL_REQ_TEMPLATE(
+                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN,
+                        res
+                    )}
+                />
+            );
+            //@ts-ignore
+            setRightPanelResponse(highlightedString);
             setIsRightPanelDataLoading(false);
             getTemplateResponse(res);
         } else {
@@ -142,12 +159,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 };
                 const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
                 // To set REST API response as deploy API curl request
-                setRightPanelResponse(CURL_REQ_TEMPLATE(
-                    accountId || CRED_PLACEHOLDERS.ACCOUNT_ID, 
-                    credDetails.credId || CRED_PLACEHOLDERS.CRED_ID, 
-                    credDetails.region || CRED_PLACEHOLDERS.REGION, 
-                    CRED_PLACEHOLDERS.TOKEN,
-                    res));
+                setRightPanelResponse(
+                    CURL_REQ_TEMPLATE(
+                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                        credDetails.region || CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN,
+                        res
+                    )
+                );
                 setIsRightPanelDataLoading(false);
                 getTemplateResponse(res);
             });
@@ -170,7 +190,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             setOpenedItem(configData[0]);
             getRestResponse(configData[0].id);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, openKey]);
 
     const handleToggle = (key: any, id: any) => {
@@ -209,11 +229,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <Highlighter highlight={searchInput}>
+                <HighlighterWord highlight={searchInput}>
                     <pre className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.templateAsYaml || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
@@ -222,9 +242,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <Highlighter highlight={searchInput}>
+                <HighlighterWord highlight={searchInput}>
                     <pre>{rightPanelResponse}</pre>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
@@ -233,11 +253,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <Highlighter highlight={searchInput}>
+                <HighlighterWord highlight={searchInput}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.templateAsCli || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
     };
@@ -262,7 +282,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return rightPanelTemplateResponse?.templateAsYaml;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
-            return rightPanelResponse;
+            return rightPanelResponse?.props?.textToHighlight;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return rightPanelTemplateResponse?.templateAsCli;
         }
@@ -459,7 +479,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     menuOpenedRowDetail.current = null;
                                                     setOpenedRow(null);
                                                     if (menuId === 'downloadYaml') {
-                                                        handleDownloadYAML(rightPanelTemplateResponse?.templateAsYaml, openedItem?.name);
+                                                        handleDownloadYAML(
+                                                            rightPanelTemplateResponse?.templateAsYaml,
+                                                            openedItem?.name
+                                                        );
                                                     }
                                                 }
                                             }}
