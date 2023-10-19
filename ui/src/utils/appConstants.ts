@@ -373,7 +373,7 @@ export const GENERAL = {
 
 export const CODE_VIEWER = {
     REST_API: 'REST API',
-    CLOUDFORMATION: 'CLoudFormation',
+    CLOUDFORMATION: 'CloudFormation',
     AWS_CLI: 'AWS CLI',
     VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
     DOWNLOAD_YAML: 'Download YAML file ',
