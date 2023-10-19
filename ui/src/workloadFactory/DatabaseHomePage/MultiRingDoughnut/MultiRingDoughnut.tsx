@@ -6,6 +6,7 @@ import styles from './MultiRingDoughnut.module.scss';
 import { Typography } from '@netapp/design-system';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import { GENERAL } from '../../../utils/appConstants';
 
 Chart.register(...registerables);
 
@@ -59,7 +60,7 @@ const MultiRingDoughnut = () => {
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                     {formatFractionalNumber(hostData?.protectedPercent)}%
                 </Typography>
-                <Typography variant="Regular_14">Protection</Typography>
+                <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
             <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
         </div>

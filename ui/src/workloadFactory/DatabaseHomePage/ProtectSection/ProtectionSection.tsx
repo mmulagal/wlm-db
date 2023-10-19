@@ -17,11 +17,11 @@ const ProtectionSection = () => {
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_PROTECTION}
-                    {(databaseHostsLoading || databaseJobsLoading) && 
+                    {(databaseHostsLoading || databaseJobsLoading) && (
                         <div className={styles.loadingPlacement}>
-                            <LoadingComponent/>
+                            <LoadingComponent />
                         </div>
-                    }
+                    )}
                 </Typography>
             </div>
 
@@ -42,7 +42,9 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.protectedPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.protectedDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.protectedDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
 
@@ -58,7 +60,9 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.unprotectedPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.unprotectedDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.unprotectedDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
                     <div className={styles.separatorProtection} />
@@ -79,7 +83,9 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.awsBackupPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.awsBackupDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.awsBackupDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
 
@@ -95,7 +101,9 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.fsxOntapSnapshotsPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.fsxOntapSnapshotsDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.fsxOntapSnapshotsDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
                     <div className={styles.separatorProtection} />
@@ -110,7 +118,9 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.sqlServerBackupPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.sqlServerBackupDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.sqlServerBackupDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
                     <div className={styles.separatorProtection} />
