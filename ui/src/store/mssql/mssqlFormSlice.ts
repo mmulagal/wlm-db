@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { GENERAL, SELECT_CONFIG } from '../../utils/appConstants';
 import { FSXADMIN, SQL_DEPLOYMENT_MODE, SQL_USERNAME } from '../../utils/consts';
 
-const initialState: any = {
+export const initialMssqlState: any = {
     awsAccount: {
         selectedCredential: null
     },
@@ -92,7 +92,7 @@ const initialState: any = {
 
 const mssqlFormSlice = createSlice({
     name: 'mssqlForm',
-    initialState,
+    initialState: initialMssqlState,
     reducers: {
         setSelectedCredentials(state, action: PayloadAction<any>) {
             state.awsAccount.selectedCredential = action.payload;

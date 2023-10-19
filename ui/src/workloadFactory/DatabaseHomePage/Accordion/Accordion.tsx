@@ -16,6 +16,7 @@ import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
+import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
 type AccordionContent = {
     heading: string;
@@ -50,7 +51,6 @@ const Accordion = ({
     const menuOpenedRowDetail: any = useRef(null);
     const [deleteConfigApi] = useDeleteConfigMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
-    const initialMssqlState = useAppSelector((state: any) => state.mssqlForm);
 
     // Default menu items applicable for all
     const menuItems = [
