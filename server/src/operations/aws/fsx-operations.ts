@@ -1,7 +1,12 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
+import {
+    describeFSxFileSystems,
+    describeFSxVolumes,
+    describeFSxStorageVirtualMachines,
+    describeFSxBackups
+} from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
 import {
@@ -206,4 +211,29 @@ async function getStorageDataUsingSSM(
     const jsonResponse = JSON.parse(cleanResponse!);
     return jsonResponse;
 }
-export { getFSxFileSystemsList, getVolumesUuids, getStorageDataUsingSSM };
+
+async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {
+    logger.info('List volume ids in an fsx', { credentialsId, region, fsxId });
+
+    const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fsxId);
+    const volumeIds: Array<string> = [];
+
+    volumes
+        ?.filter(volume => volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.VolumeId)
+        .map(volume => volumeIds.push(volume.VolumeId!));
+
+    logger.debug('List volume ids in an fsx response', volumeIds);
+
+    return volumeIds;
+}
+
+async function isAWSBackupEnabled(credentialsId: string, region: string, fsxId: string) {
+    logger.info('Check if AWS backup is enabled', credentialsId, region, fsxId);
+
+    const volumeIds = await getVolumeIds(credentialsId, region, fsxId);
+    const backups = await describeFSxBackups(credentialsId, region, volumeIds);
+
+    return backups.Backups?.length !== 0;
+}
+
+export { getFSxFileSystemsList, isAWSBackupEnabled, getVolumesUuids, getStorageDataUsingSSM };

@@ -7,15 +7,23 @@ import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
 import { ReactComponent as LoadIcon } from '../../../assets/ic_restore.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import Highlighter from '../Highlighter/Highlighter';
+import HighlighterWord from '../Highlighter/Highlighter';
+//@ts-ignore
+import Highlighter from 'react-highlight-words';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
-import { formatDateWithTime, generateOptionType, setRecommendedValues } from '../../../utils/utilityFunctions';
-import { useGetConfigListQuery, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import {
+    formatDateWithTime,
+    generateOptionType,
+    getCredDetails,
+    handleDownloadYAML,
+    setRecommendedValues
+} from '../../../utils/utilityFunctions';
+import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { GENERAL } from '../../../utils/appConstants';
+import { CODE_VIEWER } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import {
     LoadConfiguration,
@@ -23,8 +31,15 @@ import {
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
-import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import {
+    RECOMMENDED_TEMPLATES,
+    WLF_TO_FORM_NAVIGATE,
+    CURL_REQ_TEMPLATE,
+    CRED_PLACEHOLDERS
+} from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
+import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
+import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
 type ConfigType = {
     id?: string;
@@ -39,29 +54,40 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
-    const initialMssqlState = useAppSelector(state => state.mssqlForm);
+    const accountId = useAppSelector(state => state?.auth?.accountId);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
 
     //For selected option from dropdown
-    const [dropDownValue, setDropdownValue] = useState('REST API');
+    const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
-    const [rightPanelResponse, setRightPanelResponse] = useState('');
+    // For selected config REST API response
+    const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
+
+    // For selected config CloudFormation and AWS CLI response
+    const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+    const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
+
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
+    const [disableCopy, setDisableCopy] = useState(true);
+
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+    const [loadTemplateData] = useGetTemplatesMutation();
 
     const menuItems = [
         {
-            id: 'view in aws cloudFormation',
-            displayName: 'View in AWS CloudFormation'
+            id: 'viewAwsCloudFormation',
+            displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true: false
         },
         {
-            id: 'download yaml',
-            displayName: 'Download YAML file '
+            id: 'downloadYaml',
+            displayName: CODE_VIEWER.DOWNLOAD_YAML,
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true: false
         }
     ];
 
@@ -70,12 +96,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     useEffect(() => {
         const recList = [
             {
-                name: RECOMMENDED_TEMPLATES.DEV_NAME,
+                name: CODE_VIEWER.RECOMMENDED_DEV,
                 id: RECOMMENDED_TEMPLATES.DEV_ID,
                 data: setRecommendedValues(initialMssqlState, RECOMMENDED_TEMPLATES.DEV_ID)
             },
             {
-                name: RECOMMENDED_TEMPLATES.PROD_NAME,
+                name: CODE_VIEWER.RECOMMENDED_PROD,
                 id: RECOMMENDED_TEMPLATES.PROD_ID,
                 data: setRecommendedValues(initialMssqlState, RECOMMENDED_TEMPLATES.PROD_ID)
             }
@@ -83,8 +109,49 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         setRecommendedData(recList);
     }, []);
 
+    // This is to set disableCopy flag value
+    useEffect(() => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            if (!rightPanelTemplateResponse?.templateAsYaml || isRightPanelTemplateLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            if (!rightPanelResponse || isRightPanelDataLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            if (!rightPanelTemplateResponse?.templateAsCli || isRightPanelTemplateLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else {
+            setDisableCopy(true);
+        }
+    }, [dropDownValue, rightPanelResponse, isRightPanelDataLoading, rightPanelTemplateResponse, isRightPanelTemplateLoading]);
+
+    // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
+    const getTemplateResponse = (payload: any) => {
+        // TBD - to add code to get credentials and pass in request body
+        loadTemplateData({ payload: payload }).then((data: any) => {
+            if (data?.data) {
+                setRightPanelTemplateResponse(data?.data);
+                setIsRightPanelTemplateLoading(false);
+            } else {
+                setRightPanelTemplateResponse(null);
+                setIsRightPanelTemplateLoading(false);
+            }
+        });
+    };
+
+    // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
+        setIsRightPanelTemplateLoading(true);
         if (id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID) {
             // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
@@ -92,18 +159,54 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 mssqlForm: actualData[0].data
             };
             const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
-            setRightPanelResponse(res);
+            // To set REST API response as deploy API curl request. Passing accountId, credentialId and region placeholder for recommended configs.
+            const highlightedString = (
+                <Highlighter
+                    highlightClassName={styles.highlightClass}
+                    searchWords={[CRED_PLACEHOLDERS.ACCOUNT_ID, CRED_PLACEHOLDERS.CRED_ID, CRED_PLACEHOLDERS.REGION, CRED_PLACEHOLDERS.TOKEN]}
+                    autoEscape={true}
+                    textToHighlight={CURL_REQ_TEMPLATE(
+                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN,
+                        res
+                    )}
+                />
+            );
+            //@ts-ignore
+            setRightPanelResponse(highlightedString);
             setIsRightPanelDataLoading(false);
+            getTemplateResponse(res);
         } else {
             // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
                 const actualData = data?.data?.data;
+                // To get accountid, credid and region from saved config
+                const credDetails = getCredDetails(actualData);
                 const changeObjectForm = {
                     mssqlForm: actualData
                 };
                 const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
-                setRightPanelResponse(res);
+                // To set REST API response as deploy API curl request
+                const highlightedString = (
+                    <Highlighter
+                        highlightClassName={styles.highlightClass}
+                        searchWords={[CRED_PLACEHOLDERS.ACCOUNT_ID, CRED_PLACEHOLDERS.CRED_ID, CRED_PLACEHOLDERS.REGION, CRED_PLACEHOLDERS.TOKEN]}
+                        autoEscape={true}
+                        textToHighlight={CURL_REQ_TEMPLATE(
+                            accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                            credDetails.region || CRED_PLACEHOLDERS.REGION,
+                            CRED_PLACEHOLDERS.TOKEN,
+                            res
+                        )}
+                    />
+                );
+                //@ts-ignore
+                setRightPanelResponse(highlightedString);
                 setIsRightPanelDataLoading(false);
+                getTemplateResponse(res);
             });
         }
     };
@@ -113,16 +216,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const recList = recommendedData.filter((item: any) => item.id === openKey);
             setOpenedItem(recList[0]);
             getRestResponse(openKey);
-        } else if (configData && configData.length) {
-            if (openKey) {
-                const updatedConfigData = configData.filter((item: any) => item.id === openKey);
-                setOpenedItem(updatedConfigData[0]);
-                getRestResponse(updatedConfigData[0].id);
-            } else {
-                setOpenedItem(configData[0]);
-                getRestResponse(configData[0].id);
-            }
+        } else if (openKey && configData && configData.length) {
+            const updatedConfigData = configData.filter((item: any) => item.id === openKey);
+            setOpenedItem(updatedConfigData[0]);
+            getRestResponse(updatedConfigData[0].id);
+        } else if (!openKey && recommendedData && recommendedData.length) {
+            setOpenedItem(recommendedData[0]);
+            getRestResponse(recommendedData[0].id || '');
+        } else if (!openKey && configData && configData.length) {
+            setOpenedItem(configData[0]);
+            getRestResponse(configData[0].id);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, openKey]);
 
     const handleToggle = (key: any, id: any) => {
@@ -144,7 +249,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = ['CLoudFormation', 'AWS CLI', 'REST API'];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -155,25 +260,41 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //To set the data that will be displayed after selecting the drop down option in code box
     const setDisplayedDataInCodeBox = () => {
-        if (dropDownValue === 'CLoudFormation') {
-            return (
-                <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    Coming Soon
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            return isRightPanelTemplateLoading ? (
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    {CODE_VIEWER.LOADING}
                 </Typography>
+            ) : (
+                <HighlighterWord highlight={searchInput}>
+                    <pre className={styles.colorAutomation}>
+                        {rightPanelTemplateResponse?.templateAsYaml || CODE_VIEWER.NO_DATA_MSG}
+                    </pre>
+                </HighlighterWord>
             );
         }
-        if (dropDownValue === 'REST API') {
-            return (
-                <Highlighter highlight={searchInput}>
+        if (dropDownValue === CODE_VIEWER.REST_API) {
+            return isRightPanelDataLoading ? (
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    {CODE_VIEWER.LOADING}
+                </Typography>
+            ) : (
+                <HighlighterWord highlight={searchInput}>
                     <pre>{rightPanelResponse}</pre>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
-        if (dropDownValue === 'AWS CLI') {
-            return (
-                <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    Coming Soon
+        if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            return isRightPanelTemplateLoading ? (
+                <Typography variant="Semibold_14" className={styles.loading}>
+                    {CODE_VIEWER.LOADING}
                 </Typography>
+            ) : (
+                <HighlighterWord highlight={searchInput}>
+                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                        {rightPanelTemplateResponse?.templateAsCli || CODE_VIEWER.NO_DATA_MSG}
+                    </Typography>
+                </HighlighterWord>
             );
         }
     };
@@ -193,16 +314,33 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    // To copy response based on dropdown selection
+    const copyResponseData = () => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            return rightPanelTemplateResponse?.templateAsYaml;
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            return rightPanelResponse?.props?.textToHighlight;
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            return rightPanelTemplateResponse?.templateAsCli;
+        }
+    };
+
+    const handleViewInAwsCloudFormation = () => {
+        if (rightPanelTemplateResponse?.cloudFormationUrl) {
+            window.open(rightPanelTemplateResponse?.cloudFormationUrl, '_blank', 'noopener');
+        }
+    };
+
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
                 <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    Automations
+                    {CODE_VIEWER.AUTOMATIONS}
                 </Typography>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
                     <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
-                        {!isOpen ? 'Expand' : 'Collapse'}
+                        {!isOpen ? CODE_VIEWER.EXPAND : CODE_VIEWER.COLLAPSE}
                     </Typography>
                     {isOpen && <ArrowLeft />}
                 </div>
@@ -215,10 +353,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     <div className={styles.accordionStructure}>
                         <div className={styles.recTemplateHeading}>
                             <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                Recommended Templates -
+                                {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
                             </Typography>
                             <Typography variant="Regular_14" className={styles.templateHeading}>
-                                Microsoft SQL server deployment
+                                {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
                             </Typography>
                         </div>
                         {recommendedData.map((item: any, i: number) => (
@@ -241,7 +379,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                     {configLoading && (
                         <Typography variant="Semibold_14" className={styles.loading}>
-                            Loading...
+                            {CODE_VIEWER.LOADING}
                         </Typography>
                     )}
 
@@ -249,7 +387,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {configData && (
                         <div className={styles.accordionStructure}>
                             <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                My Templates
+                                {CODE_VIEWER.MY_TEMPLATES}
                             </Typography>
                             {configData.map((item: any, i: number) => (
                                 <div key={i}>
@@ -281,10 +419,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             <div className={styles.accordionStructure}>
                                 <div className={styles.recTemplateHeading}>
                                     <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                        Recommended Templates -
+                                        {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
                                     </Typography>
                                     <Typography variant="Regular_14" className={styles.templateHeading}>
-                                        Microsoft SQL server deployment
+                                        {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
                                     </Typography>
                                 </div>
                                 {recommendedData.map((item: any, i: number) => (
@@ -310,7 +448,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {configData && isOpen && (
                             <div className={styles.accordionStructure}>
                                 <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                    My Templates
+                                    {CODE_VIEWER.MY_TEMPLATES}
                                 </Typography>
                                 {configData.map((item: any, i: number) => (
                                     <div key={i}>
@@ -341,33 +479,46 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             </Typography>
                             <div className={styles.menuContainer}>
                                 <div className={styles['copy']}>
-                                    <Popover
-                                        popoverClass={styles['copy-popover']}
-                                        children={'Copied to clipboard'}
-                                        container={
-                                            <CopyToClipboard text={rightPanelResponse}>
-                                                <div className={styles.menuItem}>
-                                                    <Copy />
-                                                    <Typography
-                                                        variant="Semibold_14"
-                                                        className={styles.rightSideHeading}
-                                                    >
-                                                        Copy
-                                                    </Typography>
-                                                </div>
-                                            </CopyToClipboard>
-                                        }
-                                    />
+                                    {disableCopy ? 
+                                        // Disabled copy button 
+                                        (<div className={styles.menuItemDisabled}>
+                                            <Copy />
+                                            <Typography
+                                                variant="Semibold_14"
+                                                className={styles.rightSideHeadingDisabled}
+                                            >
+                                                {CODE_VIEWER.COPY}
+                                            </Typography>
+                                        </div>) :
+                                        // Enabled copy button
+                                        (<Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                            container={
+                                                <CopyToClipboard text={copyResponseData()}>
+                                                    <div className={styles.menuItem}>
+                                                        <Copy />
+                                                        <Typography
+                                                            variant="Semibold_14"
+                                                            className={styles.rightSideHeading}
+                                                        >
+                                                            {CODE_VIEWER.COPY}
+                                                        </Typography>
+                                                    </div>
+                                                </CopyToClipboard>
+                                            }
+                                        />)
+                                    } 
                                 </div>
 
                                 <div className={styles.menuItem} onClick={loadWizard}>
                                     <LoadIcon />
                                     <Typography variant="Semibold_14" className={styles.rightSideHeading}>
-                                        {GENERAL.SIDEBAR_LOAD_WIZARD}
+                                        {CODE_VIEWER.SIDEBAR_LOAD_WIZARD}
                                     </Typography>
                                 </div>
 
-                                {dropDownValue === 'CLoudFormation' && (
+                                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && (
                                     <div className={styles.sideBarMenuPopover} onClick={e => e.stopPropagation()}>
                                         <MenuPopover
                                             isMenuOpen={menuOpenedRowDetail.current === '' || menuOpenedRow === ''}
@@ -383,6 +534,14 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 } else if (toggleType === 'selectedOption') {
                                                     menuOpenedRowDetail.current = null;
                                                     setOpenedRow(null);
+                                                    if (menuId === 'downloadYaml') {
+                                                        handleDownloadYAML(
+                                                            rightPanelTemplateResponse?.templateAsYaml,
+                                                            openedItem?.name
+                                                        );
+                                                    } else if (menuId === 'viewAwsCloudFormation') {
+                                                        handleViewInAwsCloudFormation();
+                                                    }
                                                 }
                                             }}
                                             CustomMenu={undefined}
@@ -399,7 +558,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         <div className={styles.secondBar}>
                             <div className={styles.inputPart}>
                                 <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                    Show code as:
+                                    {CODE_VIEWER.SHOW_CODE_AS}
                                 </Typography>
                                 <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                                     <SelectField
@@ -421,13 +580,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
                             <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                {isRightPanelDataLoading ? (
-                                    <Typography variant="Semibold_14" className={styles.loading}>
-                                        Loading...
-                                    </Typography>
-                                ) : (
-                                    setDisplayedDataInCodeBox()
-                                )}
+                                {setDisplayedDataInCodeBox()}
                             </Typography>
                         </div>
                     </div>

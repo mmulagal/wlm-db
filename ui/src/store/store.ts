@@ -36,7 +36,8 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         if (
             apiName.includes('getDatabaseHosts') ||
             apiName.includes('getDatabaseJobs') ||
-            apiName.includes('getJobsSummary')
+            apiName.includes('getJobsSummary') ||
+            apiName.includes('getTemplates')
         ) {
             return;
         }

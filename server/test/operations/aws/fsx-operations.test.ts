@@ -3,8 +3,10 @@ import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { getFSxFileSystemsList } from '../../../src/operations/aws/fsx-operations';
+import { getFSxFileSystemsList, isAWSBackupEnabled } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
+
+const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 
 describe('Testcases for Amazon FSx resources operations', () => {
     it('List FSx filesystems and volume details', async () => {
@@ -84,5 +86,10 @@ describe('Testcases for Amazon FSx resources operations', () => {
         );
 
         expect(response).toEqual(fsxFilesystemResponse);
+    });
+
+    it('AWS backup enabled check', async () => {
+        const response = await isAWSBackupEnabled(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
+        expect(response).toEqual(true);
     });
 });

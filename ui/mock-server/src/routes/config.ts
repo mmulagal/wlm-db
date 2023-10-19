@@ -40,4 +40,8 @@ router.delete(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
     generateResponse(res, 200, {'success': 'ok'});
 });
 
+router.patch(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
+    generateResponse(res, 200, {'id': 'id1'});
+});
+
 export default router;

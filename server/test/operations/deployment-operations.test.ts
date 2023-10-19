@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 import {
     createCloudFormationTemplateForUserDeployment,
-    deployCloudFormationTemplate
+    deployCloudFormationTemplate,
+    getCloudformationTemplate
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/ec2-scope';
@@ -43,6 +44,18 @@ describe('Cloud formation operations', () => {
     });
     it('Deploy cloud formation template', async () => {
         const resp = await deployCloudFormationTemplate(
+            credentialsid,
+            DEFAULT_AWS_REGION,
+            NETWORKING_CONFIGURATION,
+            EC2_CONFIGURATION,
+            AD_CONFIGURATION,
+            FSX_CONFIGURATION,
+            SQL_CONFIGURATION
+        );
+        expect(resp).toBeDefined();
+    });
+    it('Get cloud formation template', async () => {
+        const resp = await getCloudformationTemplate(
             credentialsid,
             DEFAULT_AWS_REGION,
             NETWORKING_CONFIGURATION,

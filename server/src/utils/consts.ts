@@ -462,6 +462,7 @@ const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 180;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
@@ -524,6 +525,8 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
+
+const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
@@ -941,10 +944,12 @@ export {
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    STACK_NOT_FOUND,
     RESOURCE_RETRIVAL_ERROR,
     DatabaseHostsQueryFields,
     ServerState,
     SERVER_TYPE_MAPPING,
     FileSystemTypes,
+    CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER
 };

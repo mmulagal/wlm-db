@@ -122,3 +122,9 @@ export interface DatabaseHostsEntities {
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
 }
+
+export interface TemplateRes {
+    templateAsCli: string;
+    templateAsYaml: string;
+    cloudFormationUrl: string;
+}
