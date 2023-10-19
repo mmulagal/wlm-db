@@ -68,7 +68,7 @@ const CreateConfigRequestBody = Type.Object({
 
 const UpdateConfigRequestBody = Type.Object({
     name: Type.String(),
-    data: Type.Any()
+    data: Type.Optional(Type.Any())
 });
 
 export {
