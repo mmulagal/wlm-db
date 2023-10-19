@@ -73,16 +73,12 @@ async function describeFSxStorageVirtualMachines(credentialsId: string, region: 
 async function describeFSxBackups(
     credentialsId: string,
     region: string,
-    fsxId: string,
     volumeIds: Array<string>
 ): Promise<DescribeBackupsCommandOutput> {
-    logger.info('Describe Amazon FSx backups:', { credentialsId, region, fsxId, volumeIds });
+    logger.info('Describe Amazon FSx backups:', { credentialsId, region, volumeIds });
 
     const input = {
-        Filters: [
-            { Name: 'volume-id', Values: volumeIds },
-            { Name: 'file-system-id', Values: [fsxId] }
-        ]
+        Filters: [{ Name: 'volume-id', Values: volumeIds }]
     };
 
     const client = await getFSxClient(credentialsId, region);

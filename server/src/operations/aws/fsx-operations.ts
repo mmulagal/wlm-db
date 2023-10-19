@@ -151,10 +151,27 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     return { filesystems: ontapFSxFilesystems };
 }
 
-async function isAWSBackupEnabled(credentialsId: string, region: string, fsxId: string, volumeIds: Array<string>) {
-    logger.info('Check if AWS backup is enabled', credentialsId, region, fsxId, volumeIds);
+async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {
+    logger.info('List volume ids in an fsx', { credentialsId, region, fsxId });
 
-    const backups = await describeFSxBackups(credentialsId, region, fsxId, volumeIds);
+    const volumes = await describeFSxVolumes(credentialsId, region, fsxId);
+    const volumeIds: Array<string> = [];
+    volumes.Volumes?.forEach(volume => {
+        if (volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.VolumeId) {
+            volumeIds.push(volume.VolumeId);
+        }
+    });
+
+    logger.debug('List volume ids in an fsx response', volumeIds);
+
+    return volumeIds;
+}
+
+async function isAWSBackupEnabled(credentialsId: string, region: string, fsxId: string) {
+    logger.info('Check if AWS backup is enabled', credentialsId, region, fsxId);
+
+    const volumeIds = await getVolumeIds(credentialsId, region, fsxId);
+    const backups = await describeFSxBackups(credentialsId, region, volumeIds);
 
     return backups.Backups?.length !== 0;
 }
