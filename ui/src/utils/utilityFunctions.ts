@@ -361,6 +361,7 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     let totalUpHosts = 0;
     let totalInitializingHosts = 0;
     let totalDownHosts = 0;
+    let totalFailedHosts = 0;
 
     data?.map(val => {
         if (val?.status === STATUS_CONST.UP) {
@@ -369,13 +370,16 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
             totalInitializingHosts += 1;
         } else if (val?.status === STATUS_CONST.DOWN) {
             totalDownHosts += 1;
+        } else if (val?.status === STATUS_CONST.FAILED) {
+            totalFailedHosts += 1;
         }
     });
     return {
         totalHosts: data?.length || 0,
         totalUpHosts: totalUpHosts,
         totalInitializingHosts: totalInitializingHosts,
-        totalDownHosts: totalDownHosts
+        totalDownHosts: totalDownHosts,
+        totalFailedHosts: totalFailedHosts
     };
 };
 
@@ -529,36 +533,34 @@ This function is used to set recommended values for recommended templates load.
 Type dev is for Dev/Test template and type prod is for Prod template
 */
 export const setRecommendedValues = (initialFormData: any, type: string) => {
-    let result = {...initialFormData};
-    if(type === RECOMMENDED_TEMPLATES.DEV_ID) {
+    let result = { ...initialFormData };
+    if (type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
-        // setting instance type 
-        const value = 'm5.xlarge';
+        // setting instance type
+        const value = 'm5.large';
         const label2 = '2vCPU, 8 GiB RAM, 4750Mbps';
         const data = {
-            instanceType: 'm5.xlarge',
+            instanceType: 'm5.large',
             vCpus: 2,
             ramInMib: 8192,
             iopsInMbps: 4750,
-            architecture: [
-                'x86_64'
-            ]
-        }
+            architecture: ['x86_64']
+        };
         const option = generateOptionType(value, value, label2, false, '', data);
         result.instanceType = option;
-        // setting database edition 
+        // setting database edition
         result.dbEdition = {
             label: GENERAL.SQL_SERVER_STANDARD_EDITION,
             value: GENERAL.SQL_SERVER_STANDARD
-        }
+        };
         // setting deployment mode
         result.dbDeploymentModel = {
             label: GENERAL.SINGLE_INSTANCE,
             value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-        }
+        };
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
-        // setting instance type 
+        // setting instance type
         const value = 'r5.xlarge';
         const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
         const data = {
@@ -566,23 +568,36 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             vCpus: 4,
             ramInMib: 32768,
             iopsInMbps: 4750,
-            architecture: [
-                'x86_64'
-            ]
-        }
+            architecture: ['x86_64']
+        };
         const option = generateOptionType(value, value, label2, false, '', data);
         result.instanceType = option;
-        // setting database edition 
+        // setting database edition
         result.dbEdition = {
             label: GENERAL.SQL_SERVER_STANDARD_EDITION,
             value: GENERAL.SQL_SERVER_STANDARD
-        }
+        };
         // setting deployment mode
         result.dbDeploymentModel = {
             label: GENERAL.FAILOVER_CLUSTER,
             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
-        }
+        };
     }
-    
+
     return result;
+};
+
+export const handleDownloadYAML = (data: any, name = 'data') => {
+    const yamlData = data;
+    const blob = new Blob([yamlData], { type: 'application/x-yaml' });
+    const url = window.URL.createObjectURL(blob);
+
+    // Create a link element and trigger a click to download the YAML file.
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name + '.yaml';
+    a.click();
+
+    // Clean up by revoking the object URL.
+    window.URL.revokeObjectURL(url);
 };

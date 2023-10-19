@@ -1,8 +1,9 @@
-import { BASE_URL, generateResponse } from '../utils/appUtils';
+import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 
 const router = require('express').Router();
 
-router.post(`${BASE_URL}/chatbot`, async (req: any, res: any) => {
+router.post(`${BASE_URL}/v1/chatbot/prompt`, async (req: any, res: any) => {
+    await delay(3000);
     const prompt = req.body.prompt.toString();
     const msgArr = prompt.split(':');
     const lastMsg = msgArr[msgArr.length - 2];

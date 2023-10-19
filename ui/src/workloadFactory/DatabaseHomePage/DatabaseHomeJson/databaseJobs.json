@@ -24,6 +24,18 @@
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
             }
+        },
+        { 
+            "id": "resource-id-ini3",
+            "name": "Database hostname Ini3",
+            "status": "failed",
+            "metadata": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
         }
     ],
     "nextToken": null
