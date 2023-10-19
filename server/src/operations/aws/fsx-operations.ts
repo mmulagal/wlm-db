@@ -1,7 +1,12 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines } from '../../lib/aws/fsx';
+import {
+    describeFSxFileSystems,
+    describeFSxVolumes,
+    describeFSxStorageVirtualMachines,
+    describeFSxBackups
+} from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
 import {
@@ -146,4 +151,12 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     return { filesystems: ontapFSxFilesystems };
 }
 
-export { getFSxFileSystemsList };
+async function isAWSBackupEnabled(credentialsId: string, region: string, fsxId: string, volumeIds: Array<string>) {
+    logger.info('Check if AWS backup is enabled', credentialsId, region, fsxId, volumeIds);
+
+    const backups = await describeFSxBackups(credentialsId, region, fsxId, volumeIds);
+
+    return backups.Backups?.length !== 0;
+}
+
+export { getFSxFileSystemsList, isAWSBackupEnabled };

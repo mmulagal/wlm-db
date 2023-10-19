@@ -3,7 +3,9 @@ import {
     DescribeVolumesCommand,
     DescribeVolumesCommandOutput,
     paginateDescribeFileSystems,
-    DescribeStorageVirtualMachinesCommand
+    DescribeStorageVirtualMachinesCommand,
+    DescribeBackupsCommandOutput,
+    DescribeBackupsCommand
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialDetails } from '../cloud-manager/credentials';
@@ -18,6 +20,7 @@ async function getFSxClient(credentialsId: string, region: string) {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
+
     return new FSxClient({ credentials, region });
 }
 
@@ -66,4 +69,29 @@ async function describeFSxStorageVirtualMachines(credentialsId: string, region: 
 
     return response;
 }
-export { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines };
+
+async function describeFSxBackups(
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumeIds: Array<string>
+): Promise<DescribeBackupsCommandOutput> {
+    logger.info('Describe Amazon FSx backups:', { credentialsId, region, fsxId, volumeIds });
+
+    const input = {
+        Filters: [
+            { Name: 'volume-id', Values: volumeIds },
+            { Name: 'file-system-id', Values: [fsxId] }
+        ]
+    };
+
+    const client = await getFSxClient(credentialsId, region);
+
+    const response = await client.send(new DescribeBackupsCommand(input));
+
+    logger.debug('Describe Amazon FSx backups:', response);
+
+    return response;
+}
+
+export { describeFSxFileSystems, describeFSxVolumes, describeFSxStorageVirtualMachines, describeFSxBackups };

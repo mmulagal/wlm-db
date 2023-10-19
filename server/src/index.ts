@@ -47,9 +47,16 @@ import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
+import { isAWSBackupEnabled } from './operations/aws/fsx-operations';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+logger.info(
+    await isAWSBackupEnabled('cd12c632-a00c-4ed4-b1bf-e733684c954a', 'ap-southeast-1', 'fs-0b31327441679bf8e', [
+        'fsvol-0ef2fac35c0b7502e'
+    ])
+);
 
 const { verifyToken } = jwtOperation;
 
