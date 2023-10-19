@@ -9,7 +9,8 @@ import {
     createConfig,
     deleteConfig,
     createEvent,
-    listRelationshipsResources
+    listRelationshipsResources,
+    updateConfig
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -74,6 +75,26 @@ describe('List deployments', () => {
         expect(resp[0].account_id).toEqual(ACCOUNT_ID);
 
         await deleteConfig(ACCOUNT_ID, resp[0].id);
+    });
+
+    it('should update a config', async () => {
+        const { id } = await createConfig(ACCOUNT_ID, {
+            user: 'testuser',
+            name: 'testconfig',
+            creationTime: new Date().valueOf(),
+            data: {
+                subnetId: 'subnet-12345',
+                vpcId: 'vpc-12345'
+            }
+        });
+        const updateConfigName = 'testupdatedconfig';
+        const { id: updatedConfigId } = await updateConfig(ACCOUNT_ID, id, {
+            name: updateConfigName
+        });
+        const resp = await listConfig(ACCOUNT_ID, updatedConfigId);
+        expect(resp[0].name).toEqual(updateConfigName);
+
+        await deleteConfig(ACCOUNT_ID, updatedConfigId);
     });
 
     it('should return a list of resources which has relationships', async () => {

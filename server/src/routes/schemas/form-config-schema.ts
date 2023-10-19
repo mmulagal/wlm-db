@@ -5,7 +5,10 @@ import {
     FormConfigCreateResponse,
     FormConfigObjectResponse,
     CreateConfigRequestBody,
-    FormConfigObjectDeleteResponse
+    FormConfigObjectDeleteResponse,
+    UpdateConfigRequestBody,
+    FormConfigUpdateParams,
+    FormConfigUpdateResponse
 } from '../types/form-config.types';
 
 const FormConfigListSchema = {
@@ -45,4 +48,20 @@ const FormConfigCreateSchema = {
     }
 };
 
-export { FormConfigListSchema, FormConfigCreateSchema, FormConfigObjectSchema, FormConfigObjectDeleteSchema };
+const FormConfigUpdateSchema = {
+    tags: ['Config'],
+    params: FormConfigUpdateParams,
+    description: 'Update a config',
+    body: UpdateConfigRequestBody,
+    response: {
+        200: FormConfigUpdateResponse
+    }
+};
+
+export {
+    FormConfigListSchema,
+    FormConfigCreateSchema,
+    FormConfigUpdateSchema,
+    FormConfigObjectSchema,
+    FormConfigObjectDeleteSchema
+};

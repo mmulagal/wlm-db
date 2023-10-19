@@ -5,7 +5,8 @@ import {
     saveConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
-    getDeploymentStatusById
+    getDeploymentStatusById,
+    modifyConfig
 } from '../../../src/operations/database/database-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 
@@ -41,6 +42,20 @@ describe('Database operations', () => {
         const response = await deleteSavedConfig(ACCOUNT_ID, id);
         expect(response).toBeUndefined();
     });
+
+    it('Update saved config', async () => {
+        const { id } = await saveConfig(ACCOUNT_ID, 'testuser', 'testname', {
+            subnetId: 'test-subnet',
+            vpcId: 'test-vpc'
+        });
+        const { id: modifiedId } = await modifyConfig(ACCOUNT_ID, id, 'updated name');
+        const resp = await getSavedConfig(ACCOUNT_ID, modifiedId);
+        expect(resp.name).toEqual('updated name');
+        expect(resp.modifiedTime).toBeDefined();
+        const response = await deleteSavedConfig(ACCOUNT_ID, id);
+        expect(response).toBeUndefined();
+    });
+
     it('Get all deployment status', async () => {
         const response = await createDeployment(ACCOUNT_ID, {
             deploymentId: 'wlmdb-12345',
