@@ -13,7 +13,6 @@ import {
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
-import { useAppSelector } from '../../../store/storeHooks';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
