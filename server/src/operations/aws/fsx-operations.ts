@@ -154,13 +154,12 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
 async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {
     logger.info('List volume ids in an fsx', { credentialsId, region, fsxId });
 
-    const volumes = await describeFSxVolumes(credentialsId, region, fsxId);
+    const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fsxId);
     const volumeIds: Array<string> = [];
-    volumes.Volumes?.forEach(volume => {
-        if (volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.VolumeId) {
-            volumeIds.push(volume.VolumeId);
-        }
-    });
+
+    volumes
+        ?.filter(volume => volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.VolumeId)
+        .map(volume => volumeIds.push(volume.VolumeId!));
 
     logger.debug('List volume ids in an fsx response', volumeIds);
 
