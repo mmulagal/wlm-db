@@ -1,4 +1,4 @@
-import { HealthResponse, AboutResponse } from '../types/system.types';
+import { HealthResponse, AboutResponse, StatusResponse, StatusParams } from '../types/system.types';
 
 // System schemas:
 const GetHealthinessSchema = {
@@ -16,4 +16,13 @@ const GetSystemInfoSchema = {
     }
 };
 
-export { GetHealthinessSchema, GetSystemInfoSchema };
+const GetSystemStatusSchema = {
+    tags: ['System'],
+    params: StatusParams,
+    description: 'Get system information',
+    response: {
+        200: StatusResponse
+    }
+};
+
+export { GetHealthinessSchema, GetSystemInfoSchema, GetSystemStatusSchema };

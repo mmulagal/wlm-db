@@ -1,10 +1,11 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { createConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
+import { createConfig, updateConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
     FormConfigListResponseType,
-    FormConfigObjectResponseType
+    FormConfigObjectResponseType,
+    FormConfigUpdateResponseType
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
@@ -15,14 +16,18 @@ const logger = getLogger();
 async function getSavedConfig(accountId: string, id: string): Promise<FormConfigObjectResponseType> {
     logger.info('Load individual saved config ', accountId);
 
-    const [{ user, creation_time: creationTime, data, name }] = await listConfig(accountId, id);
+    const [{ user, creation_time: creationTime, data, name, modified_time: modifiedTime }] = await listConfig(
+        accountId,
+        id
+    );
     return {
         accountId,
         id,
         user,
         creationTime: moment(creationTime).unix() * 1000,
         data,
-        name
+        name,
+        modifiedTime: moment(modifiedTime).unix() * 1000
     };
 }
 
@@ -36,14 +41,17 @@ async function getAllSavedConfig(accountId: string): Promise<FormConfigListRespo
     logger.info('Load saved config ', accountId);
 
     const data = await listConfig(accountId);
-    return data.map(({ id, user, creation_time: creationTime, data: configData, name }) => ({
-        accountId,
-        id,
-        user,
-        name,
-        creationTime: moment(creationTime).unix() * 1000,
-        data: configData as object
-    }));
+    return data.map(
+        ({ id, user, creation_time: creationTime, data: configData, name, modified_time: modifiedTime }) => ({
+            accountId,
+            id,
+            user,
+            name,
+            creationTime: moment(creationTime).unix() * 1000,
+            data: configData as object,
+            modifiedTime: moment(modifiedTime).unix() * 1000
+        })
+    );
 }
 
 async function saveConfig(
@@ -66,6 +74,22 @@ async function saveConfig(
         data
     });
     return { id, accountId: configAccountId, creationTime: moment(configCreationTime).unix() * 1000, user, data, name };
+}
+
+async function modifyConfig(
+    accountId: string,
+    configId: string,
+    name: string,
+    data?: object
+): Promise<FormConfigUpdateResponseType> {
+    logger.info('Modify config ', { accountId, configId });
+    logger.debug('Modify config data', data);
+
+    const { id } = await updateConfig(accountId, configId, {
+        name,
+        data
+    });
+    return { id };
 }
 
 async function getAllDeploymentStatus(accountId: string): Promise<DeploymentStatusListResponseType> {
@@ -119,6 +143,7 @@ export {
     getSavedConfig,
     getAllSavedConfig,
     saveConfig,
+    modifyConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
     getDeploymentStatusByName

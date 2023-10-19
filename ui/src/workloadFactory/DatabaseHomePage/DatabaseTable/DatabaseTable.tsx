@@ -129,9 +129,7 @@ const DatabaseTable = () => {
                                 ></div>
                             )}
                             {rowData?.status === STATUS_CONST.FAILED && (
-                                <div
-                                    className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}
-                                ></div>
+                                <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
                             )}
                             <Typography variant="Regular_13">{rowData?.status}</Typography>
                             <div className={CommonStyles.separator} />
