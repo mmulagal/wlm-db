@@ -132,7 +132,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             // To set REST API response as deploy API curl request. Passing accountId, credentialId and region placeholder for recommended configs.
             const highlightedString = (
                 <Highlighter
-                    highlightClassName="highlightClass"
+                    highlightClassName={styles.highlightClass}
                     searchWords={['<Token>']}
                     autoEscape={true}
                     textToHighlight={CURL_REQ_TEMPLATE(
