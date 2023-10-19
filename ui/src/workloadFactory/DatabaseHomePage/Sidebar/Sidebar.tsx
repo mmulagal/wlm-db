@@ -133,7 +133,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const highlightedString = (
                 <Highlighter
                     highlightClassName={styles.highlightClass}
-                    searchWords={['<Token>']}
+                    searchWords={[CRED_PLACEHOLDERS.ACCOUNT_ID, CRED_PLACEHOLDERS.CRED_ID, CRED_PLACEHOLDERS.REGION, CRED_PLACEHOLDERS.TOKEN]}
                     autoEscape={true}
                     textToHighlight={CURL_REQ_TEMPLATE(
                         accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
@@ -159,15 +159,22 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 };
                 const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
                 // To set REST API response as deploy API curl request
-                setRightPanelResponse(
-                    CURL_REQ_TEMPLATE(
-                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
-                        credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
-                        credDetails.region || CRED_PLACEHOLDERS.REGION,
-                        CRED_PLACEHOLDERS.TOKEN,
-                        res
-                    )
+                const highlightedString = (
+                    <Highlighter
+                        highlightClassName={styles.highlightClass}
+                        searchWords={[CRED_PLACEHOLDERS.ACCOUNT_ID, CRED_PLACEHOLDERS.CRED_ID, CRED_PLACEHOLDERS.REGION, CRED_PLACEHOLDERS.TOKEN]}
+                        autoEscape={true}
+                        textToHighlight={CURL_REQ_TEMPLATE(
+                            accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                            credDetails.region || CRED_PLACEHOLDERS.REGION,
+                            CRED_PLACEHOLDERS.TOKEN,
+                            res
+                        )}
+                    />
                 );
+                //@ts-ignore
+                setRightPanelResponse(highlightedString);
                 setIsRightPanelDataLoading(false);
                 getTemplateResponse(res);
             });
