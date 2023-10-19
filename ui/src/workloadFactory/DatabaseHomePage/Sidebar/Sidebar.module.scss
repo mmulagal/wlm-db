@@ -88,6 +88,10 @@
                     color: var(--white);
                 }
 
+                .rightSideHeadingDisabled {
+                    color: var(--grey-25);
+                }
+
                 .menuContainer {
                     display: flex;
                     gap: 32px;
@@ -98,6 +102,19 @@
                         align-items: center;
                         gap: 8px;
                         cursor: pointer;
+                    }
+
+                    .menuItemDisabled {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        pointer-events: none;
+
+                        svg {
+                            path {
+                                fill: var(--grey-25);
+                            }
+                        }
                     }
 
                     .sideBarMenuPopover {

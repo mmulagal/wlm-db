@@ -267,7 +267,14 @@ export const configApi = createApi({
                     url: `config/${configId}`,
                     method: 'DELETE'
                 })
-            })
+            }),
+            updateConfig: builder.mutation({
+                query: ({ configId, payload }) => ({
+                    url: `config/${configId}`,
+                    method: 'PATCH',
+                    body: payload
+                })
+            }),
         };
     }
 });
@@ -339,8 +346,13 @@ export const {
     useBatchTablesMutation
 } = resourceApi;
 
-export const { useGetConfigListQuery, useLazyGetConfigDataQuery, useSaveConfigDataMutation, useDeleteConfigMutation } =
-    configApi;
+export const { 
+    useGetConfigListQuery, 
+    useLazyGetConfigDataQuery, 
+    useSaveConfigDataMutation, 
+    useDeleteConfigMutation, 
+    useUpdateConfigMutation 
+} = configApi;
 
 export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
     databaseHomeApi;
