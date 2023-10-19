@@ -7,7 +7,7 @@ const FormConfigObjectResponse = Type.Object({
     accountId: Type.String(),
     user: Type.String(),
     data: Type.Any(),
-    modifiedTime: Type.Number()
+    modifiedTime: Type.Optional(Type.Number())
 });
 
 const FormConfigListObjectResponse = Type.Object({
@@ -16,7 +16,7 @@ const FormConfigListObjectResponse = Type.Object({
     creationTime: Type.Number(),
     accountId: Type.String(),
     user: Type.String(),
-    modifiedTime: Type.Number()
+    modifiedTime: Type.Optional(Type.Number())
 });
 
 const FormConfigObjectDeleteResponse = {};

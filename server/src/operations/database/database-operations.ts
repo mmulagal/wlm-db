@@ -25,7 +25,7 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
         creationTime: moment(creationTime).unix() * 1000,
         data,
         name,
-        modifiedTime: moment(modifiedTime).unix() * 1000
+        ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 })
     };
 }
 
@@ -47,7 +47,7 @@ async function getAllSavedConfig(accountId: string): Promise<FormConfigListRespo
             name,
             creationTime: moment(creationTime).unix() * 1000,
             data: configData as object,
-            modifiedTime: moment(modifiedTime).unix() * 1000
+            ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 })
         })
     );
 }
