@@ -27,9 +27,14 @@ const CloudFormation = () => {
         } else if (warning && url) {
             message = (
                 <>
-                    {warning}. {GENERAL.CLOUD_FORMATION_URL_TEXT}{' '}
-                    <Button Component="button" variant="text" onClick={() => window.open(url, '_blank', 'noopener')}>
-                        URL
+                    {warning}. {GENERAL.CLOUDFORMATION_TEMPLATE_URL[0]}
+                    <Button
+                        Component="button"
+                        variant="link"
+                        className={CommonStyles.buttonClass}
+                        onClick={() => window.open(url, '_blank', 'noopener')}
+                    >
+                        {GENERAL.CLOUDFORMATION_TEMPLATE_URL[1]}
                     </Button>
                 </>
             );
@@ -44,6 +49,11 @@ const CloudFormation = () => {
             );
         } else {
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: message }));
+        }
+        if (url) {
+            setTimeout(() => {
+                window.open(url, '_blank', 'noopener');
+            }, 3000);
         }
     };
 
