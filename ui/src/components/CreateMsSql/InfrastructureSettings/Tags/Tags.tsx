@@ -34,6 +34,8 @@ const Tags = () => {
     const isAddDisabled = useMemo(() => {
         if (emptyTagItems.length || tags.length >= 40) {
             return true;
+        } else {
+            return false;
         }
     }, [tags]);
 

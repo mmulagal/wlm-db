@@ -4,7 +4,7 @@ import loadconfig from '../data/loadconfig.json';
 const router = require('express').Router();
 
 //Get all saved credentials mock response
-router.get(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/configs`, async (req: {}, res: any) => {
     const retData = [
         {
             id: 'id1',
@@ -24,23 +24,23 @@ router.get(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
     }, 3000);
 });
 
-router.get(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, loadconfig);
     }, 3000);
 });
 
-router.post(`${BASE_URL}/v1/config`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/configs`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, {'success': 'ok'});
     }, 3000);
 });
 
-router.delete(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
+router.delete(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {
     generateResponse(res, 200, {'success': 'ok'});
 });
 
-router.patch(`${BASE_URL}/v1/config/:configid`, async (req: {}, res: any) => {
+router.patch(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {
     generateResponse(res, 200, {'id': 'id1'});
 });
 
