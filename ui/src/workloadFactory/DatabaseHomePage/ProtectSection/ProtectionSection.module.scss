@@ -4,7 +4,16 @@
         height: 72px;
         padding: 12px 40px;
         align-items: center;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .title {
+        display: flex;
+    }
+
+    .loadingPlacement {
+        display: flex;
+        padding-left: 15px;
     }
 
     .secondContainer {
@@ -21,7 +30,7 @@
 
             .separatorProtection {
                 width: 340px;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: 1px solid var(--border);
             }
 
             .row {
@@ -45,7 +54,7 @@
                     gap: 8px;
 
                     .separatorSecondPart {
-                        background: #e0e0e0;
+                        background: var(--border);
                         width: 1px;
                         height: 16px;
                     }

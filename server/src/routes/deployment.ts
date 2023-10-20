@@ -4,9 +4,11 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
-    deploymentStatusById
+    deploymentStatusByName,
+    getCloudformationTemplate
 } from '../operations/deployment-operations';
 import {
+    CloudFormationTemplateSchema,
     CreateCloudFormationTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
@@ -37,6 +39,38 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     }
                 } = request;
                 const response = await createCloudFormationTemplateForUserDeployment(
+                    credentialsId,
+                    region,
+                    networkConfiguration,
+                    ec2Configuration,
+                    adConfiguration,
+                    fsxConfiguration,
+                    sqlConfiguration,
+                    topicArn,
+                    enableCloudWatch,
+                    tags
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/cloudformation/template`,
+            { schema: CloudFormationTemplateSchema },
+            async (request, reply) => {
+                const {
+                    params: { credentialsId, region },
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        adConfiguration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags
+                    }
+                } = request;
+                const response = await getCloudformationTemplate(
                     credentialsId,
                     region,
                     networkConfiguration,
@@ -91,13 +125,13 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             }
         )
         .get(
-            `${API_PREFIX_PATH}/cloudformation/stacks/:stackId/status`,
+            `${API_PREFIX_PATH}/cloudformation/stacks/:stackName/status`,
             { schema: DeploymentStatusSchema },
             async (request, reply) => {
                 const {
-                    params: { accountId, stackId }
+                    params: { accountId, stackName }
                 } = request;
-                const response = await deploymentStatusById(accountId, stackId);
+                const response = await deploymentStatusByName(accountId, stackName);
                 return reply.send(response);
             }
         );

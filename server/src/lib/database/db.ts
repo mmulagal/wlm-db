@@ -44,10 +44,10 @@ interface Resource {
 }
 
 interface Config {
-    user: string;
-    creationTime: number;
+    user?: string;
+    creationTime?: number;
     name: string;
-    data: object;
+    data?: object;
 }
 
 async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
@@ -286,7 +286,8 @@ async function listConfig(accountId: string, id?: string) {
             creation_time: true,
             account_id: true,
             data: !isEmpty(id),
-            name: true
+            name: true,
+            modified_time: true
         },
         take: 100
     });
@@ -298,14 +299,28 @@ async function createConfig(accountId: string, params: Config) {
     return prisma.client.config.create({
         data: {
             account_id: accountId,
-            user,
+            user: user!,
             name,
-            creation_time: new Date(creationTime),
+            creation_time: new Date(creationTime!),
             data
         }
     });
 }
 
+async function updateConfig(accountId: string, configId: string, params: Config) {
+    logger.info('Updating config', { accountId, configId, params });
+    const { data, name } = params;
+    return prisma.client.config.update({
+        where: {
+            id: configId
+        },
+        data: {
+            account_id: accountId,
+            name,
+            ...(!isEmpty(data) && { data })
+        }
+    });
+}
 async function deleteConfig(accountId: string, id: string) {
     logger.info('Deleting config', { accountId, id });
     return prisma.client.config.delete({
@@ -316,18 +331,39 @@ async function deleteConfig(accountId: string, id: string) {
     });
 }
 
-async function listRelationshipsResources(accountId: string) {
+async function listRelationshipsResources(accountId: string, resourceId?: string) {
     logger.info('Listing resources which has relation', { accountId });
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
             co_relation_id: {
                 not: null
-            }
+            },
+            ...(resourceId && { resource_id: resourceId })
         },
         select: {
             resource_id: true,
             co_relation_id: true
+        }
+    });
+}
+
+async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: Array<DEPLOYMENT_STATUS>) {
+    logger.info('Deployment jobs count', accountId, fromDate, statuses);
+    return prisma.client.deployment.groupBy({
+        by: ['deployment_status'],
+        where: {
+            account_id: accountId,
+            parent_deployment_id: null,
+            deployment_status: {
+                in: statuses
+            },
+            start_time: {
+                gte: fromDate.toISOString()
+            }
+        },
+        _count: {
+            deployment_status: true
         }
     });
 }
@@ -345,6 +381,8 @@ export {
     deleteResource,
     listConfig,
     createConfig,
+    updateConfig,
     deleteConfig,
-    listRelationshipsResources
+    listRelationshipsResources,
+    deploymentJobsCount
 };

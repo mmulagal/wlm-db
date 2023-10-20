@@ -54,6 +54,7 @@
         "@opentelemetry/instrumentation-http": "^0.41.2",
         "@opentelemetry/sdk-node": "^0.41.2",
         "@prisma/client": "^5.2.0",
+        "@prisma/instrumentation": "^5.4.2",
         "@sinclair/typebox": "^0.31.17",
         "async": "^3.2.4",
         "aws-sdk-client-mock": "^3.0.0",

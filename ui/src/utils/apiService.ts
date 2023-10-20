@@ -267,7 +267,14 @@ export const configApi = createApi({
                     url: `config/${configId}`,
                     method: 'DELETE'
                 })
-            })
+            }),
+            updateConfig: builder.mutation({
+                query: ({ configId, payload }) => ({
+                    url: `config/${configId}`,
+                    method: 'PATCH',
+                    body: payload
+                })
+            }),
         };
     }
 });
@@ -278,14 +285,37 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({nextToken = null}) => `database-hosts?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `database-hosts?nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
-                query: ({nextToken = null}) => `jobs?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
             }),
+            getTemplates: builder.mutation({
+                query: ({ credentialId, region, payload }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/cloudformation/template`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
+        };
+    }
+});
+
+export const chatbotApi = createApi({
+    reducerPath: 'chatbotApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            sendMsg: builder.mutation({
+                query: ({ payload }) => ({
+                    url: `chatbot/prompt`,
+                    method: 'POST',
+                    body: payload
+                })
+            })
         };
     }
 });
@@ -320,11 +350,11 @@ export const {
     useGetConfigListQuery, 
     useLazyGetConfigDataQuery, 
     useSaveConfigDataMutation, 
-    useDeleteConfigMutation 
+    useDeleteConfigMutation, 
+    useUpdateConfigMutation 
 } = configApi;
 
-export const {
-    useGetDatabaseHostsQuery,
-    useGetDatabaseJobsQuery,
-    useGetJobsSummaryQuery
-} = databaseHomeApi;
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
+    databaseHomeApi;
+
+export const { useSendMsgMutation } = chatbotApi;

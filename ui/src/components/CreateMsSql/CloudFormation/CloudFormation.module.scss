@@ -1,12 +1,16 @@
 .cloud-formation {
-  width: 1063px;
+    width: 1063px;
 
-  margin: 32px 0;
-  background-color: #fff;
-  .inner {
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+    margin: 32px 0;
+    background-color: var(--content-background);
+    .inner {
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+.with-panel {
+    width: 794px;
 }

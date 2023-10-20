@@ -11,19 +11,24 @@
     .colText {
         display: flex;
         gap: 8px;
-        color: var(--grey-50);
     }
 
     .protection {
         display: flex;
         gap: 17px;
-        color: var(--grey-50);
     }
 
     .cost {
         display: flex;
         gap: 16px;
-        color: var(--grey-50);
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
     }
 
     .statusIcon {
@@ -42,6 +47,9 @@
         }
         &.initializing {
             background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
         }
     }
 

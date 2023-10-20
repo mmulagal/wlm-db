@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getPreSignedUrl } from '../lib/aws/s3';
+import { getObjectBucket, getPreSignedUrl } from '../lib/aws/s3';
 import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
@@ -11,7 +11,8 @@ import {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    CloudFormationTemplateResponseType
+    CloudFormationTemplateResponseType,
+    CloudFormationTemplateYamlResponseType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -40,16 +41,28 @@ import {
     ACTION_BUTTON_DASHBOARD,
     REDIRECT_URL,
     STANDARD_DEPLOYMENT_ACTION,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT
+    SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    AWS_RESOURCES_ACTION_MAP,
+    AWS_RESOURCES_STRICT_ACTION_MAP,
+    SECRET_MANAGER_ARN,
+    CLOUD_FORMATION_ARN,
+    RESOURCE_GROUP_ARN,
+    EC2_TAG_CONDITION,
+    WLMDB_RESOURCE_CLASS,
+    FSX_TAG_CONDITION,
+    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+    SNS_ARN,
+    BUCKET_NAME,
+    CLOUD_FORMATION_CLI_COMMAND
 } from '../utils/consts';
-import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables } from '../utils/utils';
+import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleName } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { getAllDeploymentStatus, getDeploymentStatusById } from './database/database-operations';
+import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
@@ -159,6 +172,77 @@ async function formatTemplateParameters(
     return { stackName, templateParameters: templateParams };
 }
 
+async function getCloudformationTemplate(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
+): Promise<CloudFormationTemplateYamlResponseType> {
+    logger.info('Cloud formation template ', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        tags
+    });
+
+    const { stackName, templateParameters } = await formatTemplateParameters(
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        topicArn,
+        enableCloudWatch
+    );
+
+    logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
+
+    const customMasterTemplatePath: string = `${stackName}/${MASTER_TEMPLATE_PATH}`;
+
+    const signedMasterTemplateUrl = await getPreSignedUrl(ASSETS_BUCKET_REGION, customMasterTemplatePath);
+
+    logger.info('Signed master url ', signedMasterTemplateUrl);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        credentialsId,
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        stackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath
+    );
+
+    // Sleep for 2 seconds for master template to be uploaded
+    await sleep(2000);
+
+    const response = await getObjectBucket(credentialsId, ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
+    const masterTemplateContents = await response.Body?.transformToString();
+
+    let cliParams: string = '';
+    templateParameters.forEach(e => {
+        cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+    });
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
+
+    return {
+        template: masterTemplateContents || '',
+        cliCommand: cloudFormationCli
+    };
+}
+
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
     region: string,
@@ -187,10 +271,13 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    const { permissions } = await getMissingPermissionsList(credentialsId, region);
+    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+        credentialsId,
+        region
+    );
 
     let errMsg = '';
-    if (permissions?.length) {
+    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
         errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
         logger.error(errMsg);
     }
@@ -313,8 +400,12 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    const { permissions } = await getMissingPermissionsList(credentialsId, region);
-    if (permissions?.length) {
+    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+        credentialsId,
+        region
+    );
+
+    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
@@ -385,14 +476,51 @@ async function deploymentStatus(accountId: string) {
     return data;
 }
 
-async function deploymentStatusById(accountId: string, deploymentId: string) {
-    logger.info('Fetching deployment status by id from database ', accountId, deploymentId);
-    const data = await getDeploymentStatusById(accountId, deploymentId);
+async function deploymentStatusByName(accountId: string, deploymentName: string) {
+    logger.info('Fetching deployment status by id from database ', accountId, deploymentName);
+    const data = await getDeploymentStatusByName(accountId, deploymentName);
     return data;
 }
+
+async function checkAllMissingPermissions(credentialsId: string, region: string) {
+    logger.info('check all missing permissions', credentialsId, region);
+    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
+    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
+    const { permissions: strictPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_ACTION_MAP,
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
+    );
+    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+        undefined,
+        [
+            {
+                // ContextEntry
+                ContextKeyName: EC2_TAG_CONDITION,
+                ContextKeyValues: [
+                    // ContextKeyValueListType
+                    WLMDB_RESOURCE_CLASS
+                ],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: FSX_TAG_CONDITION,
+                ContextKeyValues: ['WLMDB*'],
+                ContextKeyType: 'string'
+            }
+        ]
+    );
+    return { permissions, strictPermissions, strictConditionPermissions };
+}
+
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     deploymentStatus,
-    deploymentStatusById
+    deploymentStatusByName,
+    getCloudformationTemplate
 };

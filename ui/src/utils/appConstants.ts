@@ -16,7 +16,8 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
-    MAX_CONFIG_LIMIT: 'You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you\'ll need to delete an old configuration first.',
+    MAX_CONFIG_LIMIT:
+        "You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you'll need to delete an old configuration first.",
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
@@ -347,6 +348,7 @@ export const GENERAL = {
     DB_HOST_REGION: 'Region',
     DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
     // Job Status constants
+    JOB_STATUS: 'Job status',
     JOB_STATUS_DAYS: 'Last 90 days',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',
@@ -357,10 +359,41 @@ export const GENERAL = {
     DB_HOST_UP: 'Up',
     DB_HOST_DOWN: 'Down',
     DB_HOST_INITIALIZING: 'Initializing',
+    DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
     DATABASE_PROTECTION: 'Database protection',
     DB_HOST_PROTECTED: 'Protected',
     DB_HOST_UNPROTECTED: 'Unprotected',
-    PROTECTED_DB_DISTRIBUTION: 'Protected database distribution'
+    PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
+    SIDEBAR_LOAD_WIZARD: 'Load Wizard',
+    PROTECTION_DATABASES: 'Databases',
+    PROTECTION: 'Protection',
+    NUMBER_OF_EXECUTION: 'Number of Execution'
+};
 
+export const CODE_VIEWER = {
+    REST_API: 'REST API',
+    CLOUDFORMATION: 'CloudFormation',
+    AWS_CLI: 'AWS CLI',
+    VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
+    DOWNLOAD_YAML: 'Download YAML file ',
+    RECOMMENDED_DEV: 'Dev/Test',
+    RECOMMENDED_PROD: 'Production',
+    NO_DATA_MSG: 'No data found',
+    LOADING: 'Loading...',
+    AUTOMATIONS: 'Automations',
+    EXPAND: 'Expand',
+    COLLAPSE: 'Collapse',
+    RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL server deployment'],
+    MY_TEMPLATES: 'My Templates',
+    COPY: 'Copy',
+    COPIED_TO_CLIPBOARD: 'Copied to clipboard',
+    SIDEBAR_LOAD_WIZARD: 'Load Wizard',
+    MENU_LOAD_WIZARD: 'Load (Wizard)',
+    SHOW_CODE_AS: 'Show code as:',
+    VIEW_CODE: 'View Code',
+    RENAME: 'Rename',
+    DELETE: 'Delete',
+    CREATION_DATE: 'Creation date:',
+    DEPLOYMENT: 'Deployment:'
 };

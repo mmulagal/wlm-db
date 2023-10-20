@@ -66,6 +66,7 @@ export interface AggregatedHostsCountRes {
     totalUpHosts: number;
     totalInitializingHosts: number;
     totalDownHosts: number;
+    totalFailedHosts: number;
 }
 
 export interface AggregatedProtectionDbCountRes {
@@ -120,4 +121,10 @@ export interface DatabaseHostsEntities {
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
     aggregatedStorageSavings: AggregatedStorageSavingsRes | null;
     aggregatedCosts: AggregatedCostsRes | null;
+}
+
+export interface TemplateRes {
+    cliCommand: string;
+    template: string;
+    url: string;
 }

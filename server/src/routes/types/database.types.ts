@@ -48,8 +48,7 @@ const DatabasesResponseBody = Type.Object({
 });
 
 const DatabaseDeleteResponseBody = Type.Object({
-    status: Type.Integer(),
-    message: Type.Optional(Type.String())
+    message: Type.String()
 });
 
 const ServerSummaryResponse = Type.Object({

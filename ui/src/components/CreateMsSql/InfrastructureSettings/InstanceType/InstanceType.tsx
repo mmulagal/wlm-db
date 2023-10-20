@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
+import { setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 
 const InstanceType = () => {
     const dispatch = useDispatch();
@@ -20,6 +21,7 @@ const InstanceType = () => {
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const isRecommendedInstance = useAppSelector(state => state.msSqlAction.isRecommendedInstance);
 
     //Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
@@ -54,7 +56,11 @@ const InstanceType = () => {
     }, [instanceTypeData, selectedLicense]);
 
     useEffect(() => {
-        if(!isLoadConfig){
+        // If isRecommendedInstance is present that set that value as default. This case is when we load recommended templates.
+        if(isRecommendedInstance && instanceTypeData && instanceTypeData?.instanceTypes) {
+            dispatch(setInstanceType(isRecommendedInstance));
+            dispatch(setIsRecommendedInstance(null));
+        } else if (!isLoadConfig && !isRecommendedInstance) {
             dispatch(setInstanceType(generateInstances[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

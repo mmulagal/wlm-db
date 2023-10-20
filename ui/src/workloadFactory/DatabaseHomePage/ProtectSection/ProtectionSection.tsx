@@ -5,15 +5,24 @@ import MultiRingDoughnut from '../MultiRingDoughnut/MultiRingDoughnut';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const ProtectionSection = () => {
-    
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     return (
         <div className={styles.protectionSection}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">{GENERAL.DB_HOST_PROTECTION}</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.DB_HOST_PROTECTION}
+                    {(databaseHostsLoading || databaseJobsLoading) && (
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent />
+                        </div>
+                    )}
+                </Typography>
             </div>
 
             <div className={styles.secondContainer}>
@@ -24,7 +33,7 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#68C6B3' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
                             <Typography variant="Regular_14">{GENERAL.DB_HOST_PROTECTED}</Typography>
                         </div>
 
@@ -33,14 +42,16 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.protectedPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.protectedDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.protectedDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
 
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#FDC300' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-6)' }} />
                             <Typography variant="Regular_14">{GENERAL.DB_HOST_UNPROTECTED}</Typography>
                         </div>
 
@@ -49,7 +60,9 @@ const ProtectionSection = () => {
                                 {formatFractionalNumber(hostData?.unprotectedPercent)} %
                             </Typography>
                             <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.unprotectedDb} Databases</Typography>
+                            <Typography variant="Regular_14">
+                                {hostData?.unprotectedDb} {GENERAL.PROTECTION_DATABASES}
+                            </Typography>
                         </div>
                     </div>
                     <div className={styles.separatorProtection} />
@@ -61,47 +74,41 @@ const ProtectionSection = () => {
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#012CAD' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-1)' }} />
                             <Typography variant="Regular_14">{GENERAL.AWS_BACKUP}</Typography>
                         </div>
 
                         <div className={styles.secondPart}>
-                            <Typography variant="Semibold_14">
-                                {formatFractionalNumber(hostData?.awsBackupPercent)} %
+                            <Typography variant="Regular_14">
+                                {hostData?.awsBackupDb} {GENERAL.PROTECTION_DATABASES}
                             </Typography>
-                            <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.awsBackupDb} Databases</Typography>
                         </div>
                     </div>
 
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#A815F3' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-9)' }} />
                             <Typography variant="Regular_14">{GENERAL.FSX_ONTAP_SNAPSHOTS}</Typography>
                         </div>
 
                         <div className={styles.secondPart}>
-                            <Typography variant="Semibold_14">
-                                {formatFractionalNumber(hostData?.fsxOntapSnapshotsPercent)} %
+                            <Typography variant="Regular_14">
+                                {hostData?.fsxOntapSnapshotsDb} {GENERAL.PROTECTION_DATABASES}
                             </Typography>
-                            <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.fsxOntapSnapshotsDb} Databases</Typography>
                         </div>
                     </div>
                     <div className={styles.separatorProtection} />
                     <div className={styles.row}>
                         <div className={styles.firstPart}>
-                            <div className={styles.square} style={{ backgroundColor: '#0BAFFC' }} />
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
                             <Typography variant="Regular_14">{GENERAL.SQL_SERVER_BACKUP}</Typography>
                         </div>
 
                         <div className={styles.secondPart}>
-                            <Typography variant="Semibold_14">
-                                {formatFractionalNumber(hostData?.sqlServerBackupPercent)} %
+                            <Typography variant="Regular_14">
+                                {hostData?.sqlServerBackupDb} {GENERAL.PROTECTION_DATABASES}
                             </Typography>
-                            <div className={styles.separatorSecondPart} />
-                            <Typography variant="Regular_14">{hostData?.sqlServerBackupDb} Databases</Typography>
                         </div>
                     </div>
                     <div className={styles.separatorProtection} />
