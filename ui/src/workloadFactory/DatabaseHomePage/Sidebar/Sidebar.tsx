@@ -112,7 +112,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // This is to set disableCopy flag value
     useEffect(() => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            if (!rightPanelTemplateResponse?.templateAsYaml || isRightPanelTemplateLoading) {
+            if (!rightPanelTemplateResponse?.template || isRightPanelTemplateLoading) {
                 setDisableCopy(true);
             } else {
                 setDisableCopy(false);
@@ -124,7 +124,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 setDisableCopy(false);
             }
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
-            if (!rightPanelTemplateResponse?.templateAsCli || isRightPanelTemplateLoading) {
+            if (!rightPanelTemplateResponse?.cliCommand || isRightPanelTemplateLoading) {
                 setDisableCopy(true);
             } else {
                 setDisableCopy(false);
@@ -135,17 +135,22 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     }, [dropDownValue, rightPanelResponse, isRightPanelDataLoading, rightPanelTemplateResponse, isRightPanelTemplateLoading]);
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
-    const getTemplateResponse = (payload: any) => {
+    const getTemplateResponse = (payload: any, credDetails: any) => {
         // TBD - to add code to get credentials and pass in request body
-        loadTemplateData({ payload: payload }).then((data: any) => {
-            if (data?.data) {
-                setRightPanelTemplateResponse(data?.data);
-                setIsRightPanelTemplateLoading(false);
-            } else {
-                setRightPanelTemplateResponse(null);
-                setIsRightPanelTemplateLoading(false);
-            }
-        });
+        if (credDetails?.credId && credDetails?.region) {
+            loadTemplateData({ credentialId: credDetails?.credId, region: credDetails?.region,payload: payload }).then((data: any) => {
+                if (data?.data) {
+                    setRightPanelTemplateResponse(data?.data);
+                    setIsRightPanelTemplateLoading(false);
+                } else {
+                    setRightPanelTemplateResponse(null);
+                    setIsRightPanelTemplateLoading(false);
+                }
+            });
+        } else {
+            setRightPanelTemplateResponse(null);
+            setIsRightPanelTemplateLoading(false);
+        }
     };
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
@@ -158,7 +163,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const changeObjectForm = {
                 mssqlForm: actualData[0].data
             };
-            const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
+            const resBody = createMssqlPayload(changeObjectForm);
+            const res = JSON.stringify(resBody, null, 2);
             // To set REST API response as deploy API curl request. Passing accountId, credentialId and region placeholder for recommended configs.
             const highlightedString = (
                 <Highlighter
@@ -177,7 +183,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             //@ts-ignore
             setRightPanelResponse(highlightedString);
             setIsRightPanelDataLoading(false);
-            getTemplateResponse(res);
+            getTemplateResponse(resBody, {});
         } else {
             // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
@@ -187,7 +193,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 const changeObjectForm = {
                     mssqlForm: actualData
                 };
-                const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
+                const resBody = createMssqlPayload(changeObjectForm);
+                const res = JSON.stringify(resBody, null, 2);
                 // To set REST API response as deploy API curl request
                 const highlightedString = (
                     <Highlighter
@@ -206,7 +213,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 //@ts-ignore
                 setRightPanelResponse(highlightedString);
                 setIsRightPanelDataLoading(false);
-                getTemplateResponse(res);
+                getTemplateResponse(resBody, credDetails);
             });
         }
     };
@@ -268,7 +275,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput}>
                     <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.templateAsYaml || CODE_VIEWER.NO_DATA_MSG}
+                        {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
                 </HighlighterWord>
             );
@@ -292,7 +299,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.templateAsCli || CODE_VIEWER.NO_DATA_MSG}
+                        {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
             );
@@ -317,11 +324,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // To copy response based on dropdown selection
     const copyResponseData = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            return rightPanelTemplateResponse?.templateAsYaml;
+            return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             return rightPanelResponse?.props?.textToHighlight;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
-            return rightPanelTemplateResponse?.templateAsCli;
+            return rightPanelTemplateResponse?.cliCommand;
         }
     };
 
@@ -536,7 +543,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     setOpenedRow(null);
                                                     if (menuId === 'downloadYaml') {
                                                         handleDownloadYAML(
-                                                            rightPanelTemplateResponse?.templateAsYaml,
+                                                            rightPanelTemplateResponse?.template,
                                                             openedItem?.name
                                                         );
                                                     } else if (menuId === 'viewAwsCloudFormation') {
