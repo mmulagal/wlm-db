@@ -27,14 +27,8 @@ async function getPreSignedUrl(region: string, key?: string) {
     return getSignedUrl(s3, command, { expiresIn: S3_BUCKET_SIGNED_URL_EXPIRY });
 }
 
-async function putObjectBucket(
-    credentialId: string,
-    region: string,
-    bucketName: string,
-    objectName: string,
-    objectData: string
-) {
-    logger.info('Uploading to bucket ', { credentialId, region, bucketName, objectName });
+async function putObjectBucket(region: string, bucketName: string, objectName: string, objectData: string) {
+    logger.info('Uploading to bucket ', { region, bucketName, objectName });
 
     const s3 = new S3Client({ region });
     const command = new PutObjectCommand({
@@ -50,8 +44,8 @@ async function putObjectBucket(
     return response;
 }
 
-async function getObjectBucket(credentialId: string, region: string, bucketName: string, objectName: string) {
-    logger.info('Reading from bucket ', { credentialId, region, bucketName, objectName });
+async function getObjectBucket(region: string, bucketName: string, objectName: string) {
+    logger.info('Reading from bucket ', { region, bucketName, objectName });
 
     const s3 = new S3Client({ region });
     const command = new GetObjectCommand({
