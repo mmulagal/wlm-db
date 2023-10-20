@@ -42,6 +42,16 @@ import {
     REDIRECT_URL,
     STANDARD_DEPLOYMENT_ACTION,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    AWS_RESOURCES_ACTION_MAP,
+    AWS_RESOURCES_STRICT_ACTION_MAP,
+    SECRET_MANAGER_ARN,
+    CLOUD_FORMATION_ARN,
+    RESOURCE_GROUP_ARN,
+    EC2_TAG_CONDITION,
+    WLMDB_RESOURCE_CLASS,
+    FSX_TAG_CONDITION,
+    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+    SNS_ARN,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND
 } from '../utils/consts';
@@ -261,10 +271,13 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    const { permissions } = await getMissingPermissionsList(credentialsId, region);
+    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+        credentialsId,
+        region
+    );
 
     let errMsg = '';
-    if (permissions?.length) {
+    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
         errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
         logger.error(errMsg);
     }
@@ -387,8 +400,12 @@ async function deployCloudFormationTemplate(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
-    const { permissions } = await getMissingPermissionsList(credentialsId, region);
-    if (permissions?.length) {
+    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+        credentialsId,
+        region
+    );
+
+    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
         throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
@@ -464,6 +481,42 @@ async function deploymentStatusByName(accountId: string, deploymentName: string)
     const data = await getDeploymentStatusByName(accountId, deploymentName);
     return data;
 }
+
+async function checkAllMissingPermissions(credentialsId: string, region: string) {
+    logger.info('check all missing permissions', credentialsId, region);
+    // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
+    const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
+    const { permissions: strictPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_ACTION_MAP,
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
+    );
+    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+        credentialsId,
+        region,
+        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+        undefined,
+        [
+            {
+                // ContextEntry
+                ContextKeyName: EC2_TAG_CONDITION,
+                ContextKeyValues: [
+                    // ContextKeyValueListType
+                    WLMDB_RESOURCE_CLASS
+                ],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: FSX_TAG_CONDITION,
+                ContextKeyValues: ['WLMDB*'],
+                ContextKeyType: 'string'
+            }
+        ]
+    );
+    return { permissions, strictPermissions, strictConditionPermissions };
+}
+
 export {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
