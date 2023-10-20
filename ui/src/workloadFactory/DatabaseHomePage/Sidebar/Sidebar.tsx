@@ -333,8 +333,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     };
 
     const handleViewInAwsCloudFormation = () => {
-        if (rightPanelTemplateResponse?.cloudFormationUrl) {
-            window.open(rightPanelTemplateResponse?.cloudFormationUrl, '_blank', 'noopener');
+        if (rightPanelTemplateResponse?.cliCommand) {
+            window.open(rightPanelTemplateResponse?.cliCommand, '_blank', 'noopener');
         }
     };
 

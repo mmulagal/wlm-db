@@ -126,5 +126,5 @@ export interface DatabaseHostsEntities {
 export interface TemplateRes {
     cliCommand: string;
     template: string;
-    cloudFormationUrl: string;
+    url: string;
 }
