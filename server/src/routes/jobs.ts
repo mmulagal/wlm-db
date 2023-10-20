@@ -20,9 +20,9 @@ export default function deploymentJobsRoutes(fastify: FastifyInstance) {
     server.get(`${DEPLOYMENT_JOBS_API_PATH}`, { schema: DeploymentJobsSummaryListSchema }, async (request, reply) => {
         const {
             params: { accountId },
-            query: { status }
+            query: { statuses }
         } = request;
-        const response = await getDeploymentJobsSummary(accountId, status);
+        const response = await getDeploymentJobsSummary(accountId, statuses);
         return reply.send(response!);
     });
 }

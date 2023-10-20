@@ -5,7 +5,7 @@ const DeploymentJobsCountQueryString = Type.Object({
 });
 
 const DeploymentJobsSummaryQueryString = Type.Object({
-    status: Type.Optional(Type.String())
+    statuses: Type.Optional(Type.String())
 });
 
 const DeploymentJobsSummaryResponse = Type.Object({

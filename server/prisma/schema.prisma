@@ -22,11 +22,11 @@ model deployment {
   region                    String            @db.VarChar(30)
   credentials_id            String            @db.VarChar(80)
   deployment_status         DEPLOYMENT_STATUS
-  deployment_model          DEPLOYMENT_MODEL
+  deployment_model          DEPLOYMENT_MODEL?
   deployment_status_reason  String?           @db.Text
   start_time                DateTime          @db.DateTime(0)
   end_time                  DateTime?         @db.DateTime(0)
-  data                      Json?             @default("{}")
+  metadata                      Json?             @default("{}")
   event                    event[]
 
   @@unique([account_id, deployment_id], name: "uk_wlmdb_deployment_account_id_deployment_id", map: "uk_wlmdb_deployment_account_id_deployment_id")

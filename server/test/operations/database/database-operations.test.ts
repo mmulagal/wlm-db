@@ -50,7 +50,7 @@ describe('Database operations', () => {
             credentialsId: '',
             startTime: 0,
             region: '',
-            data: {
+            metadata: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
                 fileSystemType: 'FSx ONTAP'
@@ -65,7 +65,7 @@ describe('Database operations', () => {
             credentialsId: '',
             startTime: 0,
             region: '',
-            data: {
+            metadata: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
                 fileSystemType: 'FSx ONTAP'
@@ -86,7 +86,7 @@ describe('Database operations', () => {
             credentialsId: '',
             startTime: 0,
             region: '',
-            data: {
+            metadata: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
                 fileSystemType: 'FSx ONTAP'
@@ -100,7 +100,7 @@ describe('Database operations', () => {
             credentialsId: '',
             startTime: 0,
             region: '',
-            data: {
+            metadata: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
                 fileSystemType: 'FSx ONTAP'
