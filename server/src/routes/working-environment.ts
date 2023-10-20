@@ -11,7 +11,7 @@ import {
     getWorkingEnvironments
 } from '../operations/working-environment-operations';
 
-const API_PATH_WORKING_ENVIRONMENTS: string = '/v1/workingEnvironments';
+const API_PATH_WORKING_ENVIRONMENTS: string = '/v1/workingEnvironments'; // TODO: as per rest standard this has to be working-environments, but the change might have a bigger impact with BlueXP integration
 const API_PATH_RELATIONSHIP: string = '/v1/relationships';
 
 export default function workingEnvironmentRoutes(fastify: FastifyInstance) {
