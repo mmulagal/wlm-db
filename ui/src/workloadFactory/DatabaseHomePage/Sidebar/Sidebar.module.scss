@@ -15,7 +15,7 @@
     }
 
     .accordionMainContainer {
-        max-height: 934px;
+        max-height: 770px;
         overflow-y: auto;
         width: calc(100% - 16px);
         margin-top: 40px;
@@ -67,7 +67,7 @@
         .leftSideView {
             width: 638px;
             margin-top: 40px;
-            max-height: 934px;
+            max-height: 770px;
             overflow-y: auto;
             padding-bottom: 40px;
         }
@@ -227,7 +227,7 @@
         .thirdBar {
             width: 1090px;
             background-color: var(--grey-65);
-            height: 672px;
+            max-height: 534px;
             overflow-y: auto;
             padding: 24px 40px 0 40px;
         }
