@@ -745,8 +745,8 @@ const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
 
-const FCI_STACKNAME = 'SQLFCIStack';
-const STANDALONE_STACKNAME = 'Standalone';
+const FCI_STACKNAME = 'SqlFciStack';
+const STANDALONE_STACKNAME = 'SqlStandaloneStack';
 
 // Notification
 const CRITICAL = 'critical';

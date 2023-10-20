@@ -1,10 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$FSxUserName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$FSxPassword,
+    [string]$FSxSecret,
 
     [Parameter(Mandatory = $true)]
     [string]$FSxID,
@@ -22,11 +19,11 @@ param(
     [string]$OntapResourceQuery
 
 )
-<#
-$SecretInfo = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId ${secrentId}).SecretString
-$username = $SecretInfo.username
-$password = $SecretInfo.password
-#>
+
+$SecretInfo = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId ${FSxSecret}).SecretString
+$FSxUserName = $SecretInfo.username
+$FSxPassword = $SecretInfo.password
+
 function makeRestCall {
     $FSxCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("$(${FSxUserName}):$(${FSxPassword})"))
 

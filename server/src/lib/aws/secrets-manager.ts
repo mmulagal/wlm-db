@@ -1,4 +1,9 @@
-import { SecretsManagerClient, CreateSecretCommand, PutResourcePolicyCommand } from '@aws-sdk/client-secrets-manager';
+import {
+    SecretsManagerClient,
+    CreateSecretCommand,
+    PutResourcePolicyCommand,
+    GetSecretValueCommand
+} from '@aws-sdk/client-secrets-manager';
 import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
@@ -62,4 +67,30 @@ async function createSecret(
     return resp;
 }
 
-export { getSecretsManagerClient, createSecret, putResourcePolicy };
+async function duplicateSecret(
+    credentialsId: string,
+    region: string,
+    existingSecretName: string,
+    duplicateSecretName: string,
+    roleArn: string
+) {
+    logger.info('Duplicate secret:', { credentialsId, region, existingSecretName, duplicateSecretName, roleArn });
+    const smClient = await getSecretsManagerClient(credentialsId, region);
+
+    const getResponse = await smClient.send(new GetSecretValueCommand({ SecretId: existingSecretName }));
+    logger.info('Get Secrets Manager response:', getResponse);
+
+    const newSecretInput = {
+        Name: duplicateSecretName,
+        Description: 'WLMDB Secret',
+        SecretString: getResponse.SecretString
+    };
+    const createResponse = await smClient.send(new CreateSecretCommand(newSecretInput));
+    logger.info('Create Secrets Manager response:', createResponse);
+
+    const policyResponse = await putResourcePolicy(credentialsId, region, createResponse.ARN!, roleArn);
+
+    return policyResponse;
+}
+
+export { getSecretsManagerClient, createSecret, putResourcePolicy, duplicateSecret };
