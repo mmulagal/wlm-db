@@ -558,6 +558,13 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.SINGLE_INSTANCE,
             value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
         };
+        //Data drive Size
+        result.storageCapacity = {
+            capacity: '100',
+            unit: 'GiB'
+        }
+        //Throughput value
+        result.throughput = '128'
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
@@ -582,6 +589,13 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.FAILOVER_CLUSTER,
             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
         };
+        //Data drive Size
+        result.storageCapacity = {
+            capacity: '500',
+            unit: 'GiB'
+        }
+        //Throughput value
+        result.throughput = '128'
     }
 
     return result;
