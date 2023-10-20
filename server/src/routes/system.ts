@@ -25,7 +25,6 @@ export default function systemRoutes(fastify: FastifyInstance) {
             reply.code(200).send('wlmdb_health 1');
         })
         .get('/v1/status', { schema: GetSystemStatusSchema }, async request => {
-            // TODO: remove /api from route when REST API convention is followed across all APIs
             const {
                 params: { accountId }
             } = request;
