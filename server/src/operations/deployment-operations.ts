@@ -12,7 +12,7 @@ import {
     FSXConfigurationType,
     SQLConfigurationType,
     CloudFormationTemplateResponseType,
-    CloudFormationTemplateYamlResponseType
+    CloudFormationStaticTemplateResponseType
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
@@ -68,25 +68,27 @@ import { handleNotification } from './cloud-manager/notification-operations';
 const logger = getLogger();
 
 async function formatTemplateParameters(
-    credentialsId: string,
-    region: string,
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
     fsxConfiguration: FSXConfigurationType,
     sqlConfiguration: SQLConfigurationType,
     topicArn: string,
-    enableCloudWatch: boolean
+    enableCloudWatch: boolean,
+    credentialsId?: string,
+    region?: string
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
+    const { roleName, roleArn, providerAccountId } = credentialsId
+        ? await getRoleName(credentialsId!)
+        : { roleName: '', roleArn: '', providerAccountId: '' };
 
     await createSecrets(
-        credentialsId,
-        region,
+        credentialsId!,
+        region!,
         [
             {
                 secretName: derivedParams.DomainAdminSecretName,
@@ -108,12 +110,12 @@ async function formatTemplateParameters(
     );
 
     const stackName = derivedParams.StackName;
-    const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
+    const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
@@ -173,8 +175,6 @@ async function formatTemplateParameters(
 }
 
 async function getCloudformationTemplate(
-    credentialsId: string,
-    region: string,
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
     adConfiguration: ADConfigurationType,
@@ -182,8 +182,10 @@ async function getCloudformationTemplate(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
-    tags?: Array<{ key: string; value: string }>
-): Promise<CloudFormationTemplateYamlResponseType> {
+    tags?: Array<{ key: string; value: string }>,
+    credentialsId?: string,
+    region?: string
+): Promise<CloudFormationStaticTemplateResponseType> {
     logger.info('Cloud formation template ', {
         credentialsId,
         region,
@@ -196,15 +198,15 @@ async function getCloudformationTemplate(
     });
 
     const { stackName, templateParameters } = await formatTemplateParameters(
-        credentialsId,
-        region,
         networkConfiguration,
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
         topicArn,
-        enableCloudWatch
+        enableCloudWatch,
+        credentialsId,
+        region
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -217,7 +219,6 @@ async function getCloudformationTemplate(
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
-        credentialsId,
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
@@ -228,16 +229,27 @@ async function getCloudformationTemplate(
     // Sleep for 2 seconds for master template to be uploaded
     await sleep(2000);
 
-    const response = await getObjectBucket(credentialsId, ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
+    const response = await getObjectBucket(ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
     const masterTemplateContents = await response.Body?.transformToString();
 
+    // Generate parameters list for cli command
     let cliParams: string = '';
     templateParameters.forEach(e => {
         cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
 
+    // Generate parameters list for quick create url command
+    let urlParams: string = `stackName=${stackName}`;
+    templateParameters.forEach(e => {
+        urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
+    });
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodeURIComponent(
+        signedMasterTemplateUrl
+    )}&${urlParams}`;
+
     return {
+        url: signedTemplateURL,
         template: masterTemplateContents || '',
         cliCommand: cloudFormationCli
     };
@@ -319,7 +331,6 @@ async function createCloudFormationTemplateForUserDeployment(
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
-        credentialsId,
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         derivedParams.StackName,
@@ -415,15 +426,15 @@ async function deployCloudFormationTemplate(
     }
 
     const { stackName, templateParameters } = await formatTemplateParameters(
-        credentialsId,
-        region,
         networkConfiguration,
         ec2Configuration,
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
         topicArn,
-        enableCloudWatch
+        enableCloudWatch,
+        credentialsId,
+        region
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -436,7 +447,6 @@ async function deployCloudFormationTemplate(
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
-        credentialsId,
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,

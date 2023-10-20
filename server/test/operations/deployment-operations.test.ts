@@ -56,8 +56,6 @@ describe('Cloud formation operations', () => {
     });
     it('Get cloud formation template', async () => {
         const resp = await getCloudformationTemplate(
-            credentialsid,
-            DEFAULT_AWS_REGION,
             NETWORKING_CONFIGURATION,
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
