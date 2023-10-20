@@ -35,9 +35,7 @@ const JobStatus = () => {
                         <Typography variant="Regular_14">{GENERAL.JOB_STATUS_SUCCESS}</Typography>
                     </div>
                     <Typography variant="Semibold_14">
-                        {jobsSummaryData?.success
-                            ? jobsSummaryData.success + GENERAL.JOB_STATUS_JOBS
-                            : GENERAL.NOT_AVAILABLE}
+                        {(jobsSummaryData?.success || 0) + GENERAL.JOB_STATUS_JOBS}
                     </Typography>
                 </div>
 
@@ -49,9 +47,7 @@ const JobStatus = () => {
                         <Typography variant="Regular_14">{GENERAL.JOB_STATUS_INITIALIZING}</Typography>
                     </div>
                     <Typography variant="Semibold_14">
-                        {jobsSummaryData?.initializing
-                            ? jobsSummaryData.initializing + GENERAL.JOB_STATUS_JOBS
-                            : GENERAL.NOT_AVAILABLE}
+                        {(jobsSummaryData?.initializing || 0) + GENERAL.JOB_STATUS_JOBS}
                     </Typography>
                 </div>
 
@@ -63,9 +59,7 @@ const JobStatus = () => {
                         <Typography variant="Regular_14">{GENERAL.JOB_STATUS_FAILED}</Typography>
                     </div>
                     <Typography variant="Semibold_14">
-                        {jobsSummaryData?.failed
-                            ? jobsSummaryData.failed + GENERAL.JOB_STATUS_JOBS
-                            : GENERAL.NOT_AVAILABLE}
+                        {(jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
                     </Typography>
                 </div>
 

@@ -36,7 +36,6 @@ import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
-import widgetRoutes from './routes/widgets';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -172,7 +171,6 @@ const app = fastify({
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
-            widgetRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }

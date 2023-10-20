@@ -124,6 +124,7 @@ export interface DatabaseHostsEntities {
 }
 
 export interface TemplateRes {
-    templateAsCli: String;
-    templateAsYaml: String;
+    templateAsCli: string;
+    templateAsYaml: string;
+    cloudFormationUrl: string;
 }

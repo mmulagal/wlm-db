@@ -26,7 +26,6 @@ import {
 
 import databaseHosts from './DatabaseHomeJson/databaseHosts.json';
 import databaseJobs from './DatabaseHomeJson/databaseJobs.json';
-import jobsSummaryData from './DatabaseHomeJson/jobsSummary.json'
 
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
@@ -40,7 +39,6 @@ const DatabaseHomeApis = () => {
     // Temporary code to read data from json
     const databaseHostsLoading = false;
     const databaseJobsLoading = false;
-    const jobsSummaryLoading = false;
 
     const {
         // data: databaseHosts,
@@ -55,8 +53,8 @@ const DatabaseHomeApis = () => {
     } = useGetDatabaseJobsQuery({nextToken: jobsCursor});
 
     const {
-        // data: jobsSummaryData,
-        // isFetching: jobsSummaryLoading,
+        data: jobsSummaryData,
+        isFetching: jobsSummaryLoading,
         isError: jobsSummaryError
     } = useGetJobsSummaryQuery('');
 

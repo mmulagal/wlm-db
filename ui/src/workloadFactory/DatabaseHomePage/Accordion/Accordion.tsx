@@ -7,11 +7,15 @@ import styles from './Accordion.module.scss';
 import { useDeleteConfigMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { useDispatch } from 'react-redux';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
-import { LoadConfiguration, LoadRecommendedConfig } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
+import {
+    LoadConfiguration,
+    LoadRecommendedConfig
+} from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
-import { useAppSelector } from '../../../store/storeHooks';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
+import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
+import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
 type AccordionContent = {
     heading: string;
@@ -27,38 +31,49 @@ type AccordionContent = {
     recommended?: boolean; //recommended templates check
 };
 
-const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRefetch, isExpanded, expand, viewCode, recommended }: AccordionContent) => {
+const Accordion = ({
+    heading,
+    subHeading,
+    toggle,
+    open,
+    openedItem,
+    id,
+    configRefetch,
+    isExpanded,
+    expand,
+    viewCode,
+    recommended
+}: AccordionContent) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
     const [deleteConfigApi] = useDeleteConfigMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
-    const initialMssqlState = useAppSelector((state:any) => state.mssqlForm);
 
     // Default menu items applicable for all
     const menuItems = [
         {
             id: 'viewCode',
-            displayName: 'View Code'
+            displayName: CODE_VIEWER.VIEW_CODE
         },
         {
             id: 'loadWizard',
-            displayName: 'Load (Wizard)'
+            displayName: CODE_VIEWER.MENU_LOAD_WIZARD
         }
     ];
 
     // Add rename and delete if it is saved config but not recommended template
     const savedConfigMenu = () => {
-        if(!recommended){
+        if (!recommended) {
             menuItems.push({
                 id: 'rename',
-                displayName: 'Rename'
-            })
+                displayName: CODE_VIEWER.RENAME
+            });
             menuItems.push({
                 id: 'delete',
-                displayName: 'Delete'
-            })
+                displayName: CODE_VIEWER.DELETE
+            });
         }
         return menuItems;
     };
@@ -72,7 +87,7 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
     const handleLoadWizard = () => {
         dispatch(setIsLoading(true));
         navigate(WLF_TO_FORM_NAVIGATE);
-        if(recommended){
+        if (recommended) {
             // Load config by setting recommended data in initial state
             const data = setRecommendedValues(initialMssqlState, id || '');
             dispatch(setIsRecommendedInstance(data?.instanceType));
@@ -84,11 +99,11 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
     };
 
     const handleViewCode = () => {
-        if(!isExpanded){
+        if (!isExpanded) {
             expand();
         }
         viewCode(heading, id);
-    }
+    };
 
     return (
         <div className={styles.accordions}>
@@ -150,19 +165,19 @@ const Accordion = ({ heading, subHeading, toggle, open, openedItem, id, configRe
                         </div>
                     </div>
                     {/* Creation date will be shown only for saved config but not for recommended templates*/}
-                    {!recommended && 
+                    {!recommended && (
                         <Typography
                             variant="Regular_13"
                             className={open ? `${styles.secondLevel} ${styles.addColor}` : `${styles.secondLevel}`}
                         >
-                            Creation date: {subHeading}
+                            {CODE_VIEWER.CREATION_DATE} {subHeading}
                         </Typography>
-                    }
+                    )}
                 </div>
                 {open && (
                     <div className={styles.contentArea}>
                         <Typography variant="Regular_13" className={styles.contentText}>
-                            Deployment: Number of Execution
+                            {CODE_VIEWER.DEPLOYMENT} {GENERAL.NUMBER_OF_EXECUTION}
                         </Typography>
                         <div className={styles.extraSpace} />
                     </div>

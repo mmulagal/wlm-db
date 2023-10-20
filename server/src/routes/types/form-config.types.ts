@@ -6,7 +6,8 @@ const FormConfigObjectResponse = Type.Object({
     creationTime: Type.Number(),
     accountId: Type.String(),
     user: Type.String(),
-    data: Type.Any()
+    data: Type.Any(),
+    modifiedTime: Type.Optional(Type.Number())
 });
 
 const FormConfigListObjectResponse = Type.Object({
@@ -14,7 +15,8 @@ const FormConfigListObjectResponse = Type.Object({
     name: Type.String(),
     creationTime: Type.Number(),
     accountId: Type.String(),
-    user: Type.String()
+    user: Type.String(),
+    modifiedTime: Type.Optional(Type.Number())
 });
 
 const FormConfigObjectDeleteResponse = {};
@@ -29,6 +31,12 @@ const FormConfigListParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
 });
 type FormConfigListParamsType = Static<typeof FormConfigListParams>;
+
+const FormConfigUpdateParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    id: Type.String({ minLength: 1 })
+});
+type FormConfigUpdateParamsType = Static<typeof FormConfigUpdateParams>;
 
 const FormConfigObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
@@ -47,9 +55,20 @@ const FormConfigCreateResponse = Type.Object({
 
 type FormConfigCreateResponseType = Static<typeof FormConfigCreateResponse>;
 
+const FormConfigUpdateResponse = Type.Object({
+    id: Type.String({ minLength: 1 })
+});
+
+type FormConfigUpdateResponseType = Static<typeof FormConfigUpdateResponse>;
+
 const CreateConfigRequestBody = Type.Object({
     name: Type.String(),
     data: Type.Any()
+});
+
+const UpdateConfigRequestBody = Type.Object({
+    name: Type.String(),
+    data: Type.Optional(Type.Any())
 });
 
 export {
@@ -62,7 +81,12 @@ export {
     FormConfigObjectParamsType,
     FormConfigListParams,
     FormConfigObjectParams,
+    FormConfigUpdateParams,
+    FormConfigUpdateParamsType,
     FormConfigCreateResponseType,
     FormConfigCreateResponse,
-    CreateConfigRequestBody
+    FormConfigUpdateResponse,
+    FormConfigUpdateResponseType,
+    CreateConfigRequestBody,
+    UpdateConfigRequestBody
 };

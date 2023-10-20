@@ -278,13 +278,7 @@ Resources:
                             waitAfterCompletion: '0'
                 Prep:
                     commands:
-                        b-rename-computer:
-                            command: !Join
-                                - ''
-                                - - powershell.exe -Command "C:\cfn\scripts\Rename-Computer.ps1 -Restart
-                                    -NewName 'DomainJoin1'
-                            waitAfterCompletion: forever
-                        c-update-DNS:
+                        a-update-DNS:
                             command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\Update-DNSServers.ps1
@@ -294,10 +288,7 @@ Resources:
                             waitAfterCompletion: '0'
                 Finalize:
                     commands:
-                        a-reboot:
-                            command: powershell.exe -Command "C:\cfn\scripts\Restart-Computer.ps1"
-                            waitAfterCompletion: forever
-                        b-validate-vpc:
+                        a-validate-vpc:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe -Command "C:\cfn\scripts\Validate-VPC.ps1 -subnet '
@@ -306,7 +297,7 @@ Resources:
                                   - !Ref 'AWS::Region'
                                   - '"'
                             waitAfterCompletion: '0'
-                        c-validate-ad:
+                        b-validate-ad:
                             command: !Join
                                 - ''
                                 - - 'powershell.exe -Command "C:\cfn\scripts\Validate-Credentials.ps1 -DomainName '
@@ -318,7 +309,7 @@ Resources:
                                   - ' -isSecretManagerSupported  1'
                                   - '"'
                             waitAfterCompletion: '0'
-                        d-signal-resource:
+                        c-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'

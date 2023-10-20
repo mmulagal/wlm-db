@@ -4,18 +4,20 @@
     "to": "/databases",
     "hasMenuItem": true,
     "hasPolicies": false,
-    "stageIntegrations": [{
-       "path": "/",
-       "renderType": "iframe/v2",
-       "iframeUrl": "https://staging-components.console.workloads.netapp.com/wlmdb/index.html"
-    }],
+    "stageIntegrations": [
+        {
+            "path": "/",
+            "renderType": "iframe/v2",
+            "iframeUrl": "https://staging-components.console.workloads.netapp.com/wlmdb/index.html"
+        }
+    ],
     "homepage": {
-       "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type.",
-       "primaryCtaLabel": "Deploy database",
-       "primaryCtaTo": "",
-       "secondaryCtaLabel": "Manage workload",
-       "secondaryCtaTo": "",
-       "isComingSoon": false,
-       "dataUrl": ""
+        "description": "Workload Factory for Database helps you to easily discover, deploy, protect, and manage databases in AWS using EC2, AWS networking, and FSxN in an automated way. The workload management is simplified, consistent, configured according to best practices, and takes advantage of FSxN features.",
+        "primaryCtaLabel": "Deploy database",
+        "primaryCtaTo": "https://staging.console.workloads.netapp.com/databases",
+        "secondaryCtaLabel": "Manage workload",
+        "secondaryCtaTo": "",
+        "isComingSoon": false,
+        "dataUrl": ""
     }
- }
+}
