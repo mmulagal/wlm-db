@@ -83,12 +83,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         {
             id: 'viewAwsCloudFormation',
             displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
         },
         {
             id: 'downloadYaml',
             displayName: CODE_VIEWER.DOWNLOAD_YAML,
-            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
         }
     ];
 
