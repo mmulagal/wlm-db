@@ -793,6 +793,192 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
     'UPDATE_FAILED'
 ];
 
+// ----------------------- CHATBOT CONFIG START -----------------------
+
+const MODEL = 'anthropic.claude-v2';
+const SERVICE = 'bedrock';
+const BEDROCK_REGION = 'us-west-2';
+
+const CHATBOT_UI_PARAMS_FSX = [
+    {
+        credentialsConfig: [
+            {
+                credentialsId: {
+                    required: true
+                }
+            }
+        ]
+    },
+    {
+        rootConfig: [
+            {
+                region: {
+                    required: true,
+                    dependsOn: 'credentialsId'
+                }
+            },
+            {
+                fsxDeploymentMode: {
+                    required: true,
+                    dependsOn: 'credentialsId'
+                }
+            }
+        ]
+    },
+    {
+        vpcConfig: [
+            {
+                vpcId: {
+                    required: true,
+                    dependsOn: 'region'
+                }
+            }
+        ]
+    },
+    {
+        vpcCidr: {
+            required: true
+        }
+    },
+    {
+        networkConfiguration: [
+            {
+                availabilityZone1: {
+                    required: true,
+                    dependsOn: 'vpcId'
+                }
+            },
+            {
+                availabilityZone2: {
+                    required: { key: 'fsxDeploymentMode', operand: 'EQ', value: 'MULTI_AZ_1' },
+                    dependsOn: 'vpcId'
+                }
+            }
+        ]
+    },
+    {
+        ec2Configuration: [
+            {
+                workloadInstanceType: {
+                    required: true,
+                    dependsOn: 'region'
+                }
+            },
+            {
+                keyPairName: {
+                    required: true
+                }
+            }
+        ]
+    },
+    {
+        adConfiguration: [
+            {
+                adScenarioType: {
+                    required: true
+                }
+            },
+            {
+                domainUsername: {
+                    required: true
+                }
+            },
+            {
+                domainPassword: {
+                    required: true
+                }
+            },
+            {
+                domainDnsname: {
+                    required: true
+                }
+            },
+            {
+                securityGroupId: {
+                    required: false,
+                    dependsOn: 'vpcId'
+                }
+            }
+        ]
+    },
+    {
+        dnsIpaddress: {
+            required: true
+        }
+    },
+    {
+        sqlConfiguration: [
+            {
+                sqlDeploymentMode: {
+                    required: true
+                }
+            },
+            {
+                sqlAmiId: {
+                    required: true
+                }
+            },
+            {
+                serviceAccountName: {
+                    required: true
+                }
+            },
+            {
+                serviceAccountPassword: {
+                    required: true
+                }
+            },
+            {
+                sqlFciName: {
+                    required: true
+                }
+            }
+        ]
+    },
+    {
+        fsxConfiguration: [
+            {
+                fsxUsername: {
+                    required: true
+                }
+            },
+            {
+                fsxPassword: {
+                    required: true
+                }
+            },
+            {
+                databaseSize: {
+                    required: true
+                }
+            },
+            {
+                fsxVolThroughput: {
+                    required: true
+                }
+            },
+            {
+                fsxIOPS: {
+                    required: true
+                }
+            },
+            {
+                encryptionKey: {
+                    required: false
+                }
+            },
+            {
+                ontapSgGroupId: {
+                    required: true,
+                    dependsOn: 'vpcId'
+                }
+            }
+        ]
+    }
+];
+
+// ----------------------- CHATBOT CONFIG END -----------------------
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -951,5 +1137,11 @@ export {
     SERVER_TYPE_MAPPING,
     FileSystemTypes,
     CLOUD_FORMATION_CLI_COMMAND,
-    DEPLOYMENT_JOBS_STATUS_FILTER
+    DEPLOYMENT_JOBS_STATUS_FILTER,
+    // CHATBOT EXPORTS START
+    MODEL,
+    SERVICE,
+    BEDROCK_REGION,
+    CHATBOT_UI_PARAMS_FSX
+    // CHATBOT EXPORTS END
 };
