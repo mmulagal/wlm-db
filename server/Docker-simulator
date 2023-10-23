@@ -7,6 +7,7 @@ ADD test ./test
 COPY config/default.json ./config/default.json
 COPY config/production.json ./config/production.json
 COPY config/log4js.json ./config/log4js.json
+COPY config/simulator.json ./config/simulator.json
 COPY resources/mssql/templates/wlm-master.yaml ./resources/mssql/templates/wlm-master.yaml
 COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/templates/vpc-ad-validation.yaml
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
@@ -14,13 +15,12 @@ COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/temp
 COPY package.json ./
 COPY package-lock.json ./
 
+COPY __mocks__ ./__mocks__
 COPY prisma ./prisma/
 COPY patches ./patches/
-COPY .env ./
+
 RUN npm i
-RUN npx --version
-RUN npx prisma migrate deploy
-RUN npx prisma generate
+
 # build mode - development or production
 ARG ARG_WLMDB_BUILD_MODE
 
@@ -37,8 +37,6 @@ ENV ENV_WLMDB_BUILD_MODE $ARG_WLMDB_BUILD_MODE
 ENV NODE_CONFIG_ENV $ARG_WLMDB_BUILD_MODE
 ENV NODE_ENV $ARG_WLMDB_BUILD_MODE
 
-EXPOSE 80
+EXPOSE 8085
 
-#  "simulator": "cross-env NODE_ENV=simulator node --loader @esbuild-kit/esm-loader --inspect --watch test/simulator/index.ts",
-
-CMD ["node", "--loader","@esbuild-kit/esm-loader","--inspect","--watch", "test/simulator/index.ts"]
+CMD ["node", "--loader","@esbuild-kit/esm-loader", "test/simulator/index.ts"]
