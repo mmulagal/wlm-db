@@ -45,8 +45,16 @@ const DatabaseHomePage = () => {
                 <div className={styles.secondLevelContainer}>
                     <DatabaseHost />
                 </div>
-                <div className={styles.ProtectionContainer}>
-                    <ProtectionSection />
+
+                <div className={styles.thirdLevelContainer}>
+                    <div className={styles.ProtectionContainer}>
+                        <ProtectionSection />
+                    </div>
+
+                    {/* Job status */}
+                    <div className={styles.jobContainer}>
+                        <JobStatus />
+                    </div>
                 </div>
 
                 <div className={styles.fourthLevelContainer}>
@@ -59,11 +67,6 @@ const DatabaseHomePage = () => {
                         <div className={styles.commonContainer}>
                             <EstimatedCost />
                         </div>
-                    </div>
-
-                    {/* Job status */}
-                    <div className={styles.jobContainer}>
-                        <JobStatus />
                     </div>
                 </div>
                 <div className={styles.secondLevelContainer}>

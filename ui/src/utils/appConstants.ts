@@ -354,6 +354,7 @@ export const GENERAL = {
     JOB_STATUS_FAILED: 'Failed',
     JOB_STATUS_INITIALIZING: 'Initializing',
     JOB_STATUS_JOBS: ' Jobs',
+    JOBS_DISTRIBUTION: 'Jobs distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
@@ -361,12 +362,12 @@ export const GENERAL = {
     DB_HOST_INITIALIZING: 'Initializing',
     DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
-    DATABASE_PROTECTION: 'Database protection',
+    DATABASE_PROTECTION: ' Protected database distribution',
     DB_HOST_PROTECTED: 'Protected',
     DB_HOST_UNPROTECTED: 'Unprotected',
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    PROTECTION_DATABASES: 'Databases',
+    PROTECTION_DATABASES: 'DB',
     PROTECTION: 'Protection',
     NUMBER_OF_EXECUTION: 'Number of Execution'
 };
