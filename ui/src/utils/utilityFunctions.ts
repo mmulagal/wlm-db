@@ -375,6 +375,7 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
         }
     });
     return {
+        totalDatabases: 0, // To Be calculated once data is available in API
         totalHosts: data?.length || 0,
         totalUpHosts: totalUpHosts,
         totalInitializingHosts: totalInitializingHosts,
@@ -397,7 +398,11 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
             val?.protection?.isSqlNativeEnabled
         ) {
             protectedDb += 1;
-        } else {
+        } else if (
+            !val?.protection?.isAwsBackUpEnabled &&
+            !val?.protection?.isFsxOntapSnapshotsEnabled &&
+            !val?.protection?.isSqlNativeEnabled
+        ){
             unprotectedDb += 1;
         }
         if (val?.protection?.isFsxOntapSnapshotsEnabled) {
@@ -419,35 +424,30 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         protectedPercent: (protectedDb / totalHost) * 100 || 0,
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
-        awsBackupPercent: (awsBackupDb / totalHost) * 100 || 0,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        fsxOntapSnapshotsPercent: (fsxOntapSnapshotsDb / totalHost) * 100 || 0,
         sqlServerBackupDb: sqlServerBackupDb,
-        sqlServerBackupPercent: (sqlServerBackupDb / totalHost) * 100 || 0
     };
 };
 
 export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
-    let storageConsumes = 0;
+    let totalConsume = 0;
     let storageSavings = 0;
-    let totalSize = 0;
 
     data?.map(val => {
-        if (val?.storage?.allocated) {
-            totalSize += val.storage.allocated;
-        }
         if (val?.storage?.used) {
-            storageConsumes += val.storage.used;
+            totalConsume += val.storage.used;
         }
-        if (val?.storage?.savings) {
-            storageSavings += val.storage.savings;
+        if (val?.storage?.spaceSavings) {
+            storageSavings += val.storage.spaceSavings;
         }
     });
 
+    const storageConsume = totalConsume - storageSavings;
+
     return {
-        storageConsumes: formatFractionalNumber(storageConsumes / 1024) || 'N/A',
-        storageSavings: formatFractionalNumber(storageSavings / 1024) || 'N/A',
-        storageSavingsPercent: (storageSavings / totalSize) * 100 || 0
+        storageConsumes: formatSizeOnePrecision(storageConsume) || 'N/A',
+        storageSavings: formatSizeOnePrecision(storageSavings) || 'N/A',
+        storageSavingsPercent: (storageSavings / totalConsume) * 100 || 0
     };
 };
 

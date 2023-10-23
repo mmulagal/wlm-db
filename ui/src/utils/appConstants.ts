@@ -330,6 +330,7 @@ export const GENERAL = {
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
+    HOSTS: 'Hosts',
     PROTECTED: 'Protected',
     NOT_PROTECTED: 'Not protected',
     AWS_BACKUP: 'AWS backup',
@@ -356,14 +357,14 @@ export const GENERAL = {
     JOB_STATUS_DAYS: 'Last 90 days',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',
-    JOB_STATUS_INITIALIZING: 'Initializing',
+    JOB_STATUS_INITIALIZING: 'In Progress',
     JOB_STATUS_JOBS: ' Jobs',
     JOBS_DISTRIBUTION: 'Jobs distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
     DB_HOST_DOWN: 'Down',
-    DB_HOST_INITIALIZING: 'Initializing',
+    DB_HOST_INITIALIZING: 'In Progress',
     DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
     DATABASE_PROTECTION: ' Protected database distribution',
