@@ -24,9 +24,6 @@ import {
     mergeDatabaseHostsData 
 } from "../../utils/utilityFunctions";
 
-import databaseHosts from './DatabaseHomeJson/databaseHosts.json';
-import databaseJobs from './DatabaseHomeJson/databaseJobs.json';
-
 const DatabaseHomeApis = () => {
     const dispatch = useAppDispatch();
 
@@ -36,19 +33,15 @@ const DatabaseHomeApis = () => {
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
 
-    // Temporary code to read data from json
-    const databaseHostsLoading = false;
-    const databaseJobsLoading = false;
-
     const {
-        // data: databaseHosts,
-        // isFetching: databaseHostsLoading,
+        data: databaseHosts,
+        isFetching: databaseHostsLoading,
         isError: databaseHostsError
     } = useGetDatabaseHostsQuery({nextToken: hostCursor});
 
     const {
-        // data: databaseJobs,
-        // isFetching: databaseJobsLoading,
+        data: databaseJobs,
+        isFetching: databaseJobsLoading,
         isError: databaseJobsError
     } = useGetDatabaseJobsQuery({nextToken: jobsCursor});
 
