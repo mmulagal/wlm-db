@@ -1,7 +1,7 @@
 {
     "name": "Databases",
     "id": "databases",
-    "to": "/databases",
+    "to": "https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549",
     "hasMenuItem": true,
     "hasPolicies": false,
     "stageIntegrations": [
