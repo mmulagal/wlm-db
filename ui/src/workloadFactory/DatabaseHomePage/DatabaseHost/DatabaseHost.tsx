@@ -22,7 +22,16 @@ const DatabaseHost = () => {
                         {hostData?.totalHosts}
                     </Typography>
                     <Typography variant="Regular_14" className={styles.databaseText}>
-                        {GENERAL.DATABASE_HOSTS}
+                        {GENERAL.HOSTS}
+                    </Typography>
+                </div>
+                <div className={styles.dbHostSeparator} />
+                <div className={styles.databaseHostsContainer}>
+                    <Typography variant="Regular_32" className={styles.databaseNumber}>
+                        {hostData?.totalDatabases}
+                    </Typography>
+                    <Typography variant="Regular_14" className={styles.databaseText}>
+                        {GENERAL.DATABASES}
                     </Typography>
                 </div>
                 <div className={styles.dbHostSeparator} />

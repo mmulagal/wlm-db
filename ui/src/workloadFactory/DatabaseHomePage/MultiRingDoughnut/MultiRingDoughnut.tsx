@@ -11,8 +11,18 @@ import { GENERAL } from '../../../utils/appConstants';
 Chart.register(...registerables);
 
 const MultiRingDoughnut = () => {
-    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-
+    // const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+    // Hardcoded values for DB protection
+    const hostData = {
+        "protectedDb": 12,
+        "unprotectedDb": 4,
+        "protectedPercent": 75,
+        "unprotectedPercent": 25,
+        "awsBackupDb": 7,
+        "fsxOntapSnapshotsDb": 6,
+        "sqlServerBackupDb": 8
+    };
+    
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -47,7 +57,8 @@ const MultiRingDoughnut = () => {
         return () => {
             myDoughnut.destroy();
         };
-    }, [hostData]);
+    }, []);
+
     return (
         <div className={styles.chartItem} id="chart-item">
             <div className={styles['center-text']}>

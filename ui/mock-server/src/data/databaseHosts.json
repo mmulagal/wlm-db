@@ -4,7 +4,7 @@
         { 
             "id": "resource-id-1",
             "name": "Database hostname 1",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -33,10 +33,11 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
-            },
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
+            },    
             "estimatedUsageCost":
             {
                 "compute": 700,
@@ -48,7 +49,7 @@
         { 
             "id": "resource-id-2",
             "name": "Database hostname 2",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -77,9 +78,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -92,7 +94,7 @@
         { 
             "id": "resource-id-3",
             "name": "Database hostname 3",
-            "status": "down",
+            "status": "Down",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -121,9 +123,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -136,7 +139,7 @@
         { 
             "id": "resource-id-4",
             "name": "Database hostname 4",
-            "status": "down",
+            "status": "Down",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -165,9 +168,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -180,7 +184,7 @@
         { 
             "id": "resource-id-5",
             "name": "Database hostname 5",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -209,9 +213,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -224,7 +229,7 @@
         { 
             "id": "resource-id-6",
             "name": "Database hostname 6",
-            "status": "down",
+            "status": "Down",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -253,9 +258,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -268,7 +274,7 @@
         { 
             "id": "resource-id-7",
             "name": "Database hostname 7",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -297,9 +303,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -312,7 +319,7 @@
         { 
             "id": "resource-id-8",
             "name": "Database hostname 8",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -341,9 +348,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -356,7 +364,7 @@
         { 
             "id": "resource-id-9",
             "name": "Database hostname 9",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -385,9 +393,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -400,7 +409,7 @@
         { 
             "id": "resource-id-10",
             "name": "Database hostname 10",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -429,9 +438,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -444,7 +454,7 @@
         { 
             "id": "resource-id-11",
             "name": "Database hostname 11",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -473,9 +483,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -488,7 +499,7 @@
         { 
             "id": "resource-id-12",
             "name": "Database hostname 12",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -517,9 +528,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -532,7 +544,7 @@
         { 
             "id": "resource-id-13",
             "name": "Database hostname 13",
-            "status": "down",
+            "status": "Down",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -561,9 +573,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -576,7 +589,7 @@
         { 
             "id": "resource-id-14",
             "name": "Database hostname 14",
-            "status": "down",
+            "status": "Down",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -605,9 +618,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -620,7 +634,7 @@
         { 
             "id": "resource-id-15",
             "name": "Database hostname 15",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -649,9 +663,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
@@ -664,7 +679,7 @@
         { 
             "id": "resource-id-16",
             "name": "Database hostname 16",
-            "status": "up",
+            "status": "Up",
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -693,9 +708,10 @@
             },
             "storage":
             {
-                "allocated": 120,
-                "used": 30,
-                "savings": 90                       
+                "size": 3932364972032,
+                "used": 181537648640,
+                "spaceSavings": 10737418240,
+                "spaceSavingsPercent": 6
             },
             "estimatedUsageCost":
             {
