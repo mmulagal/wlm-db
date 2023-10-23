@@ -336,7 +336,11 @@ export const GENERAL = {
     FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
-    DEPLOY_NEW_DATABASE: 'Deploy new database',
+    DEPLOY_NEW_DATABASE: 'Deploy',
+    DISCOVER: 'Discover',
+    MIGRATE_DB: 'Migrate',
+    CLONE_DB: 'Clone',
+    PROTECT_DB: 'Protect',
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
