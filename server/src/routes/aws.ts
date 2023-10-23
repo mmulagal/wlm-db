@@ -52,7 +52,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${API_PREFIX_PATH}/snsTopics`, { schema: GetSnsTopicsSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/sns-topics`, { schema: GetSnsTopicsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
@@ -68,7 +68,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${API_PREFIX_PATH}/instanceTypes`, { schema: GetInstanceTypesSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/instance-types`, { schema: GetInstanceTypesSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
@@ -86,7 +86,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
     });
 
     server.get(
-        `${FSX_PREFIX_PATH}/regions/:region/vpcs/:vpcId/filesystems`,
+        `${FSX_PREFIX_PATH}/regions/:region/vpcs/:vpcId/file-systems`,
         { schema: GetFSxFileSystemsSchema },
         async (request, reply) => {
             const {
@@ -98,7 +98,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(`${API_PREFIX_PATH}/kmsKeys`, { schema: GetKmsKeysListSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/kms-keys`, { schema: GetKmsKeysListSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
@@ -106,7 +106,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    server.get(`${API_PREFIX_PATH}/keyPairs`, { schema: GetKeyPairsSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/key-pairs`, { schema: GetKeyPairsSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;

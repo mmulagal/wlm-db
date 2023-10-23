@@ -83,12 +83,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         {
             id: 'viewAwsCloudFormation',
             displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true: false
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
         },
         {
             id: 'downloadYaml',
             displayName: CODE_VIEWER.DOWNLOAD_YAML,
-            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true: false
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
         }
     ];
 
@@ -133,7 +133,13 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         } else {
             setDisableCopy(true);
         }
-    }, [dropDownValue, rightPanelResponse, isRightPanelDataLoading, rightPanelTemplateResponse, isRightPanelTemplateLoading]);
+    }, [
+        dropDownValue,
+        rightPanelResponse,
+        isRightPanelDataLoading,
+        rightPanelTemplateResponse,
+        isRightPanelTemplateLoading
+    ]);
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any, credDetails: any) => {
@@ -166,7 +172,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const highlightedString = (
                 <Highlighter
                     highlightClassName={styles.highlightClass}
-                    searchWords={[CRED_PLACEHOLDERS.ACCOUNT_ID, CRED_PLACEHOLDERS.CRED_ID, CRED_PLACEHOLDERS.REGION, CRED_PLACEHOLDERS.TOKEN]}
+                    searchWords={[
+                        CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN
+                    ]}
                     autoEscape={true}
                     textToHighlight={CURL_REQ_TEMPLATE(
                         accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
@@ -196,7 +207,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 const highlightedString = (
                     <Highlighter
                         highlightClassName={styles.highlightClass}
-                        searchWords={[CRED_PLACEHOLDERS.ACCOUNT_ID, CRED_PLACEHOLDERS.CRED_ID, CRED_PLACEHOLDERS.REGION, CRED_PLACEHOLDERS.TOKEN]}
+                        searchWords={[
+                            CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            CRED_PLACEHOLDERS.CRED_ID,
+                            CRED_PLACEHOLDERS.REGION,
+                            CRED_PLACEHOLDERS.TOKEN
+                        ]}
                         autoEscape={true}
                         textToHighlight={CURL_REQ_TEMPLATE(
                             accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
@@ -292,7 +308,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} isAWSCli={true}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
@@ -484,9 +500,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             </Typography>
                             <div className={styles.menuContainer}>
                                 <div className={styles['copy']}>
-                                    {disableCopy ? 
-                                        // Disabled copy button 
-                                        (<div className={styles.menuItemDisabled}>
+                                    {disableCopy ? (
+                                        // Disabled copy button
+                                        <div className={styles.menuItemDisabled}>
                                             <Copy />
                                             <Typography
                                                 variant="Semibold_14"
@@ -494,9 +510,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                             >
                                                 {CODE_VIEWER.COPY}
                                             </Typography>
-                                        </div>) :
+                                        </div>
+                                    ) : (
                                         // Enabled copy button
-                                        (<Popover
+                                        <Popover
                                             popoverClass={styles['copy-popover']}
                                             children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                             container={
@@ -512,8 +529,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     </div>
                                                 </CopyToClipboard>
                                             }
-                                        />)
-                                    } 
+                                        />
+                                    )}
                                 </div>
 
                                 <div className={styles.menuItem} onClick={loadWizard}>

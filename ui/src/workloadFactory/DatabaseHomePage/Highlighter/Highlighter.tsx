@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Highlighter.module.scss';
 
-const HighlighterWord = ({ children, highlight }: any) => {
+const HighlighterWord = ({ children, highlight, isAWSCli }: any) => {
     if (!highlight || highlight.length < 2) return children;
     const regexp = new RegExp(highlight, 'g');
     let content = '';
@@ -39,7 +39,8 @@ const HighlighterWord = ({ children, highlight }: any) => {
     }
     return (
         <div className={styles['highlighter']}>
-            <pre>{parts}</pre>
+            {isAWSCli && <>{parts}</>}
+            {!isAWSCli && <pre>{parts}</pre>}
         </div>
     );
 };
