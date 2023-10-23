@@ -37,6 +37,7 @@ import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
+import serviceStatusRoutes from './routes/service-status';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -137,6 +138,13 @@ const app = fastify({
     .register(
         (instance, _, done) => {
             systemRoutes(instance);
+            done();
+        },
+        { prefix: `${WLMDB}` }
+    )
+    .register(
+        (instance, _, done) => {
+            serviceStatusRoutes(instance);
             done();
         },
         { prefix: `${API_PREFIX_PATH}` }
