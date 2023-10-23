@@ -3,7 +3,7 @@
     "id": "databases",
     "to": "/marketing",
     "hasMenuItem": true,
-    "hasPolicies": false,
+    "hasPolicies": true,
     "stageIntegrations": [
         {
             "path": "/",
