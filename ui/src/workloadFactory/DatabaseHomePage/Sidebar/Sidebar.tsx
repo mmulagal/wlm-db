@@ -50,7 +50,7 @@ type ConfigType = {
 const Sidebar = ({ isOpen, onClose }: any) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [openKey, setOpenKey] = useState('');
+    const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
