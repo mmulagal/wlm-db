@@ -16,6 +16,7 @@ import {
 } from './schemas/deployment-schemas';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
+const API_STATIC_TEMPLATE_PREFIX_PATH = '/v1/cloudformation/template';
 
 export default function deploymentRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -54,11 +55,10 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             }
         )
         .post(
-            `${API_PREFIX_PATH}/cloudformation/template`,
+            `${API_STATIC_TEMPLATE_PREFIX_PATH}`,
             { schema: CloudFormationTemplateSchema },
             async (request, reply) => {
                 const {
-                    params: { credentialsId, region },
                     body: {
                         networkConfiguration,
                         ec2Configuration,
@@ -67,12 +67,12 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                         sqlConfiguration,
                         topicArn,
                         enableCloudWatch,
-                        tags
+                        tags,
+                        credentialsId,
+                        region
                     }
                 } = request;
                 const response = await getCloudformationTemplate(
-                    credentialsId,
-                    region,
                     networkConfiguration,
                     ec2Configuration,
                     adConfiguration,
@@ -80,7 +80,9 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
-                    tags
+                    tags,
+                    credentialsId,
+                    region
                 );
                 return reply.send(response);
             }
