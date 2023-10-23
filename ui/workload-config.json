@@ -18,6 +18,6 @@
         "secondaryCtaLabel": "Manage workload",
         "secondaryCtaTo": "",
         "isComingSoon": false,
-        "dataUrl": ""
+        "dataUrl": "https://staging.api.workloads.netapp.com/wlmdb/api/account/:accountId/status"
     }
 }
