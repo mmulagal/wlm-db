@@ -38,7 +38,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
-    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
+    return `${apiHost}/wlmdb/accounts/${accountId}/v1`;
 };
 
 export const getUrlFixedInArg = (arg: BatchEntry[], baseUrl: string): BatchEntry[] => {
