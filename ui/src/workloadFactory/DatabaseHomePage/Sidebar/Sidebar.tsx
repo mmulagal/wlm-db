@@ -136,21 +136,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any, credDetails: any) => {
-        // TBD - to add code to get credentials and pass in request body
-        if (credDetails?.credId && credDetails?.region) {
-            loadTemplateData({ credentialId: credDetails?.credId, region: credDetails?.region,payload: payload }).then((data: any) => {
-                if (data?.data) {
-                    setRightPanelTemplateResponse(data?.data);
-                    setIsRightPanelTemplateLoading(false);
-                } else {
-                    setRightPanelTemplateResponse(null);
-                    setIsRightPanelTemplateLoading(false);
-                }
-            });
-        } else {
-            setRightPanelTemplateResponse(null);
-            setIsRightPanelTemplateLoading(false);
-        }
+        payload.credentialsId = credDetails?.credId || '';
+        payload.region = credDetails?.region || '';
+        loadTemplateData({ payload: payload }).then((data: any) => {
+            if (data?.data) {
+                setRightPanelTemplateResponse(data?.data);
+                setIsRightPanelTemplateLoading(false);
+            } else {
+                setRightPanelTemplateResponse(null);
+                setIsRightPanelTemplateLoading(false);
+            }
+        });
     };
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
@@ -240,13 +236,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const handleToggle = (key: any, id: any) => {
         setOpenKey(openKey !== id ? id : null);
         setOpenedItem({ name: key, id: id });
-        getRestResponse(id);
     };
 
     const handleViewCode = (key: any, id: any) => {
         setOpenKey(openKey !== id ? id : openKey);
         setOpenedItem({ name: key, id: id });
-        getRestResponse(id);
     };
 
     //To expand collapse side bar
@@ -342,7 +336,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
                 <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    {CODE_VIEWER.AUTOMATIONS}
+                    {CODE_VIEWER.CODEBOX}
                 </Typography>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
