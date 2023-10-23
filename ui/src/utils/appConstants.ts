@@ -381,7 +381,7 @@ export const CODE_VIEWER = {
     RECOMMENDED_PROD: 'Production',
     NO_DATA_MSG: 'No data found',
     LOADING: 'Loading...',
-    AUTOMATIONS: 'Automations',
+    CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
     RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL server deployment'],

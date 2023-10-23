@@ -336,7 +336,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
                 <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    {CODE_VIEWER.AUTOMATIONS}
+                    {CODE_VIEWER.CODEBOX}
                 </Typography>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
