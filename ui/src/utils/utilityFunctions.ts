@@ -537,12 +537,12 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
     if (type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
-        const value = 'm5.large';
-        const label2 = '2vCPU, 8 GiB RAM, 4750Mbps';
+        const value = 'm5.xlarge';
+        const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
         const data = {
-            instanceType: 'm5.large',
-            vCpus: 2,
-            ramInMib: 8192,
+            instanceType: 'm5.xlarge',
+            vCpus: 4,
+            ramInMib: 16384,
             iopsInMbps: 4750,
             architecture: ['x86_64']
         };
@@ -568,11 +568,11 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
-        const value = 'r5.xlarge';
-        const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
+        const value = 'm5.2xlarge';
+        const label2 = '8vCPU, 32 GiB RAM, 4750Mbps';
         const data = {
-            instanceType: 'r5.xlarge',
-            vCpus: 4,
+            instanceType: 'm5.2xlarge',
+            vCpus: 8,
             ramInMib: 32768,
             iopsInMbps: 4750,
             architecture: ['x86_64']
