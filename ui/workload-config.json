@@ -1,7 +1,7 @@
 {
     "name": "Databases",
     "id": "databases",
-    "to": "/databases",
+    "to": "/databases/deploy",
     "hasMenuItem": true,
     "hasPolicies": true,
     "stageIntegrations": [
@@ -14,7 +14,7 @@
     "homepage": {
         "description": "Workload Factory for Database helps you to easily discover, deploy, protect, and manage databases in AWS using EC2, AWS networking, and FSxN in an automated way. The workload management is simplified, consistent, configured according to best practices, and takes advantage of FSxN features.",
         "primaryCtaLabel": "Deploy database",
-        "primaryCtaTo": "https://staging.console.workloads.netapp.com/databases",
+        "primaryCtaTo": "https://staging.console.workloads.netapp.com/databases/deploy",
         "secondaryCtaLabel": "Manage workload",
         "secondaryCtaTo": "",
         "isComingSoon": false,
