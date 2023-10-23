@@ -85,7 +85,7 @@ const createMssqlPayload = (state: any) => {
         if (type === GENERAL.AUTOMATIC) {
             return 3;
         } else {
-            return state.mssqlForm.provisionedIOPS?.IOPSValue || 0;
+            return state.mssqlForm?.provisionedIOPS?.IOPSValue || 0;
         }
     })();
 
