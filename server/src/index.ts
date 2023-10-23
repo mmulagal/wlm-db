@@ -21,7 +21,8 @@ import {
     USER_TOKEN,
     VERSION,
     WORKSPACE_ID,
-    JWKS_FULL_NAME
+    JWKS_FULL_NAME,
+    WLMDB
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -65,7 +66,7 @@ process.on('uncaughtException', err => logger.error('Uncaught exception was thro
 async function validateSchema() {
     logger.info('Validating schema');
     try {
-        await SwaggerParser.validate(`http://${host}:${port}/${API_PREFIX_PATH}/documentation/yaml`);
+        await SwaggerParser.validate(`http://${host}:${port}/${WLMDB}/documentation/yaml`);
         logger.info('Schema is valid!!!');
     } catch (err) {
         logger.error(err);
