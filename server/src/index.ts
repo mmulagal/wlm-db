@@ -58,7 +58,7 @@ const { verifyToken } = jwtOperation;
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
 
-const API_PREFIX_PATH = '/accounts/:accountId/wlmdb';
+const API_PREFIX_PATH = '/wlmdb/accounts/:accountId';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
