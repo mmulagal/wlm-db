@@ -57,12 +57,12 @@ async function validateParams(
     requiredParams: any
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
+    logger.info('Validate Params', oldParams, { params, oldParams });
     let validatedParams: Params = {};
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of requiredParams) {
         let response: ValidationResponse | { value: any } | undefined;
-
-        if (reqParam.required) {
+        if (reqParam.required !== false) {
             const keys = Object.keys(reqParam);
             for (const key of keys) {
                 logger.debug('KEY>>>', key, reqParam[key]);
