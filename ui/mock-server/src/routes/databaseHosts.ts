@@ -19,7 +19,7 @@ router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
     generateResponse(res, 200, JobsSummary);
 });
 
-router.post(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/cloudformation/template`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/cloudformation/template`, async (req: {}, res: any) => {
     generateResponse(res, 200, Templates);
 });
 

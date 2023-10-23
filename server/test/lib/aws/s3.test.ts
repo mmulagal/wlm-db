@@ -21,7 +21,7 @@ describe('S3 Lib', () => {
         expect(response).toBeDefined();
     });
     it('Put object to bucket', async () => {
-        const response = await putObjectBucket(credentialsId, DEFAULT_AWS_REGION, 'sample', 'sample.yaml', 'sample');
+        const response = await putObjectBucket(DEFAULT_AWS_REGION, 'sample', 'sample.yaml', 'sample');
         expect(response).toBeDefined();
     });
     it('Get Bucket Lifecycle Configuration', async () => {
@@ -33,7 +33,7 @@ describe('S3 Lib', () => {
         expect(response).toBeDefined();
     });
     it('Get Bucket object', async () => {
-        const response = await getObjectBucket(credentialsId, DEFAULT_AWS_REGION, 'sample', 'sample.yaml');
+        const response = await getObjectBucket(DEFAULT_AWS_REGION, 'sample', 'sample.yaml');
         expect(response).toBeDefined();
     });
 });

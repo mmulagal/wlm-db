@@ -294,8 +294,8 @@ export const databaseHomeApi = createApi({
                 query: () => `jobs/summary`
             }),
             getTemplates: builder.mutation({
-                query: ({ credentialId, region, payload }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/cloudformation/template`,
+                query: ({ payload }) => ({
+                    url: `cloudformation/template`,
                     method: 'POST',
                     body: payload
                 })
