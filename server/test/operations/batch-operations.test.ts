@@ -15,15 +15,15 @@ describe(
         it('Executing the batch api calls', async () => {
             const resp = await executeBatchApiCalls([
                 {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Aaronview/tables',
+                    url: 'https://staging.api.workloads.netapp.com/accounts/account-6S5xAetX/wlmdb/v1/mssql/resources/i-0880a21327284f67c/databases/Aaronview/tables',
                     method: 'GET'
                 },
                 {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Amandaberg/tables',
+                    url: 'https://staging.api.workloads.netapp.com/accounts/account-6S5xAetX/wlmdb/v1/mssql/resources/i-0880a21327284f67c/databases/Amandaberg/tables',
                     method: 'GET'
                 },
                 {
-                    url: 'https://staging-api.workloads.bluexp.netapp.com/wlmdb/accounts/account-6S5xAetX/api/v1/mssql/resources/i-0880a21327284f67c/databases/Adamsview/tables',
+                    url: 'https://staging.api.workloads.netapp.com/accounts/account-6S5xAetX/wlmdb/v1/mssql/resources/i-0880a21327284f67c/databases/Adamsview/tables',
                     method: 'GET'
                 }
             ]);
