@@ -64,12 +64,34 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+// Cloud formation template, yaml and cli creation
+const CloudFormationStaticTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    adConfiguration: ADConfiguration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
 const CloudFormationTemplateResponse = Type.Object({
     cloudFormationUrl: Type.String(),
     warningMessage: Type.Optional(Type.String())
 });
 
-const CloudFormationTemplateYamlResponse = Type.Object({
+const CloudFormationStaticTemplateResponse = Type.Object({
+    url: Type.String(),
     template: Type.String(),
     cliCommand: Type.String()
 });
@@ -103,7 +125,7 @@ type ADConfigurationType = Static<typeof ADConfiguration>;
 type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationTemplateResponseType = Static<typeof CloudFormationTemplateResponse>;
-type CloudFormationTemplateYamlResponseType = Static<typeof CloudFormationTemplateYamlResponse>;
+type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -121,6 +143,7 @@ export {
     DeploymentStatusResponseType,
     DeploymentStatusObjectParams,
     DeploymentStatusObjectParamsType,
-    CloudFormationTemplateYamlResponse,
-    CloudFormationTemplateYamlResponseType
+    CloudFormationStaticTemplateResponse,
+    CloudFormationStaticTemplateResponseType,
+    CloudFormationStaticTemplateRequestBody
 };
