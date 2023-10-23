@@ -3,7 +3,7 @@
     "id": "databases",
     "to": "/databases",
     "hasMenuItem": true,
-    "hasPolicies": false,
+    "hasPolicies": true,
     "stageIntegrations": [
         {
             "path": "/",
@@ -16,8 +16,8 @@
         "primaryCtaLabel": "Deploy database",
         "primaryCtaTo": "https://staging.console.workloads.netapp.com/databases",
         "secondaryCtaLabel": "Manage workload",
-        "secondaryCtaTo": "https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549",
+        "secondaryCtaTo": "",
         "isComingSoon": false,
-        "dataUrl": ""
+        "dataUrl": "/wlmdb/v1/status"
     }
 }

@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import executeBatchApiCalls from '../operations/batch-operations';
 import { BatchSchema } from './schemas/batch-schemas';
 
-const API_PREFIX_PATH = '/v1/batch';
+const API_PREFIX_PATH = '/v1/batches';
 
 export default function batchRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();

@@ -9,6 +9,7 @@ describe('authSlice reducers', () => {
         workspaceId: string;
         pathname: string;
         features: {};
+        isWorkloadFactory: boolean;
     };
 
     beforeEach(() => {
@@ -19,7 +20,8 @@ describe('authSlice reducers', () => {
             resourceName: '',
             workspaceId: '',
             pathname: '',
-            features: {}
+            features: {},
+            isWorkloadFactory: false
         };
     });
 

@@ -15,7 +15,7 @@ import {
     saveConfig
 } from '../operations/database/database-operations';
 
-const API_PATH_CONFIG: string = '/v1/config';
+const API_PATH_CONFIG: string = '/v1/configs';
 
 export default function formConfigRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();

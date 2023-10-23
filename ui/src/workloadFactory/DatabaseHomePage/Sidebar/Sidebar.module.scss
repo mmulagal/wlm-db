@@ -37,6 +37,15 @@
         }
     }
 
+    .title {
+        display: flex;
+        gap: 8px;
+
+        svg {
+            height: 28px;
+        }
+    }
+
     .templateHeading {
         margin-bottom: 14px;
         color: var(--white);
@@ -59,6 +68,12 @@
         flex-direction: column;
         gap: 2px;
         margin: 0 40px 40px 40px;
+    }
+
+    .headingContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 558px;
     }
 
     .openView {
@@ -214,16 +229,6 @@
                     }
                 }
             }
-
-            [class*='SearchInput-module_base'] {
-                svg {
-                    --icon-primary-color: var(--white);
-                }
-
-                input {
-                    color: var(--white);
-                }
-            }
         }
 
         .thirdBar {
@@ -260,6 +265,16 @@
 
     .highlightClass {
         background-color: var(--grey-30);
+    }
+
+    [class*='SearchInput-module_base'] {
+        svg {
+            --icon-primary-color: var(--white);
+        }
+
+        input {
+            color: var(--white);
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-import { Button, Typography } from '@netapp/design-system';
+import { Typography } from '@netapp/design-system';
 import { useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
@@ -10,11 +10,9 @@ import EstimatedCost from './EstimatedCost/EstimatedCost';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
-import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../../utils/consts';
+import TopBarButton from './TopBarButton/TopBarButton';
 
 const DatabaseHomePage = () => {
-    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     DatabaseHomeApis();
@@ -31,22 +29,23 @@ const DatabaseHomePage = () => {
                         {GENERAL.DATABASES}
                     </Typography>
                     <div>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                navigate(WLF_TO_FORM_NAVIGATE);
-                            }}
-                        >
-                            {GENERAL.DEPLOY_NEW_DATABASE}
-                        </Button>
+                        <TopBarButton />
                     </div>
                 </div>
 
                 <div className={styles.secondLevelContainer}>
                     <DatabaseHost />
                 </div>
-                <div className={styles.ProtectionContainer}>
-                    <ProtectionSection />
+
+                <div className={styles.thirdLevelContainer}>
+                    <div className={styles.ProtectionContainer}>
+                        <ProtectionSection />
+                    </div>
+
+                    {/* Job status */}
+                    <div className={styles.jobContainer}>
+                        <JobStatus />
+                    </div>
                 </div>
 
                 <div className={styles.fourthLevelContainer}>
@@ -59,11 +58,6 @@ const DatabaseHomePage = () => {
                         <div className={styles.commonContainer}>
                             <EstimatedCost />
                         </div>
-                    </div>
-
-                    {/* Job status */}
-                    <div className={styles.jobContainer}>
-                        <JobStatus />
                     </div>
                 </div>
                 <div className={styles.secondLevelContainer}>

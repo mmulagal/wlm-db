@@ -19,6 +19,7 @@ const initialState: DatabaseHostsEntities = {
     },
     databaseHostsList: null,
     aggregatedHostsCount: {
+        totalDatabases: 0,
         totalHosts: 0,
         totalUpHosts: 0,
         totalInitializingHosts: 0,
@@ -31,11 +32,8 @@ const initialState: DatabaseHostsEntities = {
         protectedPercent: 0,
         unprotectedPercent: 0,
         awsBackupDb: 0,
-        awsBackupPercent: 0,
         fsxOntapSnapshotsDb: 0,
-        fsxOntapSnapshotsPercent: 0,
         sqlServerBackupDb: 0,
-        sqlServerBackupPercent: 0,
     },
     aggregatedStorageSavings: {
         storageConsumes: '0',

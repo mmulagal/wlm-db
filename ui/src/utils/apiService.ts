@@ -285,7 +285,7 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({ nextToken = null }) => `database-hosts?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
