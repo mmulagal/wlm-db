@@ -132,4 +132,8 @@
 
 .popover {
     z-index: 9999999;
+
+    svg {
+        display: none;
+    }
 }
