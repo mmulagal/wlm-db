@@ -37,6 +37,15 @@
         }
     }
 
+    .title {
+        display: flex;
+        gap: 8px;
+
+        svg {
+            height: 28px;
+        }
+    }
+
     .templateHeading {
         margin-bottom: 14px;
         color: var(--white);

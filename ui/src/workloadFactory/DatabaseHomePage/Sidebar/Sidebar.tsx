@@ -5,6 +5,7 @@ import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
 import { ReactComponent as LoadIcon } from '../../../assets/ic_restore.svg';
+import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';
@@ -335,9 +336,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
-                <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    {CODE_VIEWER.CODEBOX}
-                </Typography>
+                <div className={styles.title}>
+                    <VectorIcon />
+                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                        {CODE_VIEWER.CODEBOX}
+                    </Typography>
+                </div>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
                     <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
