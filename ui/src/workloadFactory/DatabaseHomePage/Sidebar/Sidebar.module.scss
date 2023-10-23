@@ -70,6 +70,12 @@
         margin: 0 40px 40px 40px;
     }
 
+    .headingContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 558px;
+    }
+
     .openView {
         display: flex;
         gap: 40px;
@@ -223,16 +229,6 @@
                     }
                 }
             }
-
-            [class*='SearchInput-module_base'] {
-                svg {
-                    --icon-primary-color: var(--white);
-                }
-
-                input {
-                    color: var(--white);
-                }
-            }
         }
 
         .thirdBar {
@@ -269,6 +265,16 @@
 
     .highlightClass {
         background-color: var(--grey-30);
+    }
+
+    [class*='SearchInput-module_base'] {
+        svg {
+            --icon-primary-color: var(--white);
+        }
+
+        input {
+            color: var(--white);
+        }
     }
 }
 
