@@ -336,7 +336,11 @@ export const GENERAL = {
     FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
-    DEPLOY_NEW_DATABASE: 'Deploy new database',
+    DEPLOY_NEW_DATABASE: 'Deploy',
+    DISCOVER: 'Discover',
+    MIGRATE_DB: 'Migrate',
+    CLONE_DB: 'Clone',
+    PROTECT_DB: 'Protect',
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
@@ -354,6 +358,7 @@ export const GENERAL = {
     JOB_STATUS_FAILED: 'Failed',
     JOB_STATUS_INITIALIZING: 'Initializing',
     JOB_STATUS_JOBS: ' Jobs',
+    JOBS_DISTRIBUTION: 'Jobs distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
@@ -361,12 +366,12 @@ export const GENERAL = {
     DB_HOST_INITIALIZING: 'Initializing',
     DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
-    DATABASE_PROTECTION: 'Database protection',
+    DATABASE_PROTECTION: ' Protected database distribution',
     DB_HOST_PROTECTED: 'Protected',
     DB_HOST_UNPROTECTED: 'Unprotected',
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    PROTECTION_DATABASES: 'Databases',
+    PROTECTION_DATABASES: 'DB',
     PROTECTION: 'Protection',
     NUMBER_OF_EXECUTION: 'Number of Execution'
 };
@@ -381,7 +386,7 @@ export const CODE_VIEWER = {
     RECOMMENDED_PROD: 'Production',
     NO_DATA_MSG: 'No data found',
     LOADING: 'Loading...',
-    AUTOMATIONS: 'Automations',
+    CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
     RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL server deployment'],

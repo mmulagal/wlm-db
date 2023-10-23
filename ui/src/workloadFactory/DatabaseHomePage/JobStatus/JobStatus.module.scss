@@ -6,7 +6,7 @@
         align-items: center;
         justify-content: space-between;
         flex-shrink: 0;
-        border-bottom: 1px solid var(-border);
+        border-bottom: 1px solid #e0e0e0;
     }
 
     .title {
@@ -19,20 +19,25 @@
     }
 
     .mainSection {
-        padding: 24px 40px 24px 22px;
+        padding: 40px;
         display: flex;
-        align-items: center;
-        flex-direction: column;
+        gap: 40px;
+        // flex-direction: column;
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+        }
 
         .jobSeparator {
-            width: 300px;
+            width: 200px;
             border-bottom: 1px solid var(--border);
         }
 
         .rowData {
             display: flex;
             justify-content: space-between;
-            width: 300px;
+            width: 200px;
             margin: 16px 0;
 
             .firstPart {

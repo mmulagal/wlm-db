@@ -7,8 +7,10 @@ import {
     DeploymentStatusListResponse,
     DeploymentStatusResponse,
     DeploymentStatusObjectParams,
-    CloudFormationTemplateYamlResponse
+    CloudFormationStaticTemplateRequestBody,
+    CloudFormationStaticTemplateResponse
 } from '../types/deployment.types';
+import { AccountIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
@@ -28,11 +30,12 @@ const CreateCloudFormationTemplateSchema = {
 
 // Cloud formation template
 const CloudFormationTemplateSchema = {
-    ...baseRequest,
-    description: 'Cloud Formation template in yaml and cli format for user deployment',
-    body: CloudFormationTemplateRequestBody,
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    description: 'Cloud Formation template url, yaml and cli format for user deployment',
+    body: CloudFormationStaticTemplateRequestBody,
     response: {
-        200: CloudFormationTemplateYamlResponse
+        200: CloudFormationStaticTemplateResponse
     }
 };
 

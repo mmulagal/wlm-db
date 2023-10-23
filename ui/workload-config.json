@@ -1,7 +1,7 @@
 {
     "name": "Databases",
     "id": "databases",
-    "to": "/databases",
+    "to": "/marketing",
     "hasMenuItem": true,
     "hasPolicies": false,
     "stageIntegrations": [
