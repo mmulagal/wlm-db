@@ -11,7 +11,7 @@ import MSSqlServer from '../MSSqlServer/MSSqlServer';
 
 const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
-    const showChatbot = localStorage.getItem('showChatbot') === 'true';
+    const showChatbot = useAppSelector(state => state.auth?.isWorkloadFactory);
 
     return (
         <StepLayout className={styles.header}>

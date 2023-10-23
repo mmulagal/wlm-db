@@ -9,6 +9,7 @@ import {
     updateFeatures,
     updateIsDemoMode,
     updateIsLoading,
+    updateIsWorkloadfactory,
     updatePathname,
     updateResourceId,
     updateResourceName,
@@ -37,7 +38,9 @@ const useInitialize = () => {
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
         const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
+        const isWorkloadFactory = (window.origin && window.origin.includes('workloads')) || false;
         dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
+        dispatch(updateIsWorkloadfactory(isWorkloadFactory));
 
         if (accountIdAsString) {
             dispatch(updateAccountId(accountIdAsString || ''));
