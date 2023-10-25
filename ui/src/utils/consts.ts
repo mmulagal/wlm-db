@@ -124,10 +124,10 @@ export const API_ERRORS = {
 };
 
 export const STATUS_CONST = {
-    UP: 'up',
-    DOWN: 'down',
-    INITIALIZING: 'initializing',
-    FAILED: 'failed'
+    UP: 'Up',
+    DOWN: 'Down',
+    INITIALIZING: 'Initializing',
+    FAILED: 'Failed'
 };
 
 export const MAX_SAVED_CONFIG = 100;
@@ -154,3 +154,5 @@ export const CRED_PLACEHOLDERS = {
     REGION: '<Region>',
     TOKEN: '<Token>'
 };
+
+export const MARKETING_PAGE_URL = "https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549";

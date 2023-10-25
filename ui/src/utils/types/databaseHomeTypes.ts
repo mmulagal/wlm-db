@@ -21,9 +21,10 @@ export interface DatabaseHostItem {
         assessment: string;
     };
     storage: {
-        allocated: number;
+        size: number;
         used: number;
-        savings: number;
+        spaceSavings: number;
+        spaceSavingsPercent: number;
     };
     estimatedUsageCost: {
         compute: number;
@@ -61,7 +62,12 @@ export interface JobsSummaryRes {
     initializingPercent?: number;
 }
 
+export interface StatusRes {
+    isActive: boolean;
+}
+
 export interface AggregatedHostsCountRes {
+    totalDatabases: number;
     totalHosts: number;
     totalUpHosts: number;
     totalInitializingHosts: number;
@@ -75,11 +81,8 @@ export interface AggregatedProtectionDbCountRes {
     protectedPercent: number;
     unprotectedPercent: number;
     awsBackupDb: number;
-    awsBackupPercent: number;
     fsxOntapSnapshotsDb: number;
-    fsxOntapSnapshotsPercent: number;
     sqlServerBackupDb: number;
-    sqlServerBackupPercent: number;
 }
 
 export interface AggregatedStorageSavingsRes {
@@ -115,6 +118,11 @@ export interface DatabaseHostsEntities {
         jobsSummaryData: JobsSummaryRes | null;
         jobsSummaryLoading: false;
         jobsSummaryError: null;
+    };
+    getStatus: {
+        statusData: StatusRes | null;
+        statusLoading: false;
+        statusError: null;
     };
     databaseHostsList: null;
     aggregatedHostsCount: AggregatedHostsCountRes | null;

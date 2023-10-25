@@ -10,6 +10,7 @@ import { useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import { STATUS_CONST } from '../../../utils/consts';
+import { formatSizeOnePrecision } from '../../../utils/utilityFunctions';
 
 const DatabaseTable = () => {
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
@@ -229,12 +230,11 @@ const DatabaseTable = () => {
             isSortable: true,
             width: '184px',
             renderCell: (cellData: any) => {
-                const percentVal = (cellData.savings / cellData.allocated) * 100;
                 return (
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {percentVal + '% (' + cellData?.savings + ' GiB)'}
+                                {cellData?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(cellData?.spaceSavings) + ')'}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
