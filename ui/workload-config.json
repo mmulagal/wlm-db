@@ -14,7 +14,7 @@
     "homepage": {
         "description": "Workload Factory for Database helps you to easily discover, deploy, protect, and manage databases in AWS using EC2, AWS networking, and FSxN in an automated way. The workload management is simplified, consistent, configured according to best practices, and takes advantage of FSxN features.",
         "primaryCtaLabel": "Deploy database",
-        "primaryCtaTo": "/add-working-environment/database-services/mssql/create",
+        "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Manage workload",
         "secondaryCtaTo": "",
         "isComingSoon": false,
