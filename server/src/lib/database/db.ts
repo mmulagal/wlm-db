@@ -140,7 +140,7 @@ async function updateDeployment(
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(metadata && !isEmpty(metadata) && { metadata })
+            ...(!isEmpty(metadata) && { metadata })
         }
     });
 }
@@ -193,7 +193,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(metadata && !isEmpty(metadata) && { metadata })
+            ...(!isEmpty(metadata) && { metadata })
         }
     });
 }
