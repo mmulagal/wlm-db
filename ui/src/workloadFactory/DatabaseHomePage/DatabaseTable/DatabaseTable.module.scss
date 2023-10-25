@@ -1,7 +1,7 @@
 .databaseTable {
     .jobMenuPopover {
-      width: fit-content;
-      margin-left: -12px;
+        width: fit-content;
+        margin-left: -12px;
     }
 
     .table {
@@ -11,19 +11,24 @@
     .colText {
         display: flex;
         gap: 8px;
-        color: var(--grey-50);
     }
 
     .protection {
         display: flex;
         gap: 17px;
-        color: var(--grey-50);
     }
 
     .cost {
         display: flex;
         gap: 16px;
-        color: var(--grey-50);
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
     }
 
     .statusIcon {
@@ -31,17 +36,20 @@
         height: 10px;
         align-self: center;
         &.circle {
-          border-radius: 50%;
-          margin-top: 2px;
+            border-radius: 50%;
+            margin-top: 2px;
         }
         &.up {
-          background-color: var(--green-60);
+            background-color: var(--green-60);
         }
-        &.down{
-          background-color: var(--orange-60);
+        &.down {
+            background-color: var(--orange-60);
         }
         &.initializing {
-          background-color: var(--cyan-30);
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
         }
     }
 
@@ -49,45 +57,50 @@
         width: 184px;
         gap: 8px;
         .textHeight {
-          line-height: 28px;
+            line-height: 28px;
         }
     }
 
     .costContainer {
-      width: 332px;
-      gap: 8px;
-      .costContainerHeader {
-          gap: 48px;
-          display: flex;
-          justify-content: space-between;
-          height: 36px;
-          padding: 8px 0px 0px 8px;
-      }
+        width: 332px;
+        gap: 8px;
+        .costContainerHeader {
+            gap: 48px;
+            display: flex;
+            justify-content: space-between;
+            height: 36px;
+            padding: 8px 0px 0px 8px;
+        }
 
-      .middleContainer {
-          margin-top: 1px;
-          background-color: var(--grey-10);
-          height: 36px;
-          display: flex;
-          gap: 48px;
-      }
+        .middleContainer {
+            margin-top: 1px;
+            background-color: var(--grey-10);
+            height: 36px;
+            display: flex;
+            gap: 48px;
+        }
 
-      .middle {
-          width: 159px;
-          padding: 6px 0 0 24px;
-      }
-
-      .lastContainer {
-        height: 36px;
-        margin-top: 8px;
-        background-color: var(--blue-20);
-        display: flex;
-        gap: 20px;
-
-        .totalCost {
+        .middle {
+            width: 159px;
             padding: 6px 0 0 24px;
         }
-    }
-  }
 
+        .lastContainer {
+            height: 36px;
+            margin-top: 8px;
+            background-color: var(--blue-20);
+            display: flex;
+            gap: 20px;
+
+            .totalCost {
+                padding: 6px 0 0 24px;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .table {
+        width: 1012px !important;
+    }
 }

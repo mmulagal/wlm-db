@@ -4,7 +4,7 @@ import batchResponse from '../responses/batch/batch-response.json';
 
 const batchScope = nock(WORKLOAD_FACTORY_ENDPOINT)
     .persist(true)
-    .get(/^\/wlmdb\/accounts\/(.+)\/api\/v1\/mssql\/resources\/(.+)\/databases\/(.+)\/tables$/)
+    .get(/^\/accounts\/(.+)\/wlmdb\/v1\/mssql\/resources\/(.+)\/databases\/(.+)\/tables$/)
     .reply(() => [204, batchResponse]);
 
 export default batchScope;

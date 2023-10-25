@@ -23,12 +23,24 @@
         display: flex;
     }
 
+    .thirdLevelContainer {
+        display: flex;
+        gap: 24px;
+        margin-top: 24px;
+
+        .jobContainer {
+            width: 520px;
+            height: 360px;
+            background-color: var(--content-background);
+        }
+    }
+
     .ProtectionContainer {
         margin-left: 120px;
-        margin-top: 24px;
+
         height: 360px;
-        width: 1064px;
-        background-color: var(--white);
+        width: 520px;
+        background-color: var(--content-background);
     }
 
     .fourthLevelContainer {
@@ -40,20 +52,52 @@
 
         .barContainer {
             display: flex;
-            flex-direction: column;
+
             gap: 24px;
 
             .commonContainer {
-                background-color: var(--white);
+                background-color: var(--content-background);
                 height: 244px;
-                width: 656px;
+                width: 520px;
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .databaseHome {
+        .topContainer {
+            margin-left: 37px !important;
+            width: 1012px !important;
+        }
+
+        .secondLevelContainer {
+            margin-left: 37px !important;
+        }
+
+        .ProtectionContainer {
+            margin-left: 37px !important;
+            width: 495px !important;
+        }
+
+        .thirdLevelContainer {
+            .jobContainer {
+                width: 495px !important;
             }
         }
 
-        .jobContainer {
-            width: 384px;
-            height: 512px;
-            background-color: var(--white);
+        .fourthLevelContainer {
+            margin-left: 37px !important;
+
+            .commonContainer {
+                width: 495px !important;
+            }
         }
     }
+}
+
+.loader {
+    text-align: center;
+    padding-top: 40vh;
+    height: 100vh;
 }

@@ -4,14 +4,14 @@
     gap: 8px;
 
     .text {
-        color: #404040;
+        color: var(--text-primary);
         line-height: 24px;
         position: relative;
         top: 1.5px;
     }
 
     .textDisabled {
-        color: #a7a7a7;
+        color: var(--text-disabled);
         font-size: 14px;
     }
 
@@ -20,7 +20,7 @@
         top: 2px;
         svg {
             path {
-                fill: #a7a7a7;
+                fill: var(--text-disabled);
             }
         }
     }

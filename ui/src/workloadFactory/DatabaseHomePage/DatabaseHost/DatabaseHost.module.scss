@@ -2,7 +2,7 @@
     margin-top: 40px;
     width: 1063px;
     height: 176px;
-    background-color: var(--white);
+    background-color: var(--content-background);
 
     .leftContainer {
         margin-top: 40px;
@@ -25,10 +25,12 @@
         }
 
         .dbHostSeparator {
-            margin-left: 111px;
+            margin-left: 32px;
             height: 96px;
-            background: #e0e0e0;
+            background: var(--border);
             width: 1px;
+            height: 56px;
+            margin-top: 20px;
         }
 
         .databaseHostStatusContainer {
@@ -46,7 +48,7 @@
                     border-radius: 2px;
                     background: rgba(232, 238, 253, 0.4);
                     padding: 12px 0px 12px 40px;
-                    width: 200px;
+                    width: 150px;
                     height: 84px;
                     display: flex;
                     flex-direction: column;
@@ -59,6 +61,8 @@
                         svg {
                             position: relative;
                             top: 2px;
+                            width: 20px;
+                            height: 20px;
                         }
                     }
 
@@ -67,6 +71,16 @@
                     }
                 }
             }
+        }
+    }
+}
+
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .databaseHost {
+        width: 1012px !important;
+
+        .dbHostSeparator {
+            margin-left: 60px !important;
         }
     }
 }

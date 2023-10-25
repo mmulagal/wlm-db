@@ -3,7 +3,6 @@ import {
     getAllBxpCredentials,
     getBxpCredentialDetails,
     getAllWfCredentials,
-    getWfAwsCredentialDetails,
     getWfCredentialDetails
 } from '../../../src/lib/cloud-manager/credentials';
 import {
@@ -12,7 +11,6 @@ import {
 } from '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import {
     allCredentials,
-    awsCredentials,
     genericDecryptedCredentials
 } from '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
@@ -49,10 +47,5 @@ describe('Get workload factory credentials ', () => {
     it.skip('should return decrypted AWS credentials for credentials id passed', async () => {
         const resp = await getWfCredentialDetails(credentialsId, accountId);
         expect(resp).toEqual(genericDecryptedCredentials);
-    });
-
-    it('should return decrypted AWS credentials details for credentials id passed', async () => {
-        const resp = await getWfAwsCredentialDetails(credentialsId, accountId);
-        expect(resp).toEqual(awsCredentials);
     });
 });

@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import config from 'config';
 import { join } from 'path';
 import moment from 'moment';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -129,7 +130,9 @@ enum HttpErrorCodes {
 
 enum SqlServerDeploymentModel {
     SQL_STANDALONE = 'Standalone Instance',
-    SQL_FCI = 'Always On Failover Cluster Instance'
+    SQL_FCI = 'Always On Failover Cluster Instance',
+    SQL_STANDALONE_SHORT = 'Standalone',
+    SQL_FCI_SHORT = 'FCI'
 }
 
 const VPC_COUNT_QUOTANAME = 'VPCs per Region';
@@ -238,16 +241,24 @@ enum RESOURCESTYPE {
     FSX = 'FSX'
 }
 
+const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Microsoft SQL Server']]);
+
+enum FileSystemTypes {
+    EBS = 'EBS',
+    FSXONTAP = 'FSx ONTAP'
+}
+
 const SECRETS_MANAGER = 'secretsmanager';
-const SECRECTS_MANAGER_ACTION_NAMES = [
-    'GetSecretValue',
-    'CreateSecret',
+const SECRECTS_MANAGER_ACTION_NAMES = ['GetSecretValue', 'CreateSecret', 'ListSecrets'].map(
+    action => `${SECRETS_MANAGER}:${action}`
+);
+
+const SECRECTS_MANAGER_STRICT_ACTION_NAMES = [
     'DeleteSecret',
     'TagResource',
     'UntagResource',
-    'DeleteResourcePolicy',
-    'GetSecretValue',
-    'ListSecrets'
+    'PutResourcePolicy',
+    'DeleteResourcePolicy'
 ].map(action => `${SECRETS_MANAGER}:${action}`);
 
 const KMS = 'kms';
@@ -260,11 +271,9 @@ const EC2_ACTION_NAMES = [
     'RunInstances',
     'AttachNetworkInterface',
     'AssociateRouteTable',
-    'DeleteSubnet',
     'GetConsoleOutput',
     'CreateKeyPair',
     'AssociateAddress',
-    'StartInstances',
     'AttachVolume',
     'AssociateVpcCidrBlock',
     'DetachNetworkInterface',
@@ -272,50 +281,54 @@ const EC2_ACTION_NAMES = [
     'CreateRoute',
     'CreateNetworkInterface',
     'ModifyInstanceAttribute',
-    'DeleteSecurityGroup',
-    'DeleteNetworkAcl',
     'DisassociateAddress',
     'ReplaceRoute',
     'CreateRouteTable',
     'CreateVolume',
     'ModifySubnetAttribute',
-    'DeleteVolume',
-    'DeleteNetworkInterface',
     'DisassociateVpcCidrBlock',
     'ReleaseAddress',
     'CreateSubnet',
     'CreateVpcEndpoint',
     'ModifyVolumeAttribute',
-    'DeleteKeyPair',
-    'DeleteNetworkInterfacePermission',
     'ModifyNetworkInterfaceAttribute',
     'ReplaceRouteTableAssociation',
     'AllocateAddress',
     'CreateTags',
     'ModifyVpcAttribute',
-    'DeleteVpc',
-    'DeleteRoute',
     'ModifyVolume',
     'RevokeSecurityGroupEgress',
     'AllocateHosts',
-    'DeleteTags',
     'AssociateSubnetCidrBlock',
     'DetachVolume',
-    'DeleteRouteTable',
     'AuthorizeSecurityGroupEgress',
     'RevokeSecurityGroupIngress',
     'DisassociateIamInstanceProfile',
     'DisassociateRouteTable',
     'DisassociateSubnetCidrBlock',
     'ModifyInstancePlacement',
-    'DeletePlacementGroup',
     'CreatePlacementGroup',
-    'StopInstances',
-    'TerminateInstances',
     'Describe*',
     'Get*'
 ].map(action => `${EC2}:${action}`);
-
+const EC2_STRICT_ACTION_NAMES = [
+    'StartInstances',
+    'StopInstances',
+    'Delete*',
+    'TerminateInstances',
+    'DeleteSubnet',
+    'DeleteSecurityGroup',
+    'DeleteNetworkAcl',
+    'DeleteVolume',
+    'DeleteNetworkInterface',
+    'DeleteKeyPair',
+    'DeleteNetworkInterfacePermission',
+    'DeleteVpc',
+    'DeleteRoute',
+    'DeleteTags',
+    'DeleteRouteTable',
+    'DeletePlacementGroup'
+].map(action => `${EC2}:${action}`);
 const CLOUDFORMATION = 'cloudformation';
 const CLOUDFORMATION_ACTION_NAMES = [
     'GetTemplateSummary',
@@ -323,14 +336,15 @@ const CLOUDFORMATION_ACTION_NAMES = [
     'Get*',
     'ListStacks',
     'SignalResource',
-    'DeleteStack',
     'DescribeAccountLimits',
     'DescribeStackDriftDetectionStatus',
     'List*',
-    'ValidateTemplate',
     'Describe*',
-    'CreateStack'
+    'CreateStack',
+    'ValidateTemplate'
 ].map(action => `${CLOUDFORMATION}:${action}`);
+
+const CLOUDFORMATION_STRICT_ACTION_NAMES = ['DeleteStack'].map(action => `${CLOUDFORMATION}:${action}`);
 
 const IAM = 'iam';
 const IAM_ACTION_NAMES = [
@@ -345,29 +359,25 @@ const IAM_ACTION_NAMES = [
 ].map(action => `${IAM}:${action}`);
 
 const SNS = 'sns';
-const SNS_ACTION_NAMES = [
-    'ListSubscriptionsByTopic',
-    'Publish',
-    'CreateTopic',
-    'DeleteTopic',
-    'Subscribe',
-    'Unsubscribe'
-].map(action => `${SNS}:${action}`);
+const SNS_ACTION_NAMES = ['ListSubscriptionsByTopic', 'CreateTopic', 'Subscribe', 'Unsubscribe'].map(
+    action => `${SNS}:${action}`
+);
+const SNS_STRICT_ACTION_NAMES = ['Publish', 'DeleteTopic'].map(action => `${SNS}:${action}`);
 
 const RESOURCE_GROUPS = 'resource-groups';
-const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'DeleteGroup', 'Get*'].map(
-    action => `${RESOURCE_GROUPS}:${action}`
-);
+const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'Get*'].map(action => `${RESOURCE_GROUPS}:${action}`);
+
+const RESOURCE_GROUPS_STRICT_ACTION_NAMES = ['DeleteGroup'].map(action => `${RESOURCE_GROUPS}:${action}`);
 
 const FSX = 'fsx';
 const FSX_ACTION_NAMES = [
     'CreateFileSystem',
-    'DeleteFileSystem',
     'ListTagsForResource',
     'TagResource',
     'UntagResource',
     'DescribeFileSystems'
 ].map(action => `${FSX}:${action}`);
+const FSX_STRICT_ACTION_NAMES = ['DeleteFileSystem'].map(action => `${FSX}:${action}`);
 
 const SERVICE_QUOTAS = 'servicequotas';
 const SERVICE_QUOTAS_ACTION_NAMES = ['GetServiceQuota', 'ListServiceQuotas'].map(
@@ -385,6 +395,25 @@ const AWS_RESOURCES_ACTION_MAP = {
     [FSX]: FSX_ACTION_NAMES,
     [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
 };
+
+const AWS_RESOURCES_STRICT_ACTION_MAP = {
+    [SECRETS_MANAGER]: SECRECTS_MANAGER_STRICT_ACTION_NAMES,
+    [CLOUDFORMATION]: CLOUDFORMATION_STRICT_ACTION_NAMES,
+    [RESOURCE_GROUPS]: RESOURCE_GROUPS_STRICT_ACTION_NAMES,
+    [SNS]: SNS_STRICT_ACTION_NAMES
+};
+
+const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
+    [EC2]: EC2_STRICT_ACTION_NAMES,
+    [FSX]: FSX_STRICT_ACTION_NAMES
+};
+
+const SECRET_MANAGER_ARN = 'arn:aws:secretsmanager:*:*:secret:wlmdb*';
+const CLOUD_FORMATION_ARN = 'arn:aws:cloudformation:*:*:stack/WLMDB*';
+const RESOURCE_GROUP_ARN = 'arn:aws:resource-groups:*:*:group/WLMDB*';
+const SNS_ARN = 'arn:aws:sns:*:*:wlmdb';
+const EC2_TAG_CONDITION = 'ec2:ResourceTag/aws:cloudformation:stack-name';
+const FSX_TAG_CONDITION = 'aws:ResourceTag/aws:cloudformation:stack-name';
 
 // List of AWS regions - taken from https://www.aws-services.info/regions.html
 const AWS_REGIONS = new Map<string, string>([
@@ -452,6 +481,7 @@ const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 180;
 const FSX_SSD_MIN_SIZE = 1024; // in GiB
@@ -482,7 +512,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
-    sqlFciName: 'SqlFSxFCIName',
+    sqlServerName: 'SqlServerName',
 
     workloadInstanceType: 'WorkloadInstanceType',
     keyPairName: 'KeyPairName',
@@ -515,6 +545,8 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
+const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
+
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
 // Signed URL Valid for 24 hours
@@ -532,6 +564,7 @@ const INVALID_REGION_AWS = 'getaddrinfo ENOTFOUND';
 const INVALID_REGION_MESSAGE = 'AWS region is invalid. Error:';
 const SIGNED_URL_ERROR_MESSAGE = (url: string, region: string, error: string) =>
     `Error creating signed url for ${url} in region ${region}. ${error}`;
+const RESOURCE_RETRIVAL_ERROR = 'Unable to fetch credentials, region, server instance id details.';
 
 const AWS_FSX = 'aws/fsx';
 const TEMPLATE_CLOUD_PROVIDER_ID = 'CloudProviderAccountId';
@@ -764,6 +797,26 @@ const USER_TENANCY_CACHE_TYPE = 'USER_TENANCY';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
+enum DatabaseHostsQueryFields {
+    PERFORMANCE = 'performance',
+    PROTECTION = 'protection',
+    STORAGE = 'storage',
+    USAGE_ESTIMATION = 'usageEstimation'
+}
+
+enum ServerState {
+    UP = 'Up',
+    DOWN = 'Down'
+}
+
+const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
+    'CREATE_IN_PROGRESS',
+    'CREATE_COMPLETE',
+    'CREATE_FAILED',
+    'UPDATE_IN_PROGRESS',
+    'UPDATE_COMPLETE',
+    'UPDATE_FAILED'
+];
 
 export {
     WLMDB,
@@ -919,5 +972,27 @@ export {
     WF,
     USER_TENANCY_CACHE_TYPE,
     ADMIN_ROLE,
-    USER_ROLE
+    USER_ROLE,
+    STACK_NOT_FOUND,
+    RESOURCE_RETRIVAL_ERROR,
+    DatabaseHostsQueryFields,
+    ServerState,
+    SERVER_TYPE_MAPPING,
+    FileSystemTypes,
+    EC2_STRICT_ACTION_NAMES,
+    CLOUDFORMATION_STRICT_ACTION_NAMES,
+    RESOURCE_GROUPS_STRICT_ACTION_NAMES,
+    FSX_STRICT_ACTION_NAMES,
+    SECRECTS_MANAGER_STRICT_ACTION_NAMES,
+    AWS_RESOURCES_STRICT_ACTION_MAP,
+    AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+    SECRET_MANAGER_ARN,
+    CLOUD_FORMATION_ARN,
+    RESOURCE_GROUP_ARN,
+    EC2_TAG_CONDITION,
+    FSX_TAG_CONDITION,
+    SNS_ARN,
+    SNS_STRICT_ACTION_NAMES,
+    CLOUD_FORMATION_CLI_COMMAND,
+    DEPLOYMENT_JOBS_STATUS_FILTER
 };

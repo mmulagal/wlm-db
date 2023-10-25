@@ -11,9 +11,13 @@ import Tables from './components/Resource/Tables/Tables';
 
 import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
+import DatabaseHomePage from './workloadFactory/DatabaseHomePage/DatabaseHomePage';
+import PreviewPanel from './components/PreviewPanel/PreviewPanel';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
+    const showPanel = useSelector((state: any) => state.previewPanel.showPanel);
+    const showChatbot = useSelector((state: any) => state.auth?.isWorkloadFactory);
     const dispatch = useDispatch();
     const showNotifications = useMemo(() => {
         return notificationsObj && notificationsObj.messages && notificationsObj.messages.length > 0;
@@ -21,19 +25,25 @@ const Home = () => {
 
     return (
         <div className={styles['app-layout']}>
-            <Routes>
-                <Route path={`add-working-environment/database-services/:storage/create`} element={<MainComponent />} />
-                <Route
-                    path={`add-working-environment/database-services/:storage/discover`}
-                    element={<DiscoverPage />}
-                />
-                <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
-                    <Route path={'overview'} element={<MsSqlOverview />} />
-                    <Route path={'databases'} element={<Databases />} />
-                    <Route path={'tables'} element={<Tables />} />
-                </Route>
-                <Route path="*" element={<MainComponent />} />
-            </Routes>
+            <div style={{ height: '100%' }} className={`${showPanel && showChatbot ? styles['left-pane'] : ''}`}>
+                <Routes>
+                    <Route
+                        path={`add-working-environment/database-services/:storage/create`}
+                        element={<MainComponent />}
+                    />
+                    <Route
+                        path={`add-working-environment/database-services/:storage/discover`}
+                        element={<DiscoverPage />}
+                    />
+                    <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
+                        <Route path={'overview'} element={<MsSqlOverview />} />
+                        <Route path={'databases'} element={<Databases />} />
+                        <Route path={'tables'} element={<Tables />} />
+                    </Route>
+                    <Route path={`databases`} element={<DatabaseHomePage />} />
+                    <Route path="*" element={<MainComponent />} />
+                </Routes>
+            </div>
 
             {/* To Display the notification */}
             {showNotifications && (
@@ -51,6 +61,7 @@ const Home = () => {
                     }}
                 ></AppNotification>
             )}
+            {showPanel && showChatbot && <PreviewPanel />}
         </div>
     );
 };

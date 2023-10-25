@@ -2,7 +2,6 @@ import {
     getAllBxpCredentials,
     getAllWfCredentials,
     getBxpCredentialDetails,
-    getWfAwsCredentialDetails,
     getWfCredentialDetails
 } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
@@ -62,11 +61,11 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 
 async function getRoleDetails(credentialsId: string) {
     if (getAsyncLocalStorageResource('REFERER') === WF) {
-        const data = await getWfAwsCredentialDetails(credentialsId);
+        const { metadata } = await getWfCredentialDetails(credentialsId);
         return {
-            roleName: data.credentials.match(/role\/(.*)/)?.[1] || '',
-            roleArn: data.credentials,
-            providerAccountId: data.credentials.match(/\d+/)?.[0] || ''
+            roleName: metadata.arn.match(/role\/(.*)/)?.[1] || '',
+            roleArn: metadata.arn,
+            providerAccountId: metadata.arn.match(/\d+/)?.[0] || ''
         };
     }
     const data = await getBxpCredentialDetails(credentialsId);

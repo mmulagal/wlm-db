@@ -21,7 +21,8 @@ import {
     USER_TOKEN,
     VERSION,
     WORKSPACE_ID,
-    JWKS_FULL_NAME
+    JWKS_FULL_NAME,
+    WLMDB
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -34,6 +35,9 @@ import workingEnvironmentRoutes from './routes/working-environment';
 import msSqlServerRoutes from './routes/mssql';
 import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
+import databaseHostsRoutes from './routes/database-hosts';
+import deploymentJobsRoutes from './routes/jobs';
+import serviceStatusRoutes from './routes/service-status';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -53,7 +57,8 @@ const { verifyToken, authorizeJwt } = jwtOperation;
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
-const API_PREFIX_PATH = 'wlmdb';
+
+const API_PREFIX_PATH = '/accounts/:accountId/wlmdb';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -62,7 +67,7 @@ process.on('uncaughtException', err => logger.error('Uncaught exception was thro
 async function validateSchema() {
     logger.info('Validating schema');
     try {
-        await SwaggerParser.validate(`http://${host}:${port}/${API_PREFIX_PATH}/documentation/yaml`);
+        await SwaggerParser.validate(`http://${host}:${port}/${WLMDB}/documentation/yaml`);
         logger.info('Schema is valid!!!');
     } catch (err) {
         logger.error(err);
@@ -103,16 +108,16 @@ const app = fastify({
             },
             servers: [
                 {
-                    url: 'http://localhost:8085/wlmdb'
+                    url: 'http://localhost:8085'
                 },
                 {
-                    url: 'https://staging.api.workloads.netapp.com/wlmdb'
+                    url: 'https://staging.api.workloads.netapp.com'
                 },
                 {
-                    url: 'https://api.workloads.bluexp.netapp.com/wlmdb'
+                    url: 'https://api.workloads.bluexp.netapp.com'
                 },
                 {
-                    url: 'https://demo-wlmdb.api.workloads.bluexp.netapp.com/wlmdb'
+                    url: 'https://demo-wlmdb.api.workloads.bluexp.netapp.com'
                 }
             ],
             components: {
@@ -135,7 +140,7 @@ const app = fastify({
             systemRoutes(instance);
             done();
         },
-        { prefix: `${API_PREFIX_PATH}` }
+        { prefix: `${WLMDB}` }
     )
     .register(
         (instance, _, next) => {
@@ -169,9 +174,12 @@ const app = fastify({
             msSqlServerRoutes(instance);
             batchRoutes(instance);
             pricingRoutes(instance);
+            databaseHostsRoutes(instance);
+            deploymentJobsRoutes(instance);
+            serviceStatusRoutes(instance);
             next();
         },
-        { prefix: `${API_PREFIX_PATH}/accounts/:accountId/api` }
+        { prefix: `${API_PREFIX_PATH}` }
     )
     .addHook(
         'preHandler',

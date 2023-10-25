@@ -1,62 +1,102 @@
 import styles from './EstimatedCost.module.scss';
 import { Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
+import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const EstimatedCost = () => {
+
+    // const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
+    // Hardcoded values for Estimated Cost Summary
+    const hostData = {
+        "storageCost": 11200,
+        "computeCost": 3200,
+        "connectivityCost": 1600,
+        "otherCost": 384,
+        "totalCost": 16384,
+        "storageCostPercent": 68.359375,
+        "computeCostPercent": 19.53125,
+        "connectivityCostPercent": 9.765625,
+        "otherCostPercent": 2.34375
+    };
+
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    
     return (
         <div className={styles.estimatedCost}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">Estimated monthly cost</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.ESTIMATED_MONTHLY_COST}
+                    {(databaseHostsLoading || databaseJobsLoading) && 
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent/>
+                        </div>
+                    }
+                </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    $ 15,125
+                    $ {hostData?.totalCost}
                 </Typography>
             </div>
 
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
                 <div className={styles.progressBar}>
-                    <div
-                        className={`${styles.progress} ${styles.leftCurveBar}`}
-                        style={{
-                            width: `10%`,
-                            backgroundColor: '#A815F3'
-                        }}
-                    ></div>
+                    {hostData?.storageCostPercent !== 0 && (
+                        <div
+                            className={`${styles.progress} ${styles.leftCurveBar}`}
+                            style={{
+                                width: `${hostData?.storageCostPercent}%`,
+                                backgroundColor: 'var(--chart-9)'
+                            }}
+                        ></div>
+                    )}
                     <div className={styles.separator}></div>
-                    <div
-                        className={`${styles.progress}`}
-                        style={{
-                            width: `25%`,
-                            backgroundColor: '#012CAD'
-                        }}
-                    ></div>
+                    {hostData?.computeCostPercent !== 0 && (
+                        <div
+                            className={`${styles.progress}`}
+                            style={{
+                                width: `${hostData?.computeCostPercent}%`,
+                                backgroundColor: 'var(--chart-1)'
+                            }}
+                        ></div>
+                    )}
                     <div className={styles.separator}></div>
-                    <div
-                        className={`${styles.progress}`}
-                        style={{
-                            width: `25%`,
-                            backgroundColor: '#0BAFFC'
-                        }}
-                    ></div>
+                    {hostData?.connectivityCostPercent !== 0 && (
+                        <div
+                            className={`${styles.progress}`}
+                            style={{
+                                width: `${hostData?.connectivityCostPercent}%`,
+                                backgroundColor: 'var(--chart-3)'
+                            }}
+                        ></div>
+                    )}
                     <div className={styles.separator}></div>
-                    <div
-                        className={`${styles.progress} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `40%`,
-                            backgroundColor: '#68C6B3'
-                        }}
-                    ></div>
+                    {hostData?.otherCostPercent !== 0 && (
+                        <div
+                            className={`${styles.progress} ${styles.rightCurveBar}`}
+                            style={{
+                                width: `${hostData?.otherCostPercent}%`,
+                                backgroundColor: 'var(--chart-4)'
+                            }}
+                        ></div>
+                    )}
                 </div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
-                    <SquareComponent value="$1000" color="#a815f3" text={'Storage'} />
+                    <SquareComponent value={'$' + hostData?.storageCost} color="var(--chart-9)" text={'Storage'} />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value="$1000" color="#012CAD" text={'Compute'} />
+                    <SquareComponent value={'$' + hostData?.computeCost} color="var(--chart-1)" text={'Compute'} />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value="$1000" color="#0BAFFC" text={'Connectivity'} />
+                    <SquareComponent
+                        value={'$' + hostData?.connectivityCost}
+                        color="var(--chart-3)"
+                        text={'Connectivity'}
+                    />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value="$1000" color="#68C6B3" text={'Other'} />
+                    <SquareComponent value={'$' + hostData?.otherCost} color="var(--chart-4)" text={'Other'} />
                 </div>
             </div>
         </div>

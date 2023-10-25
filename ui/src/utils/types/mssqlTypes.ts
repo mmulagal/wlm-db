@@ -207,7 +207,7 @@ export interface MssqlRequestBody {
         sqlAmiId: string;
         serviceAccountName: string;
         serviceAccountPassword: string;
-        sqlFciName: string;
+        sqlServerName: string;
     }
     topicArn?: string;
     enableCloudWatch?: boolean,

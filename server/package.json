@@ -17,8 +17,8 @@
         "outdated": "npx npm-check-updates",
         "unused": "npx depcheck",
         "build:dev": "npm run build && npm run start",
-        "test": "vitest --coverage",
-        "test:nowatch": "vitest --run --silent",
+        "test": "cross-env NODE_ENV=simulator vitest --coverage",
+        "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent",
         "postinstall": "patch-package"
     },
     "repository": {
@@ -54,6 +54,7 @@
         "@opentelemetry/instrumentation-http": "^0.41.2",
         "@opentelemetry/sdk-node": "^0.41.2",
         "@prisma/client": "^5.2.0",
+        "@prisma/instrumentation": "^5.4.2",
         "@sinclair/typebox": "^0.31.17",
         "async": "^3.2.4",
         "aws-sdk-client-mock": "^3.0.0",
@@ -93,6 +94,7 @@
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
         "nock": "^13.3.1",
+        "prismock": "^1.21.1",
         "rimraf": "^5.0.1",
         "typescript": "^5.0.4",
         "vitest": "^0.34.2"

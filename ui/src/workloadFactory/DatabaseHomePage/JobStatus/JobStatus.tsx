@@ -1,51 +1,77 @@
 import { Typography } from '@netapp/design-system';
 import styles from './JobStatus.module.scss';
 import JobDoughnutChart from './JobDoughnut/JobDoughnutChart';
+import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
+import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const JobStatus = () => {
+    const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
+
     return (
         <div className={styles.jobStatus}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16">Job status</Typography>
+                <Typography variant="Regular_16" className={styles.title}>
+                    {GENERAL.JOB_STATUS}
+                    {jobsSummaryLoading && (
+                        <div className={styles.loadingPlacement}>
+                            <LoadingComponent />
+                        </div>
+                    )}
+                </Typography>
+
                 <Typography variant="Regular_13" style={{ lineHeight: 'unset' }}>
-                    Last 90 days
+                    {GENERAL.JOB_STATUS_DAYS}
                 </Typography>
             </div>
 
             <div className={styles.mainSection}>
                 <JobDoughnutChart />
 
-                <div className={styles.jobSeparator} />
+                {/* <div className={styles.jobSeparator} /> */}
 
-                <div className={styles.rowData}>
-                    <div className={styles.firstPart}>
-                        <div className={styles.square} style={{ backgroundColor: '#68C6B3' }} />
-                        <Typography variant="Regular_14">Success</Typography>
+                <div className={styles.rightSection}>
+                    <div className={styles.rowData} style={{ marginTop: '0' }}>
+                        <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
                     </div>
-                    <Typography variant="Semibold_14">180 Jobs</Typography>
-                </div>
 
-                <div className={styles.jobSeparator} />
-
-                <div className={styles.rowData}>
-                    <div className={styles.firstPart}>
-                        <div className={styles.square} style={{ backgroundColor: '#0BAFFC' }} />
-                        <Typography variant="Regular_14">Initializing</Typography>
+                    <div className={styles.jobSeparator} />
+                    <div className={styles.rowData}>
+                        <div className={styles.firstPart}>
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
+                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_SUCCESS}</Typography>
+                        </div>
+                        <Typography variant="Semibold_14">
+                            {(jobsSummaryData?.success || 0) + GENERAL.JOB_STATUS_JOBS}
+                        </Typography>
                     </div>
-                    <Typography variant="Semibold_14">48 Jobs</Typography>
-                </div>
 
-                <div className={styles.jobSeparator} />
+                    <div className={styles.jobSeparator} />
 
-                <div className={styles.rowData}>
-                    <div className={styles.firstPart}>
-                        <div className={styles.square} style={{ backgroundColor: '#FE5502' }} />
-                        <Typography variant="Regular_14">Failed</Typography>
+                    <div className={styles.rowData}>
+                        <div className={styles.firstPart}>
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_INITIALIZING}</Typography>
+                        </div>
+                        <Typography variant="Semibold_14">
+                            {(jobsSummaryData?.initializing || 0) + GENERAL.JOB_STATUS_JOBS}
+                        </Typography>
                     </div>
-                    <Typography variant="Semibold_14">48 Jobs</Typography>
-                </div>
 
-                <div className={styles.jobSeparator} />
+                    <div className={styles.jobSeparator} />
+
+                    <div className={styles.rowData}>
+                        <div className={styles.firstPart}>
+                            <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
+                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_FAILED}</Typography>
+                        </div>
+                        <Typography variant="Semibold_14">
+                            {(jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
+                        </Typography>
+                    </div>
+
+                    <div className={styles.jobSeparator} />
+                </div>
             </div>
         </div>
     );

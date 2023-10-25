@@ -286,5 +286,23 @@
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
+    },
+    "serverIoLatencyInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"High\"}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
     }
 }

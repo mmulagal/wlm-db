@@ -27,14 +27,8 @@ async function getPreSignedUrl(region: string, key?: string) {
     return getSignedUrl(s3, command, { expiresIn: S3_BUCKET_SIGNED_URL_EXPIRY });
 }
 
-async function putObjectBucket(
-    credentialId: string,
-    region: string,
-    bucketName: string,
-    objectName: string,
-    objectData: string
-) {
-    logger.info('Uploading to bucket ', { credentialId, region, bucketName, objectName });
+async function putObjectBucket(region: string, bucketName: string, objectName: string, objectData: string) {
+    logger.info('Uploading to bucket ', { region, bucketName, objectName });
 
     const s3 = new S3Client({ region });
     const command = new PutObjectCommand({
@@ -46,6 +40,22 @@ async function putObjectBucket(
     const response = await s3.send(command);
 
     logger.debug('putObjectBucket response:', response);
+
+    return response;
+}
+
+async function getObjectBucket(region: string, bucketName: string, objectName: string) {
+    logger.info('Reading from bucket ', { region, bucketName, objectName });
+
+    const s3 = new S3Client({ region });
+    const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: objectName
+    });
+
+    const response = await s3.send(command);
+
+    logger.debug('getObjectBucket response:', response);
 
     return response;
 }
@@ -76,4 +86,10 @@ async function getBucketLifecycleConfiguration(region: string, bucketName: strin
     }
 }
 
-export { getPreSignedUrl, putObjectBucket, putBucketLifecycleConfiguration, getBucketLifecycleConfiguration };
+export {
+    getPreSignedUrl,
+    putObjectBucket,
+    putBucketLifecycleConfiguration,
+    getBucketLifecycleConfiguration,
+    getObjectBucket
+};

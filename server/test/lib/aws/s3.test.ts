@@ -7,7 +7,8 @@ import {
     getPreSignedUrl,
     putObjectBucket,
     getBucketLifecycleConfiguration,
-    putBucketLifecycleConfiguration
+    putBucketLifecycleConfiguration,
+    getObjectBucket
 } from '../../../src/lib/aws/s3';
 
 const credentialsId = `${faker.string.alpha(20)}`;
@@ -20,7 +21,7 @@ describe('S3 Lib', () => {
         expect(response).toBeDefined();
     });
     it('Put object to bucket', async () => {
-        const response = await putObjectBucket(credentialsId, DEFAULT_AWS_REGION, 'sample', 'sample.yaml', 'sample');
+        const response = await putObjectBucket(DEFAULT_AWS_REGION, 'sample', 'sample.yaml', 'sample');
         expect(response).toBeDefined();
     });
     it('Get Bucket Lifecycle Configuration', async () => {
@@ -29,6 +30,10 @@ describe('S3 Lib', () => {
     });
     it('Get Bucket Lifecycle Configuration', async () => {
         const response = await putBucketLifecycleConfiguration(DEFAULT_AWS_REGION, 'sample');
+        expect(response).toBeDefined();
+    });
+    it('Get Bucket object', async () => {
+        const response = await getObjectBucket(DEFAULT_AWS_REGION, 'sample', 'sample.yaml');
         expect(response).toBeDefined();
     });
 });

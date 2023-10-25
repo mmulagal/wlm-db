@@ -113,35 +113,6 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
         .json<AllWfCredentials>();
 }
 
-/**
- * Takes credentials as parameter and returns credntial keys by calling
- * SaS credentials API
- * @param credentialsId
- * @returns credentials:
- * { accessKey: string;
- *  secretKey: string;
- *  sessionId: string;
- *  expiration: Date }
- */
-async function getWfAwsCredentialDetails(credentialsId: string, accountId?: string) {
-    logger.info('Getting workload factory credential details for ', { credentialsId, accountId });
-
-    const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
-    return gotInstanceForInternalRequest
-        .get(`accounts/${tenancyAccountId}/credentials/v1/assume-role/${credentialsId}`, {
-            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
-            headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
-            }
-        })
-        .json<{
-            id: string;
-            credentials: string;
-            type: string;
-            metadata: { name: string };
-        }>();
-}
-
 async function getWfCredentialDetails(credentialsId: string, accountId?: string) {
     logger.info('Getting workload factory credential details for ', { credentialsId, accountId });
 
@@ -166,14 +137,8 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
                 expiration: string;
             };
             type: string;
-            metadata: { name: string };
+            metadata: { name: string; arn: string };
         }>();
 }
 
-export {
-    getBxpCredentialDetails,
-    getAllBxpCredentials,
-    getWfAwsCredentialDetails,
-    getAllWfCredentials,
-    getWfCredentialDetails
-};
+export { getBxpCredentialDetails, getAllBxpCredentials, getAllWfCredentials, getWfCredentialDetails };

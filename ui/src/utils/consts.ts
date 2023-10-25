@@ -124,9 +124,35 @@ export const API_ERRORS = {
 };
 
 export const STATUS_CONST = {
-    UP: 'up',
-    DOWN: 'down',
-    INITIALIZING: 'initializing'
+    UP: 'Up',
+    DOWN: 'Down',
+    INITIALIZING: 'Initializing',
+    FAILED: 'Failed'
 };
 
-export const MAX_SAVED_CONFIG = 50;
+export const MAX_SAVED_CONFIG = 100;
+
+export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
+
+export const RECOMMENDED_TEMPLATES = {
+    DEV_ID: '0',
+    PROD_ID: '1',
+    DEV_NAME: 'Dev/Test',
+    PROD_NAME: 'Production'
+};
+
+export const CURL_REQ_TEMPLATE = (accountId: string, credentialId: string, region: string, token: string, payload: any) => `
+curl --location --request POST 'https://staging.api.workloads.netapp.com/wlmdb/accounts/${accountId}/api/v1/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
+--header 'Authorization: Bearer ${token}' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${payload}'
+`;
+
+export const CRED_PLACEHOLDERS = {
+    ACCOUNT_ID: '<AccountId>',
+    CRED_ID: '<CredentialId>',
+    REGION: '<Region>',
+    TOKEN: '<Token>'
+};
+
+export const MARKETING_PAGE_URL = "https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549";

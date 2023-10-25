@@ -67,7 +67,7 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const fsxVolThroughput = (() => {
-        const value = state.mssqlForm.throughput?.value || '';
+        const value = state.mssqlForm.throughput?.value || '128';
         const value1 = value.split(' ');
         if (value1.length === 2) {
             if (value1[1] === 'GBps') {
@@ -81,11 +81,11 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const fsxIOPS = (() => {
-        const type = state.mssqlForm.provisionedIOPS.provisionedType;
+        const type = state.mssqlForm?.provisionedIOPS?.provisionedType;
         if (type === GENERAL.AUTOMATIC) {
             return 3;
         } else {
-            return state.mssqlForm.provisionedIOPS?.IOPSValue;
+            return state.mssqlForm?.provisionedIOPS?.IOPSValue || 0;
         }
     })();
 
@@ -154,7 +154,7 @@ const createMssqlPayload = (state: any) => {
             sqlAmiId: licenseId || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
             serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
-            sqlFciName: state.mssqlForm.dbName || ''
+            sqlServerName: state.mssqlForm.dbName || ''
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,

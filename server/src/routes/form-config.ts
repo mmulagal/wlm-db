@@ -4,16 +4,18 @@ import {
     FormConfigListSchema,
     FormConfigCreateSchema,
     FormConfigObjectSchema,
-    FormConfigObjectDeleteSchema
+    FormConfigObjectDeleteSchema,
+    FormConfigUpdateSchema
 } from './schemas/form-config-schema';
 import {
     deleteSavedConfig,
     getAllSavedConfig,
     getSavedConfig,
+    modifyConfig,
     saveConfig
 } from '../operations/database/database-operations';
 
-const API_PATH_CONFIG: string = '/v1/config';
+const API_PATH_CONFIG: string = '/v1/configs';
 
 export default function formConfigRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -69,6 +71,20 @@ export default function formConfigRoutes(fastify: FastifyInstance) {
             } = request;
             const { user } = request.headers;
             return saveConfig(accountId, user as string, name, data);
+        }
+    );
+
+    server.patch(
+        `${API_PATH_CONFIG}/:id`,
+        {
+            schema: FormConfigUpdateSchema
+        },
+        async request => {
+            const {
+                params: { accountId, id },
+                body: { name, data }
+            } = request;
+            return modifyConfig(accountId, id, name, data);
         }
     );
 }

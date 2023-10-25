@@ -40,7 +40,7 @@ $notification-width: 800px;
         .close-icon {
             width: 10px;
             height: 10px;
-            stroke: var(--grey-50);
+            color: var(--text-primary);
             margin-left: 30px;
             margin-right: 26px;
             cursor: pointer;
@@ -91,14 +91,14 @@ $notification-width: 800px;
                 font-weight: 600;
                 line-height: 1.57;
                 text-align: left;
-                color: var(--grey-50);
+                color: var(--text-primary);
             }
 
             span {
                 font-size: 14px;
                 font-weight: 600;
                 display: flex;
-                color: var(--grey-50);
+                color: var(--text-primary);
 
                 .additional-text {
                     margin-right: 4px;

@@ -16,6 +16,7 @@ const CloudFormation = () => {
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
+    const showPanel = state.previewPanel.showPanel;
 
     const [createSqlTemplate] = useCreateSqlTemplateMutation();
 
@@ -26,9 +27,14 @@ const CloudFormation = () => {
         } else if (warning && url) {
             message = (
                 <>
-                    {warning}. {GENERAL.CLOUD_FORMATION_URL_TEXT}{' '}
-                    <Button Component="button" variant="text" onClick={() => window.open(url, '_blank', 'noopener')}>
-                        URL
+                    {warning}. {GENERAL.CLOUDFORMATION_TEMPLATE_URL[0]}
+                    <Button
+                        Component="button"
+                        variant="link"
+                        className={CommonStyles.buttonClass}
+                        onClick={() => window.open(url, '_blank', 'noopener')}
+                    >
+                        {GENERAL.CLOUDFORMATION_TEMPLATE_URL[1]}
                     </Button>
                 </>
             );
@@ -43,6 +49,11 @@ const CloudFormation = () => {
             );
         } else {
             dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, message: message }));
+        }
+        if (url) {
+            setTimeout(() => {
+                window.open(url, '_blank', 'noopener');
+            }, 3000);
         }
     };
 
@@ -61,16 +72,24 @@ const CloudFormation = () => {
                         dispatch(
                             addNotification({
                                 notificationType: NOTIFICATION_TYPES.INFO,
-                                message: <>
-                                    {GENERAL.CLOUDFORMATION_TEMPLATE_URL[0]}
-                                    <Button Component="button" variant="link" className={CommonStyles.buttonClass} 
-                                        onClick={() => window.open(url, '_blank', 'noopener')}>
-                                        {GENERAL.CLOUDFORMATION_TEMPLATE_URL[1]}
-                                    </Button>
-                                </>,
+                                message: (
+                                    <>
+                                        {GENERAL.CLOUDFORMATION_TEMPLATE_URL[0]}
+                                        <Button
+                                            Component="button"
+                                            variant="link"
+                                            className={CommonStyles.buttonClass}
+                                            onClick={() => window.open(url, '_blank', 'noopener')}
+                                        >
+                                            {GENERAL.CLOUDFORMATION_TEMPLATE_URL[1]}
+                                        </Button>
+                                    </>
+                                )
                             })
                         );
-                        setTimeout(() => { window.open(url, '_blank', 'noopener') }, 3000);
+                        setTimeout(() => {
+                            window.open(url, '_blank', 'noopener');
+                        }, 3000);
                     }
                     dispatch(setIsLoading(false));
                 })
@@ -81,7 +100,7 @@ const CloudFormation = () => {
     };
 
     return (
-        <div className={styles['cloud-formation']}>
+        <div className={`${styles['cloud-formation']} ${showPanel ? styles['with-panel'] : ''}`}>
             <div className={styles.inner}>
                 <Button
                     Component="button"

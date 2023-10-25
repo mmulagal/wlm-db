@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox';
+import { Static, Type } from '@fastify/type-provider-typebox';
 
 const CFNetworkConfiguration = Type.Object({
     vpcId: Type.Optional(Type.String()),
@@ -42,7 +42,7 @@ const SQLConfiguration = Type.Object({
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
     serviceAccountPassword: Type.String(),
-    sqlFciName: Type.String()
+    sqlServerName: Type.String()
 });
 
 // Cloud formation template creation Request and Response
@@ -64,9 +64,36 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+// Cloud formation template, yaml and cli creation
+const CloudFormationStaticTemplateRequestBody = Type.Object({
+    networkConfiguration: CFNetworkConfiguration,
+    ec2Configuration: EC2Configuration,
+    adConfiguration: ADConfiguration,
+    fsxConfiguration: FSXConfiguration,
+    sqlConfiguration: SQLConfiguration,
+    topicArn: Type.Optional(Type.String()),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    tags: Type.Optional(
+        Type.Array(
+            Type.Object({
+                key: Type.String(),
+                value: Type.String()
+            })
+        )
+    ),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String())
+});
+
 const CloudFormationTemplateResponse = Type.Object({
     cloudFormationUrl: Type.String(),
     warningMessage: Type.Optional(Type.String())
+});
+
+const CloudFormationStaticTemplateResponse = Type.Object({
+    url: Type.String(),
+    template: Type.String(),
+    cliCommand: Type.String()
 });
 
 const DeployTemplateResponse = Type.Object({
@@ -77,14 +104,14 @@ const DeploymentStatusResponse = Type.Object({
     deploymentId: Type.String(),
     deploymentName: Type.String(),
     deploymentStatus: Type.String(),
-    deploymentReason: Type.Optional(Type.String())
+    deploymentFailureReason: Type.Optional(Type.String())
 });
 
 const DeploymentStatusObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 }),
     credentialsId: Type.String({ minLength: 1 }),
     region: Type.String({ minLength: 1 }),
-    stackId: Type.String({ minLength: 1 })
+    stackName: Type.String({ minLength: 1 })
 });
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
@@ -98,6 +125,7 @@ type ADConfigurationType = Static<typeof ADConfiguration>;
 type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
 type CloudFormationTemplateResponseType = Static<typeof CloudFormationTemplateResponse>;
+type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
@@ -114,5 +142,8 @@ export {
     DeploymentStatusListResponseType,
     DeploymentStatusResponseType,
     DeploymentStatusObjectParams,
-    DeploymentStatusObjectParamsType
+    DeploymentStatusObjectParamsType,
+    CloudFormationStaticTemplateResponse,
+    CloudFormationStaticTemplateResponseType,
+    CloudFormationStaticTemplateRequestBody
 };
