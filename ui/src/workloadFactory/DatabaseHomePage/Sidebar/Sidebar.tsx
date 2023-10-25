@@ -21,7 +21,7 @@ import {
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
-import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import { getBaseUrl, useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { CODE_VIEWER } from '../../../utils/appConstants';
@@ -38,7 +38,6 @@ import {
     CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS
 } from '../../../utils/consts';
-import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
@@ -54,8 +53,6 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
-
-    const accountId = useAppSelector(state => state?.auth?.accountId);
 
     //To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
@@ -86,12 +83,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         {
             id: 'viewAwsCloudFormation',
             displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
         },
         {
             id: 'downloadYaml',
             displayName: CODE_VIEWER.DOWNLOAD_YAML,
-            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
+            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
         }
     ];
 
@@ -167,6 +164,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
         setIsRightPanelTemplateLoading(true);
+        const baseUrl = getBaseUrl();
         if (id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID) {
             // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
@@ -187,7 +185,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     ]}
                     autoEscape={true}
                     textToHighlight={CURL_REQ_TEMPLATE(
-                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        baseUrl,
                         CRED_PLACEHOLDERS.CRED_ID,
                         CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
@@ -222,7 +220,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         ]}
                         autoEscape={true}
                         textToHighlight={CURL_REQ_TEMPLATE(
-                            accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            baseUrl,
                             credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                             credDetails.region || CRED_PLACEHOLDERS.REGION,
                             CRED_PLACEHOLDERS.TOKEN,
