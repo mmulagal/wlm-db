@@ -51,8 +51,6 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
     if (statuses) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         deploymentStatuses = statuses?.toUpperCase()?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
-    } else {
-        deploymentStatuses = undefined;
     }
     const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses);
 
