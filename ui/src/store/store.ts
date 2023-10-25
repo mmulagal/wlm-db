@@ -34,12 +34,9 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
 
         // TBD - Will remove once APIs will be available
         if (
-            apiName.includes('getDatabaseHosts') ||
-            apiName.includes('getDatabaseJobs') ||
-            apiName.includes('getJobsSummary') ||
-            apiName.includes('getTemplates')
+            apiName.includes('getDatabaseJobs')
         ) {
-            return;
+            return next(action);
         }
 
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;

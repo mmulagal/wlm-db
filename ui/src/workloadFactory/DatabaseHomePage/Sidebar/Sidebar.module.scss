@@ -15,11 +15,12 @@
     }
 
     .accordionMainContainer {
-        max-height: 934px;
+        // max-height: 770px;
+        max-height: 89vh;
         overflow-y: auto;
         width: calc(100% - 16px);
         margin-top: 40px;
-        padding-bottom: 40px;
+        // padding-bottom: 40px;
     }
 
     .topBar {
@@ -33,6 +34,15 @@
             display: flex;
             gap: 8px;
             align-items: center;
+        }
+    }
+
+    .title {
+        display: flex;
+        gap: 8px;
+
+        svg {
+            height: 28px;
         }
     }
 
@@ -60,6 +70,12 @@
         margin: 0 40px 40px 40px;
     }
 
+    .headingContainer {
+        display: flex;
+        justify-content: space-between;
+        width: 558px;
+    }
+
     .openView {
         display: flex;
         gap: 40px;
@@ -67,9 +83,9 @@
         .leftSideView {
             width: 638px;
             margin-top: 40px;
-            max-height: 934px;
+            max-height: 89vh;
             overflow-y: auto;
-            padding-bottom: 40px;
+            //padding-bottom: 40px;
         }
 
         .rightSideView {
@@ -79,13 +95,17 @@
             .rightSideTopBar {
                 width: 1090px;
                 height: 56px;
-                background-color: var(--grey-55);
+                // background-color: var(--grey-55);
                 display: flex;
                 justify-content: space-between;
-                padding: 16px 24px 16px 40px;
+                padding: 16px 24px 16px 0;
 
                 .rightSideHeading {
                     color: var(--white);
+                }
+
+                .rightSideBlueHeading {
+                    color: var(--blue-40);
                 }
 
                 .rightSideHeadingDisabled {
@@ -102,6 +122,12 @@
                         align-items: center;
                         gap: 8px;
                         cursor: pointer;
+
+                        svg {
+                            path {
+                                fill: var(--blue-40);
+                            }
+                        }
                     }
 
                     .menuItemDisabled {
@@ -119,14 +145,14 @@
 
                     .sideBarMenuPopover {
                         [class*='MenuPopover_menuIcon'] {
-                            color: var(--white);
+                            color: var(--blue-40);
                         }
                         [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
-                            border: 1.5px solid var(--white);
+                            border: 1.5px solid var(--blue-40);
                         }
 
                         [class*='MenuPopover_menuIcon']:hover {
-                            border: 1.5px solid var(--white);
+                            border: 1.5px solid var(--blue-40);
                         }
                     }
 
@@ -173,6 +199,7 @@
                 .inputBox {
                     width: 146px;
                     margin-top: 35px;
+                    --menu-max-height: 245px;
 
                     [class*='design-system-select__single-value'] {
                         color: var(--white);
@@ -212,22 +239,13 @@
                     }
                 }
             }
-
-            [class*='SearchInput-module_base'] {
-                svg {
-                    --icon-primary-color: var(--white);
-                }
-
-                input {
-                    color: var(--white);
-                }
-            }
         }
 
         .thirdBar {
             width: 1090px;
             background-color: var(--grey-65);
-            height: 672px;
+            max-height: calc(80vh - 110px);
+            height: calc(80vh - 110px);
             overflow-y: auto;
             padding: 24px 40px 0 40px;
         }
@@ -257,6 +275,16 @@
 
     .highlightClass {
         background-color: var(--grey-30);
+    }
+
+    [class*='SearchInput-module_base'] {
+        svg {
+            --icon-primary-color: var(--white);
+        }
+
+        input {
+            color: var(--white);
+        }
     }
 }
 

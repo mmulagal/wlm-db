@@ -1,0 +1,15 @@
+.topBarButtons {
+    display: flex;
+    gap: 16px;
+    button {
+        --button-min-width: 120px;
+        span {
+            text-transform: none !important;
+        }
+        .buttonStyle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    }
+}

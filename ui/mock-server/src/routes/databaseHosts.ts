@@ -19,8 +19,12 @@ router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
     generateResponse(res, 200, JobsSummary);
 });
 
-router.post(`${BASE_URL}/v1/template`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/cloudformation/template`, async (req: {}, res: any) => {
     generateResponse(res, 200, Templates);
+});
+
+router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
+    generateResponse(res, 200, {isActive: true});
 });
 
 export default router;

@@ -25,10 +25,12 @@
         }
 
         .dbHostSeparator {
-            margin-left: 111px;
+            margin-left: 32px;
             height: 96px;
             background: var(--border);
             width: 1px;
+            height: 56px;
+            margin-top: 20px;
         }
 
         .databaseHostStatusContainer {

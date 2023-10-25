@@ -1,5 +1,5 @@
-import { Button, Typography } from '@netapp/design-system';
-import { useState } from 'react';
+import { Spinner, Typography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
@@ -10,12 +10,24 @@ import EstimatedCost from './EstimatedCost/EstimatedCost';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
-import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../../utils/consts';
+import TopBarButton from './TopBarButton/TopBarButton';
+import { MARKETING_PAGE_URL } from '../../utils/consts';
+import { useAppSelector } from '../../store/storeHooks';
 
 const DatabaseHomePage = () => {
-    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [statusChk, setStatusChk] = useState(false);
+
+    const {statusData, statusLoading} = useAppSelector(state => state.databaseHome.getStatus);
+
+    useEffect(() => {
+        if(statusData && statusData?.isActive) {
+            setStatusChk(true);
+        } else if (statusData && !statusData?.isActive) {
+            window.open(MARKETING_PAGE_URL, '_self', 'noopener');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusData]);
 
     DatabaseHomeApis();
 
@@ -24,55 +36,57 @@ const DatabaseHomePage = () => {
     };
 
     return (
-        <div className={styles.databaseHome}>
-            <div className={styles.leftSide}>
-                <div className={styles.topContainer}>
-                    <Typography variant="Regular_24" className={styles.heading}>
-                        {GENERAL.DATABASES}
-                    </Typography>
-                    <div>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                navigate(WLF_TO_FORM_NAVIGATE);
-                            }}
-                        >
-                            {GENERAL.DEPLOY_NEW_DATABASE}
-                        </Button>
-                    </div>
-                </div>
-
-                <div className={styles.secondLevelContainer}>
-                    <DatabaseHost />
-                </div>
-                <div className={styles.ProtectionContainer}>
-                    <ProtectionSection />
-                </div>
-
-                <div className={styles.fourthLevelContainer}>
-                    {/* Bar lines */}
-                    <div className={styles.barContainer}>
-                        <div className={styles.commonContainer}>
-                            <StorageSavings />
-                        </div>
-
-                        <div className={styles.commonContainer}>
-                            <EstimatedCost />
+        (statusLoading || !statusChk) ? 
+        <div className={styles.loader}>
+            <Spinner isLarge />
+        </div> :
+        (statusChk && 
+            <div className={styles.databaseHome}>
+                <div className={styles.leftSide}>
+                    <div className={styles.topContainer}>
+                        <Typography variant="Regular_24" className={styles.heading}>
+                            {GENERAL.DATABASES}
+                        </Typography>
+                        <div>
+                            <TopBarButton />
                         </div>
                     </div>
 
-                    {/* Job status */}
-                    <div className={styles.jobContainer}>
-                        <JobStatus />
+                    <div className={styles.secondLevelContainer}>
+                        <DatabaseHost />
+                    </div>
+
+                    <div className={styles.thirdLevelContainer}>
+                        <div className={styles.ProtectionContainer}>
+                            <ProtectionSection />
+                        </div>
+
+                        {/* Job status */}
+                        <div className={styles.jobContainer}>
+                            <JobStatus />
+                        </div>
+                    </div>
+
+                    <div className={styles.fourthLevelContainer}>
+                        {/* Bar lines */}
+                        <div className={styles.barContainer}>
+                            <div className={styles.commonContainer}>
+                                <StorageSavings />
+                            </div>
+
+                            <div className={styles.commonContainer}>
+                                <EstimatedCost />
+                            </div>
+                        </div>
+                    </div>
+                    <div className={styles.secondLevelContainer}>
+                        <DatabaseTable />
                     </div>
                 </div>
-                <div className={styles.secondLevelContainer}>
-                    <DatabaseTable />
-                </div>
+
+                <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
             </div>
-
-            <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
-        </div>
+        )
     );
 };
 

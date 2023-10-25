@@ -4,7 +4,7 @@
         { 
             "id": "resource-id-ini1",
             "name": "Database hostname Ini1",
-            "status": "initializing",
+            "status": "Initializing",
             "metadata": 
             {
                 "region": "US East (N.Virginia)",
@@ -16,7 +16,19 @@
         { 
             "id": "resource-id-ini2",
             "name": "Database hostname Ini2",
-            "status": "initializing",
+            "status": "Initializing",
+            "metadata": 
+            {
+                "region": "US East (N.Virginia)",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        { 
+            "id": "resource-id-failed1",
+            "name": "Database hostname Failed1",
+            "status": "Failed",
             "metadata": 
             {
                 "region": "US East (N.Virginia)",
