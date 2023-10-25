@@ -1,5 +1,5 @@
 import { Typography } from '@netapp/design-system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
@@ -11,9 +11,29 @@ import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
 import TopBarButton from './TopBarButton/TopBarButton';
+import { useGetStatusQuery } from '../../utils/apiService';
+import { useNavigate } from 'react-router-dom';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [statusChk, setStatusChk] = useState(false);
+
+    const navigate = useNavigate();
+    
+    const {
+        data: statusData,
+        isFetching: statusLoading,
+        isError: statusError
+    } = useGetStatusQuery('');
+
+    useEffect(() => {
+        if(statusData && statusData?.isActive) {
+            setStatusChk(true);
+        } else {
+            setStatusChk(false);
+            navigate("https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549");
+        }
+    }, [statusData]);
 
     DatabaseHomeApis();
 
@@ -22,6 +42,8 @@ const DatabaseHomePage = () => {
     };
 
     return (
+        statusLoading ? <div>Loading...</div> :
+        (statusChk && 
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
                 <div className={styles.topContainer}>
@@ -66,7 +88,7 @@ const DatabaseHomePage = () => {
             </div>
 
             <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
-        </div>
+        </div>)
     );
 };
 
