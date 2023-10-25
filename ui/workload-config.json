@@ -1,7 +1,7 @@
 {
     "name": "Databases",
     "id": "databases",
-    "to": "https://staging.console.workloads.netapp.com/databases",
+    "to": "/databases",
     "hasMenuItem": true,
     "hasPolicies": true,
     "stageIntegrations": [
@@ -16,7 +16,7 @@
         "primaryCtaLabel": "Deploy database",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Manage workload",
-        "secondaryCtaTo": "https://staging.console.workloads.netapp.com/databases",
+        "secondaryCtaTo": "/databases",
         "isComingSoon": false,
         "dataUrl": "/wlmdb/v1/status"
     }

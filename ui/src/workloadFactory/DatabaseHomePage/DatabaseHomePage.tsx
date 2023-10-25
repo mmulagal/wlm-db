@@ -24,7 +24,7 @@ const DatabaseHomePage = () => {
         if(statusData && statusData?.isActive) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            window.location.href = MARKETING_PAGE_URL;
+            window.location.replace(MARKETING_PAGE_URL);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);
