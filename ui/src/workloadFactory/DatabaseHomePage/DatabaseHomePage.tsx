@@ -11,23 +11,20 @@ import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
 import TopBarButton from './TopBarButton/TopBarButton';
-import { useGetStatusQuery } from '../../utils/apiService';
 import { MARKETING_PAGE_URL } from '../../utils/consts';
+import { useAppSelector } from '../../store/storeHooks';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [statusChk, setStatusChk] = useState(false);
-    
-    const {
-        data: statusData,
-        isFetching: statusLoading,
-    } = useGetStatusQuery('');
+
+    const {statusData, statusLoading} = useAppSelector(state => state.databaseHome.getStatus);
 
     useEffect(() => {
         if(statusData && statusData?.isActive) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            window.open(MARKETING_PAGE_URL, '_self', 'noopener');
+            window.location.replace(MARKETING_PAGE_URL);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);

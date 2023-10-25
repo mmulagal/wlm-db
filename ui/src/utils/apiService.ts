@@ -7,7 +7,7 @@ import {
     retry
 } from '@reduxjs/toolkit/query/react';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
-import { RootState } from '../store/store';
+import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
@@ -28,6 +28,13 @@ const prepareHeaders = (
     return headers;
 };
 
+export const getBaseUrl = () => {
+    const state = store.getState();
+    const accountId = state?.auth?.accountId;
+    const apiHost = process.env.REACT_APP_CM_URL;
+    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
+}
+
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: '',
     prepareHeaders
@@ -38,7 +45,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
-    return `${apiHost}/wlmdb/accounts/${accountId}/v1`;
+    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
 };
 
 export const getUrlFixedInArg = (arg: BatchEntry[], baseUrl: string): BatchEntry[] => {

@@ -24,7 +24,7 @@ const StorageSavings = () => {
                     }
                 </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    {formatFractionalNumber(hostData?.storageSavingsPercent)}%
+                    {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
                 </Typography>
             </div>
 
