@@ -5,5 +5,6 @@
 
 */
 -- AlterTable
-ALTER TABLE `deployment` DROP COLUMN `data`,
-    ADD COLUMN `metadata` JSON NULL;
+ALTER TABLE `deployment`
+    CHANGE COLUMN `data` `metadata` JSON NULL;
+
