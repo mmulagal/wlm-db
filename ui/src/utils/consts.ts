@@ -154,3 +154,5 @@ export const CRED_PLACEHOLDERS = {
     REGION: '<Region>',
     TOKEN: '<Token>'
 };
+
+export const MARKETING_PAGE_URL = "https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549";
