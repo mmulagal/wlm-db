@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getObjectBucket, getPreSignedUrl } from '../lib/aws/s3';
+import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
 import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
@@ -66,6 +66,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 import { handleNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
