@@ -95,13 +95,17 @@
             .rightSideTopBar {
                 width: 1090px;
                 height: 56px;
-                background-color: var(--grey-55);
+                // background-color: var(--grey-55);
                 display: flex;
                 justify-content: space-between;
-                padding: 16px 24px 16px 40px;
+                padding: 16px 24px 16px 0;
 
                 .rightSideHeading {
                     color: var(--white);
+                }
+
+                .rightSideBlueHeading {
+                    color: var(--blue-40);
                 }
 
                 .rightSideHeadingDisabled {
@@ -118,6 +122,12 @@
                         align-items: center;
                         gap: 8px;
                         cursor: pointer;
+
+                        svg {
+                            path {
+                                fill: var(--blue-40);
+                            }
+                        }
                     }
 
                     .menuItemDisabled {
@@ -135,14 +145,14 @@
 
                     .sideBarMenuPopover {
                         [class*='MenuPopover_menuIcon'] {
-                            color: var(--white);
+                            color: var(--blue-40);
                         }
                         [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
-                            border: 1.5px solid var(--white);
+                            border: 1.5px solid var(--blue-40);
                         }
 
                         [class*='MenuPopover_menuIcon']:hover {
-                            border: 1.5px solid var(--white);
+                            border: 1.5px solid var(--blue-40);
                         }
                     }
 
