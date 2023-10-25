@@ -25,9 +25,7 @@ const DatabaseHomePage = () => {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
             window.location.href = MARKETING_PAGE_URL;
-            // window.open(MARKETING_PAGE_URL, '_self', 'noopener');
         }
-        // return;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);
 
