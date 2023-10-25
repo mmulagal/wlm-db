@@ -17,12 +17,11 @@ import PreviewPanel from './components/PreviewPanel/PreviewPanel';
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
     const showPanel = useSelector((state: any) => state.previewPanel.showPanel);
+    const showChatbot = useSelector((state: any) => state.auth?.isWorkloadFactory);
     const dispatch = useDispatch();
     const showNotifications = useMemo(() => {
         return notificationsObj && notificationsObj.messages && notificationsObj.messages.length > 0;
     }, [notificationsObj]);
-
-    const showChatbot = localStorage.getItem('showChatbot') === 'true';
 
     return (
         <div className={styles['app-layout']}>
