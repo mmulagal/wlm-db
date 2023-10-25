@@ -12,27 +12,23 @@ import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
 import TopBarButton from './TopBarButton/TopBarButton';
 import { useGetStatusQuery } from '../../utils/apiService';
-import { useNavigate } from 'react-router-dom';
 
 const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [statusChk, setStatusChk] = useState(false);
-
-    const navigate = useNavigate();
     
     const {
         data: statusData,
         isFetching: statusLoading,
-        isError: statusError
     } = useGetStatusQuery('');
 
     useEffect(() => {
         if(statusData && statusData?.isActive) {
             setStatusChk(true);
-        } else {
-            setStatusChk(false);
-            navigate("https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549");
+        } else if (statusData && !statusData?.isActive) {
+            window.open("https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549", '_self', 'noopener');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);
 
     DatabaseHomeApis();
@@ -42,7 +38,7 @@ const DatabaseHomePage = () => {
     };
 
     return (
-        statusLoading ? <div>Loading...</div> :
+        (statusLoading || !statusChk) ? <div>Loading...</div> :
         (statusChk && 
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
