@@ -375,6 +375,7 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
         }
     });
     return {
+        totalDatabases: 0, // To Be calculated once data is available in API
         totalHosts: data?.length || 0,
         totalUpHosts: totalUpHosts,
         totalInitializingHosts: totalInitializingHosts,
@@ -397,7 +398,11 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
             val?.protection?.isSqlNativeEnabled
         ) {
             protectedDb += 1;
-        } else {
+        } else if (
+            !val?.protection?.isAwsBackUpEnabled &&
+            !val?.protection?.isFsxOntapSnapshotsEnabled &&
+            !val?.protection?.isSqlNativeEnabled
+        ){
             unprotectedDb += 1;
         }
         if (val?.protection?.isFsxOntapSnapshotsEnabled) {
@@ -419,35 +424,30 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         protectedPercent: (protectedDb / totalHost) * 100 || 0,
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
-        awsBackupPercent: (awsBackupDb / totalHost) * 100 || 0,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        fsxOntapSnapshotsPercent: (fsxOntapSnapshotsDb / totalHost) * 100 || 0,
         sqlServerBackupDb: sqlServerBackupDb,
-        sqlServerBackupPercent: (sqlServerBackupDb / totalHost) * 100 || 0
     };
 };
 
 export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
-    let storageConsumes = 0;
+    let totalConsume = 0;
     let storageSavings = 0;
-    let totalSize = 0;
 
     data?.map(val => {
-        if (val?.storage?.allocated) {
-            totalSize += val.storage.allocated;
-        }
         if (val?.storage?.used) {
-            storageConsumes += val.storage.used;
+            totalConsume += val.storage.used;
         }
-        if (val?.storage?.savings) {
-            storageSavings += val.storage.savings;
+        if (val?.storage?.spaceSavings) {
+            storageSavings += val.storage.spaceSavings;
         }
     });
 
+    const storageConsume = totalConsume - storageSavings;
+
     return {
-        storageConsumes: formatFractionalNumber(storageConsumes / 1024) || 'N/A',
-        storageSavings: formatFractionalNumber(storageSavings / 1024) || 'N/A',
-        storageSavingsPercent: (storageSavings / totalSize) * 100 || 0
+        storageConsumes: formatSizeOnePrecision(storageConsume) || 'N/A',
+        storageSavings: formatSizeOnePrecision(storageSavings) || 'N/A',
+        storageSavingsPercent: (storageSavings / totalConsume) * 100 || 0
     };
 };
 
@@ -537,12 +537,12 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
     if (type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
-        const value = 'm5.large';
-        const label2 = '2vCPU, 8 GiB RAM, 4750Mbps';
+        const value = 'm5.xlarge';
+        const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
         const data = {
-            instanceType: 'm5.large',
-            vCpus: 2,
-            ramInMib: 8192,
+            instanceType: 'm5.xlarge',
+            vCpus: 4,
+            ramInMib: 16384,
             iopsInMbps: 4750,
             architecture: ['x86_64']
         };
@@ -558,14 +558,21 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.SINGLE_INSTANCE,
             value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
         };
+        //Data drive Size
+        result.storageCapacity = {
+            capacity: '100',
+            unit: 'GiB'
+        }
+        //Throughput value
+        result.throughput = '128'
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
-        const value = 'r5.xlarge';
-        const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
+        const value = 'm5.2xlarge';
+        const label2 = '8vCPU, 32 GiB RAM, 4750Mbps';
         const data = {
-            instanceType: 'r5.xlarge',
-            vCpus: 4,
+            instanceType: 'm5.2xlarge',
+            vCpus: 8,
             ramInMib: 32768,
             iopsInMbps: 4750,
             architecture: ['x86_64']
@@ -582,6 +589,13 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.FAILOVER_CLUSTER,
             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
         };
+        //Data drive Size
+        result.storageCapacity = {
+            capacity: '500',
+            unit: 'GiB'
+        }
+        //Throughput value
+        result.throughput = '128'
     }
 
     return result;
@@ -600,4 +614,15 @@ export const handleDownloadYAML = (data: any, name = 'data') => {
 
     // Clean up by revoking the object URL.
     window.URL.revokeObjectURL(url);
+};
+
+// To get credential id and region for saved config
+export const getCredDetails = (data: any) => {
+    const state = store.getState();
+    const result = {
+        accountId: state?.auth?.accountId || '',
+        credId: data?.awsAccount?.selectedCredential?.data?.credentialsId || '',
+        region: data?.regionAndVpc?.selectedRegion?.data?.regionCode || ''
+    };
+    return result;
 };

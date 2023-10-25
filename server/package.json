@@ -17,8 +17,8 @@
         "outdated": "npx npm-check-updates",
         "unused": "npx depcheck",
         "build:dev": "npm run build && npm run start",
-        "test": "vitest --coverage",
-        "test:nowatch": "vitest --run --silent",
+        "test": "cross-env NODE_ENV=simulator vitest --coverage",
+        "test:nowatch": "cross-env NODE_ENV=simulator vitest --run --silent",
         "postinstall": "patch-package"
     },
     "repository": {
@@ -93,6 +93,7 @@
         "copyfiles": "^2.4.1",
         "cross-env": "^7.0.3",
         "nock": "^13.3.1",
+        "prismock": "^1.21.1",
         "rimraf": "^5.0.1",
         "typescript": "^5.0.4",
         "vitest": "^0.34.2"

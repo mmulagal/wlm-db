@@ -1,9 +1,11 @@
 import { FastifyInstance } from 'fastify/types/instance';
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { VERSION } from '../utils/consts';
 import { GetHealthinessSchema, GetSystemInfoSchema } from './schemas/system-schemas';
 
 export default function systemRoutes(fastify: FastifyInstance) {
-    fastify
+    const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
+    server
         .get(
             '/about',
             {

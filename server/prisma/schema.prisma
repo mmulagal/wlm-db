@@ -77,6 +77,7 @@ model config {
   user          String   @db.VarChar(255)
   creation_time DateTime @db.DateTime(0)
   data          Json?    @default("{}")
+  modified_time DateTime? @updatedAt @db.DateTime(0)
 
   @@index([account_id], map: "k_wlmdb_config_account_id")
   @@unique([account_id, name, user], name: "uk_wlmdb_config_account_id_name_user", map: "uk_wlmdb_config_account_id_name_user")

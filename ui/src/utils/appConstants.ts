@@ -16,7 +16,8 @@ export const SELECT_CONFIG = {
     SAVE_CONFIG_SUCCESS: 'Configuration was saved successfully.',
     LOAD_CONFIG_SUCCESS: 'Configuration was loaded successfully.',
     NO_SAVED_CONFIG: 'There are no saved configurations.',
-    MAX_CONFIG_LIMIT: 'You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you\'ll need to delete an old configuration first.',
+    MAX_CONFIG_LIMIT:
+        "You have reached the maximum limit of 100 configurations. Before you can save a new configuration, you'll need to delete an old configuration first.",
     DUPLICATE_SAVED_CONFIG: 'Configuration was already saved.',
     MISSING_FIELDS_MESSAGE:
         'One or more fields that were loaded no longer exist. These fields are marked as "Action Required" and should be completed before you create the Microsoft SQL Server deployment.',
@@ -329,13 +330,18 @@ export const GENERAL = {
     // Constants for workload factory database host
     DATABASE_HOST: 'Database host',
     DATABASE_HOSTS: 'Database hosts',
+    HOSTS: 'Hosts',
     PROTECTED: 'Protected',
     NOT_PROTECTED: 'Not protected',
     AWS_BACKUP: 'AWS backup',
     FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
-    DEPLOY_NEW_DATABASE: 'Deploy new database',
+    DEPLOY_NEW_DATABASE: 'Deploy',
+    DISCOVER: 'Discover',
+    MIGRATE_DB: 'Migrate',
+    CLONE_DB: 'Clone',
+    PROTECT_DB: 'Protect',
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
@@ -351,33 +357,37 @@ export const GENERAL = {
     JOB_STATUS_DAYS: 'Last 90 days',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',
-    JOB_STATUS_INITIALIZING: 'Initializing',
+    JOB_STATUS_INITIALIZING: 'In Progress',
     JOB_STATUS_JOBS: ' Jobs',
+    JOBS_DISTRIBUTION: 'Jobs distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
     DB_HOST_DOWN: 'Down',
-    DB_HOST_INITIALIZING: 'Initializing',
+    DB_HOST_INITIALIZING: 'In Progress',
     DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
-    DATABASE_PROTECTION: 'Database protection',
+    DATABASE_PROTECTION: ' Protected database distribution',
     DB_HOST_PROTECTED: 'Protected',
     DB_HOST_UNPROTECTED: 'Unprotected',
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
-    SIDEBAR_LOAD_WIZARD: 'Load Wizard'
+    SIDEBAR_LOAD_WIZARD: 'Load Wizard',
+    PROTECTION_DATABASES: 'DB',
+    PROTECTION: 'Protection',
+    NUMBER_OF_EXECUTION: 'Number of Execution'
 };
 
 export const CODE_VIEWER = {
     REST_API: 'REST API',
-    CLOUDFORMATION: 'CLoudFormation',
+    CLOUDFORMATION: 'CloudFormation',
     AWS_CLI: 'AWS CLI',
     VIEW_IN_AWS_CLOUD_FORMATION: 'View in AWS CloudFormation',
     DOWNLOAD_YAML: 'Download YAML file ',
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
-    NO_DATA_MSG: 'No data found', 
+    NO_DATA_MSG: 'No data found',
     LOADING: 'Loading...',
-    AUTOMATIONS: 'Automations',
+    CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
     RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL server deployment'],
@@ -392,4 +402,4 @@ export const CODE_VIEWER = {
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
     DEPLOYMENT: 'Deployment:'
-}
+};

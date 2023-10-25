@@ -124,10 +124,10 @@ export const API_ERRORS = {
 };
 
 export const STATUS_CONST = {
-    UP: 'up',
-    DOWN: 'down',
-    INITIALIZING: 'initializing',
-    FAILED: 'failed'
+    UP: 'Up',
+    DOWN: 'Down',
+    INITIALIZING: 'Initializing',
+    FAILED: 'Failed'
 };
 
 export const MAX_SAVED_CONFIG = 100;
@@ -139,4 +139,18 @@ export const RECOMMENDED_TEMPLATES = {
     PROD_ID: '1',
     DEV_NAME: 'Dev/Test',
     PROD_NAME: 'Production'
+};
+
+export const CURL_REQ_TEMPLATE = (accountId: string, credentialId: string, region: string, token: string, payload: any) => `
+curl --location --request POST 'https://staging.api.workloads.netapp.com/wlmdb/accounts/${accountId}/api/v1/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
+--header 'Authorization: Bearer ${token}' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${payload}'
+`;
+
+export const CRED_PLACEHOLDERS = {
+    ACCOUNT_ID: '<AccountId>',
+    CRED_ID: '<CredentialId>',
+    REGION: '<Region>',
+    TOKEN: '<Token>'
 };

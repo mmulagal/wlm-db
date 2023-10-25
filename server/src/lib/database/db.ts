@@ -45,10 +45,10 @@ interface Resource {
 }
 
 interface Config {
-    user: string;
-    creationTime: number;
+    user?: string;
+    creationTime?: number;
     name: string;
-    data: object;
+    data?: object;
 }
 
 async function listDeployments(
@@ -301,7 +301,8 @@ async function listConfig(accountId: string, id?: string) {
             creation_time: true,
             account_id: true,
             data: !isEmpty(id),
-            name: true
+            name: true,
+            modified_time: true
         },
         take: 100
     });
@@ -313,14 +314,28 @@ async function createConfig(accountId: string, params: Config) {
     return prisma.client.config.create({
         data: {
             account_id: accountId,
-            user,
+            user: user!,
             name,
-            creation_time: new Date(creationTime),
+            creation_time: new Date(creationTime!),
             data
         }
     });
 }
 
+async function updateConfig(accountId: string, configId: string, params: Config) {
+    logger.info('Updating config', { accountId, configId, params });
+    const { data, name } = params;
+    return prisma.client.config.update({
+        where: {
+            id: configId
+        },
+        data: {
+            account_id: accountId,
+            name,
+            ...(!isEmpty(data) && { data })
+        }
+    });
+}
 async function deleteConfig(accountId: string, id: string) {
     logger.info('Deleting config', { accountId, id });
     return prisma.client.config.delete({
@@ -381,6 +396,7 @@ export {
     deleteResource,
     listConfig,
     createConfig,
+    updateConfig,
     deleteConfig,
     listRelationshipsResources,
     deploymentJobsCount

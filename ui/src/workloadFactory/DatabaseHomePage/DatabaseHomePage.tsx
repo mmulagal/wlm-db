@@ -1,5 +1,5 @@
-import { Button, Typography } from '@netapp/design-system';
-import { useState } from 'react';
+import { Typography } from '@netapp/design-system';
+import { useEffect, useState } from 'react';
 import { GENERAL } from '../../utils/appConstants';
 import styles from './DatabaseHomePage.module.scss';
 import Sidebar from './Sidebar/Sidebar';
@@ -10,12 +10,30 @@ import EstimatedCost from './EstimatedCost/EstimatedCost';
 import ProtectionSection from './ProtectSection/ProtectionSection';
 import JobStatus from './JobStatus/JobStatus';
 import DatabaseHomeApis from './DatabaseHomeApis';
+import TopBarButton from './TopBarButton/TopBarButton';
+import { useGetStatusQuery } from '../../utils/apiService';
 import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../../utils/consts';
 
 const DatabaseHomePage = () => {
-    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [statusChk, setStatusChk] = useState(false);
+
+    const navigate = useNavigate();
+    
+    const {
+        data: statusData,
+        isFetching: statusLoading,
+        isError: statusError
+    } = useGetStatusQuery('');
+
+    useEffect(() => {
+        if(statusData && statusData?.isActive) {
+            setStatusChk(true);
+        } else {
+            setStatusChk(false);
+            navigate("https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549");
+        }
+    }, [statusData]);
 
     DatabaseHomeApis();
 
@@ -24,6 +42,8 @@ const DatabaseHomePage = () => {
     };
 
     return (
+        statusLoading ? <div>Loading...</div> :
+        (statusChk && 
         <div className={styles.databaseHome}>
             <div className={styles.leftSide}>
                 <div className={styles.topContainer}>
@@ -31,22 +51,23 @@ const DatabaseHomePage = () => {
                         {GENERAL.DATABASES}
                     </Typography>
                     <div>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                navigate(WLF_TO_FORM_NAVIGATE);
-                            }}
-                        >
-                            {GENERAL.DEPLOY_NEW_DATABASE}
-                        </Button>
+                        <TopBarButton />
                     </div>
                 </div>
 
                 <div className={styles.secondLevelContainer}>
                     <DatabaseHost />
                 </div>
-                <div className={styles.ProtectionContainer}>
-                    <ProtectionSection />
+
+                <div className={styles.thirdLevelContainer}>
+                    <div className={styles.ProtectionContainer}>
+                        <ProtectionSection />
+                    </div>
+
+                    {/* Job status */}
+                    <div className={styles.jobContainer}>
+                        <JobStatus />
+                    </div>
                 </div>
 
                 <div className={styles.fourthLevelContainer}>
@@ -60,11 +81,6 @@ const DatabaseHomePage = () => {
                             <EstimatedCost />
                         </div>
                     </div>
-
-                    {/* Job status */}
-                    <div className={styles.jobContainer}>
-                        <JobStatus />
-                    </div>
                 </div>
                 <div className={styles.secondLevelContainer}>
                     <DatabaseTable />
@@ -72,7 +88,7 @@ const DatabaseHomePage = () => {
             </div>
 
             <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
-        </div>
+        </div>)
     );
 };
 

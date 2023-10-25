@@ -1,12 +1,14 @@
 import React from 'react';
 import styles from './Highlighter.module.scss';
 
-const Highlighter = ({ children, highlight }: any) => {
+const HighlighterWord = ({ children, highlight, isAWSCli }: any) => {
     if (!highlight || highlight.length < 2) return children;
     const regexp = new RegExp(highlight, 'g');
     let content = '';
-    if (children?.props?.children) {
-        content = children.props.children;
+    if (children?.props?.children || children?.props?.children?.props?.textToHighlight) {
+        content = children?.props?.children?.props?.textToHighlight
+            ? children?.props?.children?.props?.textToHighlight
+            : children?.props?.children;
     } else {
         content = children;
     }
@@ -37,9 +39,10 @@ const Highlighter = ({ children, highlight }: any) => {
     }
     return (
         <div className={styles['highlighter']}>
-            <pre>{parts}</pre>
+            {isAWSCli && <>{parts}</>}
+            {!isAWSCli && <pre>{parts}</pre>}
         </div>
     );
 };
 
-export default Highlighter;
+export default HighlighterWord;

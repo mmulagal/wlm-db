@@ -10,6 +10,7 @@ interface AuthState {
     loading?: boolean;
     isDemoMode?: boolean;
     features: any;
+    isWorkloadFactory: boolean;
 }
 
 interface PayloadAuthSuccess {
@@ -29,7 +30,8 @@ const initialState: AuthState = {
         active: {
             'Platform.BlueXP/DarkTheme': false
         }
-    }
+    },
+    isWorkloadFactory: false
 };
 
 const authSlice = createSlice({
@@ -64,6 +66,9 @@ const authSlice = createSlice({
         },
         updateIsDemoMode: (state, action: PayloadAction<boolean>) => {
             state.isDemoMode = action.payload;
+        },
+        updateIsWorkloadfactory: (state, action: PayloadAction<boolean>) => {
+            state.isWorkloadFactory = action.payload;
         }
     }
 });
@@ -77,6 +82,7 @@ export const {
     updatePathname,
     updateIsLoading,
     updateIsDemoMode,
+    updateIsWorkloadfactory,
     updateFeatures
 } = authSlice.actions;
 

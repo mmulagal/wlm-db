@@ -5,15 +5,19 @@ import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
 import { ReactComponent as LoadIcon } from '../../../assets/ic_restore.svg';
+import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import Highlighter from '../Highlighter/Highlighter';
+import HighlighterWord from '../Highlighter/Highlighter';
+//@ts-ignore
+import Highlighter from 'react-highlight-words';
 
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
 import {
     formatDateWithTime,
     generateOptionType,
+    getCredDetails,
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
@@ -28,9 +32,15 @@ import {
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
 import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
-import { RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import {
+    RECOMMENDED_TEMPLATES,
+    WLF_TO_FORM_NAVIGATE,
+    CURL_REQ_TEMPLATE,
+    CRED_PLACEHOLDERS
+} from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
+import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
 type ConfigType = {
     id?: string;
@@ -45,7 +55,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
-    const initialMssqlState = useAppSelector(state => state.mssqlForm);
+    const accountId = useAppSelector(state => state?.auth?.accountId);
+
+    //To get configDatalist
+    const [configData, setConfigData] = useState<any>([]);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -55,7 +68,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
     // For selected config REST API response
-    const [rightPanelResponse, setRightPanelResponse] = useState('');
+    const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
 
     // For selected config CloudFormation and AWS CLI response
@@ -64,21 +77,29 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
 
+    const [disableCopy, setDisableCopy] = useState(true);
+
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const menuItems = [
         {
-            id: 'view in aws cloudFormation',
-            displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION
+            id: 'viewAwsCloudFormation',
+            displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
+            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
         },
         {
             id: 'downloadYaml',
-            displayName: CODE_VIEWER.DOWNLOAD_YAML
+            displayName: CODE_VIEWER.DOWNLOAD_YAML,
+            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
         }
     ];
 
-    const { data: configData, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
+    const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
+
+    useEffect(() => {
+        setConfigData(configDataList);
+    }, [configDataList]);
 
     useEffect(() => {
         const recList = [
@@ -96,8 +117,41 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         setRecommendedData(recList);
     }, []);
 
+    // This is to set disableCopy flag value
+    useEffect(() => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            if (!rightPanelTemplateResponse?.template || isRightPanelTemplateLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            if (!rightPanelResponse || isRightPanelDataLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            if (!rightPanelTemplateResponse?.cliCommand || isRightPanelTemplateLoading) {
+                setDisableCopy(true);
+            } else {
+                setDisableCopy(false);
+            }
+        } else {
+            setDisableCopy(true);
+        }
+    }, [
+        dropDownValue,
+        rightPanelResponse,
+        isRightPanelDataLoading,
+        rightPanelTemplateResponse,
+        isRightPanelTemplateLoading
+    ]);
+
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
-    const getTemplateResponse = (payload: any) => {
+    const getTemplateResponse = (payload: any, credDetails: any) => {
+        payload.credentialsId = credDetails?.credId || '';
+        payload.region = credDetails?.region || '';
         loadTemplateData({ payload: payload }).then((data: any) => {
             if (data?.data) {
                 setRightPanelTemplateResponse(data?.data);
@@ -119,21 +173,67 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const changeObjectForm = {
                 mssqlForm: actualData[0].data
             };
-            const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
-            setRightPanelResponse(res);
+            const resBody = createMssqlPayload(changeObjectForm);
+            const res = JSON.stringify(resBody, null, 2);
+            // To set REST API response as deploy API curl request. Passing accountId, credentialId and region placeholder for recommended configs.
+            const highlightedString = (
+                <Highlighter
+                    highlightClassName={styles.highlightClass}
+                    searchWords={[
+                        CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN
+                    ]}
+                    autoEscape={true}
+                    textToHighlight={CURL_REQ_TEMPLATE(
+                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN,
+                        res
+                    )}
+                />
+            );
+            //@ts-ignore
+            setRightPanelResponse(highlightedString);
             setIsRightPanelDataLoading(false);
-            getTemplateResponse(res);
+            getTemplateResponse(resBody, {});
         } else {
             // Getting saved config data using API
             loadConfigDataExe({ configId: id }).then(data => {
                 const actualData = data?.data?.data;
+                // To get accountid, credid and region from saved config
+                const credDetails = getCredDetails(actualData);
                 const changeObjectForm = {
                     mssqlForm: actualData
                 };
-                const res = JSON.stringify(createMssqlPayload(changeObjectForm), null, 2);
-                setRightPanelResponse(res);
+                const resBody = createMssqlPayload(changeObjectForm);
+                const res = JSON.stringify(resBody, null, 2);
+                // To set REST API response as deploy API curl request
+                const highlightedString = (
+                    <Highlighter
+                        highlightClassName={styles.highlightClass}
+                        searchWords={[
+                            CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            CRED_PLACEHOLDERS.CRED_ID,
+                            CRED_PLACEHOLDERS.REGION,
+                            CRED_PLACEHOLDERS.TOKEN
+                        ]}
+                        autoEscape={true}
+                        textToHighlight={CURL_REQ_TEMPLATE(
+                            accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                            credDetails.region || CRED_PLACEHOLDERS.REGION,
+                            CRED_PLACEHOLDERS.TOKEN,
+                            res
+                        )}
+                    />
+                );
+                //@ts-ignore
+                setRightPanelResponse(highlightedString);
                 setIsRightPanelDataLoading(false);
-                getTemplateResponse(res);
+                getTemplateResponse(resBody, credDetails);
             });
         }
     };
@@ -154,19 +254,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             setOpenedItem(configData[0]);
             getRestResponse(configData[0].id);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, openKey]);
 
     const handleToggle = (key: any, id: any) => {
         setOpenKey(openKey !== id ? id : null);
         setOpenedItem({ name: key, id: id });
-        getRestResponse(id);
     };
 
     const handleViewCode = (key: any, id: any) => {
         setOpenKey(openKey !== id ? id : openKey);
         setOpenedItem({ name: key, id: id });
-        getRestResponse(id);
     };
 
     //To expand collapse side bar
@@ -193,11 +291,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <Highlighter highlight={searchInput}>
+                <HighlighterWord highlight={searchInput}>
                     <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.templateAsYaml || CODE_VIEWER.NO_DATA_MSG}
+                        {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
@@ -206,9 +304,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <Highlighter highlight={searchInput}>
+                <HighlighterWord highlight={searchInput}>
                     <pre>{rightPanelResponse}</pre>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
@@ -217,11 +315,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <Highlighter highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} isAWSCli={true}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.templateAsCli || CODE_VIEWER.NO_DATA_MSG}
+                        {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
-                </Highlighter>
+                </HighlighterWord>
             );
         }
     };
@@ -244,20 +342,41 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // To copy response based on dropdown selection
     const copyResponseData = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            return rightPanelTemplateResponse?.templateAsYaml;
+            return rightPanelTemplateResponse?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
-            return rightPanelResponse;
+            return rightPanelResponse?.props?.textToHighlight;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
-            return rightPanelTemplateResponse?.templateAsCli;
+            return rightPanelTemplateResponse?.cliCommand;
+        }
+    };
+
+    const handleViewInAwsCloudFormation = () => {
+        if (rightPanelTemplateResponse?.url) {
+            window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+        }
+    };
+
+    //Handle Search
+    const handleSearch = (val: string) => {
+        if (val.length) {
+            const newVal = configDataList.filter((text: any) => {
+                return text?.name.includes(val);
+            });
+            setConfigData(newVal);
+        } else {
+            setConfigData(configDataList);
         }
     };
 
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
-                <Typography variant="Regular_16" className={styles.colorAutomation}>
-                    {CODE_VIEWER.AUTOMATIONS}
-                </Typography>
+                <div className={styles.title}>
+                    <VectorIcon />
+                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                        {CODE_VIEWER.CODEBOX}
+                    </Typography>
+                </div>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
                     <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
@@ -307,9 +426,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {/* Saved templates when code box in collapse state */}
                     {configData && (
                         <div className={styles.accordionStructure}>
-                            <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                {CODE_VIEWER.MY_TEMPLATES}
-                            </Typography>
+                            <div className={styles.headingContainer}>
+                                <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <SearchInput
+                                    onChange={(e: any) => {
+                                        console.log('e', e);
+                                        handleSearch(e);
+                                    }}
+                                />
+                            </div>
+
                             {configData.map((item: any, i: number) => (
                                 <div key={i}>
                                     <Accordion
@@ -368,9 +496,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {/* saved templates list when code box in expanded state */}
                         {configData && isOpen && (
                             <div className={styles.accordionStructure}>
-                                <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                    {CODE_VIEWER.MY_TEMPLATES}
-                                </Typography>
+                                <div className={styles.headingContainer}>
+                                    <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                        {CODE_VIEWER.MY_TEMPLATES}
+                                    </Typography>
+                                    <SearchInput
+                                        onChange={(e: any) => {
+                                            console.log('e', e);
+                                            handleSearch(e);
+                                        }}
+                                    />
+                                </div>
                                 {configData.map((item: any, i: number) => (
                                     <div key={i}>
                                         <Accordion
@@ -400,23 +536,37 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             </Typography>
                             <div className={styles.menuContainer}>
                                 <div className={styles['copy']}>
-                                    <Popover
-                                        popoverClass={styles['copy-popover']}
-                                        children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                                        container={
-                                            <CopyToClipboard text={copyResponseData()}>
-                                                <div className={styles.menuItem}>
-                                                    <Copy />
-                                                    <Typography
-                                                        variant="Semibold_14"
-                                                        className={styles.rightSideHeading}
-                                                    >
-                                                        {CODE_VIEWER.COPY}
-                                                    </Typography>
-                                                </div>
-                                            </CopyToClipboard>
-                                        }
-                                    />
+                                    {disableCopy ? (
+                                        // Disabled copy button
+                                        <div className={styles.menuItemDisabled}>
+                                            <Copy />
+                                            <Typography
+                                                variant="Semibold_14"
+                                                className={styles.rightSideHeadingDisabled}
+                                            >
+                                                {CODE_VIEWER.COPY}
+                                            </Typography>
+                                        </div>
+                                    ) : (
+                                        // Enabled copy button
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                            container={
+                                                <CopyToClipboard text={copyResponseData()}>
+                                                    <div className={styles.menuItem}>
+                                                        <Copy />
+                                                        <Typography
+                                                            variant="Semibold_14"
+                                                            className={styles.rightSideHeading}
+                                                        >
+                                                            {CODE_VIEWER.COPY}
+                                                        </Typography>
+                                                    </div>
+                                                </CopyToClipboard>
+                                            }
+                                        />
+                                    )}
                                 </div>
 
                                 <div className={styles.menuItem} onClick={loadWizard}>
@@ -443,7 +593,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     menuOpenedRowDetail.current = null;
                                                     setOpenedRow(null);
                                                     if (menuId === 'downloadYaml') {
-                                                        handleDownloadYAML(rightPanelTemplateResponse?.templateAsYaml, openedItem?.name);
+                                                        handleDownloadYAML(
+                                                            rightPanelTemplateResponse?.template,
+                                                            openedItem?.name
+                                                        );
+                                                    } else if (menuId === 'viewAwsCloudFormation') {
+                                                        handleViewInAwsCloudFormation();
                                                     }
                                                 }
                                             }}
