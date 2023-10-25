@@ -141,8 +141,8 @@ export const RECOMMENDED_TEMPLATES = {
     PROD_NAME: 'Production'
 };
 
-export const CURL_REQ_TEMPLATE = (accountId: string, credentialId: string, region: string, token: string, payload: any) => `
-curl --location --request POST 'https://staging.api.workloads.netapp.com/accounts/${accountId}/wlmdb/v1/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
+export const CURL_REQ_TEMPLATE = (baseUrl: string, credentialId: string, region: string, token: string, payload: any) => `
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
