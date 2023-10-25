@@ -58,7 +58,7 @@ const { verifyToken } = jwtOperation;
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
 
-const API_PREFIX_PATH = '/wlmdb/accounts/:accountId';
+const API_PREFIX_PATH = '/accounts/:accountId/wlmdb';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -143,13 +143,6 @@ const app = fastify({
         { prefix: `${WLMDB}` }
     )
     .register(
-        (instance, _, done) => {
-            serviceStatusRoutes(instance);
-            done();
-        },
-        { prefix: `${API_PREFIX_PATH}` }
-    )
-    .register(
         (instance, _, next) => {
             instance.addHook(
                 'onRequest',
@@ -181,6 +174,7 @@ const app = fastify({
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
+            serviceStatusRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }
