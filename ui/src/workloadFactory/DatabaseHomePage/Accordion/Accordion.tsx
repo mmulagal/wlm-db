@@ -159,9 +159,9 @@ const Accordion = ({
                                     isBlackLayout={true}
                                 />
                             </div>
-                            <div className={styles['panel-collapse']}>
+                            {/* <div className={styles['panel-collapse']}>
                                 <Arrow className={!open ? styles['arrow-up'] : ''} width={18} height={18} />
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                     {/* Creation date will be shown only for saved config but not for recommended templates*/}
