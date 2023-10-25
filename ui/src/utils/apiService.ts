@@ -299,6 +299,9 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getStatus: builder.query({
+                query: () => `status`
             })
         };
     }
@@ -354,7 +357,7 @@ export const {
     useUpdateConfigMutation 
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation, useGetStatusQuery } = 
     databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;
