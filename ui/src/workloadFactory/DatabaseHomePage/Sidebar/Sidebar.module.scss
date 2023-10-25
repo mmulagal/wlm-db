@@ -251,7 +251,7 @@
             .scrollContainer {
                 overflow-y: auto;
                 height: calc(100% - 16px);
-                width: 1036px;
+                width: calc(100% + 16px);
             }
         }
     }
