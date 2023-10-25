@@ -38,7 +38,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
-    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
+    return `${apiHost}/wlmdb/accounts/${accountId}/v1`;
 };
 
 export const getUrlFixedInArg = (arg: BatchEntry[], baseUrl: string): BatchEntry[] => {
@@ -285,7 +285,7 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({ nextToken = null }) => `database-hosts?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
@@ -299,6 +299,9 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getStatus: builder.query({
+                query: () => `status`
             })
         };
     }
@@ -354,7 +357,7 @@ export const {
     useUpdateConfigMutation 
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation, useGetStatusQuery } = 
     databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;

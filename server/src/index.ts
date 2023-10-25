@@ -37,6 +37,7 @@ import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
+import serviceStatusRoutes from './routes/service-status';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -57,7 +58,7 @@ const { verifyToken } = jwtOperation;
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
 
-const API_PREFIX_PATH = '/accounts/:accountId/wlmdb';
+const API_PREFIX_PATH = '/wlmdb/accounts/:accountId';
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
@@ -137,6 +138,13 @@ const app = fastify({
     .register(
         (instance, _, done) => {
             systemRoutes(instance);
+            done();
+        },
+        { prefix: `${WLMDB}` }
+    )
+    .register(
+        (instance, _, done) => {
+            serviceStatusRoutes(instance);
             done();
         },
         { prefix: `${API_PREFIX_PATH}` }
