@@ -243,8 +243,8 @@
         .thirdBar {
             width: 1090px;
             background-color: var(--grey-65);
-            max-height: calc(80vh - 110px);
-            height: calc(80vh - 110px);
+            max-height: calc(87vh - 110px);
+            height: calc(87vh - 110px);
             // overflow-y: auto;
             padding: 10px 40px 0 40px;
 
@@ -315,6 +315,10 @@
     .sidebar {
         width: 570px !important;
 
+        .accordionMainContainer {
+            margin-top: 0 !important;
+        }
+
         .topBar {
             padding: 16px 32px 16px 32px !important;
         }
@@ -326,6 +330,10 @@
         .openView {
             gap: 0px !important;
 
+            .leftSideView {
+                margin-top: 0 !important;
+            }
+
             .rightSideView {
                 .rightSideTopBar {
                     width: 1000px !important;
@@ -334,7 +342,7 @@
                     width: 1000px !important;
                 }
                 .thirdBar {
-                    height: 540px !important;
+                    height: 616px !important;
                     width: 1000px !important;
                 }
             }
