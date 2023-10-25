@@ -4,7 +4,7 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
-import { ReactComponent as LoadIcon } from '../../../assets/ic_restore.svg';
+import { ReactComponent as LoadIcon } from '../../../assets/ic_circle_arrow_down.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -558,7 +558,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         <Copy />
                                                         <Typography
                                                             variant="Semibold_14"
-                                                            className={styles.rightSideHeading}
+                                                            className={styles.rightSideBlueHeading}
                                                         >
                                                             {CODE_VIEWER.COPY}
                                                         </Typography>
@@ -571,7 +571,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                                 <div className={styles.menuItem} onClick={loadWizard}>
                                     <LoadIcon />
-                                    <Typography variant="Semibold_14" className={styles.rightSideHeading}>
+                                    <Typography variant="Semibold_14" className={styles.rightSideBlueHeading}>
                                         {CODE_VIEWER.SIDEBAR_LOAD_WIZARD}
                                     </Typography>
                                 </div>
