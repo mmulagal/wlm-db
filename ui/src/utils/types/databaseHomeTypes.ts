@@ -62,6 +62,10 @@ export interface JobsSummaryRes {
     initializingPercent?: number;
 }
 
+export interface StatusRes {
+    isActive: boolean;
+}
+
 export interface AggregatedHostsCountRes {
     totalDatabases: number;
     totalHosts: number;
@@ -114,6 +118,11 @@ export interface DatabaseHostsEntities {
         jobsSummaryData: JobsSummaryRes | null;
         jobsSummaryLoading: false;
         jobsSummaryError: null;
+    };
+    getStatus: {
+        statusData: StatusRes | null;
+        statusLoading: false;
+        statusError: null;
     };
     databaseHostsList: null;
     aggregatedHostsCount: AggregatedHostsCountRes | null;

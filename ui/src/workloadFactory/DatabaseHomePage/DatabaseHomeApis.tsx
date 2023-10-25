@@ -8,12 +8,14 @@ import {
     addDatabaseHosts, 
     addDatabaseHostsList, 
     addDatabaseJobs, 
-    addJobsSummary 
+    addJobsSummary, 
+    addStatus
 } from "../../store/workloadFactory/databaseHomeSlice";
 import { 
     useGetDatabaseHostsQuery, 
     useGetDatabaseJobsQuery, 
-    useGetJobsSummaryQuery 
+    useGetJobsSummaryQuery, 
+    useGetStatusQuery
 } from "../../utils/apiService";
 import { 
     getAggrCost,
@@ -33,23 +35,44 @@ const DatabaseHomeApis = () => {
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
 
+    // skipApiCall to skip APi call when isActive is not true
+    const [skipApiCall, setSkipApiCall] = useState(true);
+
+    const {
+        data: statusData,
+        isFetching: statusLoading,
+        isError: statusError
+    } = useGetStatusQuery('');
+
     const {
         data: databaseHosts,
         isFetching: databaseHostsLoading,
         isError: databaseHostsError
-    } = useGetDatabaseHostsQuery({nextToken: hostCursor});
+    } = useGetDatabaseHostsQuery({nextToken: hostCursor}, {skip: skipApiCall});
 
     const {
         data: databaseJobs,
         isFetching: databaseJobsLoading,
         isError: databaseJobsError
-    } = useGetDatabaseJobsQuery({nextToken: jobsCursor});
+    } = useGetDatabaseJobsQuery({nextToken: jobsCursor}, {skip: skipApiCall});
 
     const {
         data: jobsSummaryData,
         isFetching: jobsSummaryLoading,
         isError: jobsSummaryError
-    } = useGetJobsSummaryQuery('');
+    } = useGetJobsSummaryQuery('', {skip: skipApiCall});
+
+    useEffect(() => {
+        if(statusError) {
+            dispatch(addStatus({undefined, statusLoading, statusError}));
+        } else {
+            dispatch(addStatus({statusData, statusLoading, statusError}));
+            if(statusData && statusData?.isActive) {
+                setSkipApiCall(false);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusData, statusLoading, statusError]);
 
     useEffect(() => {
         if(databaseHostsError) {
