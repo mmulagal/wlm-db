@@ -26,7 +26,7 @@ model deployment {
   deployment_status_reason  String?           @db.Text
   start_time                DateTime          @db.DateTime(0)
   end_time                  DateTime?         @db.DateTime(0)
-  metadata                      Json?             @default("{}")
+  data                      Json?             @default("{}")
   event                    event[]
 
   @@unique([account_id, deployment_id], name: "uk_wlmdb_deployment_account_id_deployment_id", map: "uk_wlmdb_deployment_account_id_deployment_id")

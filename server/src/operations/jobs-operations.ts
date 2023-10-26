@@ -18,28 +18,23 @@ async function getDeploymentJobsCount(accountId: string, duration: number = 90) 
     );
     const currentDate = moment();
     const fromDate = moment(currentDate).subtract(duration, 'days').toDate();
-
     try {
         const resp = await deploymentJobsCount(accountId, fromDate, DEPLOYMENT_JOBS_STATUS_FILTER);
+        const counts: Record<DEPLOYMENT_STATUS, number> = {} as Record<DEPLOYMENT_STATUS, number>;
 
-        const result = resp.map(item => ({
-            deploymentStatus: item.deployment_status,
-            count: item._count.deployment_status
-        }));
-
-        const formattedCounts = result.reduce((counts, { deploymentStatus, count }) => {
-            counts[deploymentStatus] = count;
-            return counts;
-        }, {} as { [key: string]: number });
+        resp.reduce((acc, { deployment_status: deploymentStatus }) => {
+            acc[deploymentStatus] = (acc[deploymentStatus] || 0) + 1;
+            return acc;
+        }, counts);
 
         return {
-            success: (formattedCounts.UPDATE_COMPLETE || 0) + (formattedCounts.CREATE_COMPLETE || 0),
-            initializing: (formattedCounts.CREATE_IN_PROGRESS || 0) + (formattedCounts.UPDATE_IN_PROGRESS || 0),
-            failed: (formattedCounts.CREATE_FAILED || 0) + (formattedCounts.UPDATE_FAILED || 0)
+            success: (counts.UPDATE_COMPLETE || 0) + (counts.CREATE_COMPLETE || 0),
+            initializing: (counts.CREATE_IN_PROGRESS || 0) + (counts.UPDATE_IN_PROGRESS || 0),
+            failed: (counts.CREATE_FAILED || 0) + (counts.UPDATE_FAILED || 0)
         };
     } catch (error) {
         logger.error('Unable to get deployment jobs counr:', error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to get deployment jobs counr: ${error}`);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to get deployment jobs count: ${error}`);
     }
 }
 
@@ -60,32 +55,27 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
             `No deployments found for account ${accountId} with statuses ${statuses}`
         );
     }
-    try {
-        const response = deploymentDetails.map(
-            ({
-                deployment_id: id,
-                deployment_status: status,
-                deployment_model: deploymentModel,
+    const response = deploymentDetails.map(
+        ({
+            deployment_id: id,
+            deployment_status: status,
+            deployment_model: deploymentModel,
+            region: deploymentRegion,
+            data: metaData
+        }) => ({
+            id,
+            name: (metaData as JSONObject).resourceName as string,
+            status,
+            metadata: {
                 region: deploymentRegion,
-                metadata
-            }) => ({
-                id,
-                name: (metadata as JSONObject).resourceName as string,
-                status,
-                metadata: {
-                    region: deploymentRegion,
-                    serverType: (metadata as JSONObject).databaseType as string,
-                    fileSystemType: (metadata as JSONObject).fileSystemType as string,
-                    serverInstallationMode: deploymentModel === null ? 'null' : deploymentModel
-                }
-            })
-        );
+                serverType: (metaData as JSONObject).databaseType as string,
+                fileSystemType: (metaData as JSONObject).fileSystemType as string,
+                serverInstallationMode: deploymentModel === null ? 'null' : deploymentModel
+            }
+        })
+    );
 
-        return { count: response.length, items: response, nextToken: '' };
-    } catch (error) {
-        logger.error(error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error fetching deployment jobs summary ${error}`);
-    }
+    return { count: response.length, items: response, nextToken: '' };
 }
 
 export { getDeploymentJobsCount, getDeploymentJobsSummary };

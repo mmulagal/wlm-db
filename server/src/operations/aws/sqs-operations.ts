@@ -146,7 +146,7 @@ async function processCloudFormationMessages() {
                                                     region,
                                                     deploymentName: stackName,
                                                     deploymentModel: trackSqlDeploymentType,
-                                                    metadata: {
+                                                    data: {
                                                         databaseType: trackdatabaseType,
                                                         resourceName: trackresourceName,
                                                         fileSystemType: trackfileSystemType
@@ -164,7 +164,7 @@ async function processCloudFormationMessages() {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
                                                         endTime: new Date(messageTimestamp).valueOf(),
-                                                        metadata: resourceProperties
+                                                        data: resourceProperties
                                                     });
 
                                                     const {
@@ -363,7 +363,7 @@ async function processCloudFormationMessages() {
                                             credentialsId,
                                             startTime: new Date(timestamp).valueOf(),
                                             deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
-                                            metadata: {
+                                            data: {
                                                 databaseType: stackDatabaseType,
                                                 resourceName: stackResourceName,
                                                 fileSystemType: stackFileSystemType

@@ -18,7 +18,7 @@ interface Deployment {
     startTime: number;
     endTime?: number;
     region: string;
-    metadata?: object;
+    data?: object;
 }
 
 interface Event {
@@ -91,7 +91,7 @@ async function createDeployment(accountId: string, params: Deployment) {
         startTime,
         endTime,
         region,
-        metadata
+        data
     } = params;
     return prisma.client.deployment.create({
         data: {
@@ -109,7 +109,7 @@ async function createDeployment(accountId: string, params: Deployment) {
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             start_time: new Date(startTime),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(metadata && { metadata }),
+            ...(data && { data }),
             region
         }
     });
@@ -124,11 +124,11 @@ async function updateDeployment(
         deploymentStatus?: DEPLOYMENT_STATUS;
         deploymentStatusReason?: string;
         endTime?: number;
-        metadata?: object;
+        data?: object;
     }
 ) {
     logger.info('Updating deployment', { id, params });
-    const { parentDeploymentId, deploymentName, deploymentStatus, deploymentStatusReason, endTime, metadata } = params;
+    const { parentDeploymentId, deploymentName, deploymentStatus, deploymentStatusReason, endTime, data } = params;
     return prisma.client.deployment.update({
         where: {
             account_id: accountId,
@@ -140,7 +140,7 @@ async function updateDeployment(
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(!isEmpty(metadata) && { metadata })
+            ...(!isEmpty(data) && { data })
         }
     });
 }
@@ -160,7 +160,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
         startTime,
         endTime,
         region,
-        metadata
+        data
     } = params;
     return prisma.client.deployment.upsert({
         where: {
@@ -184,7 +184,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             start_time: new Date(startTime),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(metadata && { metadata }),
+            ...(data && { data }),
             region
         },
         update: {
@@ -193,7 +193,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(!isEmpty(metadata) && { metadata })
+            ...(!isEmpty(data) && { data })
         }
     });
 }
@@ -365,8 +365,7 @@ async function listRelationshipsResources(accountId: string, resourceId?: string
 
 async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: Array<DEPLOYMENT_STATUS>) {
     logger.info('Deployment jobs count', accountId, fromDate, statuses);
-    return prisma.client.deployment.groupBy({
-        by: ['deployment_status'],
+    return prisma.client.deployment.findMany({
         where: {
             account_id: accountId,
             parent_deployment_id: null,
@@ -376,9 +375,6 @@ async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: 
             start_time: {
                 gte: fromDate.toISOString()
             }
-        },
-        _count: {
-            deployment_status: true
         }
     });
 }
