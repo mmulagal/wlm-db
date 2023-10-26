@@ -74,7 +74,7 @@ const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
-const WLMDB_ENDPOINT: string = config.get<string>('urls.wlm-db');
+const WF_ENDPOINT: string = config.get<string>('urls.workload-factory');
 const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
@@ -937,7 +937,7 @@ export {
     METHODS_WITH_PAYLOAD,
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
-    WLMDB_ENDPOINT,
+    WF_ENDPOINT,
     BATCH_API_CONCURRENCY_LIMIT,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
