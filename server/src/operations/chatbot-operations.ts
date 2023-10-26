@@ -1,10 +1,9 @@
 import Chatbot from '../lib/chatbot/chatbot';
 import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib/chatbot/helpers';
 import { queryBotResponseType } from '../routes/types/chatbot.types';
-import { CHATBOT_UI_PARAMS_FSX } from '../utils/consts';
+import { CHATBOT_UI_PARAMS_FSX } from '../lib/chatbot/consts';
 import getLogger from '../utils/logger';
-// import { getCredentialDetails } from '../cloud-manager/credentials';
-// import { credentialsId } from '../../../test/simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import { IntentTypes } from '../lib/chatbot/schemas/mssql-schema';
 
 const logger = getLogger();
 
@@ -20,13 +19,13 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
         }
 
         switch (intent?.type) {
-            case 'QueryResponse': {
+            case IntentTypes.QueryResponse: {
                 const value: queryBotResponseType = {
                     message: intent.response
                 };
                 return value;
             }
-            case 'DeployMsSql': {
+            case IntentTypes.DeployMsSql: {
                 const params = { ...intent.params };
                 // let params: DeployMsSqlParamsType = {};
                 // delete params.complete;

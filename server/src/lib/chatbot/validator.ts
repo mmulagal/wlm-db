@@ -3,8 +3,12 @@ import { getAdsList } from '../../operations/aws/directory-service-operations';
 import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
 import { getAllCredentials } from '../cloud-manager/credentials';
+import getLogger from '../../utils/logger';
+
+const logger = getLogger();
 
 async function validateCredentials(credentialsId: string) {
+    logger.debug('Validate Credentials', { credentialsId });
     const credentials = (await getAllCredentials('aws_assume_role')) || [];
 
     if (!credentialsId) {
@@ -21,7 +25,6 @@ async function validateCredentials(credentialsId: string) {
     }
 
     const credentialsMatched = credentials?.filter(reg => reg.credentialsId === credentialsId);
-    // // console.log(regionsMatched);
     if (credentialsMatched.length !== 1) {
         return {
             key: 'region',
@@ -42,8 +45,9 @@ async function validateCredentials(credentialsId: string) {
     };
 }
 
-async function validateRegion(credentialId: string, value: string) {
-    const { regions } = (await getFSxOntapRegionsList(credentialId)) || [];
+async function validateRegion(credentialsId: string, value: string) {
+    logger.debug('Validate Region', { credentialsId, value });
+    const { regions } = (await getFSxOntapRegionsList(credentialsId)) || [];
 
     if (!value) {
         return {
@@ -85,6 +89,7 @@ async function validateVpcId(
     paramType: string,
     paramValue?: string
 ) {
+    logger.debug('Validate VpcConfig', { credentialsId, region, vpcId, paramType, paramValue });
     const { vpcs } = await getVpcsList(credentialsId, region, paramType.includes('availabilityZone') ? 'subnet' : '');
     if (!vpcId) {
         return {
@@ -138,7 +143,7 @@ async function validateVpcId(
 }
 
 async function validateKeyName(credentialsId: string, region: string, keyName: string) {
-    // console.log('Validating Key Pair');
+    logger.debug('Validate Key Name', { credentialsId, region, keyName });
     const { keyPairs: keys } = await getKeyPairsList(credentialsId, region);
     if (!keyName) {
         return {
@@ -166,7 +171,7 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
 }
 
 async function validateImageId(credentialsId: string, region: string, imageId: string) {
-    // console.log('Validating AMI');
+    logger.debug('Validate Image Id', { credentialsId, region, imageId });
     const { amis } = await getAmiList(credentialsId, region, 'Windows', 'SQL');
     if (!imageId) {
         return {
@@ -204,7 +209,7 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
 }
 
 async function validateInstanceType(credentialsId: string, region: string, workloadInstanceType: string) {
-    // console.log('Validating Instance Type');
+    logger.debug('Validate Instance Type', { credentialsId, region, workloadInstanceType });
     const { instanceTypes } = await getInstanceTypes(credentialsId, region);
     if (!workloadInstanceType) {
         return {
@@ -236,7 +241,7 @@ async function validateInstanceType(credentialsId: string, region: string, workl
 }
 
 async function validateDomain(credentialsId: string, region: string, domainDnsname: string, paramType: string) {
-    // console.log('Validating Domain', { region, domainDnsname, paramType });
+    logger.debug('Validate Key Name', { credentialsId, region, domainDnsname, paramType });
     const { directories } = await getAdsList(credentialsId, region);
     if (!domainDnsname) {
         return {
@@ -288,7 +293,7 @@ function validateText(text: string, paramType: string) {
 }
 
 function validateDbSize(size: number) {
-    // console.log('ValidateDbSize', size);
+    logger.debug('Validate DB Size', { size });
     if (!size || typeof size !== 'number' || (size < 1024 && size >= 1024 ** 3)) {
         return {
             key: 'databaseSize',
@@ -304,6 +309,7 @@ function validateDbSize(size: number) {
 }
 
 function validateThroughPut(iops: number) {
+    logger.debug('Validate ThroughPut', { iops });
     const ThroughPut = [];
     for (let i = 0; i <= 5; i++) {
         ThroughPut.push({ label: `${128 * 2 ** i} Mbps`, value: 128 * 2 ** i });
@@ -330,13 +336,12 @@ function validateThroughPut(iops: number) {
 }
 
 async function validateSecurityGroup(credentialsId: string, region: string, vpcId: string, securityGroup: string) {
-    // console.log('Validating Security Group', { region, vpcId, securityGroup });
+    logger.debug('Validate Security Group', { credentialsId, region, securityGroup });
     const { vpcs } = await getVpcsList(credentialsId, region, 'securityGroup');
 
     const vpc = vpcs.find(({ id }) => id === vpcId);
-    // console.log('VPC>>>', vpc);
     const secGrp = vpc?.securityGroups || [];
-    // console.log('SECGRP>>>', secGrp);
+
     if (!securityGroup) {
         return {
             key: 'ontapSgGroupId',
@@ -367,7 +372,7 @@ async function validateSecurityGroup(credentialsId: string, region: string, vpcI
 }
 
 async function validateFSxDeploymentMode(deploymentType: string) {
-    // console.log('Validate FSx Deployment Type', { deploymentType });
+    logger.debug('Validate FSX Deployment Mode', { deploymentType });
     if (!['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(deploymentType)) {
         return {
             key: 'fsxDeploymentMode',

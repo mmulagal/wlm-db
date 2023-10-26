@@ -13,6 +13,33 @@ import {
     validateCredentials
 } from './validator';
 import getLogger from '../../utils/logger';
+import {
+    AD_SCENARIO_TYPE,
+    AZ_1,
+    AZ_2,
+    CREDENTIALS_ID,
+    DB_SIZE,
+    DNS_IP,
+    DOMAIN_DNS,
+    DOMAIN_PASS,
+    DOMAIN_USERNAME,
+    FSX_DEPLOYMENT_MODE,
+    FSX_IOPS,
+    FSX_PASS,
+    FSX_USERNAME,
+    FSX_VOL_THROUGHPUT,
+    KEY_PAIR_NAME,
+    ONTAP_SG_ID,
+    REGION,
+    SERVICE_ACCOUNT_NAME,
+    SERVICE_ACCOUNT_PASS,
+    SQL_AMI,
+    SQL_DEPLOYMENT_MODE,
+    SQL_FCI,
+    VPC_CIDR,
+    VPC_ID,
+    WL_INSTANCE_TYPE
+} from './consts';
 
 const logger = getLogger();
 
@@ -34,8 +61,8 @@ function findChangedKeys(params: Params, oldParams: Params) {
     return changedKeys;
 }
 
-function resetNextParamsOnUpdate(requiredParams: any, params: Params, oldParams: Params, dependsOn: Set<string>) {
-    for (const reqParam of requiredParams) {
+function resetNextParamsOnUpdate(schemaParams: any, params: Params, oldParams: Params, dependsOn: Set<string>) {
+    for (const reqParam of schemaParams) {
         for (const key in reqParam) {
             if (Array.isArray(reqParam[key])) {
                 resetNextParamsOnUpdate(reqParam[key], params, oldParams, dependsOn);
@@ -54,56 +81,43 @@ interface Params {
 async function validateParams(
     params: Params,
     oldParams: Params,
-    requiredParams: any
+    schemaParams: any
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', oldParams, { params, oldParams });
     let validatedParams: Params = {};
     const errors: Array<ValidationResponse> = [];
-    for (const reqParam of requiredParams) {
+    for (const reqParam of schemaParams) {
         let response: ValidationResponse | { value: any } | undefined;
         if (reqParam.required !== false) {
             const keys = Object.keys(reqParam);
             for (const key of keys) {
                 logger.debug('KEY>>>', key, reqParam[key]);
-                // if (reqParam[key].required === false) {
-                //     continue;
-                // }
 
                 if (Array.isArray(reqParam[key])) {
                     const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    // validatedParams[key] = response;
                     logger.debug('Response from Recursive Call>>>', response);
-                    // if (response.params) {
-                    // validatedParams.push(...response?.params);
-                    // }
                     validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
                     if (recursiveValidationResponse?.errors?.length) {
-                        errors.push(...recursiveValidationResponse.errors);
-                        // break;
-                        return { errors, params: validatedParams };
+                        return { errors: recursiveValidationResponse.errors, params: validatedParams };
                     }
-                    // return { errors, params: validatedParams };
-                    // else if (response?.value) {
-                    // }
                 } else if (checkIfRequired(reqParam[key].required, params)) {
-                    // logger.debug('CHECK FOR SKIPPING>>', key, params[key], oldParams?.[key]);
                     const shouldSkip = params?.[key] && oldParams?.[key] && oldParams[key] === params[key];
                     logger.debug('skip check', shouldSkip);
                     if (!shouldSkip) {
                         switch (key) {
-                            case 'credentialsId': {
+                            case CREDENTIALS_ID: {
                                 response = await validateCredentials(params[key]);
                                 break;
                             }
-                            case 'region': {
+                            case REGION: {
                                 response = await validateRegion(params.credentialsId, params[key]);
                                 break;
                             }
-                            case 'vpcId':
-                            case 'availabilityZone1':
-                            case 'availabilityZone2':
-                            case 'vpcCidr': {
+                            case VPC_ID:
+                            case AZ_1:
+                            case AZ_2:
+                            case VPC_CIDR: {
                                 response = await validateVpcId(
                                     params.credentialsId,
                                     params.region,
@@ -113,28 +127,24 @@ async function validateParams(
                                 );
                                 break;
                             }
-                            // case 'securityGroup': {
-                            //     response = await validateSecurityGroup(params.region, params[key]);
-                            //     break;
-                            // }
-                            case 'workloadInstanceType': {
+                            case WL_INSTANCE_TYPE: {
                                 response = await validateInstanceType(params.credentialsId, params.region, params[key]);
                                 break;
                             }
-                            case 'keyPairName': {
+                            case KEY_PAIR_NAME: {
                                 response = await validateKeyName(params.credentialsId, params.region, params[key]);
                                 break;
                             }
-                            case 'sqlAmiId': {
+                            case SQL_AMI: {
                                 response = await validateImageId(params.credentialsId, params.region, params[key]);
                                 break;
                             }
-                            case 'adScenarioType': {
+                            case AD_SCENARIO_TYPE: {
                                 response = { value: 'AWS_MANAGED_AD' };
                                 break;
                             }
-                            case 'dnsIpaddress':
-                            case 'domainDnsname': {
+                            case DNS_IP:
+                            case DOMAIN_DNS: {
                                 response = await validateDomain(
                                     params.credentialsId,
                                     params.region,
@@ -143,37 +153,37 @@ async function validateParams(
                                 );
                                 break;
                             }
-                            case 'domainUsername':
-                            case 'domainPassword':
-                            case 'fsxUsername':
-                            case 'fsxPassword':
-                            case 'serviceAccountName':
-                            case 'serviceAccountPassword':
-                            case 'sqlFciName': {
+                            case DOMAIN_USERNAME:
+                            case DOMAIN_PASS:
+                            case FSX_USERNAME:
+                            case FSX_PASS:
+                            case SERVICE_ACCOUNT_NAME:
+                            case SERVICE_ACCOUNT_PASS:
+                            case SQL_FCI: {
                                 response = validateText(params[key], key);
                                 break;
                             }
-                            case 'fsxDeploymentMode': {
+                            case FSX_DEPLOYMENT_MODE: {
                                 response = await validateFSxDeploymentMode(params[key]);
                                 break;
                             }
-                            case 'sqlDeploymentMode': {
+                            case SQL_DEPLOYMENT_MODE: {
                                 response = { value: 'standalone' };
                                 break;
                             }
-                            case 'databaseSize': {
+                            case DB_SIZE: {
                                 response = validateDbSize(params[key]);
                                 break;
                             }
-                            case 'fsxVolThroughput': {
+                            case FSX_VOL_THROUGHPUT: {
                                 response = validateThroughPut(params[key]);
                                 break;
                             }
-                            case 'fsxIOPS': {
+                            case FSX_IOPS: {
                                 response = { value: 3 * params.databaseSize };
                                 break;
                             }
-                            case 'ontapSgGroupId': {
+                            case ONTAP_SG_ID: {
                                 response = await validateSecurityGroup(
                                     params.credentialsId,
                                     params.region,
@@ -182,9 +192,6 @@ async function validateParams(
                                 );
                                 break;
                             }
-                            // case 'keyPairName': {
-                            //     response = await validateKeyName;
-                            // }
                             default:
                         }
                     } else {
@@ -192,7 +199,6 @@ async function validateParams(
                     }
                     if ((response as ValidationResponse)?.status === 'error') {
                         delete params[key];
-                        // return response;
                         errors.push(response as ValidationResponse);
                     }
 
@@ -203,7 +209,6 @@ async function validateParams(
                 }
             }
         }
-        // logger.debug({ params, response });
     }
     return { errors, params: validatedParams };
 }
