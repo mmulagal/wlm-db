@@ -23,6 +23,7 @@ const DatabaseVersion = () => {
     ];
 
     //Function to generate the options for Select Field
+    //@ts-ignore
     const generateDbVersions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         versions?.map((val, idx: number) => {
@@ -34,7 +35,7 @@ const DatabaseVersion = () => {
     }, []);
 
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig) {
             dispatch(setDBVersion(generateDbVersions[0]));
         }
     }, [dispatch, generateDbVersions]);

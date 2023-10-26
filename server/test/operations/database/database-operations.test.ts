@@ -52,6 +52,10 @@ describe('Database operations', () => {
         const resp = await getSavedConfig(ACCOUNT_ID, modifiedId);
         expect(resp.name).toEqual('updated name');
         // expect(resp.modifiedTime).toBeDefined();
+        /*
+            This check is commented because prismock doesnot support @updatedAT attribute https://github.com/morintd/prismock#:~:text=%E2%9B%94-,%40updatedAt,-%E2%9B%94
+            Once the attribute is enabled we can run this assertion.
+        */
         const response = await deleteSavedConfig(ACCOUNT_ID, id);
         expect(response).toBeUndefined();
     });
@@ -61,18 +65,30 @@ describe('Database operations', () => {
             deploymentId: 'wlmdb-12345',
             deploymentName: 'wlmdb-12345',
             deploymentStatus: 'CREATE_COMPLETE',
+            deploymentModel: 'FCI',
             credentialsId: '',
             startTime: 0,
-            region: ''
+            region: '',
+            data: {
+                resourceName: 'dummy-resourec-name',
+                databaseType: 'Microsoft SQL server',
+                fileSystemType: 'FSx ONTAP'
+            }
         });
         await createDeployment(ACCOUNT_ID, {
             deploymentId: 'wlmdb-12345-sql',
             deploymentName: 'wlmdb-12345-sql',
             parentDeploymentId: 'wlmdb-12345',
+            deploymentModel: 'FCI',
             deploymentStatus: 'CREATE_COMPLETE',
             credentialsId: '',
             startTime: 0,
-            region: ''
+            region: '',
+            data: {
+                resourceName: 'dummy-resourec-name',
+                databaseType: 'Microsoft SQL server',
+                fileSystemType: 'FSx ONTAP'
+            }
         });
         const resp = await getAllDeploymentStatus(ACCOUNT_ID);
         expect(response.deployment_id).toEqual(resp[0].deploymentId);
@@ -85,17 +101,29 @@ describe('Database operations', () => {
             deploymentId: 'wlmdb-2345',
             deploymentName: 'wlmdb-2345',
             deploymentStatus: 'CREATE_COMPLETE',
+            deploymentModel: 'FCI',
             credentialsId: '',
             startTime: 0,
-            region: ''
+            region: '',
+            data: {
+                resourceName: 'dummy-resourec-name',
+                databaseType: 'Microsoft SQL server',
+                fileSystemType: 'FSx ONTAP'
+            }
         });
         const response1 = await createDeployment(ACCOUNT_ID, {
             deploymentId: 'wlmdb-45678',
             deploymentName: 'wlmdb-45678',
             deploymentStatus: 'CREATE_FAILED',
+            deploymentModel: 'FCI',
             credentialsId: '',
             startTime: 0,
-            region: ''
+            region: '',
+            data: {
+                resourceName: 'dummy-resourec-name',
+                databaseType: 'Microsoft SQL server',
+                fileSystemType: 'FSx ONTAP'
+            }
         });
         let resp = await getDeploymentStatusByName(ACCOUNT_ID, 'wlmdb-2345');
         expect(response.deployment_name).toEqual(resp.deploymentName);
