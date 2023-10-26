@@ -73,6 +73,7 @@
         "patch-package": "^8.0.0",
         "prisma": "^5.2.0",
         "randomatic": "^3.1.1",
+        "typescript": "^5.2.2",
         "yaml": "^2.3.2"
     },
     "devDependencies": {
@@ -96,7 +97,6 @@
         "nock": "^13.3.1",
         "prismock": "^1.21.1",
         "rimraf": "^5.0.1",
-        "typescript": "^5.0.4",
         "vitest": "^0.34.2"
     }
 }
