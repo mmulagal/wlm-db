@@ -8,12 +8,13 @@ import { IntentTypes } from '../lib/chatbot/schemas/mssql-schema';
 const logger = getLogger();
 
 async function queryBot(query: string, oldParams?: { [x: string]: any }) {
+    logger.info('Querying Bot', { query, oldParams });
     try {
         let intent;
         const chatbot = new Chatbot();
 
         const response = await chatbot.query(query);
-        // console.log('CHATBOT RESP>>>', response?.data?.intent?.params);
+        logger.info('CHATBOT RESP>>>', JSON.stringify(response));
         if (response.success) {
             ({ intent } = response.data);
         }
@@ -70,7 +71,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
             }
         }
     } catch (e) {
-        logger.error(e);
+        logger.error('Failed to get the query response', e);
         return { message: 'Sorry, I could not find anything related to your query, please try again' };
     }
 }
