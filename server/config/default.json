@@ -34,7 +34,8 @@
         }
     },
     "log4js": {
-        "config-file": "./config/log4js.json"
+        "config-file": "./config/log4js.json",
+        "local-config-file": "./config/log4js.local.json"
     },
     "kinesis": {
         "stream-name": "audit-service-staging-stream"
