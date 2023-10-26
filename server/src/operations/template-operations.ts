@@ -225,11 +225,10 @@ async function uploadTemplates(
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const signedUrls = await generateSignedUrls(region, resourceType);
-        const promises: any[] = [];
-        SQL_TEMPLATES_DISTRIBUTION.map(async template => {
-            promises.push(updateTemplateUrls(region, template.location, signedUrls, template.name, stackName));
-        });
-        Promise.all(promises).then(() =>
+        const promises = SQL_TEMPLATES_DISTRIBUTION.map(async template =>
+            updateTemplateUrls(region, template.location, signedUrls, template.name, stackName)
+        );
+        await Promise.all(promises).then(() =>
             updateTemplateUrls(
                 region,
                 MASTER_TEMPLATE_DISTRIBUTION.location,
