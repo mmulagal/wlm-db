@@ -1,6 +1,7 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
+import { attempt } from 'lodash-es';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -21,6 +22,8 @@ import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
+
+const FsxNSecretName = 'wlmdb-fsx1697797203049'; // Todo: Remove this and use fsx secret
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
@@ -180,7 +183,7 @@ async function getStorageDataUsingSSM(
     logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId);
 
     const commands = [
-        `C:\\SSM\\OntapRestGet.ps1 -FSxSecret wlmdb-fsx-${fileSystemId} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName wlmdb-fsx-${fileSystemId} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
     ];
 
     const response = await callSsmExecution(
@@ -220,4 +223,44 @@ async function isAWSBackupEnabled(credentialsId: string, region: string, fsxId: 
     return backups.Backups?.length !== 0;
 }
 
-export { getFSxFileSystemsList, isAWSBackupEnabled, getVolumesUuids, getStorageDataUsingSSM };
+async function getOntapVolumesSnapshotCount(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    logger.info('Fetching ontap snapshots count ', credentialsId, region, activeNodeInstanceId);
+
+    const volumeUuids = await getVolumesUuids(credentialsId, region, fileSystemId);
+
+    const apiEndpoint = 'storage/volumes';
+    const apiFilter = `uuid=${volumeUuids?.join()}`;
+    const apiQuery = 'fields=snapshot_count';
+
+    const commands = [
+        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${FsxNSecretName}  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+    ];
+
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    const cleanResponse = response?.replaceAll('\r\n', '');
+    const parsedResponse = attempt(JSON.parse, cleanResponse);
+
+    logger.debug({ parsedResponse });
+    return parsedResponse instanceof Error ? undefined : parsedResponse;
+}
+
+export {
+    getFSxFileSystemsList,
+    isAWSBackupEnabled,
+    getOntapVolumesSnapshotCount,
+    getVolumesUuids,
+    getStorageDataUsingSSM
+};

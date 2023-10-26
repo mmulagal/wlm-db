@@ -445,8 +445,8 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
     const storageConsume = totalConsume - storageSavings;
 
     return {
-        storageConsumes: formatSizeOnePrecision(storageConsume) || 'N/A',
-        storageSavings: formatSizeOnePrecision(storageSavings) || 'N/A',
+        storageConsumes: formatSizeOnePrecision(storageConsume),
+        storageSavings: formatSizeOnePrecision(storageSavings),
         storageSavingsPercent: (storageSavings / totalConsume) * 100 || 0
     };
 };

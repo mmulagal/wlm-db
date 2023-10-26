@@ -10,18 +10,19 @@ import { navigateToCanvas } from '../../../utils/appConfig';
 
 type ResourceHeaderProps = {
     name: string | (string | null)[] | null;
-    refresh: () => void,
-    onDeleteMssql: (event: React.MouseEvent<HTMLElement>) => void
+    refresh: () => void;
+    onDeleteMssql: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
 const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) => {
     const tabs = [
-        { url: 'overview', name: GENERAL.OVERVIEW},
+        { url: 'overview', name: GENERAL.OVERVIEW },
         { url: 'databases', name: GENERAL.DATABASES },
         { url: 'tables', name: GENERAL.TABLES }
     ];
     const { pathname } = useLocation();
 
+    //@ts-ignore
     const selectedTab = useMemo(() => {
         const splitPath = pathname.split('/');
         return splitPath.length ? splitPath[splitPath.length - 1] : 'overview';
@@ -62,7 +63,7 @@ const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) =
                 <Button
                     variant="icon"
                     onClick={() => {
-                        refresh()
+                        refresh();
                     }}
                 >
                     <ReloadIcon />
@@ -74,8 +75,8 @@ const ResourceHeader = ({ name, refresh, onDeleteMssql }: ResourceHeaderProps) =
                             children: (
                                 <div
                                     className={styles.menuItem}
-                                    onClick={(e) => {
-                                        onDeleteMssql(e) ;
+                                    onClick={e => {
+                                        onDeleteMssql(e);
                                     }}
                                 >
                                     <Typography variant="Regular_14">{GENERAL.REMOVE_FROM_WORKSPACE}</Typography>

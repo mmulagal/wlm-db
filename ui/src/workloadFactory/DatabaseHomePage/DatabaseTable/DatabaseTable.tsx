@@ -271,7 +271,10 @@ const DatabaseTable = () => {
             accessor: 'topology.serverType',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '7',
@@ -279,7 +282,10 @@ const DatabaseTable = () => {
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '8',
@@ -287,7 +293,10 @@ const DatabaseTable = () => {
             accessor: 'topology.region',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '9',
@@ -295,7 +304,10 @@ const DatabaseTable = () => {
             accessor: 'topology.fileSystemType',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails()
     ];

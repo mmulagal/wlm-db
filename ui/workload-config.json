@@ -16,7 +16,7 @@
         "primaryCtaLabel": "Deploy database",
         "primaryCtaTo": "/databases/add-working-environment/database-services/mssql/create",
         "secondaryCtaLabel": "Manage workload",
-        "secondaryCtaTo": "",
+        "secondaryCtaTo": "/databases",
         "isComingSoon": false,
         "dataUrl": "/wlmdb/v1/status"
     }
