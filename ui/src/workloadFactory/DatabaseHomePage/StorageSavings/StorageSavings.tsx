@@ -55,13 +55,13 @@ const StorageSavings = () => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={hostData?.storageConsumes || 'N/A'}
+                        value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
                         text={'Storage Consumes'}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={hostData?.storageSavings || 'N/A'}
+                        value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-4)"
                         text={'Storage Savings'}
                     />
