@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
-import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
+import { CODE_VIEWER } from '../../../utils/appConstants';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
 type AccordionContent = {
@@ -159,9 +159,9 @@ const Accordion = ({
                                     isBlackLayout={true}
                                 />
                             </div>
-                            <div className={styles['panel-collapse']}>
+                            {/* <div className={styles['panel-collapse']}>
                                 <Arrow className={!open ? styles['arrow-up'] : ''} width={18} height={18} />
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                     {/* Creation date will be shown only for saved config but not for recommended templates*/}
@@ -174,14 +174,14 @@ const Accordion = ({
                         </Typography>
                     )}
                 </div>
-                {open && (
+                {/* {open && (
                     <div className={styles.contentArea}>
                         <Typography variant="Regular_13" className={styles.contentText}>
                             {CODE_VIEWER.DEPLOYMENT} {GENERAL.NUMBER_OF_EXECUTION}
                         </Typography>
                         <div className={styles.extraSpace} />
                     </div>
-                )}
+                )} */}
             </div>
         </div>
     );

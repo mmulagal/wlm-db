@@ -6,7 +6,21 @@ import { GENERAL } from '../../../utils/appConstants';
 import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const EstimatedCost = () => {
-    const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
+
+    // const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
+    // Hardcoded values for Estimated Cost Summary
+    const hostData = {
+        "storageCost": 11200,
+        "computeCost": 3200,
+        "connectivityCost": 1600,
+        "otherCost": 384,
+        "totalCost": 16384,
+        "storageCostPercent": 68.359375,
+        "computeCostPercent": 19.53125,
+        "connectivityCostPercent": 9.765625,
+        "otherCostPercent": 2.34375
+    };
+
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     

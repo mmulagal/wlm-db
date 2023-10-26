@@ -24,7 +24,7 @@ const StorageSavings = () => {
                     }
                 </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    {formatFractionalNumber(hostData?.storageSavingsPercent)}%
+                    {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
                 </Typography>
             </div>
 
@@ -55,13 +55,13 @@ const StorageSavings = () => {
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={hostData?.storageConsumes + ' TiB'}
+                        value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
                         text={'Storage Consumes'}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={hostData?.storageSavings + ' TiB'}
+                        value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-4)"
                         text={'Storage Savings'}
                     />

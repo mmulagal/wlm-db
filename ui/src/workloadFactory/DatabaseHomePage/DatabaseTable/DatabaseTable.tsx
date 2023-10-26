@@ -10,6 +10,7 @@ import { useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import { STATUS_CONST } from '../../../utils/consts';
+import { formatSizeOnePrecision } from '../../../utils/utilityFunctions';
 
 const DatabaseTable = () => {
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
@@ -229,12 +230,11 @@ const DatabaseTable = () => {
             isSortable: true,
             width: '184px',
             renderCell: (cellData: any) => {
-                const percentVal = (cellData.savings / cellData.allocated) * 100;
                 return (
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {percentVal + '% (' + cellData?.savings + ' GiB)'}
+                                {cellData?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(cellData?.spaceSavings) + ')'}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
@@ -271,7 +271,10 @@ const DatabaseTable = () => {
             accessor: 'topology.serverType',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '7',
@@ -279,7 +282,10 @@ const DatabaseTable = () => {
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '8',
@@ -287,7 +293,10 @@ const DatabaseTable = () => {
             accessor: 'topology.region',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '9',
@@ -295,7 +304,10 @@ const DatabaseTable = () => {
             accessor: 'topology.fileSystemType',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails()
     ];

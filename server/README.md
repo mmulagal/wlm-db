@@ -7,3 +7,8 @@
 -   npm install
 -   npx prisma migrate deploy
 -   npx prisma generate
+
+# Simulator and Unit test 
+
+-  For simulator and unit test prismock is used to create an inmemory database using the prisma schema that will be only viable till the application is running once its stopped data will be cleared. https://github.com/morintd/prismock 
+-  prismock supported an unsupported features are mentioned here https://github.com/morintd/prismock#supported-features

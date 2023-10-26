@@ -17,8 +17,14 @@ const initialState: DatabaseHostsEntities = {
         jobsSummaryLoading: false,
         jobsSummaryError: null
     },
+    getStatus: {
+        statusData: null,
+        statusLoading: false,
+        statusError: null
+    },
     databaseHostsList: null,
     aggregatedHostsCount: {
+        totalDatabases: 0,
         totalHosts: 0,
         totalUpHosts: 0,
         totalInitializingHosts: 0,
@@ -31,11 +37,8 @@ const initialState: DatabaseHostsEntities = {
         protectedPercent: 0,
         unprotectedPercent: 0,
         awsBackupDb: 0,
-        awsBackupPercent: 0,
         fsxOntapSnapshotsDb: 0,
-        fsxOntapSnapshotsPercent: 0,
         sqlServerBackupDb: 0,
-        sqlServerBackupPercent: 0,
     },
     aggregatedStorageSavings: {
         storageConsumes: '0',
@@ -68,6 +71,9 @@ const databaseHomeSlice = createSlice({
         addJobsSummary: (state, action: PayloadAction<any>) => {
             state.getJobsSummary = action.payload;
         },
+        addStatus: (state, action: PayloadAction<any>) => {
+            state.getStatus = action.payload;
+        },
         addDatabaseHostsList: (state, action: PayloadAction<any>) => {
             state.databaseHostsList = action.payload;
         },
@@ -90,6 +96,7 @@ export const {
     addDatabaseHosts,
     addDatabaseJobs,
     addJobsSummary,
+    addStatus,
     addDatabaseHostsList,
     addAggregateHostsCountData,
     addAggregatedProtectionDbCount,

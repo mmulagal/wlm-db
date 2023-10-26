@@ -8,17 +8,18 @@ import { useOutletContext } from 'react-router-dom';
 import { useMemo } from 'react';
 
 const Tables = () => {
-    let {tables, batchingCompleted} = useOutletContext<{tables: any, batchingCompleted: boolean}>();
+    let { tables, batchingCompleted } = useOutletContext<{ tables: any; batchingCompleted: boolean }>();
+    //@ts-ignore
     const summaryData = useMemo(() => {
-        const totalSize = tables.reduce((sum:number, item:any) => sum + parseInt(item.tableSize), 0);
+        const totalSize = tables.reduce((sum: number, item: any) => sum + parseInt(item.tableSize), 0);
         const totalSizeObj = formatSizeSplit(totalSize);
         return {
             count: tables.length,
             sizeValue: totalSizeObj.value,
             sizeUnit: totalSizeObj.format,
             isLoading: !batchingCompleted
-        }
-    }, [tables, batchingCompleted])
+        };
+    }, [tables, batchingCompleted]);
 
     const TablesColDefs: ColumnProps[] = [
         {
@@ -84,7 +85,7 @@ const Tables = () => {
                     tableProps={tableProps}
                     pluralTitle={'Tables'}
                     singularTitle={'Table'}
-                    lazyLoadingText='Loading Tables'
+                    lazyLoadingText="Loading Tables"
                 />
                 <Table
                     //@ts-ignore

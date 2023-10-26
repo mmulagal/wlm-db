@@ -7,7 +7,7 @@ import {
     retry
 } from '@reduxjs/toolkit/query/react';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
-import { RootState } from '../store/store';
+import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
@@ -28,6 +28,13 @@ const prepareHeaders = (
     return headers;
 };
 
+export const getBaseUrl = () => {
+    const state = store.getState();
+    const accountId = state?.auth?.accountId;
+    const apiHost = process.env.REACT_APP_CM_URL;
+    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
+}
+
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: '',
     prepareHeaders
@@ -38,7 +45,7 @@ export const buildBaseUrl = (api: BaseQueryApi): string => {
     const { accountId } = auth;
     const isDevMode = process.env.REACT_APP_USE_CM_FORWARDER !== 'true';
     const apiHost = isDevMode ? process.env.REACT_APP_LOCAL_SERVER : process.env.REACT_APP_CM_URL;
-    return `${apiHost}/wlmdb/accounts/${accountId}/api/v1`;
+    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
 };
 
 export const getUrlFixedInArg = (arg: BatchEntry[], baseUrl: string): BatchEntry[] => {
@@ -88,7 +95,7 @@ async function handleRootListItems<T extends DatabaseTables>(
         const { dispatch } = queryApi;
         const baseUrl = buildBaseUrl(queryApi);
         const urlFixedInArg = getUrlFixedInArg(batchEntryArray, baseUrl);
-        const result = await baseQuery({ url: 'batch', method: 'POST', body: urlFixedInArg });
+        const result = await baseQuery({ url: 'batches', method: 'POST', body: urlFixedInArg });
         if (result.error) {
             //error on the batch request itself - will be handled in the error middleware
             return { error: result.error as FetchBaseQueryError };
@@ -160,23 +167,23 @@ export const awsApi = createApi({
             }),
             getSnsTopics: builder.query({
                 query: ({ credentialId, region }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/snsTopics`
+                    url: `credentials/${credentialId}/regions/${region}/sns-topics`
                 })
             }),
             getKmsKeys: builder.query({
-                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/kmsKeys` })
+                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/kms-keys` })
             }),
             getKeyPairs: builder.query({
-                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/keyPairs` })
+                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/key-pairs` })
             }),
             getInstanceTypes: builder.query({
                 query: ({ credentialId, region }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/instanceTypes`
+                    url: `credentials/${credentialId}/regions/${region}/instance-types`
                 })
             }),
             getFsxnList: builder.query({
                 query: ({ credentialId, region, vpcId }) => ({
-                    url: `credentials/${credentialId}/fsx/regions/${region}/vpcs/${vpcId}/filesystems`
+                    url: `credentials/${credentialId}/fsx/regions/${region}/vpcs/${vpcId}/file-systems`
                 })
             }),
             createSqlTemplate: builder.mutation({
@@ -250,27 +257,27 @@ export const configApi = createApi({
     endpoints: builder => {
         return {
             getConfigList: builder.query({
-                query: () => ({ url: `config` })
+                query: () => ({ url: `configs` })
             }),
             getConfigData: builder.query({
-                query: ({ configId }) => ({ url: `config/${configId}` })
+                query: ({ configId }) => ({ url: `configs/${configId}` })
             }),
             saveConfigData: builder.mutation({
                 query: ({ payload }) => ({
-                    url: `config`,
+                    url: `configs`,
                     method: 'POST',
                     body: payload
                 })
             }),
             deleteConfig: builder.mutation({
                 query: ({ configId }) => ({
-                    url: `config/${configId}`,
+                    url: `configs/${configId}`,
                     method: 'DELETE'
                 })
             }),
             updateConfig: builder.mutation({
                 query: ({ configId, payload }) => ({
-                    url: `config/${configId}`,
+                    url: `configs/${configId}`,
                     method: 'PATCH',
                     body: payload
                 })
@@ -285,7 +292,7 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({ nextToken = null }) => `database-hosts?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
@@ -294,11 +301,14 @@ export const databaseHomeApi = createApi({
                 query: () => `jobs/summary`
             }),
             getTemplates: builder.mutation({
-                query: ({ credentialId, region, payload }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/cloudformation/template`,
+                query: ({ payload }) => ({
+                    url: `cloudformation/template`,
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getStatus: builder.query({
+                query: () => `status`
             })
         };
     }
@@ -354,7 +364,7 @@ export const {
     useUpdateConfigMutation 
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation, useGetStatusQuery } = 
     databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;

@@ -51,7 +51,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/amis`, asy
 
 // Get SNS mock response
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/snsTopics`,
+    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/sns-topics`,
     async (req: {}, res: SnsTopicsRes) => {
         const retData = snsTopicsData;
         generateResponse(res, 200, retData);
@@ -59,20 +59,20 @@ router.get(
 );
 
 // Get KMS mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/kmsKeys`, async (req: {}, res: KmsKeysRes) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/kms-keys`, async (req: {}, res: KmsKeysRes) => {
     const retData = kmsKeysData;
     generateResponse(res, 200, retData);
 });
 
 // Get Key Pair mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/keyPairs`, async (req: {}, res: KeyPairRes) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsId/regions/:region/key-pairs`, async (req: {}, res: KeyPairRes) => {
     const retData = keyPairData;
     generateResponse(res, 200, retData);
 });
 
 // Get Instance Type mock response
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instanceTypes`,
+    `${BASE_URL}/v1/credentials/:credentialsId/regions/:region/instance-types`,
     async (req: {}, res: InstanceTypeRes) => {
         const retData = instanceTypeData;
         generateResponse(res, 200, retData);
@@ -81,7 +81,7 @@ router.get(
 
 // Get FSxN mock response
 router.get(
-    `${BASE_URL}/v1/credentials/:credentialsId/fsx/regions/:region/vpcs/:vpcId/filesystems`,
+    `${BASE_URL}/v1/credentials/:credentialsId/fsx/regions/:region/vpcs/:vpcId/file-systems`,
     async (req: {}, res: FsxnRes) => {
         const retData = fsxnData;
         generateResponse(res, 200, retData);

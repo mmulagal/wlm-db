@@ -23,11 +23,24 @@
         display: flex;
     }
 
+    .thirdLevelContainer {
+        display: flex;
+        gap: 24px;
+        margin-top: 24px;
+
+        .jobContainer {
+            width: 520px;
+            height: 360px;
+            background-color: var(--content-background);
+            box-shadow: 2px 2px 6px var(--grey-15);
+        }
+    }
+
     .ProtectionContainer {
         margin-left: 120px;
-        margin-top: 24px;
+        box-shadow: 2px 2px 6px var(--grey-15);
         height: 360px;
-        width: 1064px;
+        width: 520px;
         background-color: var(--content-background);
     }
 
@@ -40,20 +53,15 @@
 
         .barContainer {
             display: flex;
-            flex-direction: column;
+
             gap: 24px;
 
             .commonContainer {
                 background-color: var(--content-background);
+                box-shadow: 2px 2px 6px var(--grey-15);
                 height: 244px;
-                width: 656px;
+                width: 520px;
             }
-        }
-
-        .jobContainer {
-            width: 384px;
-            height: 512px;
-            background-color: var(--content-background);
         }
     }
 }
@@ -71,19 +79,27 @@
 
         .ProtectionContainer {
             margin-left: 37px !important;
-            width: 1012px !important;
+            width: 495px !important;
+        }
+
+        .thirdLevelContainer {
+            .jobContainer {
+                width: 495px !important;
+            }
         }
 
         .fourthLevelContainer {
             margin-left: 37px !important;
 
             .commonContainer {
-                width: 633px !important;
-            }
-
-            .jobContainer {
-                width: 355px !important;
+                width: 495px !important;
             }
         }
     }
+}
+
+.loader {
+    text-align: center;
+    padding-top: 40vh;
+    height: 100vh;
 }
