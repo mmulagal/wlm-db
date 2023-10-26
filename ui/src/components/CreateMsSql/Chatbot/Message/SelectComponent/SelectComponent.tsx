@@ -13,6 +13,7 @@ const SelectComponent = ({ options, onChange, heading, selectKey }: selectCompon
     const [selected, setSelected] = useState('');
     const [searchText, setSearchText] = useState('');
 
+    //@ts-ignore
     const filteredOptions: any = useMemo(() => {
         if (searchText) {
             return options.filter((option: any) =>
