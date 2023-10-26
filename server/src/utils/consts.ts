@@ -504,6 +504,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
+    fsxPassword: 'FSxAdminPassword',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
