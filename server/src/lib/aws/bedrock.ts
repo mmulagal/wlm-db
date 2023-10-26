@@ -1,6 +1,6 @@
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
 import { Sha256 } from '@aws-crypto/sha256-js';
-import { MODEL, BEDROCK_REGION } from '../../utils/consts';
+import { MODEL, BEDROCK_REGION } from '../chatbot/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
