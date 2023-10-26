@@ -62,6 +62,7 @@ const AvailabilityZone = () => {
             dispatch(setSelectedSubnetNode2(null));
             setRouteTable2(undefined);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [deploymentMode]);
 
     //Function to generate the options for Select Field for Zone 1
@@ -82,6 +83,7 @@ const AvailabilityZone = () => {
                 options.push(option);
             });
         return options;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone2]);
 
     //Function to generate the options for Select Field for Zone 2
@@ -102,6 +104,7 @@ const AvailabilityZone = () => {
                 options.push(option);
             });
         return options;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone1]);
 
     //Subnet related code
@@ -109,8 +112,8 @@ const AvailabilityZone = () => {
     //Function to generate the options for Select Field subnet 1
     const generateSubnet1Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
+        let subnetsList: Subnets[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
-        let subnetsList = [];
         if (azData && azData.hasOwnProperty(selectedZone1?.value)) {
             subnetsList = azData[selectedZone1?.value];
         }
@@ -121,6 +124,7 @@ const AvailabilityZone = () => {
             options.push(option);
         });
         return options;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone1]);
 
     useEffect(() => {
@@ -163,8 +167,8 @@ const AvailabilityZone = () => {
     //Function to generate the options for Select Field subnet 2
     const generateSubnet2Options = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
+        let subnetsList: Subnets[] = [];
         const azData = selectedVPCData?.data?.availabilityZones;
-        let subnetsList = [];
         if (azData && azData.hasOwnProperty(selectedZone2?.value)) {
             subnetsList = azData[selectedZone2?.value];
         }
@@ -175,6 +179,7 @@ const AvailabilityZone = () => {
             options.push(option);
         });
         return options;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone2]);
 
     useEffect(() => {
@@ -237,6 +242,7 @@ const AvailabilityZone = () => {
                 })
             );
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [routeTable1, routeTable2]);
 
     return (
