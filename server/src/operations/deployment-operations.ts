@@ -87,30 +87,23 @@ async function formatTemplateParameters(
         ? await getRoleName(credentialsId!)
         : { roleName: '', roleArn: '', providerAccountId: '' };
 
-    if (credentialsId && region) {
-        await createSecrets(
-            credentialsId,
-            region,
-            [
-                {
-                    secretName: derivedParams.DomainAdminSecretName,
-                    username: adConfiguration.domainUsername,
-                    password: adConfiguration.domainPassword
-                },
-                {
-                    secretName: derivedParams.FSxAdministratorPasswordSecret,
-                    username: fsxConfiguration.fsxUsername,
-                    password: fsxConfiguration.fsxPassword
-                },
-                {
-                    secretName: derivedParams.SQLServiceAccountSecret,
-                    username: sqlConfiguration.serviceAccountName,
-                    password: sqlConfiguration.serviceAccountPassword
-                }
-            ],
-            roleArn
-        );
-    }
+    await createSecrets(
+        credentialsId!,
+        region!,
+        [
+            {
+                secretName: derivedParams.DomainAdminSecretName,
+                username: adConfiguration.domainUsername,
+                password: adConfiguration.domainPassword
+            },
+            {
+                secretName: derivedParams.SQLServiceAccountSecret,
+                username: sqlConfiguration.serviceAccountName,
+                password: sqlConfiguration.serviceAccountPassword
+            }
+        ],
+        roleArn
+    );
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
@@ -310,11 +303,6 @@ async function createCloudFormationTemplateForUserDeployment(
                 secretName: derivedParams.DomainAdminSecretName,
                 username: adConfiguration.domainUsername,
                 password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
             },
             {
                 secretName: derivedParams.SQLServiceAccountSecret,

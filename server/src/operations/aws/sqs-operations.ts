@@ -154,6 +154,7 @@ async function processCloudFormationMessages() {
                                                 });
                                             } else {
                                                 // Post deployment completion another custom resource is Created, to mark the successful completion of deployment
+                                                // CREATE_FAILED event for any underlying resource is considered as a failure event for master deployment; the same is updated later in the code execution flow
                                                 const [masterStackDeployment] = await listDeployments(
                                                     undefined,
                                                     undefined,
