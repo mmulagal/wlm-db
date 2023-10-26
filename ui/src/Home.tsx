@@ -19,6 +19,8 @@ const Home = () => {
     const showPanel = useSelector((state: any) => state.previewPanel.showPanel);
     const showChatbot = useSelector((state: any) => state.auth?.isWorkloadFactory);
     const dispatch = useDispatch();
+
+    //@ts-ignore
     const showNotifications = useMemo(() => {
         return notificationsObj && notificationsObj.messages && notificationsObj.messages.length > 0;
     }, [notificationsObj]);
