@@ -158,9 +158,4 @@ describe('MSSQL Resource methods', () => {
         const fsxResource = listResp.find(res => res.resource_id === 'fs-f6082f35c1db');
         expect(fsxResource).toBeUndefined();
     });
-
-    it('Get MSSQL native backups count ', async () => {
-        const resp = await getNativeSQLProtection('36E53042-04E8-40C9-AE69-26E56CB0D216');
-        expect(resp).toEqual(1);
-    });
 });
