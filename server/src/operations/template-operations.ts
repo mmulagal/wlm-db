@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import yaml from 'yaml';
-import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
+import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
     SQL_RESOURCE_ASSETS,
@@ -25,6 +25,7 @@ interface TemplateDetails {
 }
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
     logger.info('Generating signed urls ', region, resourceType);
