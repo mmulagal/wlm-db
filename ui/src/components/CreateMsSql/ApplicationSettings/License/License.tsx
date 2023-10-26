@@ -53,9 +53,9 @@ const License = () => {
             const amiName = val?.name;
             const data = {
                 architecture: val?.architecture,
-                amiVal : val?.imageId,
-                amiName : val?.name
-            }
+                amiVal: val?.imageId,
+                amiName: val?.name
+            };
             const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
             options.push(option);
         });
@@ -63,7 +63,7 @@ const License = () => {
     }, [amiData]);
 
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig) {
             dispatch(setSelectedLicenseId(generateAMIIdForLicense[0]));
         }
     }, [dispatch, generateAMIIdForLicense]);
