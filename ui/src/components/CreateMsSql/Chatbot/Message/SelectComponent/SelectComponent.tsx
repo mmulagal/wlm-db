@@ -13,7 +13,7 @@ const SelectComponent = ({ options, onChange, heading, selectKey }: selectCompon
     const [selected, setSelected] = useState('');
     const [searchText, setSearchText] = useState('');
 
-    const filteredOptions = useMemo(() => {
+    const filteredOptions: any = useMemo(() => {
         if (searchText) {
             return options.filter((option: any) =>
                 (option.label || option.value).toLowerCase().includes(searchText.toLowerCase())
