@@ -272,7 +272,7 @@ const DatabaseTable = () => {
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
@@ -283,7 +283,7 @@ const DatabaseTable = () => {
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
@@ -294,7 +294,7 @@ const DatabaseTable = () => {
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
@@ -305,7 +305,7 @@ const DatabaseTable = () => {
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
         },
