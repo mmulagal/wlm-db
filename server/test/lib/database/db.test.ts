@@ -23,6 +23,7 @@ describe('List deployments', () => {
             cloudProviderAccountId: '464262061435',
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             deploymentStatus: 'CREATE_IN_PROGRESS',
+            deploymentModel: 'FCI',
             startTime: new Date('2023-08-21T11:10:35.875Z').valueOf(),
             region: 'us-east-1'
         });
