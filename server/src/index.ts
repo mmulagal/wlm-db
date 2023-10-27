@@ -83,7 +83,10 @@ interface Headers {
     [HEADERS.AUTHORIZATION]: string;
 }
 
-await initiateSecrets();
+// Blocking for simulator
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    await initiateSecrets();
+}
 
 const app = fastify({
     trustProxy: true,
@@ -228,11 +231,14 @@ const app = fastify({
         return payload;
     });
 
-try {
-    await createAndSubscribeToSnsTopicInAllRegions();
-    processCloudFormationMessages();
-} catch (error) {
-    logger.error('Failed to setup SNS-SQS infra', error);
+// Blocking for simulator
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    try {
+        await createAndSubscribeToSnsTopicInAllRegions();
+        processCloudFormationMessages();
+    } catch (error) {
+        logger.error('Failed to setup SNS-SQS infra', error);
+    }
 }
 
 try {
@@ -242,10 +248,13 @@ try {
     logger.error('Failed to initialize database', error);
 }
 
-try {
-    await checkAndCreateBucketLifecycleConfiguration();
-} catch (error) {
-    logger.error('Failed to check and create S3 bucket lifecycle');
+// Blocking for simulator
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    try {
+        await checkAndCreateBucketLifecycleConfiguration();
+    } catch (error) {
+        logger.error('Failed to check and create S3 bucket lifecycle');
+    }
 }
 
 app.listen({ port, host }, err => {
