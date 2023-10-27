@@ -114,7 +114,7 @@ const Accordion = ({
                 content={`${GENERAL.DELETE_CONFIG_TEXT} ${heading}`}
                 primaryButton={GENERAL.DELETE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => handleDelete}
+                callback={handleDelete}
                 closeCallback={() => {
                     closeDialog();
                 }}
