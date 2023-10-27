@@ -10,7 +10,7 @@ import {
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { generateOptionType, formatVpcSubnetsData, regionsSort, sortListOfDict } from '../../../../utils/utilityFunctions';
+import { formatVpcSubnetsData, generateOptionType, regionsSort, sortListOfDict } from '../../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -96,9 +96,7 @@ const RegionVpc = () => {
                 id: val.id,
                 name: val.name,
                 cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '',
-                subnets: val?.subnets,
-                availabilityZones: formatVpcSubnetsData(val),
-                securityGroups: val?.securityGroups
+                availabilityZones: formatVpcSubnetsData(val)
             };
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
