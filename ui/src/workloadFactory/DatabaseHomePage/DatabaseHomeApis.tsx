@@ -31,12 +31,13 @@ const DatabaseHomeApis = () => {
 
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const isdemomode = useAppSelector(state => state.auth.isDemoMode);
     
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
 
     // skipApiCall to skip APi call when isActive is not true
-    const [skipApiCall, setSkipApiCall] = useState(true);
+    const [skipApiCall, setSkipApiCall] = useState(isdemomode ? false : true);
 
     const {
         data: statusData,
@@ -67,7 +68,7 @@ const DatabaseHomeApis = () => {
             dispatch(addStatus({undefined, statusLoading, statusError}));
         } else {
             dispatch(addStatus({statusData, statusLoading, statusError}));
-            if(statusData && statusData?.isActive) {
+            if(isdemomode || (statusData && statusData?.isActive)) {
                 setSkipApiCall(false);
             }
         }
