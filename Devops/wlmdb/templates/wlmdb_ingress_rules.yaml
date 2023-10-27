@@ -1,3 +1,4 @@
+{{ if not .Values.global.demoEnv }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -24,3 +25,14 @@ spec:
             name: wlmdb
             port:
               number: 8085
+  - host: {{ .Values.global.bluexpDomain }}
+    http:
+      paths:
+      - path: /accounts/(.*)/wlmdb/v1(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wlmdb
+            port:
+              number: 8085              
+{{ end }}

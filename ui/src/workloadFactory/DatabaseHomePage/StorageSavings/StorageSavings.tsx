@@ -17,14 +17,14 @@ const StorageSavings = () => {
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_STORAGE_SAVINGS}
-                    {(databaseHostsLoading || databaseJobsLoading) && 
+                    {(databaseHostsLoading || databaseJobsLoading) && (
                         <div className={styles.loadingPlacement}>
-                            <LoadingComponent/>
+                            <LoadingComponent />
                         </div>
-                    }
+                    )}
                 </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    {formatFractionalNumber(hostData?.storageSavingsPercent)}%
+                    {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
                 </Typography>
             </div>
 
@@ -50,18 +50,30 @@ const StorageSavings = () => {
                             ></div>
                         </>
                     )}
+
+                    {hostData?.storageSavingsPercent === 0 && (
+                        <>
+                            <div
+                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                                style={{
+                                    width: `${100}%`,
+                                    backgroundColor: 'var(--chart-disabled)'
+                                }}
+                            ></div>
+                        </>
+                    )}
                 </div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
                     <SquareComponent
-                        value={hostData?.storageConsumes || 'N/A'}
+                        value={hostData?.storageConsumes || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-9)"
                         text={'Storage Consumes'}
                     />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={hostData?.storageSavings || 'N/A'}
+                        value={hostData?.storageSavings || GENERAL.NOT_AVAILABLE}
                         color="var(--chart-4)"
                         text={'Storage Savings'}
                     />

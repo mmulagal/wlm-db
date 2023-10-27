@@ -1,0 +1,41 @@
+{{ if .Values.global.demoEnv }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.global.namespace }}-ingress-rules
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: x-simulator
+    nginx.ingress.kubernetes.io/canary-by-header-value: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: 3m
+    nginx.ingress.kubernetes.io/client-body-buffer-size: 3m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "80"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "80"
+    nginx.ingress.kubernetes.io/limit-rps: "6"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.global.bluexpDomain }}
+    http:
+      paths:
+      - path: /wlmdb(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wlmdb
+            port:
+              number: 8085
+  - host: {{ .Values.global.bluexpDomain }}
+    http:
+      paths:
+      - path: /accounts/(.*)/wlmdb/v1(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: wlmdb
+            port:
+              number: 8085              
+{{ end }}

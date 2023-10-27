@@ -110,6 +110,19 @@ const serverIOLatencyParams = {
     ]
 };
 
+const nativeSqlBackupParams = {
+    // eslint-disable-next-line quotes
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = D\n    AND backupset.database_name NOT IN (msdb,tempdb,model,master)\n"'
+    ]
+};
+
+const getOntapSnapshotCountParams = {
+    commands: [
+        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName 'fsx-fs-03773e21b2f0e39b4'  -FSxID 'fs-03773e21b2f0e39b4' -FSxRegion 'us-east-1' -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=volumeid' -OntapResourceQuery 'fields=snapshot_count'"
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -148,7 +161,11 @@ ssmMock
     .on(SendCommandCommand, { Parameters: serNameParams })
     .resolves(listSendCommandCommandResponse.serNameCommandResponse)
     .on(SendCommandCommand, { Parameters: serverIOLatencyParams })
-    .resolves(listSendCommandCommandResponse.serverIoLatencyCommandResponse);
+    .resolves(listSendCommandCommandResponse.serverIoLatencyCommandResponse)
+    .on(SendCommandCommand, { Parameters: nativeSqlBackupParams })
+    .resolves(listSendCommandCommandResponse.nativeSqlBackupCommandResponse)
+    .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
+    .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -184,6 +201,10 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serName' })
     .resolves(getCommandInvocationResponse.serNameInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-serverIoLatency' })
-    .resolves(getCommandInvocationResponse.serverIoLatencyInvocationResponse);
+    .resolves(getCommandInvocationResponse.serverIoLatencyInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-nativeSqlBackup' })
+    .resolves(getCommandInvocationResponse.nativeSqlBackupInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
+    .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

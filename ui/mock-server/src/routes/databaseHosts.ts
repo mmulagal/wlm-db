@@ -23,4 +23,8 @@ router.post(`${BASE_URL}/v1/cloudformation/template`, async (req: {}, res: any) 
     generateResponse(res, 200, Templates);
 });
 
+router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
+    generateResponse(res, 200, {isActive: true});
+});
+
 export default router;

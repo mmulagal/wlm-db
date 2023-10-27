@@ -13,6 +13,8 @@ import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 const SecurityGroup = () => {
     const dispatch = useDispatch();
 
+    const { vpcData } = useAppSelector(state => state.mssql.getVPCList);
+
     // Getting selected VPC to get security groups for selected VPC
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
@@ -31,14 +33,19 @@ const SecurityGroup = () => {
     //Function to generate the options for Select Field
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        selectedVPCData?.data?.securityGroups?.map((val: any, idx: number) => {
-            const sgValue = val?.id;
-            const sgLabel = val?.securityGroupName || val?.name || '-';
-            const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
-            options.push(option);
-        });
+        const selectedVpcId = selectedVPCData?.data?.id;
+        if(selectedVpcId) {
+            vpcData?.vpcs?.filter((pervpc => pervpc?.id === selectedVpcId)).map(pervpc => {
+                pervpc.securityGroups?.map((val:any) => {
+                    const sgValue = val?.id;
+                    const sgLabel = val?.securityGroupName || val?.name || '-';
+                    const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
+                    options.push(option);
+                });
+            });
+        }
         return options;
-    }, [selectedVPCData]);
+    }, [selectedVPCData, vpcData]);
 
     useEffect(() => {
         if(!isLoadConfig) {

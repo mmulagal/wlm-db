@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getObjectBucket, getPreSignedUrl } from '../lib/aws/s3';
+import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
 import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
@@ -66,6 +66,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 import { handleNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
@@ -86,28 +87,30 @@ async function formatTemplateParameters(
         ? await getRoleName(credentialsId!)
         : { roleName: '', roleArn: '', providerAccountId: '' };
 
-    await createSecrets(
-        credentialsId!,
-        region!,
-        [
-            {
-                secretName: derivedParams.DomainAdminSecretName,
-                username: adConfiguration.domainUsername,
-                password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
-            },
-            {
-                secretName: derivedParams.SQLServiceAccountSecret,
-                username: sqlConfiguration.serviceAccountName,
-                password: sqlConfiguration.serviceAccountPassword
-            }
-        ],
-        roleArn
-    );
+    if (credentialsId && region) {
+        await createSecrets(
+            credentialsId,
+            region,
+            [
+                {
+                    secretName: derivedParams.DomainAdminSecretName,
+                    username: adConfiguration.domainUsername,
+                    password: adConfiguration.domainPassword
+                },
+                {
+                    secretName: derivedParams.FSxAdministratorPasswordSecret,
+                    username: fsxConfiguration.fsxUsername,
+                    password: fsxConfiguration.fsxPassword
+                },
+                {
+                    secretName: derivedParams.SQLServiceAccountSecret,
+                    username: sqlConfiguration.serviceAccountName,
+                    password: sqlConfiguration.serviceAccountPassword
+                }
+            ],
+            roleArn
+        );
+    }
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
@@ -244,9 +247,9 @@ async function getCloudformationTemplate(
     templateParameters.forEach(e => {
         urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
     });
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodeURIComponent(
-        signedMasterTemplateUrl
-    )}&${urlParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
+        region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
+    }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
     return {
         url: signedTemplateURL,

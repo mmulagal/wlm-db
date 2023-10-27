@@ -7,6 +7,7 @@ import {
     DatabaseHostSummaryListResponseType,
     PerformanceResponseType,
     TopologyResponseType,
+    ProtectionResponseType,
     StorageResponseType
 } from '../routes/types/database-hosts.types';
 import {
@@ -17,8 +18,13 @@ import {
     SERVER_TYPE_MAPPING
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { getServerIOLatency, getServerState } from './workloads/mssql/mssql-operations';
-import { getVolumesUuids, getStorageDataUsingSSM } from './aws/fsx-operations';
+import { getServerIOLatency, getServerState, getNativeSQLProtection } from './workloads/mssql/mssql-operations';
+import {
+    getVolumesUuids,
+    getStorageDataUsingSSM,
+    isAWSBackupEnabled,
+    getOntapVolumesSnapshotCount
+} from './aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -29,6 +35,12 @@ interface Topology {
     standbyNodeInstanceName?: string;
     sqlDeploymentType?: string;
     fileSystemType?: string;
+}
+
+interface Metadata {
+    credentialsId: string;
+    activeNodeInstanceId: string;
+    standbyNodeInstanceId: string;
 }
 
 type VolumeSpaceRecord = {
@@ -168,6 +180,40 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
     };
 }
 
+async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<ProtectionResponseType | undefined> {
+    logger.info('Get protection status', { resourceDetail });
+
+    const { resource_id: resourceId, region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+    try {
+        const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!),
+            getOntapVolumesSnapshotCount(
+                credentialsId,
+                region!,
+                fileSystemId!,
+                activeNodeInstanceId,
+                standbyNodeInstanceId
+            ),
+            getNativeSQLProtection(resourceId)
+        ]);
+
+        const atleastOneVolumeHasSnapshots = ontapData?.records?.some(
+            ({ snapshot_count: snapshotCount }: { snapshot_count: number }) => snapshotCount
+        );
+
+        return {
+            isAwsBackUpEnabled: awsBackup,
+            isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
+            isSqlNativeEnabled: Boolean(nativeSqlProtection)
+        };
+    } catch (error) {
+        logger.error('Error while getting protection status', resourceDetail);
+    }
+}
+
 async function getDatabaseHostsSummary(
     accountId: string,
     fields?: string
@@ -232,13 +278,20 @@ async function getDatabaseHostsSummary(
                         }
                     }
 
+                    // Get protection status
+                    let protection: ProtectionResponseType | undefined;
+                    if (fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION)) {
+                        protection = await getProtectionStatus(resourceDetail);
+                    }
+
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
                         status: serverStatus,
                         topology: topologyData!,
                         performance: performanceData!,
-                        storage: storageData!
+                        storage: storageData!,
+                        ...(protection && { protection })
                     });
                 })
         );

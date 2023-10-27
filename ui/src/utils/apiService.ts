@@ -7,7 +7,7 @@ import {
     retry
 } from '@reduxjs/toolkit/query/react';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
-import { RootState } from '../store/store';
+import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
@@ -27,6 +27,13 @@ const prepareHeaders = (
     }
     return headers;
 };
+
+export const getBaseUrl = () => {
+    const state = store.getState();
+    const accountId = state?.auth?.accountId;
+    const apiHost = process.env.REACT_APP_CM_URL;
+    return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
+}
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: '',
@@ -288,7 +295,7 @@ export const databaseHomeApi = createApi({
                 query: ({ nextToken = null }) => `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
-                query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `jobs?fields=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
@@ -299,6 +306,9 @@ export const databaseHomeApi = createApi({
                     method: 'POST',
                     body: payload
                 })
+            }),
+            getStatus: builder.query({
+                query: () => `status`
             })
         };
     }
@@ -354,7 +364,7 @@ export const {
     useUpdateConfigMutation 
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation } = 
+export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation, useGetStatusQuery } = 
     databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;

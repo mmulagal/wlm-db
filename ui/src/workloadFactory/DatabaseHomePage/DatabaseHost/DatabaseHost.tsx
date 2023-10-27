@@ -10,7 +10,6 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseHost = () => {
-    
     const hostData = useAppSelector(state => state.databaseHome.aggregatedHostsCount);
 
     return (
@@ -34,7 +33,7 @@ const DatabaseHost = () => {
                         {GENERAL.DATABASES}
                     </Typography>
                 </div>
-                <div className={styles.dbHostSeparator} />
+
                 <div className={styles.databaseHostStatusContainer}>
                     <Typography variant="Semibold_14" className={styles.dbHostStatusHeading}>
                         {GENERAL.DATABASE_HOST_STATUS}

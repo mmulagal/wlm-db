@@ -86,8 +86,12 @@ async function getBucketLifecycleConfiguration(region: string, bucketName: strin
     }
 }
 
+// Mock for getPresignedUrl from s3 sdk is not working as expected, because of that using stub to fake the presigned url
+// To mock using stub it needs to be named export, so only the presigned url function is wrapped in different object
+const preSignedUrl = { getPreSignedUrl };
+
 export {
-    getPreSignedUrl,
+    preSignedUrl,
     putObjectBucket,
     putBucketLifecycleConfiguration,
     getBucketLifecycleConfiguration,

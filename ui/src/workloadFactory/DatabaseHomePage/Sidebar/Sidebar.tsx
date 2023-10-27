@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, SearchInput, Popover } from '@netapp/design-system';
+import { Typography, SearchInput, Popover, FlashingDotsLoader } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
-import { ReactComponent as LoadIcon } from '../../../assets/ic_restore.svg';
+import { ReactComponent as LoadIcon } from '../../../assets/ic_circle_arrow_down.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -21,7 +21,12 @@ import {
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
-import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import {
+    getBaseUrl,
+    useGetConfigListQuery,
+    useGetTemplatesMutation,
+    useLazyGetConfigDataQuery
+} from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { CODE_VIEWER } from '../../../utils/appConstants';
@@ -38,7 +43,6 @@ import {
     CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS
 } from '../../../utils/consts';
-import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
@@ -55,7 +59,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
-    const accountId = useAppSelector(state => state?.auth?.accountId);
+    //To get configDatalist
+    const [configData, setConfigData] = useState<any>([]);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -83,16 +88,20 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         {
             id: 'viewAwsCloudFormation',
             displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
+            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
         },
         {
             id: 'downloadYaml',
             displayName: CODE_VIEWER.DOWNLOAD_YAML,
-            disabled: (!rightPanelTemplateResponse || isRightPanelTemplateLoading) ? true : false
+            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
         }
     ];
 
-    const { data: configData, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
+    const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
+
+    useEffect(() => {
+        setConfigData(configDataList);
+    }, [configDataList]);
 
     useEffect(() => {
         const recList = [
@@ -160,6 +169,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
         setIsRightPanelTemplateLoading(true);
+        const baseUrl = getBaseUrl();
         if (id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID) {
             // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
@@ -180,7 +190,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     ]}
                     autoEscape={true}
                     textToHighlight={CURL_REQ_TEMPLATE(
-                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        baseUrl,
                         CRED_PLACEHOLDERS.CRED_ID,
                         CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
@@ -215,7 +225,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         ]}
                         autoEscape={true}
                         textToHighlight={CURL_REQ_TEMPLATE(
-                            accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            baseUrl,
                             credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                             credDetails.region || CRED_PLACEHOLDERS.REGION,
                             CRED_PLACEHOLDERS.TOKEN,
@@ -349,6 +359,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    //Handle Search
+    const handleSearch = (val: string) => {
+        if (val.length) {
+            const newVal = configDataList.filter((text: any) => {
+                return text?.name.includes(val);
+            });
+            setConfigData(newVal);
+        } else {
+            setConfigData(configDataList);
+        }
+    };
+
     return (
         <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.topBar}>
@@ -373,10 +395,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                     <div className={styles.accordionStructure}>
                         <div className={styles.recTemplateHeading}>
-                            <Typography variant="Semibold_14" className={styles.templateHeading}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
                                 {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
                             </Typography>
-                            <Typography variant="Regular_14" className={styles.templateHeading}>
+                            &nbsp;
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
                                 {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
                             </Typography>
                         </div>
@@ -398,18 +421,47 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         ))}
                     </div>
 
+                    {/* Collapse in loading state */}
                     {configLoading && (
-                        <Typography variant="Semibold_14" className={styles.loading}>
-                            {CODE_VIEWER.LOADING}
-                        </Typography>
+                        <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
+                                {CODE_VIEWER.MY_TEMPLATES}
+                            </Typography>
+                            <FlashingDotsLoader />
+                        </div>
+                    )}
+
+                    {/* configData length 0 */}
+                    {configData && !configData.length && (
+                        <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
+                                {CODE_VIEWER.MY_TEMPLATES}
+                            </Typography>
+                            <div className={styles.searchComponent}>
+                                <SearchInput
+                                    onChange={(e: any) => {
+                                        handleSearch(e);
+                                    }}
+                                    isDisabled={true}
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* Saved templates when code box in collapse state */}
-                    {configData && (
+                    {configData && configData.length && (
                         <div className={styles.accordionStructure}>
-                            <Typography variant="Semibold_14" className={styles.templateHeading}>
-                                {CODE_VIEWER.MY_TEMPLATES}
-                            </Typography>
+                            <div className={styles.headingContainer}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <SearchInput
+                                    onChange={(e: any) => {
+                                        handleSearch(e);
+                                    }}
+                                />
+                            </div>
+
                             {configData.map((item: any, i: number) => (
                                 <div key={i}>
                                     <Accordion
@@ -439,10 +491,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {isOpen && (
                             <div className={styles.accordionStructure}>
                                 <div className={styles.recTemplateHeading}>
-                                    <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                    <Typography variant="Regular_16" className={styles.templateHeading}>
                                         {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
                                     </Typography>
-                                    <Typography variant="Regular_14" className={styles.templateHeading}>
+                                    &nbsp;
+                                    <Typography variant="Regular_16" className={styles.templateHeading}>
                                         {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
                                     </Typography>
                                 </div>
@@ -465,12 +518,46 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 ))}
                             </div>
                         )}
-                        {/* saved templates list when code box in expanded state */}
-                        {configData && isOpen && (
-                            <div className={styles.accordionStructure}>
-                                <Typography variant="Semibold_14" className={styles.templateHeading}>
+                        {/* expanded in loading state */}
+                        {configLoading && (
+                            <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
                                     {CODE_VIEWER.MY_TEMPLATES}
                                 </Typography>
+                                <FlashingDotsLoader />
+                            </div>
+                        )}
+
+                        {/* expanded length 0 */}
+                        {configData && !configData.length && (
+                            <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <div className={styles.searchComponent}>
+                                    <SearchInput
+                                        onChange={(e: any) => {
+                                            handleSearch(e);
+                                        }}
+                                        isDisabled={true}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        {/* saved templates list when code box in expanded state */}
+                        {configData && configData.length && isOpen && (
+                            <div className={styles.accordionStructure}>
+                                <div className={styles.headingContainer}>
+                                    <Typography variant="Regular_16" className={styles.templateHeading}>
+                                        {CODE_VIEWER.MY_TEMPLATES}
+                                    </Typography>
+                                    <SearchInput
+                                        onChange={(e: any) => {
+                                            console.log('e', e);
+                                            handleSearch(e);
+                                        }}
+                                    />
+                                </div>
                                 {configData.map((item: any, i: number) => (
                                     <div key={i}>
                                         <Accordion
@@ -522,7 +609,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         <Copy />
                                                         <Typography
                                                             variant="Semibold_14"
-                                                            className={styles.rightSideHeading}
+                                                            className={styles.rightSideBlueHeading}
                                                         >
                                                             {CODE_VIEWER.COPY}
                                                         </Typography>
@@ -535,7 +622,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                                 <div className={styles.menuItem} onClick={loadWizard}>
                                     <LoadIcon />
-                                    <Typography variant="Semibold_14" className={styles.rightSideHeading}>
+                                    <Typography variant="Semibold_14" className={styles.rightSideBlueHeading}>
                                         {CODE_VIEWER.SIDEBAR_LOAD_WIZARD}
                                     </Typography>
                                 </div>
@@ -595,15 +682,19 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                     />
                                 </div>
                             </div>
-                            <SearchInput onChange={e => setSearchInput(e)} />
+                            <div className={styles.searchPart}>
+                                <SearchInput onChange={e => setSearchInput(e)} />
+                            </div>
                         </div>
                         {/* Search bar input code ends here */}
 
                         {/* Last section starts here */}
                         <div className={styles.thirdBar}>
-                            <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                {setDisplayedDataInCodeBox()}
-                            </Typography>
+                            <div className={styles.scrollContainer}>
+                                <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                                    {setDisplayedDataInCodeBox()}
+                                </Typography>
+                            </div>
                         </div>
                     </div>
                 </div>

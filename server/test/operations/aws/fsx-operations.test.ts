@@ -2,9 +2,15 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/opentelemetry-scope';
+import '../../simulator/scopes/aws/ssm-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { getFSxFileSystemsList, isAWSBackupEnabled } from '../../../src/operations/aws/fsx-operations';
-import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
+import {
+    getFSxFileSystemsList,
+    getOntapVolumesSnapshotCount,
+    isAWSBackupEnabled
+} from '../../../src/operations/aws/fsx-operations';
+import { ACTIVE_INSTANCE_ID, DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 
@@ -91,5 +97,15 @@ describe('Testcases for Amazon FSx resources operations', () => {
     it('AWS backup enabled check', async () => {
         const response = await isAWSBackupEnabled(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
         expect(response).toEqual(true);
+    });
+
+    it('Get Ontap volume snapshots count', async () => {
+        const response = await getOntapVolumesSnapshotCount(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID,
+            ACTIVE_INSTANCE_ID
+        );
+        expect(response).toBeDefined();
     });
 });

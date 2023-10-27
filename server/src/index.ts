@@ -37,6 +37,7 @@ import batchRoutes from './routes/batch';
 import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
+import serviceStatusRoutes from './routes/service-status';
 import {
     createAuditGroup,
     updateAuditGroup,
@@ -48,6 +49,7 @@ import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
+import chatbotRoutes from './routes/chatbot';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -139,7 +141,7 @@ const app = fastify({
             systemRoutes(instance);
             done();
         },
-        { prefix: `${API_PREFIX_PATH}` }
+        { prefix: `${WLMDB}` }
     )
     .register(
         (instance, _, next) => {
@@ -173,6 +175,8 @@ const app = fastify({
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
+            chatbotRoutes(instance);
+            serviceStatusRoutes(instance);
             next();
         },
         { prefix: `${API_PREFIX_PATH}` }

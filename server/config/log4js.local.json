@@ -1,0 +1,75 @@
+{
+    "appenders": {
+        "console": {
+            "type": "console",
+            "layout": {
+                "type": "pattern",
+                "pattern": "[%d] [%p] [%h] [%f{1}:%l] [%x{requestId}] [%x{accountId}] [%x{traceId}] %x{message}"
+            }
+        },
+        "server": {
+            "type": "file",
+            "filename": "log/server.log",
+            "mode": 644,
+            "maxLogSize": 5242880,
+            "backups": 10,
+            "layout": {
+                "type": "pattern",
+                "pattern": "[%d] [%p] [%h] [%f{1}:%l] [%x{requestId}] [%x{accountId}] [%x{traceId}] %x{message}"
+            }
+        },
+        "simulator": {
+            "type": "file",
+            "filename": "log/simulator.log",
+            "mode": 644,
+            "maxLogSize": 5242880,
+            "backups": 10,
+            "layout": {
+                "type": "colored"
+            }
+        },
+        "got": {
+            "type": "file",
+            "filename": "log/got.log",
+            "mode": 644,
+            "maxLogSize": 5242880,
+            "backups": 10,
+            "layout": {
+                "type": "pattern",
+                "pattern": "[%d] [%p] [%h] [%f{1}:%l] [%x{requestId}] [%x{accountId}] [%x{traceId}] %x{message}"
+            }
+        },
+        "access": {
+            "type": "file",
+            "filename": "log/access.log",
+            "mode": 644,
+            "maxLogSize": 5242880,
+            "backups": 10,
+            "layout": {
+                "type": "pattern",
+                "pattern": "[%d] [%p] [%h] [%f{1}:%l] [%x{requestId}] [%x{accountId}] [%x{traceId}] %x{message}"
+            }
+        }
+    },
+    "categories": {
+        "default": {
+            "appenders": ["console", "server"],
+            "enableCallStack": true,
+            "level": "info"
+        },
+        "simulator": {
+            "appenders": ["simulator"],
+            "level": "info"
+        },
+        "got": {
+            "appenders": ["got", "console"],
+            "enableCallStack": true,
+            "level": "info"
+        },
+        "access": {
+            "appenders": ["access", "console", "server"],
+            "enableCallStack": true,
+            "level": "info"
+        }
+    }
+}
