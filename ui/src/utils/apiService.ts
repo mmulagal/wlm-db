@@ -18,12 +18,15 @@ const prepareHeaders = (
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
     const { getState } = api;
-    const { accessToken, workspaceId } = (getState() as RootState).auth;
+    const { accessToken, workspaceId, isDemoMode } = (getState() as RootState).auth;
     if (accessToken) {
         headers.set('authorization', accessToken);
     }
     if (workspaceId) {
         headers.set('x-workspace-id', workspaceId);
+    }
+    if (isDemoMode) {
+        headers.set('x-simulator', 'true');
     }
     return headers;
 };
@@ -33,7 +36,7 @@ export const getBaseUrl = () => {
     const accountId = state?.auth?.accountId;
     const apiHost = process.env.REACT_APP_CM_URL;
     return `${apiHost}/accounts/${accountId}/wlmdb/v1`;
-}
+};
 
 const rawBaseQuery = fetchBaseQuery({
     baseUrl: '',
@@ -174,7 +177,9 @@ export const awsApi = createApi({
                 query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/kms-keys` })
             }),
             getKeyPairs: builder.query({
-                query: ({ credentialId, region }) => ({ url: `credentials/${credentialId}/regions/${region}/key-pairs` })
+                query: ({ credentialId, region }) => ({
+                    url: `credentials/${credentialId}/regions/${region}/key-pairs`
+                })
             }),
             getInstanceTypes: builder.query({
                 query: ({ credentialId, region }) => ({
@@ -281,7 +286,7 @@ export const configApi = createApi({
                     method: 'PATCH',
                     body: payload
                 })
-            }),
+            })
         };
     }
 });
@@ -292,7 +297,8 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({ nextToken = null }) => `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
+                query: ({ nextToken = null }) =>
+                    `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => `jobs?fields=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
@@ -356,15 +362,20 @@ export const {
     useBatchTablesMutation
 } = resourceApi;
 
-export const { 
-    useGetConfigListQuery, 
-    useLazyGetConfigDataQuery, 
-    useSaveConfigDataMutation, 
-    useDeleteConfigMutation, 
-    useUpdateConfigMutation 
+export const {
+    useGetConfigListQuery,
+    useLazyGetConfigDataQuery,
+    useSaveConfigDataMutation,
+    useDeleteConfigMutation,
+    useUpdateConfigMutation
 } = configApi;
 
-export const { useGetDatabaseHostsQuery, useGetDatabaseJobsQuery, useGetJobsSummaryQuery, useGetTemplatesMutation, useGetStatusQuery } = 
-    databaseHomeApi;
+export const {
+    useGetDatabaseHostsQuery,
+    useGetDatabaseJobsQuery,
+    useGetJobsSummaryQuery,
+    useGetTemplatesMutation,
+    useGetStatusQuery
+} = databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;
