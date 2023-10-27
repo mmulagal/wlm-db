@@ -2,15 +2,9 @@
 type Intent = {
     intent: FunctionToRun | QueryResponse;
 };
-
-enum IntentTypes {
-    QueryResponse = 'QueryResponse',
-    DeployMsSql = 'DeployMsSql'
-}
-
 // Use this type for the query that doesn't match any other types
 type QueryResponse = {
-    type: IntentTypes.QueryResponse;
+    type: 'QueryResponse';
     response: string; // The response from the chatbot
 };
 
@@ -53,8 +47,8 @@ type DeployMsSqlParams = {
 
 // Deploy MS SQL
 type DeployMsSql = {
-    type: IntentTypes.DeployMsSql;
+    type: 'DeployMsSql';
     params: DeployMsSqlParams;
 };
 
-export { Intent, IntentTypes };
+export { Intent };

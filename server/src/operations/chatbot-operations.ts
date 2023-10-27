@@ -3,7 +3,6 @@ import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib
 import { queryBotResponseType } from '../routes/types/chatbot.types';
 import { CHATBOT_UI_PARAMS_FSX } from '../lib/chatbot/consts';
 import getLogger from '../utils/logger';
-import { IntentTypes } from '../lib/chatbot/schemas/mssql-schema';
 
 const logger = getLogger();
 
@@ -20,13 +19,13 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
         }
 
         switch (intent?.type) {
-            case IntentTypes.QueryResponse: {
+            case 'QueryResponse': {
                 const value: queryBotResponseType = {
                     message: intent.response
                 };
                 return value;
             }
-            case IntentTypes.DeployMsSql: {
+            case 'DeployMsSql': {
                 const params = { ...intent.params };
                 // let params: DeployMsSqlParamsType = {};
                 // delete params.complete;
