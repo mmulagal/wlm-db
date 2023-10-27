@@ -6,7 +6,11 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"    
   name: wlmdb
 spec:
+  {{ if .Values.global.demoEnv }}
+  replicas: 1
+  {{ else }}
   replicas: 2
+  {{ end }}
   selector:
     matchLabels:
       run: wlmdb
@@ -24,6 +28,12 @@ spec:
 {{ toYaml .Values.global.annotations | indent 10 }}          
     spec:
       serviceAccountName: wlmdb-secretmanager-sa
+      {{ if .Values.global.NFSlogs }}
+      volumes:
+        - name: logs-disk
+          persistentVolumeClaim:
+            claimName: wlmdb-pv
+      {{ end }}
       containers:
       - image: {{ .Values.image.registry }}:{{ .Values.infraversion }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -32,6 +42,13 @@ spec:
         - configMapRef:
             name: wlmdb-config
         env:
+          {{ if .Values.global.NFSlogs }}
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          {{ end }}
         readinessProbe:
           httpGet:
             path: wlmdb/health
@@ -50,6 +67,12 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 5
+        {{ if .Values.global.NFSlogs }}
+        volumeMounts:
+          - mountPath: "/log"
+            subPathExpr: $(POD_NAME)
+            name: logs-disk
+        {{ end }}
         resources:
 {{ toYaml .Values.resources | indent 12 }}
       # dnsPolicy: ClusterFirst

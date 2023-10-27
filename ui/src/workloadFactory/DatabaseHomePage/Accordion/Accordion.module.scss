@@ -89,6 +89,10 @@
     }
 }
 
+[class*='Dialog-module_dialog'] {
+    z-index: 2 !important;
+}
+
 @media screen and (min-width: 1576px) and (max-width: 1720px) {
     .accordionContainer {
         width: 510px !important;

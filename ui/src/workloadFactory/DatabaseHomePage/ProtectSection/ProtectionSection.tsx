@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './ProtectionSection.module.scss';
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import MultiRingDoughnut from '../MultiRingDoughnut/MultiRingDoughnut';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
@@ -28,12 +28,9 @@ const ProtectionSection = () => {
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_PROTECTION}
-                    {(databaseHostsLoading || databaseJobsLoading) && (
-                        <div className={styles.loadingPlacement}>
-                            <LoadingComponent />
-                        </div>
-                    )}
                 </Typography>
+
+                {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.secondContainer}>
