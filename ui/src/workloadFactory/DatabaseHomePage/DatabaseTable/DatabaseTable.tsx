@@ -52,8 +52,8 @@ const DatabaseTable = () => {
                 <Typography variant="Semibold_13" className={styles.textHeight}>
                     {GENERAL.PROTECTED_BY}:
                 </Typography>
-                {data.map((val: any) => (
-                    <Typography variant="Regular_13" className={styles.textHeight}>
+                {data.map((val: any, index: number) => (
+                    <Typography key={index} variant="Regular_13" className={styles.textHeight}>
                         {val}
                     </Typography>
                 ))}

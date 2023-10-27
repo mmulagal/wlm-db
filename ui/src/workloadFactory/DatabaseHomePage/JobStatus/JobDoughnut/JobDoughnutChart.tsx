@@ -60,7 +60,9 @@ const JobDoughnutChart = () => {
                 <Typography variant="Regular_14">{GENERAL.JOB_STATUS_JOBS}</Typography>
             </div>
             {/* @ts-ignore */}
-            {(jobsSummaryLoading || jobsSummaryData === null) && <div className={styles.emptyCircle}></div>}
+            {(jobsSummaryLoading || !jobsSummaryData || jobsSummaryData?.totalJobs == 0) && (
+                <div className={styles.emptyCircle}></div>
+            )}
 
             {!jobsSummaryLoading && jobsSummaryData?.totalJobs !== 0 && (
                 <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
