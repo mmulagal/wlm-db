@@ -233,6 +233,10 @@ async function getDatabaseHostsSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
+    const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
+    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
         await Promise.all(
@@ -241,57 +245,28 @@ async function getDatabaseHostsSummary(
                 .map(async resourceDetail => {
                     const { resource_id: resourceId, resource_name: resourceName, region } = resourceDetail;
 
-                    // Fetch server status
                     let serverStatus: string = ServerState.DOWN;
-                    try {
-                        serverStatus = await getServerState(resourceId);
-                        serverStatus = serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
-                    } catch (error) {
-                        logger.error('Error while fetching status for resource ', accountId, resourceId, error);
-                    }
-
-                    // Fetch topology data
                     let topologyData: TopologyResponseType;
-                    try {
-                        topologyData = await getTopology(accountId, region!, resourceId, resourceDetail);
-                    } catch (error) {
-                        logger.error('Error while fetching topology data for resource ', accountId, resourceId, error);
-                    }
+                    let performanceData: PerformanceResponseType | undefined;
+                    let storageData: StorageResponseType | undefined;
+                    let protectionData: ProtectionResponseType | undefined;
 
-                    // Fetch io latency data
-                    let performanceData: PerformanceResponseType;
-                    if (fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE)) {
-                        try {
-                            performanceData = await getServerIOLatency(resourceId);
-                        } catch (error) {
-                            logger.error('Error while fetching io latency for resource ', accountId, resourceId, error);
-                        }
-                    }
-
-                    // Fetch storage savings data
-                    let storageData: StorageResponseType;
-                    if (fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE)) {
-                        try {
-                            storageData = await getStorageData(resourceDetail);
-                        } catch (error) {
-                            logger.error('Failed to get storage savings for resource ', accountId, resourceId, error);
-                        }
-                    }
-
-                    // Get protection status
-                    let protection: ProtectionResponseType | undefined;
-                    if (fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION)) {
-                        protection = await getProtectionStatus(resourceDetail);
-                    }
+                    [serverStatus, topologyData, performanceData, storageData, protectionData] = await Promise.all([
+                        getServerState(resourceId), // Fetch server status
+                        getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                        ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                        ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                        ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
+                    ]);
 
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
-                        status: serverStatus,
+                        status: serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
                         topology: topologyData!,
-                        performance: performanceData!,
-                        storage: storageData!,
-                        ...(protection && { protection })
+                        ...(performanceData && { performance: performanceData }),
+                        ...(storageData && { storage: storageData }),
+                        ...(protectionData && { protection: protectionData })
                     });
                 })
         );
