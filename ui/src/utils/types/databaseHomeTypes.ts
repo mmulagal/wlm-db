@@ -2,6 +2,7 @@
 export interface DatabaseHostItem {
     id: string;
     name: string;
+    databaseHostname?: string;
     status: string;
     topology: {
         region: string;
@@ -41,6 +42,7 @@ export interface DatabaseHostItem {
 export interface DatabaseJobsItem {
     id: string;
     name: string;
+    databaseHostname?: string;
     status: string;
     metadata: {
         region: string;
