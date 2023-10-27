@@ -116,7 +116,7 @@ const DatabaseTable = () => {
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{rowData?.name}</Typography>
+                        <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.colText}>
                             {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
@@ -132,9 +132,9 @@ const DatabaseTable = () => {
                             {rowData?.status === STATUS_CONST.FAILED && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
                             )}
-                            <Typography variant="Regular_13">{rowData?.status}</Typography>
+                            <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
                             <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{rowData?.topology?.serverType}</Typography>
+                            <Typography variant="Regular_13">{rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}</Typography>
                         </div>
                     </div>
                 );
