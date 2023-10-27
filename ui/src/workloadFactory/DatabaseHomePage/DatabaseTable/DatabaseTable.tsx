@@ -109,10 +109,11 @@ const DatabaseTable = () => {
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'name',
+            accessor: 'status',
             isSortable: true,
             width: '280px',
             isSticky: true,
+            filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
