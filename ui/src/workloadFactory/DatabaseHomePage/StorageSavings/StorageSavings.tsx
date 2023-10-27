@@ -7,9 +7,68 @@ import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const StorageSavings = () => {
-    const hostData = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const hostData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+
+    const handleProgressBar = () => {
+        if (
+            hostData?.storageSavingsPercent !== 0 &&
+            //@ts-ignore
+            hostData?.storageSavingsPercent <= 1
+        ) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: 'var(--chart-9)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+        if (
+            hostData?.storageSavingsPercent !== 0 &&
+            //@ts-ignore
+            hostData?.storageSavingsPercent >= 1
+        ) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar}`}
+                        style={{
+                            width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
+                            backgroundColor: 'var(--chart-9)'
+                        }}
+                    ></div>
+                    <div className={styles.separator}></div>
+                    <div
+                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${hostData?.storageSavingsPercent}%`,
+                            backgroundColor: 'var(--chart-4)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+
+        if (hostData?.storageSavingsPercent === 0) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: 'var(--chart-disabled)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+    };
 
     return (
         <div className={styles.storageSaving}>
@@ -28,39 +87,7 @@ const StorageSavings = () => {
 
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
-                <div className={styles.progressBar}>
-                    {hostData?.storageSavingsPercent !== 0 && (
-                        <>
-                            <div
-                                className={`${styles.progress} ${styles.leftCurveBar}`}
-                                style={{
-                                    width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
-                                    backgroundColor: 'var(--chart-9)'
-                                }}
-                            ></div>
-                            <div className={styles.separator}></div>
-                            <div
-                                className={`${styles.progress} ${styles.rightCurveBar}`}
-                                style={{
-                                    width: `${hostData?.storageSavingsPercent}%`,
-                                    backgroundColor: 'var(--chart-4)'
-                                }}
-                            ></div>
-                        </>
-                    )}
-
-                    {hostData?.storageSavingsPercent === 0 && (
-                        <>
-                            <div
-                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                                style={{
-                                    width: `${100}%`,
-                                    backgroundColor: 'var(--chart-disabled)'
-                                }}
-                            ></div>
-                        </>
-                    )}
-                </div>
+                <div className={styles.progressBar}>{handleProgressBar()}</div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>

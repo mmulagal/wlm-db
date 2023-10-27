@@ -109,14 +109,16 @@ const DatabaseTable = () => {
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'name',
+            accessor: 'status',
             isSortable: true,
             width: '280px',
             isSticky: true,
+            filterOptions: 'auto',
+            accessorForTextFilter: 'name',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{rowData?.name}</Typography>
+                        <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.colText}>
                             {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
@@ -132,9 +134,9 @@ const DatabaseTable = () => {
                             {rowData?.status === STATUS_CONST.FAILED && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
                             )}
-                            <Typography variant="Regular_13">{rowData?.status}</Typography>
+                            <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
                             <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{rowData?.topology?.serverType}</Typography>
+                            <Typography variant="Regular_13">{rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}</Typography>
                         </div>
                     </div>
                 );
@@ -143,32 +145,33 @@ const DatabaseTable = () => {
         {
             id: '2',
             Header: GENERAL.DB_HOST_PROTECTION,
-            accessor: 'protection',
+            accessor: 'protectionText',
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
+                const protectionData = rowData?.protection;
                 let protectedChk = false;
                 if (
-                    cellData?.isAwsBackUpEnabled ||
-                    cellData?.isFsxOntapSnapshotsEnabled ||
-                    cellData?.isSqlNativeEnabled
+                    protectionData?.isAwsBackUpEnabled ||
+                    protectionData?.isFsxOntapSnapshotsEnabled ||
+                    protectionData?.isSqlNativeEnabled
                 ) {
                     protectedChk = true;
                 }
                 let protectedByList = [];
-                if (cellData?.isFsxOntapSnapshotsEnabled) {
+                if (protectionData?.isFsxOntapSnapshotsEnabled) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (cellData?.isAwsBackUpEnabled) {
+                if (protectionData?.isAwsBackUpEnabled) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
-                if (cellData?.isSqlNativeEnabled) {
+                if (protectionData?.isSqlNativeEnabled) {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }
                 return (
                     <>
-                        {cellData && (
+                        {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
                                     {protectedChk && (
@@ -198,7 +201,7 @@ const DatabaseTable = () => {
                                 )}
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!protectionData && notAvailable()}
                     </>
                 );
             }
@@ -206,7 +209,7 @@ const DatabaseTable = () => {
         {
             id: '3',
             Header: GENERAL.DB_HOST_PERFORMANCE,
-            accessor: 'performance',
+            accessor: 'performanceText',
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
@@ -215,7 +218,7 @@ const DatabaseTable = () => {
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData?.assessment + ' ( <' + cellData?.latency + ' ms )'}
+                                {cellData}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
@@ -226,7 +229,7 @@ const DatabaseTable = () => {
         {
             id: '4',
             Header: GENERAL.DB_HOST_STORAGE_SAVINGS,
-            accessor: 'storage',
+            accessor: 'storageSavingsText',
             isSortable: true,
             width: '184px',
             renderCell: (cellData: any) => {
@@ -234,10 +237,7 @@ const DatabaseTable = () => {
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData?.spaceSavingsPercent +
-                                    '% (' +
-                                    formatSizeOnePrecision(cellData?.spaceSavings) +
-                                    ')'}
+                                {cellData}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
@@ -248,22 +248,23 @@ const DatabaseTable = () => {
         {
             id: '5',
             Header: GENERAL.DB_HOST_ESTIMATED_COST,
-            accessor: 'estimatedUsageCost',
+            accessor: 'totalCost',
             isSortable: true,
             width: '184px',
-            renderCell: (cellData: any) => {
-                const totalCost = cellData?.compute + cellData?.storage + cellData?.connectivity + cellData?.others;
+            renderCell: (cellData: any, rowData: any) => {
+                const costData = rowData?.estimatedUsageCost;
+                const totalCost = costData?.compute + costData?.storage + costData?.connectivity + costData?.others;
                 return (
                     <>
-                        {cellData && (
+                        {costData && (
                             <div className={styles.cost}>
                                 <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                                    {DatabaseEstimatedCost({ ...cellData, totalCost: totalCost })}
+                                    {DatabaseEstimatedCost({ ...costData, totalCost: totalCost })}
                                 </TooltipInfo>
                                 <Typography variant="Regular_14">{totalCost}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!costData && notAvailable()}
                     </>
                 );
             }

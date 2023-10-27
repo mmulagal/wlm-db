@@ -4,22 +4,10 @@ import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import MultiRingDoughnut from '../MultiRingDoughnut/MultiRingDoughnut';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { formatFractionalNumber } from '../../../utils/utilityFunctions';
-import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const ProtectionSection = () => {
-    // const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-    // Hardcoded values for DB protection
-    const hostData = {
-        protectedDb: 12,
-        unprotectedDb: 4,
-        protectedPercent: 75,
-        unprotectedPercent: 25,
-        awsBackupDb: 7,
-        fsxOntapSnapshotsDb: 6,
-        sqlServerBackupDb: 8
-    };
-
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+    
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 

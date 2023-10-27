@@ -3,7 +3,8 @@ import getLogger from './logger';
 
 let PrismaClient: typeof import('@prisma/client').PrismaClient;
 
-if (process.env.NODE_ENV === 'simulator') {
+// added both condition to work for local & demo simulator
+if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
     PrismaClient = (await import('../../__mocks__/@prisma/client')).PrismaClient;
 } else {
     PrismaClient = (await import('@prisma/client')).PrismaClient;

@@ -23,7 +23,7 @@ const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
-const FsxNSecretName = 'wlmdb-fsx1697797203049'; // Todo: Remove this and use fsx secret
+const FsxNSecretName = 'wlmdb-fsx1698373976113'; // Todo: Remove this and use fsx secret
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
@@ -232,29 +232,33 @@ async function getOntapVolumesSnapshotCount(
 ) {
     logger.info('Fetching ontap snapshots count ', credentialsId, region, activeNodeInstanceId);
 
-    const volumeUuids = await getVolumesUuids(credentialsId, region, fileSystemId);
+    try {
+        const volumeUuids = await getVolumesUuids(credentialsId, region, fileSystemId);
 
-    const apiEndpoint = 'storage/volumes';
-    const apiFilter = `uuid=${volumeUuids?.join()}`;
-    const apiQuery = 'fields=snapshot_count';
+        const apiEndpoint = 'storage/volumes';
+        const apiFilter = `uuid=${volumeUuids?.join()}`;
+        const apiQuery = 'fields=snapshot_count';
 
-    const commands = [
-        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${FsxNSecretName}  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
-    ];
+        const commands = [
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${FsxNSecretName}  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        ];
 
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
 
-    const cleanResponse = response?.replaceAll('\r\n', '');
-    const parsedResponse = attempt(JSON.parse, cleanResponse);
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        const parsedResponse = attempt(JSON.parse, cleanResponse);
 
-    logger.debug({ parsedResponse });
-    return parsedResponse instanceof Error ? undefined : parsedResponse;
+        logger.debug({ parsedResponse });
+        return parsedResponse instanceof Error ? undefined : parsedResponse;
+    } catch (err) {
+        logger.error('Failed executing SSM script to get ontap snapshots', { err });
+    }
 }
 
 export {

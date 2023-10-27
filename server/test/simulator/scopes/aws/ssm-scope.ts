@@ -119,6 +119,7 @@ const nativeSqlBackupParams = {
 
 const getOntapSnapshotCountParams = {
     commands: [
+        // eslint-disable-next-line quotes
         "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName 'fsx-fs-03773e21b2f0e39b4'  -FSxID 'fs-03773e21b2f0e39b4' -FSxRegion 'us-east-1' -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=volumeid' -OntapResourceQuery 'fields=snapshot_count'"
     ]
 };
