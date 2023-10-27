@@ -114,7 +114,7 @@ const DatabaseTable = () => {
             width: '280px',
             isSticky: true,
             filterOptions: 'auto',
-            accessorForTextFilter: 'name',
+            accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>

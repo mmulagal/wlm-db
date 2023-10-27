@@ -338,6 +338,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             }
             val = {
                 ...val,
+                databaseHostname: (val?.name || '') + (val?.status || ''),
                 protectionText: protectionText,
                 // Total cost to enable search in table
                 totalCost: (
@@ -370,6 +371,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             }
             val = {
                 ...val,
+                databaseHostname: (val?.name || '') + (status || ''),
                 status: status,
                 topology: val?.metadata
             };
