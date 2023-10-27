@@ -323,18 +323,25 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
     }
     let uniqueIds: Array<String> = [];
     const mergedList: any[] = [];
-    jobsData?.map(val => {
+    hostsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
-            val = {
-                ...val,
-                topology: val?.metadata
-            };
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
     });
-    hostsData?.map(val => {
+    jobsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
+            let status = val?.status;
+            if(val?.status && (val.status === 'CREATE_IN_PROGRESS' || val.status === 'UPDATE_IN_PROGRESS')) {
+                status = STATUS_CONST.INITIALIZING;
+            } else if (val?.status && (val.status === 'CREATE_FAILED' || val.status === 'UPDATE_FAILED')) {
+                status = STATUS_CONST.FAILED;
+            }
+            val = {
+                ...val,
+                status: status,
+                topology: val?.metadata
+            };
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
