@@ -1,0 +1,391 @@
+{
+    "count": 35,
+    "items": [
+        {
+            "id": "deployment-079",
+            "name": "930cbff",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-094",
+            "name": "692ef02",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-139",
+            "name": "56d3afa",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-101",
+            "name": "77f8332",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-143",
+            "name": "b732d8b",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-053",
+            "name": "c953d5f",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-085",
+            "name": "a996c86",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-078",
+            "name": "6642ae9",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-124",
+            "name": "6f01ccf",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-080",
+            "name": "14bc1bd",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-034",
+            "name": "e07a8e0",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-120",
+            "name": "9b4dcef",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-071",
+            "name": "3bfa7f4",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-025",
+            "name": "04d118e",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-141",
+            "name": "1ac27f2",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-013",
+            "name": "513c963",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-057",
+            "name": "6bfed3d",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-015",
+            "name": "78fbcb9",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-039",
+            "name": "4f81b0d",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-029",
+            "name": "e083b6f",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-028",
+            "name": "ec72e1b",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-036",
+            "name": "ba29b31",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-067",
+            "name": "9820273",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-052",
+            "name": "928550b",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-083",
+            "name": "3de4855",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-142",
+            "name": "6eb9cec",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-129",
+            "name": "4582046",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-135",
+            "name": "fc8b3b6",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-086",
+            "name": "25985eb",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-024",
+            "name": "465f947",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-130",
+            "name": "405a7c3",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-004",
+            "name": "645449c",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-116",
+            "name": "c5e3c60",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-063",
+            "name": "11bba33",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "FCI",
+                "fileSystemType": "FSx ONTAP"
+            }
+        },
+        {
+            "id": "deployment-127",
+            "name": "3b3025d",
+            "status": "CREATE_IN_PROGRESS",
+            "metadata": {
+                "region": "region",
+                "serverType": "Microsoft SQL Server",
+                "serverInstallationMode": "Standalone",
+                "fileSystemType": "FSx ONTAP"
+            }
+        }
+    ],
+    "nextToken": ""
+}

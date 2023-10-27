@@ -22,6 +22,8 @@ COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/
 COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/templates/standalone-deployment.yaml
 COPY dist/src ./
 
+COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
+
 COPY prisma ./prisma/
 
 COPY patches ./patches/

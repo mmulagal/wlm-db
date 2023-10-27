@@ -1,4 +1,4 @@
-import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
@@ -13,6 +13,7 @@ interface Deployment {
     cloudProviderName?: string;
     credentialsId: string;
     deploymentStatus: DEPLOYMENT_STATUS;
+    deploymentModel: DEPLOYMENT_MODEL;
     deploymentStatusReason?: string;
     startTime: number;
     endTime?: number;
@@ -50,13 +51,23 @@ interface Config {
     data?: object;
 }
 
-async function listDeployments(accountId?: string, deploymentId?: string, deploymentName?: string) {
-    logger.info('Listing deployments', { accountId, deploymentId, deploymentName });
+async function listDeployments(
+    accountId?: string,
+    deploymentId?: string,
+    deploymentName?: string,
+    statuses?: Array<DEPLOYMENT_STATUS>
+) {
+    logger.info('Listing deployments', { accountId, deploymentId, deploymentName, statuses });
     return prisma.client.deployment.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
             ...(deploymentId && { deployment_id: deploymentId }),
-            ...(deploymentName && { deployment_name: deploymentName })
+            ...(deploymentName && { deployment_name: deploymentName }),
+            ...(statuses && {
+                deployment_status: {
+                    in: statuses
+                }
+            })
         },
         orderBy: {
             start_time: 'desc'
@@ -75,6 +86,7 @@ async function createDeployment(accountId: string, params: Deployment) {
         cloudProviderName,
         credentialsId,
         deploymentStatus,
+        deploymentModel,
         deploymentStatusReason,
         startTime,
         endTime,
@@ -93,6 +105,7 @@ async function createDeployment(accountId: string, params: Deployment) {
             ...(cloudProviderName && { cloud_provider_name: cloudProviderName }),
             credentials_id: credentialsId,
             deployment_status: deploymentStatus,
+            ...(deploymentModel && { deployment_model: deploymentModel }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             start_time: new Date(startTime),
             ...(endTime && { end_time: new Date(endTime) }),
@@ -127,7 +140,7 @@ async function updateDeployment(
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(data && !isEmpty(data) && { data })
+            ...(!isEmpty(data) && { data })
         }
     });
 }
@@ -142,6 +155,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
         cloudProviderName,
         credentialsId,
         deploymentStatus,
+        deploymentModel,
         deploymentStatusReason,
         startTime,
         endTime,
@@ -166,6 +180,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
             ...(cloudProviderName && { cloud_provider_name: cloudProviderName }),
             credentials_id: credentialsId,
             deployment_status: deploymentStatus,
+            ...(deploymentModel && { deployment_model: deploymentModel }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             start_time: new Date(startTime),
             ...(endTime && { end_time: new Date(endTime) }),
@@ -178,7 +193,7 @@ async function upsertDeployment(accountId: string, params: Deployment) {
             ...(deploymentStatus && { deployment_status: deploymentStatus }),
             ...(deploymentStatusReason && { deployment_status_reason: deploymentStatusReason }),
             ...(endTime && { end_time: new Date(endTime) }),
-            ...(data && !isEmpty(data) && { data })
+            ...(!isEmpty(data) && { data })
         }
     });
 }
@@ -350,8 +365,7 @@ async function listRelationshipsResources(accountId: string, resourceId?: string
 
 async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: Array<DEPLOYMENT_STATUS>) {
     logger.info('Deployment jobs count', accountId, fromDate, statuses);
-    return prisma.client.deployment.groupBy({
-        by: ['deployment_status'],
+    return prisma.client.deployment.findMany({
         where: {
             account_id: accountId,
             parent_deployment_id: null,
@@ -361,9 +375,6 @@ async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: 
             start_time: {
                 gte: fromDate.toISOString()
             }
-        },
-        _count: {
-            deployment_status: true
         }
     });
 }

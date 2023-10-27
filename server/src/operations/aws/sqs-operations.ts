@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
-import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
@@ -96,7 +96,11 @@ async function processCloudFormationMessages() {
                                 RequestType: requestType,
                                 ResponseURL: responseUrl,
                                 ResourceProperties: resourceProperties,
-                                LogicalResourceId: logicalResourceId
+                                LogicalResourceId: logicalResourceId,
+                                SQLDeploymentType: trackSqlDeploymentType,
+                                DatabaseType: trackdatabaseType,
+                                ResourceName: trackresourceName,
+                                FileSystemType: trackfileSystemType
                             } = jsonMessage;
                             if (
                                 requestType === CF_CUSTOM_RESOURCE_CODES.CREATE ||
@@ -140,7 +144,13 @@ async function processCloudFormationMessages() {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
                                                     startTime: new Date(messageTimestamp).valueOf(),
                                                     region,
-                                                    deploymentName: stackName
+                                                    deploymentName: stackName,
+                                                    deploymentModel: trackSqlDeploymentType,
+                                                    data: {
+                                                        databaseType: trackdatabaseType,
+                                                        resourceName: trackresourceName,
+                                                        fileSystemType: trackfileSystemType
+                                                    }
                                                 });
                                             } else {
                                                 // Post deployment completion another custom resource is Created, to mark the successful completion of deployment
@@ -166,8 +176,8 @@ async function processCloudFormationMessages() {
                                                         FSxFileSystemName: fsxName,
                                                         ActiveInstanceIp: activeNodeInstanceIp,
                                                         StandbyInstanceIp: standbyNodeInstanceIp,
-                                                        ResourceName: resourceName,
                                                         SQLDeploymentType: sqlDeploymentType,
+                                                        ResourceName: resourceName,
                                                         FileSystemType: fileSystemType
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await listResources(
@@ -302,8 +312,13 @@ async function processCloudFormationMessages() {
                                 EventId: eventId,
                                 ResourceStatus: resourceStatus,
                                 ResourceStatusReason: resourceStatusReason,
-                                ResourceProperties: resourceProperties
+                                ResourceProperties: resourceProperties,
+                                SQLDeploymentType: stackSqlDeploymentType,
+                                DatabaseType: stackDatabaseType,
+                                ResourceName: stackResourceName,
+                                FileSystemType: stackFileSystemType
                             } = stackMessage;
+
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
                                 const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
@@ -346,7 +361,13 @@ async function processCloudFormationMessages() {
                                             parentDeploymentId:
                                                 masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
                                             credentialsId,
-                                            startTime: new Date(timestamp).valueOf()
+                                            startTime: new Date(timestamp).valueOf(),
+                                            deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
+                                            data: {
+                                                databaseType: stackDatabaseType,
+                                                resourceName: stackResourceName,
+                                                fileSystemType: stackFileSystemType
+                                            }
                                         });
                                         if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
                                             // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED

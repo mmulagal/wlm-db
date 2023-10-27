@@ -32,12 +32,13 @@
             width: 520px;
             height: 360px;
             background-color: var(--content-background);
+            box-shadow: 2px 2px 6px var(--grey-15);
         }
     }
 
     .ProtectionContainer {
         margin-left: 120px;
-
+        box-shadow: 2px 2px 6px var(--grey-15);
         height: 360px;
         width: 520px;
         background-color: var(--content-background);
@@ -57,6 +58,7 @@
 
             .commonContainer {
                 background-color: var(--content-background);
+                box-shadow: 2px 2px 6px var(--grey-15);
                 height: 244px;
                 width: 520px;
             }
