@@ -27,7 +27,11 @@ spec:
       annotations:  
 {{ toYaml .Values.global.annotations | indent 10 }}          
     spec:
+      {{ if .Values.global.demoEnv }}
+      serviceAccountName: wlmdb-demo-sa
+      {{ else }}
       serviceAccountName: wlmdb-secretmanager-sa
+      {{ end }}
       {{ if .Values.global.NFSlogs }}
       volumes:
         - name: logs-disk
