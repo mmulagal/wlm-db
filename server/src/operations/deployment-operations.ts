@@ -53,7 +53,8 @@ import {
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
     SNS_ARN,
     BUCKET_NAME,
-    CLOUD_FORMATION_CLI_COMMAND
+    CLOUD_FORMATION_CLI_COMMAND,
+    DEFAULT_AWS_REGION
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -240,7 +241,9 @@ async function getCloudformationTemplate(
     templateParameters.forEach(e => {
         cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
+        region || DEFAULT_AWS_REGION
+    } --parameters ${cliParams}`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
