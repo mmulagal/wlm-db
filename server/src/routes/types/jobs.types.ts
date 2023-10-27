@@ -10,7 +10,7 @@ const DeploymentJobsSummaryQueryString = Type.Object({
 
 const DeploymentJobsSummaryResponse = Type.Object({
     id: Type.String(),
-    name: Type.String(),
+    name: Type.Optional(Type.String()),
     status: Type.String(),
     metadata: Type.Object({
         region: Type.Optional(Type.String()),
