@@ -402,7 +402,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
-        ){
+        ) {
             unprotectedDb += 1;
         }
         if (val?.protection?.isFsxOntapSnapshotsEnabled) {
@@ -425,7 +425,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        sqlServerBackupDb: sqlServerBackupDb,
+        sqlServerBackupDb: sqlServerBackupDb
     };
 };
 
@@ -562,9 +562,9 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         result.storageCapacity = {
             capacity: '100',
             unit: 'GiB'
-        }
+        };
         //Throughput value
-        result.throughput = '128'
+        result.throughput = '128';
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
@@ -593,9 +593,9 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         result.storageCapacity = {
             capacity: '500',
             unit: 'GiB'
-        }
+        };
         //Throughput value
-        result.throughput = '128'
+        result.throughput = '128';
     }
 
     return result;
@@ -625,4 +625,15 @@ export const getCredDetails = (data: any) => {
         region: data?.regionAndVpc?.selectedRegion?.data?.regionCode || ''
     };
     return result;
+};
+
+export const validateChatbotField = (fieldName: string, val: any) => {
+    switch (fieldName) {
+        case 'fsxPassword':
+            return fsxPassVal(val) || '';
+        case 'serviceAccountName':
+            return isValidUserName(val) || '';
+        case 'serviceAccountPassword':
+            return dbPassVal(val) || '';
+    }
 };
