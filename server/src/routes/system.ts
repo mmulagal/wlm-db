@@ -21,6 +21,12 @@ export default function systemRoutes(fastify: FastifyInstance) {
             }
         )
         .get('/health', { schema: GetHealthinessSchema }, (_, reply) => {
-            reply.code(200).send('wlmdb_health 1');
+            // added both condition to work for local & demo simulator
+            if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+                reply.code(200).send('wlmdb_demo_health 1');
+            } else {
+                // this health response is to differentiate demo and dev mode
+                reply.code(200).send('wlmdb_health 1');
+            }
         });
 }
