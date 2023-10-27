@@ -23,10 +23,16 @@
             .databaseText {
                 line-height: unset;
             }
+
+            .databaseContent {
+                width: 80px;
+                display: flex;
+                gap: 4px;
+            }
         }
 
         .dbHostSeparator {
-            margin-left: 56px;
+            margin-left: 16px;
             background: var(--border);
             width: 1px;
             height: 56px;
@@ -68,6 +74,11 @@
 
                     .secondRow {
                         line-height: unset;
+                    }
+
+                    .secondRowContent {
+                        display: flex;
+                        gap: 8px;
                     }
                 }
             }

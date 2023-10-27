@@ -3,7 +3,6 @@ import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const EstimatedCost = () => {
     // const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);

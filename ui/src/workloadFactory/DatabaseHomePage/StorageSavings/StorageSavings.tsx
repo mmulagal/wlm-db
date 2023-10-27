@@ -5,7 +5,6 @@ import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
-import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const StorageSavings = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
