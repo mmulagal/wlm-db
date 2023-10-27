@@ -6,7 +6,11 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"    
   name: wlmdb
 spec:
+  {{ if .Values.global.demoEnv }}
+  replicas: 1
+  {{ else }}
   replicas: 2
+  {{ end }}
   selector:
     matchLabels:
       run: wlmdb

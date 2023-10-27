@@ -1,10 +1,13 @@
-{{ if not .Values.global.demoEnv }}
+{{ if .Values.global.demoEnv }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.global.namespace }}-ingress-rules
   namespace: {{ .Values.global.namespace }}
   annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: x-simulator
+    nginx.ingress.kubernetes.io/canary-by-header-value: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-body-size: 3m
     nginx.ingress.kubernetes.io/client-body-buffer-size: 3m

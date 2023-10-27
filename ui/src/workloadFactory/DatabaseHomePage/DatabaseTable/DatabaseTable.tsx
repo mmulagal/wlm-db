@@ -234,7 +234,10 @@ const DatabaseTable = () => {
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(cellData?.spaceSavings) + ')'}
+                                {cellData?.spaceSavingsPercent +
+                                    '% (' +
+                                    formatSizeOnePrecision(cellData?.spaceSavings) +
+                                    ')'}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
@@ -329,7 +332,10 @@ const DatabaseTable = () => {
     return (
         <>
             <div className={styles.databaseTable}>
-                <div className={styles.table}>
+                <div
+                    //  @ts-ignore
+                    className={databaseHostsList?.length ? `${styles.table} ${styles.tableScroll}` : `${styles.table}`}
+                >
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}

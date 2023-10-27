@@ -76,6 +76,18 @@
         width: 558px;
     }
 
+    .headingLoadingContainer {
+        margin-left: 40px;
+        border-bottom: 2px solid var(--grey-65);
+        overflow: hidden;
+
+        .searchComponent {
+            svg {
+                --icon-primary-color: var(--grey-40);
+            }
+        }
+    }
+
     .openView {
         display: flex;
         gap: 40px;
