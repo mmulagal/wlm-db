@@ -96,7 +96,7 @@ const Accordion = ({
             name: updateConfigName
         };
         setIsSaveConfigLoading(true);
-        renameConfigApi({ configId: id, payload: payload}).then((data: any) => {
+        renameConfigApi({ configId: id, payload: payload }).then((data: any) => {
             dispatch(setSaveConfigName(''));
             configRefetch();
             setIsSaveConfigLoading(false);
@@ -176,13 +176,15 @@ const Accordion = ({
                     <div className={styles.firstLevel}>
                         <div
                             className={
-                                open ? `${styles.accordionHeading} ${styles.addColor}` : `${styles.accordionHeading}`
+                                openedItem === heading
+                                    ? `${styles.accordionHeading} ${styles.addColor}`
+                                    : `${styles.accordionHeading}`
                             }
                         >
                             {heading}
                         </div>
                         <div className={styles.rightMenu}>
-                            <div className={styles.accordionMenuPopover} onClick={e => e.stopPropagation()}>
+                            <div className={styles.accordionMenuPopover}>
                                 <MenuPopover
                                     isMenuOpen={menuOpenedRowDetail.current === heading || menuOpenedRow === heading}
                                     menuItems={savedConfigMenu()}
