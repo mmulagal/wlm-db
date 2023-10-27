@@ -3,7 +3,7 @@
     top: 0;
     right: 0;
     z-index: 2;
-    width: 637px;
+    width: 33vw;
     height: 100%;
     background-color: var(--grey-70);
     transition: right 0.3s rase-in-out;
@@ -73,13 +73,14 @@
     .headingContainer {
         display: flex;
         justify-content: space-between;
-        width: 558px;
+        width: 100%;
     }
 
     .headingLoadingContainer {
         margin-left: 40px;
         border-bottom: 2px solid var(--grey-65);
         overflow: hidden;
+        width: 83%;
 
         .searchComponent {
             svg {
@@ -93,7 +94,8 @@
         gap: 40px;
 
         .leftSideView {
-            width: 638px;
+            width: 33%;
+            // width: 638px;
             margin-top: 40px;
             max-height: 89vh;
             overflow-y: auto;
@@ -101,11 +103,10 @@
         }
 
         .rightSideView {
-            width: 1170px;
             padding: 40px 40px;
 
             .rightSideTopBar {
-                width: 1090px;
+                // width: 1090px;
                 display: flex;
                 justify-content: space-between;
                 padding: 3px 24px 16px 0;
@@ -192,7 +193,7 @@
         }
 
         .secondBar {
-            width: 1090px;
+            // width: 1090px;
             height: 48px;
             padding: 16px 24px 16px 40px;
             background-color: var(--grey-55);
@@ -253,7 +254,7 @@
         }
 
         .thirdBar {
-            width: 1090px;
+            // width: 1090px;
             background-color: var(--grey-65);
             max-height: calc(87vh - 110px);
             height: calc(87vh - 110px);
