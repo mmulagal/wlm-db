@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, SearchInput, Popover } from '@netapp/design-system';
+import { Typography, SearchInput, Popover, FlashingDotsLoader } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
@@ -421,14 +421,35 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         ))}
                     </div>
 
+                    {/* Collapse in loading state */}
                     {configLoading && (
-                        <Typography variant="Semibold_14" className={styles.loading}>
-                            {CODE_VIEWER.LOADING}
-                        </Typography>
+                        <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
+                                {CODE_VIEWER.MY_TEMPLATES}
+                            </Typography>
+                            <FlashingDotsLoader />
+                        </div>
+                    )}
+
+                    {/* configData length 0 */}
+                    {configData && !configData.length && (
+                        <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
+                                {CODE_VIEWER.MY_TEMPLATES}
+                            </Typography>
+                            <div className={styles.searchComponent}>
+                                <SearchInput
+                                    onChange={(e: any) => {
+                                        handleSearch(e);
+                                    }}
+                                    isDisabled={true}
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* Saved templates when code box in collapse state */}
-                    {configData && (
+                    {configData && configData.length && (
                         <div className={styles.accordionStructure}>
                             <div className={styles.headingContainer}>
                                 <Typography variant="Regular_16" className={styles.templateHeading}>
@@ -436,7 +457,6 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 </Typography>
                                 <SearchInput
                                     onChange={(e: any) => {
-                                        console.log('e', e);
                                         handleSearch(e);
                                     }}
                                 />
@@ -498,8 +518,34 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 ))}
                             </div>
                         )}
+                        {/* expanded in loading state */}
+                        {configLoading && (
+                            <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <FlashingDotsLoader />
+                            </div>
+                        )}
+
+                        {/* expanded length 0 */}
+                        {configData && !configData.length && (
+                            <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <div className={styles.searchComponent}>
+                                    <SearchInput
+                                        onChange={(e: any) => {
+                                            handleSearch(e);
+                                        }}
+                                        isDisabled={true}
+                                    />
+                                </div>
+                            </div>
+                        )}
                         {/* saved templates list when code box in expanded state */}
-                        {configData && isOpen && (
+                        {configData && configData.length && isOpen && (
                             <div className={styles.accordionStructure}>
                                 <div className={styles.headingContainer}>
                                     <Typography variant="Regular_16" className={styles.templateHeading}>
