@@ -34,7 +34,7 @@ function getActiveTraceId() {
 
 function initialize() {
     const path =
-        isEmpty(process.env.ARG_WLMDB_BUILD_MODE) || process.env.NODE_ENV === 'simulator'
+        isEmpty(process.env.ENV_WLMDB_BUILD_MODE) || process.env.NODE_ENV === 'simulator'
             ? config.get<string>('log4js.local-config-file')
             : config.get<string>('log4js.config-file');
     const configuration: Configuration = JSON.parse(readFileSync(path).toString());
