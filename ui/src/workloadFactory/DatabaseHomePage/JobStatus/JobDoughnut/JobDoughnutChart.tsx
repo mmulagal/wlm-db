@@ -9,8 +9,8 @@ import styles from './JobDoughnutchart.module.scss';
 Chart.register(...registerables);
 
 const JobDoughnutChart = () => {
-    const { jobsSummaryData } = useAppSelector(state => state.databaseHome.getJobsSummary);
-    
+    const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
+
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -27,9 +27,11 @@ const JobDoughnutChart = () => {
         data: {
             datasets: [
                 {
-                    data: [jobsSummaryData?.successPercent, 
-                        jobsSummaryData?.initializingPercent, 
-                        jobsSummaryData?.failedPercent],
+                    data: [
+                        jobsSummaryData?.successPercent,
+                        jobsSummaryData?.initializingPercent,
+                        jobsSummaryData?.failedPercent
+                    ],
                     backgroundColor: ['#68C6B3', '#0BAFFC', '#FE5502']
                 }
             ]
@@ -45,9 +47,9 @@ const JobDoughnutChart = () => {
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (!jobsSummaryLoading && jobsSummaryData?.totalJobs !== 0) myDoughnut.destroy();
         };
-    }, [jobsSummaryData]);
+    }, [jobsSummaryData, jobsSummaryLoading]);
 
     return (
         <div className={styles.jobChart} id="chart-item">
@@ -57,7 +59,12 @@ const JobDoughnutChart = () => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.JOB_STATUS_JOBS}</Typography>
             </div>
-            <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+            {/* @ts-ignore */}
+            {(jobsSummaryLoading || jobsSummaryData === null) && <div className={styles.emptyCircle}></div>}
+
+            {!jobsSummaryLoading && jobsSummaryData?.totalJobs !== 0 && (
+                <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+            )}
         </div>
     );
 };
