@@ -405,7 +405,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
             val?.protection?.isSqlNativeEnabled
         ) {
             protectedDb += 1;
-        } else if (
+        } else if (val?.protection &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
