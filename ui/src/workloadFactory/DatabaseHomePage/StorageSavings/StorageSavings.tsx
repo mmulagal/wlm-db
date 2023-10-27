@@ -17,11 +17,11 @@ const StorageSavings = () => {
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_STORAGE_SAVINGS}
-                    {(databaseHostsLoading || databaseJobsLoading) && 
+                    {(databaseHostsLoading || databaseJobsLoading) && (
                         <div className={styles.loadingPlacement}>
-                            <LoadingComponent/>
+                            <LoadingComponent />
                         </div>
-                    }
+                    )}
                 </Typography>
                 <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
                     {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
@@ -46,6 +46,18 @@ const StorageSavings = () => {
                                 style={{
                                     width: `${hostData?.storageSavingsPercent}%`,
                                     backgroundColor: 'var(--chart-4)'
+                                }}
+                            ></div>
+                        </>
+                    )}
+
+                    {hostData?.storageSavingsPercent === 0 && (
+                        <>
+                            <div
+                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                                style={{
+                                    width: `${100}%`,
+                                    backgroundColor: 'var(--chart-disabled)'
                                 }}
                             ></div>
                         </>
