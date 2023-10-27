@@ -13,6 +13,9 @@ Chart.register(...registerables);
 const MultiRingDoughnut = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -45,9 +48,9 @@ const MultiRingDoughnut = () => {
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) myDoughnut.destroy();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [hostData]);
 
     return (
@@ -58,7 +61,15 @@ const MultiRingDoughnut = () => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+            {(databaseHostsLoading ||
+                databaseJobsLoading ||
+                !hostData ||
+                (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (
+                <div className={styles.emptyCircle}></div>
+            )}
+            {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (
+                <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+            )}
         </div>
     );
 };
