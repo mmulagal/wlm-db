@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chart, ChartOptions } from 'chart.js';
+import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './MultiRingDoughnut.module.scss';
@@ -14,15 +14,15 @@ const MultiRingDoughnut = () => {
     // const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
     // Hardcoded values for DB protection
     const hostData = {
-        "protectedDb": 12,
-        "unprotectedDb": 4,
-        "protectedPercent": 75,
-        "unprotectedPercent": 25,
-        "awsBackupDb": 7,
-        "fsxOntapSnapshotsDb": 6,
-        "sqlServerBackupDb": 8
+        protectedDb: 12,
+        unprotectedDb: 4,
+        protectedPercent: 75,
+        unprotectedPercent: 25,
+        awsBackupDb: 7,
+        fsxOntapSnapshotsDb: 6,
+        sqlServerBackupDb: 8
     };
-    
+
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
