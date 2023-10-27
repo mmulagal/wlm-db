@@ -10,7 +10,7 @@ const logger = getLogger();
 export default async function sendNotification(requestBody: any) {
     logger.info('Sending Notification:', { requestBody });
     // Blocking for simulator
-    if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    if (process.env.NODE_ENV !== 'demo') {
         try {
             const { token } = await getServiceToken();
             return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/pubsub/publish`, {
