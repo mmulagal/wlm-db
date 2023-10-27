@@ -81,8 +81,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
 }
 
 async function deleteDeploymentJob(accountId: string, jobId: string) {
-    // eslint-disable-next-line no-console
-    console.log(accountId, jobId);
+    logger.info('Deleting Deployment entry for id', accountId, jobId);
     try {
         const response = await deleteDeploymentJobById(accountId, jobId);
         if (response.count === 1) {
