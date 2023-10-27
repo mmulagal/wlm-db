@@ -3,7 +3,7 @@ import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
-import { deploymentJobsCount, listDeployments } from '../lib/database/db';
+import { deploymentJobsCount, listDeployments, deleteDeploymentJobById } from '../lib/database/db';
 import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -47,7 +47,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         deploymentStatuses = statuses?.toUpperCase()?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
     }
-    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses);
+    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses, true);
 
     if (isEmpty(deploymentDetails)) {
         throw createError(
@@ -57,20 +57,22 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
     }
     const response = deploymentDetails.map(
         ({
-            deployment_id: id,
+            id,
+            deployment_id: deploymentId,
             deployment_status: status,
             deployment_model: deploymentModel,
             region: deploymentRegion,
             data: metaData
         }) => ({
             id,
+            deploymentId,
             name: (metaData as JSONObject).resourceName as string,
             status,
             metadata: {
                 region: deploymentRegion,
                 serverType: (metaData as JSONObject).databaseType as string,
                 fileSystemType: (metaData as JSONObject).fileSystemType as string,
-                serverInstallationMode: deploymentModel === null ? 'null' : deploymentModel
+                serverInstallationMode: deploymentModel === null ? 'N/A' : deploymentModel
             }
         })
     );
@@ -78,4 +80,24 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
     return { count: response.length, items: response, nextToken: '' };
 }
 
-export { getDeploymentJobsCount, getDeploymentJobsSummary };
+async function deleteDeploymentJob(accountId: string, jobId: string) {
+    // eslint-disable-next-line no-console
+    console.log(accountId, jobId);
+    try {
+        const response = await deleteDeploymentJobById(accountId, jobId);
+        if (response.count === 1) {
+            return { message: 'Resource successfully deleted' };
+        }
+
+        throw new Error('Resource does not exist for tenancy account');
+    } catch (err: any) {
+        logger.error('Failed to remove resource. Reason:', err.message);
+
+        const errorMessage = 'Resource does not exist for tenancy account';
+        const statusCode =
+            err.message === errorMessage ? HttpErrorCodes.NOT_FOUND : HttpErrorCodes.INTERNAL_SERVER_ERROR;
+        return createError(statusCode, err.message);
+    }
+}
+
+export { getDeploymentJobsCount, getDeploymentJobsSummary, deleteDeploymentJob };
