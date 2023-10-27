@@ -3,9 +3,9 @@ import { useDialog } from '@netapp/design-system';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { Typography } from '@netapp/design-system';
 import styles from './Accordion.module.scss';
-import { useDeleteConfigMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import { useDeleteConfigMutation, useLazyGetConfigDataQuery, useUpdateConfigMutation } from '../../../utils/apiService';
 import { useDispatch } from 'react-redux';
-import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
+import { setIsLoading, setIsRecommendedInstance, setIsSaveConfigLoading } from '../../../store/mssql/msSqlActionSlice';
 import {
     LoadConfiguration,
     LoadRecommendedConfig
@@ -14,9 +14,10 @@ import { useNavigate } from 'react-router-dom';
 import { FROM_DIALOG, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
-import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
+import { initialMssqlState, setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import SaveConfig from '../../../components/CreateMsSql/SaveConfig/SaveConfig';
+import store from '../../../store/store';
 
 type AccordionContent = {
     heading: string;
@@ -52,6 +53,7 @@ const Accordion = ({
     const menuOpenedRowDetail: any = useRef(null);
     const [deleteConfigApi] = useDeleteConfigMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+    const [renameConfigApi] = useUpdateConfigMutation();
 
     // Default menu items applicable for all
     const menuItems = [
@@ -83,6 +85,22 @@ const Accordion = ({
     const handleDelete = () => {
         deleteConfigApi({ configId: id }).then((data: any) => {
             configRefetch();
+        });
+    };
+
+    // To rename saved configuration
+    const handleRename = () => {
+        const state = store.getState();
+        const updateConfigName = state.mssqlForm.saveConfigName;
+        const payload = {
+            name: updateConfigName
+        };
+        setIsSaveConfigLoading(true);
+        renameConfigApi({ configId: id, payload: payload}).then((data: any) => {
+            dispatch(setSaveConfigName(''));
+            configRefetch();
+            setIsSaveConfigLoading(false);
+            closeDialog();
         });
     };
 
@@ -123,15 +141,16 @@ const Accordion = ({
         );
     };
 
-    const handleRename = () => {
+    const handleRenameDialog = () => {
         setDialog(
             <DialogComponent
                 header={GENERAL.RENAME_CONFIG}
                 content={<SaveConfig />}
                 primaryButton={GENERAL.RENAME}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => {}}
+                callback={handleRename}
                 closeCallback={() => {
+                    dispatch(setSaveConfigName(''));
                     closeDialog();
                 }}
                 dialogFrom={FROM_DIALOG.SAVE_CONFIG}
@@ -186,7 +205,7 @@ const Accordion = ({
                                             } else if (menuId === 'viewCode') {
                                                 handleViewCode();
                                             } else if (menuId === 'rename') {
-                                                handleRename();
+                                                handleRenameDialog();
                                             }
                                         }
                                     }}
