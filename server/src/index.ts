@@ -83,10 +83,7 @@ interface Headers {
     [HEADERS.AUTHORIZATION]: string;
 }
 
-// Blocking for simulator
-if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
-    await initiateSecrets();
-}
+await initiateSecrets();
 
 const app = fastify({
     trustProxy: true,
@@ -248,13 +245,10 @@ try {
     logger.error('Failed to initialize database', error);
 }
 
-// Blocking for simulator
-if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
-    try {
-        await checkAndCreateBucketLifecycleConfiguration();
-    } catch (error) {
-        logger.error('Failed to check and create S3 bucket lifecycle');
-    }
+try {
+    await checkAndCreateBucketLifecycleConfiguration();
+} catch (error) {
+    logger.error('Failed to check and create S3 bucket lifecycle');
 }
 
 app.listen({ port, host }, err => {
