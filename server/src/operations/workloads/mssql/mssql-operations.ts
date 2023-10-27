@@ -560,26 +560,32 @@ async function getServerState(resourceId: string) {
 async function getNativeSQLProtection(resourceId: string) {
     logger.info('Fetch SQL native protection status', { resourceId });
 
-    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+    try {
+        const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
+            resourceId
+        );
 
-    if (!credentialsId || !region || !activeNodeInstanceId) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+        if (!credentialsId || !region || !activeNodeInstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+        }
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${NATIVE_SQL_BACKUPS}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId!
+        );
+
+        const cleanedResponse = response?.replaceAll('\r\n', '');
+        const parsedResponse = attempt(JSON.parse, cleanedResponse);
+
+        logger.debug('SQL native protection status', parsedResponse);
+
+        return parsedResponse instanceof Error ? undefined : parsedResponse[0].backupCount;
+    } catch (err) {
+        logger.error('Error getting SQL native protection status', { err });
     }
-
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        [`${PSSCRIPT} -Query "${NATIVE_SQL_BACKUPS}"`],
-        activeNodeInstanceId,
-        standbyNodeInstanceId!
-    );
-
-    const cleanedResponse = response?.replaceAll('\r\n', '');
-    const parsedResponse = attempt(JSON.parse, cleanedResponse);
-
-    logger.debug('SQL native protection status', parsedResponse);
-
-    return parsedResponse instanceof Error ? undefined : parsedResponse[0].backupCount;
 }
 
 export {
