@@ -19,9 +19,10 @@ const DatabaseHomePage = () => {
     const [statusChk, setStatusChk] = useState(false);
 
     const {statusData, statusLoading} = useAppSelector(state => state.databaseHome.getStatus);
+    const isdemomode = useAppSelector(state => state.auth.isDemoMode);
 
     useEffect(() => {
-        if(statusData && statusData?.isActive) {
+        if (isdemomode || (statusData && statusData?.isActive)) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
             window.location.replace(MARKETING_PAGE_URL);
