@@ -295,7 +295,7 @@ export const databaseHomeApi = createApi({
                 query: ({ nextToken = null }) => `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
-                query: ({ nextToken = null }) => `jobs?nextToken=${nextToken}`
+                query: ({ nextToken = null }) => `jobs?fields=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
