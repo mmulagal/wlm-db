@@ -4,8 +4,8 @@ apiVersion: v1
 metadata:
   annotations:
       trident.netapp.io/shareFromPVC: vector/shared-pv
-  name: {{ .Values.global.namespace }}
-  namespace: {{ .Values.global.pvName }}
+  name: {{ .Values.global.pvName }}
+  namespace: {{ .Values.global.namespace }}
 spec:
   accessModes:
     - ReadWriteMany
