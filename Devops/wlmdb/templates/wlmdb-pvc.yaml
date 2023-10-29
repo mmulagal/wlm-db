@@ -1,3 +1,4 @@
+{{ if .Values.global.NFSlogs }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -12,3 +13,4 @@ spec:
     requests:
       storage: 100Gi
   storageClassName: {{ .Values.configuration.storageclass }}
+{{ end }}
