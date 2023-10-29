@@ -4,13 +4,13 @@ apiVersion: v1
 metadata:
   annotations:
       trident.netapp.io/shareFromPVC: vector/shared-pv
-  name: wlmdb-pv
-  namespace: wlmdb
+  name: {{ .Values.global.namespace }}
+  namespace: {{ .Values.global.pvName }}
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
       storage: 100Gi
-  storageClassName: {{ .Values.configuration.storageclass }}
+  storageClassName: trident-csi
 {{ end }}
