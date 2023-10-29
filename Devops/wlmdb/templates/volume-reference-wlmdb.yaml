@@ -1,0 +1,9 @@
+
+apiVersion: trident.netapp.io/v1
+kind: TridentVolumeReference
+metadata:
+  name: wlmdb-pv
+  namespace: wlmdb
+spec:
+  pvcName: shared-pv
+  pvcNamespace: vector
