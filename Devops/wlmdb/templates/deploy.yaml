@@ -36,7 +36,7 @@ spec:
       volumes:
         - name: logs-disk
           persistentVolumeClaim:
-            claimName: wlmdb-pv
+            claimName: {{ .Values.global.pvName }}
       {{ end }}
       containers:
       - image: {{ .Values.global.accountID }}.dkr.ecr.{{ .Values.global.region }}.amazonaws.com/wlmdb:{{ .Values.infraversion }}
