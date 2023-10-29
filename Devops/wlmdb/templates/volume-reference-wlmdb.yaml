@@ -1,4 +1,4 @@
-
+{{ if .Values.global.NFSlogs }}
 apiVersion: trident.netapp.io/v1
 kind: TridentVolumeReference
 metadata:
@@ -7,3 +7,4 @@ metadata:
 spec:
   pvcName: shared-pv
   pvcNamespace: vector
+{{ end }}
