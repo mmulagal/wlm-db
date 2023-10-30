@@ -338,7 +338,7 @@ const DatabaseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
-            width: '184px',
+            width: '204px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -349,7 +349,7 @@ const DatabaseTable = () => {
             Header: GENERAL.DB_HOST_REGION,
             accessor: 'topology.region',
             isSortable: true,
-            width: '184px',
+            width: '179px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
