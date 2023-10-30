@@ -41,7 +41,7 @@ Metadata:
           - DeploymentMode
           - FSxFileSystemName
           - FSxFileSystemId
-          - FSxAdminPassword
+          - FSxAdministratorPasswordSecret
           - FSxSvmName
           - FSxStorageCapacity
           - FSxDataVolumeName
@@ -374,8 +374,8 @@ Parameters:
     Description: Size of the SQL data lun, in megabytes (MiB)
     Type: Number
 
-  FsxAdminPassword:
-    Description: Password for 'fsxadmin' user.
+  FSxAdministratorPasswordSecret:
+    Description: Secret String for FSx "fsxadmin" administrator account
     Type: String
     MinLength: 8
     MaxLength: 50
@@ -606,8 +606,8 @@ Resources:
           Ref: DeploymentMode
         FSxFileSystemName:
           Ref: FSxFileSystemName
-        FsxAdminPassword:
-          Ref: FSxAdminPassword
+        FSxAdministratorPasswordSecret:
+          Ref: FSxAdministratorPasswordSecret
         FSxVolumeThroughputCapacity:
           Ref: FSxVolumeThroughputCapacity
         FSxStorageCapacity:
@@ -665,8 +665,6 @@ Resources:
           Ref: SQLSvmName
         FSxFileSystemId:
           Ref: FSxFileSystemId
-        FSxAdminPassword:
-          Ref: FSxAdminpassword
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
         FSxDataVolumeSize:
@@ -770,7 +768,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdminpassword
+          Ref: FSxAdministratorPasswordSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -868,7 +866,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FsxAdminPassword
+          Ref: FSxAdministratorPasswordSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
