@@ -11,7 +11,7 @@ Metadata:
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemName
-                  - FSxAdminPassword
+                  - FSxAdministratorPasswordSecret
                   - FSxDiskIops
                   - FSxStorageCapacity
                   - FSxVolumeThroughputCapacity
@@ -46,8 +46,8 @@ Metadata:
                 default: File system deployment mode
             FSxFileSystemName:
                 default: File system name
-            FsxAdminPassword:
-                default: Password for 'fsxadmin' user.
+            FSxAdministratorPasswordSecret:
+                default: File system administrative password
             FSxDiskIops:
                 default: Provisioned SSD IOPS
             FSxStorageCapacity:
@@ -101,8 +101,8 @@ Parameters:
         Type: String
         Default: wlmdb-fsx
 
-    FsxAdminPassword:
-        Description: Password for 'fsxadmin' user.
+    FSxAdministratorPasswordSecret:
+        Description: Secret String for FSx "fsxadmin" administrator account
         Type: String
         MinLength: 8
         MaxLength: 50
@@ -344,7 +344,7 @@ Resources:
                 DiskIopsConfiguration:
                     Iops: !If [FSxIsProvisionModeAutomatic, !Ref AWS::NoValue, !Ref FSxDiskIops]
                     Mode: !If [FSxIsProvisionModeAutomatic, AUTOMATIC, USER_PROVISIONED]
-                FsxAdminPassword: !Ref FSxAdminPassword
+                FsxAdminPassword: !Sub '{{resolve:secretsmanager:${FSxAdministratorPasswordSecret}:SecretString:password}}'
                 PreferredSubnetId: !Ref PreferredSubnetId
                 RouteTableIds:
                     !If [
@@ -353,12 +353,6 @@ Resources:
                         !Ref AWS::NoValue
                     ]
                 ThroughputCapacity: !Ref FSxVolumeThroughputCapacity
-    FSxSecret:
-        Type: AWS::SecretsManager::Secret
-        Properties:
-            Name: !Join [ '', [ 'wlmdb-fsx-', !Ref FSxFileSystemConfiguration ]]
-            Description: Secret for FSxN filesystem
-            SecretString: !Sub '{ "username": "fsxadmin", "password": "${FSxAdminPassword}" }'
 
     FSxSvmConfiguration:
         Type: AWS::FSx::StorageVirtualMachine
@@ -443,11 +437,6 @@ Outputs:
         Value: !Ref FSxFileSystemConfiguration
         Export:
             Name: !Sub ${AWS::StackName}-FSxFileSystemId
-
-    FSxSecret:
-        Description: FSx filesystem secret
-        Value: !Ref FSxSecret
-                                    
     FSxFileSystemResourceARN:
         Description: FSx file system ARN
         Value: !GetAtt FSxFileSystemConfiguration.ResourceARN

@@ -11,7 +11,6 @@ Metadata:
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemId
-                  - FSxAdminPassword
                   - FSxSvmName
                   - FSxDataVolumeName
                   - FSxDataVolumeSize
@@ -52,10 +51,6 @@ Parameters:
 
     FSxFileSystemId:
         Description: FSx Filesystem ID
-        Type: String
-
-    FSxAdminPassword:
-        Description: Password for 'fsxadmin' user.
         Type: String
 
     FSxSvmName:
@@ -107,13 +102,6 @@ Conditions:
     FSxIsMultiZoneDeployment: !Equals [!Ref DeploymentMode, 'MULTI_AZ_1']
 
 Resources:
-    FSxSecret:
-        Type: AWS::SecretsManager::Secret
-        Properties:
-            Name: !Join [ '', [ 'wlmdb-fsx-', !Ref FSxFileSystemId ]]
-            Description: Secret for FSxN filesystem
-            SecretString: !Sub '{ "username": "fsxadmin", "password": "${FSxAdminPassword}" }'
-
     FSxSvmConfiguration:
         Type: AWS::FSx::StorageVirtualMachine
         Properties:
@@ -195,11 +183,6 @@ Outputs:
     FSxFileSystemId:
         Description: FSx file system ID
         Value: !Ref FSxFileSystemId
-
-    FSxSecret:
-        Description: FSx filesystem secret
-        Value: !Ref FSxSecret
-        
     FSxDataVolumeLogicalId:
         Description: FSx data volume logical ID
         Value: !Ref FSxDataVolumeConfiguration
