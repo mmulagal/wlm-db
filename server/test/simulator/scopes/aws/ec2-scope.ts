@@ -31,7 +31,7 @@ const keyPairsResponse = {
         {
             KeyPairId,
             KeyFingerprint,
-            KeyName: 'occm_qa',
+            KeyName: 'Key-Pair-1',
             KeyType: 'rsa',
             Tags: [],
             CreateTime: '2022-01-09T21:45:04.000Z'
@@ -39,7 +39,7 @@ const keyPairsResponse = {
         {
             KeyPairId,
             KeyFingerprint,
-            KeyName: 'kanikaj_key',
+            KeyName: 'Key-Pair-2',
             KeyType: 'rsa',
             Tags: [],
             CreateTime: '2023-02-14T06:29:16.874Z'
@@ -47,7 +47,7 @@ const keyPairsResponse = {
         {
             KeyPairId,
             KeyFingerprint,
-            KeyName: 'nithin_xcp_sg',
+            KeyName: 'Key-Pair-3',
             KeyType: 'rsa',
             Tags: [],
             CreateTime: '2023-02-14T07:06:02.860Z'
