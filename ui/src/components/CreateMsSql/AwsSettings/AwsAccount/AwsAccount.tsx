@@ -28,6 +28,7 @@ const AwsAccount = () => {
     //Getting the Data from state
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
+    const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
@@ -182,7 +183,12 @@ const AwsAccount = () => {
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
-                                <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
+                                {isWorkloadFactoryStatus && (
+                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT_WF}</div>
+                                )}
+                                {!isWorkloadFactoryStatus && (
+                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
+                                )}
                                 <Typography variant="Regular_14" className={styles.buttonStyle}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
