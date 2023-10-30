@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
 import { deploymentJobsCount, listDeployments, deleteDeploymentJobById } from '../lib/database/db';
-import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes } from '../utils/consts';
+import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes, NOT_AVAILABLE } from '../utils/consts';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
@@ -72,7 +72,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
                 region: deploymentRegion,
                 serverType: (metaData as JSONObject).databaseType as string,
                 fileSystemType: (metaData as JSONObject).fileSystemType as string,
-                serverInstallationMode: deploymentModel === null ? 'N/A' : deploymentModel
+                serverInstallationMode: deploymentModel === null ? NOT_AVAILABLE : deploymentModel
             }
         })
     );
@@ -82,21 +82,12 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
 
 async function deleteDeploymentJob(accountId: string, jobId: string) {
     logger.info('Deleting Deployment entry for id', accountId, jobId);
-    try {
-        const response = await deleteDeploymentJobById(accountId, jobId);
-        if (response.count === 1) {
-            return { message: 'Resource successfully deleted' };
-        }
 
-        throw new Error('Resource does not exist for tenancy account');
-    } catch (err: any) {
-        logger.error('Failed to remove resource. Reason:', err.message);
-
-        const errorMessage = 'Resource does not exist for tenancy account';
-        const statusCode =
-            err.message === errorMessage ? HttpErrorCodes.NOT_FOUND : HttpErrorCodes.INTERNAL_SERVER_ERROR;
-        return createError(statusCode, err.message);
+    const response = await deleteDeploymentJobById(accountId, jobId);
+    if (response.count === 1) {
+        return { message: 'Resource successfully deleted' };
     }
+    return createError(HttpErrorCodes.NOT_FOUND, 'Resource does not exist for tenancy account');
 }
 
 export { getDeploymentJobsCount, getDeploymentJobsSummary, deleteDeploymentJob };
