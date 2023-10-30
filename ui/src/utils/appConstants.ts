@@ -87,6 +87,8 @@ export const GENERAL = {
     FOR_MORE_INFO: 'Learn more about the',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT_WF:
+        'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
