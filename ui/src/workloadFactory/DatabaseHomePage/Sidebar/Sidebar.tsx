@@ -82,6 +82,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [disableCopy, setDisableCopy] = useState(true);
 
+    //Search Word count
+    const [countWord, setCountWord] = useState(0);
+
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
 
@@ -242,6 +245,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    const countDetails = (count: any) => {
+        setCountWord(count - 1);
+    };
+
+    useEffect(() => {
+        if (countWord > 0) {
+            setTimeout(() => {
+                const occurrences = document.querySelectorAll('[class$="highlighted"]');
+                const target = occurrences[0];
+
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 500);
+        }
+    }, [searchInput]);
+
     useEffect(() => {
         if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
             const recList = recommendedData.filter((item: any) => item.id === openKey);
@@ -306,7 +326,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
@@ -319,7 +339,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre>{rightPanelResponse}</pre>
                 </HighlighterWord>
             );
@@ -330,7 +350,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     {CODE_VIEWER.LOADING}
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput} isAWSCli={true}>
+                <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
