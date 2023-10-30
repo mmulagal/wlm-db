@@ -1,10 +1,12 @@
 .databaseHome {
     height: 100vh;
+    width: 100vw;
     background-color: var(--main-background);
 
     .leftSide {
         overflow-y: auto;
         height: 100%;
+        width: 67.3vw;
     }
 
     .topContainer {
@@ -13,6 +15,7 @@
         justify-content: space-between;
         margin-top: 38px;
         margin-left: 120px;
+        margin-right: 40px;
         .heading {
             line-height: unset;
         }
@@ -21,6 +24,7 @@
     .secondLevelContainer {
         margin-left: 120px;
         display: flex;
+        width: 1063px;
     }
 
     .thirdLevelContainer {
@@ -63,6 +67,10 @@
                 width: 520px;
             }
         }
+    }
+
+    ::-webkit-scrollbar {
+        height: 6px;
     }
 }
 

@@ -25,8 +25,8 @@ interface OptionsWithData extends optionType {
 }
 
 export const generateOptionType = (
-    value: string,
-    label: string,
+    value: string | any,
+    label: string | any,
     label2: string,
     isDisabled: boolean,
     disabledTitle: string,
@@ -323,18 +323,57 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
     }
     let uniqueIds: Array<String> = [];
     const mergedList: any[] = [];
-    jobsData?.map(val => {
+    hostsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
+            // Protection text added to enable filter
+            let protectionText = '';
+            if (
+                val?.protection?.isAwsBackUpEnabled ||
+                val?.protection?.isFsxOntapSnapshotsEnabled ||
+                val?.protection?.isSqlNativeEnabled
+            ) {
+                protectionText = GENERAL.PROTECTED;
+            } else if (val?.protection) {
+                protectionText = GENERAL.NOT_PROTECTED;
+            }
             val = {
                 ...val,
-                topology: val?.metadata
+                databaseHostname: (val?.name || '') + (val?.status || ''),
+                protectionText: protectionText,
+                // Total cost to enable search in table
+                totalCost: (
+                    (val?.estimatedUsageCost?.compute || 0) +
+                    (val?.estimatedUsageCost?.storage || 0) +
+                    (val?.estimatedUsageCost?.connectivity || 0) +
+                    (val?.estimatedUsageCost?.others || 0)
+                ).toString(),
+                // performance table text to search in table
+                performanceText:
+                    val?.performance && val.performance?.assessment + ' ( <' + val.performance?.latency + ' ms )',
+                // Storage saving table text to search in table
+                storageSavingsText:
+                    val?.storage &&
+                    val.storage?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
     });
-    hostsData?.map(val => {
+    jobsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
+            // To map status
+            let status = val?.status;
+            if (val?.status && (val.status === 'CREATE_IN_PROGRESS' || val.status === 'UPDATE_IN_PROGRESS')) {
+                status = STATUS_CONST.INITIALIZING;
+            } else if (val?.status && (val.status === 'CREATE_FAILED' || val.status === 'UPDATE_FAILED')) {
+                status = STATUS_CONST.FAILED;
+            }
+            val = {
+                ...val,
+                databaseHostname: (val?.name || '') + (status || ''),
+                status: status,
+                topology: val?.metadata
+            };
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
@@ -399,10 +438,11 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         ) {
             protectedDb += 1;
         } else if (
+            val?.protection &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
-        ){
+        ) {
             unprotectedDb += 1;
         }
         if (val?.protection?.isFsxOntapSnapshotsEnabled) {
@@ -425,7 +465,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         unprotectedPercent: (unprotectedDb / totalHost) * 100 || 0,
         awsBackupDb: awsBackupDb,
         fsxOntapSnapshotsDb: fsxOntapSnapshotsDb,
-        sqlServerBackupDb: sqlServerBackupDb,
+        sqlServerBackupDb: sqlServerBackupDb
     };
 };
 
@@ -562,9 +602,9 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         result.storageCapacity = {
             capacity: '100',
             unit: 'GiB'
-        }
+        };
         //Throughput value
-        result.throughput = '128'
+        result.throughput = '128';
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
@@ -593,9 +633,9 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         result.storageCapacity = {
             capacity: '500',
             unit: 'GiB'
-        }
+        };
         //Throughput value
-        result.throughput = '128'
+        result.throughput = '128';
     }
 
     return result;
@@ -625,4 +665,15 @@ export const getCredDetails = (data: any) => {
         region: data?.regionAndVpc?.selectedRegion?.data?.regionCode || ''
     };
     return result;
+};
+
+export const validateChatbotField = (fieldName: string, val: any) => {
+    switch (fieldName) {
+        case 'fsxPassword':
+            return fsxPassVal(val) || '';
+        case 'serviceAccountName':
+            return isValidUserName(val) || '';
+        case 'serviceAccountPassword':
+            return dbPassVal(val) || '';
+    }
 };

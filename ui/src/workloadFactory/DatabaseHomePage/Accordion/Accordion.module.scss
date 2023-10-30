@@ -3,7 +3,7 @@
         border-left: 8px solid #84b0ff;
     }
     .accordionContainer {
-        width: 558px;
+        width: 100%;
 
         background: #2b323d;
 
@@ -87,6 +87,10 @@
             height: 16px;
         }
     }
+}
+
+[class*='Dialog-module_dialog'] {
+    z-index: 2 !important;
 }
 
 @media screen and (min-width: 1576px) and (max-width: 1720px) {

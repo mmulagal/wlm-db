@@ -1,56 +1,93 @@
 import React from 'react';
 import styles from './StorageSavings.module.scss';
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
-import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const StorageSavings = () => {
-    const hostData = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const hostData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+
+    const handleProgressBar = () => {
+        if (
+            hostData?.storageSavingsPercent !== 0 &&
+            //@ts-ignore
+            hostData?.storageSavingsPercent <= 1
+        ) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: 'var(--chart-9)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+        if (
+            hostData?.storageSavingsPercent !== 0 &&
+            //@ts-ignore
+            hostData?.storageSavingsPercent >= 1
+        ) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar}`}
+                        style={{
+                            width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
+                            backgroundColor: 'var(--chart-9)'
+                        }}
+                    ></div>
+                    <div className={styles.separator}></div>
+                    <div
+                        className={`${styles.progress} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${hostData?.storageSavingsPercent}%`,
+                            backgroundColor: 'var(--chart-4)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+
+        if (hostData?.storageSavingsPercent === 0) {
+            return (
+                <>
+                    <div
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                        style={{
+                            width: `${100}%`,
+                            backgroundColor: 'var(--chart-disabled)'
+                        }}
+                    ></div>
+                </>
+            );
+        }
+    };
 
     return (
         <div className={styles.storageSaving}>
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_STORAGE_SAVINGS}
-                    {(databaseHostsLoading || databaseJobsLoading) && 
-                        <div className={styles.loadingPlacement}>
-                            <LoadingComponent/>
-                        </div>
-                    }
                 </Typography>
-                <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
-                </Typography>
+                {databaseHostsLoading || databaseJobsLoading ? (
+                    <FlashingDotsLoader />
+                ) : (
+                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
+                        {formatFractionalNumber(hostData?.storageSavingsPercent, 2)}%
+                    </Typography>
+                )}
             </div>
 
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
-                <div className={styles.progressBar}>
-                    {hostData?.storageSavingsPercent !== 0 && (
-                        <>
-                            <div
-                                className={`${styles.progress} ${styles.leftCurveBar}`}
-                                style={{
-                                    width: `${100 - (hostData?.storageSavingsPercent || 0)}%`,
-                                    backgroundColor: 'var(--chart-9)'
-                                }}
-                            ></div>
-                            <div className={styles.separator}></div>
-                            <div
-                                className={`${styles.progress} ${styles.rightCurveBar}`}
-                                style={{
-                                    width: `${hostData?.storageSavingsPercent}%`,
-                                    backgroundColor: 'var(--chart-4)'
-                                }}
-                            ></div>
-                        </>
-                    )}
-                </div>
+                <div className={styles.progressBar}>{handleProgressBar()}</div>
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>

@@ -1,0 +1,16 @@
+{{ if .Values.global.NFSlogs }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+      trident.netapp.io/shareFromPVC: vector/shared-pv
+  name: {{ .Values.global.pvName }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: trident-csi
+{{ end }}
