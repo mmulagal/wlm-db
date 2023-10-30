@@ -379,7 +379,8 @@ export const GENERAL = {
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
     PROTECTION_DATABASES: 'DB',
     PROTECTION: 'Protection',
-    NUMBER_OF_EXECUTION: 'Number of Execution'
+    NUMBER_OF_EXECUTION: 'Number of Execution',
+    TERRAFORM: 'Terraform'
 };
 
 export const CODE_VIEWER = {
