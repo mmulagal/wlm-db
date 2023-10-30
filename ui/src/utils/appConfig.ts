@@ -37,13 +37,13 @@ const useInitialize = () => {
         const accountIdAsString = Array.isArray(accountId) ? accountId[0] : accountId;
         const accessTokenAsString = Array.isArray(accessToken) ? accessToken[0] : accessToken;
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
-        const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
+        // const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
         const isWorkloadFactory =
             !window.location ||
             !window.location.ancestorOrigins ||
             !window.location.ancestorOrigins.length ||
             window.location.ancestorOrigins[0] !== 'https://staging.cloudmanager.netapp.com';
-        dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
+        // dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
         dispatch(updateIsWorkloadfactory(isWorkloadFactory));
 
         if (accountIdAsString) {
