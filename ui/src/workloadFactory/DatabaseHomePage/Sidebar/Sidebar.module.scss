@@ -207,6 +207,11 @@
                 gap: 16px;
                 align-items: center;
 
+                .terraformContainer {
+                    display: flex;
+                    gap: 40px;
+                }
+
                 .inputBox {
                     width: 146px;
                     margin-top: 35px;
@@ -217,6 +222,7 @@
                     }
                     [class*='design-system-select__menu'] {
                         box-shadow: none;
+                        width: 240px;
                     }
 
                     [class*='design-system-select__option'] {
