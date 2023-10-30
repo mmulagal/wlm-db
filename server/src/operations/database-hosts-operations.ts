@@ -256,7 +256,7 @@ async function getDatabaseHostsSummary(
                         getServerState(resourceId), // Fetch server status
                         getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
                         ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                        ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.reject()]), // Fetch storage savings data
+                        ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                         ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
                     ]);
 
