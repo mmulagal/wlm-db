@@ -6,7 +6,7 @@ import {
 } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
-import { WF } from '../../utils/consts';
+import { WF, HEADERS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -41,7 +41,7 @@ async function getAllCredentialsRecursive(
  */
 async function getCredentials(credentialsType: string): Promise<CredentialsResponseType> {
     logger.info('Getting credentials ', credentialsType);
-    if (getAsyncLocalStorageResource('REFERER') === WF) {
+    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
         const credentialsList = await getAllCredentialsRecursive(credentialsType);
         return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
             credentialsId: id,
@@ -60,7 +60,7 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 }
 
 async function getRoleDetails(credentialsId: string) {
-    if (getAsyncLocalStorageResource('REFERER') === WF) {
+    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
         const { metadata } = await getWfCredentialDetails(credentialsId);
         return {
             roleName: metadata.arn.match(/role\/(.*)/)?.[1] || '',
@@ -77,7 +77,7 @@ async function getRoleDetails(credentialsId: string) {
 }
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
-    if (getAsyncLocalStorageResource('REFERER') === WF) {
+    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken }
         } = await getWfCredentialDetails(credentialsId, accountId);

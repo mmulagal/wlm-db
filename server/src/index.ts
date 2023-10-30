@@ -22,7 +22,9 @@ import {
     VERSION,
     WORKSPACE_ID,
     JWKS_FULL_NAME,
-    WLMDB
+    WLMDB,
+    WF,
+    BXP
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -196,7 +198,7 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId },
+                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId, referer },
                     params: { accountId },
                     id: requestId
                 } = request;
@@ -205,6 +207,7 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
+                setAsyncLocalStorageResource(HEADERS.REFERER, referer?.includes('cloudmanager') ? BXP : WF);
                 const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                 if (!requestUrl) {
                     createAuditGroup(request, reply);
