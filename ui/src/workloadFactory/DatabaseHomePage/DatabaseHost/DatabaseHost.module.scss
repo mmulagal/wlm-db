@@ -3,6 +3,7 @@
     width: 1063px;
     height: 176px;
     background-color: var(--content-background);
+    box-shadow: 2px 2px 6px var(--grey-15);
 
     .leftContainer {
         margin-top: 40px;
@@ -22,11 +23,16 @@
             .databaseText {
                 line-height: unset;
             }
+
+            .databaseContent {
+                width: 80px;
+                display: flex;
+                gap: 4px;
+            }
         }
 
         .dbHostSeparator {
-            margin-left: 32px;
-            height: 96px;
+            margin-left: 16px;
             background: var(--border);
             width: 1px;
             height: 56px;
@@ -47,12 +53,12 @@
                 .layout {
                     border-radius: 2px;
                     background: rgba(232, 238, 253, 0.4);
-                    padding: 12px 0px 12px 40px;
+                    padding: 18px 0px 12px 24px;
                     width: 150px;
                     height: 84px;
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
+                    gap: 6px;
 
                     .firstRow {
                         display: flex;
@@ -68,6 +74,11 @@
 
                     .secondRow {
                         line-height: unset;
+                    }
+
+                    .secondRowContent {
+                        display: flex;
+                        gap: 8px;
                     }
                 }
             }

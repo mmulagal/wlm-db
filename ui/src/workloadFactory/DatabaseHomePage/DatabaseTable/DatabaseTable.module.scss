@@ -8,6 +8,12 @@
         width: 1063px;
     }
 
+    .tableScroll {
+        [class*='Table-module_scroll'] {
+            width: 1808px !important;
+        }
+    }
+
     .colText {
         display: flex;
         gap: 8px;

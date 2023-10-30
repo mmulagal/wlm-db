@@ -49,6 +49,7 @@ import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
+import chatbotRoutes from './routes/chatbot';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -176,6 +177,7 @@ const app = fastify({
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
+            chatbotRoutes(instance);
             serviceStatusRoutes(instance);
             next();
         },
@@ -228,11 +230,14 @@ const app = fastify({
         return payload;
     });
 
-try {
-    await createAndSubscribeToSnsTopicInAllRegions();
-    processCloudFormationMessages();
-} catch (error) {
-    logger.error('Failed to setup SNS-SQS infra', error);
+// Blocking for simulator
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    try {
+        await createAndSubscribeToSnsTopicInAllRegions();
+        processCloudFormationMessages();
+    } catch (error) {
+        logger.error('Failed to setup SNS-SQS infra', error);
+    }
 }
 
 try {

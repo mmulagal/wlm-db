@@ -63,6 +63,9 @@ export const GENERAL = {
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    RENAME_CONFIG: 'Rename configuration',
+    DELETE_CONFIG: 'Delete configuration',
+    DELETE_CONFIG_TEXT: 'Are you sure to delete configuration',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
     CONFIG_NAME: 'Configuration name',
@@ -70,6 +73,8 @@ export const GENERAL = {
     CLOSE: 'Close',
     REMOVE: 'Remove',
     SAVE: 'Save',
+    RENAME: 'Rename',
+    DELETE: 'Delete',
     API_REQUEST: 'API request',
     CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
@@ -374,7 +379,8 @@ export const GENERAL = {
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
     PROTECTION_DATABASES: 'DB',
     PROTECTION: 'Protection',
-    NUMBER_OF_EXECUTION: 'Number of Execution'
+    NUMBER_OF_EXECUTION: 'Number of Execution',
+    TERRAFORM: 'Terraform'
 };
 
 export const CODE_VIEWER = {

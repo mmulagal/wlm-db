@@ -1,0 +1,36 @@
+FROM node:alpine3.18
+
+WORKDIR /opt/netapp/wlmdb
+
+ADD src ./src
+ADD test ./test
+ADD config ./config
+ADD resources/mssql/templates ./resources/mssql/templates
+COPY package.json ./
+COPY package-lock.json ./
+
+COPY __mocks__ ./__mocks__
+COPY prisma ./prisma/
+COPY patches ./patches/
+
+RUN npm i
+
+# build mode - development or production
+ARG ARG_WLMDB_BUILD_MODE
+
+# Team City build number
+ARG ARG_WLMDB_BUILD_TC
+
+# GIT short hash
+ARG ARG_WLMDB_BUILD_GIT
+
+# persist arguments as environment variables
+ENV ENV_WLMDB_BUILD_GIT $ARG_WLMDB_BUILD_GIT
+ENV ENV_WLMDB_BUILD_TC $ARG_WLMDB_BUILD_TC
+ENV ENV_WLMDB_BUILD_MODE $ARG_WLMDB_BUILD_MODE
+ENV NODE_CONFIG_ENV $ARG_WLMDB_BUILD_MODE
+ENV NODE_ENV $ARG_WLMDB_BUILD_MODE
+
+EXPOSE 8085
+
+CMD ["node", "--loader","@esbuild-kit/esm-loader", "test/simulator/index.ts"]

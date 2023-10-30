@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { attempt, isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
@@ -20,7 +20,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SERVER_IO_LATENCY
+    SERVER_IO_LATENCY,
+    NATIVE_SQL_BACKUPS
 } from './queries';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -556,6 +557,37 @@ async function getServerState(resourceId: string) {
     return response!.replace(/[\r\n.]/g, '');
 }
 
+async function getNativeSQLProtection(resourceId: string) {
+    logger.info('Fetch SQL native protection status', { resourceId });
+
+    try {
+        const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
+            resourceId
+        );
+
+        if (!credentialsId || !region || !activeNodeInstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+        }
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${NATIVE_SQL_BACKUPS}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId!
+        );
+
+        const cleanedResponse = response?.replaceAll('\r\n', '');
+        const parsedResponse = attempt(JSON.parse, cleanedResponse);
+
+        logger.debug('SQL native protection status', parsedResponse);
+
+        return parsedResponse instanceof Error ? undefined : parsedResponse[0].backupCount;
+    } catch (err) {
+        logger.error('Error getting SQL native protection status', { err });
+    }
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -570,5 +602,6 @@ export {
     getMsSqlResourceId,
     deleteResourceById,
     getServerIOLatency,
-    getServerState
+    getServerState,
+    getNativeSQLProtection
 };

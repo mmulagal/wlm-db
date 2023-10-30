@@ -30,14 +30,6 @@ const rootReducer = combineReducers({
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
-        const apiName = action?.meta?.arg?.queryCacheKey || '';
-
-        // TBD - Will remove once APIs will be available
-        if (
-            apiName.includes('getDatabaseJobs')
-        ) {
-            return next(action);
-        }
 
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 

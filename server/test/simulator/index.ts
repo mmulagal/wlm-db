@@ -19,7 +19,6 @@ async function initiateSimulator() {
     await import('./scopes/aws/s3-scope');
     await import('./scopes/aws/iam-scope');
     await import('./scopes/aws/ssm-scope');
-    await import('./scopes/aws/s3-signed-scope');
     await import('./scopes/aws/sns-scope');
     await import('./scopes/aws/sqs-scope');
     await import('./scopes/batch-scope');

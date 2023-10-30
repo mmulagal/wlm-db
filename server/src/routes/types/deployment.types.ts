@@ -28,7 +28,6 @@ const ADConfiguration = Type.Object({
 const FSXConfiguration = Type.Object({
     fsxDeploymentMode: Type.String({ enum: ['SINGLE_AZ_1', 'MULTI_AZ_1'] }),
     fsxFileSystemId: Type.Optional(Type.String()),
-    fsxUsername: Type.String(),
     fsxPassword: Type.String(),
     databaseSize: Type.Number(),
     ontapSgGroupId: Type.Array(Type.String()),

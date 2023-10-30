@@ -79,7 +79,7 @@ const EstimatedCost = () => {
             diskSize &&
             (iopsValueType !== GENERAL.USER_PROVISIONED ||
                 (iopsValueType === GENERAL.USER_PROVISIONED &&
-                    (iopsValue === '' || (Number(iopsValue) > 3072 && Number(iopsValue) < 160000))))
+                    (iopsValue === '' || (Number(iopsValue) >= 3072 && Number(iopsValue) <= 160000))))
         ) {
             const splitRegion = regionValue?.value.split('|');
             const updatedStr = splitRegion[0].replace(/\s?$/, '');

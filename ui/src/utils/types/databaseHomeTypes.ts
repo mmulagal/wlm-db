@@ -2,6 +2,7 @@
 export interface DatabaseHostItem {
     id: string;
     name: string;
+    databaseHostname?: string;
     status: string;
     topology: {
         region: string;
@@ -20,23 +21,28 @@ export interface DatabaseHostItem {
         latency: number;
         assessment: string;
     };
+    performanceText?: string;
+    protectionText?: string;
     storage: {
         size: number;
         used: number;
         spaceSavings: number;
         spaceSavingsPercent: number;
     };
+    storageSavingsText?: string;
     estimatedUsageCost: {
         compute: number;
         storage: number;
         connectivity: number;
         others: number;
-    }
+    };
+    totalCost?: string;
 }
 
 export interface DatabaseJobsItem {
     id: string;
     name: string;
+    databaseHostname?: string;
     status: string;
     metadata: {
         region: string;

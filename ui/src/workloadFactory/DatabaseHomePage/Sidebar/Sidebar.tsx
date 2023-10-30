@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, SearchInput, Popover } from '@netapp/design-system';
+import { Typography, SearchInput, Popover, FlashingDotsLoader } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
 import { ReactComponent as LoadIcon } from '../../../assets/ic_circle_arrow_down.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';
@@ -21,10 +22,15 @@ import {
     handleDownloadYAML,
     setRecommendedValues
 } from '../../../utils/utilityFunctions';
-import { useGetConfigListQuery, useGetTemplatesMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import {
+    getBaseUrl,
+    useGetConfigListQuery,
+    useGetTemplatesMutation,
+    useLazyGetConfigDataQuery
+} from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { CODE_VIEWER } from '../../../utils/appConstants';
+import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import {
     LoadConfiguration,
@@ -38,7 +44,6 @@ import {
     CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS
 } from '../../../utils/consts';
-import { useAppSelector } from '../../../store/storeHooks';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 
@@ -54,8 +59,6 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
-
-    const accountId = useAppSelector(state => state?.auth?.accountId);
 
     //To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
@@ -167,6 +170,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const getRestResponse = (id: string) => {
         setIsRightPanelDataLoading(true);
         setIsRightPanelTemplateLoading(true);
+        const baseUrl = getBaseUrl();
         if (id === RECOMMENDED_TEMPLATES.DEV_ID || id === RECOMMENDED_TEMPLATES.PROD_ID) {
             // For recommended template updating values in initial form and getting response
             const actualData = recommendedData.filter((item: any) => item.id === id);
@@ -187,7 +191,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     ]}
                     autoEscape={true}
                     textToHighlight={CURL_REQ_TEMPLATE(
-                        accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        baseUrl,
                         CRED_PLACEHOLDERS.CRED_ID,
                         CRED_PLACEHOLDERS.REGION,
                         CRED_PLACEHOLDERS.TOKEN,
@@ -222,7 +226,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         ]}
                         autoEscape={true}
                         textToHighlight={CURL_REQ_TEMPLATE(
-                            accountId || CRED_PLACEHOLDERS.ACCOUNT_ID,
+                            baseUrl,
                             credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
                             credDetails.region || CRED_PLACEHOLDERS.REGION,
                             CRED_PLACEHOLDERS.TOKEN,
@@ -272,12 +276,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         onClose();
     };
 
+    const terraformUI = () => {
+        return (
+            <div className={styles.terraformContainer}>
+                <div>{GENERAL.TERRAFORM}</div>
+                <div>
+                    <ComingSoon />
+                </div>
+            </div>
+        );
+    };
+
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+            const option = generateOptionType(val, val, '', idx === 3 ? true : false, '');
             options.push(option);
         });
         return options;
@@ -392,10 +407,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                     <div className={styles.accordionStructure}>
                         <div className={styles.recTemplateHeading}>
-                            <Typography variant="Semibold_14" className={styles.templateHeading}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
                                 {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
                             </Typography>
-                            <Typography variant="Regular_14" className={styles.templateHeading}>
+                            &nbsp;
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
                                 {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
                             </Typography>
                         </div>
@@ -417,22 +433,42 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         ))}
                     </div>
 
+                    {/* Collapse in loading state */}
                     {configLoading && (
-                        <Typography variant="Semibold_14" className={styles.loading}>
-                            {CODE_VIEWER.LOADING}
-                        </Typography>
+                        <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
+                                {CODE_VIEWER.MY_TEMPLATES}
+                            </Typography>
+                            <FlashingDotsLoader />
+                        </div>
+                    )}
+
+                    {/* configData length 0 */}
+                    {configData && !configData.length && (
+                        <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                            <Typography variant="Regular_16" className={styles.templateHeading}>
+                                {CODE_VIEWER.MY_TEMPLATES}
+                            </Typography>
+                            <div className={styles.searchComponent}>
+                                <SearchInput
+                                    onChange={(e: any) => {
+                                        handleSearch(e);
+                                    }}
+                                    isDisabled={true}
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* Saved templates when code box in collapse state */}
-                    {configData && (
+                    {configData && configData.length && (
                         <div className={styles.accordionStructure}>
                             <div className={styles.headingContainer}>
-                                <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
                                     {CODE_VIEWER.MY_TEMPLATES}
                                 </Typography>
                                 <SearchInput
                                     onChange={(e: any) => {
-                                        console.log('e', e);
                                         handleSearch(e);
                                     }}
                                 />
@@ -467,10 +503,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {isOpen && (
                             <div className={styles.accordionStructure}>
                                 <div className={styles.recTemplateHeading}>
-                                    <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                    <Typography variant="Regular_16" className={styles.templateHeading}>
                                         {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[0]}
                                     </Typography>
-                                    <Typography variant="Regular_14" className={styles.templateHeading}>
+                                    &nbsp;
+                                    <Typography variant="Regular_16" className={styles.templateHeading}>
                                         {CODE_VIEWER.RECOMMENDED_TEMPLATES_HEADING[1]}
                                     </Typography>
                                 </div>
@@ -493,11 +530,37 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 ))}
                             </div>
                         )}
+                        {/* expanded in loading state */}
+                        {configLoading && (
+                            <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <FlashingDotsLoader />
+                            </div>
+                        )}
+
+                        {/* expanded length 0 */}
+                        {configData && !configData.length && (
+                            <div className={`${styles.headingContainer} ${styles.headingLoadingContainer}`}>
+                                <Typography variant="Regular_16" className={styles.templateHeading}>
+                                    {CODE_VIEWER.MY_TEMPLATES}
+                                </Typography>
+                                <div className={styles.searchComponent}>
+                                    <SearchInput
+                                        onChange={(e: any) => {
+                                            handleSearch(e);
+                                        }}
+                                        isDisabled={true}
+                                    />
+                                </div>
+                            </div>
+                        )}
                         {/* saved templates list when code box in expanded state */}
-                        {configData && isOpen && (
+                        {configData && configData.length && isOpen && (
                             <div className={styles.accordionStructure}>
                                 <div className={styles.headingContainer}>
-                                    <Typography variant="Semibold_14" className={styles.templateHeading}>
+                                    <Typography variant="Regular_16" className={styles.templateHeading}>
                                         {CODE_VIEWER.MY_TEMPLATES}
                                     </Typography>
                                     <SearchInput
@@ -528,118 +591,124 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         )}
                     </div>
                     {/* Right side panel in expanded code box */}
-                    <div className={styles.rightSideView}>
-                        {/* Code for top bar here */}
-                        <div className={styles.rightSideTopBar}>
-                            <Typography variant="Semibold_14" className={styles.rightSideHeading}>
-                                {openedItem?.name}
-                            </Typography>
-                            <div className={styles.menuContainer}>
-                                <div className={styles['copy']}>
-                                    {disableCopy ? (
-                                        // Disabled copy button
-                                        <div className={styles.menuItemDisabled}>
-                                            <Copy />
-                                            <Typography
-                                                variant="Semibold_14"
-                                                className={styles.rightSideHeadingDisabled}
-                                            >
-                                                {CODE_VIEWER.COPY}
-                                            </Typography>
+                    <div style={{ width: '67%' }}>
+                        <div className={styles.rightSideView}>
+                            {/* Code for top bar here */}
+                            <div className={styles.rightSideTopBar}>
+                                <Typography variant="Semibold_14" className={styles.rightSideHeading}>
+                                    {openedItem?.name}
+                                </Typography>
+                                <div className={styles.menuContainer}>
+                                    <div className={styles['copy']}>
+                                        {disableCopy ? (
+                                            // Disabled copy button
+                                            <div className={styles.menuItemDisabled}>
+                                                <Copy />
+                                                <Typography
+                                                    variant="Semibold_14"
+                                                    className={styles.rightSideHeadingDisabled}
+                                                >
+                                                    {CODE_VIEWER.COPY}
+                                                </Typography>
+                                            </div>
+                                        ) : (
+                                            // Enabled copy button
+                                            <Popover
+                                                popoverClass={styles['copy-popover']}
+                                                children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                                container={
+                                                    <CopyToClipboard text={copyResponseData()}>
+                                                        <div className={styles.menuItem}>
+                                                            <Copy />
+                                                            <Typography
+                                                                variant="Semibold_14"
+                                                                className={styles.rightSideBlueHeading}
+                                                            >
+                                                                {CODE_VIEWER.COPY}
+                                                            </Typography>
+                                                        </div>
+                                                    </CopyToClipboard>
+                                                }
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className={styles.menuItem} onClick={loadWizard}>
+                                        <LoadIcon />
+                                        <Typography variant="Semibold_14" className={styles.rightSideBlueHeading}>
+                                            {CODE_VIEWER.SIDEBAR_LOAD_WIZARD}
+                                        </Typography>
+                                    </div>
+
+                                    {dropDownValue === CODE_VIEWER.CLOUDFORMATION && (
+                                        <div className={styles.sideBarMenuPopover} onClick={e => e.stopPropagation()}>
+                                            <MenuPopover
+                                                isMenuOpen={menuOpenedRowDetail.current === '' || menuOpenedRow === ''}
+                                                menuItems={menuItems}
+                                                toggleMenu={(toggleType: string, menuId: string) => {
+                                                    if (toggleType === 'close') {
+                                                        menuOpenedRowDetail.current = null;
+                                                        setOpenedRow(null);
+                                                    } else if (toggleType === 'open') {
+                                                        menuOpenedRowDetail.current = null;
+                                                        setOpenedRow('');
+                                                        menuOpenedRowDetail.current = '';
+                                                    } else if (toggleType === 'selectedOption') {
+                                                        menuOpenedRowDetail.current = null;
+                                                        setOpenedRow(null);
+                                                        if (menuId === 'downloadYaml') {
+                                                            handleDownloadYAML(
+                                                                rightPanelTemplateResponse?.template,
+                                                                openedItem?.name
+                                                            );
+                                                        } else if (menuId === 'viewAwsCloudFormation') {
+                                                            handleViewInAwsCloudFormation();
+                                                        }
+                                                    }
+                                                }}
+                                                CustomMenu={undefined}
+                                                disabledText={undefined}
+                                                isBlackLayout={true}
+                                            />
                                         </div>
-                                    ) : (
-                                        // Enabled copy button
-                                        <Popover
-                                            popoverClass={styles['copy-popover']}
-                                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                                            container={
-                                                <CopyToClipboard text={copyResponseData()}>
-                                                    <div className={styles.menuItem}>
-                                                        <Copy />
-                                                        <Typography
-                                                            variant="Semibold_14"
-                                                            className={styles.rightSideBlueHeading}
-                                                        >
-                                                            {CODE_VIEWER.COPY}
-                                                        </Typography>
-                                                    </div>
-                                                </CopyToClipboard>
-                                            }
-                                        />
                                     )}
                                 </div>
+                            </div>
+                            {/* Top bar code ends */}
 
-                                <div className={styles.menuItem} onClick={loadWizard}>
-                                    <LoadIcon />
-                                    <Typography variant="Semibold_14" className={styles.rightSideBlueHeading}>
-                                        {CODE_VIEWER.SIDEBAR_LOAD_WIZARD}
+                            {/* Code for Search bar and input */}
+                            <div className={styles.secondBar}>
+                                <div className={styles.inputPart}>
+                                    <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                                        {CODE_VIEWER.SHOW_CODE_AS}
                                     </Typography>
-                                </div>
-
-                                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && (
-                                    <div className={styles.sideBarMenuPopover} onClick={e => e.stopPropagation()}>
-                                        <MenuPopover
-                                            isMenuOpen={menuOpenedRowDetail.current === '' || menuOpenedRow === ''}
-                                            menuItems={menuItems}
-                                            toggleMenu={(toggleType: string, menuId: string) => {
-                                                if (toggleType === 'close') {
-                                                    menuOpenedRowDetail.current = null;
-                                                    setOpenedRow(null);
-                                                } else if (toggleType === 'open') {
-                                                    menuOpenedRowDetail.current = null;
-                                                    setOpenedRow('');
-                                                    menuOpenedRowDetail.current = '';
-                                                } else if (toggleType === 'selectedOption') {
-                                                    menuOpenedRowDetail.current = null;
-                                                    setOpenedRow(null);
-                                                    if (menuId === 'downloadYaml') {
-                                                        handleDownloadYAML(
-                                                            rightPanelTemplateResponse?.template,
-                                                            openedItem?.name
-                                                        );
-                                                    } else if (menuId === 'viewAwsCloudFormation') {
-                                                        handleViewInAwsCloudFormation();
-                                                    }
-                                                }
+                                    <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
+                                        <SelectField
+                                            isClearable={false}
+                                            onChange={(selectedOptions: any): void => {
+                                                setDropdownValue(selectedOptions?.value);
                                             }}
-                                            CustomMenu={undefined}
-                                            disabledText={undefined}
-                                            isBlackLayout={true}
+                                            isSearchable={false}
+                                            variant="underline"
+                                            options={generateCLIOptions}
+                                            defaultValue={[generateCLIOptions[2]]}
                                         />
                                     </div>
-                                )}
-                            </div>
-                        </div>
-                        {/* Top bar code ends */}
-
-                        {/* Code for Search bar and input */}
-                        <div className={styles.secondBar}>
-                            <div className={styles.inputPart}>
-                                <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                    {CODE_VIEWER.SHOW_CODE_AS}
-                                </Typography>
-                                <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
-                                    <SelectField
-                                        isClearable={false}
-                                        onChange={(selectedOptions: any): void => {
-                                            setDropdownValue(selectedOptions?.value);
-                                        }}
-                                        isSearchable={false}
-                                        variant="underline"
-                                        options={generateCLIOptions}
-                                        defaultValue={[generateCLIOptions[2]]}
-                                    />
+                                </div>
+                                <div className={styles.searchPart}>
+                                    <SearchInput onChange={e => setSearchInput(e)} />
                                 </div>
                             </div>
-                            <SearchInput onChange={e => setSearchInput(e)} />
-                        </div>
-                        {/* Search bar input code ends here */}
+                            {/* Search bar input code ends here */}
 
-                        {/* Last section starts here */}
-                        <div className={styles.thirdBar}>
-                            <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                                {setDisplayedDataInCodeBox()}
-                            </Typography>
+                            {/* Last section starts here */}
+                            <div className={styles.thirdBar}>
+                                <div className={styles.scrollContainer}>
+                                    <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                                        {setDisplayedDataInCodeBox()}
+                                    </Typography>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

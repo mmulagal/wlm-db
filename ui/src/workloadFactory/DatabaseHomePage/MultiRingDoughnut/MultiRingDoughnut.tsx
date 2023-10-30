@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chart, ChartOptions } from 'chart.js';
+import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './MultiRingDoughnut.module.scss';
@@ -11,18 +11,11 @@ import { GENERAL } from '../../../utils/appConstants';
 Chart.register(...registerables);
 
 const MultiRingDoughnut = () => {
-    // const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-    // Hardcoded values for DB protection
-    const hostData = {
-        "protectedDb": 12,
-        "unprotectedDb": 4,
-        "protectedPercent": 75,
-        "unprotectedPercent": 25,
-        "awsBackupDb": 7,
-        "fsxOntapSnapshotsDb": 6,
-        "sqlServerBackupDb": 8
-    };
-    
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
 
@@ -55,9 +48,10 @@ const MultiRingDoughnut = () => {
             setDoughnutChart(myDoughnut);
         }
         return () => {
-            myDoughnut.destroy();
+            if (hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) myDoughnut.destroy();
         };
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hostData]);
 
     return (
         <div className={styles.chartItem} id="chart-item">
@@ -67,7 +61,15 @@ const MultiRingDoughnut = () => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+            {(databaseHostsLoading ||
+                databaseJobsLoading ||
+                !hostData ||
+                (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (
+                <div className={styles.emptyCircle}></div>
+            )}
+            {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (
+                <canvas ref={ref} id="chart-area" width={162} height={162}></canvas>
+            )}
         </div>
     );
 };

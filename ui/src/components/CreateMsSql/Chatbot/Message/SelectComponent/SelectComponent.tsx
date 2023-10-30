@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { ReactComponent as SearchIcon } from '../../../../../assets/search-icon.svg';
 import styles from './SelectComponent.module.scss';
+import { SelectField } from '@netapp/design-system';
 
 type selectComponentPropType = {
     options: any;
@@ -13,20 +13,23 @@ const SelectComponent = ({ options, onChange, heading, selectKey }: selectCompon
     const [selected, setSelected] = useState('');
     const [searchText, setSearchText] = useState('');
 
-    const filteredOptions = useMemo(() => {
-        if (searchText) {
-            return options.filter((option: any) =>
-                (option.label || option.value).toLowerCase().includes(searchText.toLowerCase())
-            );
-        } else {
-            return options;
-        }
-    }, [options, searchText]);
+    //@ts-ignore
 
     return (
         <div className={styles['select-component']}>
             <div className={styles['select-component-heading']}>{heading}</div>
-            {options.length > 4 && (
+            <SelectField
+                label={''}
+                isClearable={false}
+                defaultValue={options[0]}
+                onChange={(selectedOptions: any): void => {
+                    onChange(selectKey, selectedOptions.value, selectedOptions.label);
+                    setSelected(selectedOptions.value);
+                }}
+                isSearchable={options.length > 5}
+                options={options}
+            />
+            {/* {options.length > 4 && (
                 <div className={styles['search-container']}>
                     <input className={styles['search-input']} onChange={e => setSearchText(e.target.value)} />
                     <SearchIcon className={styles['search-icon']} />
@@ -74,7 +77,7 @@ const SelectComponent = ({ options, onChange, heading, selectKey }: selectCompon
                         </div>
                     );
                 })}
-            </div>
+            </div> */}
         </div>
     );
 };

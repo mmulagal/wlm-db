@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getObjectBucket, getPreSignedUrl } from '../lib/aws/s3';
+import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
 import { generateAuthToken } from '../lib/cloud-manager/tenancy';
 import { createSecrets } from './aws/secrets-manager-operations';
 import {
@@ -53,7 +53,8 @@ import {
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
     SNS_ARN,
     BUCKET_NAME,
-    CLOUD_FORMATION_CLI_COMMAND
+    CLOUD_FORMATION_CLI_COMMAND,
+    DEFAULT_AWS_REGION
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -66,6 +67,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 import { handleNotification } from './cloud-manager/notification-operations';
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
@@ -92,11 +94,6 @@ async function formatTemplateParameters(
                 secretName: derivedParams.DomainAdminSecretName,
                 username: adConfiguration.domainUsername,
                 password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
             },
             {
                 secretName: derivedParams.SQLServiceAccountSecret,
@@ -235,16 +232,18 @@ async function getCloudformationTemplate(
     templateParameters.forEach(e => {
         cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
+        region || DEFAULT_AWS_REGION
+    } --parameters ${cliParams}`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
         urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
     });
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodeURIComponent(
-        signedMasterTemplateUrl
-    )}&${urlParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
+        region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
+    }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
     return {
         url: signedTemplateURL,
@@ -305,11 +304,6 @@ async function createCloudFormationTemplateForUserDeployment(
                 secretName: derivedParams.DomainAdminSecretName,
                 username: adConfiguration.domainUsername,
                 password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
             },
             {
                 secretName: derivedParams.SQLServiceAccountSecret,

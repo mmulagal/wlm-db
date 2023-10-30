@@ -41,7 +41,7 @@ Metadata:
           - DeploymentMode
           - FSxFileSystemName
           - FSxFileSystemId
-          - FSxAdministratorPasswordSecret
+          - FSxAdminPassword
           - FSxSvmName
           - FSxStorageCapacity
           - FSxDataVolumeName
@@ -374,8 +374,8 @@ Parameters:
     Description: Size of the SQL data lun, in megabytes (MiB)
     Type: Number
 
-  FSxAdministratorPasswordSecret:
-    Description: Secret String for FSx "fsxadmin" administrator account
+  FsxAdminPassword:
+    Description: Password for 'fsxadmin' user.
     Type: String
     MinLength: 8
     MaxLength: 50
@@ -478,6 +478,14 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
+      ResourceName: !Ref 'SqlServerName'
+      SQLDeploymentType: 
+          !If
+            - IsFailoverCluster
+            - 'FCI'
+            - 'Standalone'
+      FileSystemType: 'FSx ONTAP'
+      DatabaseType: 'Microsoft SQL server'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
@@ -598,8 +606,8 @@ Resources:
           Ref: DeploymentMode
         FSxFileSystemName:
           Ref: FSxFileSystemName
-        FSxAdministratorPasswordSecret:
-          Ref: FSxAdministratorPasswordSecret
+        FsxAdminPassword:
+          Ref: FSxAdminPassword
         FSxVolumeThroughputCapacity:
           Ref: FSxVolumeThroughputCapacity
         FSxStorageCapacity:
@@ -657,6 +665,8 @@ Resources:
           Ref: SQLSvmName
         FSxFileSystemId:
           Ref: FSxFileSystemId
+        FSxAdminPassword:
+          Ref: FSxAdminpassword
         FSxDataVolumeName:
           Ref: FSxDataVolumeName
         FSxDataVolumeSize:
@@ -760,7 +770,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxAdminpassword
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -858,7 +868,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FsxAdminPassword
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:

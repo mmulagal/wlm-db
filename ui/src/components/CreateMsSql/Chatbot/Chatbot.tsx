@@ -163,7 +163,7 @@ const Chatbot = () => {
             objDiv.scrollTop = objDiv.scrollHeight;
         }
     }, [messages]);
-
+    //@ts-ignore
     const messagesToShow = useMemo(() => {
         const lastMsg = messages ? messages[messages.length - 1] : {};
         if (lastMsg.sender === 'bot' && !lastMsg.intent && currentIntent && currentIntent.type === 'DeployMsSql') {

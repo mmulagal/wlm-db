@@ -7,6 +7,7 @@ import {
     DatabaseHostSummaryListResponseType,
     PerformanceResponseType,
     TopologyResponseType,
+    ProtectionResponseType,
     StorageResponseType
 } from '../routes/types/database-hosts.types';
 import {
@@ -17,8 +18,13 @@ import {
     SERVER_TYPE_MAPPING
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { getServerIOLatency, getServerState } from './workloads/mssql/mssql-operations';
-import { getVolumesUuids, getStorageDataUsingSSM } from './aws/fsx-operations';
+import { getServerIOLatency, getServerState, getNativeSQLProtection } from './workloads/mssql/mssql-operations';
+import {
+    getVolumesUuids,
+    getStorageDataUsingSSM,
+    isAWSBackupEnabled,
+    getOntapVolumesSnapshotCount
+} from './aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -29,6 +35,12 @@ interface Topology {
     standbyNodeInstanceName?: string;
     sqlDeploymentType?: string;
     fileSystemType?: string;
+}
+
+interface Metadata {
+    credentialsId: string;
+    activeNodeInstanceId: string;
+    standbyNodeInstanceId: string;
 }
 
 type VolumeSpaceRecord = {
@@ -168,6 +180,40 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
     };
 }
 
+async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<ProtectionResponseType | undefined> {
+    logger.info('Get protection status', { resourceDetail });
+
+    const { resource_id: resourceId, region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+    try {
+        const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!),
+            getOntapVolumesSnapshotCount(
+                credentialsId,
+                region!,
+                fileSystemId!,
+                activeNodeInstanceId,
+                standbyNodeInstanceId
+            ),
+            getNativeSQLProtection(resourceId)
+        ]);
+
+        const atleastOneVolumeHasSnapshots = ontapData?.records?.some(
+            ({ snapshot_count: snapshotCount }: { snapshot_count: number }) => snapshotCount
+        );
+
+        return {
+            isAwsBackUpEnabled: awsBackup,
+            isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
+            isSqlNativeEnabled: Boolean(nativeSqlProtection)
+        };
+    } catch (error) {
+        logger.error('Error while getting protection status', resourceDetail);
+    }
+}
+
 async function getDatabaseHostsSummary(
     accountId: string,
     fields?: string
@@ -187,6 +233,10 @@ async function getDatabaseHostsSummary(
         fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
     }
 
+    const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
+    const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
         await Promise.all(
@@ -195,50 +245,28 @@ async function getDatabaseHostsSummary(
                 .map(async resourceDetail => {
                     const { resource_id: resourceId, resource_name: resourceName, region } = resourceDetail;
 
-                    // Fetch server status
                     let serverStatus: string = ServerState.DOWN;
-                    try {
-                        serverStatus = await getServerState(resourceId);
-                        serverStatus = serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
-                    } catch (error) {
-                        logger.error('Error while fetching status for resource ', accountId, resourceId, error);
-                    }
-
-                    // Fetch topology data
                     let topologyData: TopologyResponseType;
-                    try {
-                        topologyData = await getTopology(accountId, region!, resourceId, resourceDetail);
-                    } catch (error) {
-                        logger.error('Error while fetching topology data for resource ', accountId, resourceId, error);
-                    }
+                    let performanceData: PerformanceResponseType | undefined;
+                    let storageData: StorageResponseType | undefined;
+                    let protectionData: ProtectionResponseType | undefined;
 
-                    // Fetch io latency data
-                    let performanceData: PerformanceResponseType;
-                    if (fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE)) {
-                        try {
-                            performanceData = await getServerIOLatency(resourceId);
-                        } catch (error) {
-                            logger.error('Error while fetching io latency for resource ', accountId, resourceId, error);
-                        }
-                    }
-
-                    // Fetch storage savings data
-                    let storageData: StorageResponseType;
-                    if (fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE)) {
-                        try {
-                            storageData = await getStorageData(resourceDetail);
-                        } catch (error) {
-                            logger.error('Failed to get storage savings for resource ', accountId, resourceId, error);
-                        }
-                    }
+                    [serverStatus, topologyData, performanceData, storageData, protectionData] = await Promise.all([
+                        getServerState(resourceId), // Fetch server status
+                        getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                        ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                        ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                        ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
+                    ]);
 
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
-                        status: serverStatus,
+                        status: serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
                         topology: topologyData!,
-                        performance: performanceData!,
-                        storage: storageData!
+                        ...(performanceData && { performance: performanceData }),
+                        ...(storageData && { storage: storageData }),
+                        ...(protectionData && { protection: protectionData })
                     });
                 })
         );

@@ -1,26 +1,13 @@
 import React from 'react';
 import styles from './ProtectionSection.module.scss';
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import MultiRingDoughnut from '../MultiRingDoughnut/MultiRingDoughnut';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { formatFractionalNumber } from '../../../utils/utilityFunctions';
-import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const ProtectionSection = () => {
-
-    // const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-    // Hardcoded values for DB protection
-    const hostData = {
-        "protectedDb": 12,
-        "unprotectedDb": 4,
-        "protectedPercent": 75,
-        "unprotectedPercent": 25,
-        "awsBackupDb": 7,
-        "fsxOntapSnapshotsDb": 6,
-        "sqlServerBackupDb": 8
-    };
-
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+    
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
@@ -29,12 +16,9 @@ const ProtectionSection = () => {
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_PROTECTION}
-                    {(databaseHostsLoading || databaseJobsLoading) && (
-                        <div className={styles.loadingPlacement}>
-                            <LoadingComponent />
-                        </div>
-                    )}
                 </Typography>
+
+                {(databaseHostsLoading || databaseJobsLoading) && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.secondContainer}>
@@ -84,6 +68,7 @@ const ProtectionSection = () => {
                             </Typography>
                         </div>
                     </div>
+                    <div className={styles.separatorProtection} />
 
                     {/* End here */}
                 </div>

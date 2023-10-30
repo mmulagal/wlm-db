@@ -8,16 +8,17 @@ import { useOutletContext } from 'react-router-dom';
 import { useMemo } from 'react';
 
 const Databases = () => {
-    let {databasesList} = useOutletContext<{databasesList: any}>();
+    let { databasesList } = useOutletContext<{ databasesList: any }>();
+    //@ts-ignore
     const summaryData = useMemo(() => {
-        const totalSize = databasesList.reduce((sum:number, item:any) => sum + parseInt(item.databaseSize), 0);
+        const totalSize = databasesList.reduce((sum: number, item: any) => sum + parseInt(item.databaseSize), 0);
         const totalSizeObj = formatSizeSplit(totalSize);
         return {
             count: databasesList.length,
             sizeValue: totalSizeObj.value,
             sizeUnit: totalSizeObj.format
-        }
-    }, [databasesList])
+        };
+    }, [databasesList]);
 
     const DatabasesColDefs: ColumnProps[] = [
         {
@@ -68,7 +69,7 @@ const Databases = () => {
         }
     ];
 
-    const databaseTableData = databasesList.length ? databasesList : []
+    const databaseTableData = databasesList.length ? databasesList : [];
 
     const tableProps = useTable({
         isSorting: false,
