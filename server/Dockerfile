@@ -8,6 +8,7 @@ WORKDIR /opt/netapp/wlmdb
 
 # Change ownership of the working directory to the new user
 RUN chown -R netappuser:netappgroup /opt/netapp/wlmdb
+RUN chmod 777 /log
 RUN chown -R netappuser:netappgroup /log
 
 # Switch to the new user

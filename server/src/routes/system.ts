@@ -21,6 +21,8 @@ export default function systemRoutes(fastify: FastifyInstance) {
             }
         )
         .get('/health', { schema: GetHealthinessSchema }, (_, reply) => {
-            reply.code(200).send('wlmdb_health 1');
+            // this health response is to differentiate demo and dev mode
+            const response = process.env.NODE_ENV === 'demo' ? 'wlmdb_demo_health 1' : 'wlmdb_health 1';
+            reply.code(200).send(response);
         });
 }

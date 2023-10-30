@@ -182,24 +182,8 @@ async function getStorageDataUsingSSM(
 ) {
     logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId);
 
-    // FIXME: Use AWS secrets instead of passing FSx username/password.
-
-    // NOTE TO REVIEWERS:
-    // FSx password isn't stored in WLMDB. However, it is necessary for making
-    // REST API calls. For now we are using the hardcoded credentials.
-    //
-    // Though we can store the passwords in the secrets manager, the same needs
-    // to be updated upon password updation.
-    //
-    // Moreover, secrets have a limit (though it seems big enough).  So in the
-    // unfortunate case of consuming the whole quota, we won't be able to make
-    // REST calls with a secret.
-    //
-    // Once we have a reliable way of storing FSx password, the
-    // username/password can be saved as secret in AWS.
-
     const commands = [
-        `C:\\SSM\\OntapRestGet.ps1 -FSxUserName fsxadmin -FSxPassword netapp1! -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName wlmdb-fsx-${fileSystemId} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
     ];
 
     const response = await callSsmExecution(

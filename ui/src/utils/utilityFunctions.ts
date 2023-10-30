@@ -25,8 +25,8 @@ interface OptionsWithData extends optionType {
 }
 
 export const generateOptionType = (
-    value: string,
-    label: string,
+    value: string | any,
+    label: string | any,
     label2: string,
     isDisabled: boolean,
     disabledTitle: string,
@@ -325,20 +325,52 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
     const mergedList: any[] = [];
     hostsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
+            // Protection text added to enable filter
+            let protectionText = '';
+            if (
+                val?.protection?.isAwsBackUpEnabled ||
+                val?.protection?.isFsxOntapSnapshotsEnabled ||
+                val?.protection?.isSqlNativeEnabled
+            ) {
+                protectionText = GENERAL.PROTECTED;
+            } else if (val?.protection) {
+                protectionText = GENERAL.NOT_PROTECTED;
+            }
+            val = {
+                ...val,
+                databaseHostname: (val?.name || '') + (val?.status || ''),
+                protectionText: protectionText,
+                // Total cost to enable search in table
+                totalCost: (
+                    (val?.estimatedUsageCost?.compute || 0) +
+                    (val?.estimatedUsageCost?.storage || 0) +
+                    (val?.estimatedUsageCost?.connectivity || 0) +
+                    (val?.estimatedUsageCost?.others || 0)
+                ).toString(),
+                // performance table text to search in table
+                performanceText:
+                    val?.performance && val.performance?.assessment + ' ( <' + val.performance?.latency + ' ms )',
+                // Storage saving table text to search in table
+                storageSavingsText:
+                    val?.storage &&
+                    val.storage?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
+            };
             mergedList.push(val);
             uniqueIds.push(val?.id);
         }
     });
     jobsData?.map(val => {
         if (!uniqueIds.includes(val?.id)) {
+            // To map status
             let status = val?.status;
-            if(val?.status && (val.status === 'CREATE_IN_PROGRESS' || val.status === 'UPDATE_IN_PROGRESS')) {
+            if (val?.status && (val.status === 'CREATE_IN_PROGRESS' || val.status === 'UPDATE_IN_PROGRESS')) {
                 status = STATUS_CONST.INITIALIZING;
             } else if (val?.status && (val.status === 'CREATE_FAILED' || val.status === 'UPDATE_FAILED')) {
                 status = STATUS_CONST.FAILED;
             }
             val = {
                 ...val,
+                databaseHostname: (val?.name || '') + (status || ''),
                 status: status,
                 topology: val?.metadata
             };
@@ -405,7 +437,8 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
             val?.protection?.isSqlNativeEnabled
         ) {
             protectedDb += 1;
-        } else if (val?.protection &&
+        } else if (
+            val?.protection &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled

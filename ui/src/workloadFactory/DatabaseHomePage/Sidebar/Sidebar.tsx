@@ -6,6 +6,7 @@ import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/ic_copy_replicate.svg';
 import { ReactComponent as LoadIcon } from '../../../assets/ic_circle_arrow_down.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';
@@ -29,7 +30,7 @@ import {
 } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { CODE_VIEWER } from '../../../utils/appConstants';
+import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import {
     LoadConfiguration,
@@ -275,12 +276,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         onClose();
     };
 
+    const terraformUI = () => {
+        return (
+            <div className={styles.terraformContainer}>
+                <div>{GENERAL.TERRAFORM}</div>
+                <div>
+                    <ComingSoon />
+                </div>
+            </div>
+        );
+    };
+
     //Function to generate the options for Select Field for License
     const generateCLIOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API];
+        const arr = [CODE_VIEWER.CLOUDFORMATION, CODE_VIEWER.AWS_CLI, CODE_VIEWER.REST_API, terraformUI()];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '');
+            const option = generateOptionType(val, val, '', idx === 3 ? true : false, '');
             options.push(option);
         });
         return options;
