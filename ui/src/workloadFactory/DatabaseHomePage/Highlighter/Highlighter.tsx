@@ -1,7 +1,7 @@
 import React from 'react';
-import styles from './Highlighter.module.scss';
+import './Highlighter.scss';
 
-const HighlighterWord = ({ children, highlight, isAWSCli }: any) => {
+const HighlighterWord = ({ children, highlight, isAWSCli, count }: any) => {
     if (!highlight || highlight.length < 2) return children;
     const regexp = new RegExp(highlight, 'g');
     let content = '';
@@ -15,6 +15,9 @@ const HighlighterWord = ({ children, highlight, isAWSCli }: any) => {
 
     const matches = content.match(regexp)!;
     var parts = content.split(new RegExp(`${highlight.replace()}`, 'g'));
+
+    //@ts-ignore
+    count(parts.length);
 
     for (var i = 0; i < parts.length; i++) {
         if (i !== parts.length - 1) {
@@ -32,13 +35,13 @@ const HighlighterWord = ({ children, highlight, isAWSCli }: any) => {
             parts[i] = (
                 <React.Fragment key={i}>
                     {parts[i]}
-                    <span className={styles['highlighted']}>{match}</span>
+                    <span className={'highlighted'}>{match}</span>
                 </React.Fragment>
             );
         }
     }
     return (
-        <div className={styles['highlighter']}>
+        <div className={'highlighter'}>
             {isAWSCli && <>{parts}</>}
             {!isAWSCli && <pre>{parts}</pre>}
         </div>
