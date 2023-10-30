@@ -10,6 +10,7 @@ const DeploymentJobsSummaryQueryString = Type.Object({
 
 const DeploymentJobsSummaryResponse = Type.Object({
     id: Type.String(),
+    deploymentId: Type.String(),
     name: Type.Optional(Type.String()),
     status: Type.String(),
     metadata: Type.Object({
@@ -38,6 +39,15 @@ const DeploymentJobsCountResponse = Type.Object({
 
 type DeploymentJobsCountResponseType = Static<typeof DeploymentJobsCountResponse>;
 
+const DeleteJobResponse = Type.Object({
+    message: Type.String()
+});
+
+const JobsParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    jobId: Type.String({ minLength: 1 })
+});
+
 export {
     DeploymentJobsCountResponse,
     DeploymentJobsCountResponseType,
@@ -45,5 +55,7 @@ export {
     DeploymentJobsSummaryQueryString,
     DeploymentJobsSummaryListResponse,
     DeploymentJobsSummaryResponseType,
-    DeploymentJobsSummaryListResponseType
+    DeploymentJobsSummaryListResponseType,
+    DeleteJobResponse,
+    JobsParams
 };
