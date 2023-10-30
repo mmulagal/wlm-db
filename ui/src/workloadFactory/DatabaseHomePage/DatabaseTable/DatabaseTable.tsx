@@ -1,4 +1,4 @@
-import { Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DatabaseTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -9,16 +9,26 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
-import { STATUS_CONST } from '../../../utils/consts';
-import { formatSizeOnePrecision } from '../../../utils/utilityFunctions';
+import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import RemoveDialog from '../../../components/Resource/RemoveDialog/RemoveDialog';
+import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
+import { setRefetchDatabaseHostApi, setRefetchDatabaseJobApi } from '../../../store/mssql/msSqlActionSlice';
+import { useDispatch } from 'react-redux';
 
 const DatabaseTable = () => {
+    const dispatch = useDispatch();
+
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+    const { setDialog, closeDialog } = useDialog();
+
+    const [removeDatabaseHosts] = useRemoveMSSQLMutation();
+    const [removeDatabaseJobs] = useRemoveDatabaseJobsMutation();
 
     const menuItems = [
         {
@@ -61,6 +71,45 @@ const DatabaseTable = () => {
         );
     };
 
+    // To delete MSSQL Resources
+    const deleteMssqlResource = (id: string, type: string) => {
+        if(type === DB_HOME_DATA_TYPE.JOBS){
+            // removeDatabaseJobs delete API call when data getting from jobs API
+            removeDatabaseJobs(id)
+                .then((data: any) => {
+                    if (!data?.error) {
+                        dispatch(setRefetchDatabaseJobApi(true));
+                    }
+                })
+        } else {
+            // removeDatabaseHosts delete API call when data getting from database-hosts API
+            removeDatabaseHosts(id)
+                .then((data: any) => {
+                    if (!data?.error) {
+                        dispatch(setRefetchDatabaseHostApi(true));
+                    }
+                })
+        }
+    }
+
+    const handleRemoveDialog = (row: any) => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.REMOVE_FROM_WORKSPACE}
+                content={<RemoveDialog weType={GENERAL.MSSQL}
+                name={row?.name || row?.id}/>}
+                primaryButton={GENERAL.REMOVE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    deleteMssqlResource(row?.id, row?.type);
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+            />
+        );
+    };
+
     const lastColDetails = () => {
         return {
             id: '10',
@@ -83,6 +132,10 @@ const DatabaseTable = () => {
                                 } else if (toggleType === 'selectedOption') {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
+
+                                    if (menuId === 'remove') {
+                                        handleRemoveDialog(rowData);
+                                    }
                                 }
                             }}
                             CustomMenu={undefined}
@@ -285,7 +338,7 @@ const DatabaseTable = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
-            width: '184px',
+            width: '204px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -296,7 +349,7 @@ const DatabaseTable = () => {
             Header: GENERAL.DB_HOST_REGION,
             accessor: 'topology.region',
             isSortable: true,
-            width: '184px',
+            width: '179px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;

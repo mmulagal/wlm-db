@@ -301,7 +301,8 @@ export const databaseHomeApi = createApi({
                     `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
-                query: ({ nextToken = null }) => `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
+                query: ({ nextToken = null }) => 
+                    `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
@@ -315,7 +316,12 @@ export const databaseHomeApi = createApi({
             }),
             getStatus: builder.query({
                 query: () => `status`
-            })
+            }),
+            removeDatabaseJobs: builder.mutation({
+                async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
+                }
+            }),
         };
     }
 });
@@ -375,7 +381,8 @@ export const {
     useGetDatabaseJobsQuery,
     useGetJobsSummaryQuery,
     useGetTemplatesMutation,
-    useGetStatusQuery
+    useGetStatusQuery,
+    useRemoveDatabaseJobsMutation
 } = databaseHomeApi;
 
 export const { useSendMsgMutation } = chatbotApi;

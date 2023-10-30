@@ -1,6 +1,7 @@
 
 export interface DatabaseHostItem {
     id: string;
+    type?: string;
     name: string;
     databaseHostname?: string;
     status: string;
@@ -41,6 +42,7 @@ export interface DatabaseHostItem {
 
 export interface DatabaseJobsItem {
     id: string;
+    type?: string;
     name: string;
     databaseHostname?: string;
     status: string;
