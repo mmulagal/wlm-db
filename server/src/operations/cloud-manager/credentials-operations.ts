@@ -1,3 +1,5 @@
+import { isEmpty } from 'lodash-es';
+import createError from 'http-errors';
 import {
     getAllBxpCredentials,
     getAllWfCredentials,
@@ -76,7 +78,34 @@ async function getRoleDetails(credentialsId: string) {
     };
 }
 
+async function lookupCredentials(credentialsId: string) {
+    try {
+        const {
+            credentials: { accessKeyId, secretAccessKey, sessionToken }
+        } = await getWfCredentialDetails(credentialsId);
+
+        return {
+            credentials: {
+                accessKey: accessKeyId,
+                secretKey: secretAccessKey,
+                sessionId: sessionToken
+            }
+        };
+    } catch (error) {
+        try {
+            return await getBxpCredentialDetails(credentialsId);
+        } catch (err) {
+            const errMsg = `Failed to fetch credentials. ${err}`;
+            logger.error(errMsg);
+            throw createError(400, errMsg);
+        }
+    }
+}
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
+    if (isEmpty(getAsyncLocalStorageResource(HEADERS.REFERER)) && !process.env.TEST) {
+        // in case of background processes trying to fetch credentials, doing a lookup in new and old credentials service
+        return lookupCredentials(credentialsId);
+    }
     if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken }
