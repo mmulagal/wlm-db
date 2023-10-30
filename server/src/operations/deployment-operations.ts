@@ -99,11 +99,6 @@ async function formatTemplateParameters(
                     password: adConfiguration.domainPassword
                 },
                 {
-                    secretName: derivedParams.FSxAdministratorPasswordSecret,
-                    username: fsxConfiguration.fsxUsername,
-                    password: fsxConfiguration.fsxPassword
-                },
-                {
                     secretName: derivedParams.SQLServiceAccountSecret,
                     username: sqlConfiguration.serviceAccountName,
                     password: sqlConfiguration.serviceAccountPassword
@@ -314,11 +309,6 @@ async function createCloudFormationTemplateForUserDeployment(
                 secretName: derivedParams.DomainAdminSecretName,
                 username: adConfiguration.domainUsername,
                 password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
             },
             {
                 secretName: derivedParams.SQLServiceAccountSecret,

@@ -138,10 +138,11 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
         credentialsId: string;
         activeNodeInstanceId: string;
         standbyNodeInstanceId: string;
+        fsxSecret: string;
     };
 
     const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
@@ -151,6 +152,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         credentialsId,
         region!,
         fileSystemId!,
+        fsxSecret,
         'storage/volumes',
         `uuid=${volumeUuidList}`,
         'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',

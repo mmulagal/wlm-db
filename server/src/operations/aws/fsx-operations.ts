@@ -174,45 +174,34 @@ async function getStorageDataUsingSSM(
     credentialsId: string,
     region: string,
     fileSystemId: string,
+    fsxSecret: string,
     apiEndpoint: string,
     apiFilter: string,
     apiQuery: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
-    logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId);
+    logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
 
-    // FIXME: Use AWS secrets instead of passing FSx username/password.
+    try {
+        const commands = [
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        ];
 
-    // NOTE TO REVIEWERS:
-    // FSx password isn't stored in WLMDB. However, it is necessary for making
-    // REST API calls. For now we are using the hardcoded credentials.
-    //
-    // Though we can store the passwords in the secrets manager, the same needs
-    // to be updated upon password updation.
-    //
-    // Moreover, secrets have a limit (though it seems big enough).  So in the
-    // unfortunate case of consuming the whole quota, we won't be able to make
-    // REST calls with a secret.
-    //
-    // Once we have a reliable way of storing FSx password, the
-    // username/password can be saved as secret in AWS.
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
 
-    const commands = [
-        `C:\\SSM\\OntapRestGet.ps1 -FSxUserName fsxadmin -FSxPassword netapp1! -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
-    ];
-
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
-
-    const cleanResponse = response?.replaceAll('\r\n', '');
-    const jsonResponse = JSON.parse(cleanResponse!);
-    return jsonResponse;
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        const jsonResponse = JSON.parse(cleanResponse!);
+        return jsonResponse;
+    } catch (error) {
+        logger.error('Failed to fetch storage savings details. Reason:', { error });
+    }
 }
 
 async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {
