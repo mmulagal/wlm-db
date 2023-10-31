@@ -57,6 +57,7 @@ export const GENERAL = {
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
+    DEPLOYMENT_MODEL: 'Deployment Model',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
