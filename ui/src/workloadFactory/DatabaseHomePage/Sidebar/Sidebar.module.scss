@@ -9,8 +9,12 @@
     transition: right 0.3s rase-in-out;
 
     .loading {
-        margin-top: 40px;
-        margin-left: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+        position: relative;
+        top: 22vh;
         color: var(--white);
     }
 
