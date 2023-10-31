@@ -67,6 +67,11 @@
         color: var(--blue-40);
     }
 
+    .colorExpandCollapse {
+        color: var(--blue-40);
+        cursor: pointer;
+    }
+
     .accordionStructure {
         display: flex;
         flex-direction: column;
@@ -221,6 +226,8 @@
                     margin-top: 35px;
                     --menu-max-height: 245px;
 
+                    // Select box CSS
+
                     [class*='design-system-select__single-value'] {
                         color: var(--white);
                     }
@@ -243,6 +250,7 @@
                     }
                     [class*='design-system-select__control']:hover {
                         box-shadow: 0 1px 0 var(--header-netapp-text-hover);
+                        border-bottom: 1px solid var(--blue-40);
 
                         div {
                             color: var(--header-netapp-text-hover);
