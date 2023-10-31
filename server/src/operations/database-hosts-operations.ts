@@ -273,7 +273,10 @@ async function getDatabaseHostsSummary(
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
-                        status: serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
+                        status:
+                            serverStatus && serverStatus.toLowerCase() === 'running'
+                                ? ServerState.UP
+                                : ServerState.DOWN,
                         databaseCount: dbCount,
                         topology: topologyData!,
                         ...(performanceData && { performance: performanceData }),
