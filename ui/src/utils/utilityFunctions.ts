@@ -4,6 +4,7 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
+    DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
@@ -338,6 +339,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             }
             val = {
                 ...val,
+                type: DB_HOME_DATA_TYPE.HOSTS,
                 databaseHostname: (val?.name || '') + (val?.status || ''),
                 protectionText: protectionText,
                 // Total cost to enable search in table
@@ -370,9 +372,10 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             }
             val = {
                 ...val,
+                type: DB_HOME_DATA_TYPE.JOBS,
                 databaseHostname: (val?.name || '') + (status || ''),
                 status: status,
-                topology: val?.metadata
+                topology: val?.metadata,
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);

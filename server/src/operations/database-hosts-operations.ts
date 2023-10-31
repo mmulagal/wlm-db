@@ -143,10 +143,11 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
         credentialsId: string;
         activeNodeInstanceId: string;
         standbyNodeInstanceId: string;
+        fsxSecret: string;
     };
 
     const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
@@ -156,6 +157,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         credentialsId,
         region!,
         fileSystemId!,
+        fsxSecret,
         'storage/volumes',
         `uuid=${volumeUuidList}`,
         'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
@@ -254,21 +256,25 @@ async function getDatabaseHostsSummary(
                         metadata as unknown as Metadata;
 
                     let serverStatus: string = ServerState.DOWN;
-                    let dbCount: number = 0;
+                    let dbCount;
                     let topologyData: TopologyResponseType;
                     let performanceData: PerformanceResponseType | undefined;
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
 
-                    [serverStatus, dbCount, topologyData, performanceData, storageData, protectionData] =
-                        await Promise.all([
-                            getServerState(resourceId), // Fetch server status
-                            getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
-                            getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
-                            ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                            ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                            ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
-                        ]);
+                    // Using 'allSettled' instead of 'all' to avoid failing the entire response for a single host.
+                    const results = await Promise.allSettled([
+                        getServerState(resourceId), // Fetch server status
+                        getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
+                        getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                        ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                        ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                        ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
+                    ]);
+
+                    [serverStatus, dbCount, topologyData, performanceData, storageData, protectionData] = results.map(
+                        result => (result.status === 'fulfilled' ? result.value : undefined)
+                    );
 
                     databaseHosts.push({
                         id: resourceId,
@@ -277,7 +283,7 @@ async function getDatabaseHostsSummary(
                             serverStatus && serverStatus.toLowerCase() === 'running'
                                 ? ServerState.UP
                                 : ServerState.DOWN,
-                        databaseCount: dbCount,
+                        databaseCount: dbCount!.totalCount || 2,
                         topology: topologyData!,
                         ...(performanceData && { performance: performanceData }),
                         ...(storageData && { storage: storageData }),

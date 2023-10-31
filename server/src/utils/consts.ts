@@ -504,6 +504,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
+    fsxUsername: 'FSxAdminUsername',
     fsxPassword: 'FSxAdminPassword',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
@@ -813,6 +814,8 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
     'UPDATE_FAILED'
 ];
 
+const NOT_AVAILABLE = 'N/A';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -985,5 +988,6 @@ export {
     SNS_ARN,
     SNS_STRICT_ACTION_NAMES,
     CLOUD_FORMATION_CLI_COMMAND,
-    DEPLOYMENT_JOBS_STATUS_FILTER
+    DEPLOYMENT_JOBS_STATUS_FILTER,
+    NOT_AVAILABLE
 };

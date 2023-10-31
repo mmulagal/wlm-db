@@ -1,7 +1,11 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import { DeploymentJobsCountSchema, DeploymentJobsSummaryListSchema } from './schemas/jobs-schemas';
-import { getDeploymentJobsCount, getDeploymentJobsSummary } from '../operations/jobs-operations';
+import {
+    DeploymentJobsCountSchema,
+    DeploymentJobsSummaryListSchema,
+    DeleteDeploymentJobsSchema
+} from './schemas/jobs-schemas';
+import { getDeploymentJobsCount, getDeploymentJobsSummary, deleteDeploymentJob } from '../operations/jobs-operations';
 
 const DEPLOYMENT_JOBS_API_PATH: string = '/v1/jobs';
 
@@ -25,4 +29,16 @@ export default function deploymentJobsRoutes(fastify: FastifyInstance) {
         const response = await getDeploymentJobsSummary(accountId, statuses);
         return reply.send(response!);
     });
+
+    server.delete(
+        `${DEPLOYMENT_JOBS_API_PATH}/jobId/:jobId`,
+        { schema: DeleteDeploymentJobsSchema },
+        async (request, reply) => {
+            const {
+                params: { accountId, jobId }
+            } = request;
+            const response = await deleteDeploymentJob(accountId, jobId);
+            return reply.send(response);
+        }
+    );
 }
