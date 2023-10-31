@@ -11,7 +11,6 @@ import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import RemoveDialog from '../../../components/Resource/RemoveDialog/RemoveDialog';
 import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchDatabaseHostApi, setRefetchDatabaseJobApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
