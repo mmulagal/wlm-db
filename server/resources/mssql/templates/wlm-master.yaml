@@ -41,7 +41,8 @@ Metadata:
           - DeploymentMode
           - FSxFileSystemName
           - FSxFileSystemId
-          - FSxAdministratorPasswordSecret
+          - FSxAdminUsername
+          - FSxAdminPassword
           - FSxSvmName
           - FSxStorageCapacity
           - FSxDataVolumeName
@@ -374,11 +375,15 @@ Parameters:
     Description: Size of the SQL data lun, in megabytes (MiB)
     Type: Number
 
-  FSxAdministratorPasswordSecret:
-    Description: Secret String for FSx "fsxadmin" administrator account
+  FSxAdminUsername:
+    Description: FSxN username
     Type: String
-    MinLength: 8
-    MaxLength: 50
+    MinLength: 1
+         
+  FSxAdminPassword:
+    Description: Password for FSxAdminUsername.
+    Type: String
+    NoEcho: true
 
   FSxSvmName:
     Type: String
@@ -595,6 +600,13 @@ Resources:
         Ref: AWS::StackName
       ResourceQuery:
         Type: CLOUDFORMATION_STACK_1_0
+  FSxNSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${AWS::StackName}-fsx
+      Description: Secret for FSxN filesystem
+      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
+
   NewFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
@@ -607,7 +619,7 @@ Resources:
         FSxFileSystemName:
           Ref: FSxFileSystemName
         FSxAdministratorPasswordSecret:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxNSecret
         FSxVolumeThroughputCapacity:
           Ref: FSxVolumeThroughputCapacity
         FSxStorageCapacity:
@@ -768,7 +780,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -866,7 +878,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -907,6 +919,7 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
+      FSxNSecret: !Sub ${AWS::StackName}-fsx
       FSxFileSystemId:
           !If
             - NewOntapFsx
