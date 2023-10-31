@@ -128,9 +128,7 @@ const Chatbot = () => {
     const handleSelectButtonClicked = async (paramObj: any) => {
         const updatedMessages = messages ? [...messages] : [];
         if (updatedMessages.length) {
-            updatedMessages[updatedMessages.length - 1].list = undefined;
-            updatedMessages[updatedMessages.length - 1].type = undefined;
-            updatedMessages[updatedMessages.length - 1].errors = undefined;
+            updatedMessages.splice(updatedMessages.length - 1, 1);
         }
         updatedMessages.push({
             sender: 'user',
