@@ -322,8 +322,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    {CODE_VIEWER.LOADING}
+                <Typography variant="Regular_14" className={styles.loading}>
+                    <div>{CODE_VIEWER.LOADING_CLOUD_FORMATION}</div>
+                    <FlashingDotsLoader />
                 </Typography>
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
@@ -335,8 +336,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
             return isRightPanelDataLoading ? (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    {CODE_VIEWER.LOADING}
+                <Typography variant="Regular_14" className={styles.loading}>
+                    <div>{CODE_VIEWER.LOADING_REST_API}</div>
+                    <FlashingDotsLoader />
                 </Typography>
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
@@ -346,8 +348,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    {CODE_VIEWER.LOADING}
+                <Typography variant="Regular_14" className={styles.loading}>
+                    <div>{CODE_VIEWER.LOADING_AWS_CLI}</div>
+                    <FlashingDotsLoader />
                 </Typography>
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
@@ -414,7 +417,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </div>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
-                    <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
+                    <Typography variant="Regular_16" className={styles.colorExpandCollapse} onClick={handleClose}>
                         {!isOpen ? CODE_VIEWER.EXPAND : CODE_VIEWER.COLLAPSE}
                     </Typography>
                     {isOpen && <ArrowLeft />}
