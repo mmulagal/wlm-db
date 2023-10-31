@@ -82,6 +82,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     const [disableCopy, setDisableCopy] = useState(true);
 
+    //Search Word count
+    const [countWord, setCountWord] = useState(0);
+
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
 
@@ -242,6 +245,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    const countDetails = (count: any) => {
+        setCountWord(count - 1);
+    };
+
+    useEffect(() => {
+        if (countWord > 0) {
+            setTimeout(() => {
+                const occurrences = document.querySelectorAll('[class$="highlighted"]');
+                const target = occurrences[0];
+
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 500);
+        }
+    }, [searchInput]);
+
     useEffect(() => {
         if (openKey && (openKey === RECOMMENDED_TEMPLATES.DEV_ID || openKey === RECOMMENDED_TEMPLATES.PROD_ID)) {
             const recList = recommendedData.filter((item: any) => item.id === openKey);
@@ -302,11 +322,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    {CODE_VIEWER.LOADING}
+                <Typography variant="Regular_14" className={styles.loading}>
+                    <div>{CODE_VIEWER.LOADING_CLOUD_FORMATION}</div>
+                    <FlashingDotsLoader />
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
@@ -315,22 +336,24 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
             return isRightPanelDataLoading ? (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    {CODE_VIEWER.LOADING}
+                <Typography variant="Regular_14" className={styles.loading}>
+                    <div>{CODE_VIEWER.LOADING_REST_API}</div>
+                    <FlashingDotsLoader />
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre>{rightPanelResponse}</pre>
                 </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Semibold_14" className={styles.loading}>
-                    {CODE_VIEWER.LOADING}
+                <Typography variant="Regular_14" className={styles.loading}>
+                    <div>{CODE_VIEWER.LOADING_AWS_CLI}</div>
+                    <FlashingDotsLoader />
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput} isAWSCli={true}>
+                <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
@@ -394,7 +417,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 </div>
                 <div className={styles.rightSection}>
                     {!isOpen && <ArrowRight />}
-                    <Typography variant="Regular_16" className={styles.color} onClick={handleClose}>
+                    <Typography variant="Regular_16" className={styles.colorExpandCollapse} onClick={handleClose}>
                         {!isOpen ? CODE_VIEWER.EXPAND : CODE_VIEWER.COLLAPSE}
                     </Typography>
                     {isOpen && <ArrowLeft />}

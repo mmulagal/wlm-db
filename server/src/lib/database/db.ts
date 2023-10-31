@@ -55,7 +55,8 @@ async function listDeployments(
     accountId?: string,
     deploymentId?: string,
     deploymentName?: string,
-    statuses?: Array<DEPLOYMENT_STATUS>
+    statuses?: Array<DEPLOYMENT_STATUS>,
+    parentStackOnly?: boolean
 ) {
     logger.info('Listing deployments', { accountId, deploymentId, deploymentName, statuses });
     return prisma.client.deployment.findMany({
@@ -67,7 +68,8 @@ async function listDeployments(
                 deployment_status: {
                     in: statuses
                 }
-            })
+            }),
+            ...(parentStackOnly && { parent_deployment_id: null })
         },
         orderBy: {
             start_time: 'desc'
@@ -379,6 +381,17 @@ async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: 
     });
 }
 
+async function deleteDeploymentJobById(accountId: string, jobId: string) {
+    logger.info('Deleting Deployment Job by Id', { accountId, jobId });
+
+    return prisma.client.deployment.deleteMany({
+        where: {
+            account_id: accountId,
+            id: jobId
+        }
+    });
+}
+
 export {
     Resource,
     listDeployments,
@@ -395,5 +408,6 @@ export {
     updateConfig,
     deleteConfig,
     listRelationshipsResources,
-    deploymentJobsCount
+    deploymentJobsCount,
+    deleteDeploymentJobById
 };

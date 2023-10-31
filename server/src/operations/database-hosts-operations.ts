@@ -138,10 +138,11 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
         credentialsId: string;
         activeNodeInstanceId: string;
         standbyNodeInstanceId: string;
+        fsxSecret: string;
     };
 
     const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
@@ -151,6 +152,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         credentialsId,
         region!,
         fileSystemId!,
+        fsxSecret,
         'storage/volumes',
         `uuid=${volumeUuidList}`,
         'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
@@ -251,7 +253,8 @@ async function getDatabaseHostsSummary(
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
 
-                    [serverStatus, topologyData, performanceData, storageData, protectionData] = await Promise.all([
+                    // Using 'allSettled' instead of 'all' to avoid failing the entire response for a single host.
+                    const results = await Promise.allSettled([
                         getServerState(resourceId), // Fetch server status
                         getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
                         ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
@@ -259,10 +262,14 @@ async function getDatabaseHostsSummary(
                         ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
                     ]);
 
+                    [serverStatus, topologyData, performanceData, storageData, protectionData] = results.map(result =>
+                        result.status === 'fulfilled' ? result.value : undefined
+                    );
+
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
-                        status: serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
+                        status: serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
                         topology: topologyData!,
                         ...(performanceData && { performance: performanceData }),
                         ...(storageData && { storage: storageData }),

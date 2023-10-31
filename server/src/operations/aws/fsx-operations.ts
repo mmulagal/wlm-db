@@ -174,29 +174,34 @@ async function getStorageDataUsingSSM(
     credentialsId: string,
     region: string,
     fileSystemId: string,
+    fsxSecret: string,
     apiEndpoint: string,
     apiFilter: string,
     apiQuery: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
-    logger.info('Fetching tables total count ', credentialsId, region, activeNodeInstanceId);
+    logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
 
-    const commands = [
-        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName wlmdb-fsx-${fileSystemId} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
-    ];
+    try {
+        const commands = [
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        ];
 
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
 
-    const cleanResponse = response?.replaceAll('\r\n', '');
-    const jsonResponse = JSON.parse(cleanResponse!);
-    return jsonResponse;
+        const cleanResponse = response?.replaceAll('\r\n', '');
+        const jsonResponse = JSON.parse(cleanResponse!);
+        return jsonResponse;
+    } catch (error) {
+        logger.error('Failed to fetch storage savings details. Reason:', { error });
+    }
 }
 
 async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {

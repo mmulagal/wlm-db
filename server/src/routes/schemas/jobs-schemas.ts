@@ -3,7 +3,9 @@ import {
     DeploymentJobsCountResponse,
     DeploymentJobsCountQueryString,
     DeploymentJobsSummaryQueryString,
-    DeploymentJobsSummaryListResponse
+    DeploymentJobsSummaryListResponse,
+    JobsParams,
+    DeleteJobResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -32,4 +34,13 @@ const DeploymentJobsSummaryListSchema = {
     }
 };
 
-export { DeploymentJobsCountSchema, DeploymentJobsSummaryListSchema };
+const DeleteDeploymentJobsSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: JobsParams,
+    description: 'Delete deployment Job',
+    response: {
+        200: DeleteJobResponse
+    }
+};
+
+export { DeploymentJobsCountSchema, DeploymentJobsSummaryListSchema, DeleteDeploymentJobsSchema };

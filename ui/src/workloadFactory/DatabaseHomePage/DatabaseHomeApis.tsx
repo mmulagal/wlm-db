@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setRefetchDatabaseHostApi, setRefetchDatabaseJobApi } from "../../store/mssql/msSqlActionSlice";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
 import { 
     addAggregatedCosts,
@@ -31,6 +32,8 @@ const DatabaseHomeApis = () => {
 
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const refetchDatabaseHostApi = useAppSelector(state => state.msSqlAction.refetchDatabaseHostApi);
+    const refetchDatabaseJobApi = useAppSelector(state => state.msSqlAction.refetchDatabaseJobApi);
     
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
@@ -47,20 +50,36 @@ const DatabaseHomeApis = () => {
     const {
         data: databaseHosts,
         isFetching: databaseHostsLoading,
-        isError: databaseHostsError
+        isError: databaseHostsError,
+        refetch: databaseHostsRefetch
     } = useGetDatabaseHostsQuery({nextToken: hostCursor}, {skip: skipApiCall});
 
     const {
         data: databaseJobs,
         isFetching: databaseJobsLoading,
-        isError: databaseJobsError
+        isError: databaseJobsError,
+        refetch: databaseJobsRefetch
     } = useGetDatabaseJobsQuery({nextToken: jobsCursor}, {skip: skipApiCall});
 
     const {
         data: jobsSummaryData,
         isFetching: jobsSummaryLoading,
-        isError: jobsSummaryError
+        isError: jobsSummaryError,
+        refetch: jobsSummaryDataRefetch
     } = useGetJobsSummaryQuery('', {skip: skipApiCall});
+
+    useEffect(() => {
+        if(refetchDatabaseHostApi) {
+            dispatch(setRefetchDatabaseHostApi(false));
+            databaseHostsRefetch();
+        }
+        if(refetchDatabaseJobApi) {
+            dispatch(setRefetchDatabaseJobApi(false));
+            jobsSummaryDataRefetch();
+            databaseJobsRefetch();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refetchDatabaseHostApi, refetchDatabaseJobApi])
 
     useEffect(() => {
         if(statusError) {

@@ -3,8 +3,8 @@ import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
-import { deploymentJobsCount, listDeployments } from '../lib/database/db';
-import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes } from '../utils/consts';
+import { deploymentJobsCount, listDeployments, deleteDeploymentJobById } from '../lib/database/db';
+import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes, NOT_AVAILABLE } from '../utils/consts';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
@@ -47,7 +47,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         deploymentStatuses = statuses?.toUpperCase()?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
     }
-    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses);
+    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses, true);
 
     if (isEmpty(deploymentDetails)) {
         throw createError(
@@ -57,20 +57,22 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
     }
     const response = deploymentDetails.map(
         ({
-            deployment_id: id,
+            id,
+            deployment_id: deploymentId,
             deployment_status: status,
             deployment_model: deploymentModel,
             region: deploymentRegion,
             data: metaData
         }) => ({
             id,
+            deploymentId,
             name: (metaData as JSONObject).resourceName as string,
             status,
             metadata: {
                 region: deploymentRegion,
                 serverType: (metaData as JSONObject).databaseType as string,
                 fileSystemType: (metaData as JSONObject).fileSystemType as string,
-                serverInstallationMode: deploymentModel === null ? 'null' : deploymentModel
+                serverInstallationMode: deploymentModel === null ? NOT_AVAILABLE : deploymentModel
             }
         })
     );
@@ -78,4 +80,14 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
     return { count: response.length, items: response, nextToken: '' };
 }
 
-export { getDeploymentJobsCount, getDeploymentJobsSummary };
+async function deleteDeploymentJob(accountId: string, jobId: string) {
+    logger.info('Deleting Deployment entry for id', accountId, jobId);
+
+    const response = await deleteDeploymentJobById(accountId, jobId);
+    if (response.count === 1) {
+        return { message: 'Resource successfully deleted' };
+    }
+    return createError(HttpErrorCodes.NOT_FOUND, 'Resource does not exist for tenancy account');
+}
+
+export { getDeploymentJobsCount, getDeploymentJobsSummary, deleteDeploymentJob };

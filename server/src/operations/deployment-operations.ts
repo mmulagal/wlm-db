@@ -16,7 +16,7 @@ import {
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
-    MISSING_PERMISSIONS,
+    // MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
@@ -86,23 +86,25 @@ async function formatTemplateParameters(
 
     const { roleName, roleArn, providerAccountId } = await getRoleDetails(credentialsId!);
 
-    await createSecrets(
-        credentialsId!,
-        region!,
-        [
-            {
-                secretName: derivedParams.DomainAdminSecretName,
-                username: adConfiguration.domainUsername,
-                password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.SQLServiceAccountSecret,
-                username: sqlConfiguration.serviceAccountName,
-                password: sqlConfiguration.serviceAccountPassword
-            }
-        ],
-        roleArn
-    );
+    if (credentialsId && region) {
+        await createSecrets(
+            credentialsId,
+            region,
+            [
+                {
+                    secretName: derivedParams.DomainAdminSecretName,
+                    username: adConfiguration.domainUsername,
+                    password: adConfiguration.domainPassword
+                },
+                {
+                    secretName: derivedParams.SQLServiceAccountSecret,
+                    username: sqlConfiguration.serviceAccountName,
+                    password: sqlConfiguration.serviceAccountPassword
+                }
+            ],
+            roleArn
+        );
+    }
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
@@ -280,15 +282,16 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
+    // commented to test the iam permissions with strict policy.. It will be added once we finalise the permissions
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
         credentialsId,
         region
     );
 
-    let errMsg = '';
+    const errMsg = '';
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
-        logger.error(errMsg);
+        // errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
+        // logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
@@ -409,7 +412,7 @@ async function deployCloudFormationTemplate(
     );
 
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+        // throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);

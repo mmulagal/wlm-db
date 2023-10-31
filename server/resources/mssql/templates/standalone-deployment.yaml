@@ -484,22 +484,24 @@ Resources:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\DSC.zip -Destination C:\cfn
                             waitAfterCompletion: '0'
-                        g-unpack-sqlfci-scripts:
+                        c-unpack-sqlfci-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlfci.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
-                        c-unpack-sqlontap-scripts:
+                        d-unpack-sqlontap-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\scripts\sqlontap.zip -Destination C:\cfn\scripts
                             waitAfterCompletion: '0'
-                        d-unpack-sqlspcu-scripts:
+                        e-unpack-sqlspcu-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\sqlspcu.zip -Destination C:\cfn
-                        e-unpack-powershell-scripts:
+                        f-unpack-powershell-scripts:
                             command: powershell.exe -Command C:\cfn\scripts\Unzip-Archive.ps1 -Source
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
-                        f-move-ssmscript:
+                        g-move-ssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
+			            h-move-ontapscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
