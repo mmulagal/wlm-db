@@ -384,8 +384,6 @@ Parameters:
     Description: Password for FSxAdminUsername.
     Type: String
     NoEcho: true
-    MinLength: 8
-    MaxLength: 50
 
   FSxSvmName:
     Type: String
