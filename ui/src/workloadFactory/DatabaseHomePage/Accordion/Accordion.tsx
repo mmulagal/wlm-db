@@ -129,7 +129,7 @@ const Accordion = ({
         setDialog(
             <DialogComponent
                 header={GENERAL.DELETE_CONFIG}
-                content={`${GENERAL.DELETE_CONFIG_TEXT} ${heading}`}
+                content={<Typography variant="Regular_14">{`${GENERAL.DELETE_CONFIG_TEXT} "${heading}" ?`}</Typography>}
                 primaryButton={GENERAL.DELETE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={handleDelete}
@@ -145,8 +145,8 @@ const Accordion = ({
         setDialog(
             <DialogComponent
                 header={GENERAL.RENAME_CONFIG}
-                content={<SaveConfig />}
-                primaryButton={GENERAL.RENAME}
+                content={<SaveConfig description={`${GENERAL.RENAME_CONFIG_CONTENT[0]} "${heading}" ${GENERAL.RENAME_CONFIG_CONTENT[1]}`}/>}
+                primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={handleRename}
                 closeCallback={() => {

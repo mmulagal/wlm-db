@@ -69,6 +69,7 @@ export const GENERAL = {
     DELETE_CONFIG_TEXT: 'Are you sure to delete configuration',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+    RENAME_CONFIG_CONTENT: ['Enter a new name to ', ' configuration'],
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
@@ -276,6 +277,8 @@ export const GENERAL = {
     INFORMATION: 'Information',
     RESOURCE_DISTRIBUTION: 'Resources Distribution',
     TIMELINE: 'Timeline',
+    REMOVE_DATABASE_HOST: 'Remove database host',
+    REMOVE_CONFIG_TEXT: 'Are you sure you want to remove database host?',
     REMOVE_FROM_WORKSPACE: 'Remove from workspace',
     TABLES_SUMMARY: 'Tables summary',
     TABLES: 'Tables',
