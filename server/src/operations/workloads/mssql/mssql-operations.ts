@@ -33,11 +33,14 @@ import {
     HttpErrorCodes,
     CloudProviders,
     ACCOUNT_ID,
-    RESOURCE_RETRIVAL_ERROR
+    RESOURCE_RETRIVAL_ERROR,
+    WF
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, listResources, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
+import { associateResource } from '../../../lib/cloud-manager/credentials';
+import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -477,6 +480,16 @@ async function discoverMsSqlServer(
             standbyNodeInstanceName // TODO : store active an standby instance IP when available
         }
     });
+    const { source } = await lookupCredentials(credentialsId);
+    if (source === WF) {
+        await associateResource(credentialsId, accountId, [
+            {
+                id: resourceId,
+                name: resourceName,
+                type: resourceType
+            }
+        ]);
+    }
     return { resourceId, resourceName };
 }
 async function deleteResourceById(accountId: string, resourceId: string) {

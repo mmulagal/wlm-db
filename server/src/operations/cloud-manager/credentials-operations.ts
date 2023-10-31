@@ -8,7 +8,7 @@ import {
 } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
-import { WF, HEADERS } from '../../utils/consts';
+import { WF, HEADERS, BXP } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -85,6 +85,7 @@ async function lookupCredentials(credentialsId: string) {
         } = await getWfCredentialDetails(credentialsId);
 
         return {
+            source: WF,
             credentials: {
                 accessKey: accessKeyId,
                 secretKey: secretAccessKey,
@@ -93,7 +94,12 @@ async function lookupCredentials(credentialsId: string) {
         };
     } catch (error) {
         try {
-            return await getBxpCredentialDetails(credentialsId);
+            const { credentials, extra } = await getBxpCredentialDetails(credentialsId);
+            return {
+                source: BXP,
+                credentials,
+                extra
+            };
         } catch (err) {
             const errMsg = `Failed to fetch credentials. ${err}`;
             logger.error(errMsg);
@@ -101,6 +107,7 @@ async function lookupCredentials(credentialsId: string) {
         }
     }
 }
+
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
     if (isEmpty(getAsyncLocalStorageResource(HEADERS.REFERER)) && !process.env.TEST) {
         // in case of background processes trying to fetch credentials, doing a lookup in new and old credentials service
@@ -121,4 +128,4 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
     }
     return getBxpCredentialDetails(credentialsId);
 }
-export { getCredentials, getRoleDetails, getCredentialsDetails };
+export { lookupCredentials, getCredentials, getRoleDetails, getCredentialsDetails };

@@ -141,4 +141,37 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
         }>();
 }
 
-export { getBxpCredentialDetails, getAllBxpCredentials, getAllWfCredentials, getWfCredentialDetails };
+interface Resource {
+    id: string;
+    name: string;
+    type: string;
+}
+async function associateResource(credentialsId: string, accountId: string, resources: Array<Resource>) {
+    logger.info('Associating resource for credentials', { credentialsId, accountId, resources });
+
+    const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
+    const { token } = await getServiceToken();
+    return gotInstanceForInternalRequest
+        .post(`accounts/${tenancyAccountId}/credentials/v1/associations`, {
+            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+            headers: {
+                [HEADERS.AUTHORIZATION]: token
+            },
+            json: {
+                credentials: credentialsId,
+                resources
+            }
+        })
+        .json<{
+            credentials: string;
+            resources: [Resource];
+        }>();
+}
+
+export {
+    getBxpCredentialDetails,
+    getAllBxpCredentials,
+    getAllWfCredentials,
+    getWfCredentialDetails,
+    associateResource
+};

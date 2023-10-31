@@ -55,6 +55,25 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .reply(() => [200, genericDecryptedCredentials])
     .get(/^\/accounts\/(.+)\/credentials\/v1\/generic\/(.+)$/)
     .query(queryObj => Boolean(queryObj?.decrypt) === false)
-    .reply(() => [200, genericCredentials]);
+    .reply(() => [200, genericCredentials])
+    .post(/^\/accounts\/(.+)\/credentials\/v1\/associations/)
+    .reply(() => [
+        200,
+        {
+            credentials: '35887b14-3e98-499d-8165-e0f45ec5057e',
+            resources: [
+                {
+                    id: '0cec115582d22fcc87b193ae485fa4bba0d67d590e806674fe07e6fbea608652',
+                    name: 'sqldbvy5p4',
+                    type: 'MSSQL'
+                },
+                {
+                    id: 'fs-08195cb9399d38c19',
+                    name: null,
+                    type: 'FSxFileSystem'
+                }
+            ]
+        }
+    ]);
 
 export { allCredentials, genericDecryptedCredentials, credentialsId };
