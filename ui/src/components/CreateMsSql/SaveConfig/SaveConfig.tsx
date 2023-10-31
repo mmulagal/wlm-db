@@ -7,7 +7,9 @@ import { GENERAL } from '../../../utils/appConstants';
 import sanitizeHTML from 'sanitize-html';
 import styles from './SaveConfig.module.scss';
 
-const SaveConfig = () => {
+type Props = { description: string | null };
+
+const SaveConfig = ({description}: Props) => {
     const [configName, setConfigName] = useState('');
     const dispatch = useDispatch();
 
@@ -17,7 +19,7 @@ const SaveConfig = () => {
 
     return (
         <div className={styles['save-config']}>
-            <Typography variant="Regular_14">{GENERAL.SAVE_CONFIG_CONTENT}</Typography>
+            <Typography variant="Regular_14">{description}</Typography>
             <TextField
                 label={GENERAL.CONFIG_NAME}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

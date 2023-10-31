@@ -95,9 +95,8 @@ const DatabaseTable = () => {
     const handleRemoveDialog = (row: any) => {
         setDialog(
             <DialogComponent
-                header={GENERAL.REMOVE_FROM_WORKSPACE}
-                content={<RemoveDialog weType={GENERAL.MSSQL}
-                name={row?.name || row?.id}/>}
+                header={`${GENERAL.REMOVE_DATABASE_HOST} "${row?.name || row?.id}"`}
+                content={<Typography variant="Regular_14">{`${GENERAL.REMOVE_CONFIG_TEXT}`}</Typography>}
                 primaryButton={GENERAL.REMOVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {

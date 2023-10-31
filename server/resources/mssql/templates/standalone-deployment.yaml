@@ -500,7 +500,7 @@ Resources:
                                 C:\cfn\Installer\powershell.zip -Destination C:\cfn\Installer
                         f-move-ssmscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
-			            n-move-ontapscript:
+                        n-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
                 InitialSetup:
                     commands:
