@@ -75,7 +75,7 @@ const MSSqlHeader = () => {
         setDialog(
             <DialogComponent
                 header={GENERAL.SAVE_CONFIG_HEADER}
-                content={<SaveConfig />}
+                content={<SaveConfig description={GENERAL.SAVE_CONFIG_CONTENT}/>}
                 primaryButton={GENERAL.SAVE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog, dialogFrom)}
