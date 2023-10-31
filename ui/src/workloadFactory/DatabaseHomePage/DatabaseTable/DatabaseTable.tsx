@@ -12,14 +12,15 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
-import { setRefetchDatabaseHostApi, setRefetchDatabaseJobApi } from '../../../store/mssql/msSqlActionSlice';
+import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
+import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
 
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
@@ -77,7 +78,9 @@ const DatabaseTable = () => {
             removeDatabaseJobs(id)
                 .then((data: any) => {
                     if (!data?.error) {
-                        dispatch(setRefetchDatabaseJobApi(true));
+                        dispatch(setRefetchJobSummaryApi(true));
+                        const newList = databaseJobsData?.filter((val:any) => val?.id !== id);
+                        dispatch(addDatabaseJobs({databaseJobsData: newList, databaseJobsLoading, undefined}));
                     }
                 })
         } else {
@@ -85,7 +88,9 @@ const DatabaseTable = () => {
             removeDatabaseHosts(id)
                 .then((data: any) => {
                     if (!data?.error) {
-                        dispatch(setRefetchDatabaseHostApi(true));
+                        dispatch(setRefetchJobSummaryApi(true));
+                        const newList = databaseHostsData?.filter((val:any) => val?.id !== id);
+                        dispatch(addDatabaseHosts({databaseHostsData: newList, databaseHostsLoading, undefined}));
                     }
                 })
         }

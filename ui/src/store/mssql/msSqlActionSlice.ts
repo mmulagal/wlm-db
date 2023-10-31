@@ -21,8 +21,7 @@ const initialState: any = {
         isLoading: false
     },
     isRecommendedInstance: null, // To load default instance type on recommended templates load
-    refetchDatabaseHostApi: false,
-    refetchDatabaseJobApi: false
+    refetchJobSummaryApi: false
 };
 
 const msSqlActionSlice = createSlice({
@@ -88,11 +87,8 @@ const msSqlActionSlice = createSlice({
         setIsRecommendedInstance(state, action:PayloadAction<any>) {
             state.isRecommendedInstance = action.payload;
         },
-        setRefetchDatabaseHostApi(state, action: PayloadAction<any>) {
-            state.refetchDatabaseHostApi = action.payload;
-        },
-        setRefetchDatabaseJobApi(state, action: PayloadAction<any>) {
-            state.refetchDatabaseJobApi = action.payload;
+        setRefetchJobSummaryApi(state, action: PayloadAction<any>) {
+            state.refetchJobSummaryApi = action.payload;
         }
     }
 });
@@ -116,7 +112,6 @@ export const {
     setRefetchApiCountRan,
     setRefetchApiCountLoading,
     setIsRecommendedInstance,
-    setRefetchDatabaseHostApi,
-    setRefetchDatabaseJobApi
+    setRefetchJobSummaryApi
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;
