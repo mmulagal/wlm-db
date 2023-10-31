@@ -67,9 +67,11 @@ export const GENERAL = {
     RENAME_CONFIG: 'Rename configuration',
     DELETE_CONFIG: 'Delete configuration',
     DELETE_CONFIG_TEXT: 'Are you sure to delete configuration',
+    DELETE_CONFIG_NOTIFICATION: 'Configuration deleted successfully.',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
     RENAME_CONFIG_CONTENT: ['Enter a new name to ', ' configuration'],
+    RENAME_CONFIG_NOTIFICATION: 'Configuration name changes successfully.',
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',

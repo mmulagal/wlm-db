@@ -18,6 +18,7 @@ import { initialMssqlState, setSaveConfigName } from '../../../store/mssql/mssql
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import SaveConfig from '../../../components/CreateMsSql/SaveConfig/SaveConfig';
 import store from '../../../store/store';
+import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 type AccordionContent = {
     heading: string;
@@ -84,6 +85,14 @@ const Accordion = ({
 
     const handleDelete = () => {
         deleteConfigApi({ configId: id }).then((data: any) => {
+            if(!data?.error){
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.DELETE_CONFIG_NOTIFICATION
+                    })
+                );
+            }
             configRefetch();
         });
     };
@@ -97,6 +106,14 @@ const Accordion = ({
         };
         setIsSaveConfigLoading(true);
         renameConfigApi({ configId: id, payload: payload }).then((data: any) => {
+            if(!data?.error) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.RENAME_CONFIG_NOTIFICATION
+                    })
+                );
+            }
             dispatch(setSaveConfigName(''));
             configRefetch();
             setIsSaveConfigLoading(false);
