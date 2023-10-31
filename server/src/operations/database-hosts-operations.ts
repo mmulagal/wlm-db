@@ -251,7 +251,8 @@ async function getDatabaseHostsSummary(
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
 
-                    [serverStatus, topologyData, performanceData, storageData, protectionData] = await Promise.all([
+                    // Using 'allSettled' instead of 'all' to avoid failing the entire response for a single host.
+                    const results = await Promise.allSettled([
                         getServerState(resourceId), // Fetch server status
                         getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
                         ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
@@ -259,10 +260,14 @@ async function getDatabaseHostsSummary(
                         ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
                     ]);
 
+                    [serverStatus, topologyData, performanceData, storageData, protectionData] = results.map(result =>
+                        result.status === 'fulfilled' ? result.value : undefined
+                    );
+
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
-                        status: serverStatus.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
+                        status: serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
                         topology: topologyData!,
                         ...(performanceData && { performance: performanceData }),
                         ...(storageData && { storage: storageData }),
