@@ -37,7 +37,7 @@ router.post(`${BASE_URL}/v1/configs`, async (req: {}, res: any) => {
 });
 
 router.delete(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {
-    generateResponse(res, 200, {'success': 'ok'});
+    generateResponse(res, 400, {'message': 'failed'});
 });
 
 router.patch(`${BASE_URL}/v1/configs/:configid`, async (req: {}, res: any) => {

@@ -92,8 +92,8 @@ const Accordion = ({
                         message: GENERAL.DELETE_CONFIG_NOTIFICATION
                     })
                 );
+                configRefetch();
             }
-            configRefetch();
         });
     };
 
@@ -113,9 +113,9 @@ const Accordion = ({
                         message: GENERAL.RENAME_CONFIG_NOTIFICATION
                     })
                 );
+                configRefetch();
             }
             dispatch(setSaveConfigName(''));
-            configRefetch();
             setIsSaveConfigLoading(false);
             closeDialog();
         });
