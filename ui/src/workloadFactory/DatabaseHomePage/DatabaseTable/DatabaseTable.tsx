@@ -80,7 +80,7 @@ const DatabaseTable = () => {
                     if (!data?.error) {
                         dispatch(setRefetchJobSummaryApi(true));
                         const newList = databaseJobsData?.filter((val:any) => val?.id !== id);
-                        dispatch(addDatabaseJobs({databaseJobsData: newList, databaseJobsLoading, undefined}));
+                        dispatch(addDatabaseJobs({databaseJobsData: newList, databaseJobsLoading: false, undefined}));
                     }
                 })
         } else {
@@ -90,7 +90,7 @@ const DatabaseTable = () => {
                     if (!data?.error) {
                         dispatch(setRefetchJobSummaryApi(true));
                         const newList = databaseHostsData?.filter((val:any) => val?.id !== id);
-                        dispatch(addDatabaseHosts({databaseHostsData: newList, databaseHostsLoading, undefined}));
+                        dispatch(addDatabaseHosts({databaseHostsData: newList, databaseHostsLoading: false, undefined}));
                     }
                 })
         }
