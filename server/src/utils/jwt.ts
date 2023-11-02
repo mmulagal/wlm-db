@@ -77,7 +77,7 @@ async function authorizeJwt(authToken: string, decodedToken: JwtPayload, account
             userTenancyAccounts = readFromCacheByKey(USER_TENANCY_CACHE_TYPE, tokenSub) as Account[];
         } else {
             const userPermissionsResponse = await getTenancyUserPermissions(authToken, tokenSub, accountId);
-            if (!(userPermissionsResponse?.role === ADMIN_ROLE || userPermissionsResponse?.role === USER_ROLE)) {
+            if (userPermissionsResponse?.role && ![ADMIN_ROLE, USER_ROLE].includes(userPermissionsResponse?.role)) {
                 throw createError(403, unauthorizedErrorMessage);
             }
             userTenancyAccounts = await getTenancyAccounts(authToken);

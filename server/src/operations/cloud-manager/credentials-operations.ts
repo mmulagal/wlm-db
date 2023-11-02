@@ -1,4 +1,3 @@
-import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import {
     getAllBxpCredentials,
@@ -62,6 +61,7 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 }
 
 async function getRoleDetails(credentialsId: string) {
+    logger.debug('Getting role details:', credentialsId);
     if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
         const { metadata } = await getWfCredentialDetails(credentialsId);
         return {
@@ -79,6 +79,7 @@ async function getRoleDetails(credentialsId: string) {
 }
 
 async function lookupCredentials(credentialsId: string) {
+    logger.debug('Looking up credentials:', credentialsId);
     try {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken }
@@ -109,23 +110,28 @@ async function lookupCredentials(credentialsId: string) {
 }
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
-    if (isEmpty(getAsyncLocalStorageResource(HEADERS.REFERER)) && !process.env.TEST) {
-        // in case of background processes trying to fetch credentials, doing a lookup in new and old credentials service
-        return lookupCredentials(credentialsId);
-    }
-    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
-        const {
-            credentials: { accessKeyId, secretAccessKey, sessionToken }
-        } = await getWfCredentialDetails(credentialsId, accountId);
+    logger.debug('Getting credentials details:', { credentialsId, accountId });
 
-        return {
-            credentials: {
-                accessKey: accessKeyId,
-                secretKey: secretAccessKey,
-                sessionId: sessionToken
-            }
-        };
-    }
-    return getBxpCredentialDetails(credentialsId);
+    return lookupCredentials(credentialsId);
+
+    /* the below logic tries to look up credentials based on the referer header, keeping it until a decision is made if new credentials service can handle both blue xp and new creds */
+    // if (isEmpty(getAsyncLocalStorageResource(HEADERS.REFERER)) && !process.env.TEST) {
+    // in case of background processes trying to fetch credentials, doing a lookup in new and old credentials service
+
+    // }
+    // if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
+    //     const {
+    //         credentials: { accessKeyId, secretAccessKey, sessionToken }
+    //     } = await getWfCredentialDetails(credentialsId, accountId);
+
+    //     return {
+    //         credentials: {
+    //             accessKey: accessKeyId,
+    //             secretKey: secretAccessKey,
+    //             sessionId: sessionToken
+    //         }
+    //     };
+    // }
+    // return getBxpCredentialDetails(credentialsId);
 }
 export { lookupCredentials, getCredentials, getRoleDetails, getCredentialsDetails };
