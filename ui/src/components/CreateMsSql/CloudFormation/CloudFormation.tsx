@@ -17,6 +17,7 @@ const CloudFormation = () => {
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
     const showPanel = state.previewPanel.showPanel;
+    const isDemoMode = state.auth.isDemoMode;
 
     const [createSqlTemplate] = useCreateSqlTemplateMutation();
 
@@ -101,16 +102,18 @@ const CloudFormation = () => {
 
     return (
         <div className={`${styles['cloud-formation']} ${showPanel ? styles['with-panel'] : ''}`}>
-            <div className={styles.inner}>
-                <Button
-                    Component="button"
-                    variant="link"
-                    onClick={handleTemplateView}
-                    className={CommonStyles.buttonClass}
-                >
-                    {GENERAL.SAVE_FORM_AS_CLOUD}
-                </Button>
-            </div>
+            {!isDemoMode && (
+                <div className={styles.inner}>
+                    <Button
+                        Component="button"
+                        variant="link"
+                        onClick={handleTemplateView}
+                        className={CommonStyles.buttonClass}
+                    >
+                        {GENERAL.SAVE_FORM_AS_CLOUD}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };
