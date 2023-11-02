@@ -417,5 +417,6 @@ export const CODE_VIEWER = {
     RENAME: 'Rename',
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
-    DEPLOYMENT: 'Deployment:'
+    DEPLOYMENT: 'Deployment:',
+    CREATE_DATABASE: 'Create database'
 };

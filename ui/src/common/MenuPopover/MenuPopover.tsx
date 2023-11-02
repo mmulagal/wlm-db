@@ -25,6 +25,7 @@ type MenuPopoverType = {
     prefferedLocation?: Popover.PopoverPlace;
     isSubmenu?: boolean;
     isBlackLayout?: boolean;
+    customColor?: string;
 };
 
 function MenuPopover({
@@ -36,7 +37,8 @@ function MenuPopover({
     disabledText,
     prefferedLocation,
     isSubmenu,
-    isBlackLayout = false
+    isBlackLayout = false,
+    customColor
 }: MenuPopoverType) {
     const refMenuContent = useRef<HTMLDivElement>(null);
     const refParent = useRef<HTMLDivElement>(null);
@@ -198,6 +200,7 @@ function MenuPopover({
                                 }}
                                 ref={refParent}
                                 className={isMenuOpen ? `${styles.menuIcon} ${styles.selected}` : styles.menuIcon}
+                                style={{ color: customColor }}
                             >
                                 <span className={styles.menuPointer}>...</span>
                             </div>

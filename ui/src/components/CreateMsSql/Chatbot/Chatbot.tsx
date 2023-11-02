@@ -1,11 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getWlmdbPayload, wrapContext } from '../../../utils/utilityFunctions';
+import { generateOptionType, getWlmdbPayload, wrapContext } from '../../../utils/utilityFunctions';
 
 import styles from './Chatbot.module.scss';
 import ChatBox from './ChatBox/Chatbox';
 import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useSendMsgMutation } from '../../../utils/apiService';
+import { setCurrentIntent, setMessages } from '../../../store/chatbot/chatbotSlice';
+import {
+    setSelectedCredentials,
+    setSelectedDBDeploymentModel,
+    setSelectedRegionData
+} from '../../../store/mssql/mssqlFormSlice';
+import { GENERAL } from '../../../utils/appConstants';
+import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
 type optionsType = {
     value?: string | number;
     label?: string;
@@ -23,22 +31,64 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
+    const messages = useAppSelector(state => state.chatbot.messages);
+    const currentIntent = useAppSelector(state => state.chatbot.currentIntent);
+    const mssqlFormData = useAppSelector(state => state.mssqlForm);
+    const credentialData = useAppSelector(state => state.mssql.getCredentials);
+    const { regionsData } = useAppSelector(state => state.mssql.getRegions);
+    //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
     const [isBotReplying, setIsBotReplying] = useState(false);
-    const [currentIntent, setCurrentIntent] = useState<any>('');
+    //const [currentIntent, setCurrentIntent] = useState<any>('');
     const [isPayloadReady, setIsPayloadReady] = useState(false);
     const [payloadContent, setPayloadContent] = useState<any>('');
     const dispatch = useAppDispatch();
 
     const [sendMsgToBot] = useSendMsgMutation();
 
-    const selectedCredId = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId);
+    const mapParamsToPayload = (params: any) => {
+        console.log(mssqlFormData, params);
+        Object.keys(params).map(key => {
+            switch (key) {
+                case 'credentialsId':
+                    const newCredential = credentialData.credentialData?.filter(
+                        item => item.credentialsId === params[key]
+                    )[0];
+                    const credValue = newCredential?.name + ' | Account: ' + newCredential?.providerAccountId;
+                    const option = generateOptionType(credValue, credValue, '', false, '', newCredential);
+                    dispatch(setSelectedCredentials(option));
+                    break;
+                case 'fsxDeploymentMode':
+                    if (params[key] === 'SINGLE_AZ_1') {
+                        dispatch(
+                            setSelectedDBDeploymentModel({
+                                label: GENERAL.SINGLE_INSTANCE,
+                                value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                            })
+                        );
+                    } else {
+                        dispatch(
+                            setSelectedDBDeploymentModel({
+                                label: GENERAL.FAILOVER_CLUSTER,
+                                value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                            })
+                        );
+                    }
+                    break;
+                case 'region':
+                    const newRegion = regionsData?.regions?.filter(item => item.regionCode === params[key])[0];
+                    const regionValue = newRegion?.regionCode + ' | ' + newRegion?.regionName;
+                    const regionOption = generateOptionType(regionValue, regionValue, '', false, '', newRegion);
+                    dispatch(setSelectedRegionData(regionOption));
+                    break;
+            }
+        });
+    };
 
     const sendMsg = async (msg?: string, add: boolean = true, msgs = messages) => {
         setIsBotReplying(true);
         let updatedMessages = msgs ? [...msgs] : [];
         if (add) {
-            setMessages([...(msgs || []), { sender: 'user', msg: msg }]);
+            dispatch(setMessages([...(msgs || []), { sender: 'user', msg: msg }]));
             updatedMessages = [...updatedMessages, { sender: 'user', msg: msg }];
         }
 
@@ -62,9 +112,10 @@ const Chatbot = () => {
                 if (res.data) {
                     const { message, key, allowedValues, intent, type, errors } = res.data;
                     if (intent) {
-                        setCurrentIntent(intent);
+                        dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
                             setPayloadContent(getWlmdbPayload(intent.params));
+                            mapParamsToPayload(intent.params);
                         } else {
                             setPayloadContent(intent.validatedJson);
                         }
@@ -86,10 +137,13 @@ const Chatbot = () => {
                     ];
 
                     if (currentIntent && !intent) {
-                        updatedMessages[updatedMessages.length - 3].active = false;
+                        updatedMessages[updatedMessages.length - 3] = {
+                            ...updatedMessages[updatedMessages.length - 3],
+                            active: false
+                        };
                     }
 
-                    setMessages(updatedMessages);
+                    dispatch(setMessages(updatedMessages));
                     setIsBotReplying(false);
                 }
             })
@@ -139,7 +193,7 @@ const Chatbot = () => {
                 )
                 .join(', ')
         });
-        setMessages(updatedMessages);
+        dispatch(setMessages(updatedMessages));
         const msgToBot = Object.keys(paramObj)
             .map(key => `Use ${key} as ${paramObj[key].value}`)
             .join(', ');
@@ -164,9 +218,16 @@ const Chatbot = () => {
     //@ts-ignore
     const messagesToShow = useMemo(() => {
         const lastMsg = messages ? messages[messages.length - 1] : {};
-        if (lastMsg.sender === 'bot' && !lastMsg.intent && currentIntent && currentIntent.type === 'DeployMsSql') {
+        if (
+            lastMsg &&
+            lastMsg.sender === 'bot' &&
+            !lastMsg.intent &&
+            currentIntent &&
+            currentIntent.type === 'DeployMsSql'
+        ) {
+            const existingMessages = messages ? messages : [];
             return [
-                ...[messages ? messages : []],
+                ...existingMessages,
                 {
                     sender: 'bot',
                     type: 'confirm',
@@ -180,10 +241,10 @@ const Chatbot = () => {
                             const botMsgs = messages.filter(item => item.sender === 'bot');
                             const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
                             const updatedMsgs = [...messages];
-                            setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]);
+                            dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
                         },
                         onCancel: () => {
-                            setCurrentIntent('');
+                            dispatch(setCurrentIntent(''));
                         }
                     }
                 }
