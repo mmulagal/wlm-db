@@ -498,6 +498,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     adScenarioType: 'ADScenarioType',
     domainUsername: 'DomainAdminUser',
+    domainPassword: 'DomainAdminPassword',
     domainDnsname: 'DomainDNSName',
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
@@ -514,6 +515,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
 
     workloadInstanceType: 'WorkloadInstanceType',
