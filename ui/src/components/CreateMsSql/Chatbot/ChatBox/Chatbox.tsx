@@ -35,8 +35,10 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
     const isCurrentMsgActive = el === document.activeElement;
 
     const handleSendMsg = () => {
-        sendMsg(userInput);
-        setUserInput('');
+        if (userInput.trim()) {
+            sendMsg(userInput);
+            setUserInput('');
+        }
     };
     return (
         <div className={styles['chat-container']}>
