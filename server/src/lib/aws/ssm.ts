@@ -8,8 +8,9 @@ import {
     paginateGetParametersByPath,
     GetParametersByPathCommandInput
 } from '@aws-sdk/client-ssm';
+
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
-import { getCredentialDetails } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -19,7 +20,7 @@ async function getSSMClient(credentialsId: string, region: string, accountId?: s
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId, accountId);
+    } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new SSMClient({ credentials, region });

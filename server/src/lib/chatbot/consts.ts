@@ -39,11 +39,6 @@ const CHATBOT_UI_PARAMS_FSX = [
         ]
     },
     {
-        vpcCidr: {
-            required: true
-        }
-    },
-    {
         networkConfiguration: [
             {
                 availabilityZone1: {
@@ -77,11 +72,6 @@ const CHATBOT_UI_PARAMS_FSX = [
     {
         adConfiguration: [
             {
-                adScenarioType: {
-                    required: true
-                }
-            },
-            {
                 domainUsername: {
                     required: true
                 }
@@ -103,11 +93,6 @@ const CHATBOT_UI_PARAMS_FSX = [
                 }
             }
         ]
-    },
-    {
-        dnsIpaddress: {
-            required: true
-        }
     },
     {
         sqlConfiguration: [
@@ -161,11 +146,6 @@ const CHATBOT_UI_PARAMS_FSX = [
                 }
             },
             {
-                fsxIOPS: {
-                    required: true
-                }
-            },
-            {
                 encryptionKey: {
                     required: false
                 }
@@ -174,6 +154,38 @@ const CHATBOT_UI_PARAMS_FSX = [
                 ontapSgGroupId: {
                     required: true,
                     dependsOn: 'vpcId'
+                }
+            }
+        ]
+    },
+    {
+        derivedParams: [
+            {
+                vpcCidr: {
+                    required: true,
+                    dependsOn: 'vpcId',
+                    hidden: true
+                }
+            },
+            {
+                adScenarioType: {
+                    required: true,
+                    dependsOn: 'domainDnsname',
+                    hidden: true
+                }
+            },
+            {
+                dnsIpaddress: {
+                    required: true,
+                    dependsOn: 'domainDnsname',
+                    hidden: true
+                }
+            },
+            {
+                fsxIOPS: {
+                    required: true,
+                    dependsOn: 'databaseSize',
+                    hidden: true
                 }
             }
         ]

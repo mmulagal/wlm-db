@@ -22,7 +22,9 @@ import {
     VERSION,
     WORKSPACE_ID,
     JWKS_FULL_NAME,
-    WLMDB
+    WLMDB,
+    WF,
+    BXP
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -54,7 +56,7 @@ import chatbotRoutes from './routes/chatbot';
 const logger = getLogger();
 const accessLogger = getLogger('access');
 
-const { verifyToken } = jwtOperation;
+const { verifyToken, authorizeJwt } = jwtOperation;
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
@@ -149,12 +151,14 @@ const app = fastify({
                 'onRequest',
                 async (request: FastifyRequest<{ Headers: Headers; Params: Params }>, reply: FastifyReply) => {
                     const {
-                        headers: { authorization }
+                        headers: { authorization },
+                        params: { accountId }
                     } = request;
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
                             const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            await authorizeJwt(authorization, payload, accountId);
                             request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
@@ -194,7 +198,7 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId },
+                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId, referer },
                     params: { accountId },
                     id: requestId
                 } = request;
@@ -203,6 +207,7 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
+                setAsyncLocalStorageResource(HEADERS.REFERER, referer?.includes('cloudmanager') ? BXP : WF);
                 const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                 if (!requestUrl) {
                     createAuditGroup(request, reply);
@@ -218,9 +223,10 @@ const app = fastify({
         done();
     })
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
-    .addHook('onSend', async (request, reply, payload) => {
+    .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
-        if (reply.statusCode !== 202) {
+        const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+        if (!requestUrl && reply.statusCode !== 202) {
             updateAuditGroup(request, reply, payload);
         } else if (request.url.includes('cloudformation/stack')) {
             updateAuditGroupResponse(request, payload);
