@@ -5,6 +5,7 @@ export interface DatabaseHostItem {
     name: string;
     databaseHostname?: string;
     status: string;
+    databaseCount?: number;
     topology: {
         region: string;
         serverType: string;
@@ -46,6 +47,7 @@ export interface DatabaseJobsItem {
     name: string;
     databaseHostname?: string;
     status: string;
+    databaseCount?: number;
     metadata: {
         region: string;
         serverType: string;

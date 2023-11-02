@@ -31,10 +31,14 @@ type ChatBoxPropTypes = {
 
 const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, messagesToShow }: ChatBoxPropTypes) => {
     const [userInput, setUserInput] = useState('');
+    const el = document.querySelector('.current-msg-input');
+    const isCurrentMsgActive = el === document.activeElement;
 
     const handleSendMsg = () => {
-        sendMsg(userInput);
-        setUserInput('');
+        if (userInput.trim()) {
+            sendMsg(userInput);
+            setUserInput('');
+        }
     };
     return (
         <div className={styles['chat-container']}>
@@ -50,21 +54,28 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
                 ))}
                 <ChatBotResponseLoader isBotReplying={isBotReplying} />
             </div>
-            <div className={`${styles['current-msg']} ${isBotReplying ? styles['chat-disabled'] : ''}`}>
-                <input
-                    value={userInput}
-                    onChange={e => {
-                        setUserInput(e.target.value);
-                    }}
-                    onKeyUp={e => {
-                        if (e.key === 'Enter') {
-                            handleSendMsg();
-                        }
-                    }}
-                    disabled={isBotReplying}
-                ></input>
-                <div onClick={() => handleSendMsg()}>
-                    <SendButton />
+            <div className={styles['current-msg-container']}>
+                <div
+                    className={`${styles['current-msg']} ${isBotReplying ? styles['chat-disabled'] : ''} ${
+                        isCurrentMsgActive ? styles['current-msg-active'] : ''
+                    }`}
+                >
+                    <input
+                        value={userInput}
+                        onChange={e => {
+                            setUserInput(e.target.value);
+                        }}
+                        onKeyUp={e => {
+                            if (e.key === 'Enter') {
+                                handleSendMsg();
+                            }
+                        }}
+                        disabled={isBotReplying}
+                        className="current-msg-input"
+                    ></input>
+                    <div onClick={() => handleSendMsg()}>
+                        <SendButton />
+                    </div>
                 </div>
             </div>
         </div>
