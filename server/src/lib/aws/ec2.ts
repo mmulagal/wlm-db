@@ -22,7 +22,7 @@ import {
     DescribeNetworkInterfacesCommandOutput,
     DescribeNetworkInterfacesCommand
 } from '@aws-sdk/client-ec2';
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -34,7 +34,7 @@ async function getEC2Client(region: string, credentialsId?: string) {
     }
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new EC2Client({ credentials, region });

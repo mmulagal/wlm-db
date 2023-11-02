@@ -22,7 +22,8 @@ import {
     STANDARD_DEPLOYMENT_ACTION,
     SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    WLMDB
+    WLMDB,
+    WF
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -39,6 +40,8 @@ import {
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
 import { handleNotification } from '../cloud-manager/notification-operations';
+import { lookupCredentials } from '../cloud-manager/credentials-operations';
+import { associateResource } from '../../lib/cloud-manager/credentials';
 
 const logger = getLogger();
 
@@ -74,7 +77,47 @@ async function getMatchingMasterStackDeployment(stackName: string) {
         return masterStackDeployment;
     }
 }
+async function handleResourceAssociation(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    resourceName: string,
+    fsxId?: string,
+    fsxName?: string
+) {
+    logger.info('Handling credentials resource association', {
+        accountId,
+        credentialsId,
+        resourceId,
+        resourceName,
+        fsxId,
+        fsxName
+    });
 
+    try {
+        const { source } = await lookupCredentials(credentialsId);
+        if (source === WF) {
+            const resourcesToAssociate = [
+                {
+                    id: resourceId,
+                    name: resourceName,
+                    type: RESOURCESTYPE.MSSQL as string
+                }
+            ];
+            if (fsxId && fsxName) {
+                resourcesToAssociate.push({
+                    id: fsxId,
+                    name: fsxName,
+                    type: 'FSxFileSystem'
+                });
+            }
+
+            await associateResource(credentialsId, accountId, resourcesToAssociate);
+        }
+    } catch (error) {
+        logger.error('Failed to associate resource with credentials service', error);
+    }
+}
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
     if (process.env.AWS_ROLE_ARN) {
@@ -179,7 +222,9 @@ async function processCloudFormationMessages() {
                                                         SQLDeploymentType: sqlDeploymentType,
                                                         ResourceName: resourceName,
                                                         FileSystemType: fileSystemType,
-                                                        FSxNSecret: fsxSecret
+                                                        FSxNSecret: fsxSecret,
+                                                        DomainAdminSecretName: domainAdminSecret,
+                                                        SQLServiceAccountSecret: sqlServiceAccountSecret
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await listResources(
                                                         accountId,
@@ -219,9 +264,20 @@ async function processCloudFormationMessages() {
                                                             standbyNodeInstanceIp,
                                                             sqlDeploymentType,
                                                             fileSystemType,
-                                                            fsxSecret
+                                                            fsxSecret,
+                                                            domainAdminSecret,
+                                                            sqlServiceAccountSecret
                                                         }
                                                     });
+
+                                                    await handleResourceAssociation(
+                                                        accountId,
+                                                        credentialsId,
+                                                        resourceId,
+                                                        resourceName,
+                                                        fsxId,
+                                                        fsxName
+                                                    );
                                                     const notificationData = {
                                                         notificationAction: STANDARD_DEPLOYMENT_ACTION,
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,

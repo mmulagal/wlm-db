@@ -10,7 +10,7 @@ import {
     SetTopicAttributesCommandInput,
     SetTopicAttributesCommand
 } from '@aws-sdk/client-sns';
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -20,7 +20,7 @@ async function getSNS(region: string, credentialsId: string) {
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new SNSClient({ credentials, region });

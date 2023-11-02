@@ -41,6 +41,7 @@ const CodeBox = () => {
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
+    const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
@@ -101,7 +102,7 @@ const CodeBox = () => {
                     <FlashingDotsLoader />
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
@@ -115,7 +116,7 @@ const CodeBox = () => {
                     <FlashingDotsLoader />
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput}>
+                <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre>{rightPanelResponse}</pre>
                 </HighlighterWord>
             );
@@ -127,7 +128,7 @@ const CodeBox = () => {
                     <FlashingDotsLoader />
                 </Typography>
             ) : (
-                <HighlighterWord highlight={searchInput} isAWSCli={true}>
+                <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
@@ -184,6 +185,23 @@ const CodeBox = () => {
             return rightPanelTemplateResponse?.cliCommand;
         }
     };
+
+    const countDetails = (count: any) => {
+        setCountWord(count - 1);
+    };
+
+    useEffect(() => {
+        if (countWord > 0) {
+            setTimeout(() => {
+                const occurrences = document.querySelectorAll('[class$="highlighted"]');
+                const target = occurrences[0];
+
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 500);
+        }
+    }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any, credDetails: any) => {
@@ -327,7 +345,11 @@ const CodeBox = () => {
                 </div>
                 <div className={styles.payloadBody}>
                     <div className={styles.scrollContainer}>
-                        <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                        <Typography
+                            variant="Regular_14"
+                            className={styles.contentArea}
+                            style={{ color: 'var(--white)' }}
+                        >
                             {setDisplayedDataInCodeBox()}
                         </Typography>
                     </div>

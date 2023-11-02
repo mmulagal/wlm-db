@@ -1,0 +1,13 @@
+{
+  "role": "Role-2",
+  "permissions": [
+    "compliance:view",
+    "general:view",
+    "account:get_permissions",
+    "config:get:simplicator",
+    "workspace:get",
+    "configuration:get",
+    "agent:get_agents",
+    "resource:get"
+  ]
+}

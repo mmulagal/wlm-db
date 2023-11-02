@@ -2,15 +2,15 @@ import { uniqBy } from 'lodash-es';
 import { getAdsList } from '../../operations/aws/directory-service-operations';
 import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
-import { getAllCredentials } from '../cloud-manager/credentials';
 import getLogger from '../../utils/logger';
 import { AZ_1, AZ_2, VPC_CIDR, VPC_ID } from './consts';
+import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
 async function validateCredentials(credentialsId: string, key: string) {
     logger.debug('Validate Credentials', { credentialsId });
-    const credentials = (await getAllCredentials('aws_assume_role')) || [];
+    const credentials = (await getCredentials('aws_assume_role')) || [];
 
     if (!credentialsId) {
         return {
@@ -19,7 +19,7 @@ async function validateCredentials(credentialsId: string, key: string) {
             message:
                 'I would need the credentialsId information to proceed further, please select a credentialsId of your choice',
             allowedValues: credentials.map(credential => ({
-                label: credential.extra.name,
+                label: credential.name,
                 value: credential.credentialsId
             }))
         };
@@ -32,7 +32,7 @@ async function validateCredentials(credentialsId: string, key: string) {
             status: 'error',
             message:
                 'The credentials that you have mentioned seems to be incorrect, please select one from the list below',
-            allowedValues: credentials.map(cred => ({ label: cred.extra.name, value: cred.credentialsId }))
+            allowedValues: credentials.map(cred => ({ label: cred.name, value: cred.credentialsId }))
         };
     }
 
