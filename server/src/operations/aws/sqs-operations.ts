@@ -341,7 +341,8 @@ async function processCloudFormationMessages() {
                                         * */
                                     if (
                                         stackName === masterDeploymentName &&
-                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED
+                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED &&
+                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.UPDATE_FAILED
                                     ) {
                                         await updateDeployment(accountId, id, {
                                             deploymentName: stackName,
