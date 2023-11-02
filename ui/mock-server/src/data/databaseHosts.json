@@ -5,6 +5,7 @@
             "id": "resource-id-1",
             "name": "Database hostname 1",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -50,6 +51,7 @@
             "id": "resource-id-2",
             "name": "Database hostname 2",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -95,6 +97,7 @@
             "id": "resource-id-3",
             "name": "Database hostname 3",
             "status": "Down",
+            "databaseCount": 0,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -140,6 +143,7 @@
             "id": "resource-id-4",
             "name": "Database hostname 4",
             "status": "Down",
+            "databaseCount": 0,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -185,6 +189,7 @@
             "id": "resource-id-5",
             "name": "Database hostname 5",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -230,6 +235,7 @@
             "id": "resource-id-6",
             "name": "Database hostname 6",
             "status": "Down",
+            "databaseCount": 0,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -275,6 +281,7 @@
             "id": "resource-id-7",
             "name": "Database hostname 7",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -320,6 +327,7 @@
             "id": "resource-id-8",
             "name": "Database hostname 8",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -365,6 +373,7 @@
             "id": "resource-id-9",
             "name": "Database hostname 9",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -410,6 +419,7 @@
             "id": "resource-id-10",
             "name": "Database hostname 10",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -455,6 +465,7 @@
             "id": "resource-id-11",
             "name": "Database hostname 11",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -500,6 +511,7 @@
             "id": "resource-id-12",
             "name": "Database hostname 12",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -545,6 +557,7 @@
             "id": "resource-id-13",
             "name": "Database hostname 13",
             "status": "Down",
+            "databaseCount": 0,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -590,6 +603,7 @@
             "id": "resource-id-14",
             "name": "Database hostname 14",
             "status": "Down",
+            "databaseCount": 0,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -635,6 +649,7 @@
             "id": "resource-id-15",
             "name": "Database hostname 15",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",
@@ -680,6 +695,7 @@
             "id": "resource-id-16",
             "name": "Database hostname 16",
             "status": "Up",
+            "databaseCount": 2,
             "topology": 
             {
                 "region": "US East (N.Virginia)",

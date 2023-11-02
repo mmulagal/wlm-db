@@ -404,6 +404,7 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     let totalInitializingHosts = 0;
     let totalDownHosts = 0;
     let totalFailedHosts = 0;
+    let totalDatabases = 0;
 
     data?.map(val => {
         if (val?.status === STATUS_CONST.UP) {
@@ -415,9 +416,10 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
         } else if (val?.status === STATUS_CONST.FAILED) {
             totalFailedHosts += 1;
         }
+        totalDatabases += val?.databaseCount || 0;
     });
     return {
-        totalDatabases: 0, // To Be calculated once data is available in API
+        totalDatabases: totalDatabases,
         totalHosts: data?.length || 0,
         totalUpHosts: totalUpHosts,
         totalInitializingHosts: totalInitializingHosts,
