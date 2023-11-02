@@ -443,7 +443,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         ) {
             protectedDb += 1;
         } else if (
-            val?.protection &&
+            (val?.status === STATUS_CONST.DOWN || val?.status === STATUS_CONST.UP) &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
