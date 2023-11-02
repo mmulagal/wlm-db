@@ -15,7 +15,7 @@
                 }
             ],
             "IsDefault": false,
-            "Tags": [{ "Key": "Name", "Value": "sathish" }]
+            "Tags": [{ "Key": "Name", "Value": "VPC-1" }]
         },
         {
             "CidrBlock": "192.168.16.0/20",
@@ -32,7 +32,7 @@
                 }
             ],
             "IsDefault": false,
-            "Tags": [{ "Key": "Name", "Value": "HCL-VPCOF-2 - to be deleted" }]
+            "Tags": [{ "Key": "Name", "Value": "VPC-2" }]
         },
         {
             "CidrBlock": "10.0.0.0/16",
@@ -49,7 +49,7 @@
                 }
             ],
             "IsDefault": false,
-            "Tags": [{ "Key": "Name", "Value": "SGWS" }]
+            "Tags": [{ "Key": "Name", "Value": "VPC-3" }]
         },
         {
             "CidrBlock": "192.168.16.0/20",
@@ -66,7 +66,7 @@
                 }
             ],
             "IsDefault": false,
-            "Tags": [{ "Key": "Name", "Value": "HCL-CC" }]
+            "Tags": [{ "Key": "Name", "Value": "VPC-4" }]
         }
     ]
 }
