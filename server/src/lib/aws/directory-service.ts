@@ -1,6 +1,6 @@
 import { DirectoryServiceClient, DescribeDirectoriesCommand } from '@aws-sdk/client-directory-service';
 import getLogger from '../../utils/logger';
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -9,7 +9,7 @@ async function getDsClient(region: string, credentialsId: string) {
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new DirectoryServiceClient({ credentials, region });
