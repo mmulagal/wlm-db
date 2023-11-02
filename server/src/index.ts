@@ -218,9 +218,10 @@ const app = fastify({
         done();
     })
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
-    .addHook('onSend', async (request, reply, payload) => {
+    .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
-        if (reply.statusCode !== 202) {
+        const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+        if (!requestUrl && reply.statusCode !== 202) {
             updateAuditGroup(request, reply, payload);
         } else if (request.url.includes('cloudformation/stack')) {
             updateAuditGroupResponse(request, payload);

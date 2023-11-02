@@ -109,10 +109,13 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     ]
                 };
 
-                let subnetsList: Array<Subnet> = [];
-                if (fieldsValues?.includes(AWSQueryFields.SUBNET)) {
-                    subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
-                }
+                const proms = [];
+
+                proms.push(
+                    fieldsValues?.includes(AWSQueryFields.SUBNET)
+                        ? getSubnetsList(credentialsId, region, subnetParams)
+                        : Promise.resolve([])
+                );
 
                 const sgParams: DescribeSecurityGroupsRequest = {
                     Filters: [
@@ -122,10 +125,14 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                         }
                     ]
                 };
-                let securityGroupList: Array<SecurityGroup> = [];
-                if (fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)) {
-                    securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
-                }
+
+                proms.push(
+                    fieldsValues?.includes(AWSQueryFields.SUBNET)
+                        ? getSecurityGroupsList(credentialsId, region, sgParams)
+                        : Promise.resolve([])
+                );
+
+                const [subnets, securityGroups] = await Promise.all(proms);
 
                 const resourceName = findResourceNameFromTags(tags);
                 vpcs.push({
@@ -134,8 +141,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     tags,
                     cidrBlock,
                     isDefault,
-                    subnets: subnetsList,
-                    securityGroups: securityGroupList,
+                    subnets,
+                    securityGroups,
                     ...(resourceName && { name: resourceName })
                 });
             })
