@@ -130,7 +130,10 @@ async function formatTemplateParameters(
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             templateParams.push({
                 ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-                ParameterValue: skipPasswords && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(key) ? '' : value.toString()
+                ParameterValue:
+                    skipPasswords && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key])
+                        ? ''
+                        : value.toString()
             });
         }
     });
@@ -329,9 +332,8 @@ async function createCloudFormationTemplateForUserDeployment(
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
-            templateParams += `&param_${
-                TEMPLATE_CONFIGURATION_MAPPING[key]
-            }=${SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(key)} ? '' : ${value}`;
+            value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
+            templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
         }
     });
 
