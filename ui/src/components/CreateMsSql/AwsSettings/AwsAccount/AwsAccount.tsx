@@ -113,8 +113,10 @@ const AwsAccount = () => {
 
     // Update selected region in form data store
     useEffect(() => {
-        dispatch(setSelectedCredentials(generateAWSAccounts[0]));
-    }, [dispatch, generateAWSAccounts]);
+        if (!selectedCredential) {
+            dispatch(setSelectedCredentials(generateAWSAccounts[0]));
+        }
+    }, [dispatch, generateAWSAccounts, selectedCredential]);
 
     //Set the Header text here
     const setHeader = () => {
