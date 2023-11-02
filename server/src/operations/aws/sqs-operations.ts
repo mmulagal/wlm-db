@@ -96,11 +96,7 @@ async function processCloudFormationMessages() {
                                 RequestType: requestType,
                                 ResponseURL: responseUrl,
                                 ResourceProperties: resourceProperties,
-                                LogicalResourceId: logicalResourceId,
-                                SQLDeploymentType: trackSqlDeploymentType,
-                                DatabaseType: trackdatabaseType,
-                                ResourceName: trackresourceName,
-                                FileSystemType: trackfileSystemType
+                                LogicalResourceId: logicalResourceId
                             } = jsonMessage;
                             if (
                                 requestType === CF_CUSTOM_RESOURCE_CODES.CREATE ||
@@ -114,7 +110,11 @@ async function processCloudFormationMessages() {
                                         CredentialsId: credentialsId,
                                         Region: region,
                                         StackName: stackName,
-                                        JWToken: jwtToken
+                                        JWToken: jwtToken,
+                                        SQLDeploymentType: trackSqlDeploymentType,
+                                        DatabaseType: trackdatabaseType,
+                                        ResourceName: trackresourceName,
+                                        FileSystemType: trackfileSystemType
                                     } = resourceProperties;
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
@@ -314,11 +314,7 @@ async function processCloudFormationMessages() {
                                 EventId: eventId,
                                 ResourceStatus: resourceStatus,
                                 ResourceStatusReason: resourceStatusReason,
-                                ResourceProperties: resourceProperties,
-                                SQLDeploymentType: stackSqlDeploymentType,
-                                DatabaseType: stackDatabaseType,
-                                ResourceName: stackResourceName,
-                                FileSystemType: stackFileSystemType
+                                ResourceProperties: resourceProperties
                             } = stackMessage;
 
                             if (stackId) {
@@ -334,7 +330,9 @@ async function processCloudFormationMessages() {
                                         cloud_provider_name: cloudProviderName,
                                         credentials_id: credentialsId,
                                         deployment_name: masterDeploymentName,
-                                        deployment_status: masterDeploymentStatus
+                                        deployment_status: masterDeploymentStatus,
+                                        deployment_model: stackSqlDeploymentType,
+                                        data
                                     } = masterStackDeployment;
 
                                     /**
@@ -365,11 +363,7 @@ async function processCloudFormationMessages() {
                                             credentialsId,
                                             startTime: new Date(timestamp).valueOf(),
                                             deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
-                                            data: {
-                                                databaseType: stackDatabaseType,
-                                                resourceName: stackResourceName,
-                                                fileSystemType: stackFileSystemType
-                                            }
+                                            data: data as object
                                         });
                                         if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
                                             // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED
