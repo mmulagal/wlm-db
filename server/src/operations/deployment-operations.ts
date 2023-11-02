@@ -1,5 +1,8 @@
 import createError from 'http-errors';
+import { faker } from '@faker-js/faker';
 import { Parameter } from '@aws-sdk/client-cloudformation';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
@@ -54,7 +57,9 @@ import {
     SNS_ARN,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
-    DEFAULT_AWS_REGION
+    DEFAULT_AWS_REGION,
+    CloudProviders,
+    RESOURCESTYPE
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -65,6 +70,7 @@ import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
+import { createDeployment, createResource } from '../lib/database/db';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -474,6 +480,18 @@ async function deployCloudFormationTemplate(
     };
     await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
+        const stackId = deployStackResponse.StackId || '';
+        createDeploymentMockDataInDB(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlConfiguration?.sqlDeploymentMode
+        );
+    }
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
@@ -522,6 +540,48 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
         ]
     );
     return { permissions, strictPermissions, strictConditionPermissions };
+}
+
+async function createDeploymentMockDataInDB(
+    accountId: string,
+    stackId: string,
+    stackName: string,
+    region: string,
+    credentialId: string,
+    sqlDeploymentMode: string
+) {
+    logger.info('create deployment mock data in database', {
+        accountId,
+        stackId,
+        stackName,
+        region,
+        credentialId,
+        sqlDeploymentMode
+    });
+
+    const cloudProviderId = `${faker.number.int({ min: 40000000, max: 50000000 })}`;
+    await createDeployment(accountId, {
+        deploymentId: stackId,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        credentialsId: credentialId,
+        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
+        startTime: new Date().valueOf(),
+        region,
+        deploymentName: stackName,
+        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        endTime: new Date().valueOf()
+    });
+
+    await createResource(accountId, {
+        resourceId: randomUUID(),
+        resourceName: `sqlnode-${faker.number.int({ min: 25424, max: 30000 })}`,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        resourceType: RESOURCESTYPE.MSSQL,
+        coRelationId: `fs-${faker.string.alphanumeric(17)}`,
+        region
+    });
 }
 
 export {
