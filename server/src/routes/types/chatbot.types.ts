@@ -17,7 +17,7 @@ const queryBotResponse = Type.Object({
                 allowedValues: Type.Optional(
                     Type.Array(
                         Type.Object({
-                            label: Type.String(),
+                            label: Type.Optional(Type.String()),
                             value: Type.String()
                         })
                     )

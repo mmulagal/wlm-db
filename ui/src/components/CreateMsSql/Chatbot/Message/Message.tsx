@@ -55,7 +55,13 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
                                 {msgObj.active && item.allowedValues && item.allowedValues.length ? (
                                     <div className={styles['select-container']}>
                                         <SelectComponent
-                                            options={item.allowedValues}
+                                            options={
+                                                item.key === 'region'
+                                                    ? item.allowedValues.map((item: any) => {
+                                                          return { ...item, label: `${item.value} | ${item.label}` };
+                                                      })
+                                                    : item.allowedValues
+                                            }
                                             onChange={(key: string, val: string | number, label: string) => {
                                                 setParamObj({
                                                     ...paramObj,
@@ -64,6 +70,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
                                             }}
                                             heading={item.message}
                                             selectKey={item.key}
+                                            paramObj={paramObj}
                                         />
                                     </div>
                                 ) : (

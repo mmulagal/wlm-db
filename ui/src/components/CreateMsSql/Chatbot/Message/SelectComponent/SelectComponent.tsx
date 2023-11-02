@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './SelectComponent.module.scss';
 import { SelectField } from '@netapp/design-system';
 
@@ -7,13 +7,19 @@ type selectComponentPropType = {
     onChange: (key: string, val: string | number, label: string) => void;
     heading: string;
     selectKey: string;
+    paramObj: any;
 };
 
-const SelectComponent = ({ options, onChange, heading, selectKey }: selectComponentPropType) => {
+const SelectComponent = ({ options, onChange, heading, selectKey, paramObj }: selectComponentPropType) => {
     const [selected, setSelected] = useState('');
-    const [searchText, setSearchText] = useState('');
 
     //@ts-ignore
+    useEffect(() => {
+        if (options.length && !paramObj.hasOwnProperty(selectKey)) {
+            setSelected(options[0].value);
+            onChange(selectKey, options[0].value, options[0].label);
+        }
+    }, [options, paramObj]);
 
     return (
         <div className={styles['select-component']}>

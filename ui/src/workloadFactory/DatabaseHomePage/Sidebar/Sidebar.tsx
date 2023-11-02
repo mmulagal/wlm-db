@@ -62,6 +62,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
+    const [dataToCheck, setDataToCheck] = useState<any>([]);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -105,6 +106,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     useEffect(() => {
         setConfigData(configDataList);
+        setDataToCheck(configDataList);
     }, [configDataList]);
 
     useEffect(() => {
@@ -400,9 +402,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const newVal = configDataList.filter((text: any) => {
                 return text?.name.includes(val);
             });
-            setConfigData(newVal);
+            setDataToCheck(newVal);
         } else {
-            setConfigData(configDataList);
+            setDataToCheck(configDataList);
         }
     };
 
@@ -497,7 +499,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 />
                             </div>
 
-                            {configData.map((item: any, i: number) => (
+                            {dataToCheck.map((item: any, i: number) => (
                                 <div key={i}>
                                     <Accordion
                                         heading={item.name}
@@ -593,7 +595,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         }}
                                     />
                                 </div>
-                                {configData.map((item: any, i: number) => (
+                                {dataToCheck.map((item: any, i: number) => (
                                     <div key={i}>
                                         <Accordion
                                             heading={item.name}
