@@ -127,7 +127,7 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                 };
 
                 proms.push(
-                    fieldsValues?.includes(AWSQueryFields.SUBNET)
+                    fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)
                         ? getSecurityGroupsList(credentialsId, region, sgParams)
                         : Promise.resolve([])
                 );
