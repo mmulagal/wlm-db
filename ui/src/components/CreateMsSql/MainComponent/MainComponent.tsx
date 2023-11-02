@@ -15,8 +15,8 @@ const MainComponent = () => {
     const showChatbot = useAppSelector(state => state.auth?.isWorkloadFactory);
 
     return (
-        <>
-            <div className={styles.leftSide}>
+        <div className={styles.mainContainer}>
+            <div className={`${styles.leftSide} ${!showChatbot ? styles.noChatBot : ''}`}>
                 <StepLayout className={styles.header}>
                     <MSSqlHeader />
                     <WizardContent className={styles.content}>
@@ -35,10 +35,12 @@ const MainComponent = () => {
                     )}
                 </StepLayout>
             </div>
-            <div className={styles.rightSide}>
-                <CodeBox />
-            </div>
-        </>
+            {showChatbot && (
+                <div className={styles.rightSide}>
+                    <CodeBox />
+                </div>
+            )}
+        </div>
     );
 };
 
