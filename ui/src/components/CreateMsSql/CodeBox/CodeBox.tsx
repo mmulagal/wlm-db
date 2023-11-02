@@ -345,7 +345,11 @@ const CodeBox = () => {
                 </div>
                 <div className={styles.payloadBody}>
                     <div className={styles.scrollContainer}>
-                        <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
+                        <Typography
+                            variant="Regular_14"
+                            className={styles.contentArea}
+                            style={{ color: 'var(--white)' }}
+                        >
                             {setDisplayedDataInCodeBox()}
                         </Typography>
                     </div>
