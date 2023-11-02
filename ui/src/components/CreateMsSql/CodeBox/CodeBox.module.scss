@@ -157,7 +157,7 @@
                 position: absolute;
                 z-index: 2;
                 right: 16px;
-                width: 100%;
+                // width: 100%;
                 display: flex;
                 justify-content: flex-end;
                 .searchInput {
@@ -180,7 +180,7 @@
                     position: relative;
                     top: -3px;
 
-                    width: calc(100% - 56px);
+                    width: calc(31vw - 90px);
                     background-color: var(--grey-55);
 
                     svg {
