@@ -87,7 +87,7 @@ async function getBxpCredentialDetails(credentialsId: string, accountId?: string
     logger.info('Getting Blue XP credential details for ', { credentialsId, accountId });
 
     if (!process.env.TEST && hasCache(BXP_USER_CRED_TYPE, credentialsId)) {
-        logger.info('>>BXP CACHE RESPOPNSE', readFromCacheByKey(WF_USER_CRED_TYPE, credentialsId));
+        logger.info('>>BXP CACHE RESPOPNSE', readFromCacheByKey(BXP_USER_CRED_TYPE, credentialsId));
         return readFromCacheByKey(BXP_USER_CRED_TYPE, credentialsId);
     }
 
