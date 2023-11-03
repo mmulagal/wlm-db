@@ -3,6 +3,7 @@ import { getAdsList } from '../../../src/operations/aws/directory-service-operat
 
 import '../../simulator/scopes/aws/directory-service-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;

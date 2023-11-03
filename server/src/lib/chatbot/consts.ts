@@ -1,6 +1,6 @@
 const MODEL = 'anthropic.claude-v2';
 const SERVICE = 'bedrock';
-const BEDROCK_REGION = 'us-west-2';
+const BEDROCK_REGION = process.env.REGION;
 
 const CHATBOT_UI_PARAMS_FSX = [
     {
