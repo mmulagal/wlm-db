@@ -50,8 +50,8 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
     const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses, true);
 
     if (isEmpty(deploymentDetails)) {
-        logger.info(`No deployments found for account ${accountId} with statuses ${statuses}`);
-        return { count: 0, nextToken: '' };
+        logger.error(`No deployments found for account ${accountId} with statuses ${statuses}`);
+        return { count: 0, items: [], nextToken: '' };
     }
     const response = deploymentDetails.map(
         ({
