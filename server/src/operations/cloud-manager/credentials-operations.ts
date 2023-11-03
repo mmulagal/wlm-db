@@ -67,16 +67,16 @@ async function getRoleDetails(credentialsId: string) {
     if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
         const { metadata } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
         return {
-            roleName: metadata.arn.match(/role\/(.*)/)?.[1] || '',
-            roleArn: metadata.arn,
-            providerAccountId: metadata.arn.match(/\d+/)?.[0] || ''
+            roleName: metadata?.arn?.match(/role\/(.*)/)?.[1] || '',
+            roleArn: metadata?.arn,
+            providerAccountId: metadata?.arn.match(/\d+/)?.[0] || ''
         };
     }
     const data = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
     return {
-        roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '',
-        roleArn: data.extra.arn,
-        providerAccountId: data.extra.arn.match(/\d+/)?.[0] || ''
+        roleName: data?.extra?.arn.match(/role\/(.*)/)?.[1] || '',
+        roleArn: data?.extra?.arn,
+        providerAccountId: data?.extra?.arn.match(/\d+/)?.[0] || ''
     };
 }
 

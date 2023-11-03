@@ -89,7 +89,7 @@ async function formatTemplateParameters(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, providerAccountId } = credentialsId
+    const { roleName = '', providerAccountId = '' } = credentialsId
         ? await getRoleDetails(credentialsId)
         : { roleName: '', providerAccountId: '' };
 
