@@ -176,17 +176,11 @@ const SECRETS_MANAGER_KEYS: Record<string, string> = {
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';
 
 const SECRET_WORDS = [
-    'credentials',
     'passphrase',
     'certificateAuthority',
     'clientCertificate',
     'authorization',
-    'secretAccessKey',
-    'accessKeyId',
-    'sessionToken',
     'token',
-    'secretkey',
-    'accesskey',
     'password',
     'clientSecret',
     'clientId',
@@ -196,12 +190,7 @@ const SECRET_WORDS = [
     'client_id',
     'client_secret',
     'access_token',
-    'secretAccessKey',
-    'accessKeyId',
     'authorization',
-    'SessionToken',
-    'AccessKeyId',
-    'SecretAccessKey',
     'username',
     'domainPassword',
     'fsxPassword',
@@ -827,6 +816,12 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
 
 const NOT_AVAILABLE = 'N/A';
 
+const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
+    'DomainAdminPassword',
+    'SQLServiceAccountPassword',
+    'FSxAdminPassword'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1007,5 +1002,6 @@ export {
     SNS_STRICT_ACTION_NAMES,
     CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS
 };
