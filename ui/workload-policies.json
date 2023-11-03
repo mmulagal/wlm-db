@@ -23,19 +23,115 @@
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": "SecretManagerListStatement",
                 "Effect": "Allow",
-                "Action": ["ec2:DescribeVpcs", "ec2:DescribeSecurityGroups", "ec2:DescribeSubnets"],
+                "Action": [
+                    "secretsmanager:GetSecretValue"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "SNSListStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "sns:ListTopics"
+                ],
                 "Resource": "*"
             },
             {
+                "Sid": "EC2BackendListStatement",
                 "Effect": "Allow",
                 "Action": [
-                    "cloudformation:CreateStack",
-                    "cloudformation:DescribeStacks",
-                    "cloudformation:UpdateStack",
-                    "cloudformation:DeleteStack"
+                    "ec2:DescribeVpcs",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeImages",
+                    "ec2:DescribeRegions",
+                    "ec2:DescribeRouteTables",
+                    "ec2:DescribeKeyPairs",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DescribeInstanceTypes"
                 ],
-                "Resource": "*"
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "KMSListStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "kms:ListAliases",
+                    "kms:ListKeys",
+                    "kms:DescribeKey"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "CloudFormationListStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "cloudformation:ListStacks"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "DirectoryServiceStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "ds:DescribeDirectories"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "FSXListStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "fsx:DescribeVolumes",
+                    "fsx:DescribeBackups",
+                    "fsx:DescribeStorageVirtualMachines",
+                    "fsx:DescribeFileSystems"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "QuotaStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "servicequotas:ListServiceQuotas"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "PricingStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "pricing:GetProducts"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "IAMStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "iam:SimulatePrincipalPolicy"
+                ],
+                "Resource": [
+                    "*"
+                ]
             }
         ]
     }
