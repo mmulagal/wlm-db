@@ -26,7 +26,7 @@ type DeploymentJobsSummaryResponseType = Static<typeof DeploymentJobsSummaryResp
 
 const DeploymentJobsSummaryListResponse = Type.Object({
     count: Type.Number(),
-    items: Type.Array(DeploymentJobsSummaryResponse),
+    items: Type.Optional(Type.Array(DeploymentJobsSummaryResponse)),
     nextToken: Type.String()
 });
 

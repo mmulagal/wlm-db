@@ -6,14 +6,16 @@ import { BUCKET_NAME, ASSETS_BUCKET_REGION } from '../../utils/consts';
 const logger = getLogger();
 
 const newRule: LifecycleRule = {
-    ID: 'NewDeleteWlmdbFolders',
-    Prefix: 'WLMDB',
+    Expiration: {
+        Days: 1
+    },
+    ID: 'DeleteWlmdbFolders',
+    Filter: {
+        Prefix: 'WLMDB'
+    },
     Status: 'Enabled',
     NoncurrentVersionExpiration: {
         NoncurrentDays: 1
-    },
-    Expiration: {
-        Days: 1
     }
 };
 
@@ -23,7 +25,7 @@ async function checkAndCreateBucketLifecycleConfiguration() {
     logger.debug('Existing configurations', configurations);
     const { Rules: currentLifecycleRules = [] } = configurations || {};
     const deletewlmdbRuleExists = currentLifecycleRules.some(
-        (rule: LifecycleRule) => rule.ID && rule.ID === 'NewDeleteWlmdbFolders'
+        (rule: LifecycleRule) => rule.ID && rule.ID === 'DeleteWlmdbFolders'
     );
 
     if (deletewlmdbRuleExists) {
