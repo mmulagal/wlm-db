@@ -64,42 +64,43 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 
 async function getRoleDetails(credentialsId: string) {
     logger.debug('Getting role details:', credentialsId);
-    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
-        const { metadata } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
+    const { source, metadata, extra } = await lookupCredentials(credentialsId);
+    if (source === WF) {
         return {
             roleName: metadata?.arn?.match(/role\/(.*)/)?.[1] || '',
             roleArn: metadata?.arn,
             providerAccountId: metadata?.arn.match(/\d+/)?.[0] || ''
         };
     }
-    const data = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
     return {
-        roleName: data?.extra?.arn.match(/role\/(.*)/)?.[1] || '',
-        roleArn: data?.extra?.arn,
-        providerAccountId: data?.extra?.arn.match(/\d+/)?.[0] || ''
+        roleName: extra?.arn.match(/role\/(.*)/)?.[1] || '',
+        roleArn: extra?.arn,
+        providerAccountId: extra?.arn.match(/\d+/)?.[0] || ''
     };
 }
 
 async function lookupCredentials(credentialsId: string) {
-    logger.info('Looking up credentials:', credentialsId);
-    let response;
+    logger.debug('Looking up credentials:', credentialsId);
+
     try {
         const {
-            credentials: { accessKeyId, secretAccessKey, sessionToken }
+            credentials: { accessKeyId, secretAccessKey, sessionToken },
+            metadata
         } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
 
-        response = {
+        return {
             source: WF,
             credentials: {
                 accessKey: accessKeyId,
                 secretKey: secretAccessKey,
                 sessionId: sessionToken
-            }
+            },
+            metadata
         };
     } catch (error) {
         try {
             const { credentials, extra } = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
-            response = {
+            return {
                 source: BXP,
                 credentials,
                 extra
@@ -110,8 +111,6 @@ async function lookupCredentials(credentialsId: string) {
             throw createError(400, errMsg);
         }
     }
-    logger.info('>>RESPONSE CREDS', response);
-    return response;
 }
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
