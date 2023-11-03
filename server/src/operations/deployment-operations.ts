@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { faker } from '@faker-js/faker';
+import randomize from 'randomatic';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -518,7 +518,7 @@ async function createDeploymentMockDataInDB(
         sqlDeploymentMode
     });
 
-    const cloudProviderId = `${faker.number.int({ min: 40000000, max: 50000000 })}`;
+    const cloudProviderId = randomize('0', 8);
     await createDeployment(accountId, {
         deploymentId: stackId,
         cloudProviderAccountId: cloudProviderId,
@@ -534,11 +534,11 @@ async function createDeploymentMockDataInDB(
 
     await createResource(accountId, {
         resourceId: randomUUID(),
-        resourceName: `sqlnode-${faker.number.int({ min: 25424, max: 30000 })}`,
+        resourceName: `sqlnode-${randomize('0', 5)}`,
         cloudProviderAccountId: cloudProviderId,
         cloudProviderName: CloudProviders.AWS,
         resourceType: RESOURCESTYPE.MSSQL,
-        coRelationId: `fs-${faker.string.alphanumeric(17)}`,
+        coRelationId: `fs-${randomize('A0', 17)}`,
         region
     });
 }
