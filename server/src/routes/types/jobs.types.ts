@@ -11,6 +11,7 @@ const DeploymentJobsSummaryQueryString = Type.Object({
 const DeploymentJobsSummaryResponse = Type.Object({
     id: Type.String(),
     deploymentId: Type.String(),
+    deploymentName: Type.String(),
     name: Type.Optional(Type.String()),
     status: Type.String(),
     metadata: Type.Object({

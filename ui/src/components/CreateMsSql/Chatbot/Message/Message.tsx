@@ -53,7 +53,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
                         {fieldsArr.map((item: any, idx: number) => {
                             return (
                                 <>
-                                    {msgObj.active && item.allowedValues && item.allowedValues.length ? (
+                                    {msgObj.active && item.allowedValues ? (
                                         <div className={styles['select-container']}>
                                             <SelectComponent
                                                 options={

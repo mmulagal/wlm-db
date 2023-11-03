@@ -59,6 +59,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         ({
             id,
             deployment_id: deploymentId,
+            deployment_name: deploymentName,
             deployment_status: status,
             deployment_model: deploymentModel,
             region: deploymentRegion,
@@ -66,6 +67,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         }) => ({
             id,
             deploymentId,
+            deploymentName,
             name: (metaData as JSONObject).resourceName as string,
             status,
             metadata: {

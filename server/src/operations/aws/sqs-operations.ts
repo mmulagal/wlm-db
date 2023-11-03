@@ -168,7 +168,7 @@ async function processCloudFormationMessages() {
                                         const cfnResponse =
                                             requestType === CF_CUSTOM_RESOURCE_CODES.CREATE
                                                 ? createStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.FAILED)
-                                                : modifyStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.FAILED);
+                                                : modifyStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.SUCCESS);
                                         await deleteMessage(DEFAULT_AWS_REGION, {
                                             QueueUrl: queueUrl,
                                             ReceiptHandle: sqsMessage?.ReceiptHandle

@@ -1,7 +1,7 @@
 import jwksRsa from 'jwks-rsa';
+import { isEmpty } from 'lodash-es';
 import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
 import { AUTH0_SERVER_ADDRESS, AUTH0_AUDIENCE, USER_TENANCY_CACHE_TYPE, ADMIN_ROLE, USER_ROLE } from './consts';
 import getLogger from './logger';
 import { getPermissionsForUser, getTenancyAccounts, Account } from '../lib/cloud-manager/tenancy';
@@ -64,10 +64,17 @@ async function getTenancyUserPermissions(
     return userPermissionsResponse ? (userPermissionsResponse as TenancyUserPermissions) : undefined;
 }
 
-async function authorizeJwt(authToken: string, decodedToken: JwtPayload, accountId: string) {
+async function authorizeJwt(authToken: string, decodedToken: JwtPayload | string, accountId: string) {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
 
-    const tokenSub = decodedToken?.sub;
+    let tokenSub;
+    // For simulator we are sending stringified mocked response so have to parse it here
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        tokenSub = JSON.parse(decodedToken as string)?.sub;
+    } else {
+        tokenSub = decodedToken?.sub;
+    }
+
     if (tokenSub && !isEmpty(tokenSub) && !tokenSub?.endsWith('@clients')) {
         // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests
         const unauthorizedErrorMessage = 'You do not have permission to access this resource';
