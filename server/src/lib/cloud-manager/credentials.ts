@@ -1,8 +1,16 @@
-import { ACCOUNT_ID, CREDENTIALS_ENDPOINT, WORKLOAD_FACTORY_ENDPOINT, HEADERS, USER_TOKEN } from '../../utils/consts';
+import {
+    ACCOUNT_ID,
+    CREDENTIALS_ENDPOINT,
+    WORKLOAD_FACTORY_ENDPOINT,
+    HEADERS,
+    USER_TOKEN,
+    WF_USER_CRED_TYPE
+} from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getServiceToken } from './tenancy';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -121,7 +129,11 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
     const { token } = await getServiceToken();
-    return gotInstanceForInternalRequest
+
+    if (hasCache(WF_USER_CRED_TYPE, credentialsId)) {
+        return readFromCacheByKey(WF_USER_CRED_TYPE, credentialsId);
+    }
+    const response = await gotInstanceForInternalRequest
         .get(`accounts/${tenancyAccountId}/credentials/v1/generic/${credentialsId}`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
@@ -142,6 +154,8 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
             type: string;
             metadata: { name: string; arn: string };
         }>();
+    writeToCache(WF_USER_CRED_TYPE, credentialsId, response);
+    return response;
 }
 
 interface Resource {
