@@ -110,6 +110,7 @@ async function lookupCredentials(credentialsId: string) {
             throw createError(400, errMsg);
         }
     }
+    logger.info('>>RESPONSE CREDS', response);
     return response;
 }
 
