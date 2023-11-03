@@ -1,9 +1,11 @@
 import createError from 'http-errors';
 import {
+    bxpCredentials,
     getAllBxpCredentials,
     getAllWfCredentials,
     getBxpCredentialDetails,
-    getWfCredentialDetails
+    getWfCredentialDetails,
+    wfCredentials
 } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
@@ -63,14 +65,14 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 async function getRoleDetails(credentialsId: string) {
     logger.debug('Getting role details:', credentialsId);
     if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
-        const { metadata } = await getWfCredentialDetails(credentialsId);
+        const { metadata } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
         return {
             roleName: metadata.arn.match(/role\/(.*)/)?.[1] || '',
             roleArn: metadata.arn,
             providerAccountId: metadata.arn.match(/\d+/)?.[0] || ''
         };
     }
-    const data = await getBxpCredentialDetails(credentialsId);
+    const data = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
     return {
         roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '',
         roleArn: data.extra.arn,
@@ -83,7 +85,7 @@ async function lookupCredentials(credentialsId: string) {
     try {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken }
-        } = await getWfCredentialDetails(credentialsId);
+        } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
 
         return {
             source: WF,
@@ -95,7 +97,7 @@ async function lookupCredentials(credentialsId: string) {
         };
     } catch (error) {
         try {
-            const { credentials, extra } = await getBxpCredentialDetails(credentialsId);
+            const { credentials, extra } = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
             return {
                 source: BXP,
                 credentials,

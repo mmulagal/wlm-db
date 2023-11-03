@@ -4,7 +4,8 @@ import {
     WORKLOAD_FACTORY_ENDPOINT,
     HEADERS,
     USER_TOKEN,
-    WF_USER_CRED_TYPE
+    WF_USER_CRED_TYPE,
+    BXP_USER_CRED_TYPE
 } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
@@ -76,14 +77,23 @@ async function getAllBxpCredentials(credentialsType: string): Promise<Array<AllC
  *  sessionId: string;
  *  expiration: Date }
  */
+
+interface bxpCredentials {
+    credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date };
+    extra: { arn: string };
+}
 async function getBxpCredentialDetails(credentialsId: string, accountId?: string) {
     logger.info('Getting Blue XP credential details for ', { credentialsId, accountId });
+
+    if (hasCache(BXP_USER_CRED_TYPE, credentialsId)) {
+        return readFromCacheByKey(BXP_USER_CRED_TYPE, credentialsId);
+    }
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
 
     const { token } = await getServiceToken();
 
-    return gotInstanceForInternalRequest
+    const response = await gotInstanceForInternalRequest
         .get(`credentials/accounts/${tenancyAccountId}/credentials/${credentialsId}`, {
             prefixUrl: CREDENTIALS_ENDPOINT,
             headers: {
@@ -93,10 +103,10 @@ async function getBxpCredentialDetails(credentialsId: string, accountId?: string
                 getDecrypted: true
             }
         })
-        .json<{
-            credentials: { accessKey: string; secretKey: string; sessionId: string; expiration: Date };
-            extra: { arn: string };
-        }>();
+        .json<bxpCredentials>();
+
+    writeToCache(BXP_USER_CRED_TYPE, credentialsId, response);
+    return response;
 }
 
 /**
@@ -109,6 +119,7 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
     logger.info('Getting all workload factory credentials for credentials type ', { credentialsType, nextToken });
 
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
+
     return gotInstanceForInternalRequest
         .get(`accounts/${accountId}/credentials/v1/credentials`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
@@ -124,15 +135,27 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
         .json<AllWfCredentials>();
 }
 
+interface wfCredentials {
+    id: string;
+    credentials: {
+        accessKeyId: string;
+        secretAccessKey: string;
+        sessionToken: string;
+        expiration: string;
+    };
+    type: string;
+    metadata: { name: string; arn: string };
+}
 async function getWfCredentialDetails(credentialsId: string, accountId?: string) {
     logger.info('Getting workload factory credential details for ', { credentialsId, accountId });
-
-    const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
-    const { token } = await getServiceToken();
 
     if (hasCache(WF_USER_CRED_TYPE, credentialsId)) {
         return readFromCacheByKey(WF_USER_CRED_TYPE, credentialsId);
     }
+
+    const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
+    const { token } = await getServiceToken();
+
     const response = await gotInstanceForInternalRequest
         .get(`accounts/${tenancyAccountId}/credentials/v1/generic/${credentialsId}`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
@@ -143,17 +166,7 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
                 decrypt: true
             }
         })
-        .json<{
-            id: string;
-            credentials: {
-                accessKeyId: string;
-                secretAccessKey: string;
-                sessionToken: string;
-                expiration: string;
-            };
-            type: string;
-            metadata: { name: string; arn: string };
-        }>();
+        .json<wfCredentials>();
     writeToCache(WF_USER_CRED_TYPE, credentialsId, response);
     return response;
 }
@@ -186,6 +199,8 @@ async function associateResource(credentialsId: string, accountId: string, resou
 }
 
 export {
+    wfCredentials,
+    bxpCredentials,
     getBxpCredentialDetails,
     getAllBxpCredentials,
     getAllWfCredentials,
