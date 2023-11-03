@@ -16,7 +16,7 @@ const MSSqlFooter = () => {
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
-    const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
+    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
 
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
 

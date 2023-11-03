@@ -18,7 +18,7 @@ const prepareHeaders = (
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
     const { getState } = api;
-    const { accessToken, workspaceId, isDemoMode } = (getState() as RootState).auth;
+    const { accessToken, workspaceId, isDemoMode, isWorkloadFactory } = (getState() as RootState).auth;
     if (accessToken) {
         headers.set('authorization', accessToken);
     }
@@ -27,6 +27,9 @@ const prepareHeaders = (
     }
     if (isDemoMode) {
         headers.set('x-simulator', 'true');
+    }
+    if (!isWorkloadFactory) {
+        headers.set('x-netapp-referer', 'BlueXP');
     }
     return headers;
 };
