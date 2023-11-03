@@ -44,7 +44,7 @@ async function getAllCredentialsRecursive(
  */
 async function getCredentials(credentialsType: string): Promise<CredentialsResponseType> {
     logger.info('Getting credentials ', credentialsType);
-    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
+    if (getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER) === WF) {
         const credentialsList = await getAllCredentialsRecursive(credentialsType);
         return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
             credentialsId: id,
@@ -119,11 +119,11 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
     return lookupCredentials(credentialsId);
 
     /* the below logic tries to look up credentials based on the referer header, keeping it until a decision is made if new credentials service can handle both blue xp and new creds */
-    // if (isEmpty(getAsyncLocalStorageResource(HEADERS.REFERER)) && !process.env.TEST) {
+    // if (isEmpty(getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER)) && !process.env.TEST) {
     // in case of background processes trying to fetch credentials, doing a lookup in new and old credentials service
 
     // }
-    // if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
+    // if (getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER) === WF) {
     //     const {
     //         credentials: { accessKeyId, secretAccessKey, sessionToken }
     //     } = await getWfCredentialDetails(credentialsId, accountId);
