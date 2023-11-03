@@ -46,6 +46,7 @@ import {
 } from '../../../utils/consts';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
+import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 
 type ConfigType = {
     id?: string;
@@ -324,10 +325,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_CLOUD_FORMATION}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
@@ -338,10 +336,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
             return isRightPanelDataLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_REST_API}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre>{rightPanelResponse}</pre>
@@ -350,10 +345,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_AWS_CLI}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
