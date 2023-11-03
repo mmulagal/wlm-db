@@ -14,6 +14,10 @@
         display: flex;
         gap: 12px;
     }
+
+    label {
+        color: var(--grey-55) !important;
+    }
 }
 
 .select-component-heading {
