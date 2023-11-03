@@ -10,7 +10,12 @@ const USER_TENANCY_CACHE = new LRUCache({
     ttl: ms('15m')
 });
 
-const USER_CRED_CACHE = new LRUCache({
+const WF_USER_CRED_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('10m')
+});
+
+const BXP_USER_CRED_CACHE = new LRUCache({
     max: 1000,
     ttl: ms('10m')
 });
@@ -22,8 +27,9 @@ function getCacheByType(type: string) {
         case USER_TENANCY_CACHE_TYPE:
             return USER_TENANCY_CACHE;
         case WF_USER_CRED_TYPE:
+            return WF_USER_CRED_CACHE;
         case BXP_USER_CRED_TYPE:
-            return USER_CRED_CACHE;
+            return BXP_USER_CRED_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }
