@@ -88,6 +88,7 @@ export const GENERAL = {
     STEP_TWO_TEXT: 'Add the credentials required for deployment:',
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
+    OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
@@ -267,6 +268,11 @@ export const GENERAL = {
         ' has been triggered. You can track the progress using the ',
         'Timeline',
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
+    ],
+    CREATE_INFO_MESSAGE_WLM: [
+        'Microsoft SQL Server and FSxN for ONTAP deployment ',
+        'with stack name ',
+        ' has been triggered. Estimated time: Up to 2 hours.'
     ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',

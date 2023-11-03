@@ -169,7 +169,7 @@ const AwsAccount = () => {
                                     <div className={styles.listItem}>
                                         <Bullet />
                                         <Typography variant="Regular_14" className={styles.textWidth}>
-                                            {GENERAL.OPTION_TWO}
+                                            {isWorkloadFactoryStatus ? GENERAL.OPTION_TWO_WF : GENERAL.OPTION_TWO}
                                         </Typography>
                                     </div>
                                 </Typography>

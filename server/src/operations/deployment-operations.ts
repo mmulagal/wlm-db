@@ -1,5 +1,8 @@
 import createError from 'http-errors';
+import randomize from 'randomatic';
 import { Parameter } from '@aws-sdk/client-cloudformation';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
@@ -54,7 +57,9 @@ import {
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     DEFAULT_AWS_REGION,
-    SKIP_TEMPLATE_PASSWORD_PARAMETERS
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS,
+    CloudProviders,
+    RESOURCESTYPE
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
@@ -65,6 +70,7 @@ import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
+import { createDeployment, createResource } from '../lib/database/db';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -85,7 +91,9 @@ async function formatTemplateParameters(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, providerAccountId } = await getRoleDetails(credentialsId!);
+    const { roleName = '', providerAccountId = '' } = credentialsId
+        ? await getRoleDetails(credentialsId)
+        : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
@@ -440,6 +448,18 @@ async function deployCloudFormationTemplate(
     };
     await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
+        const stackId = deployStackResponse.StackId || '';
+        createDeploymentMockDataInDB(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlConfiguration?.sqlDeploymentMode
+        );
+    }
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
@@ -488,6 +508,48 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
         ]
     );
     return { permissions, strictPermissions, strictConditionPermissions };
+}
+
+async function createDeploymentMockDataInDB(
+    accountId: string,
+    stackId: string,
+    stackName: string,
+    region: string,
+    credentialId: string,
+    sqlDeploymentMode: string
+) {
+    logger.info('create deployment mock data in database', {
+        accountId,
+        stackId,
+        stackName,
+        region,
+        credentialId,
+        sqlDeploymentMode
+    });
+
+    const cloudProviderId = randomize('0', 8);
+    await createDeployment(accountId, {
+        deploymentId: stackId,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        credentialsId: credentialId,
+        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
+        startTime: new Date().valueOf(),
+        region,
+        deploymentName: stackName,
+        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        endTime: new Date().valueOf()
+    });
+
+    await createResource(accountId, {
+        resourceId: randomUUID(),
+        resourceName: `sqlnode-${randomize('0', 5)}`,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        resourceType: RESOURCESTYPE.MSSQL,
+        coRelationId: `fs-${randomize('A0', 17)}`,
+        region
+    });
 }
 
 export {
