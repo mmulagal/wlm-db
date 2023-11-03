@@ -14,11 +14,13 @@ import {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
-    FSX_BATCH_CONCURRENCY_VALUE
+    FSX_BATCH_CONCURRENCY_VALUE,
+    SSM_COMMAND_CACHE_TYPE
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import Metadata from '../../utils/common-types';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -252,6 +254,12 @@ async function getOntapVolumesSnapshotCount(
 
     const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
 
+    const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-snapshot-count`;
+    if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
+        return response;
+    }
+
     try {
         const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
 
@@ -275,6 +283,7 @@ async function getOntapVolumesSnapshotCount(
         const parsedResponse = attempt(JSON.parse, cleanResponse);
 
         logger.debug({ parsedResponse });
+        writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, '6h');
         return parsedResponse instanceof Error ? undefined : parsedResponse;
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap snapshots', { err });
@@ -290,6 +299,12 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
     });
 
     const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata;
+
+    const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-mapped-volumes`;
+    if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
+        return response;
+    }
 
     try {
         const commands = [
@@ -307,6 +322,7 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
         const cleanResponse = response?.replaceAll('\r\n', '');
         const parsedResponse = attempt(JSON.parse, cleanResponse);
 
+        writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, '24h');
         logger.debug({ parsedResponse });
         return parsedResponse instanceof Error ? undefined : parsedResponse;
     } catch (err) {
