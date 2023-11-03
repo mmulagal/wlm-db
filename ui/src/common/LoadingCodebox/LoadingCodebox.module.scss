@@ -1,0 +1,9 @@
+.loadingCodeBox {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    position: relative;
+    top: 22vh;
+    color: var(--white);
+}
