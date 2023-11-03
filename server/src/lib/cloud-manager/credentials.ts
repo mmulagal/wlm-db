@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import {
     ACCOUNT_ID,
     CREDENTIALS_ENDPOINT,
@@ -105,7 +106,9 @@ async function getBxpCredentialDetails(credentialsId: string, accountId?: string
         })
         .json<bxpCredentials>();
 
-    writeToCache(BXP_USER_CRED_TYPE, credentialsId, response);
+    if (!isEmpty(response?.credentials?.accessKey)) {
+        writeToCache(BXP_USER_CRED_TYPE, credentialsId, response);
+    }
     return response;
 }
 
@@ -167,7 +170,9 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
             }
         })
         .json<wfCredentials>();
-    writeToCache(WF_USER_CRED_TYPE, credentialsId, response);
+    if (!isEmpty(response?.credentials?.accessKeyId)) {
+        writeToCache(WF_USER_CRED_TYPE, credentialsId, response);
+    }
     return response;
 }
 
