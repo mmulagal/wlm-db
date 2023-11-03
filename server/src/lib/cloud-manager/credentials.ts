@@ -72,11 +72,14 @@ async function getBxpCredentialDetails(credentialsId: string, accountId?: string
     logger.info('Getting Blue XP credential details for ', { credentialsId, accountId });
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
+
+    const { token } = await getServiceToken();
+
     return gotInstanceForInternalRequest
         .get(`credentials/accounts/${tenancyAccountId}/credentials/${credentialsId}`, {
             prefixUrl: CREDENTIALS_ENDPOINT,
             headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
+                [HEADERS.AUTHORIZATION]: token
             },
             searchParams: {
                 getDecrypted: true
