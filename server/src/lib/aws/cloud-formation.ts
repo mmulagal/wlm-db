@@ -6,7 +6,7 @@ import {
     CreateStackInput,
     Parameter
 } from '@aws-sdk/client-cloudformation';
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { CAPABILITY_IAM, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { gotInstanceForExternalRequest } from '../../utils/got';
@@ -18,7 +18,7 @@ async function getCloudformationClient(credentialsId: string, region: string) {
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
 
     return new CloudFormationClient({ region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
