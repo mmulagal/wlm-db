@@ -81,13 +81,14 @@ async function getRoleDetails(credentialsId: string) {
 }
 
 async function lookupCredentials(credentialsId: string) {
-    logger.debug('Looking up credentials:', credentialsId);
+    logger.info('Looking up credentials:', credentialsId);
+    let response;
     try {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken }
         } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
 
-        return {
+        response = {
             source: WF,
             credentials: {
                 accessKey: accessKeyId,
@@ -98,7 +99,7 @@ async function lookupCredentials(credentialsId: string) {
     } catch (error) {
         try {
             const { credentials, extra } = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
-            return {
+            response = {
                 source: BXP,
                 credentials,
                 extra
@@ -109,10 +110,12 @@ async function lookupCredentials(credentialsId: string) {
             throw createError(400, errMsg);
         }
     }
+    logger.info('>>RESPONSE CREDS', response);
+    return response;
 }
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
-    logger.debug('Getting credentials details:', { credentialsId, accountId });
+    logger.info('Getting credentials details:', { credentialsId, accountId });
 
     return lookupCredentials(credentialsId);
 
