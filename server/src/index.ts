@@ -199,7 +199,7 @@ const app = fastify({
                     headers: {
                         authorization,
                         [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
-                        'x-netapp-referer': xNetappReferer
+                        [HEADERS.X_NETAPP_REFERER]: xNetappReferer
                     },
                     params: { accountId },
                     id: requestId
