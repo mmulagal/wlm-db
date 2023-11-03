@@ -85,7 +85,7 @@ interface bxpCredentials {
 async function getBxpCredentialDetails(credentialsId: string, accountId?: string) {
     logger.info('Getting Blue XP credential details for ', { credentialsId, accountId });
 
-    if (hasCache(BXP_USER_CRED_TYPE, credentialsId)) {
+    if (!process.env.TEST && hasCache(BXP_USER_CRED_TYPE, credentialsId)) {
         return readFromCacheByKey(BXP_USER_CRED_TYPE, credentialsId);
     }
 
@@ -149,7 +149,7 @@ interface wfCredentials {
 async function getWfCredentialDetails(credentialsId: string, accountId?: string) {
     logger.info('Getting workload factory credential details for ', { credentialsId, accountId });
 
-    if (hasCache(WF_USER_CRED_TYPE, credentialsId)) {
+    if (!process.env.TEST && hasCache(WF_USER_CRED_TYPE, credentialsId)) {
         return readFromCacheByKey(WF_USER_CRED_TYPE, credentialsId);
     }
 
