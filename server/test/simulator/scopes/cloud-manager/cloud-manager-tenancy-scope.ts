@@ -3,6 +3,8 @@ import nock from 'nock';
 import { CLOUD_MANAGER_ENDPOINT } from '../../../../src/utils/consts';
 import registerServiceResponse from '../../responses/cloud-manager/register-service-resource-tenancy.json';
 import getTenancyResourceResponse from '../../responses/cloud-manager/get-tenancy-resources-by-type.json';
+import tenancyAccountsResponse from '../../responses/cloud-manager/tenancy-accounts.json';
+import userPermissionsResponse from '../../responses/cloud-manager/user-permissions.json';
 
 const serviceTokenResponse = {
     access_token: `${faker.string.alphanumeric(20)}`,
@@ -18,4 +20,9 @@ nock(`${CLOUD_MANAGER_ENDPOINT}`)
     .reply(() => [200, serviceTokenResponse])
     .get(/^\/tenancy\/service-resource/)
     .query(true)
-    .reply(() => [200, getTenancyResourceResponse]);
+    .reply(() => [200, getTenancyResourceResponse])
+    .get('/tenancy/account')
+    .query(true)
+    .reply(() => [200, tenancyAccountsResponse])
+    .get(/^\/tenancy\/account\/(.+)\/permissions-for-user$/)
+    .reply(() => [200, userPermissionsResponse]);

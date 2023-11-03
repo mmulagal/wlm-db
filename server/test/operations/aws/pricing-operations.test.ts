@@ -1,4 +1,5 @@
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/aws/pricing-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';

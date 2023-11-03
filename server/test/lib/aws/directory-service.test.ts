@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { describeDirectories } from '../../../src/lib/aws/directory-service';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import adsResponse from '../../simulator/responses/aws/list-ads.json';
 import '../../simulator/scopes/aws/directory-service-scope';
 import '../../simulator/scopes/opentelemetry-scope';

@@ -88,6 +88,7 @@ export const GENERAL = {
     STEP_TWO_TEXT: 'Add the credentials required for deployment:',
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
+    OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
@@ -417,5 +418,6 @@ export const CODE_VIEWER = {
     RENAME: 'Rename',
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
-    DEPLOYMENT: 'Deployment:'
+    DEPLOYMENT: 'Deployment:',
+    CREATE_DATABASE: 'Create database'
 };

@@ -104,8 +104,6 @@ Parameters:
     FSxAdministratorPasswordSecret:
         Description: Secret String for FSx "fsxadmin" administrator account
         Type: String
-        MinLength: 8
-        MaxLength: 50
 
     FSxDiskIops:
         Description: The total number of SSD IOPS provisioned for the file system.  Maximum 80,000 IOPS.

@@ -18,7 +18,12 @@ import {
     SERVER_TYPE_MAPPING
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { getServerIOLatency, getServerState, getNativeSQLProtection } from './workloads/mssql/mssql-operations';
+import {
+    getServerIOLatency,
+    getServerState,
+    getNativeSQLProtection,
+    getDatabasesCount
+} from './workloads/mssql/mssql-operations';
 import {
     getVolumesUuids,
     getStorageDataUsingSSM,
@@ -245,9 +250,13 @@ async function getDatabaseHostsSummary(
             resourceDetails
                 .filter(resourceDetail => resourceDetail.resource_type !== RESOURCESTYPE.FSX)
                 .map(async resourceDetail => {
-                    const { resource_id: resourceId, resource_name: resourceName, region } = resourceDetail;
+                    const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
+
+                    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
+                        metadata as unknown as Metadata;
 
                     let serverStatus: string = ServerState.DOWN;
+                    let dbCount;
                     let topologyData: TopologyResponseType;
                     let performanceData: PerformanceResponseType | undefined;
                     let storageData: StorageResponseType | undefined;
@@ -256,20 +265,22 @@ async function getDatabaseHostsSummary(
                     // Using 'allSettled' instead of 'all' to avoid failing the entire response for a single host.
                     const results = await Promise.allSettled([
                         getServerState(resourceId), // Fetch server status
+                        getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
                         getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
                         ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
                         ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                         ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
                     ]);
 
-                    [serverStatus, topologyData, performanceData, storageData, protectionData] = results.map(result =>
-                        result.status === 'fulfilled' ? result.value : undefined
+                    [serverStatus, dbCount, topologyData, performanceData, storageData, protectionData] = results.map(
+                        result => (result.status === 'fulfilled' ? result.value : undefined)
                     );
 
                     databaseHosts.push({
                         id: resourceId,
                         name: resourceName || '',
                         status: serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
+                        databaseCount: dbCount?.totalCount || 0,
                         topology: topologyData!,
                         ...(performanceData && { performance: performanceData }),
                         ...(storageData && { storage: storageData }),

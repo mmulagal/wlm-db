@@ -66,6 +66,7 @@ const DatabaseHostSummaryResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
+    databaseCount: Type.Number(),
     topology: Type.Optional(TopologyResponse),
     protection: Type.Optional(ProtectionResponse),
     performance: Type.Optional(PerformanceResponse),

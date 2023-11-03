@@ -113,8 +113,10 @@ const AwsAccount = () => {
 
     // Update selected region in form data store
     useEffect(() => {
-        dispatch(setSelectedCredentials(generateAWSAccounts[0]));
-    }, [dispatch, generateAWSAccounts]);
+        if (!selectedCredential) {
+            dispatch(setSelectedCredentials(generateAWSAccounts[0]));
+        }
+    }, [dispatch, generateAWSAccounts, selectedCredential]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -167,7 +169,7 @@ const AwsAccount = () => {
                                     <div className={styles.listItem}>
                                         <Bullet />
                                         <Typography variant="Regular_14" className={styles.textWidth}>
-                                            {GENERAL.OPTION_TWO}
+                                            {isWorkloadFactoryStatus ? GENERAL.OPTION_TWO_WF : GENERAL.OPTION_TWO}
                                         </Typography>
                                     </div>
                                 </Typography>

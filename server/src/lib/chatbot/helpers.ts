@@ -10,7 +10,8 @@ import {
     validateVpcId,
     validateSecurityGroup,
     validateFSxDeploymentMode,
-    validateCredentials
+    validateCredentials,
+    validateAdScenarioType
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -86,6 +87,7 @@ async function validateParams(
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', oldParams, { params, oldParams });
     let validatedParams: Params = {};
+    const promises = [];
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of schemaParams) {
         let response: ValidationResponse | { value: any } | undefined;
@@ -102,114 +104,12 @@ async function validateParams(
                         return { errors: recursiveValidationResponse.errors, params: validatedParams };
                     }
                 } else if (checkIfRequired(reqParam[key].required, params)) {
-                    const shouldSkip = params?.[key] && oldParams?.[key] && oldParams[key] === params[key];
-                    logger.debug('skip check', shouldSkip);
-                    if (!shouldSkip) {
-                        switch (key) {
-                            case CREDENTIALS_ID: {
-                                response = await validateCredentials(params[key]);
-                                break;
-                            }
-                            case REGION: {
-                                response = await validateRegion(params.credentialsId, params[key]);
-                                break;
-                            }
-                            case VPC_ID:
-                            case AZ_1:
-                            case AZ_2:
-                            case VPC_CIDR: {
-                                response = await validateVpcId(
-                                    params.credentialsId,
-                                    params.region,
-                                    params.vpcId,
-                                    key,
-                                    params[key]
-                                );
-                                break;
-                            }
-                            case WL_INSTANCE_TYPE: {
-                                response = await validateInstanceType(params.credentialsId, params.region, params[key]);
-                                break;
-                            }
-                            case KEY_PAIR_NAME: {
-                                response = await validateKeyName(params.credentialsId, params.region, params[key]);
-                                break;
-                            }
-                            case SQL_AMI: {
-                                response = await validateImageId(params.credentialsId, params.region, params[key]);
-                                break;
-                            }
-                            case AD_SCENARIO_TYPE: {
-                                response = { value: 'AWS_MANAGED_AD' };
-                                break;
-                            }
-                            case DNS_IP:
-                            case DOMAIN_DNS: {
-                                response = await validateDomain(
-                                    params.credentialsId,
-                                    params.region,
-                                    params.domainDnsname,
-                                    key
-                                );
-                                break;
-                            }
-                            case DOMAIN_USERNAME:
-                            case DOMAIN_PASS:
-                            case FSX_USERNAME:
-                            case FSX_PASS:
-                            case SERVICE_ACCOUNT_NAME:
-                            case SERVICE_ACCOUNT_PASS:
-                            case SQL_FCI: {
-                                response = validateText(params[key], key);
-                                break;
-                            }
-                            case FSX_DEPLOYMENT_MODE: {
-                                response = await validateFSxDeploymentMode(params[key]);
-                                break;
-                            }
-                            case SQL_DEPLOYMENT_MODE: {
-                                response = { value: 'standalone' };
-                                break;
-                            }
-                            case DB_SIZE: {
-                                response = validateDbSize(params[key]);
-                                break;
-                            }
-                            case FSX_VOL_THROUGHPUT: {
-                                response = validateThroughPut(params[key]);
-                                break;
-                            }
-                            case FSX_IOPS: {
-                                response = { value: 3 * params.databaseSize };
-                                break;
-                            }
-                            case ONTAP_SG_ID: {
-                                response = await validateSecurityGroup(
-                                    params.credentialsId,
-                                    params.region,
-                                    params.vpcId,
-                                    params[key]
-                                );
-                                break;
-                            }
-                            default:
-                        }
-                    } else {
-                        validatedParams[key] = params[key];
-                    }
-                    if ((response as ValidationResponse)?.status === 'error') {
-                        delete params[key];
-                        errors.push(response as ValidationResponse);
-                    }
-
-                    if (response?.value) {
-                        validatedParams[key] = response?.value;
-                        params[key] = response?.value;
-                    }
+                    promises.push(validate(key, params, oldParams, errors, validatedParams));
                 }
             }
         }
     }
+    await Promise.all(promises);
     return { errors, params: validatedParams };
 }
 
@@ -230,6 +130,117 @@ function checkIfRequired(required: boolean | { key: string; value: string; opera
     }
 
     return !!required;
+}
+
+async function validate(
+    key: string,
+    params: Params,
+    oldParams: Params,
+    errors: Array<ValidationResponse>,
+    validatedParams: Params
+) {
+    const shouldSkip = params?.[key] && oldParams?.[key] && oldParams[key] === params[key];
+    logger.debug('skip check', shouldSkip);
+    let response;
+    if (!shouldSkip) {
+        switch (key) {
+            case CREDENTIALS_ID: {
+                response = await validateCredentials(params[key], key);
+                break;
+            }
+            case REGION: {
+                response = await validateRegion(params.credentialsId, params[key], key);
+                break;
+            }
+            case VPC_ID:
+            case AZ_1:
+            case AZ_2:
+            case VPC_CIDR: {
+                response = await validateVpcId(
+                    params.credentialsId,
+                    params.region,
+                    params.vpcId,
+                    params.availabilityZone1,
+                    params.availabilityZone2,
+                    key
+                );
+                break;
+            }
+            case WL_INSTANCE_TYPE: {
+                response = await validateInstanceType(params.credentialsId, params.region, params[key], key);
+                break;
+            }
+            case KEY_PAIR_NAME: {
+                response = await validateKeyName(params.credentialsId, params.region, params[key], key);
+                break;
+            }
+            case SQL_AMI: {
+                response = await validateImageId(params.credentialsId, params.region, params[key], key);
+                break;
+            }
+            case AD_SCENARIO_TYPE: {
+                response = await validateAdScenarioType(params[key], key);
+                break;
+            }
+            case DNS_IP:
+            case DOMAIN_DNS: {
+                response = await validateDomain(params.credentialsId, params.region, params.domainDnsname, key);
+                break;
+            }
+            case DOMAIN_USERNAME:
+            case DOMAIN_PASS:
+            case FSX_USERNAME:
+            case FSX_PASS:
+            case SERVICE_ACCOUNT_NAME:
+            case SERVICE_ACCOUNT_PASS:
+            case SQL_FCI: {
+                response = validateText(params[key], key);
+                break;
+            }
+            case FSX_DEPLOYMENT_MODE: {
+                response = await validateFSxDeploymentMode(params[key], key);
+                break;
+            }
+            case SQL_DEPLOYMENT_MODE: {
+                response = { value: 'standalone' };
+                break;
+            }
+            case DB_SIZE: {
+                response = validateDbSize(params[key], key);
+                break;
+            }
+            case FSX_VOL_THROUGHPUT: {
+                response = validateThroughPut(params[key], key);
+                break;
+            }
+            case FSX_IOPS: {
+                response = { value: 3 * params.databaseSize };
+                break;
+            }
+            case ONTAP_SG_ID: {
+                response = await validateSecurityGroup(
+                    params.credentialsId,
+                    params.region,
+                    params.vpcId,
+                    params[key],
+                    key
+                );
+                break;
+            }
+            default:
+        }
+    } else {
+        validatedParams[key] = params[key];
+    }
+    if ((response as ValidationResponse)?.status === 'error') {
+        delete params[key];
+        errors.push(response as ValidationResponse);
+    }
+
+    if (response?.value) {
+        validatedParams[key] = response?.value;
+        params[key] = response?.value;
+    }
 }
 
 export { validateParams, resetNextParamsOnUpdate, wrapContext, findChangedKeys };

@@ -7,7 +7,7 @@ import {
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 import getLogger from '../../utils/logger';
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -21,7 +21,7 @@ async function getProducts(
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
     const pricingClient = new PricingClient({ credentials, region: DEFAULT_AWS_REGION });
     const command = new GetProductsCommand(productFilters);

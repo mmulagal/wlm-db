@@ -29,7 +29,7 @@ import {
     useLazyGetConfigDataQuery
 } from '../../../utils/apiService';
 import { createMssqlPayload } from '../../../components/CreateMsSql/MSSqlServer/MSSqlFooter/createSqlServer';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import MenuPopover, { MenuItemType } from '../../../common/MenuPopover/MenuPopover';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
 import {
@@ -42,10 +42,11 @@ import {
     RECOMMENDED_TEMPLATES,
     WLF_TO_FORM_NAVIGATE,
     CURL_REQ_TEMPLATE,
-    CRED_PLACEHOLDERS
+    CRED_PLACEHOLDERS,
+    CODEBOX_REST_RES
 } from '../../../utils/consts';
-import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
+import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 
 type ConfigType = {
     id?: string;
@@ -56,12 +57,13 @@ type ConfigType = {
 const Sidebar = ({ isOpen, onClose }: any) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [openKey, setOpenKey] = useState();
+    const [openKey, setOpenKey] = useState<string|undefined>();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
     //To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
+    const [dataToCheck, setDataToCheck] = useState<any>([]);
 
     // For expanded menu
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
@@ -71,11 +73,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
 
     // For selected config REST API response
-    const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
+    const [rightPanelData, setRightPanelData] = useState<any>([]);
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
 
     // For selected config CloudFormation and AWS CLI response
-    const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+    const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<any>([]);
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
 
     const [recommendedData, setRecommendedData] = useState<ConfigType[]>([]);
@@ -85,26 +87,32 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     //Search Word count
     const [countWord, setCountWord] = useState(0);
 
+    const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
+
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
 
-    const menuItems = [
-        {
-            id: 'viewAwsCloudFormation',
-            displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
-        },
-        {
-            id: 'downloadYaml',
-            displayName: CODE_VIEWER.DOWNLOAD_YAML,
-            disabled: !rightPanelTemplateResponse || isRightPanelTemplateLoading ? true : false
-        }
-    ];
+    useEffect(() => {
+        setMenuItems([
+            {
+                id: 'viewAwsCloudFormation',
+                displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
+                disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
+            },
+            {
+                id: 'downloadYaml',
+                displayName: CODE_VIEWER.DOWNLOAD_YAML,
+                disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
+            }
+        ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRightPanelTemplateLoading, rightPanelTemplateResponse]);
 
     const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
 
     useEffect(() => {
         setConfigData(configDataList);
+        setDataToCheck(configDataList);
     }, [configDataList]);
 
     useEffect(() => {
@@ -126,19 +134,20 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // This is to set disableCopy flag value
     useEffect(() => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            if (!rightPanelTemplateResponse?.template || isRightPanelTemplateLoading) {
+            if (!getRightPanelTemplateResponse(openKey)?.template || isRightPanelTemplateLoading) {
                 setDisableCopy(true);
             } else {
                 setDisableCopy(false);
             }
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            const rightPanelResponse = getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW);
             if (!rightPanelResponse || isRightPanelDataLoading) {
                 setDisableCopy(true);
             } else {
                 setDisableCopy(false);
             }
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
-            if (!rightPanelTemplateResponse?.cliCommand || isRightPanelTemplateLoading) {
+            if (!getRightPanelTemplateResponse(openKey)?.cliCommand || isRightPanelTemplateLoading) {
                 setDisableCopy(true);
             } else {
                 setDisableCopy(false);
@@ -146,28 +155,118 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         } else {
             setDisableCopy(true);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         dropDownValue,
-        rightPanelResponse,
+        rightPanelData,
         isRightPanelDataLoading,
         rightPanelTemplateResponse,
         isRightPanelTemplateLoading
     ]);
 
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
-    const getTemplateResponse = (payload: any, credDetails: any) => {
-        payload.credentialsId = credDetails?.credId || '';
-        payload.region = credDetails?.region || '';
-        loadTemplateData({ payload: payload }).then((data: any) => {
-            if (data?.data) {
-                setRightPanelTemplateResponse(data?.data);
-                setIsRightPanelTemplateLoading(false);
-            } else {
-                setRightPanelTemplateResponse(null);
-                setIsRightPanelTemplateLoading(false);
-            }
-        });
+    const getTemplateResponse = (payload: any, credDetails: any, id: string) => {
+        const data = getRightPanelTemplateResponse(id);
+        if(data) {
+            setIsRightPanelTemplateLoading(false);
+        } else {
+            payload.credentialsId = credDetails?.credId || '';
+            payload.region = credDetails?.region || '';
+            loadTemplateData({ payload: payload }).then((data: any) => {
+                if (data?.data) {
+                    storeRightPanelTemplateResponse(id, data?.data);
+                    setIsRightPanelTemplateLoading(false);
+                } else {
+                    storeRightPanelTemplateResponse(id, null);
+                    setIsRightPanelTemplateLoading(false);
+                }
+            });
+        }
     };
+
+    // To save Rest API response 
+    const storeRightPanelRestResponse = (id:string, data: any, viewData: any) => {
+        if (!rightPanelData.some((val: { id: string; }) => val.id === id)) {
+            const newData = {
+                id: id,
+                restApiData: data,
+                restViewData: viewData
+            }
+            setRightPanelData((prevData: any) => [...prevData, newData]);
+        }
+    }
+
+    // To get Rest API response
+    const getRightPanelRestResponse = (id: string | undefined, resType: string) => {
+        const result = rightPanelData.find((val:any) => val.id === id);
+        if(result && resType === CODEBOX_REST_RES.API) {
+            return result?.restApiData;
+        } else if(result && resType === CODEBOX_REST_RES.VIEW) {
+            return result?.restViewData;
+        } else {
+            return undefined;
+        }
+    }
+
+    // To store Template API response
+    const storeRightPanelTemplateResponse = (id:string, data: any) => {
+        if (!rightPanelTemplateResponse.some((val: { id: string; }) => val.id === id)) {
+            const newData = {
+                id: id,
+                data: data
+            }
+            setRightPanelTemplateResponse((prevData: any) => [...prevData, newData]);
+        }
+    }
+
+    // To get template API response
+    const getRightPanelTemplateResponse = (id: string | undefined) => {
+        const result = rightPanelTemplateResponse.find((val:any) => val.id === id);
+        if(result && result?.data) {
+            return result?.data;
+        } else {
+            return undefined;
+        }
+    }
+
+    const loadRestApi = (actualData: any, id: string, save: boolean) => {
+        const baseUrl = getBaseUrl();
+        // To get accountid, credid and region from saved config
+        const credDetails = getCredDetails(actualData);
+        const changeObjectForm = {
+            mssqlForm: actualData
+        };
+        const resBody = createMssqlPayload(changeObjectForm);
+        
+        if (id === openKey) {
+            setIsRightPanelDataLoading(false);
+            getTemplateResponse(resBody, credDetails, id);
+        }
+        if(save) {
+            const res = JSON.stringify(resBody, null, 2);
+            // To set REST API response as deploy API curl request
+            const highlightedString = (
+                <Highlighter
+                    highlightClassName={styles.highlightClass}
+                    searchWords={[
+                        CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN
+                    ]}
+                    autoEscape={true}
+                    textToHighlight={CURL_REQ_TEMPLATE(
+                        baseUrl,
+                        credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                        credDetails.region || CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN,
+                        res
+                    )}
+                />
+            );
+            storeRightPanelRestResponse(id, actualData, highlightedString);
+        }
+    }
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
@@ -202,46 +301,21 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     )}
                 />
             );
-            //@ts-ignore
-            setRightPanelResponse(highlightedString);
             setIsRightPanelDataLoading(false);
-            getTemplateResponse(resBody, {});
+            getTemplateResponse(resBody, {}, id);
+            storeRightPanelRestResponse(id, actualData[0].data, highlightedString);
         } else {
-            // Getting saved config data using API
-            loadConfigDataExe({ configId: id }).then(data => {
-                const actualData = data?.data?.data;
-                // To get accountid, credid and region from saved config
-                const credDetails = getCredDetails(actualData);
-                const changeObjectForm = {
-                    mssqlForm: actualData
-                };
-                const resBody = createMssqlPayload(changeObjectForm);
-                const res = JSON.stringify(resBody, null, 2);
-                // To set REST API response as deploy API curl request
-                const highlightedString = (
-                    <Highlighter
-                        highlightClassName={styles.highlightClass}
-                        searchWords={[
-                            CRED_PLACEHOLDERS.ACCOUNT_ID,
-                            CRED_PLACEHOLDERS.CRED_ID,
-                            CRED_PLACEHOLDERS.REGION,
-                            CRED_PLACEHOLDERS.TOKEN
-                        ]}
-                        autoEscape={true}
-                        textToHighlight={CURL_REQ_TEMPLATE(
-                            baseUrl,
-                            credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
-                            credDetails.region || CRED_PLACEHOLDERS.REGION,
-                            CRED_PLACEHOLDERS.TOKEN,
-                            res
-                        )}
-                    />
-                );
-                //@ts-ignore
-                setRightPanelResponse(highlightedString);
-                setIsRightPanelDataLoading(false);
-                getTemplateResponse(resBody, credDetails);
-            });
+            const data = getRightPanelRestResponse(id, CODEBOX_REST_RES.API);
+            if(data) {
+                // If data is already saved that just load data
+                loadRestApi(data, id, false);
+            } else {
+                // Getting saved config data using API
+                loadConfigDataExe({ configId: id }).then(data => {
+                    const actualData = data?.data?.data;
+                    loadRestApi(actualData, id, true);
+                });
+            }
         }
     };
 
@@ -260,6 +334,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 }
             }, 500);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchInput]);
 
     useEffect(() => {
@@ -282,8 +357,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     }, [configData, openKey]);
 
     const handleToggle = (key: any, id: any) => {
-        setOpenKey(openKey !== id ? id : null);
-        setOpenedItem({ name: key, id: id });
+        if (openKey !== id) {
+            setOpenKey(openKey !== id ? id : null);
+            setOpenedItem({ name: key, id: id });
+        }
     };
 
     const handleViewCode = (key: any, id: any) => {
@@ -293,6 +370,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //To expand collapse side bar
     const handleClose = () => {
+        if(!isOpen && !openKey) {
+            setOpenKey('0');
+        }
         onClose();
     };
 
@@ -322,40 +402,31 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_CLOUD_FORMATION}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
+                        {getRightPanelTemplateResponse(openKey)?.template || CODE_VIEWER.NO_DATA_MSG}
                     </pre>
                 </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
             return isRightPanelDataLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_REST_API}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre>{rightPanelResponse}</pre>
+                    <pre>{getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW)}</pre>
                 </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_AWS_CLI}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
+                        {getRightPanelTemplateResponse(openKey)?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
             );
@@ -380,17 +451,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // To copy response based on dropdown selection
     const copyResponseData = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            return rightPanelTemplateResponse?.template;
+            return getRightPanelTemplateResponse(openKey)?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            const rightPanelResponse = getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW);
             return rightPanelResponse?.props?.textToHighlight;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
-            return rightPanelTemplateResponse?.cliCommand;
+            return getRightPanelTemplateResponse(openKey)?.cliCommand;
         }
     };
 
     const handleViewInAwsCloudFormation = () => {
-        if (rightPanelTemplateResponse?.url) {
-            window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+        if (getRightPanelTemplateResponse(openKey)?.url) {
+            window.open(getRightPanelTemplateResponse(openKey)?.url, '_blank', 'noopener');
         }
     };
 
@@ -400,9 +472,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             const newVal = configDataList.filter((text: any) => {
                 return text?.name.includes(val);
             });
-            setConfigData(newVal);
+            setDataToCheck(newVal);
         } else {
-            setConfigData(configDataList);
+            setDataToCheck(configDataList);
         }
     };
 
@@ -497,7 +569,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 />
                             </div>
 
-                            {configData.map((item: any, i: number) => (
+                            {dataToCheck.map((item: any, i: number) => (
                                 <div key={i}>
                                     <Accordion
                                         heading={item.name}
@@ -593,7 +665,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                         }}
                                     />
                                 </div>
-                                {configData.map((item: any, i: number) => (
+                                {dataToCheck.map((item: any, i: number) => (
                                     <div key={i}>
                                         <Accordion
                                             heading={item.name}
@@ -681,7 +753,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                         setOpenedRow(null);
                                                         if (menuId === 'downloadYaml') {
                                                             handleDownloadYAML(
-                                                                rightPanelTemplateResponse?.template,
+                                                                getRightPanelTemplateResponse(openKey)?.template,
                                                                 openedItem?.name
                                                             );
                                                         } else if (menuId === 'viewAwsCloudFormation') {
