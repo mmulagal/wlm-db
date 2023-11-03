@@ -208,6 +208,7 @@ Parameters:
     Description: Password for Domain Adminstrator.
     Type: String
     NoEcho: true
+    MinLength: 8
 
   DomainDNSName:
     AllowedPattern: "[a-zA-Z0-9\\-]+\\..+"
@@ -277,6 +278,7 @@ Parameters:
     Description: Password for the SQL Server Service Account.
     Type: String
     NoEcho: true
+    MinLength: 8
 
   SQLigroupname:
     Description: SQL igroupname
@@ -382,6 +384,7 @@ Parameters:
     Description: Password for FSxAdminUsername.
     Type: String
     NoEcho: true
+    MinLength: 8
 
   FSxSvmName:
     Type: String

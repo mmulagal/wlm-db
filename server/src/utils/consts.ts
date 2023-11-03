@@ -827,6 +827,12 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
 
 const NOT_AVAILABLE = 'N/A';
 
+const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
+    'DomainAdminPassword',
+    'SQLServiceAccountPassword',
+    'FSxAdminPassword'
+];
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1007,5 +1013,6 @@ export {
     SNS_STRICT_ACTION_NAMES,
     CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS
 };
