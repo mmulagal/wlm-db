@@ -46,7 +46,6 @@ const Chatbot = () => {
     const [sendMsgToBot] = useSendMsgMutation();
 
     const mapParamsToPayload = (params: any) => {
-        console.log(mssqlFormData, params);
         Object.keys(params).map(key => {
             switch (key) {
                 case 'credentialsId':
@@ -88,7 +87,18 @@ const Chatbot = () => {
         setIsBotReplying(true);
         let updatedMessages = msgs ? [...msgs] : [];
         if (add) {
-            dispatch(setMessages([...(msgs || []), { sender: 'user', msg: msg }]));
+            let preResponseMsg = msgs || [];
+            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].errors) {
+                const lastMsg = preResponseMsg[preResponseMsg.length - 1];
+                preResponseMsg = [
+                    ...preResponseMsg.slice(0, preResponseMsg.length - 1),
+                    {
+                        ...lastMsg,
+                        active: false
+                    }
+                ];
+            }
+            dispatch(setMessages([...preResponseMsg, { sender: 'user', msg: msg }]));
             updatedMessages = [...updatedMessages, { sender: 'user', msg: msg }];
         }
 
@@ -182,7 +192,13 @@ const Chatbot = () => {
     const handleSelectButtonClicked = async (paramObj: any) => {
         const updatedMessages = messages ? [...messages] : [];
         if (updatedMessages.length) {
-            updatedMessages.splice(updatedMessages.length - 1, 1);
+            updatedMessages[updatedMessages.length - 1] = {
+                ...updatedMessages[updatedMessages.length - 1],
+                errors: null,
+                msg: `Provide value${Object.keys(paramObj).length > 1 ? 's' : ''} for ${Object.keys(paramObj).join(
+                    ', '
+                )}`
+            };
         }
         updatedMessages.push({
             sender: 'user',
