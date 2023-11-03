@@ -1,6 +1,6 @@
 import { LRUCache } from 'lru-cache';
 import ms from 'ms';
-import { USER_TENANCY_CACHE_TYPE, WF_USER_CRED_TYPE } from './consts.js';
+import { BXP_USER_CRED_TYPE, USER_TENANCY_CACHE_TYPE, WF_USER_CRED_TYPE } from './consts.js';
 import getLogger from './logger.js';
 
 const logger = getLogger();
@@ -10,7 +10,7 @@ const USER_TENANCY_CACHE = new LRUCache({
     ttl: ms('15m')
 });
 
-const WF_USER_CRED_CACHE = new LRUCache({
+const USER_CRED_CACHE = new LRUCache({
     max: 1000,
     ttl: ms('10m')
 });
@@ -22,7 +22,8 @@ function getCacheByType(type: string) {
         case USER_TENANCY_CACHE_TYPE:
             return USER_TENANCY_CACHE;
         case WF_USER_CRED_TYPE:
-            return WF_USER_CRED_CACHE;
+        case BXP_USER_CRED_TYPE:
+            return USER_CRED_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }
