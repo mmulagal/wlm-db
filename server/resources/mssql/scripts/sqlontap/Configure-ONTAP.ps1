@@ -202,6 +202,7 @@ $Body = @{
     "tiering-minimum-cooling-days" = "7"
     "snapshot-policy" = "none"
     "autosize-mode" = "grow"
+    "tiering-object-tags" = "wlmDeploymentId=$Stackname.Replace('-', '_')"
 }
 
 $JsonBody = $Body | ConvertTo-Json
@@ -262,26 +263,7 @@ if ($FSxQuorumVolumeName -ne "") {
 $URI=@"
 https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FSxQuorumVolumeName)
 "@
-$Body = @{
-    "fractional-reserve" = "0"
-    "space-guarantee" = "none"
-    "space-mgmt-try-first"= "volume_grow"
-    "percent-snapshot-space" = "0"
-    "read-realloc" = "on"
-    "tiering-policy" = "snapshot-only"
-    "tiering-minimum-cooling-days" = "7"
-    "snapshot-policy" = "none"
-    "autosize-mode" = "grow"
-}
 
-$JsonBody = $Body | ConvertTo-Json
-$Params = @{
-    "URI"     = "$URI"
-    "Method"  = "PATCH"
-    "Headers" = @{"Authorization" = "Basic $base64"}
-    "Body" =  "$JsonBody"
-    "ContentType" = "application/json"
-}
 try{
     $restcert = returncert -region $region
     Invoke-RestMethod @Params -Certificate $restcert

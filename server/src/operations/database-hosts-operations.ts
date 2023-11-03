@@ -152,6 +152,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
 
     const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
     const volumeUuidList = volumeUuids.join(',');
+    const deploymentId = fsxSecret.replace('-fsx', '').replaceAll('-', '_');
 
     const info = await getStorageDataUsingSSM(
         credentialsId,
@@ -159,7 +160,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         fileSystemId!,
         fsxSecret,
         'storage/volumes',
-        `uuid=${volumeUuidList}`,
+        `uuid=${volumeUuidList}&tiering.object_tags='wlmDeploymentId=${deploymentId}'`,
         'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
         activeNodeInstanceId,
         standbyNodeInstanceId
