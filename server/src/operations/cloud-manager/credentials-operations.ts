@@ -44,21 +44,21 @@ async function getAllCredentialsRecursive(
  */
 async function getCredentials(credentialsType: string): Promise<CredentialsResponseType> {
     logger.info('Getting credentials ', credentialsType);
-    if (getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER) === WF) {
-        const credentialsList = await getAllCredentialsRecursive(credentialsType);
-        return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
-            credentialsId: id,
+    if (String(getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER))?.toUpperCase() === BXP.toUpperCase()) {
+        const data = await getAllBxpCredentials(credentialsType);
+        return data.map(({ credentialsId, extra: { name, arn } }) => ({
+            credentialsId,
             name,
-            arn: credentials,
-            providerAccountId: credentials.match(/\d+/)?.[0] || ''
+            arn,
+            providerAccountId: arn.match(/\d+/)?.[0] || ''
         }));
     }
-    const data = await getAllBxpCredentials(credentialsType);
-    return data.map(({ credentialsId, extra: { name, arn } }) => ({
-        credentialsId,
+    const credentialsList = await getAllCredentialsRecursive(credentialsType);
+    return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
+        credentialsId: id,
         name,
-        arn,
-        providerAccountId: arn.match(/\d+/)?.[0] || ''
+        arn: credentials,
+        providerAccountId: credentials.match(/\d+/)?.[0] || ''
     }));
 }
 
