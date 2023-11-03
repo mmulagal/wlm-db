@@ -63,7 +63,7 @@ async function getTenancyUserPermissions(
     return userPermissionsResponse ? (userPermissionsResponse as TenancyUserPermissions) : undefined;
 }
 
-async function authorizeJwt(authToken: string, decodedToken, accountId: string) {
+async function authorizeJwt(authToken: string, decodedToken: any, accountId: string) {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
 
     let tokenSub;
