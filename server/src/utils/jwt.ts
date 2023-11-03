@@ -1,5 +1,5 @@
 import jwksRsa from 'jwks-rsa';
-import jsonwebtoken, { JwtPayload } from 'jsonwebtoken';
+import jsonwebtoken from 'jsonwebtoken';
 import createError from 'http-errors';
 import { AUTH0_SERVER_ADDRESS, AUTH0_AUDIENCE, USER_TENANCY_CACHE_TYPE, ADMIN_ROLE, USER_ROLE } from './consts';
 import getLogger from './logger';
@@ -63,10 +63,17 @@ async function getTenancyUserPermissions(
     return userPermissionsResponse ? (userPermissionsResponse as TenancyUserPermissions) : undefined;
 }
 
-async function authorizeJwt(authToken: string, decodedToken: JwtPayload, accountId: string) {
+async function authorizeJwt(authToken: string, decodedToken, accountId: string) {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
 
-    const tokenSub = decodedToken?.sub;
+    let tokenSub;
+    // For simulator we are sending stringified mocked response so have to parse it here
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        tokenSub = JSON.parse(decodedToken)?.sub;
+    } else {
+        tokenSub = decodedToken?.sub;
+    }
+
     if (tokenSub && !tokenSub.endsWith('@clients')) {
         // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests
         const unauthorizedErrorMessage = 'You do not have permission to access this resource';
