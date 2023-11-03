@@ -25,13 +25,19 @@ const genericDecryptedCredentials = {
     metadata: {
         name: `${faker.string.alpha(10)}`,
         externalId: `${faker.string.alphanumeric(10)}`,
-        arn: 'arn:aws:iam::718273455463:role/test-assume-role'
+        arn: 'arn:aws:iam::718273455463:role/test-assume-role',
+        policy: {
+            fsx: false,
+            vmware: false,
+            databases: 'operate'
+        },
+        isAlpha: false
     },
     credentials: {
-        accessKey: `${faker.string.alphanumeric(20)}`,
-        secretKey: `${faker.string.alphanumeric(20)}`,
-        sessionId: `${faker.string.alphanumeric(60)}`,
-        expiration: '2023-07-18T16:04:22.000Z'
+        accessKeyId: `${faker.string.alphanumeric(20)}`,
+        secretAccessKey: `${faker.string.alphanumeric(20)}`,
+        sessionToken: `${faker.string.alphanumeric(60)}`,
+        expiration: '2025-07-18T16:04:22.000Z'
     },
     numAssociatedResources: 0
 };
