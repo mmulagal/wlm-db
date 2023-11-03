@@ -799,6 +799,8 @@ const WF = 'WORKLOAD_FACTORY';
 const BXP = 'BlueXP';
 
 const USER_TENANCY_CACHE_TYPE = 'USER_TENANCY';
+const WF_USER_CRED_TYPE = 'WF_USER_CRED';
+const BXP_USER_CRED_TYPE = 'BXP_USER_CRED';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -979,6 +981,8 @@ export {
     WF,
     BXP,
     USER_TENANCY_CACHE_TYPE,
+    WF_USER_CRED_TYPE,
+    BXP_USER_CRED_TYPE,
     ADMIN_ROLE,
     USER_ROLE,
     STACK_NOT_FOUND,

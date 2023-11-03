@@ -89,7 +89,9 @@ async function formatTemplateParameters(
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, providerAccountId } = await getRoleDetails(credentialsId!);
+    const { roleName, providerAccountId } = credentialsId
+        ? await getRoleDetails(credentialsId)
+        : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
