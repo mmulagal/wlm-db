@@ -269,19 +269,17 @@ async function getDatabaseHostsSummary(
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
 
-                    // Using 'allSettled' instead of 'all' to avoid failing the entire response for a single host.
-                    const results = await Promise.allSettled([
-                        getServerState(resourceId), // Fetch server status
-                        getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
-                        getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
-                        ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                        ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                        ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
-                    ]);
-
-                    [serverStatus, dbCount, topologyData, performanceData, storageData, protectionData] = results.map(
-                        result => (result.status === 'fulfilled' ? result.value : undefined)
-                    );
+                    [serverStatus, dbCount, topologyData, performanceData, storageData, protectionData] =
+                        await Promise.all(
+                            [
+                                getServerState(resourceId), // Fetch server status
+                                getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
+                                getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                                ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                                ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                                ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
+                            ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+                        );
 
                     databaseHosts.push({
                         id: resourceId,

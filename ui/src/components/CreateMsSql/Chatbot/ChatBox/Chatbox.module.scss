@@ -33,6 +33,11 @@
             padding: 0 10px 0 10px;
             background-color: var(--content-background);
             border-radius: 4px;
+
+            input {
+                background-color: var(--content-background);
+                color: var(--text-primary);
+            }
         }
 
         .current-msg-active {

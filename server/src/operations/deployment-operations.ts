@@ -57,6 +57,7 @@ import {
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     DEFAULT_AWS_REGION,
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE
 } from '../utils/consts';
@@ -83,13 +84,16 @@ async function formatTemplateParameters(
     topicArn: string,
     enableCloudWatch: boolean,
     credentialsId?: string,
-    region?: string
+    region?: string,
+    skipPasswords?: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, providerAccountId } = await getRoleDetails(credentialsId!);
+    const { roleName = '', providerAccountId = '' } = credentialsId
+        ? await getRoleDetails(credentialsId)
+        : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
@@ -132,7 +136,10 @@ async function formatTemplateParameters(
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             templateParams.push({
                 ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-                ParameterValue: value.toString()
+                ParameterValue:
+                    skipPasswords && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key])
+                        ? ''
+                        : value.toString()
             });
         }
     });
@@ -188,7 +195,8 @@ async function getCloudformationTemplate(
         topicArn,
         enableCloudWatch,
         credentialsId,
-        region
+        region,
+        true
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -330,6 +338,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
         }
     });

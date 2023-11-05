@@ -1,10 +1,11 @@
 import React from 'react';
 import styles from './StorageSavings.module.scss';
-import { FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
+import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 
 const StorageSavings = () => {
     const hostData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
@@ -73,9 +74,28 @@ const StorageSavings = () => {
     return (
         <div className={styles.storageSaving}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16" className={styles.title}>
-                    {GENERAL.DB_HOST_STORAGE_SAVINGS}
-                </Typography>
+                <div className={styles.storageSavingTooltipSection}>
+                    <Typography variant="Regular_16" className={styles.title}>
+                        {GENERAL.DB_HOST_STORAGE_SAVINGS}
+                    </Typography>
+                    <TooltipInfo>
+                        <div className={styles.list}>
+                            <div className={styles.listItem}>
+                                <Bullet />
+                                <Typography variant="Regular_13" className={styles.textWidth}>
+                                    {GENERAL.DB_SS_TT_1}
+                                </Typography>
+                            </div>
+                            <div className={styles.listItem}>
+                                <Bullet />
+                                <Typography variant="Regular_13" className={styles.textWidth}>
+                                    {GENERAL.DB_SS_TT_2}
+                                </Typography>
+                            </div>
+                        </div>
+                    </TooltipInfo>
+                </div>
+
                 {databaseHostsLoading || databaseJobsLoading ? (
                     <FlashingDotsLoader />
                 ) : (

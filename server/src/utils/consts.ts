@@ -431,8 +431,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['ap-southeast-3', 'Asia Pacific (Jakarta)'],
     ['ap-southeast-4', 'Asia Pacific (Melbourne)'],
     ['ca-central-1', 'Canada (Central)'],
-    ['cn-north-1', 'China (Beijing)	'],
     ['cn-north-1', 'China (Beijing)'],
+    ['cn-northwest-1', 'China (Ningxia)'],
     ['eu-central-1', 'Europe (Frankfurt)'],
     ['eu-central-2', 'Europe (Zurich)'],
     ['eu-north-1', 'Europe (Stockholm)'],
@@ -799,6 +799,8 @@ const WF = 'WORKLOAD_FACTORY';
 const BXP = 'BlueXP';
 
 const USER_TENANCY_CACHE_TYPE = 'USER_TENANCY';
+const WF_USER_CRED_TYPE = 'WF_USER_CRED';
+const BXP_USER_CRED_TYPE = 'BXP_USER_CRED';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -824,6 +826,12 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
 ];
 
 const NOT_AVAILABLE = 'N/A';
+
+const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
+    'DomainAdminPassword',
+    'SQLServiceAccountPassword',
+    'FSxAdminPassword'
+];
 
 export {
     WLMDB,
@@ -979,6 +987,8 @@ export {
     WF,
     BXP,
     USER_TENANCY_CACHE_TYPE,
+    WF_USER_CRED_TYPE,
+    BXP_USER_CRED_TYPE,
     ADMIN_ROLE,
     USER_ROLE,
     STACK_NOT_FOUND,
@@ -1003,5 +1013,6 @@ export {
     SNS_STRICT_ACTION_NAMES,
     CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER,
-    NOT_AVAILABLE
+    NOT_AVAILABLE,
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS
 };

@@ -1,9 +1,11 @@
 import createError from 'http-errors';
 import {
+    bxpCredentials,
     getAllBxpCredentials,
     getAllWfCredentials,
     getBxpCredentialDetails,
-    getWfCredentialDetails
+    getWfCredentialDetails,
+    wfCredentials
 } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
@@ -62,28 +64,29 @@ async function getCredentials(credentialsType: string): Promise<CredentialsRespo
 
 async function getRoleDetails(credentialsId: string) {
     logger.debug('Getting role details:', credentialsId);
-    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
-        const { metadata } = await getWfCredentialDetails(credentialsId);
+    const { source, metadata, extra } = await lookupCredentials(credentialsId);
+    if (source === WF) {
         return {
-            roleName: metadata.arn.match(/role\/(.*)/)?.[1] || '',
-            roleArn: metadata.arn,
-            providerAccountId: metadata.arn.match(/\d+/)?.[0] || ''
+            roleName: metadata?.arn?.match(/role\/(.*)/)?.[1] || '',
+            roleArn: metadata?.arn,
+            providerAccountId: metadata?.arn.match(/\d+/)?.[0] || ''
         };
     }
-    const data = await getBxpCredentialDetails(credentialsId);
     return {
-        roleName: data.extra.arn.match(/role\/(.*)/)?.[1] || '',
-        roleArn: data.extra.arn,
-        providerAccountId: data.extra.arn.match(/\d+/)?.[0] || ''
+        roleName: extra?.arn.match(/role\/(.*)/)?.[1] || '',
+        roleArn: extra?.arn,
+        providerAccountId: extra?.arn.match(/\d+/)?.[0] || ''
     };
 }
 
 async function lookupCredentials(credentialsId: string) {
     logger.debug('Looking up credentials:', credentialsId);
+
     try {
         const {
-            credentials: { accessKeyId, secretAccessKey, sessionToken }
-        } = await getWfCredentialDetails(credentialsId);
+            credentials: { accessKeyId, secretAccessKey, sessionToken },
+            metadata
+        } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
 
         return {
             source: WF,
@@ -91,11 +94,12 @@ async function lookupCredentials(credentialsId: string) {
                 accessKey: accessKeyId,
                 secretKey: secretAccessKey,
                 sessionId: sessionToken
-            }
+            },
+            metadata
         };
     } catch (error) {
         try {
-            const { credentials, extra } = await getBxpCredentialDetails(credentialsId);
+            const { credentials, extra } = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
             return {
                 source: BXP,
                 credentials,
@@ -110,7 +114,7 @@ async function lookupCredentials(credentialsId: string) {
 }
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
-    logger.debug('Getting credentials details:', { credentialsId, accountId });
+    logger.info('Getting credentials details:', { credentialsId, accountId });
 
     return lookupCredentials(credentialsId);
 
