@@ -166,7 +166,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         fileSystemId!,
         fsxSecret,
         'storage/volumes',
-        `uuid=${volumeUuidList}&tiering.object_tags='wlmDeploymentId=${deploymentId}'`,
+        `uuid=${volumeUuidList}&tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
         'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
         activeNodeInstanceId,
         standbyNodeInstanceId
