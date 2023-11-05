@@ -153,13 +153,20 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
     const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
     const volumeUuidList = volumeUuids.join(',');
 
+    // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
+    // deploymentID from the fsxSecret, which has an additional '-fsx'
+    // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
+    //     ONTAP tags have '_' instead of '-' in the stack name.  So we
+    // tune tag accordingly with replaceAll.
+    const deploymentId = fsxSecret.replace('-fsx', '').replaceAll('-', '_');
+
     const info = await getStorageDataUsingSSM(
         credentialsId,
         region!,
         fileSystemId!,
         fsxSecret,
         'storage/volumes',
-        `uuid=${volumeUuidList}`,
+        `uuid=${volumeUuidList}&tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
         'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
         activeNodeInstanceId,
         standbyNodeInstanceId
