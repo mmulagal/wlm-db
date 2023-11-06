@@ -2,7 +2,7 @@ import { format } from 'util';
 import { readFileSync } from 'fs';
 import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
 import config from 'config';
-import { isObject, cloneDeep, isArray, isPlainObject, isEmpty } from 'lodash-es';
+import { isObject, isArray, isPlainObject, isEmpty } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
 import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
@@ -52,7 +52,9 @@ function initialize() {
                     traceId: () => getActiveTraceId() || 'unknown',
                     message: loggingEvent =>
                         format(
-                            ...loggingEvent.data.map(log => (isObject(log) ? hideSecretsValues(cloneDeep(log)) : log))
+                            ...loggingEvent.data.map(log =>
+                                isObject(log) ? hideSecretsValues(structuredClone(log)) : log
+                            )
                         )
                 };
             }
