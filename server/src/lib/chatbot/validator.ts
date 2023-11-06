@@ -12,7 +12,9 @@ import {
     AD_SCENARIO_TYPE,
     DNS_IP,
     AWS_MANAGED_AD,
-    USER_MANAGED_AD
+    USER_MANAGED_AD,
+    SINGLE_AZ,
+    MULTI_AZ
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 // import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -515,18 +517,35 @@ async function validateSecurityGroup(
 
 async function validateFSxDeploymentMode(deploymentType: string, key: string) {
     logger.debug('Validate FSX Deployment Mode', { deploymentType });
-    if (!['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(deploymentType)) {
+    if (![SINGLE_AZ, MULTI_AZ].includes(deploymentType)) {
         return {
             key,
             status: 'error',
             message: 'Please select the FSx deployment type',
             allowedValues: [
-                { label: 'SINGLE_AZ_1', value: 'SINGLE_AZ_1' },
-                { label: 'MULTI_AZ_1', value: 'MULTI_AZ_1' }
+                { label: 'Single Instance', value: SINGLE_AZ },
+                { label: 'Failover Cluster Instance (FCI)', value: MULTI_AZ }
             ]
         };
     }
     return { value: deploymentType };
+}
+
+function checkFsxType(type: string, key: string) {
+    if (type !== 'NEW' && type !== 'EXISTING') {
+        return {
+            key,
+            status: 'error',
+            message: 'Please select the FSx type',
+            allowedValues: [
+                { label: 'New', value: 'NEW' },
+                { label: 'Existing', value: 'EXISTING' }
+            ]
+        };
+    }
+    return {
+        value: type
+    };
 }
 
 export {
@@ -542,5 +561,6 @@ export {
     validateSecurityGroup,
     validateFSxDeploymentMode,
     validateCredentials,
-    validateAdScenarioType
+    validateAdScenarioType,
+    checkFsxType
 };

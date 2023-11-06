@@ -10,7 +10,8 @@ import {
     validateVpcId,
     validateSecurityGroup,
     validateFSxDeploymentMode,
-    validateCredentials
+    validateCredentials,
+    checkFsxType
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -26,6 +27,7 @@ import {
     FSX_DEPLOYMENT_MODE,
     FSX_IOPS,
     FSX_PASS,
+    FSX_TYPE,
     FSX_USERNAME,
     FSX_VOL_THROUGHPUT,
     KEY_PAIR_NAME,
@@ -35,11 +37,11 @@ import {
     SERVICE_ACCOUNT_PASS,
     SQL_AMI,
     SQL_DEPLOYMENT_MODE,
-    SQL_FCI,
     VPC_CIDR,
     VPC_ID,
     WL_INSTANCE_TYPE
 } from './consts';
+import { SINGLE_AZ } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -194,8 +196,7 @@ async function validate(
             case FSX_USERNAME:
             case FSX_PASS:
             case SERVICE_ACCOUNT_NAME:
-            case SERVICE_ACCOUNT_PASS:
-            case SQL_FCI: {
+            case SERVICE_ACCOUNT_PASS: {
                 response = validateText(params[key], key);
                 break;
             }
@@ -204,7 +205,7 @@ async function validate(
                 break;
             }
             case SQL_DEPLOYMENT_MODE: {
-                response = { value: 'standalone' };
+                response = { value: params[FSX_DEPLOYMENT_MODE] === SINGLE_AZ ? 'standalone' : 'fci' };
                 break;
             }
             case DB_SIZE: {
@@ -227,6 +228,10 @@ async function validate(
                     params[key],
                     key
                 );
+                break;
+            }
+            case FSX_TYPE: {
+                response = checkFsxType(params[key], key);
                 break;
             }
             default:
