@@ -11,7 +11,8 @@ import {
     validateSecurityGroup,
     validateFSxDeploymentMode,
     validateCredentials,
-    checkFsxType
+    checkFsxType,
+    validateFsx
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -39,9 +40,12 @@ import {
     SQL_DEPLOYMENT_MODE,
     VPC_CIDR,
     VPC_ID,
-    WL_INSTANCE_TYPE
+    WL_INSTANCE_TYPE,
+    FSX_FILE_SYSTEM_ID,
+    SINGLE_AZ,
+    STANDALONE,
+    FCI
 } from './consts';
-import { SINGLE_AZ } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -150,7 +154,7 @@ async function validate(
                 break;
             }
             case REGION: {
-                response = await validateRegion(params.credentialsId, params[key], key);
+                response = await validateRegion(params[CREDENTIALS_ID], params[key], key);
                 break;
             }
             case VPC_ID:
@@ -168,24 +172,24 @@ async function validate(
                 break;
             }
             case WL_INSTANCE_TYPE: {
-                response = await validateInstanceType(params.credentialsId, params.region, params[key], key);
+                response = await validateInstanceType(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
             case KEY_PAIR_NAME: {
-                response = await validateKeyName(params.credentialsId, params.region, params[key], key);
+                response = await validateKeyName(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
             case SQL_AMI: {
-                response = await validateImageId(params.credentialsId, params.region, params[key], key);
+                response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
             case AD_SCENARIO_TYPE:
             case DNS_IP:
             case DOMAIN_DNS: {
                 response = await validateDomain(
-                    params.credentialsId,
-                    params.region,
-                    params.domainDnsname,
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[DOMAIN_DNS],
                     params[DNS_IP],
                     key
                 );
@@ -205,7 +209,7 @@ async function validate(
                 break;
             }
             case SQL_DEPLOYMENT_MODE: {
-                response = { value: params[FSX_DEPLOYMENT_MODE] === SINGLE_AZ ? 'standalone' : 'fci' };
+                response = { value: params[FSX_DEPLOYMENT_MODE] === SINGLE_AZ ? STANDALONE : FCI };
                 break;
             }
             case DB_SIZE: {
@@ -217,14 +221,14 @@ async function validate(
                 break;
             }
             case FSX_IOPS: {
-                response = { value: 3 * params.databaseSize };
+                response = { value: 3 * params[DB_SIZE] };
                 break;
             }
             case ONTAP_SG_ID: {
                 response = await validateSecurityGroup(
-                    params.credentialsId,
-                    params.region,
-                    params.vpcId,
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[VPC_ID],
                     params[key],
                     key
                 );
@@ -232,6 +236,10 @@ async function validate(
             }
             case FSX_TYPE: {
                 response = checkFsxType(params[key], key);
+                break;
+            }
+            case FSX_FILE_SYSTEM_ID: {
+                response = await validateFsx(params[CREDENTIALS_ID], params[REGION], params[VPC_ID], params[key], key);
                 break;
             }
             default:

@@ -14,10 +14,12 @@ import {
     AWS_MANAGED_AD,
     USER_MANAGED_AD,
     SINGLE_AZ,
-    MULTI_AZ
+    MULTI_AZ,
+    NEW,
+    EXISTING
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
-// import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
+import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -342,39 +344,38 @@ async function validateInstanceType(credentialsId: string, region: string, workl
         value: isValidType.instanceType || null
     };
 }
-// To be Used by Yash PR
 
-// async function validateFsx(credentialsId: string, region: string, vpcId: string, fsxId: string, key: string) {
-//     logger.info('Validate FSX', credentialsId, region, key);
-//     const { filesystems } = await getFSxFileSystemsList(credentialsId, region, vpcId);
-//     if (!fsxId) {
-//         return {
-//             key,
-//             status: 'error',
-//             message: 'fsx information is required to process, Please select one',
-//             allowedValues: filesystems.map(({ name, fileSystemId }) => ({
-//                 label: name,
-//                 value: fileSystemId
-//             }))
-//         };
-//     }
-//     const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
-//     if (!isValidFsx) {
-//         return {
-//             key,
-//             status: 'error',
-//             message: 'fsx information does not seems to correct, Please provide a valid one',
-//             allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
-//                 label: name,
-//                 value: fileSystemId
-//             }))
-//         };
-//     }
+async function validateFsx(credentialsId: string, region: string, vpcId: string, fsxId: string, key: string) {
+    logger.info('Validate FSX', credentialsId, region, fsxId);
+    const { filesystems } = await getFSxFileSystemsList(credentialsId, region, vpcId);
+    if (!fsxId) {
+        return {
+            key,
+            status: 'error',
+            message: 'fsx information is required to process, Please select one',
+            allowedValues: filesystems.map(({ name, fileSystemId }) => ({
+                label: name,
+                value: fileSystemId
+            }))
+        };
+    }
+    const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
+    if (!isValidFsx) {
+        return {
+            key,
+            status: 'error',
+            message: 'fsx information does not seems to correct, Please provide a valid one',
+            allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
+                label: name,
+                value: fileSystemId
+            }))
+        };
+    }
 
-//     return {
-//         value: isValidFsx?.fileSystemId || null
-//     };
-// }
+    return {
+        value: isValidFsx?.fileSystemId || null
+    };
+}
 
 async function validateDomain(
     credentialsId: string,
@@ -532,14 +533,14 @@ async function validateFSxDeploymentMode(deploymentType: string, key: string) {
 }
 
 function checkFsxType(type: string, key: string) {
-    if (type !== 'NEW' && type !== 'EXISTING') {
+    if (type !== NEW && type !== EXISTING) {
         return {
             key,
             status: 'error',
             message: 'Please select the FSx type',
             allowedValues: [
-                { label: 'New', value: 'NEW' },
-                { label: 'Existing', value: 'EXISTING' }
+                { label: 'New', value: NEW },
+                { label: 'Existing', value: EXISTING }
             ]
         };
     }
@@ -562,5 +563,6 @@ export {
     validateFSxDeploymentMode,
     validateCredentials,
     validateAdScenarioType,
-    checkFsxType
+    checkFsxType,
+    validateFsx
 };

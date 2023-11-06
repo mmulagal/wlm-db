@@ -36,6 +36,12 @@ const MULTI_AZ = 'MULTI_AZ_1';
 
 const EQ = 'EQ';
 
+const STANDALONE = 'standalone';
+const FCI = 'fci';
+
+const NEW = 'NEW';
+const EXISTING = 'EXISTING';
+
 const CHATBOT_UI_PARAMS_FSX = [
     {
         credentialsConfig: [
@@ -155,7 +161,7 @@ const CHATBOT_UI_PARAMS_FSX = [
         fsxConfiguration: [
             {
                 [FSX_FILE_SYSTEM_ID]: {
-                    required: { key: FSX_TYPE, operand: EQ, value: 'EXISTING' },
+                    required: { key: FSX_TYPE, operand: EQ, value: EXISTING },
                     dependsOn: FSX_TYPE
                 }
             },
@@ -260,6 +266,11 @@ export {
     AWS_MANAGED_AD,
     USER_MANAGED_AD,
     FSX_TYPE,
+    FSX_FILE_SYSTEM_ID,
     SINGLE_AZ,
-    MULTI_AZ
+    MULTI_AZ,
+    STANDALONE,
+    FCI,
+    NEW,
+    EXISTING
 };
