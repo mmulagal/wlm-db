@@ -44,21 +44,21 @@ async function getAllCredentialsRecursive(
  */
 async function getCredentials(credentialsType: string): Promise<CredentialsResponseType> {
     logger.info('Getting credentials ', credentialsType);
-    if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
-        const credentialsList = await getAllCredentialsRecursive(credentialsType);
-        return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
-            credentialsId: id,
+    if (String(getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER))?.toUpperCase() === BXP.toUpperCase()) {
+        const data = await getAllBxpCredentials(credentialsType);
+        return data.map(({ credentialsId, extra: { name, arn } }) => ({
+            credentialsId,
             name,
-            arn: credentials,
-            providerAccountId: credentials.match(/\d+/)?.[0] || ''
+            arn,
+            providerAccountId: arn.match(/\d+/)?.[0] || ''
         }));
     }
-    const data = await getAllBxpCredentials(credentialsType);
-    return data.map(({ credentialsId, extra: { name, arn } }) => ({
-        credentialsId,
+    const credentialsList = await getAllCredentialsRecursive(credentialsType);
+    return credentialsList.map(({ id, credentials, metadata: { name } }) => ({
+        credentialsId: id,
         name,
-        arn,
-        providerAccountId: arn.match(/\d+/)?.[0] || ''
+        arn: credentials,
+        providerAccountId: credentials.match(/\d+/)?.[0] || ''
     }));
 }
 
@@ -119,11 +119,11 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
     return lookupCredentials(credentialsId);
 
     /* the below logic tries to look up credentials based on the referer header, keeping it until a decision is made if new credentials service can handle both blue xp and new creds */
-    // if (isEmpty(getAsyncLocalStorageResource(HEADERS.REFERER)) && !process.env.TEST) {
+    // if (isEmpty(getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER)) && !process.env.TEST) {
     // in case of background processes trying to fetch credentials, doing a lookup in new and old credentials service
 
     // }
-    // if (getAsyncLocalStorageResource(HEADERS.REFERER) === WF) {
+    // if (getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER) === WF) {
     //     const {
     //         credentials: { accessKeyId, secretAccessKey, sessionToken }
     //     } = await getWfCredentialDetails(credentialsId, accountId);

@@ -51,7 +51,8 @@ enum HEADERS {
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
     SIMULATOR = 'x-simulator',
     REFERER = 'referer',
-    ACTIVE_TRACE_ID = 'active-trace-id'
+    ACTIVE_TRACE_ID = 'active-trace-id',
+    X_NETAPP_REFERER = 'x-netapp-referer'
 }
 
 const API_PATH_HEALTH: string = '/health';
