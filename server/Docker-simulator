@@ -9,8 +9,6 @@ ADD resources/mssql/templates ./resources/mssql/templates
 COPY package.json ./
 COPY package-lock.json ./
 
-COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
-
 COPY __mocks__ ./__mocks__
 COPY prisma ./prisma/
 COPY patches ./patches/
