@@ -87,7 +87,7 @@ const TABLES_QUERY = (offset: number, rowscount: number) =>
 const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables ${FOR_JSON_PATH}`;
 
 const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT 
-                                            [ServerIOLatency] =
+                                            [i] =
                                                 CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)
                                                     THEN 0 ELSE (SUM(io_stall) / (SUM(num_of_reads) + SUM(num_of_writes))) END
                                             FROM
@@ -105,8 +105,8 @@ const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT
                                                                  WHEN ServerIOLatency < 5 THEN 'Very good'
                                                                  WHEN ServerIOLatency < 100 THEN 'Bad'
                                                                  WHEN ServerIOLatency < 100 THEN 'Bad'
-                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad'  
-                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful' 
+                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad'
+                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful'
                                                             END 
                                                     END
                                             from DatabaseLatency
