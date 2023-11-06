@@ -36,6 +36,7 @@ import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     MssqlApis();
 
@@ -54,7 +55,7 @@ const MSSqlAccordions = () => {
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>
             <AccordionController isGrouped>
                 {/* Deployment model heading added in case of Standard create */}
-                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && 
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                     <div className={styles['header-buttons']}>
                         <Typography
                             style={{
@@ -64,21 +65,21 @@ const MSSqlAccordions = () => {
                         >
                             {GENERAL.DEPLOYMENT_MODEL}
                         </Typography>
-                        <Button
-                            onClick={handleViewAPIRequest}
-                            Component="button"
-                            variant="text"
-                            className={styles.buttonClass}
-                        >
-                            {GENERAL.VIEW_API_REQUEST}
-                        </Button>
+                        {!isWorkloadFactory && (
+                            <Button
+                                onClick={handleViewAPIRequest}
+                                Component="button"
+                                variant="text"
+                                className={styles.buttonClass}
+                            >
+                                {GENERAL.VIEW_API_REQUEST}
+                            </Button>
+                        )}
                     </div>
-                }
+                )}
 
                 {/* Deployment model accordions */}
-                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
-                    <DatabaseDeploymentModel />
-                )}
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <DatabaseDeploymentModel />}
                 {/* Ends here */}
 
                 <div className={styles['header-buttons']}>
@@ -92,7 +93,7 @@ const MSSqlAccordions = () => {
                         {GENERAL.AWS_SETTINGS}
                     </Typography>
                     {/* View API request added here in case of easy create otherwise added as part of Deployment Model */}
-                    {selectedConfig === SELECT_CONFIG.EASY_CREATE &&
+                    {selectedConfig === SELECT_CONFIG.EASY_CREATE && !isWorkloadFactory && (
                         <Button
                             onClick={handleViewAPIRequest}
                             Component="button"
@@ -101,7 +102,7 @@ const MSSqlAccordions = () => {
                         >
                             {GENERAL.VIEW_API_REQUEST}
                         </Button>
-                    }
+                    )}
                 </div>
                 {/* AWS Accounts Accordion */}
                 {/* <MssqlApis /> */}
