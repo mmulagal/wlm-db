@@ -87,7 +87,7 @@ const TABLES_QUERY = (offset: number, rowscount: number) =>
 const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalCount FROM sys.tables ${FOR_JSON_PATH}`;
 
 const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT 
-                                            [i] =
+                                            [ServerIOLatency] =
                                                 CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)
                                                     THEN 0 ELSE (SUM(io_stall) / (SUM(num_of_reads) + SUM(num_of_writes))) END
                                             FROM
