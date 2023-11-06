@@ -22,7 +22,7 @@ import {
     useLazyGetConfigDataQuery,
     useSaveConfigDataMutation
 } from '../../../utils/apiService';
-import { setIsLoadConfig } from '../../../store/mssql/msSqlActionSlice';
+import { setIsLoadConfig, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, FROM_DIALOG } from '../../../utils/consts';
 import SaveConfig from '../SaveConfig/SaveConfig';
 import { setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
@@ -199,7 +199,7 @@ const CodeBox = () => {
     }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for current payload.
-    const getTemplateResponse = () => {
+    const getTemplateResponse = (redirect=false) => {
         setIsRightPanelTemplateLoading(true);
         // Current form data
         const actualData = mssqlFormData;
@@ -215,9 +215,17 @@ const CodeBox = () => {
             if (data?.data) {
                 setRightPanelTemplateResponse(data?.data);
                 setIsRightPanelTemplateLoading(false);
+                dispatch(setIsLoading(false));
+                // Redirect if clicked on Redirect to CloudFormation
+                if (redirect) {
+                    if (data?.data?.url) {
+                        window.open(data?.data?.url, '_blank', 'noopener');
+                    }
+                }
             } else {
                 setRightPanelTemplateResponse(null);
                 setIsRightPanelTemplateLoading(false);
+                dispatch(setIsLoading(false));
             }
         });
     };
@@ -281,6 +289,21 @@ const CodeBox = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
+    // "Redirect to CloudFormation" click implementation
+    const handleRedirectToCF = () => {
+        if (!formData || !_.isEqual(mssqlFormData, formData)) {
+            // If form changed so template API will get called again to get latest CF url
+            dispatch(setIsLoading(true));
+            setFormData(mssqlFormData);
+            getTemplateResponse(true);
+        } else {
+            // If data is already stored
+            if (rightPanelTemplateResponse?.url) {
+                window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+            }
+        }
+    };
+
     return (
         <div className={styles.codebox}>
             <div className={styles.topBar}>
@@ -322,7 +345,7 @@ const CodeBox = () => {
                                     navigator.clipboard.writeText(copyResponseData());
                                     setCopyText(`${dropDownValue} copied`);
                                 } else if (menuId === 'redirect') {
-                                    console.log('redirected');
+                                    handleRedirectToCF();
                                 }
                             }
                         }}
