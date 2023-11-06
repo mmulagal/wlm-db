@@ -48,37 +48,6 @@ const Chatbot = () => {
     const mapParamsToPayload = (params: any) => {
         Object.keys(params).map(key => {
             switch (key) {
-                case 'credentialsId':
-                    const newCredential = credentialData.credentialData?.filter(
-                        item => item.credentialsId === params[key]
-                    )[0];
-                    const credValue = newCredential?.name + ' | Account: ' + newCredential?.providerAccountId;
-                    const option = generateOptionType(credValue, credValue, '', false, '', newCredential);
-                    dispatch(setSelectedCredentials(option));
-                    break;
-                case 'fsxDeploymentMode':
-                    if (params[key] === 'SINGLE_AZ_1') {
-                        dispatch(
-                            setSelectedDBDeploymentModel({
-                                label: GENERAL.SINGLE_INSTANCE,
-                                value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
-                            })
-                        );
-                    } else {
-                        dispatch(
-                            setSelectedDBDeploymentModel({
-                                label: GENERAL.FAILOVER_CLUSTER,
-                                value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
-                            })
-                        );
-                    }
-                    break;
-                case 'region':
-                    const newRegion = regionsData?.regions?.filter(item => item.regionCode === params[key])[0];
-                    const regionValue = newRegion?.regionCode + ' | ' + newRegion?.regionName;
-                    const regionOption = generateOptionType(regionValue, regionValue, '', false, '', newRegion);
-                    dispatch(setSelectedRegionData(regionOption));
-                    break;
             }
         });
     };

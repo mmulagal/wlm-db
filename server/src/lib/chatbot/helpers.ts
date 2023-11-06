@@ -10,8 +10,7 @@ import {
     validateVpcId,
     validateSecurityGroup,
     validateFSxDeploymentMode,
-    validateCredentials,
-    validateAdScenarioType
+    validateCredentials
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -178,13 +177,16 @@ async function validate(
                 response = await validateImageId(params.credentialsId, params.region, params[key], key);
                 break;
             }
-            case AD_SCENARIO_TYPE: {
-                response = await validateAdScenarioType(params[key], key);
-                break;
-            }
+            case AD_SCENARIO_TYPE:
             case DNS_IP:
             case DOMAIN_DNS: {
-                response = await validateDomain(params.credentialsId, params.region, params.domainDnsname, key);
+                response = await validateDomain(
+                    params.credentialsId,
+                    params.region,
+                    params.domainDnsname,
+                    params[DNS_IP],
+                    key
+                );
                 break;
             }
             case DOMAIN_USERNAME:
