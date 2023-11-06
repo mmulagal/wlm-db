@@ -3,8 +3,19 @@ import { getAdsList } from '../../operations/aws/directory-service-operations';
 import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
 import getLogger from '../../utils/logger';
-import { AZ_1, AZ_2, VPC_CIDR, VPC_ID } from './consts';
+import {
+    AZ_1,
+    AZ_2,
+    VPC_CIDR,
+    VPC_ID,
+    DOMAIN_DNS,
+    AD_SCENARIO_TYPE,
+    DNS_IP,
+    AWS_MANAGED_AD,
+    USER_MANAGED_AD
+} from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
+// import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -124,7 +135,7 @@ async function validateVpcId(
                 return {
                     key,
                     status: 'error',
-                    message: 'Please select an availability zone for the primary secondary the  sql node',
+                    message: 'Please select an availability zone for the primary sql node',
                     allowedValues: uniqBy(
                         isValidVpc.subnets?.map(({ availabilityZone }) => ({
                             label: availabilityZone,
@@ -134,7 +145,24 @@ async function validateVpcId(
                     )
                 };
             }
-
+            const subnets = vpcs?.map(vpc => vpc?.subnets);
+            const isValidAZ = subnets?.flat().find(subnet => subnet?.availabilityZone === az1);
+            logger.debug('isValidAZ', isValidAZ);
+            if (!isValidAZ) {
+                return {
+                    key,
+                    status: 'error',
+                    message:
+                        'The availability zone that you provided seems to be incorrect, please choose an appropriate one',
+                    allowedValues: uniqBy(
+                        isValidVpc.subnets?.map(({ availabilityZone }) => ({
+                            label: availabilityZone,
+                            value: availabilityZone
+                        })),
+                        'value'
+                    )
+                };
+            }
             return {
                 value: az1
             };
@@ -145,6 +173,39 @@ async function validateVpcId(
                     key,
                     status: 'error',
                     message: 'Please select an availability zone for the secondary sql node',
+                    allowedValues: uniqBy(
+                        isValidVpc.subnets?.map(({ availabilityZone }) => ({
+                            label: availabilityZone,
+                            value: availabilityZone
+                        })),
+                        'value'
+                    )
+                };
+            }
+
+            if (az1 === az2) {
+                return {
+                    key,
+                    status: 'error',
+                    message: 'Please select an different availability zone for the secondary sql node',
+                    allowedValues: uniqBy(
+                        isValidVpc.subnets?.map(({ availabilityZone }) => ({
+                            label: availabilityZone,
+                            value: availabilityZone
+                        })),
+                        'value'
+                    )
+                };
+            }
+            const subnets = vpcs?.map(vpc => vpc?.subnets);
+            const isValidAZ = subnets?.flat().find(subnet => subnet?.availabilityZone === az2);
+            logger.debug('isValidAZ', isValidAZ);
+            if (!isValidAZ) {
+                return {
+                    key,
+                    status: 'error',
+                    message:
+                        'The availability zone that you provided seems to be incorrect, please choose an appropriate one',
                     allowedValues: uniqBy(
                         isValidVpc.subnets?.map(({ availabilityZone }) => ({
                             label: availabilityZone,
@@ -279,8 +340,47 @@ async function validateInstanceType(credentialsId: string, region: string, workl
         value: isValidType.instanceType || null
     };
 }
+// To be Used by Yash PR
 
-async function validateDomain(credentialsId: string, region: string, domainDnsname: string, key: string) {
+// async function validateFsx(credentialsId: string, region: string, vpcId: string, fsxId: string, key: string) {
+//     logger.info('Validate FSX', credentialsId, region, key);
+//     const { filesystems } = await getFSxFileSystemsList(credentialsId, region, vpcId);
+//     if (!fsxId) {
+//         return {
+//             key,
+//             status: 'error',
+//             message: 'fsx information is required to process, Please select one',
+//             allowedValues: filesystems.map(({ name, fileSystemId }) => ({
+//                 label: name,
+//                 value: fileSystemId
+//             }))
+//         };
+//     }
+//     const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
+//     if (!isValidFsx) {
+//         return {
+//             key,
+//             status: 'error',
+//             message: 'fsx information does not seems to correct, Please provide a valid one',
+//             allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
+//                 label: name,
+//                 value: fileSystemId
+//             }))
+//         };
+//     }
+
+//     return {
+//         value: isValidFsx?.fileSystemId || null
+//     };
+// }
+
+async function validateDomain(
+    credentialsId: string,
+    region: string,
+    domainDnsname: string,
+    dnsIp: string,
+    key: string
+) {
     logger.debug('Validate Domain DNS', { credentialsId, region, domainDnsname, key });
     const { directories } = await getAdsList(credentialsId, region);
     if (!domainDnsname) {
@@ -288,6 +388,7 @@ async function validateDomain(credentialsId: string, region: string, domainDnsna
             key,
             status: 'error',
             message: 'Please select the domain dns name',
+            allowCreate: true,
             allowedValues: uniqBy(
                 directories.map(({ domainName }) => ({
                     label: domainName,
@@ -297,26 +398,22 @@ async function validateDomain(credentialsId: string, region: string, domainDnsna
             )
         };
     }
-
-    const isValidDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
-
-    if (!isValidDomain) {
-        return {
-            key,
-            status: 'error',
-            message: 'Domain Name is not correct, please provide a valid one',
-            allowedValues: uniqBy(
-                directories.map(({ domainName }) => ({
-                    label: domainName,
-                    value: domainName
-                })),
-                'value'
-            )
-        };
+    const errorResponse = { status: 'error', message: 'Please provide the domain ip address', type: 'text' };
+    const isAWSManagedDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
+    switch (key) {
+        case DOMAIN_DNS:
+            return { value: domainDnsname };
+        case AD_SCENARIO_TYPE:
+            return { value: isAWSManagedDomain ? AWS_MANAGED_AD : USER_MANAGED_AD };
+        case DNS_IP:
+            return isAWSManagedDomain
+                ? { value: isAWSManagedDomain?.dnsIpAddress?.join(',') }
+                : dnsIp
+                ? { value: dnsIp }
+                : { key, ...errorResponse };
+        default:
+            return {};
     }
-    return {
-        value: (key === 'domainDnsname' ? isValidDomain.domainName : isValidDomain?.dnsIpAddress?.join(',')) || null
-    };
 }
 
 function validateText(text: string, key: string) {
