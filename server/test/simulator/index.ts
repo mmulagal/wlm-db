@@ -2,7 +2,9 @@ import nock from 'nock';
 
 async function initiateSimulator() {
     nock.disableNetConnect();
-    nock.enableNetConnect(host => host.includes('0.0.0.0') || host.includes('bedrock-runtime'));
+    nock.enableNetConnect(
+        host => host.includes('0.0.0.0') || host.includes('bedrock-runtime') || host.includes('sts.')
+    );
 
     await import('./scopes/jwt-scope');
     await import('./scopes/cloud-manager/cloud-manager-credentials-scope');
