@@ -217,6 +217,8 @@ const DB_SIZE = 'databaseSize';
 const FSX_VOL_THROUGHPUT = 'fsxVolThroughput';
 const FSX_IOPS = 'fsxIOPS';
 const ONTAP_SG_ID = 'ontapSgGroupId';
+const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
+const USER_MANAGED_AD = 'USER_MANAGED_AD';
 
 export {
     MODEL,
@@ -247,5 +249,7 @@ export {
     DB_SIZE,
     FSX_VOL_THROUGHPUT,
     FSX_IOPS,
-    ONTAP_SG_ID
+    ONTAP_SG_ID,
+    AWS_MANAGED_AD,
+    USER_MANAGED_AD
 };

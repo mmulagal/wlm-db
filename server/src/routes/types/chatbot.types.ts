@@ -14,6 +14,7 @@ const queryBotResponse = Type.Object({
                 status: Type.Optional(Type.String()),
                 message: Type.Optional(Type.String()),
                 type: Type.Optional(Type.String()),
+                allowCreate: Type.Optional(Type.Boolean()),
                 allowedValues: Type.Optional(
                     Type.Array(
                         Type.Object({
