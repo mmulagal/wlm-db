@@ -614,14 +614,6 @@ Resources:
       Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
       Timeout: '7200'
       Count: 0
-  WLMSQLResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    DependsOn: WaitCondition
-    Properties:
-      Name:
-        Ref: AWS::StackName
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
   FSxNSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
