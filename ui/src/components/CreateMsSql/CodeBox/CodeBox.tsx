@@ -2,7 +2,7 @@ import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 import { ReactComponent as UploadIcon } from '../../../assets/upload-icon.svg';
 import { ReactComponent as DownloadIcon } from '../../../assets/download-icon.svg';
-import { FlashingDotsLoader, SearchInput, Typography, useDialog } from '@netapp/design-system';
+import { SearchInput, Typography, useDialog } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { CODE_VIEWER, GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
@@ -31,6 +31,7 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
+import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -99,10 +100,7 @@ const CodeBox = () => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_CLOUD_FORMATION}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
@@ -113,10 +111,7 @@ const CodeBox = () => {
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
             return isRightPanelDataLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_REST_API}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre>{rightPanelResponse}</pre>
@@ -125,10 +120,7 @@ const CodeBox = () => {
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_AWS_CLI}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
@@ -203,7 +195,7 @@ const CodeBox = () => {
                 }
             }, 500);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for current payload.
@@ -239,7 +231,7 @@ const CodeBox = () => {
                 getTemplateResponse();
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dropDownValue]);
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
@@ -286,7 +278,7 @@ const CodeBox = () => {
         // Reset dropdown value to Rest API in case of form change
         setDropdownValue(CODE_VIEWER.REST_API);
         setFormData(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
     return (
