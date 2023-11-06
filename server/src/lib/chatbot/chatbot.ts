@@ -24,7 +24,7 @@ class Chatbot {
         // open schema file containing ts definitions
         let filePath = path.join(process.cwd(), 'src', 'lib', 'chatbot', 'schemas', 'mssql-schema.ts');
 
-        if (process.env.ENV_WLMDB_BUILD_MODE) {
+        if (process.env.ENV_WLMDB_BUILD_MODE && process.env.ENV_WLMDB_BUILD_MODE !== 'demo') {
             filePath = path.join(process.cwd(), 'lib', 'chatbot', 'schemas', 'mssql-schema.ts');
         }
         const schemaText = fs.readFileSync(filePath, 'utf8');
