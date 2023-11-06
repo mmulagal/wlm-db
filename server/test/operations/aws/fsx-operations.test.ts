@@ -12,7 +12,7 @@ import {
     getOntapVolumesSnapshotCount,
     isAWSBackupEnabled
 } from '../../../src/operations/aws/fsx-operations';
-import { ACTIVE_INSTANCE_ID, DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const FSX_SECRET = 'wlmdb-fsx1698373976113';
@@ -29,7 +29,9 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     it('AWS backup enabled check', async () => {
-        const response = await isAWSBackupEnabled(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID);
+        const response = await isAWSBackupEnabled(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID, {
+            credentialsId: '', activeNodeInstanceId: '', standbyNodeInstanceId: '', fsxSecret: ''
+        });
         expect(response).toEqual(true);
     });
 
@@ -38,8 +40,9 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_CREDENTIALS_TYPE,
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
-            FSX_SECRET,
-            ACTIVE_INSTANCE_ID
+            {
+                credentialsId: '', activeNodeInstanceId: '', standbyNodeInstanceId: '', fsxSecret: ''
+            }
         );
         expect(response).toBeDefined();
     });
