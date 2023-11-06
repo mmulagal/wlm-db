@@ -102,8 +102,6 @@ const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT
                                                                  WHEN ServerIOLatency < 5 THEN 'Very good'
                                                                  WHEN ServerIOLatency < 10 THEN 'Good'
                                                                  WHEN ServerIOLatency < 20 THEN 'Poor'
-                                                                 WHEN ServerIOLatency < 5 THEN 'Very good'
-                                                                 WHEN ServerIOLatency < 100 THEN 'Bad'
                                                                  WHEN ServerIOLatency < 100 THEN 'Bad'
                                                                  WHEN ServerIOLatency < 500 THEN 'Very bad'
                                                                  WHEN ServerIOLatency >= 500 THEN 'Awful'
