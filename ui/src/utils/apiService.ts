@@ -11,6 +11,7 @@ import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
+import { sortListOfDict } from './utilityFunctions';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -265,7 +266,10 @@ export const configApi = createApi({
     endpoints: builder => {
         return {
             getConfigList: builder.query({
-                query: () => ({ url: `configs` })
+                query: () => ({ url: `configs` }),
+                transformResponse: (response) => {
+                    return response ? sortListOfDict(response, 'creationTime', false) : [];
+                }
             }),
             getConfigData: builder.query({
                 query: ({ configId }) => ({ url: `configs/${configId}` })

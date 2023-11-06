@@ -27,7 +27,7 @@ import {
 } from '../../../store/mssql/mssqlSlice';
 import { useEffect, useState } from 'react';
 import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
-import { formatKmsData, sortListOfDict } from '../../../utils/utilityFunctions';
+import { formatKmsData } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
 import { 
@@ -379,8 +379,7 @@ const MssqlApis = () => {
         if(configError) {
             dispatch(addSavedConfigList({undefined, configLoading, configError}));
         } else {
-            const sortedConfig = configData ? sortListOfDict(configData, 'creationTime', false) : [];
-            dispatch(addSavedConfigList({configData: sortedConfig, configLoading, configError}));
+            dispatch(addSavedConfigList({configData, configLoading, configError}));
         }
         
     // eslint-disable-next-line react-hooks/exhaustive-deps
