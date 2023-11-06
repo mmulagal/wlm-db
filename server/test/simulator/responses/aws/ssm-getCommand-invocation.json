@@ -300,7 +300,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"High\"}]\r\n",
+        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"Very good\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
