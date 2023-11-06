@@ -31,6 +31,7 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
+const _ = require('lodash');
 
 const CodeBox = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,6 +40,7 @@ const CodeBox = () => {
     const [isRightPanelTemplateLoading, setIsRightPanelTemplateLoading] = useState(false);
     const [searchInput, setSearchInput] = useState('');
     const [rightPanelTemplateResponse, setRightPanelTemplateResponse] = useState<TemplateRes | null>(null);
+    const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
@@ -201,13 +203,23 @@ const CodeBox = () => {
                 }
             }, 500);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchInput]);
 
-    // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
-    const getTemplateResponse = (payload: any, credDetails: any) => {
-        payload.credentialsId = credDetails?.credId || '';
-        payload.region = credDetails?.region || '';
-        loadTemplateData({ payload: payload }).then((data: any) => {
+    // This will call template API to get CloudFormation and AWS CLI response for current payload.
+    const getTemplateResponse = () => {
+        setIsRightPanelTemplateLoading(true);
+        // Current form data
+        const actualData = mssqlFormData;
+        // To get accountid, credid and region from provided data
+        const credDetails = getCredDetails(actualData);
+        const changeObjectForm = {
+            mssqlForm: actualData
+        };
+        const resBody = createMssqlPayload(changeObjectForm);
+        resBody.credentialsId = credDetails?.credId || '';
+        resBody.region = credDetails?.region || '';
+        loadTemplateData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
                 setRightPanelTemplateResponse(data?.data);
                 setIsRightPanelTemplateLoading(false);
@@ -218,10 +230,21 @@ const CodeBox = () => {
         });
     };
 
+    // After form update if user clicks on CF or CLI than get template data
+    useEffect(() => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION || dropDownValue === CODE_VIEWER.AWS_CLI) {
+            // If user is switching between CF and CLI than no need to call template APi again
+            if (!formData || !_.isEqual(mssqlFormData, formData)) {
+                setFormData(mssqlFormData);
+                getTemplateResponse();
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dropDownValue]);
+
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = () => {
         setIsRightPanelDataLoading(true);
-        setIsRightPanelTemplateLoading(true);
         const baseUrl = getBaseUrl();
 
         // Getting saved config data using API
@@ -256,11 +279,14 @@ const CodeBox = () => {
         //@ts-ignore
         setRightPanelResponse(highlightedString);
         setIsRightPanelDataLoading(false);
-        getTemplateResponse(resBody, credDetails);
     };
 
     useEffect(() => {
         getRestResponse();
+        // Reset dropdown value to Rest API in case of form change
+        setDropdownValue(CODE_VIEWER.REST_API);
+        setFormData(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
     return (
@@ -329,6 +355,7 @@ const CodeBox = () => {
                         <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                             <SelectField
                                 isClearable={false}
+                                value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
                                 onChange={(selectedOptions: any): void => {
                                     setDropdownValue(selectedOptions?.value);
                                 }}

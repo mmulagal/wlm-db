@@ -11,6 +11,7 @@ import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
+import { sortListOfDict } from './utilityFunctions';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -18,7 +19,7 @@ const prepareHeaders = (
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
     const { getState } = api;
-    const { accessToken, workspaceId, isDemoMode } = (getState() as RootState).auth;
+    const { accessToken, workspaceId, isDemoMode, isWorkloadFactory } = (getState() as RootState).auth;
     if (accessToken) {
         headers.set('authorization', accessToken);
     }
@@ -27,6 +28,9 @@ const prepareHeaders = (
     }
     if (isDemoMode) {
         headers.set('x-simulator', 'true');
+    }
+    if (!isWorkloadFactory) {
+        headers.set('x-netapp-referer', 'BlueXP');
     }
     return headers;
 };
@@ -262,7 +266,10 @@ export const configApi = createApi({
     endpoints: builder => {
         return {
             getConfigList: builder.query({
-                query: () => ({ url: `configs` })
+                query: () => ({ url: `configs` }),
+                transformResponse: (response) => {
+                    return response ? sortListOfDict(response, 'creationTime', false) : [];
+                }
             }),
             getConfigData: builder.query({
                 query: ({ configId }) => ({ url: `configs/${configId}` })

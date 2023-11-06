@@ -11,7 +11,7 @@ import {
     LoadRecommendedConfig
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
-import { FROM_DIALOG, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { FROM_DIALOG, RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
 import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { initialMssqlState, setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
@@ -92,6 +92,7 @@ const Accordion = ({
                         message: GENERAL.DELETE_CONFIG_NOTIFICATION
                     })
                 );
+                toggle(RECOMMENDED_TEMPLATES.DEV_NAME, RECOMMENDED_TEMPLATES.DEV_ID);
                 configRefetch();
             }
         });

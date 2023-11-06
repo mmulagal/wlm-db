@@ -269,6 +269,11 @@ export const GENERAL = {
         'Timeline',
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
+    CREATE_INFO_MESSAGE_WLM: [
+        'Microsoft SQL Server and FSxN for ONTAP deployment ',
+        'with stack name ',
+        ' has been triggered. Estimated time: Up to 2 hours.'
+    ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
@@ -361,6 +366,9 @@ export const GENERAL = {
     DB_HOST_PROTECTION: 'Protection',
     DB_HOST_PERFORMANCE: 'Performance',
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
+    DB_SS_TT_1:
+        'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Clone etc. ',
+    DB_SS_TT_2: 'Calculation is based on unique FSx ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated Cost',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',

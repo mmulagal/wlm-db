@@ -169,6 +169,7 @@ export interface TagObj {
 
 
 export interface MssqlRequestBody {
+    [x: string]: any;
     networkConfiguration: {
         vpcId: string; 
         vpcCidr: string;
