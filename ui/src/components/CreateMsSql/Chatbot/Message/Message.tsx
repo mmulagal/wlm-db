@@ -3,7 +3,8 @@ import SelectComponent from './SelectComponent/SelectComponent';
 import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.svg';
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Button } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 
@@ -37,6 +38,12 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
     const isUserInputRequired = msgObj[key];
     const fieldsArr = msgObj[key] || [];
     const [paramObj, setParamObj] = useState({});
+    const [errorFields, setErrorFields] = useState<string[]>([]);
+
+    //@ts-ignore
+    const isContinueDisabled = useMemo(() => {
+        return Object.keys(paramObj).length !== fieldsArr.length || errorFields.length > 0;
+    }, [paramObj, fieldsArr, errorFields]);
 
     return (
         <div className={styles['message-item']} key={`msg-${idx}`}>
@@ -91,23 +98,28 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
                                                     }}
                                                     selectKey={item.key}
                                                     fieldType={item.type}
+                                                    errorFields={errorFields}
+                                                    setErrorFields={setErrorFields}
                                                 />
                                             </div>
                                         )
                                     )}
-                                    {idx < fieldsArr.length - 1 && <div className="seperator"></div>}
                                 </>
                             );
                         })}
                         <div className={styles['buttons-container']}>
                             {/* <button className="discard-button">Discard</button> */}
-                            <button
+                            <Button
                                 className={styles['select-chosen-button']}
-                                onClick={() => handleSelectButtonClicked(paramObj)}
-                                disabled={Object.keys(paramObj).length !== fieldsArr.length}
+                                onClick={() => {
+                                    if (!isContinueDisabled) {
+                                        handleSelectButtonClicked(paramObj);
+                                    }
+                                }}
+                                disabled={isContinueDisabled}
                             >
                                 Continue
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : (
