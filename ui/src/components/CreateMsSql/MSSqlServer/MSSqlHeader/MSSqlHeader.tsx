@@ -31,6 +31,7 @@ const MSSqlHeader = () => {
     const [isConfig, setIsConfig] = useState(false);
 
     const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const [saveConfigData] = useSaveConfigDataMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
@@ -113,12 +114,12 @@ const MSSqlHeader = () => {
             style={{ width: '100vw' }}
         >
             <div className={styles['header-button']}>
-                {isConfig && (
+                {isConfig && !isWorkloadFactory && (
                     <Button Component="button" onClick={handleLoadConfiguration} variant="text">
                         {SELECT_CONFIG.LOAD_CONFIG}
                     </Button>
                 )}
-                {!isConfig && (
+                {!isConfig && !isWorkloadFactory && (
                     <Button
                         Component="button"
                         variant="text"
@@ -141,7 +142,7 @@ const MSSqlHeader = () => {
                         }
                     />
                 )}
-                {(!configData || configData?.length < MAX_SAVED_CONFIG) && (
+                {(!configData || configData?.length < MAX_SAVED_CONFIG) && !isWorkloadFactory && (
                     <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Button>
