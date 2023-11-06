@@ -216,6 +216,7 @@ const CodeBox = () => {
                 setRightPanelTemplateResponse(data?.data);
                 setIsRightPanelTemplateLoading(false);
                 dispatch(setIsLoading(false));
+                // Redirect if clicked on Redirect to CloudFormation
                 if (redirect) {
                     if (data?.data?.url) {
                         window.open(data?.data?.url, '_blank', 'noopener');
@@ -288,12 +289,15 @@ const CodeBox = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
-    const handleSaveformCF = () => {
+    // "Redirect to CloudFormation" click implementation
+    const handleRedirectToCF = () => {
         if (!formData || !_.isEqual(mssqlFormData, formData)) {
+            // If form changed so template API will get called again to get latest CF url
             dispatch(setIsLoading(true));
             setFormData(mssqlFormData);
             getTemplateResponse(true);
         } else {
+            // If data is already stored
             if (rightPanelTemplateResponse?.url) {
                 window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
             }
@@ -341,7 +345,7 @@ const CodeBox = () => {
                                     navigator.clipboard.writeText(copyResponseData());
                                     setCopyText(`${dropDownValue} copied`);
                                 } else if (menuId === 'redirect') {
-                                    handleSaveformCF();
+                                    handleRedirectToCF();
                                 }
                             }
                         }}
