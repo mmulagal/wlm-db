@@ -237,7 +237,8 @@ async function getDatabaseHostsSummary(
     const resourceDetails = await listResources(accountId);
 
     if (isEmpty(resourceDetails)) {
-        throw createError(HttpErrorCodes.NOT_FOUND, `No database hosts found for account ${accountId}.`);
+        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+        return { count: 0, items: [], nextToken: '' };
     }
 
     let fieldsValues: Array<string> = [];
