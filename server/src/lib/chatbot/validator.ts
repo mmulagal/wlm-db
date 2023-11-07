@@ -12,10 +12,14 @@ import {
     AD_SCENARIO_TYPE,
     DNS_IP,
     AWS_MANAGED_AD,
-    USER_MANAGED_AD
+    USER_MANAGED_AD,
+    SINGLE_AZ,
+    MULTI_AZ,
+    NEW,
+    EXISTING
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
-// import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
+import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
 
 const logger = getLogger();
 
@@ -340,39 +344,38 @@ async function validateInstanceType(credentialsId: string, region: string, workl
         value: isValidType.instanceType || null
     };
 }
-// To be Used by Yash PR
 
-// async function validateFsx(credentialsId: string, region: string, vpcId: string, fsxId: string, key: string) {
-//     logger.info('Validate FSX', credentialsId, region, key);
-//     const { filesystems } = await getFSxFileSystemsList(credentialsId, region, vpcId);
-//     if (!fsxId) {
-//         return {
-//             key,
-//             status: 'error',
-//             message: 'fsx information is required to process, Please select one',
-//             allowedValues: filesystems.map(({ name, fileSystemId }) => ({
-//                 label: name,
-//                 value: fileSystemId
-//             }))
-//         };
-//     }
-//     const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
-//     if (!isValidFsx) {
-//         return {
-//             key,
-//             status: 'error',
-//             message: 'fsx information does not seems to correct, Please provide a valid one',
-//             allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
-//                 label: name,
-//                 value: fileSystemId
-//             }))
-//         };
-//     }
+async function validateFsx(credentialsId: string, region: string, vpcId: string, fsxId: string, key: string) {
+    logger.info('Validate FSX', credentialsId, region, fsxId);
+    const { filesystems } = await getFSxFileSystemsList(credentialsId, region, vpcId);
+    if (!fsxId) {
+        return {
+            key,
+            status: 'error',
+            message: 'fsx information is required to process, Please select one',
+            allowedValues: filesystems.map(({ name, fileSystemId }) => ({
+                label: name,
+                value: fileSystemId
+            }))
+        };
+    }
+    const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
+    if (!isValidFsx) {
+        return {
+            key,
+            status: 'error',
+            message: 'fsx information does not seems to correct, Please provide a valid one',
+            allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
+                label: name,
+                value: fileSystemId
+            }))
+        };
+    }
 
-//     return {
-//         value: isValidFsx?.fileSystemId || null
-//     };
-// }
+    return {
+        value: isValidFsx?.fileSystemId || null
+    };
+}
 
 async function validateDomain(
     credentialsId: string,
@@ -515,18 +518,35 @@ async function validateSecurityGroup(
 
 async function validateFSxDeploymentMode(deploymentType: string, key: string) {
     logger.debug('Validate FSX Deployment Mode', { deploymentType });
-    if (!['SINGLE_AZ_1', 'MULTI_AZ_1'].includes(deploymentType)) {
+    if (![SINGLE_AZ, MULTI_AZ].includes(deploymentType)) {
         return {
             key,
             status: 'error',
             message: 'Please select the FSx deployment type',
             allowedValues: [
-                { label: 'SINGLE_AZ_1', value: 'SINGLE_AZ_1' },
-                { label: 'MULTI_AZ_1', value: 'MULTI_AZ_1' }
+                { label: 'Single Instance', value: SINGLE_AZ },
+                { label: 'Failover Cluster Instance (FCI)', value: MULTI_AZ }
             ]
         };
     }
     return { value: deploymentType };
+}
+
+function checkFsxType(type: string, key: string) {
+    if (type !== NEW && type !== EXISTING) {
+        return {
+            key,
+            status: 'error',
+            message: 'Please select the FSx type',
+            allowedValues: [
+                { label: 'New', value: NEW },
+                { label: 'Existing', value: EXISTING }
+            ]
+        };
+    }
+    return {
+        value: type
+    };
 }
 
 export {
@@ -542,5 +562,7 @@ export {
     validateSecurityGroup,
     validateFSxDeploymentMode,
     validateCredentials,
-    validateAdScenarioType
+    validateAdScenarioType,
+    checkFsxType,
+    validateFsx
 };

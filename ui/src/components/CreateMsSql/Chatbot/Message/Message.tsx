@@ -82,6 +82,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
                                                 heading={item.message}
                                                 selectKey={item.key}
                                                 paramObj={paramObj}
+                                                allowCreate={item.allowCreate}
                                             />
                                         </div>
                                     ) : (
