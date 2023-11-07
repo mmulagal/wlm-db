@@ -14,6 +14,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { AWS_MANAGED_AD, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
@@ -29,7 +30,7 @@ const createMssqlPayload = (state: any) => {
     const encryptionKey = (() => {
         const encryptionType = state.mssqlForm.encryption?.encryptionType;
         if (encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT) {
-            if(state.mssqlForm.encryption?.selectedRow){
+            if (state.mssqlForm.encryption?.selectedRow) {
                 return state.mssqlForm.encryption?.selectedRow[0]?.id;
             } else {
                 return '';
@@ -93,7 +94,7 @@ const createMssqlPayload = (state: any) => {
         let ontapSgGroupList = [];
         const sgType = state.mssqlForm.securityGroup?.selectedSecurityType;
         const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
-        if(sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
+        if (sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
             ontapSgGroupList.push(vpcsg);
         }
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
@@ -108,7 +109,7 @@ const createMssqlPayload = (state: any) => {
 
     const fsxDeploymentMode = (() => {
         const deploymentType = state.mssqlForm.dbDeploymentModel?.value;
-        if(deploymentType === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        if (deploymentType === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             return FSX_DEPLOYMENT_MODE.SINGLE_AZ_1;
         } else {
             return FSX_DEPLOYMENT_MODE.MULTI_AZ_1;
@@ -158,7 +159,7 @@ const createMssqlPayload = (state: any) => {
         },
         topicArn: state.mssqlForm.simpleNotification.snsState ? state.mssqlForm.simpleNotification?.snsARN?.value : '',
         enableCloudWatch: state.mssqlForm.cloudWatch,
-        tags: state.mssqlForm.tags.filter((tag:TagObj) => tag.key)
+        tags: state.mssqlForm.tags.filter((tag: TagObj) => tag.key)
     };
     return payload;
 };
@@ -167,21 +168,20 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
     let payload;
     dispatch(setCreatePressed(true));
     dispatch(setCreateHit(Math.random()));
-
-    if(state.auth.isDemoMode) {
+    if (state.auth.isDemoMode) {
         payload = createMssqlPayload(state);
         console.log('Deploy Payload', payload);
     } else {
         const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
 
         const azStateValue =
-            (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER && 
+            (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER &&
                 (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
-                !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
-                !state.mssqlForm.availabilityZones.selectedAzNode2 ||
-                !state.mssqlForm.availabilityZones.selectedSubnetNode2)) || 
-                (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE && 
-                    (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
+                    !state.mssqlForm.availabilityZones.selectedSubnetNode1 ||
+                    !state.mssqlForm.availabilityZones.selectedAzNode2 ||
+                    !state.mssqlForm.availabilityZones.selectedSubnetNode2)) ||
+            (state.mssqlForm.dbDeploymentModel?.label === GENERAL.SINGLE_INSTANCE &&
+                (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
                     !state.mssqlForm.availabilityZones.selectedSubnetNode1));
 
         const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
@@ -258,6 +258,29 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
             payload = createMssqlPayload(state);
             console.log('Deploy Payload', payload);
         } else {
+            const missingField = vpcStateValue
+                ? 'VPC'
+                : azStateValue
+                ? 'Availability Zone'
+                : dbCredStateValue
+                ? 'DB credentials'
+                : adStateValue
+                ? 'Active Directory params'
+                : fsxStateValue
+                ? 'FSx'
+                : licenseIdCheck
+                ? 'License information'
+                : '';
+            if (state.chatbot.isShow) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: `Action required: ${missingField || 'some parameters'} ${
+                            missingField ? 'is' : 'are'
+                        } missing`
+                    })
+                );
+            }
             console.log('Action required');
         }
     }
