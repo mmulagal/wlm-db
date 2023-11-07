@@ -229,7 +229,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (result && result?.data) {
             // escape character is being removed so adding that again in cli command
             const newdata = { ...result?.data,
-                cliCommand: result?.data?.cliCommand.replace(/"/g, '\\"')
+                cliCommand: result?.data?.cliCommand ? result.data.cliCommand.replace(/"/g, '\\"') : ''
             }
             return newdata;
         } else {
