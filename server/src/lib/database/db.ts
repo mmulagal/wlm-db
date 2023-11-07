@@ -375,7 +375,7 @@ async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: 
                 in: statuses
             },
             start_time: {
-                gte: fromDate.toISOString()
+                gte: fromDate
             }
         }
     });
