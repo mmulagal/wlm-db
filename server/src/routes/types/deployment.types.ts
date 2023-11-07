@@ -1,10 +1,10 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 
 const CFNetworkConfiguration = Type.Object({
-    vpcId: Type.Optional(Type.String()),
+    vpcId: Type.String(),
     vpcCidr: Type.String(),
-    privateSubnet1Id: Type.Optional(Type.String()),
-    routeTable1Id: Type.Optional(Type.String()),
+    privateSubnet1Id: Type.String(),
+    routeTable1Id: Type.String(),
     availabilityZone1: Type.String(),
     privateSubnet2Id: Type.Optional(Type.String()),
     routeTable2Id: Type.Optional(Type.String()),
