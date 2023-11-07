@@ -1,6 +1,6 @@
 import { TextField, PasswordField, Typography } from '@netapp/design-system';
 import styles from './InputComponent.module.scss';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { validateChatbotField } from '../../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
@@ -10,10 +10,35 @@ type inputComponentPropType = {
     onChange: (key: string, val: string | number) => void;
     heading: string;
     selectKey: string;
+    errorFields: string[];
+    setErrorFields: (errorFields: string[]) => void;
 };
 
-const InputComponent = ({ heading, selectKey, fieldType, onChange }: inputComponentPropType) => {
+const InputComponent = ({
+    heading,
+    selectKey,
+    fieldType,
+    onChange,
+    errorFields,
+    setErrorFields
+}: inputComponentPropType) => {
     const [value, setValue] = useState('');
+
+    const handleErrorFields = () => {
+        const isError = validateChatbotField(selectKey, value);
+        let updatedErrorFields = [...errorFields];
+        if (updatedErrorFields.includes(selectKey) && !isError) {
+            updatedErrorFields.splice(updatedErrorFields.indexOf(selectKey), 1);
+            setErrorFields(updatedErrorFields);
+        } else if (!updatedErrorFields.includes(selectKey) && isError) {
+            updatedErrorFields.push(selectKey);
+            setErrorFields(updatedErrorFields);
+        }
+    };
+
+    useEffect(() => {
+        handleErrorFields();
+    }, [value]);
 
     const tooltipText = () => {
         if (selectKey === 'fsxPassword') {

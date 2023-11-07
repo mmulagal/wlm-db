@@ -5,6 +5,7 @@
     flex-direction: column;
     align-items: center;
     padding-top: 40px;
+
     .chat-window {
         width: 646px;
         height: calc(100vh - 361px);
@@ -12,6 +13,16 @@
         flex-direction: column;
         overflow-y: auto;
         background-color: var(--content-background);
+
+        .bedrock-powered-container {
+            width: 100%;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+        }
     }
 
     .current-msg-container {

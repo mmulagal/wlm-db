@@ -104,7 +104,10 @@ catch {
 Start-Sleep -Seconds 15
 $Nodes = Invoke-Command -scriptblock {
    param($wincluster)
-   $clusnodes = (Get-ClusterNode -Cluster $wincluster) | Out-String
+   $clusnodes = (Get-ClusterNode -Cluster $wincluster -ErrorAction SilentlyContinue) | Out-String
+   if ([string]::IsNullOrEmpty($clusnodes)) {
+     $clusnodes = (Get-ClusterNode -ErrorAction SilentlyContinue) | Out-String 
+   }
    Write-Output $clusnodes
    $clusnodes
      }  -Credential $Credentials -ComputerName $HostName -Authentication credssp -ArgumentList $ClusterName

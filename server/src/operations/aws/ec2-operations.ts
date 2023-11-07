@@ -296,6 +296,16 @@ async function getAmiList(
         Filters: [
             { Name: 'name', Values: amiNames },
             { Name: 'owner-alias', Values: ['amazon'] }
+        ],
+        Owners: [
+            '801119661308', // for regular regions
+            '185158320714', // for il-central-1
+            '536790793924', // for eu-central-2
+            '688423173695', // for eu-south-2
+            '878052572473', // for me-central-1
+            '159365745649', // for ap-south-2
+            '903064639964', // ap-southeast-3
+            '311529897437' //  ap-southeast-4
         ]
     });
 

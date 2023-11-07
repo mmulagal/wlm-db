@@ -23,8 +23,6 @@ const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
-const FsxNSecretName = 'wlmdb-fsx1698373976113'; // Todo: Remove this and use fsx secret
-
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
     const enetInterfaces: DescribeNetworkInterfacesRequest = {
@@ -232,6 +230,7 @@ async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
+    fsxSecret: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
@@ -245,7 +244,7 @@ async function getOntapVolumesSnapshotCount(
         const apiQuery = 'fields=snapshot_count';
 
         const commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${FsxNSecretName}  -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
 
         const response = await callSsmExecution(

@@ -46,6 +46,7 @@ interface Metadata {
     credentialsId: string;
     activeNodeInstanceId: string;
     standbyNodeInstanceId: string;
+    fsxSecret: string;
 }
 
 type VolumeSpaceRecord = {
@@ -199,7 +200,7 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
 
     const { resource_id: resourceId, region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
 
     try {
         const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
@@ -208,6 +209,7 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
                 credentialsId,
                 region!,
                 fileSystemId!,
+                fsxSecret,
                 activeNodeInstanceId,
                 standbyNodeInstanceId
             ),
@@ -237,7 +239,8 @@ async function getDatabaseHostsSummary(
     const resourceDetails = await listResources(accountId);
 
     if (isEmpty(resourceDetails)) {
-        throw createError(HttpErrorCodes.NOT_FOUND, `No database hosts found for account ${accountId}.`);
+        logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
+        return { count: 0, items: [], nextToken: '' };
     }
 
     let fieldsValues: Array<string> = [];

@@ -47,6 +47,7 @@ import {
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
+import { addEscapeInCli, setMaskedPassword } from './CodeboxUtility';
 
 type ConfigType = {
     id?: string;
@@ -57,7 +58,7 @@ type ConfigType = {
 const Sidebar = ({ isOpen, onClose }: any) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [openKey, setOpenKey] = useState<string|undefined>();
+    const [openKey, setOpenKey] = useState<string | undefined>();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
 
@@ -105,7 +106,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
             }
         ]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isRightPanelTemplateLoading, rightPanelTemplateResponse]);
 
     const { data: configDataList, isFetching: configLoading, refetch: configRefetch } = useGetConfigListQuery({});
@@ -155,7 +156,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         } else {
             setDisableCopy(true);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         dropDownValue,
         rightPanelData,
@@ -167,7 +168,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // This will call template API to get CloudFormation and AWS CLI response for config payload. For both recommended and saved config.
     const getTemplateResponse = (payload: any, credDetails: any, id: string) => {
         const data = getRightPanelTemplateResponse(id);
-        if(data) {
+        if (data) {
             setIsRightPanelTemplateLoading(false);
         } else {
             payload.credentialsId = credDetails?.credId || '';
@@ -184,50 +185,53 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
-    // To save Rest API response 
-    const storeRightPanelRestResponse = (id:string, data: any, viewData: any) => {
-        if (!rightPanelData.some((val: { id: string; }) => val.id === id)) {
+    // To save Rest API response
+    const storeRightPanelRestResponse = (id: string, data: any, viewData: any, restViewDataMasked: any) => {
+        if (!rightPanelData.some((val: { id: string }) => val.id === id)) {
             const newData = {
                 id: id,
                 restApiData: data,
-                restViewData: viewData
-            }
+                restViewData: viewData,
+                restViewDataMasked: restViewDataMasked
+            };
             setRightPanelData((prevData: any) => [...prevData, newData]);
         }
-    }
+    };
 
     // To get Rest API response
     const getRightPanelRestResponse = (id: string | undefined, resType: string) => {
-        const result = rightPanelData.find((val:any) => val.id === id);
-        if(result && resType === CODEBOX_REST_RES.API) {
+        const result = rightPanelData.find((val: any) => val.id === id);
+        if (result && resType === CODEBOX_REST_RES.API) {
             return result?.restApiData;
-        } else if(result && resType === CODEBOX_REST_RES.VIEW) {
+        } else if (result && resType === CODEBOX_REST_RES.COPY) {
             return result?.restViewData;
+        } else if (result && resType === CODEBOX_REST_RES.VIEW) {
+            return result?.restViewDataMasked;
         } else {
             return undefined;
         }
-    }
+    };
 
     // To store Template API response
-    const storeRightPanelTemplateResponse = (id:string, data: any) => {
-        if (!rightPanelTemplateResponse.some((val: { id: string; }) => val.id === id)) {
+    const storeRightPanelTemplateResponse = (id: string, data: any) => {
+        if (!rightPanelTemplateResponse.some((val: { id: string }) => val.id === id)) {
             const newData = {
                 id: id,
                 data: data
-            }
+            };
             setRightPanelTemplateResponse((prevData: any) => [...prevData, newData]);
         }
-    }
+    };
 
     // To get template API response
     const getRightPanelTemplateResponse = (id: string | undefined) => {
-        const result = rightPanelTemplateResponse.find((val:any) => val.id === id);
-        if(result && result?.data) {
-            return result?.data;
+        const result = rightPanelTemplateResponse.find((val: any) => val.id === id);
+        if (result && result?.data) {
+            return addEscapeInCli(result?.data);
         } else {
             return undefined;
         }
-    }
+    };
 
     const loadRestApi = (actualData: any, id: string, save: boolean) => {
         const baseUrl = getBaseUrl();
@@ -236,13 +240,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         const changeObjectForm = {
             mssqlForm: actualData
         };
+        const maskedChangeObj = { mssqlForm: setMaskedPassword(actualData) };
+        const maskedResBody = createMssqlPayload(maskedChangeObj);
         const resBody = createMssqlPayload(changeObjectForm);
-        
+
         if (id === openKey) {
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, credDetails, id);
         }
-        if(save) {
+        if (save) {
             const res = JSON.stringify(resBody, null, 2);
             // To set REST API response as deploy API curl request
             const highlightedString = (
@@ -264,9 +270,32 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     )}
                 />
             );
-            storeRightPanelRestResponse(id, actualData, highlightedString);
+
+            const res1 = JSON.stringify(maskedResBody, null, 2);
+            // To set REST API response as deploy API curl request
+            const highlightedString1 = (
+                <Highlighter
+                    highlightClassName={styles.highlightClass}
+                    searchWords={[
+                        CRED_PLACEHOLDERS.ACCOUNT_ID,
+                        CRED_PLACEHOLDERS.CRED_ID,
+                        CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN
+                    ]}
+                    autoEscape={true}
+                    textToHighlight={CURL_REQ_TEMPLATE(
+                        baseUrl,
+                        credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                        credDetails.region || CRED_PLACEHOLDERS.REGION,
+                        CRED_PLACEHOLDERS.TOKEN,
+                        res1
+                    )}
+                />
+            );
+
+            storeRightPanelRestResponse(id, actualData, highlightedString, highlightedString1);
         }
-    }
+    };
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
     const getRestResponse = (id: string) => {
@@ -303,10 +332,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, {}, id);
-            storeRightPanelRestResponse(id, actualData[0].data, highlightedString);
+            storeRightPanelRestResponse(id, actualData[0].data, highlightedString, highlightedString);
         } else {
             const data = getRightPanelRestResponse(id, CODEBOX_REST_RES.API);
-            if(data) {
+            if (data) {
                 // If data is already saved that just load data
                 loadRestApi(data, id, false);
             } else {
@@ -334,7 +363,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 }
             }, 500);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchInput]);
 
     useEffect(() => {
@@ -370,7 +399,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
     //To expand collapse side bar
     const handleClose = () => {
-        if(!isOpen && !openKey) {
+        if (!isOpen && !openKey) {
             setOpenKey('0');
         }
         onClose();
@@ -416,7 +445,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre>{getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW)}</pre>
+                    <pre className={styles.colorAutomation}>
+                        {getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW)}
+                    </pre>
                 </HighlighterWord>
             );
         }
@@ -453,7 +484,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return getRightPanelTemplateResponse(openKey)?.template;
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
-            const rightPanelResponse = getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW);
+            const rightPanelResponse = getRightPanelRestResponse(openKey, CODEBOX_REST_RES.COPY);
             return rightPanelResponse?.props?.textToHighlight;
         } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return getRightPanelTemplateResponse(openKey)?.cliCommand;

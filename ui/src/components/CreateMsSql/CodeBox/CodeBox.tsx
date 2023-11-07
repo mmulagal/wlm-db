@@ -2,7 +2,7 @@ import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 import { ReactComponent as UploadIcon } from '../../../assets/upload-icon.svg';
 import { ReactComponent as DownloadIcon } from '../../../assets/download-icon.svg';
-import { FlashingDotsLoader, SearchInput, Typography, useDialog } from '@netapp/design-system';
+import { SearchInput, Typography, useDialog } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { CODE_VIEWER, GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
@@ -22,7 +22,7 @@ import {
     useLazyGetConfigDataQuery,
     useSaveConfigDataMutation
 } from '../../../utils/apiService';
-import { setIsLoadConfig } from '../../../store/mssql/msSqlActionSlice';
+import { setIsLoadConfig, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, FROM_DIALOG } from '../../../utils/consts';
 import SaveConfig from '../SaveConfig/SaveConfig';
 import { setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
@@ -31,6 +31,8 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
+import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
+import { setMaskedPassword, addEscapeInCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -43,6 +45,7 @@ const CodeBox = () => {
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
+    const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
@@ -99,10 +102,7 @@ const CodeBox = () => {
     const setDisplayedDataInCodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_CLOUD_FORMATION}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
@@ -113,22 +113,18 @@ const CodeBox = () => {
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
             return isRightPanelDataLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_REST_API}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre>{rightPanelResponse}</pre>
+                    <pre className={styles.colorAutomation}>
+                        {rightPanelMaskedResponse}
+                    </pre>
                 </HighlighterWord>
             );
         }
         if (dropDownValue === CODE_VIEWER.AWS_CLI) {
             return isRightPanelTemplateLoading ? (
-                <Typography variant="Regular_14" className={styles.loading}>
-                    <div>{CODE_VIEWER.LOADING_AWS_CLI}</div>
-                    <FlashingDotsLoader />
-                </Typography>
+                <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={styles.colorAutomation}>
@@ -203,11 +199,11 @@ const CodeBox = () => {
                 }
             }, 500);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for current payload.
-    const getTemplateResponse = () => {
+    const getTemplateResponse = (redirect=false) => {
         setIsRightPanelTemplateLoading(true);
         // Current form data
         const actualData = mssqlFormData;
@@ -221,11 +217,19 @@ const CodeBox = () => {
         resBody.region = credDetails?.region || '';
         loadTemplateData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
-                setRightPanelTemplateResponse(data?.data);
+                setRightPanelTemplateResponse(addEscapeInCli(data?.data));
                 setIsRightPanelTemplateLoading(false);
+                dispatch(setIsLoading(false));
+                // Redirect if clicked on Redirect to CloudFormation
+                if (redirect) {
+                    if (data?.data?.url) {
+                        window.open(data?.data?.url, '_blank', 'noopener');
+                    }
+                }
             } else {
                 setRightPanelTemplateResponse(null);
                 setIsRightPanelTemplateLoading(false);
+                dispatch(setIsLoading(false));
             }
         });
     };
@@ -239,7 +243,7 @@ const CodeBox = () => {
                 getTemplateResponse();
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dropDownValue]);
 
     // This will get get for Rest API section. After getting rest API it will call template API to get CF and AWS CLI response.
@@ -278,7 +282,39 @@ const CodeBox = () => {
         );
         //@ts-ignore
         setRightPanelResponse(highlightedString);
+        getMaskedRestResponse(actualData, credDetails, baseUrl);
         setIsRightPanelDataLoading(false);
+    };
+
+    // This will set masked data
+    const getMaskedRestResponse = (actualData: any, credDetails: any, baseUrl: string) => {
+        const changeObjectForm = {
+            mssqlForm: setMaskedPassword(actualData)
+        };
+        const resBody = createMssqlPayload(changeObjectForm);
+        const res = JSON.stringify(resBody, null, 2);
+        // To set REST API response as deploy API curl request
+        const highlightedString = (
+            <Highlighter
+                highlightClassName={styles.highlightClass}
+                searchWords={[
+                    CRED_PLACEHOLDERS.ACCOUNT_ID,
+                    CRED_PLACEHOLDERS.CRED_ID,
+                    CRED_PLACEHOLDERS.REGION,
+                    CRED_PLACEHOLDERS.TOKEN
+                ]}
+                autoEscape={true}
+                textToHighlight={CURL_REQ_TEMPLATE(
+                    baseUrl,
+                    credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                    credDetails.region || CRED_PLACEHOLDERS.REGION,
+                    CRED_PLACEHOLDERS.TOKEN,
+                    res
+                )}
+            />
+        );
+        //@ts-ignore
+        setRightPanelMaskedResponse(highlightedString);
     };
 
     useEffect(() => {
@@ -286,8 +322,23 @@ const CodeBox = () => {
         // Reset dropdown value to Rest API in case of form change
         setDropdownValue(CODE_VIEWER.REST_API);
         setFormData(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
+
+    // "Redirect to CloudFormation" click implementation
+    const handleRedirectToCF = () => {
+        if (!formData || !_.isEqual(mssqlFormData, formData)) {
+            // If form changed so template API will get called again to get latest CF url
+            dispatch(setIsLoading(true));
+            setFormData(mssqlFormData);
+            getTemplateResponse(true);
+        } else {
+            // If data is already stored
+            if (rightPanelTemplateResponse?.url) {
+                window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+            }
+        }
+    };
 
     return (
         <div className={styles.codebox}>
@@ -330,7 +381,7 @@ const CodeBox = () => {
                                     navigator.clipboard.writeText(copyResponseData());
                                     setCopyText(`${dropDownValue} copied`);
                                 } else if (menuId === 'redirect') {
-                                    console.log('redirected');
+                                    handleRedirectToCF();
                                 }
                             }
                         }}
@@ -372,11 +423,7 @@ const CodeBox = () => {
                 </div>
                 <div className={styles.payloadBody}>
                     <div className={styles.scrollContainer}>
-                        <Typography
-                            variant="Regular_14"
-                            className={styles.contentArea}
-                            style={{ color: 'var(--white)' }}
-                        >
+                        <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
                             {setDisplayedDataInCodeBox()}
                         </Typography>
                     </div>

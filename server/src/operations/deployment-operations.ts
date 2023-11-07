@@ -25,7 +25,6 @@ import {
     MASTER_STACK_TIMEOUT_MINUTES,
     HttpErrorCodes,
     WLM_ASSETS,
-    SAME_ROUTETABLE_MESSAGE,
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
     EC2_ROLE_NAME,
@@ -60,10 +59,19 @@ import {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
+    STANDALONE,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_VIOLATION_MESSAGE,
     FileSystemTypes,
     DATABASE_TYPE
 } from '../utils/consts';
-import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
+import {
+    derivePropertiesFromARN,
+    generateDeploymentParams,
+    getSnsArn,
+    isNetworkConfigurationViolated,
+    sleep
+} from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
@@ -272,9 +280,12 @@ async function createCloudFormationTemplateForUserDeployment(
         tags
     });
 
-    const sameRoutes = isSameRoutetables(networkConfiguration);
-    if (sameRoutes) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
+    if (isViolated) {
+        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
+        }
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
     }
 
     // commented to test the iam permissions with strict policy.. It will be added once we finalise the permissions
@@ -379,9 +390,12 @@ async function deployCloudFormationTemplate(
         tags
     });
 
-    const sameRoutes = isSameRoutetables(networkConfiguration);
-    if (sameRoutes) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
+    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
+    if (isViolated) {
+        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
+        }
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
     }
 
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(

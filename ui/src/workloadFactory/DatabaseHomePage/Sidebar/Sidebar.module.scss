@@ -61,6 +61,7 @@
 
     .colorAutomation {
         color: var(--white);
+        margin-top: 0px;
     }
 
     .color {
@@ -342,48 +343,48 @@
     width: 100%;
 }
 
-@media screen and (min-width: 1576px) and (max-width: 1720px) {
-    .sidebar {
-        width: 570px !important;
+// @media screen and (min-width: 1576px) and (max-width: 1720px) {
+//     .sidebar {
+//         width: 570px !important;
 
-        .accordionMainContainer {
-            margin-top: 0 !important;
-        }
+//         .accordionMainContainer {
+//             margin-top: 0 !important;
+//         }
 
-        .headingContainer {
-            width: 514px !important;
-        }
-        .topBar {
-            padding: 16px 32px 16px 32px !important;
-        }
+//         .headingContainer {
+//             width: 514px !important;
+//         }
+//         .topBar {
+//             padding: 16px 32px 16px 32px !important;
+//         }
 
-        .accordionStructure {
-            margin: 40px 32px 40px 32px !important;
-        }
+//         .accordionStructure {
+//             margin: 40px 32px 40px 32px !important;
+//         }
 
-        .openView {
-            gap: 0px !important;
+//         .openView {
+//             gap: 0px !important;
 
-            .leftSideView {
-                margin-top: 0 !important;
-            }
+//             .leftSideView {
+//                 margin-top: 0 !important;
+//             }
 
-            .rightSideView {
-                .rightSideTopBar {
-                    width: 1000px !important;
-                }
-                .secondBar {
-                    width: 1000px !important;
-                }
-                .thirdBar {
-                    height: 616px !important;
-                    width: 1000px !important;
-                }
-            }
-        }
-    }
+//             .rightSideView {
+//                 .rightSideTopBar {
+//                     width: 1000px !important;
+//                 }
+//                 .secondBar {
+//                     width: 1000px !important;
+//                 }
+//                 .thirdBar {
+//                     height: 616px !important;
+//                     width: 1000px !important;
+//                 }
+//             }
+//         }
+//     }
 
-    .open {
-        width: 100% !important;
-    }
-}
+//     .open {
+//         width: 100% !important;
+//     }
+// }

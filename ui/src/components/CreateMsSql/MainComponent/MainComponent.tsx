@@ -16,6 +16,14 @@ const MainComponent = () => {
 
     return (
         <div className={styles.mainContainer}>
+            {loading && (
+                <>
+                    <div className={styles.loaderOverlay}></div>
+                    <div className={styles.spinnerPlacement}>
+                        <Spinner isLarge />
+                    </div>
+                </>
+            )}
             <div className={`${styles.leftSide} ${!showChatbot ? styles.noChatBot : ''}`}>
                 <StepLayout className={styles.header}>
                     <MSSqlHeader />
@@ -25,14 +33,6 @@ const MainComponent = () => {
                     <WizardFooter>
                         <MSSqlFooter />
                     </WizardFooter>
-                    {loading && (
-                        <>
-                            <div className={styles.loaderOverlay}></div>
-                            <div className={styles.spinnerPlacement}>
-                                <Spinner isLarge />
-                            </div>
-                        </>
-                    )}
                 </StepLayout>
             </div>
             {showChatbot && (
