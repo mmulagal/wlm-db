@@ -227,7 +227,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const getRightPanelTemplateResponse = (id: string | undefined) => {
         const result = rightPanelTemplateResponse.find((val: any) => val.id === id);
         if (result && result?.data) {
-            return result?.data;
+            // escape character is being removed so adding that again in cli command
+            const newdata = { ...result?.data,
+                cliCommand: result?.data?.cliCommand.replace(/"/g, '\\"')
+            }
+            return newdata;
         } else {
             return undefined;
         }
