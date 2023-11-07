@@ -114,7 +114,9 @@ const CodeBox = () => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre>{rightPanelResponse}</pre>
+                    <pre className={styles.colorAutomation}>
+                        {rightPanelResponse}
+                    </pre>
                 </HighlighterWord>
             );
         }
@@ -387,11 +389,7 @@ const CodeBox = () => {
                 </div>
                 <div className={styles.payloadBody}>
                     <div className={styles.scrollContainer}>
-                        <Typography
-                            variant="Regular_14"
-                            className={styles.contentArea}
-                            style={{ color: 'var(--white)' }}
-                        >
+                        <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
                             {setDisplayedDataInCodeBox()}
                         </Typography>
                     </div>

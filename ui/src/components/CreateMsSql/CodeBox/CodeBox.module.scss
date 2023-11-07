@@ -11,6 +11,7 @@
 
     .colorAutomation {
         color: var(--white) !important;
+        margin-top: 0px;
     }
 
     .topBar {
@@ -202,10 +203,6 @@
                 height: calc(100% - 72px);
                 width: calc(100% - 16px);
                 padding: 0 40px 0 40px;
-
-                .contentArea {
-                    margin-top: -20px;
-                }
             }
         }
     }
