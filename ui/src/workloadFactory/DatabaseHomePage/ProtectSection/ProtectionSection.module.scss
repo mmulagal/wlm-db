@@ -5,15 +5,11 @@
         padding: 12px 40px;
         align-items: center;
         border-bottom: 1px solid var(--border);
+        justify-content: space-between;
     }
 
     .title {
         display: flex;
-    }
-
-    .loadingPlacement {
-        display: flex;
-        padding-left: 15px;
     }
 
     .secondContainer {

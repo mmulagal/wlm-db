@@ -1,43 +1,41 @@
 import styles from './EstimatedCost.module.scss';
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import LoadingComponent from '../../../common/LoadingConponent/LoadingComponent';
 
 const EstimatedCost = () => {
-
     // const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
     // Hardcoded values for Estimated Cost Summary
     const hostData = {
-        "storageCost": 11200,
-        "computeCost": 3200,
-        "connectivityCost": 1600,
-        "otherCost": 384,
-        "totalCost": 16384,
-        "storageCostPercent": 68.359375,
-        "computeCostPercent": 19.53125,
-        "connectivityCostPercent": 9.765625,
-        "otherCostPercent": 2.34375
+        storageCost: 11200,
+        computeCost: 3200,
+        connectivityCost: 1600,
+        otherCost: 384,
+        totalCost: 16384,
+        storageCostPercent: 68.359375,
+        computeCostPercent: 19.53125,
+        connectivityCostPercent: 9.765625,
+        otherCostPercent: 2.34375
     };
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
-    
+
     return (
         <div className={styles.estimatedCost}>
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.ESTIMATED_MONTHLY_COST}
-                    {(databaseHostsLoading || databaseJobsLoading) && 
-                        <div className={styles.loadingPlacement}>
-                            <LoadingComponent/>
-                        </div>
-                    }
                 </Typography>
-                <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                    $ {hostData?.totalCost}
-                </Typography>
+
+                {databaseHostsLoading || databaseJobsLoading ? (
+                    <FlashingDotsLoader />
+                ) : (
+                    <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
+                        $ {hostData?.totalCost}
+                    </Typography>
+                )}
             </div>
 
             <div className={styles.mainSection}>

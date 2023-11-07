@@ -67,9 +67,6 @@ function generateDeploymentParams(FSxDataLunSize: number, isExistingFSx: boolean
         SQLigroupname: `${prefix}_sqligroup_${suffix}`,
         SQLSvmName: `${prefix}_sqlsvm_${suffix}`,
         NodeNetBIOSNames: netbios,
-        DomainAdminSecretName: `${prefix}-domain-${suffix}`,
-        FSxAdministratorPasswordSecret: `${prefix}-fsx${suffix}`,
-        SQLServiceAccountSecret: `${prefix}-sql-${suffix}`,
         FSxStorageCapacity,
         FSxDataLunSize: FSxDataLunSizeInMib
     };

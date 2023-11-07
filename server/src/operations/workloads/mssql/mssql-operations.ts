@@ -1,6 +1,6 @@
 import Promise from 'bluebird';
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { attempt, isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
@@ -20,7 +20,8 @@ import {
     CLUSTER_NODES,
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
-    SERVER_IO_LATENCY
+    SERVER_IO_LATENCY,
+    NATIVE_SQL_BACKUPS
 } from './queries';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -32,11 +33,14 @@ import {
     HttpErrorCodes,
     CloudProviders,
     ACCOUNT_ID,
-    RESOURCE_RETRIVAL_ERROR
+    RESOURCE_RETRIVAL_ERROR,
+    WF
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, listResources, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
+import { associateResource } from '../../../lib/cloud-manager/credentials';
+import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
@@ -476,6 +480,16 @@ async function discoverMsSqlServer(
             standbyNodeInstanceName // TODO : store active an standby instance IP when available
         }
     });
+    const { source } = await lookupCredentials(credentialsId);
+    if (source === WF) {
+        await associateResource(credentialsId, accountId, [
+            {
+                id: resourceId,
+                name: resourceName,
+                type: resourceType
+            }
+        ]);
+    }
     return { resourceId, resourceName };
 }
 async function deleteResourceById(accountId: string, resourceId: string) {
@@ -556,6 +570,37 @@ async function getServerState(resourceId: string) {
     return response!.replace(/[\r\n.]/g, '');
 }
 
+async function getNativeSQLProtection(resourceId: string) {
+    logger.info('Fetch SQL native protection status', { resourceId });
+
+    try {
+        const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
+            resourceId
+        );
+
+        if (!credentialsId || !region || !activeNodeInstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+        }
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${NATIVE_SQL_BACKUPS}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId!
+        );
+
+        const cleanedResponse = response?.replaceAll('\r\n', '');
+        const parsedResponse = attempt(JSON.parse, cleanedResponse);
+
+        logger.debug('SQL native protection status', parsedResponse);
+
+        return parsedResponse instanceof Error ? undefined : parsedResponse[0].backupCount;
+    } catch (err) {
+        logger.error('Error getting SQL native protection status', { err });
+    }
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -570,5 +615,6 @@ export {
     getMsSqlResourceId,
     deleteResourceById,
     getServerIOLatency,
-    getServerState
+    getServerState,
+    getNativeSQLProtection
 };

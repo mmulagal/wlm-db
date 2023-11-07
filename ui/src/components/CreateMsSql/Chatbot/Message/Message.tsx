@@ -3,7 +3,8 @@ import SelectComponent from './SelectComponent/SelectComponent';
 import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.svg';
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Button } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 
@@ -37,6 +38,12 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
     const isUserInputRequired = msgObj[key];
     const fieldsArr = msgObj[key] || [];
     const [paramObj, setParamObj] = useState({});
+    const [errorFields, setErrorFields] = useState<string[]>([]);
+
+    //@ts-ignore
+    const isContinueDisabled = useMemo(() => {
+        return Object.keys(paramObj).length !== fieldsArr.length || errorFields.length > 0;
+    }, [paramObj, fieldsArr, errorFields]);
 
     return (
         <div className={styles['message-item']} key={`msg-${idx}`}>
@@ -48,57 +55,83 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, handleSendMsg, messag
                 {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon />}
             </div>
             {isUserInputRequired ? (
-                <div className={styles['msg-group-container']}>
-                    {fieldsArr.map((item: any, idx: number) => {
-                        return (
-                            <>
-                                {msgObj.active && item.allowedValues && item.allowedValues.length ? (
-                                    <div className={styles['select-container']}>
-                                        <SelectComponent
-                                            options={item.allowedValues}
-                                            onChange={(key: string, val: string | number, label: string) => {
-                                                setParamObj({
-                                                    ...paramObj,
-                                                    [key]: { label: label, value: val }
-                                                });
-                                            }}
-                                            heading={item.message}
-                                            selectKey={item.key}
-                                        />
-                                    </div>
-                                ) : (
-                                    msgObj.active &&
-                                    (item.type === 'text' || item.type === 'password') && (
+                msgObj.active ? (
+                    <div className={styles['msg-group-container']}>
+                        {fieldsArr.map((item: any, idx: number) => {
+                            return (
+                                <>
+                                    {msgObj.active && item.allowedValues ? (
                                         <div className={styles['select-container']}>
-                                            <InputComponent
-                                                heading={item.message}
-                                                onChange={(key: string, val: string | number) => {
+                                            <SelectComponent
+                                                options={
+                                                    item.key === 'region'
+                                                        ? item.allowedValues.map((item: any) => {
+                                                              return {
+                                                                  ...item,
+                                                                  label: `${item.value} | ${item.label}`
+                                                              };
+                                                          })
+                                                        : item.allowedValues
+                                                }
+                                                onChange={(key: string, val: string | number, label: string) => {
                                                     setParamObj({
                                                         ...paramObj,
-                                                        [key]: { label: val, value: val }
+                                                        [key]: { label: label, value: val }
                                                     });
                                                 }}
+                                                heading={item.message}
                                                 selectKey={item.key}
-                                                fieldType={item.type}
+                                                paramObj={paramObj}
+                                                allowCreate={item.allowCreate}
                                             />
                                         </div>
-                                    )
-                                )}
-                                {idx < fieldsArr.length - 1 && <div className="seperator"></div>}
-                            </>
-                        );
-                    })}
-                    <div className={styles['buttons-container']}>
-                        {/* <button className="discard-button">Discard</button> */}
-                        <button
-                            className={styles['select-chosen-button']}
-                            onClick={() => handleSelectButtonClicked(paramObj)}
-                            disabled={Object.keys(paramObj).length !== fieldsArr.length}
-                        >
-                            Continue
-                        </button>
+                                    ) : (
+                                        msgObj.active &&
+                                        (item.type === 'text' || item.type === 'password') && (
+                                            <div className={styles['select-container']}>
+                                                <InputComponent
+                                                    heading={item.message}
+                                                    onChange={(key: string, val: string | number) => {
+                                                        setParamObj({
+                                                            ...paramObj,
+                                                            [key]: { label: val, value: val }
+                                                        });
+                                                    }}
+                                                    selectKey={item.key}
+                                                    fieldType={item.type}
+                                                    errorFields={errorFields}
+                                                    setErrorFields={setErrorFields}
+                                                />
+                                            </div>
+                                        )
+                                    )}
+                                </>
+                            );
+                        })}
+                        <div className={styles['buttons-container']}>
+                            {/* <button className="discard-button">Discard</button> */}
+                            <Button
+                                className={styles['select-chosen-button']}
+                                onClick={() => {
+                                    if (!isContinueDisabled) {
+                                        handleSelectButtonClicked(paramObj);
+                                    }
+                                }}
+                                disabled={isContinueDisabled}
+                            >
+                                Continue
+                            </Button>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div
+                        className={`${styles['message-text']} ${
+                            msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
+                        }`}
+                    >
+                        {`${fieldsArr[0].message}`}
+                    </div>
+                )
             ) : msgObj.active && msgObj.type === 'confirm' ? (
                 <div className={styles['select-container']}>
                     <Confirmation

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll } from 'vitest';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/aws/ssm-scope';
@@ -23,7 +24,8 @@ import {
     discoverMsSqlServer,
     deleteResourceById,
     getServerIOLatency,
-    getServerState
+    getServerState,
+    getNativeSQLProtection
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 
@@ -125,6 +127,11 @@ describe('MSSQL Resource methods', () => {
     it('Get Server state ', async () => {
         const resp = await getServerState('36E53042-04E8-40C9-AE69-26E56CB0D216');
         expect(resp).toEqual(mssqlResponse.serverSummaryResponse.serverStatus);
+    });
+
+    it('Get MSSQL native backups count ', async () => {
+        const resp = await getNativeSQLProtection('36E53042-04E8-40C9-AE69-26E56CB0D216');
+        expect(resp).toEqual(1);
     });
 
     it('Discover MSSQL server ', async () => {

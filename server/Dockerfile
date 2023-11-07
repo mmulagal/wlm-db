@@ -1,5 +1,6 @@
 FROM node:alpine3.18
 
+RUN mkdir -p /log
 # Create a new user "netappuser" with UID 1000 and group name "netappgroup"
 RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
 
@@ -7,6 +8,8 @@ WORKDIR /opt/netapp/wlmdb
 
 # Change ownership of the working directory to the new user
 RUN chown -R netappuser:netappgroup /opt/netapp/wlmdb
+RUN chmod 777 /log
+RUN chown -R netappuser:netappgroup /log
 
 # Switch to the new user
 USER netappuser
@@ -21,6 +24,8 @@ COPY resources/mssql/templates/vpc-ad-validation.yaml ./resources/mssql/template
 COPY resources/mssql/templates/sql-windows-fci-config_nosignal.yaml ./resources/mssql/templates/sql-windows-fci-config_nosignal.yaml
 COPY resources/mssql/templates/standalone-deployment.yaml ./resources/mssql/templates/standalone-deployment.yaml
 COPY dist/src ./
+
+COPY src/lib/chatbot/schemas/* ./lib/chatbot/schemas
 
 COPY prisma ./prisma/
 

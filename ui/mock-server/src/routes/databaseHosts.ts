@@ -20,11 +20,17 @@ router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
 });
 
 router.post(`${BASE_URL}/v1/cloudformation/template`, async (req: {}, res: any) => {
-    generateResponse(res, 200, Templates);
+    setTimeout(() => {
+        generateResponse(res, 200, Templates);
+    }, 3000);
 });
 
 router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
     generateResponse(res, 200, {isActive: true});
+});
+
+router.delete(`${BASE_URL}/v1/jobs/jobId/:id`, async (req: {}, res: any) => {
+    generateResponse(res, 200, {'success': 'ok'});
 });
 
 export default router;

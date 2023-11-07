@@ -28,6 +28,7 @@ const AwsAccount = () => {
     //Getting the Data from state
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
+    const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
@@ -112,8 +113,10 @@ const AwsAccount = () => {
 
     // Update selected region in form data store
     useEffect(() => {
-        dispatch(setSelectedCredentials(generateAWSAccounts[0]));
-    }, [dispatch, generateAWSAccounts]);
+        if (!selectedCredential) {
+            dispatch(setSelectedCredentials(generateAWSAccounts[0]));
+        }
+    }, [dispatch, generateAWSAccounts, selectedCredential]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -166,7 +169,7 @@ const AwsAccount = () => {
                                     <div className={styles.listItem}>
                                         <Bullet />
                                         <Typography variant="Regular_14" className={styles.textWidth}>
-                                            {GENERAL.OPTION_TWO}
+                                            {isWorkloadFactoryStatus ? GENERAL.OPTION_TWO_WF : GENERAL.OPTION_TWO}
                                         </Typography>
                                     </div>
                                 </Typography>
@@ -182,7 +185,12 @@ const AwsAccount = () => {
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
-                                <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
+                                {isWorkloadFactoryStatus && (
+                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT_WF}</div>
+                                )}
+                                {!isWorkloadFactoryStatus && (
+                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
+                                )}
                                 <Typography variant="Regular_14" className={styles.buttonStyle}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>

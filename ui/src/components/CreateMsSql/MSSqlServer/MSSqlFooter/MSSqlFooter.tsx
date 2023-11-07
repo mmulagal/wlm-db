@@ -16,6 +16,7 @@ const MSSqlFooter = () => {
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
+    const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
 
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
 
@@ -31,23 +32,33 @@ const MSSqlFooter = () => {
                         if(stackName && stackName.includes('/')){
                             stackName = stackName.split('/')[1];
                         }
-                        const timelineUrl =
-                            process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
-                        const message = (
-                            <>
-                                {GENERAL.CREATE_INFO_MESSAGE[0]}
-                                {stackName ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
-                                {GENERAL.CREATE_INFO_MESSAGE[2]}
-                                <Button
-                                    Component="button"
-                                    variant="text"
-                                    onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
-                                >
-                                    {GENERAL.CREATE_INFO_MESSAGE[3]}
-                                </Button>
-                                {GENERAL.CREATE_INFO_MESSAGE[4]}
-                            </>
-                        );
+                        let message;
+                        if (isWorkloadFactoryStatus) {
+                            message = (
+                                <>
+                                    {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
+                                    {stackName ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName: ''}
+                                    {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
+                                </>
+                            );
+                        } else {
+                            const timelineUrl = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
+                            message = (
+                                <>
+                                    {GENERAL.CREATE_INFO_MESSAGE[0]}
+                                    {stackName ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
+                                    {GENERAL.CREATE_INFO_MESSAGE[2]}
+                                    <Button
+                                        Component="button"
+                                        variant="text"
+                                        onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
+                                    >
+                                        {GENERAL.CREATE_INFO_MESSAGE[3]}
+                                    </Button>
+                                    {GENERAL.CREATE_INFO_MESSAGE[4]}
+                                </>
+                            );
+                        }
                         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
                         setTimeout(() => {
                             navigateToCanvas('/');

@@ -9,7 +9,7 @@ import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-    <React.StrictMode>
+    <>
         <ReduxContextProvider store={store}>
             <BrowserRouter>
                 <DialogContextProvider>
@@ -17,5 +17,5 @@ root.render(
                 </DialogContextProvider>
             </BrowserRouter>
         </ReduxContextProvider>
-    </React.StrictMode>
+    </>
 );

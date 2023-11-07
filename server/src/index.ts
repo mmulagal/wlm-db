@@ -49,11 +49,12 @@ import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
+import chatbotRoutes from './routes/chatbot';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
 
-const { verifyToken } = jwtOperation;
+const { verifyToken, authorizeJwt } = jwtOperation;
 
 const port = config.get<number>('app-port');
 const host = '0.0.0.0';
@@ -148,12 +149,14 @@ const app = fastify({
                 'onRequest',
                 async (request: FastifyRequest<{ Headers: Headers; Params: Params }>, reply: FastifyReply) => {
                     const {
-                        headers: { authorization }
+                        headers: { authorization },
+                        params: { accountId }
                     } = request;
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
                             const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
+                            await authorizeJwt(authorization, payload, accountId);
                             request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                         } catch (err) {
                             logger.error('Token verification error', err);
@@ -174,6 +177,7 @@ const app = fastify({
             pricingRoutes(instance);
             databaseHostsRoutes(instance);
             deploymentJobsRoutes(instance);
+            chatbotRoutes(instance);
             serviceStatusRoutes(instance);
             next();
         },
@@ -192,7 +196,11 @@ const app = fastify({
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
                     url,
-                    headers: { authorization, [HEADERS.WORKSPACE_ID_HEADER]: workspaceId },
+                    headers: {
+                        authorization,
+                        [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
+                        [HEADERS.X_NETAPP_REFERER]: xNetappReferer
+                    },
                     params: { accountId },
                     id: requestId
                 } = request;
@@ -201,6 +209,7 @@ const app = fastify({
                 setAsyncLocalStorageResource(USER_TOKEN, authorization);
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
+                setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
                 const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                 if (!requestUrl) {
                     createAuditGroup(request, reply);
@@ -216,9 +225,10 @@ const app = fastify({
         done();
     })
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
-    .addHook('onSend', async (request, reply, payload) => {
+    .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
-        if (reply.statusCode !== 202) {
+        const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+        if (!requestUrl && reply.statusCode !== 202) {
             updateAuditGroup(request, reply, payload);
         } else if (request.url.includes('cloudformation/stack')) {
             updateAuditGroupResponse(request, payload);
@@ -226,11 +236,14 @@ const app = fastify({
         return payload;
     });
 
-try {
-    await createAndSubscribeToSnsTopicInAllRegions();
-    processCloudFormationMessages();
-} catch (error) {
-    logger.error('Failed to setup SNS-SQS infra', error);
+// Blocking for simulator
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+    try {
+        await createAndSubscribeToSnsTopicInAllRegions();
+        processCloudFormationMessages();
+    } catch (error) {
+        logger.error('Failed to setup SNS-SQS infra', error);
+    }
 }
 
 try {

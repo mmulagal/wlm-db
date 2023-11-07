@@ -300,7 +300,43 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"High\"}]\r\n",
+        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"Very good\"}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "nativeSqlBackupInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "[{\"backupCount\":1}]\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "ontapSnapshotCountInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\r\n\"records\":[\r\n{\r\n\"uuid\":\"032cd032-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqltemp_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":{\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/032cd032-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":\"03486072-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqldata_1698276677110\",\r\n\"snapshot_count\":3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/03486072-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"035b0b46-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_sqllog_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/035b0b46-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"095e5132-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_quorum_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/095e5132-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n}\r\n],\r\n    \"num_records\":  4,\r\n    \"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes?uuid=032cd032-7391-11ee-8151-1feabed00a0f,095e5132-7391-11ee-8151-1feabed00a0f,03486072-7391-11ee-8151-1feabed00a0f,035b0b46-7391-11ee-8151-1feabed00a0f\\u0026fields=snapshot_count\"\r\n}\r\n}\r\n}\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

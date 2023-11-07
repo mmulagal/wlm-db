@@ -51,7 +51,8 @@ enum HEADERS {
     NETAPP_WLMSQL_REQUEST_ID = 'x-netapp-wlmsql-request-id',
     SIMULATOR = 'x-simulator',
     REFERER = 'referer',
-    ACTIVE_TRACE_ID = 'active-trace-id'
+    ACTIVE_TRACE_ID = 'active-trace-id',
+    X_NETAPP_REFERER = 'x-netapp-referer'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -65,7 +66,7 @@ const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch'];
+const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt'];
 const DEFAULT_AWS_REGION = 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
@@ -74,7 +75,7 @@ const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
 const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
-const WF_ENDPOINT: string = config.get<string>('urls.workload-factory');
+const WORKLOAD_FACTORY_ENDPOINT: string = config.get<string>('urls.workload-factory');
 const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
 
 const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
@@ -431,8 +432,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['ap-southeast-3', 'Asia Pacific (Jakarta)'],
     ['ap-southeast-4', 'Asia Pacific (Melbourne)'],
     ['ca-central-1', 'Canada (Central)'],
-    ['cn-north-1', 'China (Beijing)	'],
     ['cn-north-1', 'China (Beijing)'],
+    ['cn-northwest-1', 'China (Ningxia)'],
     ['eu-central-1', 'Europe (Frankfurt)'],
     ['eu-central-2', 'Europe (Zurich)'],
     ['eu-north-1', 'Europe (Stockholm)'],
@@ -498,12 +499,15 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     adScenarioType: 'ADScenarioType',
     domainUsername: 'DomainAdminUser',
+    domainPassword: 'DomainAdminPassword',
     domainDnsname: 'DomainDNSName',
     dnsIpaddress: 'DNSIpAddresses',
     securityGroupId: 'DomainMemberSGID',
 
     fsxDeploymentMode: 'DeploymentMode',
     fsxFileSystemId: 'FSxFileSystemId',
+    fsxUsername: 'FSxAdminUsername',
+    fsxPassword: 'FSxAdminPassword',
     fsxVolThroughput: 'FSxVolumeThroughputCapacity',
     fsxIOPS: 'FSxDiskIops',
     ontapSgGroupId: 'ONTAPSecurityGroupID',
@@ -512,6 +516,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     sqlDeploymentMode: 'SQLDeploymentMode',
     sqlAmiId: 'SQLAMIID',
     serviceAccountName: 'SQLServiceAccountName',
+    serviceAccountPassword: 'SQLServiceAccountPassword',
     sqlServerName: 'SqlServerName',
 
     workloadInstanceType: 'WorkloadInstanceType',
@@ -764,8 +769,8 @@ const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
 
-const FCI_STACKNAME = 'SQLFCIStack';
-const STANDALONE_STACKNAME = 'Standalone';
+const FCI_STACKNAME = 'SqlFciStack';
+const STANDALONE_STACKNAME = 'SqlStandaloneStack';
 
 // Notification
 const CRITICAL = 'critical';
@@ -791,6 +796,15 @@ const FCI = 'fci';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
 
+const WF = 'WORKLOAD_FACTORY';
+const BXP = 'BlueXP';
+
+const USER_TENANCY_CACHE_TYPE = 'USER_TENANCY';
+const WF_USER_CRED_TYPE = 'WF_USER_CRED';
+const BXP_USER_CRED_TYPE = 'BXP_USER_CRED';
+
+const ADMIN_ROLE = 'Role-1';
+const USER_ROLE = 'Role-2';
 enum DatabaseHostsQueryFields {
     PERFORMANCE = 'performance',
     PROTECTION = 'protection',
@@ -810,6 +824,14 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
     'UPDATE_IN_PROGRESS',
     'UPDATE_COMPLETE',
     'UPDATE_FAILED'
+];
+
+const NOT_AVAILABLE = 'N/A';
+
+const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
+    'DomainAdminPassword',
+    'SQLServiceAccountPassword',
+    'FSxAdminPassword'
 ];
 
 export {
@@ -937,7 +959,7 @@ export {
     METHODS_WITH_PAYLOAD,
     SERVICE_TOKEN,
     TOKEN_EXPIRATION_TIME,
-    WF_ENDPOINT,
+    WORKLOAD_FACTORY_ENDPOINT,
     BATCH_API_CONCURRENCY_LIMIT,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
@@ -963,6 +985,13 @@ export {
     SQL_DEPLOYMENT_FAILED_SUBJECT,
     SQL_DEPLOYMENT_COMPLETED_SUBJECT,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    WF,
+    BXP,
+    USER_TENANCY_CACHE_TYPE,
+    WF_USER_CRED_TYPE,
+    BXP_USER_CRED_TYPE,
+    ADMIN_ROLE,
+    USER_ROLE,
     STACK_NOT_FOUND,
     RESOURCE_RETRIVAL_ERROR,
     DatabaseHostsQueryFields,
@@ -984,5 +1013,7 @@ export {
     SNS_ARN,
     SNS_STRICT_ACTION_NAMES,
     CLOUD_FORMATION_CLI_COMMAND,
-    DEPLOYMENT_JOBS_STATUS_FILTER
+    DEPLOYMENT_JOBS_STATUS_FILTER,
+    NOT_AVAILABLE,
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS
 };

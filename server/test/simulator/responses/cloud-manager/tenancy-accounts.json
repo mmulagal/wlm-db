@@ -1,0 +1,312 @@
+[
+    {
+        "accountPublicId": "account-3JuDht6X",
+        "accountName": "Demo_SIM_Stg",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96047492333825192656",
+        "userRole": "Role-2"
+    },
+    {
+        "accountPublicId": "account-Xy9lYV5u",
+        "accountName": "gil_-gil",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96027000015452781096",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-2FKBEZKj",
+        "accountName": "Netapp",
+        "isSaas": false,
+        "isGov": true,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96088796257168096394",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-SC6dfavU",
+        "accountName": "Netapp",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96040839664943550618",
+        "userRole": "Role-2"
+    },
+    {
+        "accountPublicId": "account-LiFXImgc",
+        "accountName": "Netapp",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96011203301461666186",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-Od1CJ7mV",
+        "accountName": "Netapp",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96074097937892302902",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-vTvVvgZG",
+        "accountName": "Anand",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": true,
+        "is3rdPartyServicesEnabled": true,
+        "accountSerial": "96096433637766415264",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-i6vJXvZW",
+        "accountName": "rashidn",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96064469711530003565",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-ib1qOgnj",
+        "accountName": "sfr",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": true,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96008157204832885552",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-M2lCKXwn",
+        "accountName": "Backup2701",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96018676820625977233",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-z9MQJNZI",
+        "accountName": "GOV-Account",
+        "isSaas": false,
+        "isGov": true,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96005606340574584907",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-7vtgzuqC",
+        "accountName": "Pepsi",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96053441489063674983",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-OOnAR4ZS",
+        "accountName": "cbs",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96073160743242845476",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-uqW32GoN",
+        "accountName": "Sanjeev",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96000995175312989846",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-TNXHqXTD",
+        "accountName": "gov210926",
+        "isSaas": false,
+        "isGov": true,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": true,
+        "accountSerial": "96038608597920042346",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-X6bN8uan",
+        "accountName": "cbs-marketing-demo",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96084061351744300139",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-T6CRXnG0",
+        "accountName": "jacobaccount1",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96021929850672320526",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-f7mykehu",
+        "accountName": "scalecbs",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96085606508818035828",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-AevnS2Yi",
+        "accountName": "catalog1",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96022843161451550041",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-y764jnu3",
+        "accountName": "catalog2",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96024912932969891942",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-mdLRozSn",
+        "accountName": "catalog3",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96093809856101915071",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-8BJJnGuE",
+        "accountName": "azure_gov_cloud",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96021651752610820411",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-ROglDwaL",
+        "accountName": "catalog6",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96062216895232234491",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-kswl8o7j",
+        "accountName": "catalog7",
+        "isSaas": false,
+        "isGov": true,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96027415750313999038",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-dKQDgxDw",
+        "accountName": "cbsqa_manual_01",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96015938534085914330",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-OMkOpCYM",
+        "accountName": "catalog8",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96092323579893910742",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-T6u7WBZ6",
+        "accountName": "skadam",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96057547160902897854",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-7HgZAef2",
+        "accountName": "cbssprint16",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96080108371064589723",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-r3Dy0m0U",
+        "accountName": "raghvpvmdk1",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96084825781911889954",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-Ifv1ggOE",
+        "accountName": "cbsqa_license",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96003569710581483403",
+        "userRole": "Role-1"
+    },
+    {
+        "accountPublicId": "account-HwskUzae",
+        "accountName": "cbs-dev",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96079513952799431690",
+        "userRole": "Role-1"
+    }
+]

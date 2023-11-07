@@ -6,6 +6,7 @@ import ssmCommandOutput from '../../simulator/responses/aws/ssm-sendcommands-res
 import ssmResponse from '../../simulator/responses/aws/ssm-response.json';
 import fsxOntapRegions from '../../simulator/responses/aws/list-fsx-ontap-regions.json';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';

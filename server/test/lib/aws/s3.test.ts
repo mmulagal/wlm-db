@@ -1,15 +1,19 @@
 import { faker } from '@faker-js/faker';
 import '../../simulator/scopes/aws/s3-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION, SECRETS } from '../../../src/utils/consts';
 import {
-    getPreSignedUrl,
+    preSignedUrl,
     putObjectBucket,
     getBucketLifecycleConfiguration,
     putBucketLifecycleConfiguration,
     getObjectBucket
 } from '../../../src/lib/aws/s3';
+
+const { getPreSignedUrl } = preSignedUrl;
 
 const credentialsId = `${faker.string.alpha(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

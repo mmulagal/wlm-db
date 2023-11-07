@@ -8,7 +8,7 @@
         height: 40px;
         width: 40px;
         border-radius: 20px;
-        box-shadow: 2px 2px 6px 0px #e0e0e0;
+        box-shadow: 2px 2px 6px 0px var(--border);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -28,8 +28,8 @@
         flex-direction: column;
         justify-content: center;
         width: fit-content;
-        max-width: 650px;
-        box-shadow: 2px 2px 6px 0px #e0e0e0;
+        max-width: 550px;
+        box-shadow: 2px 2px 6px 0px var(--border);
         padding: 10px 20px 10px 20px;
         white-space: pre-line;
         text-align: justify;
@@ -45,14 +45,13 @@
 
     .msg-group-container {
         display: flex;
-        gap: 30px;
         flex-direction: column;
         justify-content: center;
         width: fit-content;
-        max-width: 690px;
-        box-shadow: 2px 2px 6px 0px #e0e0e0;
+        max-width: 550px;
+        box-shadow: 2px 2px 6px 0px var(--border);
         font-size: 14px;
-        padding: 10px 20px 10px 20px;
+        padding: 30px;
         background-color: white;
 
         .select-container {
@@ -60,7 +59,7 @@
             flex-direction: column;
             justify-content: center;
             width: fit-content;
-            max-width: 690px;
+            max-width: 550px;
             font-size: 14px;
             gap: 30px;
         }
@@ -70,17 +69,6 @@
             flex-direction: row;
             justify-content: space-between;
             padding: 0 50px 0 50px;
-
-            .select-chosen-button {
-                background-color: #0067c5;
-                color: white;
-                font-weight: 600;
-                border: none;
-                border-radius: 5px;
-                width: 70px;
-                height: 25px;
-                cursor: pointer;
-            }
         }
     }
 }

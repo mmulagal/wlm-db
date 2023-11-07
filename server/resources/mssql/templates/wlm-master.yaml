@@ -32,7 +32,7 @@ Metadata:
           - ADScenarioType
           - DomainDNSName
           - DomainAdminUser
-          - DomainAdminSecretName
+          - DomainAdminPassword
           - DNSIpAddresses
           - DomainMemberSGID
       - Label:
@@ -41,7 +41,8 @@ Metadata:
           - DeploymentMode
           - FSxFileSystemName
           - FSxFileSystemId
-          - FSxAdministratorPasswordSecret
+          - FSxAdminUsername
+          - FSxAdminPassword
           - FSxSvmName
           - FSxStorageCapacity
           - FSxDataVolumeName
@@ -64,7 +65,7 @@ Metadata:
           - SQLDeploymentMode
           - SQLAMIID
           - SQLServiceAccountName
-          - SQLServiceAccountSecret
+          - SQLServiceAccountPassword
           - SqlFSxWSFCName
           - SqlServerName
       - Label:
@@ -100,10 +101,10 @@ Metadata:
         default: AD Scenario Type
       DNSIpAddresses:
         default: DNS IP Addresses
-      DomainAdminSecretName:
-        default: Secrets Manager Secret Name for FCI of Domain Admin Password
       DomainAdminUser:
         default: Domain Admin User Name
+      DomainAdminPassword:
+        default: Domain Admin Password
       DomainDNSName:
         default: Domain DNS Name
       SqlFSxWSFCName:
@@ -118,8 +119,8 @@ Metadata:
         default: SQL Server Version
       SQLServiceAccountName:
         default: Service Account Name
-      SQLServiceAccountSecret:
-        default: Secrets Manager Secret for of Service Account Password
+      SQLServiceAccountPassword:
+        default: Service Account Password
       SQLigroupname:
         default: SQL igroup Name
       SqlServerName:
@@ -192,12 +193,6 @@ Parameters:
     Description: Fixed private IPs for the Active Directory servers
     Type: String
 
-  DomainAdminSecretName:
-    Description:
-      Secrets Manager Secret Name for FCI for the domain admin user. Must
-      be at least 8 characters containing letters, numbers and symbols
-    Type: String
-
   DomainAdminUser:
     AllowedPattern: "([a-zA-Z0-9]+(\\.|_|-|@)*)+"
     Description:
@@ -208,6 +203,12 @@ Parameters:
     MaxLength: "20"
     MinLength: "5"
     Type: String
+
+  DomainAdminPassword:
+    Description: Password for Domain Adminstrator.
+    Type: String
+    NoEcho: true
+    MinLength: 8
 
   DomainDNSName:
     AllowedPattern: "[a-zA-Z0-9\\-]+\\..+"
@@ -272,13 +273,13 @@ Parameters:
     MaxLength: "20"
     MinLength: "5"
     Type: String
-
-  SQLServiceAccountSecret:
-    Description:
-      Secrets Manager name of Password for the SQL Service account. Must
-      be at least 8 characters containing letters, numbers and symbols
-    Type: String
   
+  SQLServiceAccountPassword:
+    Description: Password for the SQL Server Service Account.
+    Type: String
+    NoEcho: true
+    MinLength: 8
+
   SQLigroupname:
     Description: SQL igroupname
     Type: String
@@ -374,11 +375,16 @@ Parameters:
     Description: Size of the SQL data lun, in megabytes (MiB)
     Type: Number
 
-  FSxAdministratorPasswordSecret:
-    Description: Secret String for FSx "fsxadmin" administrator account
+  FSxAdminUsername:
+    Description: FSxN username
     Type: String
+    MinLength: 1
+         
+  FSxAdminPassword:
+    Description: Password for FSxAdminUsername.
+    Type: String
+    NoEcho: true
     MinLength: 8
-    MaxLength: 50
 
   FSxSvmName:
     Type: String
@@ -468,6 +474,27 @@ Conditions:
   IsStandalone: !Equals [!Ref SQLDeploymentMode, 'standalone']
   IsFailoverCluster: !Not [Condition: IsStandalone]
 Resources:
+  DomainAdminSecretName:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${AWS::StackName}-domain
+      Description: Secret for Domain Account
+      SecretString: !Sub '{ "username": "${DomainAdminUser}", "password": "${DomainAdminPassword}" }'
+
+  FSxNSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${AWS::StackName}-fsx
+      Description: Secret for FSxN filesystem
+      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
+
+  SQLServiceAccountSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${AWS::StackName}-sql
+      Description: Secret for SQL Service Account
+      SecretString: !Sub '{ "username": "${SQLServiceAccountName}", "password": "${SQLServiceAccountPassword}" }'
+
   TrackStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
@@ -478,6 +505,14 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
+      ResourceName: !Ref 'SqlServerName'
+      SQLDeploymentType: 
+          !If
+            - IsFailoverCluster
+            - 'FCI'
+            - 'Standalone'
+      FileSystemType: 'FSx ONTAP'
+      DatabaseType: 'Microsoft SQL server'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
@@ -579,14 +614,21 @@ Resources:
       Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
       Timeout: '7200'
       Count: 0
-  WLMSQLResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    DependsOn: WaitCondition
+  # WLMSQLResourceGroup:
+  #   Type: AWS::ResourceGroups::Group
+  #   DependsOn: WaitCondition
+  #   Properties:
+  #     Name:
+  #       Ref: AWS::StackName
+  #     ResourceQuery:
+  #       Type: CLOUDFORMATION_STACK_1_0
+  FSxNSecret:
+    Type: AWS::SecretsManager::Secret
     Properties:
-      Name:
-        Ref: AWS::StackName
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
+      Name: !Sub ${AWS::StackName}-fsx
+      Description: Secret for FSxN filesystem
+      SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
+
   NewFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
@@ -599,7 +641,7 @@ Resources:
         FSxFileSystemName:
           Ref: FSxFileSystemName
         FSxAdministratorPasswordSecret:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxNSecret
         FSxVolumeThroughputCapacity:
           Ref: FSxVolumeThroughputCapacity
         FSxStorageCapacity:
@@ -760,7 +802,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -858,7 +900,7 @@ Resources:
             - !GetAtt "NewFSxStack.Outputs.FSxFileSystemLogicalId"
             - !GetAtt "ExistingFSxStack.Outputs.FSxFileSystemId"
         FsxAdminPassword:
-          Ref: FSxAdministratorPasswordSecret
+          Ref: FSxNSecret
         SQLSvmName:
           Ref: SQLSvmName
         FSxDataVolumeName:
@@ -899,6 +941,10 @@ Resources:
       JWToken: !Ref JwtToken
       Region: !Ref 'AWS::Region' 
       StackName: !Ref 'AWS::StackName'
+      DomainAdminSecretName: !Sub ${AWS::StackName}-domain
+      FSxNSecret: !Sub ${AWS::StackName}-fsx
+      SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
+
       FSxFileSystemId:
           !If
             - NewOntapFsx

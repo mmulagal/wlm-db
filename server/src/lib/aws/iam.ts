@@ -1,5 +1,5 @@
 import { IAMClient, SimulatePrincipalPolicyCommand, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
-import { getCredentialDetails } from '../cloud-manager/credentials';
+import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -9,13 +9,17 @@ async function getIAM(credentialsId: string, region: string) {
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new IAMClient({ credentials, region });
 }
 
-async function getPermissionsList(credentialsId: string, region: string, command: SimulatePrincipalPolicyCommandInput) {
+export default async function getPermissionsList(
+    credentialsId: string,
+    region: string,
+    command: SimulatePrincipalPolicyCommandInput
+) {
     logger.info('Get missing permissions List', { credentialsId, region, command });
 
     const iamClient = await getIAM(credentialsId, region);
@@ -25,5 +29,3 @@ async function getPermissionsList(credentialsId: string, region: string, command
 
     return response;
 }
-
-export { getPermissionsList };

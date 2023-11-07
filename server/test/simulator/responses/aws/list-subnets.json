@@ -30,7 +30,7 @@
             }
         },
         {
-            "AvailabilityZone": "us-east-1d",
+            "AvailabilityZone": "us-east-2d",
             "AvailabilityZoneId": "use1-az4",
             "AvailableIpAddressCount": 251,
             "CidrBlock": "192.168.17.0/24",

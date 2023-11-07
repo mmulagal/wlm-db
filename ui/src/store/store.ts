@@ -10,6 +10,7 @@ import { GENERAL } from '../utils/appConstants';
 import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import previewPanelSlice from './previewPanel/previewPanelSlice';
+import chatbotSlice from './chatbot/chatbotSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -24,21 +25,13 @@ const rootReducer = combineReducers({
     [databaseHomeApi.reducerPath]: databaseHomeApi.reducer,
     [chatbotApi.reducerPath]: chatbotApi.reducer,
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
-    [previewPanelSlice.name]: previewPanelSlice.reducer
+    [previewPanelSlice.name]: previewPanelSlice.reducer,
+    [chatbotSlice.name]: chatbotSlice.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
-        const apiName = action?.meta?.arg?.queryCacheKey || '';
-
-        // TBD - Will remove once APIs will be available
-        if (
-            apiName.includes('getDatabaseJobs')
-        ) {
-            return next(action);
-        }
-
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
 
         const reqFieldChk = requiredFieldError(errorMsg);

@@ -57,19 +57,28 @@ export const GENERAL = {
     TAG: 'Tag',
     SIMPLE_NOTIFICATION_SERVICE: 'Simple Notification Service',
     SAVE_FORM_AS_CLOUD: 'Redirect to CloudFormation',
+    DEPLOYMENT_MODEL: 'Deployment Model',
     AWS_SETTINGS: 'AWS settings',
     VIEW_API_REQUEST: 'View API request',
     LOAD_CONFIG_HEADER: 'Load Microsoft SQL server configuration',
     LOAD_CONFIG_CONTENT:
         'Select the configuration that you want to load. You can change the parameters after it loads.',
     SAVE_CONFIG_HEADER: 'Save Microsoft SQL Server configuration',
+    RENAME_CONFIG: 'Rename configuration',
+    DELETE_CONFIG: 'Delete configuration',
+    DELETE_CONFIG_TEXT: 'Are you sure to delete configuration',
+    DELETE_CONFIG_NOTIFICATION: 'Configuration deleted successfully.',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
+    RENAME_CONFIG_CONTENT: ['Enter a new name to ', ' configuration'],
+    RENAME_CONFIG_NOTIFICATION: 'Configuration name changes successfully.',
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
     REMOVE: 'Remove',
     SAVE: 'Save',
+    RENAME: 'Rename',
+    DELETE: 'Delete',
     API_REQUEST: 'API request',
     CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
@@ -79,9 +88,12 @@ export const GENERAL = {
     STEP_TWO_TEXT: 'Add the credentials required for deployment:',
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
+    OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT_WF:
+        'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
@@ -257,6 +269,11 @@ export const GENERAL = {
         'Timeline',
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
+    CREATE_INFO_MESSAGE_WLM: [
+        'Microsoft SQL Server and FSxN for ONTAP deployment ',
+        'with stack name ',
+        ' has been triggered. Estimated time: Up to 2 hours.'
+    ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
     DISCOVER_FORM_HEADING:
@@ -268,6 +285,8 @@ export const GENERAL = {
     INFORMATION: 'Information',
     RESOURCE_DISTRIBUTION: 'Resources Distribution',
     TIMELINE: 'Timeline',
+    REMOVE_DATABASE_HOST: 'Remove database host',
+    REMOVE_CONFIG_TEXT: 'Are you sure you want to remove database host?',
     REMOVE_FROM_WORKSPACE: 'Remove from workspace',
     TABLES_SUMMARY: 'Tables summary',
     TABLES: 'Tables',
@@ -347,6 +366,9 @@ export const GENERAL = {
     DB_HOST_PROTECTION: 'Protection',
     DB_HOST_PERFORMANCE: 'Performance',
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
+    DB_SS_TT_1:
+        'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Clone etc. ',
+    DB_SS_TT_2: 'Calculation is based on unique FSx ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated Cost',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
@@ -374,7 +396,8 @@ export const GENERAL = {
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
     PROTECTION_DATABASES: 'DB',
     PROTECTION: 'Protection',
-    NUMBER_OF_EXECUTION: 'Number of Execution'
+    NUMBER_OF_EXECUTION: 'Number of Execution',
+    TERRAFORM: 'Terraform'
 };
 
 export const CODE_VIEWER = {
@@ -386,7 +409,9 @@ export const CODE_VIEWER = {
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
     NO_DATA_MSG: 'No data found',
-    LOADING: 'Loading...',
+    LOADING_CLOUD_FORMATION: 'Loading CloudFormation code',
+    LOADING_REST_API: 'Loading REST API code',
+    LOADING_AWS_CLI: 'Loading AWS CLI code',
     CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
@@ -401,5 +426,6 @@ export const CODE_VIEWER = {
     RENAME: 'Rename',
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
-    DEPLOYMENT: 'Deployment:'
+    DEPLOYMENT: 'Deployment:',
+    CREATE_DATABASE: 'Create database'
 };

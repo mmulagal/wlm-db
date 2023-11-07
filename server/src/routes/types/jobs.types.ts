@@ -1,14 +1,62 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 
-const DeploymentJobsResponse = Type.Object({
+const DeploymentJobsCountQueryString = Type.Object({
+    duration: Type.Optional(Type.Number())
+});
+
+const DeploymentJobsSummaryQueryString = Type.Object({
+    statuses: Type.Optional(Type.String())
+});
+
+const DeploymentJobsSummaryResponse = Type.Object({
+    id: Type.String(),
+    deploymentId: Type.String(),
+    deploymentName: Type.String(),
+    name: Type.Optional(Type.String()),
+    status: Type.String(),
+    metadata: Type.Object({
+        region: Type.Optional(Type.String()),
+        serverType: Type.Optional(Type.String()),
+        serverInstallationMode: Type.Optional(Type.String()),
+        fileSystemType: Type.Optional(Type.String())
+    })
+});
+
+type DeploymentJobsSummaryResponseType = Static<typeof DeploymentJobsSummaryResponse>;
+
+const DeploymentJobsSummaryListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(DeploymentJobsSummaryResponse),
+    nextToken: Type.String()
+});
+
+type DeploymentJobsSummaryListResponseType = Static<typeof DeploymentJobsSummaryListResponse>;
+
+const DeploymentJobsCountResponse = Type.Object({
     success: Type.Number(),
     initializing: Type.Number(),
     failed: Type.Number()
 });
-type DeploymentJobsResponseResponseType = Static<typeof DeploymentJobsResponse>;
 
-const DeploymentJobsQueryString = Type.Object({
-    duration: Type.Optional(Type.Number())
+type DeploymentJobsCountResponseType = Static<typeof DeploymentJobsCountResponse>;
+
+const DeleteJobResponse = Type.Object({
+    message: Type.String()
 });
 
-export { DeploymentJobsResponse, DeploymentJobsResponseResponseType, DeploymentJobsQueryString };
+const JobsParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    jobId: Type.String({ minLength: 1 })
+});
+
+export {
+    DeploymentJobsCountResponse,
+    DeploymentJobsCountResponseType,
+    DeploymentJobsCountQueryString,
+    DeploymentJobsSummaryQueryString,
+    DeploymentJobsSummaryListResponse,
+    DeploymentJobsSummaryResponseType,
+    DeploymentJobsSummaryListResponseType,
+    DeleteJobResponse,
+    JobsParams
+};

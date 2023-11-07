@@ -29,6 +29,7 @@
     "license": "UNLICENSED",
     "dependencies": {
         "@apidevtools/swagger-parser": "^10.1.0",
+        "@aws-sdk/client-bedrock-runtime": "^3.433.0",
         "@aws-sdk/client-cloudformation": "^3.427.0",
         "@aws-sdk/client-directory-service": "^3.427.0",
         "@aws-sdk/client-ec2": "^3.427.0",
@@ -67,11 +68,13 @@
         "jwks-rsa": "^3.0.1",
         "lodash-es": "^4.17.21",
         "log4js": "^6.9.1",
+        "lru-cache": "^10.0.1",
         "moment": "^2.29.4",
         "nanoid": "^4.0.2",
         "patch-package": "^8.0.0",
         "prisma": "^5.2.0",
         "randomatic": "^3.1.1",
+        "typescript": "^5.2.2",
         "yaml": "^2.3.2"
     },
     "devDependencies": {
@@ -95,7 +98,6 @@
         "nock": "^13.3.1",
         "prismock": "^1.21.1",
         "rimraf": "^5.0.1",
-        "typescript": "^5.0.4",
         "vitest": "^0.34.2"
     }
 }

@@ -6,7 +6,7 @@ import AwsAccount from '../AwsSettings/AwsAccount/AwsAccount';
 import RegionVpc from '../AwsSettings/RegionVpc/RegionVpc';
 import SecurityGroup from '../AwsSettings/SecurityGroup/SecurityGroup';
 import OperatingSystem from '../ApplicationSettings/OperatingSystem/OperatingSystem';
-import DatabaseDeploymentModel from '../ApplicationSettings/DatabaseDeploymentModel/DatabaseDeploymentModel';
+import DatabaseDeploymentModel from '../DeploymentModel/DatabaseDeploymentModel/DatabaseDeploymentModel';
 import DatabaseEdition from '../ApplicationSettings/DatabaseEdition/DatabaseEdition';
 import DatabaseVersion from '../ApplicationSettings/DatabaseVersion/DatabaseVersion';
 import License from '../ApplicationSettings/License/License';
@@ -36,6 +36,7 @@ import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     MssqlApis();
 
@@ -53,23 +54,55 @@ const MSSqlAccordions = () => {
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>
             <AccordionController isGrouped>
+                {/* Deployment model heading added in case of Standard create */}
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                    <div className={styles['header-buttons']}>
+                        <Typography
+                            style={{
+                                padding: '0 0 8px'
+                            }}
+                            variant="Semibold_16"
+                        >
+                            {GENERAL.DEPLOYMENT_MODEL}
+                        </Typography>
+                        {!isWorkloadFactory && (
+                            <Button
+                                onClick={handleViewAPIRequest}
+                                Component="button"
+                                variant="text"
+                                className={styles.buttonClass}
+                            >
+                                {GENERAL.VIEW_API_REQUEST}
+                            </Button>
+                        )}
+                    </div>
+                )}
+
+                {/* Deployment model accordions */}
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && <DatabaseDeploymentModel />}
+                {/* Ends here */}
+
                 <div className={styles['header-buttons']}>
                     <Typography
                         style={{
                             padding: '0 0 8px'
                         }}
                         variant="Semibold_16"
+                        className={selectedConfig === SELECT_CONFIG.STANDARD_CREATE ? styles.adjustMargin : ''}
                     >
                         {GENERAL.AWS_SETTINGS}
                     </Typography>
-                    <Button
-                        onClick={handleViewAPIRequest}
-                        Component="button"
-                        variant="text"
-                        className={styles.buttonClass}
-                    >
-                        {GENERAL.VIEW_API_REQUEST}
-                    </Button>
+                    {/* View API request added here in case of easy create otherwise added as part of Deployment Model */}
+                    {selectedConfig === SELECT_CONFIG.EASY_CREATE && !isWorkloadFactory && (
+                        <Button
+                            onClick={handleViewAPIRequest}
+                            Component="button"
+                            variant="text"
+                            className={styles.buttonClass}
+                        >
+                            {GENERAL.VIEW_API_REQUEST}
+                        </Button>
+                    )}
                 </div>
                 {/* AWS Accounts Accordion */}
                 {/* <MssqlApis /> */}
@@ -92,7 +125,6 @@ const MSSqlAccordions = () => {
                 {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                     <>
                         <OperatingSystem />
-                        <DatabaseDeploymentModel />
                         <DatabaseEdition />
                         <DatabaseVersion />
                         <License />

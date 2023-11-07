@@ -1,5 +1,9 @@
 const SET_NOCOUNT = 'SET NOCOUNT ON;';
 const FOR_JSON_PATH = 'FOR JSON PATH';
+const DEVICE_TYPE_DISK = 2; // Storage is in local disk
+const BACKUP_TYPE_DATA = 'D'; // Data, not logs
+const SYSTEM_DATABASES = ['msdb', 'tempdb', 'model', 'master'];
+
 const DATABASES = (offset: number, rowscount: number) =>
     `${SET_NOCOUNT} SELECT databaseId = d.database_id,
             databaseName = d.name,
@@ -94,13 +98,27 @@ const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT
                                                     CASE 
                                                         WHEN ServerIOLatency = 0 THEN 'N/A' 
                                                         ELSE 
-                                                            CASE WHEN ServerIOLatency < 10 THEN 'High'
-                                                                WHEN ServerIOLatency < 20 THEN 'Medium'
-                                                                WHEN ServerIOLatency < 100 THEN 'Low'      
+                                                            CASE WHEN ServerIOLatency < 1 THEN 'Excellent'
+                                                                 WHEN ServerIOLatency < 5 THEN 'Very good'
+                                                                 WHEN ServerIOLatency < 10 THEN 'Good'
+                                                                 WHEN ServerIOLatency < 20 THEN 'Poor'
+                                                                 WHEN ServerIOLatency < 100 THEN 'Bad'
+                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad'
+                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful'
                                                             END 
                                                     END
                                             from DatabaseLatency
                                 ${FOR_JSON_PATH}`;
+
+const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
+    COUNT(DISTINCT backupset.database_name) as backupCount
+    FROM msdb.dbo.backupset AS backupset
+    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
+    ON backupset.media_set_id = backupmedia.media_set_id
+    WHERE backupmedia.device_type = ${DEVICE_TYPE_DISK}
+    AND backupset.type = ${BACKUP_TYPE_DATA}
+    AND backupset.database_name NOT IN (${SYSTEM_DATABASES.join()})
+`;
 
 export {
     DATABASES,
@@ -119,5 +137,6 @@ export {
     SERVER_NODE,
     CLUSTER_NODES,
     DB_SIZE,
-    SERVER_IO_LATENCY
+    SERVER_IO_LATENCY,
+    NATIVE_SQL_BACKUPS
 };

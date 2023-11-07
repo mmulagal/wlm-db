@@ -17,6 +17,7 @@ const Tags = () => {
     const dispatch = useDispatch();
     const tags = useAppSelector((state: any) => state.mssqlForm.tags);
 
+    //@ts-ignore
     const emptyTagItems = useMemo(() => {
         return tags.filter((tag: Tag) => !tag.key);
     }, [tags]);
@@ -31,6 +32,7 @@ const Tags = () => {
         );
     };
 
+    //@ts-ignore
     const isAddDisabled = useMemo(() => {
         if (emptyTagItems.length || tags.length >= 40) {
             return true;
@@ -45,7 +47,7 @@ const Tags = () => {
 
     const handleChange = (idx: number, prop: string, value: string) => {
         const re = /^([a-zA-Z0-9_.:/=+-@]*)$/;
-        if(!value || re.test(value)){
+        if (!value || re.test(value)) {
             const updatedTags = [
                 ...tags.map((tag: Tag) => {
                     return { key: tag.key, value: tag.value };

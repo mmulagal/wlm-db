@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setRefetchJobSummaryApi } from "../../store/mssql/msSqlActionSlice";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
 import { 
     addAggregatedCosts,
@@ -31,6 +32,7 @@ const DatabaseHomeApis = () => {
 
     const { databaseHostsData } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const refetchJobSummaryApi = useAppSelector(state => state.msSqlAction.refetchJobSummaryApi);
     
     const [hostCursor, setHostCursor] = useState(null);
     const [jobsCursor, setJobsCursor] = useState(null);
@@ -59,8 +61,17 @@ const DatabaseHomeApis = () => {
     const {
         data: jobsSummaryData,
         isFetching: jobsSummaryLoading,
-        isError: jobsSummaryError
+        isError: jobsSummaryError,
+        refetch: jobsSummaryRefetch
     } = useGetJobsSummaryQuery('', {skip: skipApiCall});
+
+    useEffect(() => {
+        if(refetchJobSummaryApi) {
+            dispatch(setRefetchJobSummaryApi(false));
+            jobsSummaryRefetch();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refetchJobSummaryApi])
 
     useEffect(() => {
         if(statusError) {

@@ -1,32 +1,66 @@
-import { useState, useMemo } from 'react';
-import { ReactComponent as SearchIcon } from '../../../../../assets/search-icon.svg';
+import { useState, useEffect, useMemo } from 'react';
 import styles from './SelectComponent.module.scss';
+import { SelectField } from '@netapp/design-system';
 
 type selectComponentPropType = {
     options: any;
     onChange: (key: string, val: string | number, label: string) => void;
     heading: string;
     selectKey: string;
+    paramObj: any;
+    allowCreate?: boolean;
 };
 
-const SelectComponent = ({ options, onChange, heading, selectKey }: selectComponentPropType) => {
+const SelectComponent = ({
+    options,
+    onChange,
+    heading,
+    selectKey,
+    paramObj,
+    allowCreate = false
+}: selectComponentPropType) => {
     const [selected, setSelected] = useState('');
-    const [searchText, setSearchText] = useState('');
+    const [optionsToShow, setOptionsToShow] = useState<any>([]);
+    const [isCreating, setIsCreating] = useState(false);
 
-    const filteredOptions = useMemo(() => {
-        if (searchText) {
-            return options.filter((option: any) =>
-                (option.label || option.value).toLowerCase().includes(searchText.toLowerCase())
-            );
-        } else {
-            return options;
+    //@ts-ignore
+    useEffect(() => {
+        setOptionsToShow(options);
+    }, [options]);
+
+    useEffect(() => {
+        if (options.length && !paramObj.hasOwnProperty(selectKey)) {
+            setSelected(options[0].value);
+            onChange(selectKey, options[0].value, options[0].label);
         }
-    }, [options, searchText]);
+    }, [options, paramObj]);
+
+    const addNewOption = async (option: any) => {
+        setIsCreating(true);
+        const updatedOptions = [...optionsToShow, { label: option, value: option }];
+        setOptionsToShow(updatedOptions);
+        setIsCreating(false);
+    };
 
     return (
         <div className={styles['select-component']}>
             <div className={styles['select-component-heading']}>{heading}</div>
-            {options.length > 4 && (
+            <SelectField
+                label={''}
+                isClearable={false}
+                defaultValue={options[0]}
+                isCreatingOption={isCreating}
+                isOptionsAddingEnabled={allowCreate}
+                //@ts-ignore
+                onCreateOption={addNewOption}
+                onChange={(selectedOptions: any): void => {
+                    onChange(selectKey, selectedOptions.value, selectedOptions.label);
+                    setSelected(selectedOptions.value);
+                }}
+                isSearchable={options.length > 5}
+                options={options}
+            />
+            {/* {options.length > 4 && (
                 <div className={styles['search-container']}>
                     <input className={styles['search-input']} onChange={e => setSearchText(e.target.value)} />
                     <SearchIcon className={styles['search-icon']} />
@@ -74,7 +108,7 @@ const SelectComponent = ({ options, onChange, heading, selectKey }: selectCompon
                         </div>
                     );
                 })}
-            </div>
+            </div> */}
         </div>
     );
 };

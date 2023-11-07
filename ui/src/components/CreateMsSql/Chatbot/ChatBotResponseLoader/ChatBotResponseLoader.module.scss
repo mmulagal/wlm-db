@@ -8,7 +8,7 @@
         height: 40px;
         width: 40px;
         border-radius: 20px;
-        box-shadow: 2px 2px 6px 0px #e0e0e0;
+        box-shadow: 2px 2px 6px 0px var(--border);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -20,8 +20,8 @@
         flex-direction: column;
         justify-content: center;
         width: fit-content;
-        max-width: 650px;
-        box-shadow: 2px 2px 6px 0px #e0e0e0;
+        max-width: 550px;
+        box-shadow: 2px 2px 6px 0px var(--border);
         padding: 10px 20px 10px 20px;
         white-space: pre-line;
         text-align: justify;

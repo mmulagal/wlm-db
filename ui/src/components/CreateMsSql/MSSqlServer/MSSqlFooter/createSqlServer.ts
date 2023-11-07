@@ -58,7 +58,7 @@ const createMssqlPayload = (state: any) => {
     })();
 
     const databaseSize = (() => {
-        let capacity = state.mssqlForm.storageCapacity?.capacity;
+        let capacity = state.mssqlForm.storageCapacity?.capacity || 0;
         const unit = state.mssqlForm.storageCapacity?.unit?.value;
         if (unit === 'TiB') {
             capacity = 1024 * capacity;

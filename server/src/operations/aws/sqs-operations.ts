@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash-es';
 import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
-import { DEPLOYMENT_STATUS } from '@prisma/client';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
@@ -22,7 +22,8 @@ import {
     STANDARD_DEPLOYMENT_ACTION,
     SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    WLMDB
+    WLMDB,
+    WF
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -39,6 +40,8 @@ import {
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
 import { handleNotification } from '../cloud-manager/notification-operations';
+import { lookupCredentials } from '../cloud-manager/credentials-operations';
+import { associateResource } from '../../lib/cloud-manager/credentials';
 
 const logger = getLogger();
 
@@ -74,7 +77,47 @@ async function getMatchingMasterStackDeployment(stackName: string) {
         return masterStackDeployment;
     }
 }
+async function handleResourceAssociation(
+    accountId: string,
+    credentialsId: string,
+    resourceId: string,
+    resourceName: string,
+    fsxId?: string,
+    fsxName?: string
+) {
+    logger.info('Handling credentials resource association', {
+        accountId,
+        credentialsId,
+        resourceId,
+        resourceName,
+        fsxId,
+        fsxName
+    });
 
+    try {
+        const { source } = await lookupCredentials(credentialsId);
+        if (source === WF) {
+            const resourcesToAssociate = [
+                {
+                    id: resourceId,
+                    name: resourceName,
+                    type: RESOURCESTYPE.MSSQL as string
+                }
+            ];
+            if (fsxId && fsxName) {
+                resourcesToAssociate.push({
+                    id: fsxId,
+                    name: fsxName,
+                    type: 'FSxFileSystem'
+                });
+            }
+
+            await associateResource(credentialsId, accountId, resourcesToAssociate);
+        }
+    } catch (error) {
+        logger.error('Failed to associate resource with credentials service', error);
+    }
+}
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
     if (process.env.AWS_ROLE_ARN) {
@@ -110,7 +153,11 @@ async function processCloudFormationMessages() {
                                         CredentialsId: credentialsId,
                                         Region: region,
                                         StackName: stackName,
-                                        JWToken: jwtToken
+                                        JWToken: jwtToken,
+                                        SQLDeploymentType: trackSqlDeploymentType,
+                                        DatabaseType: trackdatabaseType,
+                                        ResourceName: trackresourceName,
+                                        FileSystemType: trackfileSystemType
                                     } = resourceProperties;
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
@@ -121,7 +168,7 @@ async function processCloudFormationMessages() {
                                         const cfnResponse =
                                             requestType === CF_CUSTOM_RESOURCE_CODES.CREATE
                                                 ? createStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.FAILED)
-                                                : modifyStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.FAILED);
+                                                : modifyStackAck(jsonMessage, CF_CUSTOM_RESOURCE_CODES.SUCCESS);
                                         await deleteMessage(DEFAULT_AWS_REGION, {
                                             QueueUrl: queueUrl,
                                             ReceiptHandle: sqsMessage?.ReceiptHandle
@@ -140,7 +187,13 @@ async function processCloudFormationMessages() {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_IN_PROGRESS,
                                                     startTime: new Date(messageTimestamp).valueOf(),
                                                     region,
-                                                    deploymentName: stackName
+                                                    deploymentName: stackName,
+                                                    deploymentModel: trackSqlDeploymentType,
+                                                    data: {
+                                                        databaseType: trackdatabaseType,
+                                                        resourceName: trackresourceName,
+                                                        fileSystemType: trackfileSystemType
+                                                    }
                                                 });
                                             } else {
                                                 // Post deployment completion another custom resource is Created, to mark the successful completion of deployment
@@ -166,9 +219,12 @@ async function processCloudFormationMessages() {
                                                         FSxFileSystemName: fsxName,
                                                         ActiveInstanceIp: activeNodeInstanceIp,
                                                         StandbyInstanceIp: standbyNodeInstanceIp,
-                                                        ResourceName: resourceName,
                                                         SQLDeploymentType: sqlDeploymentType,
-                                                        FileSystemType: fileSystemType
+                                                        ResourceName: resourceName,
+                                                        FileSystemType: fileSystemType,
+                                                        FSxNSecret: fsxSecret,
+                                                        DomainAdminSecretName: domainAdminSecret,
+                                                        SQLServiceAccountSecret: sqlServiceAccountSecret
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await listResources(
                                                         accountId,
@@ -207,9 +263,21 @@ async function processCloudFormationMessages() {
                                                             activeNodeInstanceIp,
                                                             standbyNodeInstanceIp,
                                                             sqlDeploymentType,
-                                                            fileSystemType
+                                                            fileSystemType,
+                                                            fsxSecret,
+                                                            domainAdminSecret,
+                                                            sqlServiceAccountSecret
                                                         }
                                                     });
+
+                                                    await handleResourceAssociation(
+                                                        accountId,
+                                                        credentialsId,
+                                                        resourceId,
+                                                        resourceName,
+                                                        fsxId,
+                                                        fsxName
+                                                    );
                                                     const notificationData = {
                                                         notificationAction: STANDARD_DEPLOYMENT_ACTION,
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
@@ -304,6 +372,7 @@ async function processCloudFormationMessages() {
                                 ResourceStatusReason: resourceStatusReason,
                                 ResourceProperties: resourceProperties
                             } = stackMessage;
+
                             if (stackId) {
                                 const { isValid, message } = checkAndRetrieveJsonObject(resourceProperties);
                                 const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
@@ -317,7 +386,9 @@ async function processCloudFormationMessages() {
                                         cloud_provider_name: cloudProviderName,
                                         credentials_id: credentialsId,
                                         deployment_name: masterDeploymentName,
-                                        deployment_status: masterDeploymentStatus
+                                        deployment_status: masterDeploymentStatus,
+                                        deployment_model: stackSqlDeploymentType,
+                                        data
                                     } = masterStackDeployment;
 
                                     /**
@@ -326,7 +397,8 @@ async function processCloudFormationMessages() {
                                         * */
                                     if (
                                         stackName === masterDeploymentName &&
-                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED
+                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED &&
+                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.UPDATE_FAILED
                                     ) {
                                         await updateDeployment(accountId, id, {
                                             deploymentName: stackName,
@@ -346,7 +418,9 @@ async function processCloudFormationMessages() {
                                             parentDeploymentId:
                                                 masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
                                             credentialsId,
-                                            startTime: new Date(timestamp).valueOf()
+                                            startTime: new Date(timestamp).valueOf(),
+                                            deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
+                                            data: data as object
                                         });
                                         if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
                                             // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED

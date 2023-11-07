@@ -1,4 +1,4 @@
-import { Table, TableTopBar, TooltipInfo, Typography, useTable } from '@netapp/design-system';
+import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DatabaseTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
@@ -9,16 +9,26 @@ import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
-import { STATUS_CONST } from '../../../utils/consts';
-import { formatSizeOnePrecision } from '../../../utils/utilityFunctions';
+import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
+import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
+import { useDispatch } from 'react-redux';
+import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const DatabaseTable = () => {
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const dispatch = useDispatch();
+
+    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
+    const { setDialog, closeDialog } = useDialog();
+
+    const [removeDatabaseHosts] = useRemoveMSSQLMutation();
+    const [removeDatabaseJobs] = useRemoveDatabaseJobsMutation();
 
     const menuItems = [
         {
@@ -52,12 +62,54 @@ const DatabaseTable = () => {
                 <Typography variant="Semibold_13" className={styles.textHeight}>
                     {GENERAL.PROTECTED_BY}:
                 </Typography>
-                {data.map((val: any) => (
-                    <Typography variant="Regular_13" className={styles.textHeight}>
+                {data.map((val: any, index: number) => (
+                    <Typography key={index} variant="Regular_13" className={styles.textHeight}>
                         {val}
                     </Typography>
                 ))}
             </div>
+        );
+    };
+
+    // To delete MSSQL Resources
+    const deleteMssqlResource = (id: string, type: string) => {
+        if(type === DB_HOME_DATA_TYPE.JOBS){
+            // removeDatabaseJobs delete API call when data getting from jobs API
+            removeDatabaseJobs(id)
+                .then((data: any) => {
+                    if (!data?.error) {
+                        dispatch(setRefetchJobSummaryApi(true));
+                        const newList = databaseJobsData?.filter((val:any) => val?.id !== id);
+                        dispatch(addDatabaseJobs({databaseJobsData: newList, databaseJobsLoading: false, undefined}));
+                    }
+                })
+        } else {
+            // removeDatabaseHosts delete API call when data getting from database-hosts API
+            removeDatabaseHosts(id)
+                .then((data: any) => {
+                    if (!data?.error) {
+                        dispatch(setRefetchJobSummaryApi(true));
+                        const newList = databaseHostsData?.filter((val:any) => val?.id !== id);
+                        dispatch(addDatabaseHosts({databaseHostsData: newList, databaseHostsLoading: false, undefined}));
+                    }
+                })
+        }
+    }
+
+    const handleRemoveDialog = (row: any) => {
+        setDialog(
+            <DialogComponent
+                header={`${GENERAL.REMOVE_DATABASE_HOST} "${row?.name || row?.id}"`}
+                content={<Typography variant="Regular_14">{`${GENERAL.REMOVE_CONFIG_TEXT}`}</Typography>}
+                primaryButton={GENERAL.REMOVE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={() => {
+                    deleteMssqlResource(row?.id, row?.type);
+                }}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+            />
         );
     };
 
@@ -83,6 +135,10 @@ const DatabaseTable = () => {
                                 } else if (toggleType === 'selectedOption') {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
+
+                                    if (menuId === 'remove') {
+                                        handleRemoveDialog(rowData);
+                                    }
                                 }
                             }}
                             CustomMenu={undefined}
@@ -109,14 +165,16 @@ const DatabaseTable = () => {
         {
             id: '1',
             Header: GENERAL.DATABASE_HOST_NAME,
-            accessor: 'name',
+            accessor: 'status',
             isSortable: true,
             width: '280px',
             isSticky: true,
+            filterOptions: 'auto',
+            accessorForTextFilter: 'databaseHostname',
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div>
-                        <Typography variant="Semibold_14">{rowData?.name}</Typography>
+                        <Typography variant="Semibold_14">{rowData?.name || GENERAL.NOT_AVAILABLE}</Typography>
                         <div className={styles.colText}>
                             {rowData?.status === STATUS_CONST.UP && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['up']}`}></div>
@@ -132,9 +190,9 @@ const DatabaseTable = () => {
                             {rowData?.status === STATUS_CONST.FAILED && (
                                 <div className={`${styles.statusIcon} ${styles['circle']} ${styles['failed']}`}></div>
                             )}
-                            <Typography variant="Regular_13">{rowData?.status}</Typography>
+                            <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
                             <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{rowData?.topology?.serverType}</Typography>
+                            <Typography variant="Regular_13">{rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}</Typography>
                         </div>
                     </div>
                 );
@@ -143,32 +201,33 @@ const DatabaseTable = () => {
         {
             id: '2',
             Header: GENERAL.DB_HOST_PROTECTION,
-            accessor: 'protection',
+            accessor: 'protectionText',
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
+                const protectionData = rowData?.protection;
                 let protectedChk = false;
                 if (
-                    cellData?.isAwsBackUpEnabled ||
-                    cellData?.isFsxOntapSnapshotsEnabled ||
-                    cellData?.isSqlNativeEnabled
+                    protectionData?.isAwsBackUpEnabled ||
+                    protectionData?.isFsxOntapSnapshotsEnabled ||
+                    protectionData?.isSqlNativeEnabled
                 ) {
                     protectedChk = true;
                 }
                 let protectedByList = [];
-                if (cellData?.isFsxOntapSnapshotsEnabled) {
+                if (protectionData?.isFsxOntapSnapshotsEnabled) {
                     protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
                 }
-                if (cellData?.isAwsBackUpEnabled) {
+                if (protectionData?.isAwsBackUpEnabled) {
                     protectedByList.push(GENERAL.AWS_BACKUP);
                 }
-                if (cellData?.isSqlNativeEnabled) {
+                if (protectionData?.isSqlNativeEnabled) {
                     protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
                 }
                 return (
                     <>
-                        {cellData && (
+                        {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
                                     {protectedChk && (
@@ -198,7 +257,7 @@ const DatabaseTable = () => {
                                 )}
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!protectionData && notAvailable()}
                     </>
                 );
             }
@@ -206,7 +265,7 @@ const DatabaseTable = () => {
         {
             id: '3',
             Header: GENERAL.DB_HOST_PERFORMANCE,
-            accessor: 'performance',
+            accessor: 'performanceText',
             isSortable: true,
             width: '184px',
             filterOptions: 'auto',
@@ -215,7 +274,7 @@ const DatabaseTable = () => {
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData?.assessment + ' ( <' + cellData?.latency + ' ms )'}
+                                {cellData}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
@@ -226,7 +285,7 @@ const DatabaseTable = () => {
         {
             id: '4',
             Header: GENERAL.DB_HOST_STORAGE_SAVINGS,
-            accessor: 'storage',
+            accessor: 'storageSavingsText',
             isSortable: true,
             width: '184px',
             renderCell: (cellData: any) => {
@@ -234,7 +293,7 @@ const DatabaseTable = () => {
                     <>
                         {cellData && (
                             <Typography variant="Regular_13" className={styles.colText}>
-                                {cellData?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(cellData?.spaceSavings) + ')'}
+                                {cellData}
                             </Typography>
                         )}
                         {!cellData && notAvailable()}
@@ -245,22 +304,23 @@ const DatabaseTable = () => {
         {
             id: '5',
             Header: GENERAL.DB_HOST_ESTIMATED_COST,
-            accessor: 'estimatedUsageCost',
+            accessor: 'totalCost',
             isSortable: true,
             width: '184px',
-            renderCell: (cellData: any) => {
-                const totalCost = cellData?.compute + cellData?.storage + cellData?.connectivity + cellData?.others;
+            renderCell: (cellData: any, rowData: any) => {
+                const costData = rowData?.estimatedUsageCost;
+                const totalCost = costData?.compute + costData?.storage + costData?.connectivity + costData?.others;
                 return (
                     <>
-                        {cellData && (
+                        {costData && (
                             <div className={styles.cost}>
                                 <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
-                                    {DatabaseEstimatedCost({ ...cellData, totalCost: totalCost })}
+                                    {DatabaseEstimatedCost({ ...costData, totalCost: totalCost })}
                                 </TooltipInfo>
                                 <Typography variant="Regular_14">{totalCost}</Typography>
                             </div>
                         )}
-                        {!cellData && notAvailable()}
+                        {!costData && notAvailable()}
                     </>
                 );
             }
@@ -271,23 +331,32 @@ const DatabaseTable = () => {
             accessor: 'topology.serverType',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '7',
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
-            width: '184px',
-            filterOptions: 'auto'
+            width: '204px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '8',
             Header: GENERAL.DB_HOST_REGION,
             accessor: 'topology.region',
             isSortable: true,
-            width: '184px',
-            filterOptions: 'auto'
+            width: '179px',
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         {
             id: '9',
@@ -295,7 +364,10 @@ const DatabaseTable = () => {
             accessor: 'topology.fileSystemType',
             isSortable: true,
             width: '184px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: string) => {
+                return cellData || GENERAL.NOT_AVAILABLE;
+            }
         },
         lastColDetails()
     ];
@@ -317,7 +389,10 @@ const DatabaseTable = () => {
     return (
         <>
             <div className={styles.databaseTable}>
-                <div className={styles.table}>
+                <div
+                    //  @ts-ignore
+                    className={databaseHostsList?.length ? `${styles.table} ${styles.tableScroll}` : `${styles.table}`}
+                >
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}

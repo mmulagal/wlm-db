@@ -109,10 +109,13 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     ]
                 };
 
-                let subnetsList: Array<Subnet> = [];
-                if (fieldsValues?.includes(AWSQueryFields.SUBNET)) {
-                    subnetsList = await getSubnetsList(credentialsId, region, subnetParams);
-                }
+                const proms = [];
+
+                proms.push(
+                    fieldsValues?.includes(AWSQueryFields.SUBNET)
+                        ? getSubnetsList(credentialsId, region, subnetParams)
+                        : Promise.resolve([])
+                );
 
                 const sgParams: DescribeSecurityGroupsRequest = {
                     Filters: [
@@ -122,10 +125,14 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                         }
                     ]
                 };
-                let securityGroupList: Array<SecurityGroup> = [];
-                if (fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)) {
-                    securityGroupList = await getSecurityGroupsList(credentialsId, region, sgParams);
-                }
+
+                proms.push(
+                    fieldsValues?.includes(AWSQueryFields.SECURITY_GROUP)
+                        ? getSecurityGroupsList(credentialsId, region, sgParams)
+                        : Promise.resolve([])
+                );
+
+                const [subnets, securityGroups] = await Promise.all(proms);
 
                 const resourceName = findResourceNameFromTags(tags);
                 vpcs.push({
@@ -134,8 +141,8 @@ async function getVpcsList(credentialsId: string, region: string, fields?: strin
                     tags,
                     cidrBlock,
                     isDefault,
-                    subnets: subnetsList,
-                    securityGroups: securityGroupList,
+                    subnets,
+                    securityGroups,
                     ...(resourceName && { name: resourceName })
                 });
             })
@@ -289,6 +296,16 @@ async function getAmiList(
         Filters: [
             { Name: 'name', Values: amiNames },
             { Name: 'owner-alias', Values: ['amazon'] }
+        ],
+        Owners: [
+            '801119661308', // for regular regions
+            '185158320714', // for il-central-1
+            '536790793924', // for eu-central-2
+            '688423173695', // for eu-south-2
+            '878052572473', // for me-central-1
+            '159365745649', // for ap-south-2
+            '903064639964', // ap-southeast-3
+            '311529897437' //  ap-southeast-4
         ]
     });
 

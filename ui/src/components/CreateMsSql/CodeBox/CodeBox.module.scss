@@ -1,0 +1,234 @@
+.codebox {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    top: 56px;
+    right: 0;
+    z-index: 2;
+    width: 33vw;
+    height: calc(100% - 56px);
+    background-color: var(--grey-70);
+
+    .colorAutomation {
+        color: var(--white) !important;
+    }
+
+    .topBar {
+        height: 60px;
+        background-color: var(--grey-65);
+        display: flex;
+        padding: 16px 40px;
+        justify-content: space-between;
+
+        .title {
+            display: flex;
+            gap: 8px;
+
+            svg {
+                height: 28px;
+            }
+        }
+    }
+
+    .createDbHeader {
+        display: flex;
+        flex-direction: row;
+        margin: 32px 40px 16px 40px;
+        justify-content: space-between;
+        align-items: center;
+
+        .createDBText {
+            color: var(--white);
+        }
+
+        .configActions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+
+            .configText {
+                color: var(--blue-40);
+            }
+        }
+
+        .configActions:hover {
+            cursor: pointer;
+            .configText {
+                color: var(--blue-30);
+            }
+            svg {
+                path {
+                    fill: var(--blue-30);
+                }
+            }
+        }
+
+        .menuContainer {
+            .copyContainer {
+                position: fixed;
+                z-index: 3;
+                box-shadow: 2px 2px 6px 0px #111925;
+                right: 40px;
+                border-radius: 4px;
+                padding: 8px 12px 8px 12px;
+                margin-top: 8px;
+                background-color: var(--grey-70);
+
+                .copyText {
+                    color: var(--white);
+                }
+            }
+        }
+    }
+    .payloadContainer {
+        padding: 0 40px 0 40px;
+        .payloadHeader {
+            height: 48px;
+            padding: 16px 24px 16px 40px;
+            background-color: var(--grey-55);
+            box-shadow: 0px -1px 0px 0px var(--grey-55) inset;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            position: relative;
+
+            .inputPart {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                position: absolute;
+                z-index: 1;
+
+                .terraformContainer {
+                    display: flex;
+                    gap: 40px;
+                }
+
+                .inputBox {
+                    width: 146px;
+                    margin-top: 35px;
+                    --menu-max-height: 245px;
+
+                    // Select box CSS
+
+                    [class*='design-system-select__single-value'] {
+                        color: var(--white);
+                    }
+                    [class*='design-system-select__menu'] {
+                        box-shadow: none;
+                        width: 240px;
+                    }
+
+                    [class*='design-system-select__option'] {
+                        background-color: var(--grey-70);
+                        color: var(--white);
+                    }
+
+                    [class*='Select-module_multiselect-menu'] {
+                        background-color: var(--grey-70);
+                    }
+                    [class*='design-system-select__option--is-focused'] {
+                        color: var(--blue-40);
+                        background-color: var(--grey-60);
+                    }
+                    [class*='design-system-select__control']:hover {
+                        box-shadow: 0 1px 0 var(--header-netapp-text-hover);
+                        border-bottom: 1px solid var(--blue-40);
+
+                        div {
+                            color: var(--header-netapp-text-hover);
+                        }
+
+                        svg {
+                            --icon-primary-color: var(--header-netapp-text-hover);
+                        }
+                    }
+
+                    [class*='design-system-select__control'] {
+                        border-bottom: 2px solid var(--content-background);
+                        svg {
+                            --icon-primary-color: var(--white);
+                        }
+                    }
+                }
+            }
+            .searchPart {
+                position: absolute;
+                z-index: 2;
+                right: 16px;
+                // width: 100%;
+                display: flex;
+                justify-content: flex-end;
+                .searchInput {
+                    // max-width: 200px;
+                    color: var(--white);
+                }
+
+                [class*='SearchInput-module_base'] {
+                    svg {
+                        --icon-primary-color: var(--white);
+                    }
+
+                    input {
+                        color: var(--white);
+                    }
+                }
+
+                [class*='SearchInput-module_opened'] {
+                    border-bottom: 2px solid var(--content-background);
+                    position: relative;
+                    top: -3px;
+
+                    width: calc(31vw - 90px);
+                    background-color: var(--grey-55);
+
+                    svg {
+                        --icon-primary-color: var(--white);
+                    }
+
+                    input {
+                        color: var(--white);
+                    }
+                }
+            }
+        }
+        .payloadBody {
+            height: calc(100vh - 180px);
+            background-color: var(--grey-65);
+            padding-top: 10px;
+            .scrollContainer {
+                overflow-y: auto;
+                height: calc(100% - 72px);
+                width: calc(100% - 16px);
+                padding: 0 40px 0 40px;
+
+                .contentArea {
+                    margin-top: -20px;
+                }
+            }
+        }
+    }
+
+    ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+        background-color: #858c95;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 4px;
+        background-color: #858c95;
+        width: 4px;
+        height: 4px;
+        -webkit-box-shadow: inset 0 0 6px var(--grey-25);
+        box-shadow: inset 0 0 6px var(--grey-25);
+    }
+
+    ::-webkit-scrollbar-track {
+        background-color: var(--grey-65);
+    }
+    ::-webkit-scrollbar-corner {
+        background-color: var(--grey-65);
+    }
+}

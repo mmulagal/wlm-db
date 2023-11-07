@@ -3,14 +3,18 @@
     top: 0;
     right: 0;
     z-index: 2;
-    width: 637px;
+    width: 33vw;
     height: 100%;
     background-color: var(--grey-70);
     transition: right 0.3s rase-in-out;
 
     .loading {
-        margin-top: 40px;
-        margin-left: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+        position: relative;
+        top: 22vh;
         color: var(--white);
     }
 
@@ -63,6 +67,11 @@
         color: var(--blue-40);
     }
 
+    .colorExpandCollapse {
+        color: var(--blue-40);
+        cursor: pointer;
+    }
+
     .accordionStructure {
         display: flex;
         flex-direction: column;
@@ -73,7 +82,20 @@
     .headingContainer {
         display: flex;
         justify-content: space-between;
-        width: 558px;
+        width: 100%;
+    }
+
+    .headingLoadingContainer {
+        margin-left: 40px;
+        border-bottom: 2px solid var(--grey-65);
+        overflow: hidden;
+        width: 83%;
+
+        .searchComponent {
+            svg {
+                --icon-primary-color: var(--grey-40);
+            }
+        }
     }
 
     .openView {
@@ -81,7 +103,8 @@
         gap: 40px;
 
         .leftSideView {
-            width: 638px;
+            width: 33%;
+            // width: 638px;
             margin-top: 40px;
             max-height: 89vh;
             overflow-y: auto;
@@ -89,11 +112,10 @@
         }
 
         .rightSideView {
-            width: 1170px;
             padding: 40px 40px;
 
             .rightSideTopBar {
-                width: 1090px;
+                // width: 1090px;
                 display: flex;
                 justify-content: space-between;
                 padding: 3px 24px 16px 0;
@@ -180,7 +202,7 @@
         }
 
         .secondBar {
-            width: 1090px;
+            // width: 1090px;
             height: 48px;
             padding: 16px 24px 16px 40px;
             background-color: var(--grey-55);
@@ -194,16 +216,24 @@
                 gap: 16px;
                 align-items: center;
 
+                .terraformContainer {
+                    display: flex;
+                    gap: 40px;
+                }
+
                 .inputBox {
                     width: 146px;
                     margin-top: 35px;
                     --menu-max-height: 245px;
+
+                    // Select box CSS
 
                     [class*='design-system-select__single-value'] {
                         color: var(--white);
                     }
                     [class*='design-system-select__menu'] {
                         box-shadow: none;
+                        width: 240px;
                     }
 
                     [class*='design-system-select__option'] {
@@ -220,6 +250,7 @@
                     }
                     [class*='design-system-select__control']:hover {
                         box-shadow: 0 1px 0 var(--header-netapp-text-hover);
+                        border-bottom: 1px solid var(--blue-40);
 
                         div {
                             color: var(--header-netapp-text-hover);
@@ -241,7 +272,7 @@
         }
 
         .thirdBar {
-            width: 1090px;
+            // width: 1090px;
             background-color: var(--grey-65);
             max-height: calc(87vh - 110px);
             height: calc(87vh - 110px);

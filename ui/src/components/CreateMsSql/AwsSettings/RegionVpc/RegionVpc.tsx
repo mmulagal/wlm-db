@@ -10,7 +10,12 @@ import {
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
-import { generateOptionType, formatVpcSubnetsData, regionsSort, sortListOfDict } from '../../../../utils/utilityFunctions';
+import {
+    formatVpcSubnetsData,
+    generateOptionType,
+    regionsSort,
+    sortListOfDict
+} from '../../../../utils/utilityFunctions';
 import styles from './RegionVpc.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -52,10 +57,10 @@ const RegionVpc = () => {
 
     //Update selected region in form data store
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig && !selectedRegionData) {
             dispatch(setSelectedRegionData(generateRegionsData[0]));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateRegionsData]);
 
     useEffect(() => {
@@ -77,28 +82,26 @@ const RegionVpc = () => {
                 2: true
             });
             setIsDefaultOpen(true);
-        }
-        else if(isLoadConfig){
+        } else if (isLoadConfig) {
             accordionContext({
                 2: false
             });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, regionsData, isLoadConfig]);
 
     //Function to generate the options for Select Field
     const generateVPCOptions = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         vpcData?.vpcs?.map((val, idx: number) => {
-            const vpcValue = ((val?.name ? val.name + ' | ': '') + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '')) || '-';
+            const vpcValue =
+                (val?.name ? val.name + ' | ' : '') + (val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '') || '-';
             const vpcLabel2 = val.id!;
             const vpcData = {
                 id: val.id,
                 name: val.name,
                 cidrBlock: val.cidrBlock ? val.cidrBlock[0]?.CidrBlock : '',
-                subnets: val?.subnets,
-                availabilityZones: formatVpcSubnetsData(val),
-                securityGroups: val?.securityGroups
+                availabilityZones: formatVpcSubnetsData(val)
             };
             const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
             options.push(option);
@@ -109,7 +112,12 @@ const RegionVpc = () => {
     // On VPC selection needs to check if 2 availability zones are available or not
     useEffect(() => {
         const azData = selectedVPCData?.data?.availabilityZones;
-        if (!isDemoMode && deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && azData && Object.keys(azData).length < 2) {
+        if (
+            !isDemoMode &&
+            deploymentModel?.label === GENERAL.FAILOVER_CLUSTER &&
+            azData &&
+            Object.keys(azData).length < 2
+        ) {
             dispatch(
                 addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: GENERAL.MULTI_AZ_CHECK_MESSAGE })
             );
@@ -119,10 +127,10 @@ const RegionVpc = () => {
 
     //Update selected VPC in form data store
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig) {
             dispatch(setSelectedVPC(null));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateVPCOptions]);
 
     //Set the Header text here

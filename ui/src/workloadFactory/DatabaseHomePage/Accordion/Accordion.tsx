@@ -1,21 +1,24 @@
 import React, { useState, useRef } from 'react';
-import { ReactComponent as Arrow } from '../../../assets/Row arrow.svg';
+import { useDialog } from '@netapp/design-system';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { ReactComponent as ActionDots } from '../../../assets/table action icon.svg';
 import { Typography } from '@netapp/design-system';
 import styles from './Accordion.module.scss';
-import { useDeleteConfigMutation, useLazyGetConfigDataQuery } from '../../../utils/apiService';
+import { useDeleteConfigMutation, useLazyGetConfigDataQuery, useUpdateConfigMutation } from '../../../utils/apiService';
 import { useDispatch } from 'react-redux';
-import { setIsLoading, setIsRecommendedInstance } from '../../../store/mssql/msSqlActionSlice';
+import { setIsLoading, setIsRecommendedInstance, setIsSaveConfigLoading } from '../../../store/mssql/msSqlActionSlice';
 import {
     LoadConfiguration,
     LoadRecommendedConfig
 } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { useNavigate } from 'react-router-dom';
-import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
+import { FROM_DIALOG, RECOMMENDED_TEMPLATES, WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { setRecommendedValues } from '../../../utils/utilityFunctions';
-import { CODE_VIEWER } from '../../../utils/appConstants';
-import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
+import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
+import { initialMssqlState, setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import SaveConfig from '../../../components/CreateMsSql/SaveConfig/SaveConfig';
+import store from '../../../store/store';
+import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 
 type AccordionContent = {
     heading: string;
@@ -45,11 +48,13 @@ const Accordion = ({
     recommended
 }: AccordionContent) => {
     const dispatch = useDispatch();
+    const { setDialog, closeDialog } = useDialog();
     const navigate = useNavigate();
     const [menuOpenedRow, setOpenedRow] = useState<string | null>(null);
     const menuOpenedRowDetail: any = useRef(null);
     const [deleteConfigApi] = useDeleteConfigMutation();
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
+    const [renameConfigApi] = useUpdateConfigMutation();
 
     // Default menu items applicable for all
     const menuItems = [
@@ -80,7 +85,40 @@ const Accordion = ({
 
     const handleDelete = () => {
         deleteConfigApi({ configId: id }).then((data: any) => {
-            configRefetch();
+            if(!data?.error){
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.DELETE_CONFIG_NOTIFICATION
+                    })
+                );
+                toggle(RECOMMENDED_TEMPLATES.DEV_NAME, RECOMMENDED_TEMPLATES.DEV_ID);
+                configRefetch();
+            }
+        });
+    };
+
+    // To rename saved configuration
+    const handleRename = () => {
+        const state = store.getState();
+        const updateConfigName = state.mssqlForm.saveConfigName;
+        const payload = {
+            name: updateConfigName
+        };
+        setIsSaveConfigLoading(true);
+        renameConfigApi({ configId: id, payload: payload }).then((data: any) => {
+            if(!data?.error) {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.RENAME_CONFIG_NOTIFICATION
+                    })
+                );
+                configRefetch();
+            }
+            dispatch(setSaveConfigName(''));
+            setIsSaveConfigLoading(false);
+            closeDialog();
         });
     };
 
@@ -105,6 +143,39 @@ const Accordion = ({
         viewCode(heading, id);
     };
 
+    const handleDeleteDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.DELETE_CONFIG}
+                content={<Typography variant="Regular_14">{`${GENERAL.DELETE_CONFIG_TEXT} "${heading}" ?`}</Typography>}
+                primaryButton={GENERAL.DELETE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={handleDelete}
+                closeCallback={() => {
+                    closeDialog();
+                }}
+                dialogFrom={''}
+            />
+        );
+    };
+
+    const handleRenameDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.RENAME_CONFIG}
+                content={<SaveConfig description={`${GENERAL.RENAME_CONFIG_CONTENT[0]} "${heading}" ${GENERAL.RENAME_CONFIG_CONTENT[1]}`}/>}
+                primaryButton={GENERAL.SAVE}
+                secondaryButton={GENERAL.CANCEL}
+                callback={handleRename}
+                closeCallback={() => {
+                    dispatch(setSaveConfigName(''));
+                    closeDialog();
+                }}
+                dialogFrom={FROM_DIALOG.SAVE_CONFIG}
+            />
+        );
+    };
+
     return (
         <div className={styles.accordions}>
             <div
@@ -123,13 +194,15 @@ const Accordion = ({
                     <div className={styles.firstLevel}>
                         <div
                             className={
-                                open ? `${styles.accordionHeading} ${styles.addColor}` : `${styles.accordionHeading}`
+                                openedItem === heading
+                                    ? `${styles.accordionHeading} ${styles.addColor}`
+                                    : `${styles.accordionHeading}`
                             }
                         >
                             {heading}
                         </div>
                         <div className={styles.rightMenu}>
-                            <div className={styles.accordionMenuPopover} onClick={e => e.stopPropagation()}>
+                            <div className={styles.accordionMenuPopover}>
                                 <MenuPopover
                                     isMenuOpen={menuOpenedRowDetail.current === heading || menuOpenedRow === heading}
                                     menuItems={savedConfigMenu()}
@@ -146,11 +219,13 @@ const Accordion = ({
                                             setOpenedRow(null);
 
                                             if (menuId === 'delete') {
-                                                handleDelete();
+                                                handleDeleteDialog();
                                             } else if (menuId === 'loadWizard') {
                                                 handleLoadWizard();
                                             } else if (menuId === 'viewCode') {
                                                 handleViewCode();
+                                            } else if (menuId === 'rename') {
+                                                handleRenameDialog();
                                             }
                                         }
                                     }}

@@ -1,7 +1,8 @@
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
+import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/aws/iam-scope';
 import '../../simulator/scopes/opentelemetry-scope';
-import { getPermissionsList } from '../../../src/lib/aws/iam';
+import getPermissionsList from '../../../src/lib/aws/iam';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 const REGION = 'us-east-1';

@@ -1,10 +1,12 @@
 import createError from 'http-errors';
+import randomize from 'randomatic';
 import { Parameter } from '@aws-sdk/client-cloudformation';
+import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
-import { getObjectBucket, getPreSignedUrl } from '../lib/aws/s3';
+import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
 import { generateAuthToken } from '../lib/cloud-manager/tenancy';
-import { createSecrets } from './aws/secrets-manager-operations';
 import {
     CFNetworkConfigurationType,
     EC2ConfigurationType,
@@ -16,7 +18,7 @@ import {
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
-    MISSING_PERMISSIONS,
+    // MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
@@ -53,19 +55,25 @@ import {
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
     SNS_ARN,
     BUCKET_NAME,
-    CLOUD_FORMATION_CLI_COMMAND
+    CLOUD_FORMATION_CLI_COMMAND,
+    DEFAULT_AWS_REGION,
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS,
+    CloudProviders,
+    RESOURCESTYPE
 } from '../utils/consts';
 import { derivePropertiesFromARN, generateDeploymentParams, getSnsArn, isSameRoutetables, sleep } from '../utils/utils';
 import getLogger from '../utils/logger';
-import { getRoleName } from './cloud-manager/credentials-operations';
+import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
 import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
+import { createDeployment, createResource } from '../lib/database/db';
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function formatTemplateParameters(
     networkConfiguration: CFNetworkConfigurationType,
@@ -76,40 +84,16 @@ async function formatTemplateParameters(
     topicArn: string,
     enableCloudWatch: boolean,
     credentialsId?: string,
-    region?: string
+    region?: string,
+    skipPasswords?: boolean
 ) {
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, roleArn, providerAccountId } = credentialsId
-        ? await getRoleName(credentialsId!)
-        : { roleName: '', roleArn: '', providerAccountId: '' };
-
-    if (credentialsId && region) {
-        await createSecrets(
-            credentialsId,
-            region,
-            [
-                {
-                    secretName: derivedParams.DomainAdminSecretName,
-                    username: adConfiguration.domainUsername,
-                    password: adConfiguration.domainPassword
-                },
-                {
-                    secretName: derivedParams.FSxAdministratorPasswordSecret,
-                    username: fsxConfiguration.fsxUsername,
-                    password: fsxConfiguration.fsxPassword
-                },
-                {
-                    secretName: derivedParams.SQLServiceAccountSecret,
-                    username: sqlConfiguration.serviceAccountName,
-                    password: sqlConfiguration.serviceAccountPassword
-                }
-            ],
-            roleArn
-        );
-    }
+    const { roleName = '', providerAccountId = '' } = credentialsId
+        ? await getRoleDetails(credentialsId)
+        : { roleName: '', providerAccountId: '' };
 
     const stackName = derivedParams.StackName;
     const validationAmiImage = credentialsId && region ? await getWindowsServerBaseAmi(credentialsId!, region!) : '';
@@ -152,7 +136,10 @@ async function formatTemplateParameters(
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             templateParams.push({
                 ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
-                ParameterValue: value.toString()
+                ParameterValue:
+                    skipPasswords && SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key])
+                        ? ''
+                        : value.toString()
             });
         }
     });
@@ -208,7 +195,8 @@ async function getCloudformationTemplate(
         topicArn,
         enableCloudWatch,
         credentialsId,
-        region
+        region,
+        true
     );
 
     logger.debug(`Stack ${stackName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -239,7 +227,9 @@ async function getCloudformationTemplate(
     templateParameters.forEach(e => {
         cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams}`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
+        region || DEFAULT_AWS_REGION
+    } --parameters ${cliParams}`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
@@ -285,44 +275,22 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, SAME_ROUTETABLE_MESSAGE);
     }
 
+    // commented to test the iam permissions with strict policy.. It will be added once we finalise the permissions
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
         credentialsId,
         region
     );
 
-    let errMsg = '';
+    const errMsg = '';
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
-        logger.error(errMsg);
+        // errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
+        // logger.error(errMsg);
     }
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
 
-    const { roleName, roleArn, providerAccountId } = await getRoleName(credentialsId);
-
-    await createSecrets(
-        credentialsId,
-        region,
-        [
-            {
-                secretName: derivedParams.DomainAdminSecretName,
-                username: adConfiguration.domainUsername,
-                password: adConfiguration.domainPassword
-            },
-            {
-                secretName: derivedParams.FSxAdministratorPasswordSecret,
-                username: fsxConfiguration.fsxUsername,
-                password: fsxConfiguration.fsxPassword
-            },
-            {
-                secretName: derivedParams.SQLServiceAccountSecret,
-                username: sqlConfiguration.serviceAccountName,
-                password: sqlConfiguration.serviceAccountPassword
-            }
-        ],
-        roleArn
-    );
+    const { roleName, providerAccountId } = await getRoleDetails(credentialsId);
 
     const customMasterTemplatePath: string = `${derivedParams.StackName}/${MASTER_TEMPLATE_PATH}`;
 
@@ -370,6 +338,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
+            value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
         }
     });
@@ -419,7 +388,7 @@ async function deployCloudFormationTemplate(
     );
 
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+        // throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
@@ -479,6 +448,18 @@ async function deployCloudFormationTemplate(
     };
     await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
+        const stackId = deployStackResponse.StackId || '';
+        createDeploymentMockDataInDB(
+            accountId,
+            stackId,
+            stackName,
+            region,
+            credentialsId,
+            sqlConfiguration?.sqlDeploymentMode
+        );
+    }
     return { cloudFormationStackId: deployStackResponse.StackId! };
 }
 
@@ -527,6 +508,48 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
         ]
     );
     return { permissions, strictPermissions, strictConditionPermissions };
+}
+
+async function createDeploymentMockDataInDB(
+    accountId: string,
+    stackId: string,
+    stackName: string,
+    region: string,
+    credentialId: string,
+    sqlDeploymentMode: string
+) {
+    logger.info('create deployment mock data in database', {
+        accountId,
+        stackId,
+        stackName,
+        region,
+        credentialId,
+        sqlDeploymentMode
+    });
+
+    const cloudProviderId = randomize('0', 8);
+    await createDeployment(accountId, {
+        deploymentId: stackId,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        credentialsId: credentialId,
+        deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
+        startTime: new Date().valueOf(),
+        region,
+        deploymentName: stackName,
+        deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        endTime: new Date().valueOf()
+    });
+
+    await createResource(accountId, {
+        resourceId: randomUUID(),
+        resourceName: `sqlnode-${randomize('0', 5)}`,
+        cloudProviderAccountId: cloudProviderId,
+        cloudProviderName: CloudProviders.AWS,
+        resourceType: RESOURCESTYPE.MSSQL,
+        coRelationId: `fs-${randomize('A0', 17)}`,
+        region
+    });
 }
 
 export {

@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import yaml from 'yaml';
-import { getPreSignedUrl, putObjectBucket } from '../lib/aws/s3';
+import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
     SQL_RESOURCE_ASSETS,
@@ -25,6 +25,7 @@ interface TemplateDetails {
 }
 
 const logger = getLogger();
+const { getPreSignedUrl } = preSignedUrl;
 
 async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
     logger.info('Generating signed urls ', region, resourceType);
@@ -224,11 +225,10 @@ async function uploadTemplates(
 
     if (resourceType === DatabaseTypes.MS_SQL_SERVER) {
         const signedUrls = await generateSignedUrls(region, resourceType);
-        const promises: any[] = [];
-        SQL_TEMPLATES_DISTRIBUTION.map(async template => {
-            promises.push(updateTemplateUrls(region, template.location, signedUrls, template.name, stackName));
-        });
-        Promise.all(promises).then(() =>
+        const promises = SQL_TEMPLATES_DISTRIBUTION.map(async template =>
+            updateTemplateUrls(region, template.location, signedUrls, template.name, stackName)
+        );
+        await Promise.all(promises).then(() =>
             updateTemplateUrls(
                 region,
                 MASTER_TEMPLATE_DISTRIBUTION.location,

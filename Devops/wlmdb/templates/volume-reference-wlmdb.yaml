@@ -1,0 +1,10 @@
+{{ if .Values.global.NFSlogs }}
+apiVersion: trident.netapp.io/v1
+kind: TridentVolumeReference
+metadata:
+  name: {{ .Values.global.pvName }}
+  namespace: {{ .Values.global.namespace }}
+spec:
+  pvcName: shared-pv
+  pvcNamespace: vector
+{{ end }}
