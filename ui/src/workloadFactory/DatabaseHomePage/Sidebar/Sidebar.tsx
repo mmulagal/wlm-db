@@ -457,7 +457,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre>{getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW)}</pre>
+                    <pre className={styles.colorAutomation}>
+                        {getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW)}
+                    </pre>
                 </HighlighterWord>
             );
         }
