@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { generateOptionType, getWlmdbPayload, wrapContext } from '../../../utils/utilityFunctions';
+import {
+    formatSize,
+    formatVpcSubnetsData,
+    generateOptionType,
+    getWlmdbPayload,
+    wrapContext
+} from '../../../utils/utilityFunctions';
 
 import styles from './Chatbot.module.scss';
 import ChatBox from './ChatBox/Chatbox';
@@ -8,12 +14,34 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useSendMsgMutation } from '../../../utils/apiService';
 import { setCurrentIntent, setMessages } from '../../../store/chatbot/chatbotSlice';
 import {
+    setDBCredentialsName,
+    setDBCredentialsPassword,
+    setFsxNExistingUserName,
+    setFsxNPassword,
+    setInstanceType,
+    setSelectedADDomainAddress,
+    setSelectedADDomainName,
+    setSelectedADPassword,
+    setSelectedADScenarioType,
+    setSelectedADUserName,
+    setSelectedAzNode1,
+    setSelectedAzNode2,
     setSelectedCredentials,
     setSelectedDBDeploymentModel,
-    setSelectedRegionData
+    setSelectedExistingSecurityGroup,
+    setSelectedKeyPair,
+    setSelectedLicenseId,
+    setSelectedRegionData,
+    setSelectedSubnetNode1,
+    setSelectedSubnetNode2,
+    setSelectedVPC,
+    setStorageCapacity,
+    setStorageUnit,
+    setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
 import { GENERAL } from '../../../utils/appConstants';
-import { SQL_DEPLOYMENT_MODE } from '../../../utils/consts';
+import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
+import MssqlApis from '../MSSqlServer/MssqlApis';
 type optionsType = {
     value?: string | number;
     label?: string;
@@ -34,8 +62,7 @@ const Chatbot = () => {
     const messages = useAppSelector(state => state.chatbot.messages);
     const currentIntent = useAppSelector(state => state.chatbot.currentIntent);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
-    const credentialData = useAppSelector(state => state.mssql.getCredentials);
-    const { regionsData } = useAppSelector(state => state.mssql.getRegions);
+    const mssqlData = useAppSelector(state => state.mssql);
     //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
     const [isBotReplying, setIsBotReplying] = useState(false);
     //const [currentIntent, setCurrentIntent] = useState<any>('');
@@ -45,9 +72,252 @@ const Chatbot = () => {
 
     const [sendMsgToBot] = useSendMsgMutation();
 
+    MssqlApis();
+
     const mapParamsToPayload = (params: any) => {
         Object.keys(params).map(key => {
+            const value = params[key];
             switch (key) {
+                case 'credentialsId':
+                    if (mssqlFormData?.awsAccount?.selectedCredential?.data?.credentialsId !== value) {
+                        const selectedCredentialOption = mssqlData.getCredentials.credentialData?.filter(
+                            item => item.credentialsId === value
+                        )[0];
+                        const credValue =
+                            selectedCredentialOption?.name +
+                            ' | Account: ' +
+                            selectedCredentialOption?.providerAccountId;
+                        const option = generateOptionType(
+                            credValue,
+                            credValue,
+                            '',
+                            false,
+                            '',
+                            selectedCredentialOption
+                        );
+                        dispatch(setSelectedCredentials(option));
+                    }
+                    break;
+                case 'fsxDeploymentMode':
+                    if (
+                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'SINGLE_AZ_1') ||
+                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'MULTI_AZ_1')
+                    ) {
+                        dispatch(
+                            setSelectedDBDeploymentModel(
+                                value === 'MULTI_AZ_1'
+                                    ? {
+                                          label: GENERAL.FAILOVER_CLUSTER,
+                                          value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+                                      }
+                                    : {
+                                          label: GENERAL.SINGLE_INSTANCE,
+                                          value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                                      }
+                            )
+                        );
+                    }
+                    break;
+                case 'region':
+                    if (mssqlFormData?.regionAndVpc?.selectedRegion?.data?.regionCode !== value) {
+                        const selectedRegionOption = mssqlData.getRegions.regionsData?.regions?.filter(
+                            item => item.regionCode === value
+                        )[0];
+                        const credValue =
+                            selectedRegionOption?.regionCode + ' | Account: ' + selectedRegionOption?.regionName;
+                        const option = generateOptionType(credValue, credValue, '', false, '', selectedRegionOption);
+                        dispatch(setSelectedRegionData(option));
+                    }
+                    break;
+                case 'vpcId':
+                    if (mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id !== value) {
+                        const selectedVpcId = mssqlData.getVPCList.vpcData?.vpcs?.filter(item => item.id === value)[0];
+                        const vpcValue =
+                            (selectedVpcId?.name ? selectedVpcId.name + ' | ' : '') +
+                                (selectedVpcId?.cidrBlock ? selectedVpcId.cidrBlock[0]?.CidrBlock : '') || '-';
+                        const vpcLabel2 = selectedVpcId?.id!;
+                        const vpcData = {
+                            id: selectedVpcId?.id,
+                            name: selectedVpcId?.name,
+                            cidrBlock: selectedVpcId?.cidrBlock ? selectedVpcId?.cidrBlock[0]?.CidrBlock : '',
+                            availabilityZones: formatVpcSubnetsData(selectedVpcId || { subnets: [] })
+                        };
+                        const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
+                        dispatch(setSelectedVPC(option));
+                    }
+                    break;
+                case 'availabilityZone1':
+                    if (mssqlFormData?.availabilityZones?.selectedAzNode1?.data?.availabilityZone !== value) {
+                        const azData = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.availabilityZones;
+                        const zones = azData ? Object.keys(azData) : [];
+                        const selectedAzNode1 = zones.filter(val => val === value)[0];
+                        const subnetsList: Array<string> = [];
+                        azData[selectedAzNode1]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                        const data: any = {
+                            availabilityZone: selectedAzNode1,
+                            subnets: subnetsList
+                        };
+                        const option: any = generateOptionType(selectedAzNode1, selectedAzNode1, '', false, '', data);
+                        dispatch(setSelectedAzNode1(option));
+                        const subnet = option?.data?.subnets?.[0];
+                        dispatch(
+                            setSelectedSubnetNode1(
+                                generateOptionType(subnet?.cidrBlock, value, subnet?.id, false, '', subnet)
+                            )
+                        );
+                    }
+                    break;
+                case 'availabilityZone2':
+                    if (mssqlFormData?.availabilityZones?.selectedAzNode2?.data?.availabilityZone !== value) {
+                        const azData = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.availabilityZones;
+                        const zones = azData ? Object.keys(azData) : [];
+                        const selectedAzNode1 = zones.filter(val => val === value)[0];
+                        const subnetsList: Array<string> = [];
+                        azData[selectedAzNode1].map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                        const data: any = {
+                            availabilityZone: selectedAzNode1,
+                            subnets: subnetsList
+                        };
+                        const option: any = generateOptionType(selectedAzNode1, selectedAzNode1, '', false, '', data);
+                        dispatch(setSelectedAzNode2(option));
+                        const subnet = option?.data?.subnets?.[0];
+                        dispatch(
+                            setSelectedSubnetNode2(
+                                generateOptionType(subnet?.cidrBlock, value, subnet?.id, false, '', subnet)
+                            )
+                        );
+                    }
+                    break;
+                case 'keyPairName':
+                    if (mssqlFormData?.keyPair?.selectedKeyPair?.data?.name !== value) {
+                        const selectedKayPair = mssqlData?.getKeyPairList?.keyPairData?.keyPairs?.filter(
+                            item => item.name === value
+                        )[0];
+                        const keyPairName = selectedKayPair?.name || '';
+                        const option = generateOptionType(keyPairName, keyPairName, '', false, '', selectedKayPair);
+                        dispatch(setSelectedKeyPair(option));
+                    }
+                    break;
+                case 'workloadInstanceType':
+                    if (mssqlFormData?.instanceType?.data?.instanceType !== value) {
+                        const selectedInstance: any =
+                            mssqlData?.getInstanceTypeList?.instanceTypeData?.instanceTypes?.filter(
+                                item => item.instanceType === value
+                            )[0];
+                        let label2 = '';
+                        if (selectedInstance?.vCpus) {
+                            label2 += selectedInstance?.vCpus + 'vCPU, ';
+                        }
+                        if (selectedInstance?.ramInMib) {
+                            label2 += formatSize(selectedInstance?.ramInMib, 'mib') + ' RAM, ';
+                        }
+                        if (selectedInstance?.iopsInMbps) {
+                            label2 += selectedInstance?.iopsInMbps + 'Mbps';
+                        }
+                        const option = generateOptionType(value, value, label2, false, '', selectedInstance);
+                        dispatch(setInstanceType(option));
+                    }
+                    break;
+                case 'domainUsername':
+                    if (mssqlFormData?.activeDirectory?.userName !== value) {
+                        dispatch(setSelectedADUserName(value));
+                    }
+                    break;
+                case 'domainPassword':
+                    if (mssqlFormData?.activeDirectory?.password !== value) {
+                        dispatch(setSelectedADPassword(value));
+                    }
+                    break;
+                case 'domainDnsname':
+                    if (mssqlFormData?.activeDirectory?.domainName !== value) {
+                        const selectedDomainName = mssqlData.getAdsList?.adsData?.directories?.filter(
+                            item => item.domainName === value
+                        )[0];
+                        const verVal = selectedDomainName?.domainName;
+                        const data = {
+                            domainName: selectedDomainName?.domainName,
+                            dnsIpAddress: (selectedDomainName?.dnsIpAddress || '').toString(),
+                            securityGroupId: selectedDomainName?.vpcSettings?.securityGroupId,
+                            adScenarioType: AWS_MANAGED_AD
+                        };
+                        const option = generateOptionType(verVal, verVal, '', false, '', data);
+                        dispatch(setSelectedADDomainName(option));
+                        dispatch(setSelectedADDomainAddress(data?.dnsIpAddress));
+                        dispatch(setSelectedADScenarioType(data?.adScenarioType || USER_MANAGED_AD));
+                    }
+                    break;
+                case 'serviceAccountName':
+                    if (mssqlFormData?.dbCredentials?.name !== value) {
+                        dispatch(setDBCredentialsName(value));
+                    }
+                    break;
+                case 'serviceAccountPassword':
+                    if (mssqlFormData?.dbCredentials?.password !== value) {
+                        dispatch(setDBCredentialsPassword(value));
+                    }
+                    break;
+                case 'sqlAmiId':
+                    if (mssqlFormData?.license?.selectedLicenseId !== value) {
+                        const selectedLicense = mssqlData.getAmiList?.amiData?.amis?.filter(
+                            item => item.imageId === value
+                        )[0];
+                        const amiVal = selectedLicense?.imageId;
+                        const amiName = selectedLicense?.name || '';
+                        const data = {
+                            architecture: selectedLicense?.architecture,
+                            amiVal: selectedLicense?.imageId,
+                            amiName: selectedLicense?.name
+                        };
+                        const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
+                        dispatch(setSelectedLicenseId(option));
+                    }
+                    break;
+                case 'fsxUsername':
+                    if (mssqlFormData?.fsxN?.fsxNNewUserName !== value) {
+                        dispatch(setFsxNExistingUserName(value));
+                    }
+                    break;
+                case 'fsxPassword':
+                    if (mssqlFormData?.fsxN?.fsxNPassword !== value) {
+                        dispatch(setFsxNPassword(value));
+                    }
+                    break;
+                case 'fsxVolThroughput':
+                    const numVal = parseInt(value);
+                    const convertedVal = numVal < 1024 ? `${numVal} MBps` : `${numVal / 1024} GBps`;
+                    if (mssqlFormData?.throughput?.value !== convertedVal) {
+                        const option = generateOptionType(convertedVal, convertedVal, '', false, '');
+                        dispatch(setThroughputValue(option));
+                    }
+                    break;
+                case 'databaseSize':
+                    const convertToGb =
+                        mssqlFormData?.storageCapacity?.unit?.value === 'TiB'
+                            ? parseInt(mssqlFormData?.storageCapacity?.capacity) * 1024
+                            : parseInt(mssqlFormData?.storageCapacity?.capacity);
+                    if (convertToGb !== value) {
+                        dispatch(setStorageCapacity(value));
+                        const option = generateOptionType('GiB', 'GiB', '', false, '');
+                        dispatch(setStorageUnit(option));
+                    }
+                    break;
+                case 'ontapSgGroupId':
+                    if (mssqlFormData?.securityGroup?.sgValue !== value) {
+                        const selectedVpcId = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id;
+                        if (selectedVpcId) {
+                            const selectedVpcData = mssqlData?.getVPCList?.vpcData.vpcs?.filter(
+                                pervpc => pervpc?.id === selectedVpcId
+                            )[0];
+                            const selectedSg: any = selectedVpcData?.securityGroups?.filter(
+                                (item: any) => item?.id === value
+                            )[0];
+                            const sgValue = selectedSg?.id;
+                            const sgLabel = selectedSg?.securityGroupName || selectedSg?.name || '-';
+                            const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
+                            dispatch(setSelectedExistingSecurityGroup(option));
+                        }
+                    }
+                    break;
             }
         });
     };
@@ -89,7 +359,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, intent, type, errors } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, errors } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -97,6 +367,7 @@ const Chatbot = () => {
                             mapParamsToPayload(intent.params);
                         } else {
                             setPayloadContent(intent.validatedJson);
+                            mapParamsToPayload(intent.params);
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -108,6 +379,7 @@ const Chatbot = () => {
                             msg: message,
                             key: key,
                             list: allowedValues,
+                            allowCreate: allowCreate,
                             intent: intent,
                             type: type,
                             active: true,
