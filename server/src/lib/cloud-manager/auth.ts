@@ -6,7 +6,7 @@ import getLogger from '../../utils/logger.js';
 const logger = getLogger();
 
 async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }> {
-    logger.info('Getting service token:');
+    logger.info('Getting workload factory service token:');
 
     try {
         const {
@@ -38,7 +38,7 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
 }
 
 async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number }> {
-    logger.info('Getting service token:');
+    logger.info('Getting BlueXP service token:');
 
     try {
         const { token } = await getWfServiceToken();
