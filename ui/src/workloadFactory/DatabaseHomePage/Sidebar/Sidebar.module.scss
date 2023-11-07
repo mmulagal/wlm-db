@@ -325,7 +325,7 @@
     }
 
     [class*='SearchInput-module_opened'] {
-        border-bottom: 2px solid var(--content-background);
+        border-bottom: 2px solid var(--content-background) !important;
         position: relative;
         top: -3px;
         svg {
@@ -333,6 +333,11 @@
         }
 
         input {
+            color: var(--white);
+        }
+
+        ::-webkit-input-placeholder {
+            /* WebKit, Blink, Edge */
             color: var(--white);
         }
     }
