@@ -43,6 +43,10 @@ export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 export const CREDENTIAL_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/credentials/account-credentials';
 export const CREDENTIAL_PROD_LINK = 'https://cloudmanager.netapp.com/credentials/account-credentials';
 
+// Add WF credentials link
+export const CREDENTIAL_WF_STAGE_LINK = 'https://staging.console.workloads.netapp.com/credentials';
+export const CREDENTIAL_WF_PROD_LINK = 'https://console.workloads.netapp.com/credentials';
+
 // Add timeline link
 export const TIMELINE_STAGE_LINK = 'https://staging.cloudmanager.netapp.com/timeline';
 export const TIMELINE_PROD_LINK = 'https://cloudmanager.netapp.com/timeline';
