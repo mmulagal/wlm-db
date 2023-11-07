@@ -1,5 +1,6 @@
 import '../../simulator/scopes/cloud-manager/cloud-manager-audit-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import sendAudit from '../../../src/lib/cloud-manager/audit';
 import { WLMDB } from '../../../src/utils/consts';

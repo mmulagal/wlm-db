@@ -1,6 +1,5 @@
 import { ACCOUNT_ID, CLOUD_MANAGER_ENDPOINT, HEADERS } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
-import { getServiceToken } from './tenancy';
 
 import getLogger from '../../utils/logger';
 import {
@@ -9,6 +8,7 @@ import {
     UpdateAuditGroupSchemaType
 } from '../../routes/schemas/audit-schema';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
+import { getBxpServiceToken } from './auth';
 
 const logger = getLogger();
 
@@ -21,7 +21,7 @@ export default async function sendAudit(auditData: {
     logger.debug('Sending Audit:', auditData);
 
     try {
-        const { token } = await getServiceToken();
+        const { token } = await getBxpServiceToken();
         const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
         return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/audit/${accountId}`, {
             headers: {

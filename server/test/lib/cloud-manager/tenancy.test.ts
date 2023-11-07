@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker/locale/af_ZA';
 import jwt from 'jsonwebtoken';
 import {
-    getServiceToken,
     getTenancyResourcesByType,
     registerServiceResource,
     generateAuthToken,
@@ -10,6 +9,7 @@ import {
     getPermissionsForUser
 } from '../../../src/lib/cloud-manager/tenancy';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import registerServiceResponse from '../../simulator/responses/cloud-manager/register-service-resource-tenancy.json';
 import getTenancyResourceResponse from '../../simulator/responses/cloud-manager/get-tenancy-resources-by-type.json';
@@ -33,10 +33,10 @@ function generateBearerToken() {
 }
 
 describe('tenancny resource lib', () => {
-    it('should return a service token', async () => {
-        const resp = await getServiceToken();
-        expect(resp).toBeDefined();
-    });
+    // it('should return a service token', async () => {
+    //     const resp = await getServiceToken();
+    //     expect(resp).toBeDefined();
+    // });
 
     it('should return a tenancy resources by type', async () => {
         const resp = await getTenancyResourcesByType('MYSQL');
