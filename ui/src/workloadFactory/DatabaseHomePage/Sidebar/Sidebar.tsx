@@ -47,7 +47,7 @@ import {
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
-import { setMaskedPassword } from './CodeboxUtility';
+import { addEscapeInCli, setMaskedPassword } from './CodeboxUtility';
 
 type ConfigType = {
     id?: string;
@@ -227,11 +227,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const getRightPanelTemplateResponse = (id: string | undefined) => {
         const result = rightPanelTemplateResponse.find((val: any) => val.id === id);
         if (result && result?.data) {
-            // escape character is being removed so adding that again in cli command
-            const newdata = { ...result?.data,
-                cliCommand: result?.data?.cliCommand ? result.data.cliCommand.replace(/"/g, '\\"') : ''
-            }
-            return newdata;
+            return addEscapeInCli(result?.data);
         } else {
             return undefined;
         }
