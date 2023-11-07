@@ -682,3 +682,25 @@ export const validateChatbotField = (fieldName: string, val: any) => {
             return dbPassVal(val) || '';
     }
 };
+
+export const databaseTableSort = (data: DatabaseHostItem[] | null) => {
+    if (!data || data.length < 2) {
+        return data;
+    }
+    const sort_order_list = [STATUS_CONST.INITIALIZING, STATUS_CONST.UP, STATUS_CONST.DOWN, STATUS_CONST.FAILED];
+    const newDataList = data.slice().sort((a, b) => {
+        const indexA = sort_order_list.indexOf(a.status || '');
+        const indexB = sort_order_list.indexOf(b.status || '');
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+        if (indexA !== -1) {
+            return -1;
+        }
+        if (indexB !== -1) {
+            return 1;
+        }
+        return 0;
+    });
+    return newDataList;
+};

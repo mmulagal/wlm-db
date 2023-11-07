@@ -15,6 +15,7 @@ import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
+import { databaseTableSort } from '../../../utils/utilityFunctions';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -375,7 +376,7 @@ const DatabaseTable = () => {
     const tableProps = useTable({
         isSorting: false,
         columns: DatabasesColDefs,
-        rows: databaseHostsList || [],
+        rows: databaseTableSort(databaseHostsList) || [],
         pageSize: 10,
         selectionType: 'none',
         isHorizontalScroll: true,
