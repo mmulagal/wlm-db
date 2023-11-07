@@ -90,7 +90,7 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
 
         const response = { token: `${tokenType} ${accessToken}`, expiresIn };
         if (!isEmpty(accessToken)) {
-            writeToCache(WF_SVC_TOKEN_TYPE, WLMDB, response, expiresIn * 1000);
+            writeToCache(BXP_SVC_TOKEN_TYPE, WLMDB, response, expiresIn * 1000);
         }
         return response;
     } catch (err) {
