@@ -15,7 +15,8 @@ import {
     FSX_SSD_MIN_SIZE,
     FSX_SSD_MAX_SIZE,
     FCI_STACKNAME,
-    STANDALONE_STACKNAME
+    STANDALONE_STACKNAME,
+    STANDALONE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -127,10 +128,15 @@ function getSubjectFromBearerToken() {
     return decodedToken?.payload.sub;
 }
 
-function isSameRoutetables(networkConfiguration: CFNetworkConfigurationType) {
+function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigurationType, deploymentMode: string) {
+    if (deploymentMode === STANDALONE) {
+        return !networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id;
+    }
     return (
-        'routeTable1Id' in networkConfiguration &&
-        'routeTable2Id' in networkConfiguration &&
+        !networkConfiguration.privateSubnet1Id ||
+        !networkConfiguration.privateSubnet2Id ||
+        !networkConfiguration.routeTable1Id ||
+        !networkConfiguration.routeTable2Id ||
         networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
     );
 }
@@ -212,7 +218,7 @@ export {
     generateDeploymentParams,
     getSubjectFromBearerToken,
     hideSecretsValues,
-    isSameRoutetables,
+    isNetworkConfigurationViolated,
     checkAndRetrieveJsonObject,
     getQueueArn,
     getQueueUrl,
