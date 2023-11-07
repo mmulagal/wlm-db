@@ -47,6 +47,7 @@ import {
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
+import { setMaskedPassword } from './CodeboxUtility';
 
 type ConfigType = {
     id?: string;
@@ -239,20 +240,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         const changeObjectForm = {
             mssqlForm: actualData
         };
-        //Masked res body
-        const maskedPassword = {
-            ...actualData,
-            dbCredentials: {
-                ...actualData.dbCredentials,
-                password: actualData.dbCredentials.password.length ? '******' : ''
-            },
-            fsxN: { ...actualData.fsxN, fsxNPassword: actualData.fsxN.fsxNPassword.length ? '*****' : '' },
-            activeDirectory: {
-                ...actualData.activeDirectory,
-                password: actualData.activeDirectory.password.length ? '*****' : ''
-            }
-        };
-        const maskedChangeObj = { mssqlForm: maskedPassword };
+        const maskedChangeObj = { mssqlForm: setMaskedPassword(actualData) };
         const maskedResBody = createMssqlPayload(maskedChangeObj);
         const resBody = createMssqlPayload(changeObjectForm);
 

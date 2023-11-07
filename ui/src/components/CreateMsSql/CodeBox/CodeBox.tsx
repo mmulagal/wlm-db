@@ -32,6 +32,7 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
+import { setMaskedPassword } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -44,6 +45,7 @@ const CodeBox = () => {
     const [formData, setFormData] = useState<any>(null); // Saving form data on template API call
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
+    const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
@@ -115,7 +117,7 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
-                        {rightPanelResponse}
+                        {rightPanelMaskedResponse}
                     </pre>
                 </HighlighterWord>
             );
@@ -280,7 +282,39 @@ const CodeBox = () => {
         );
         //@ts-ignore
         setRightPanelResponse(highlightedString);
+        getMaskedRestResponse(actualData, credDetails, baseUrl);
         setIsRightPanelDataLoading(false);
+    };
+
+    // This will set masked data
+    const getMaskedRestResponse = (actualData: any, credDetails: any, baseUrl: string) => {
+        const changeObjectForm = {
+            mssqlForm: setMaskedPassword(actualData)
+        };
+        const resBody = createMssqlPayload(changeObjectForm);
+        const res = JSON.stringify(resBody, null, 2);
+        // To set REST API response as deploy API curl request
+        const highlightedString = (
+            <Highlighter
+                highlightClassName={styles.highlightClass}
+                searchWords={[
+                    CRED_PLACEHOLDERS.ACCOUNT_ID,
+                    CRED_PLACEHOLDERS.CRED_ID,
+                    CRED_PLACEHOLDERS.REGION,
+                    CRED_PLACEHOLDERS.TOKEN
+                ]}
+                autoEscape={true}
+                textToHighlight={CURL_REQ_TEMPLATE(
+                    baseUrl,
+                    credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
+                    credDetails.region || CRED_PLACEHOLDERS.REGION,
+                    CRED_PLACEHOLDERS.TOKEN,
+                    res
+                )}
+            />
+        );
+        //@ts-ignore
+        setRightPanelMaskedResponse(highlightedString);
     };
 
     useEffect(() => {
