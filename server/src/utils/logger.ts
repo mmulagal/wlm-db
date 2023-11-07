@@ -23,8 +23,6 @@ function hideSecretsValues(obj: any) {
             }
         });
     }
-    // eslint-disable-next-line no-console
-    console.log('>>ERROR OBJECT', obj); // TODO: REMOVE ME
 
     return JSON.stringify(obj);
 }

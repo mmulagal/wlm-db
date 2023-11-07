@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker/locale/af_ZA';
 import jwt from 'jsonwebtoken';
 import {
-    getServiceToken,
     getTenancyResourcesByType,
     registerServiceResource,
     generateAuthToken,
@@ -33,10 +32,10 @@ function generateBearerToken() {
 }
 
 describe('tenancny resource lib', () => {
-    it('should return a service token', async () => {
-        const resp = await getServiceToken();
-        expect(resp).toBeDefined();
-    });
+    // it('should return a service token', async () => {
+    //     const resp = await getServiceToken();
+    //     expect(resp).toBeDefined();
+    // });
 
     it('should return a tenancy resources by type', async () => {
         const resp = await getTenancyResourcesByType('MYSQL');

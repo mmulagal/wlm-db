@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { HEADERS, SECRETS, WF_ENDPOINT } from '../../utils/consts.js';
+import { HEADERS, SECRETS, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts.js';
 import { gotInstanceForInternalRequest } from '../../utils/got.js';
 import getLogger from '../../utils/logger.js';
 
@@ -14,7 +14,7 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
             expires_in: expiresIn,
             token_type: tokenType
         } = await gotInstanceForInternalRequest
-            .post(`${WF_ENDPOINT}/auth/v1/auth/token`, {
+            .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token`, {
                 json: {
                     client_id: SECRETS.AUTH_CLIENT_ID,
                     client_secret: SECRETS.AUTH_CLIENT_SECRET,
@@ -47,7 +47,7 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
             expires_in: expiresIn,
             token_type: tokenType
         } = await gotInstanceForInternalRequest
-            .get(`${WF_ENDPOINT}/auth/v1/auth0/token`, {
+            .get(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth0/token`, {
                 headers: {
                     [HEADERS.AUTHORIZATION]: token
                 }

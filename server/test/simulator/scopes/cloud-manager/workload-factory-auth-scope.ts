@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import nock from 'nock';
-import { WF_ENDPOINT } from '../../../../src/utils/consts';
+import { WORKLOAD_FACTORY_ENDPOINT } from '../../../../src/utils/consts';
 
-nock(`${WF_ENDPOINT}`)
+nock(`${WORKLOAD_FACTORY_ENDPOINT}`)
     .persist(true)
     .post(/^\/auth\/v1\/auth\/token$/)
     .reply(() => [
