@@ -13,6 +13,7 @@ type FunctionToRun = DeployMsSql;
 // Parameters for MS SQL Deployment, use undefined as default value
 type DeployMsSqlParams = {
     credentialsId?: string;
+    fsxType?: string;
     region?: string; // region name or code as provided by the user
     fsxDeploymentMode?: string;
     vpcId?: string; // VPC id for the instance
@@ -35,7 +36,6 @@ type DeployMsSqlParams = {
     sqlAmiId?: string;
     serviceAccountName?: string;
     serviceAccountPassword?: string;
-    sqlFciName?: string;
     fsxUsername?: string;
     fsxPassword?: string;
     databaseSize?: number;
@@ -43,6 +43,7 @@ type DeployMsSqlParams = {
     fsxIOPS?: number;
     encryptionKey?: string;
     ontapSgGroupId?: string;
+    fsxFileSystemId?: string;
 };
 
 // Deploy MS SQL

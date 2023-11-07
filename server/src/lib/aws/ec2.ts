@@ -106,9 +106,33 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
 
     const client = await getEC2Client(region, credentialsId);
     const paginator = paginateDescribeInstanceTypes(
-        { client, pageSize: 50 },
+        { client, pageSize: 100 },
         {
-            Filters: [{ Name: 'instance-type', Values: ['*'] }]
+            Filters: [
+                { Name: 'current-generation', Values: ['true'] },
+                { Name: 'processor-info.supported-architecture', Values: ['x86_64'] },
+                { Name: 'supported-usage-class', Values: ['on-demand'] },
+                { Name: 'supported-virtualization-type', Values: ['hvm'] },
+                { Name: 'vcpu-info.default-vcpus', Values: ['4', '8', '16', '32', '64', '72'] },
+                {
+                    Name: 'memory-info.size-in-mib',
+                    Values: [
+                        (4 * 1024).toString(),
+                        (8 * 1024).toString(),
+                        (16 * 1024).toString(),
+                        (32 * 1024).toString(),
+                        (64 * 1024).toString(),
+                        (128 * 1024).toString(),
+                        (160 * 1024).toString(),
+                        (256 * 1024).toString(),
+                        (512 * 1024).toString()
+                    ]
+                },
+                {
+                    Name: 'instance-type',
+                    Values: ['m5*', 'm6*', 'm7*', 'c5*', 'c6*', 'c7*', 'r4*', 'r5*', 'r6*']
+                }
+            ]
         }
     );
     const instanceTypes = [];

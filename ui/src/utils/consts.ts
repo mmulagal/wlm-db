@@ -141,7 +141,13 @@ export const RECOMMENDED_TEMPLATES = {
     PROD_NAME: 'Production'
 };
 
-export const CURL_REQ_TEMPLATE = (baseUrl: string, credentialId: string, region: string, token: string, payload: any) => `
+export const CURL_REQ_TEMPLATE = (
+    baseUrl: string,
+    credentialId: string,
+    region: string,
+    token: string,
+    payload: any
+) => `
 curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
@@ -155,7 +161,7 @@ export const CRED_PLACEHOLDERS = {
     TOKEN: '<Token>'
 };
 
-export const MARKETING_PAGE_URL = "https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549";
+export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549';
 
 export const DB_HOME_DATA_TYPE = {
     HOSTS: 'hosts',
@@ -164,5 +170,6 @@ export const DB_HOME_DATA_TYPE = {
 
 export const CODEBOX_REST_RES = {
     API: 'api',
-    VIEW: 'view'
-}
+    VIEW: 'view',
+    COPY: 'copy'
+};

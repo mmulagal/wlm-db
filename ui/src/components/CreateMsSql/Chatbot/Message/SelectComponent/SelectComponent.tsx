@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import styles from './SelectComponent.module.scss';
 import { SelectField } from '@netapp/design-system';
 
@@ -8,18 +8,39 @@ type selectComponentPropType = {
     heading: string;
     selectKey: string;
     paramObj: any;
+    allowCreate?: boolean;
 };
 
-const SelectComponent = ({ options, onChange, heading, selectKey, paramObj }: selectComponentPropType) => {
+const SelectComponent = ({
+    options,
+    onChange,
+    heading,
+    selectKey,
+    paramObj,
+    allowCreate = false
+}: selectComponentPropType) => {
     const [selected, setSelected] = useState('');
+    const [optionsToShow, setOptionsToShow] = useState<any>([]);
+    const [isCreating, setIsCreating] = useState(false);
 
     //@ts-ignore
+    useEffect(() => {
+        setOptionsToShow(options);
+    }, [options]);
+
     useEffect(() => {
         if (options.length && !paramObj.hasOwnProperty(selectKey)) {
             setSelected(options[0].value);
             onChange(selectKey, options[0].value, options[0].label);
         }
     }, [options, paramObj]);
+
+    const addNewOption = async (option: any) => {
+        setIsCreating(true);
+        const updatedOptions = [...optionsToShow, { label: option, value: option }];
+        setOptionsToShow(updatedOptions);
+        setIsCreating(false);
+    };
 
     return (
         <div className={styles['select-component']}>
@@ -28,6 +49,10 @@ const SelectComponent = ({ options, onChange, heading, selectKey, paramObj }: se
                 label={''}
                 isClearable={false}
                 defaultValue={options[0]}
+                isCreatingOption={isCreating}
+                isOptionsAddingEnabled={allowCreate}
+                //@ts-ignore
+                onCreateOption={addNewOption}
                 onChange={(selectedOptions: any): void => {
                     onChange(selectKey, selectedOptions.value, selectedOptions.label);
                     setSelected(selectedOptions.value);
