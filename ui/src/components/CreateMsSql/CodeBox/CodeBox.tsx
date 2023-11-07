@@ -32,7 +32,7 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
-import { setMaskedPassword } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
+import { setMaskedPassword, addEscapeInCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -217,7 +217,7 @@ const CodeBox = () => {
         resBody.region = credDetails?.region || '';
         loadTemplateData({ payload: resBody }).then((data: any) => {
             if (data?.data) {
-                setRightPanelTemplateResponse(data?.data);
+                setRightPanelTemplateResponse(addEscapeInCli(data?.data));
                 setIsRightPanelTemplateLoading(false);
                 dispatch(setIsLoading(false));
                 // Redirect if clicked on Redirect to CloudFormation

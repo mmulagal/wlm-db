@@ -1,3 +1,4 @@
+import { TemplateRes } from "../../../utils/types/databaseHomeTypes";
 import { MssqlRequestBody } from "../../../utils/types/mssqlTypes";
 
 export const setMaskedPassword = (data: MssqlRequestBody) => {
@@ -14,4 +15,12 @@ export const setMaskedPassword = (data: MssqlRequestBody) => {
         }
     };
     return maskedPassword
+}
+
+export const addEscapeInCli = (data: TemplateRes) => {
+    // escape character is being removed so adding that again in cli command
+    const result = { ...data,
+        cliCommand: data?.cliCommand ? data.cliCommand.replace(/"/g, '\\"') : ''
+    }
+    return result;
 }

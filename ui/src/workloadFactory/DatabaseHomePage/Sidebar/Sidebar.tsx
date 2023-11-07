@@ -47,7 +47,7 @@ import {
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
-import { setMaskedPassword } from './CodeboxUtility';
+import { addEscapeInCli, setMaskedPassword } from './CodeboxUtility';
 
 type ConfigType = {
     id?: string;
@@ -227,7 +227,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const getRightPanelTemplateResponse = (id: string | undefined) => {
         const result = rightPanelTemplateResponse.find((val: any) => val.id === id);
         if (result && result?.data) {
-            return result?.data;
+            return addEscapeInCli(result?.data);
         } else {
             return undefined;
         }
