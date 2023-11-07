@@ -175,6 +175,7 @@ Parameters:
   Ec2RoleName:
     Description: EC2 instance role name
     Type: String
+    MinLength: 1
 
   UniqueID:
     Description: Automation Execution Unique ID.
@@ -192,6 +193,7 @@ Parameters:
   DNSIpAddresses:
     Description: Fixed private IPs for the Active Directory servers
     Type: String
+    MinLength: 1
 
   DomainAdminUser:
     AllowedPattern: "([a-zA-Z0-9]+(\\.|_|-|@)*)+"
@@ -233,10 +235,12 @@ Parameters:
     Description:
       S3 bucket name for WLMDB assets. 
     Type: String
+    Default: staging.wlmdb.workloads.netapp.com
 
   AssetsS3RegionCode:
     Description: S3 region code.
     Type: String
+    Default: s3.us-east-1
 
   AssetsS3KeyPrefix:
     Description:
@@ -244,6 +248,8 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
+    Default: templates
+
 
   MSSQLMediaBucketName:
     Default: LaunchWizard-sqlha
@@ -264,6 +270,7 @@ Parameters:
   SQLAMIID:
     Description: Version of SQL Windows AMI ID
     Type: String
+    MinLength: 1
 
   SQLServiceAccountName:
     AllowedPattern: "([a-zA-Z0-9]+(\\.|_|-|@)*)+"
@@ -283,10 +290,12 @@ Parameters:
   SQLigroupname:
     Description: SQL igroupname
     Type: String
+    MinLength: 1
 
   SqlServerName:
     Description: SQL Server Name
     Type: String
+    MinLength: 1
 
   SqlFSxWSFCName:
     AllowedPattern: "[a-zA-Z0-9\\-]+"
@@ -306,6 +315,7 @@ Parameters:
   PrivateSubnet1ID:
     Description: ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)
     Type: String
+    MinLength: 1
 
   PrivateSubnet2ID:
     Description: ID of private subnet 2 in Availability Zone 2 for the Workload (e.g., subnet-a0246dcd)
@@ -314,6 +324,7 @@ Parameters:
   RouteTable1Id:
     Description: Comma seperated list of all route table ids' for SQL subnets.
     Type: String
+    MinLength: 1
   
   RouteTable2Id:
     Description: Comma seperated list of all route table ids' for SQL subnets.
@@ -322,14 +333,17 @@ Parameters:
   SQLSvmName:
     Description: SQL Storage Machine Virtual Name
     Type: String
+    MinLength: 1
 
   WorkloadInstanceType:
     Description: Amazon EC2 instance type for the WSFC Nodes
     Type: String
+    MinLength: 1
 
   NodeNetBIOSNames:
     Type: String
     Description: NetBIOS name of Nodes (each one up to 15 characters)
+    MinLength: 1
   
   FSxStorageCapacity:
     Description: Storage capacity of the file system. Minimum 1024 GiB, maximum 192 TiB.
@@ -344,10 +358,12 @@ Parameters:
   FSxDataVolumeName:
     Description: FSx data volume name
     Type: String
+    MinLength: 1
   
   FSxLogVolumeName:
     Description: FSx log volume name
     Type: String
+    MinLength: 1
   
   FSxLogVolumeSize:
     Description: Size of the log volume, in megabytes (MiB).
@@ -356,6 +372,7 @@ Parameters:
   FSxTempDbVolumeName:
     Description: FSx TempDB volume name
     Type: String
+    MinLength: 1
   
   FSxTempDbVolumeSize:
     Description: FSx TempDB volume size, in megabytes (MiB)
@@ -419,6 +436,7 @@ Parameters:
   VPCID:
     Description: Existing VPC ID for deployment
     Type: String
+    MinLength: 1
   
   ONTAPSecurityGroupID:
     Description: ONTAP Security Group ID
@@ -439,6 +457,7 @@ Parameters:
   ValidationAmi:
     Description: Validation node AMI image id
     Type: String
+    MinLength: 1
   
   RoleCredentialsId:
     Description: Account credentials id to deploy and manage resources
@@ -447,7 +466,7 @@ Parameters:
   AccountId:
     Description: BlueXP account id
     Type: String
-
+    
   CloudProviderAccountId:
     Description: BlueXP CloudProviderAccountId id
     Type: String

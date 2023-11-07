@@ -548,7 +548,11 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
-const SAME_ROUTETABLE_MESSAGE = 'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
+const STANDALONE_NETWORK_VIOLATION_MESSAGE =
+    'For standalone deployment, privateSubnet1Id and routeTable1Id cannot be empty.';
+
+const FCI_NETWORK_VIOLATION_MESSAGE =
+    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 
@@ -927,7 +931,6 @@ export {
     SQL_RESOURCE_ASSETS,
     SQL_TEMPLATE_TAGS_INDENTATION,
     DEFAULT_TAGS,
-    SAME_ROUTETABLE_MESSAGE,
     FileSystemDeploymentType,
     FSX_RESOURCE_TYPE,
     RESOURCESTYPE,
@@ -1015,5 +1018,7 @@ export {
     CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER,
     NOT_AVAILABLE,
-    SKIP_TEMPLATE_PASSWORD_PARAMETERS
+    SKIP_TEMPLATE_PASSWORD_PARAMETERS,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_VIOLATION_MESSAGE
 };
