@@ -23,6 +23,10 @@
     label {
         color: var(--grey-55) !important;
     }
+
+    [class*='Typography-module_ellipsis'] {
+        color: var(--grey-55) !important;
+    }
 }
 
 .select-component-heading {
