@@ -23,7 +23,8 @@ import {
     SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
-    WF
+    WF,
+    DEPLOYMENT_JOBS_FAILED_STATUS
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -394,11 +395,25 @@ async function processCloudFormationMessages() {
                                     /**
                                              a master stack deployment record is created as part of the custom resource definition in master       template. As part of stack message additional deployment details for the master template deployment are  available.
                                              *In addition, all nested stack deployment messages are also available, if its master template related message then update the existing record, otherwise if its related to nested deployment insert a deployment record; a master template may have a set of nested templates deployed;
+
+                                             Cloudformation does not send a notfication for parent stack deployment. We rely on nested template notification to capture the status of master stack.
+                                             During initial deployment, cloudformation status would begin with 'CREATE_'. If any of the nested stacks fail (CREATE_FAILED) master stack is marked as CREATE_FAILED.
+                                             It could be the case other nested stacks deploy successfully, however master stack should be CREATE_FAILED since one (or more) nested stack may have failed.
+
+                                             Retry failed stack
+                                             ==================
+                                             User may retry failed stack, cloudformation status would now begin with 'UPDATE_'.
+                                             Master stack will be updated with 'UPDATE_' status. If any of the nested stack is 'UPDATE_FAILED', then master stack will be marked as 'UPDATE_FAILED'.
                                         * */
+
+                                    let [mainCFStatusClass] = resourceStatus.split('_');
+                                    if (resourceStatus.includes('UPDATE_ROLLBACK')) {
+                                        mainCFStatusClass = 'UPDATE_ROLLBACK';
+                                    }
                                     if (
                                         stackName === masterDeploymentName &&
-                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED &&
-                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.UPDATE_FAILED
+                                        !masterDeploymentStatus.startsWith(mainCFStatusClass) &&
+                                        !masterDeploymentStatus.includes('FAILED')
                                     ) {
                                         await updateDeployment(accountId, id, {
                                             deploymentName: stackName,
@@ -422,8 +437,8 @@ async function processCloudFormationMessages() {
                                             deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
                                             data: data as object
                                         });
-                                        if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
-                                            // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED
+                                        if (DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)) {
+                                            // if any of the underlying resource is in CREATE_FAILED, DELETE_FAILED, ROLLBACK_FAILED, UPDATE_FAILED, UPDATE_ROLLBACK_FAILED mark the parent stack stack status as FAILED
                                             await updateDeployment(accountId, id, {
                                                 deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
                                                 endTime: new Date(timestamp).valueOf()
