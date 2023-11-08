@@ -22,7 +22,8 @@ import {
     VERSION,
     WORKSPACE_ID,
     JWKS_FULL_NAME,
-    WLMDB
+    WLMDB,
+    DEPLOYMENT_JOBS_FAILED_STATUS
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import { getLocalStorage, setAsyncLocalStorageResource } from './utils/async-local-storage';
@@ -60,6 +61,13 @@ const port = config.get<number>('app-port');
 const host = '0.0.0.0';
 
 const API_PREFIX_PATH = '/accounts/:accountId/wlmdb';
+
+const resourceStatus = 'CREATE_IN_PROGRESS';
+const masterDeploymentStatus = 'CREATE_FAILED';
+
+logger.info('********************************');
+logger.info(DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus) && !masterDeploymentStatus.includes('FAILED'));
+logger.info('********************************');
 
 process.on('unhandledRejection', (reason, p) => logger.error('Unhandled Rejection at:', p, 'reason:', reason));
 
