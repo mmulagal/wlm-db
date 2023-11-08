@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/aws/fsx-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -10,7 +11,8 @@ import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
-    isAWSBackupEnabled
+    isAWSBackupEnabled,
+    getMappedOntapVolumes
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
 
@@ -29,10 +31,10 @@ describe('Testcases for Amazon FSx resources operations', () => {
 
     it('AWS backup enabled check', async () => {
         const response = await isAWSBackupEnabled(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, FSX_FILESYSTEM_ID, {
-            credentialsId: '',
-            activeNodeInstanceId: '',
-            standbyNodeInstanceId: '',
-            fsxSecret: ''
+            credentialsId: `${faker.string.alpha(20)}`,
+            activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
+            standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
+            fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
         });
         expect(response).toEqual(true);
     });
@@ -43,10 +45,25 @@ describe('Testcases for Amazon FSx resources operations', () => {
             DEFAULT_AWS_REGION,
             FSX_FILESYSTEM_ID,
             {
-                credentialsId: '',
-                activeNodeInstanceId: '',
-                standbyNodeInstanceId: '',
-                fsxSecret: ''
+                credentialsId: `${faker.string.alpha(20)}`,
+                activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
+                standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
+                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
+            }
+        );
+        expect(response).toBeDefined();
+    });
+
+    it('Get Ontap mapped volumes', async () => {
+        const response = await getMappedOntapVolumes(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID,
+            {
+                credentialsId: `${faker.string.alpha(20)}`,
+                activeNodeInstanceId: `i-${faker.string.alpha(17)}`,
+                standbyNodeInstanceId: `i-${faker.string.alpha(17)}`,
+                fsxSecret: 'WLMDB-SqlStandaloneStack-1699407080711-fsx'
             }
         );
         expect(response).toBeDefined();

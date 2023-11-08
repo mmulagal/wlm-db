@@ -351,5 +351,6 @@ export {
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
     getVolumesUuids,
-    getStorageDataUsingSSM
+    getStorageDataUsingSSM,
+    getMappedOntapVolumes
 };
