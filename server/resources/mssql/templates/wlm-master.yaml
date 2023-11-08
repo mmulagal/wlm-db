@@ -475,10 +475,6 @@ Parameters:
     Description: JWT Token to grant access to a resource
     Type: String
 
-  SnsServiceToken:
-    Description: SNS ARN to push cloud formation messages
-    Type: String
-
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -517,7 +513,7 @@ Resources:
   TrackStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
-      ServiceToken: !Ref SnsServiceToken
+      ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb'
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
@@ -569,9 +565,9 @@ Resources:
           Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
       {{Tags}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
@@ -611,9 +607,9 @@ Resources:
           Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
       {{Tags}}
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
@@ -701,9 +697,9 @@ Resources:
           Ref: FSxDiskIops 
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
       {{Tags}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
@@ -736,9 +732,9 @@ Resources:
           Ref: FSxQuorumVolumeSize
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
       {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
@@ -848,9 +844,9 @@ Resources:
           Ref: FSxLogVolumeName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
       {{Tags}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
@@ -946,14 +942,14 @@ Resources:
           Ref: SqlServerName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
+        - [!Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb']
       {{Tags}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Properties:
-      ServiceToken: !Ref SnsServiceToken
+      ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${CloudProviderAccountId}:wlmdb'
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
