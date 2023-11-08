@@ -86,7 +86,7 @@ const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalC
 const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT 
                                             [ServerIOLatency] =
                                                 CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)
-                                                    THEN 0 ELSE (SUM(io_stall) / (SUM(num_of_reads) + SUM(num_of_writes))) END
+                                                    THEN 0 ELSE (CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))) END
                                             FROM
                                                 sys.dm_io_virtual_file_stats (NULL,NULL)
                                             )
