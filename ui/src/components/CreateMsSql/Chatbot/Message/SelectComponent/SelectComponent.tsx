@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import styles from './SelectComponent.module.scss';
 import { SelectField } from '@netapp/design-system';
+import { generateOptionType } from '../../../../../utils/utilityFunctions';
 
 type selectComponentPropType = {
     options: any;
@@ -9,6 +10,14 @@ type selectComponentPropType = {
     selectKey: string;
     paramObj: any;
     allowCreate?: boolean;
+};
+
+const delay = () => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve('');
+        }, 2000);
+    });
 };
 
 const SelectComponent = ({
@@ -38,8 +47,10 @@ const SelectComponent = ({
     const addNewOption = async (option: any) => {
         setIsCreating(true);
         const updatedOptions = [...optionsToShow, { label: option, value: option }];
+        await delay();
         setOptionsToShow(updatedOptions);
         setIsCreating(false);
+        return generateOptionType(option, option, '', false, '');
     };
 
     return (
@@ -57,8 +68,8 @@ const SelectComponent = ({
                     onChange(selectKey, selectedOptions.value, selectedOptions.label);
                     setSelected(selectedOptions.value);
                 }}
-                isSearchable={options.length > 5}
-                options={options}
+                isSearchable={optionsToShow.length > 5 || allowCreate}
+                options={optionsToShow}
             />
             {/* {options.length > 4 && (
                 <div className={styles['search-container']}>
