@@ -7,7 +7,7 @@ const logger = getLogger();
 
 const newRule: LifecycleRule = {
     Expiration: {
-        Days: 1
+        Days: 7
     },
     ID: 'DeleteWlmdbFolders',
     Filter: {
