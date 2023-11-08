@@ -5,6 +5,10 @@
     gap: 8px;
     max-width: 400px;
 
+    [class*='design-system-select__single-value'] {
+        max-width: 330px !important;
+    }
+
     .select-component-heading {
         display: block;
         color: var(--grey-55);
