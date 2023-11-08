@@ -61,7 +61,9 @@ import {
     RESOURCESTYPE,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE
+    FCI_NETWORK_VIOLATION_MESSAGE,
+    FileSystemTypes,
+    DATABASE_TYPE
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -542,6 +544,8 @@ async function createDeploymentMockDataInDB(
     });
 
     const cloudProviderId = randomize('0', 8);
+    const resourceName = `sqlnode-${randomize('0', 5)}`;
+
     await createDeployment(accountId, {
         deploymentId: stackId,
         cloudProviderAccountId: cloudProviderId,
@@ -552,17 +556,29 @@ async function createDeploymentMockDataInDB(
         region,
         deploymentName: stackName,
         deploymentModel: sqlDeploymentMode as DEPLOYMENT_MODEL,
-        endTime: new Date().valueOf()
+        endTime: new Date().valueOf(),
+        data: {
+            databaseType: DATABASE_TYPE,
+            resourceName,
+            fileSystemType: FileSystemTypes.FSXONTAP
+        }
     });
 
     await createResource(accountId, {
         resourceId: randomUUID(),
-        resourceName: `sqlnode-${randomize('0', 5)}`,
+        resourceName,
         cloudProviderAccountId: cloudProviderId,
         cloudProviderName: CloudProviders.AWS,
         resourceType: RESOURCESTYPE.MSSQL,
         coRelationId: `fs-${randomize('A0', 17)}`,
-        region
+        region,
+        metadata: {
+            credentialsId: credentialId,
+            sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
+            fileSystemType: FileSystemTypes.FSXONTAP,
+            activeNodeInstanceId: `i-${randomize('A0', 17)}`,
+            activeNodeInstanceName: `sqlnode-${randomize('0', 5)}`
+        }
     });
 }
 
