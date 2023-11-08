@@ -2,18 +2,22 @@ import Chatbot from '../lib/chatbot/chatbot';
 import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib/chatbot/helpers';
 import { queryBotResponseType } from '../routes/types/chatbot.types';
 import { CHATBOT_UI_PARAMS_FSX } from '../lib/chatbot/consts';
+import { maskPasswords } from '../utils/utils';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
 
 async function queryBot(query: string, oldParams?: { [x: string]: any }) {
-    logger.info('Querying Bot', { query, oldParams });
+    const logQuery = maskPasswords(query);
+    const logOldParams = maskPasswords(oldParams as object);
+    logger.info('Querying Bot', { logQuery, logOldParams });
     try {
         let intent;
         const chatbot = new Chatbot();
 
         const response = await chatbot.query(query);
-        logger.info('CHATBOT RESP>>>', JSON.stringify(response));
+        const logResponse = maskPasswords(response);
+        logger.info('CHATBOT RESP>>>', JSON.stringify(logResponse));
         if (response.success) {
             ({ intent } = response.data);
         }
