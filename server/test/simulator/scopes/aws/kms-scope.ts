@@ -10,12 +10,8 @@ const keyId = `${faker.string.alphanumeric(20)}`;
 const accountId = `${faker.string.numeric(12)}`;
 
 const listKeysResponse = {
-    KeyCount: 2,
+    KeyCount: 1,
     Keys: [
-        {
-            KeyArn: keyArn,
-            KeyId: keyId
-        },
         {
             KeyArn: keyArn,
             KeyId: keyId
@@ -27,7 +23,7 @@ const listKeyAliasesResponse = {
     Aliases: [
         {
             AliasArn: keyArn,
-            AliasName: 'alias/nviet-openlab-key6',
+            AliasName: 'aws/fsx',
             TargetKeyId: keyId
         }
     ],
@@ -39,7 +35,7 @@ const describeKeyResponse = {
         AWSAccountId: accountId,
         Arn: keyArn,
         CustomerMasterKeySpec: 'SYMMETRIC_DEFAULT',
-        Description: 'sathish-openLab',
+        Description: 'wlmdb-openLab',
         Enabled: true,
         EncryptionAlgorithms: ['SYMMETRIC_DEFAULT'],
         KeyId: keyId,

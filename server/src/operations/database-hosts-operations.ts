@@ -159,7 +159,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
     // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
     //     ONTAP tags have '_' instead of '-' in the stack name.  So we
     // tune tag accordingly with replaceAll.
-    const deploymentId = fsxSecret.replace('-fsx', '').replaceAll('-', '_');
+    const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
 
     const info = await getStorageDataUsingSSM(
         credentialsId,

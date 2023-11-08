@@ -42,7 +42,7 @@
                     "Value": "DBSFSX"
                 }
             ],
-            "VpcId": "vpc-84b3afe6"
+            "VpcId": "vpc-7d4a2818"
         },
         {
             "CreationTime": "2023-07-26T21:30:53.041Z",
@@ -77,7 +77,139 @@
                     "Value": "rranga-zfs"
                 }
             ],
-            "VpcId": "vpc-84b3afe6"
+            "VpcId": "vpc-d4f1aab1"
+        },
+        {
+            "CreationTime": "2023-07-26T07:27:48.159Z",
+            "FileSystemId": "fs-03773e21b2f0e39c4",
+            "FileSystemType": "ONTAP",
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061425:key/0a96542a-f57b-487c-a0fc-4dba89",
+            "Lifecycle": "AVAILABLE",
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
+            "OntapConfiguration": {
+                "AutomaticBackupRetentionDays": 30,
+                "DailyAutomaticBackupStartTime": "15:30",
+                "DeploymentType": "MULTI_AZ_1",
+                "DiskIopsConfiguration": {
+                    "Iops": 3072,
+                    "Mode": "AUTOMATIC"
+                },
+                "EndpointIpAddressRange": "172.31.255.255/26",
+                "Endpoints": {
+                    "Intercluster": {
+                        "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
+                    },
+                    "Management": {
+                        "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
+                        "ipAddresses": ["172.31.255.204"]
+                    }
+                },
+                "PreferredSubnetId": "subnet-f4484e80",
+                "RouteTableIds": ["rtb-65aeb107"],
+                "ThroughputCapacity": 128,
+                "WeeklyMaintenanceStartTime": "1:14:30"
+            },
+            "OwnerId": "464262061425",
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
+            "StorageCapacity": 1024,
+            "StorageType": "SSD",
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "DBSFSX-1"
+                }
+            ],
+            "VpcId": "vpc-d4f1aab1"
+        },
+        {
+            "CreationTime": "2023-07-26T07:27:48.159Z",
+            "FileSystemId": "fs-03773e21b2f0e39d4",
+            "FileSystemType": "ONTAP",
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061425:key/0a96542a-f57b-487c-a0fc-4dba89",
+            "Lifecycle": "AVAILABLE",
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
+            "OntapConfiguration": {
+                "AutomaticBackupRetentionDays": 30,
+                "DailyAutomaticBackupStartTime": "15:30",
+                "DeploymentType": "MULTI_AZ_1",
+                "DiskIopsConfiguration": {
+                    "Iops": 3072,
+                    "Mode": "AUTOMATIC"
+                },
+                "EndpointIpAddressRange": "172.31.255.255/26",
+                "Endpoints": {
+                    "Intercluster": {
+                        "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
+                    },
+                    "Management": {
+                        "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
+                        "ipAddresses": ["172.31.255.204"]
+                    }
+                },
+                "PreferredSubnetId": "subnet-f4484e80",
+                "RouteTableIds": ["rtb-65aeb107"],
+                "ThroughputCapacity": 128,
+                "WeeklyMaintenanceStartTime": "1:14:30"
+            },
+            "OwnerId": "464262061425",
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
+            "StorageCapacity": 1024,
+            "StorageType": "SSD",
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "DBSFSX-2"
+                }
+            ],
+            "VpcId": "vpc-62720a04"
+        },
+        {
+            "CreationTime": "2023-07-26T07:27:48.159Z",
+            "FileSystemId": "fs-03773e21b2f0e39d4",
+            "FileSystemType": "ONTAP",
+            "KmsKeyId": "arn:aws:kms:ap-southeast-1:464262061425:key/0a96542a-f57b-487c-a0fc-4dba89",
+            "Lifecycle": "AVAILABLE",
+            "NetworkInterfaceIds": ["eni-0f21c7486b651ca11", "eni-01a4d0d5f61d75ee4"],
+            "OntapConfiguration": {
+                "AutomaticBackupRetentionDays": 30,
+                "DailyAutomaticBackupStartTime": "15:30",
+                "DeploymentType": "MULTI_AZ_1",
+                "DiskIopsConfiguration": {
+                    "Iops": 3072,
+                    "Mode": "AUTOMATIC"
+                },
+                "EndpointIpAddressRange": "172.31.255.255/26",
+                "Endpoints": {
+                    "Intercluster": {
+                        "dnsName": "intercluster.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
+                        "ipAddresses": ["172.31.24.147", "172.31.11.147"]
+                    },
+                    "Management": {
+                        "dnsName": "management.fs-03773e21b2f0e39b4.fsx.ap-southeast-1.amazonaws.com",
+                        "ipAddresses": ["172.31.255.204"]
+                    }
+                },
+                "PreferredSubnetId": "subnet-f4484e80",
+                "RouteTableIds": ["rtb-65aeb107"],
+                "ThroughputCapacity": 128,
+                "WeeklyMaintenanceStartTime": "1:14:30"
+            },
+            "OwnerId": "464262061425",
+            "ResourceARN": "arn:aws:fsx:ap-southeast-1:464262061425:file-system/fs-03773e21b2f039b4",
+            "StorageCapacity": 1024,
+            "StorageType": "SSD",
+            "SubnetIds": ["subnet-f4484e80", "subnet-4cdd3b29"],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "DBSFSX-3"
+                }
+            ],
+            "VpcId": "vpc-ba1ed1de"
         }
     ]
 }
