@@ -312,6 +312,9 @@ export const generateRandomDBName = () => {
 };
 
 export const formatFractionalNumber = (value: number | undefined, precision: number = 1) => {
+    if (Number.isNaN(value)) {
+        return 0;
+    }
     if (value && typeof value === 'number' && !Number.isInteger(value)) {
         return value.toFixed(precision);
     }
