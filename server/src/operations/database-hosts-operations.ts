@@ -208,7 +208,7 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
         );
 
         return {
-            isAwsBackUpEnabled: awsBackup,
+            isAwsBackUpEnabled: Boolean(awsBackup),
             isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };

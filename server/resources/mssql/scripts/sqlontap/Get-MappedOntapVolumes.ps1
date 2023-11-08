@@ -10,9 +10,6 @@ param(
     [string]$FSxRegion
 )
 
-Start-Transcript -Path C:\cfn\log\ontapvolumesmapping.ps1.txt -Append
-$ErrorActionPreference = "Stop"
-
 # Read fsxadmin password from secrets and encode the username:password with base64String
 $SecretInfo = ConvertFrom-Json -InputObject (Get-SECSecretValue -SecretId ${FSxSecretName}).SecretString
 $FSxUserName = $SecretInfo.username
@@ -27,18 +24,18 @@ $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStore
 $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
 
 # Get Windows drives associated with databases
-$qlresponse =  sqlcmd -Q "SET NOCOUNT ON; SELECT DISTINCT vs.logical_volume_name FROM sys.master_files AS mf CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs WHERE vs.volume_mount_point != 'C:\' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB';" -y 0 ;
+$sqlresponse =  sqlcmd -Q "SET NOCOUNT ON; SELECT DISTINCT vs.logical_volume_name FROM sys.master_files AS mf CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs WHERE vs.volume_mount_point != 'C:\' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) = 'MDF' AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) != 'TEMPDB' FOR JSON PATH;" -y 0;
 
-$drives = $sqlresponse.split('\r\n')
+[string[]]$WinVolumes = $sqlresponse | ConvertFrom-Json | % { $_.logical_volume_name }
 
-Write-output $drives
+Write-Debug "$WinVolumes"
 
 Function Get-SerialNumberOfWinVolumes {
     Write-Debug "Getting serial number of windows volumes"
 
     [string[]]$serialnumers = @()
-    foreach ($drive in $drives) {
-        $serialnumers += (Get-Volume -FileSystemLabel $drive | Get-Partition | Get-Disk).SerialNumber
+    foreach ($WinVolume in $WinVolumes) {
+        $serialnumers += (Get-Volume -FileSystemLabel $WinVolume | Get-Partition | Get-Disk).SerialNumber
     }
 
     Write-Debug "Serial numbers: $serialnumers"
@@ -67,7 +64,7 @@ function Invoke-ONTAPGetRequest {
 }
 
 function Get-LunFromSerialNumber($LunSerialNumbers) {
-    Write-Debug "Get ONTAP lun name from serial numbers: $LunSerialNumbers"
+    Write-Debug "Get ONTAP lun name from serial numbers for: $LunSerialNumbers"
 
     $QueryFilter = ''
     foreach ($LunSerialNumber in $LunSerialNumbers) {
@@ -115,21 +112,26 @@ function Get-VolumeIdFromName($Names) {
         $Params += @{"ApiQueryFilter" = "name=$QueryFilter"}
     }
 
-    $Response = Invoke-ONTAPGetRequest @Params
+    return Invoke-ONTAPGetRequest @Params
+}
 
-    $VolumeRecords = $Response.records
-
-    [string[]]$VolumeIds = @()
-    foreach ($record in $VolumeRecords) {
-        $VolumeIds += $record.uuid
-    }
-
-    Write-Debug "Volume ids: $VolumeIds"
-    return $VolumeIds
+if (!($WinVolumes.count -gt 0)) {
+    write-error "Couldn't get database windows volumes"
+    return
 }
 
 $SerialNumbers = Get-SerialNumberOfWinVolumes
 
+if (!($SerialNumbers.count -gt 0)) {
+    write-error "Couldn't get windows volume serial numbers"
+    return
+}
+
 $VolumeNames = Get-LunFromSerialNumber $SerialNumbers
 
-Get-VolumeIdFromName $VolumeNames
+if (!($VolumeNames.count -gt 0)) {
+    write-error "Couldn't get associated Ontap LUN volume names"
+    return
+}
+
+Get-VolumeIdFromName $VolumeNames | ConvertTo-Json -Depth 10
