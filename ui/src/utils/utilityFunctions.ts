@@ -337,6 +337,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             } else if (val?.protection) {
                 protectionText = GENERAL.NOT_PROTECTED;
             }
+            const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0
             val = {
                 ...val,
                 type: DB_HOME_DATA_TYPE.HOSTS,
@@ -355,7 +356,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                 // Storage saving table text to search in table
                 storageSavingsText:
                     val?.storage &&
-                    val.storage?.spaceSavingsPercent + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
+                    formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);
