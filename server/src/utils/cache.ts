@@ -59,8 +59,9 @@ function writeToCache(type: string, key: string, data: any, ttl?: number) {
     const cache = getCacheByType(type);
     if (ttl) {
         cache?.set(key, data, { ttl });
+    } else {
+        cache?.set(key, data);
     }
-    cache?.set(key, data);
 }
 
 function readFromCacheByKey(type: string, key: string) {
