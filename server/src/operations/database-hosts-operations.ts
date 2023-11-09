@@ -24,12 +24,8 @@ import {
     getNativeSQLProtection,
     getDatabasesCount
 } from './workloads/mssql/mssql-operations';
-import {
-    getVolumesUuids,
-    getStorageDataUsingSSM,
-    isAWSBackupEnabled,
-    getOntapVolumesSnapshotCount
-} from './aws/fsx-operations';
+import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
+import Metadata from '../utils/common-types';
 
 const logger = getLogger();
 
@@ -40,13 +36,6 @@ interface Topology {
     standbyNodeInstanceName?: string;
     sqlDeploymentType?: string;
     fileSystemType?: string;
-}
-
-interface Metadata {
-    credentialsId: string;
-    activeNodeInstanceId: string;
-    standbyNodeInstanceId: string;
-    fsxSecret: string;
 }
 
 type VolumeSpaceRecord = {
@@ -139,60 +128,60 @@ async function getTopology(
     return topologyData;
 }
 
-async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageResponseType> {
+async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageResponseType | undefined> {
     logger.info('Getting storage data:', { resourceDetail });
 
-    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+    try {
+        const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
-        credentialsId: string;
-        activeNodeInstanceId: string;
-        standbyNodeInstanceId: string;
-        fsxSecret: string;
-    };
+        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
+            credentialsId: string;
+            activeNodeInstanceId: string;
+            standbyNodeInstanceId: string;
+            fsxSecret: string;
+        };
 
-    const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
-    const volumeUuidList = volumeUuids.join(',');
+        // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
+        // deploymentID from the fsxSecret, which has an additional '-fsx'
+        // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
+        //     ONTAP tags have '_' instead of '-' in the stack name.  So we
+        // tune tag accordingly with replaceAll.
+        const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
 
-    // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
-    // deploymentID from the fsxSecret, which has an additional '-fsx'
-    // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
-    //     ONTAP tags have '_' instead of '-' in the stack name.  So we
-    // tune tag accordingly with replaceAll.
-    const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
+        const info = await getStorageDataUsingSSM(
+            credentialsId,
+            region!,
+            fileSystemId!,
+            fsxSecret,
+            'storage/volumes',
+            `tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
+            'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
 
-    const info = await getStorageDataUsingSSM(
-        credentialsId,
-        region!,
-        fileSystemId!,
-        fsxSecret,
-        'storage/volumes',
-        `uuid=${volumeUuidList}&tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
-        'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+        logger.info(`Storage data for volumes with deploymentId ${deploymentId}:`, info);
 
-    let totalSize = 0;
-    let totalUsed = 0;
-    let totalSpaceSavings = 0;
-    let totalSpaceSavingsPercent = 0;
-    info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
-        const { size, used } = space;
-        const { total, total_percent: totalPercent } = efficiency.space_savings;
+        let totalSize = 0;
+        let totalUsed = 0;
+        let totalSpaceSavings = 0;
+        info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
+            const { size, used } = space;
+            const { total } = efficiency.space_savings;
 
-        totalSize += size;
-        totalUsed += used;
-        totalSpaceSavings += total;
-        totalSpaceSavingsPercent += totalPercent;
-    });
+            totalSize += size;
+            totalUsed += used;
+            totalSpaceSavings += total;
+        });
 
-    return {
-        size: totalSize,
-        used: totalUsed,
-        spaceSavings: totalSpaceSavings,
-        spaceSavingsPercent: totalSpaceSavingsPercent
-    };
+        return {
+            size: totalSize,
+            used: totalUsed,
+            spaceSavings: totalSpaceSavings
+        };
+    } catch (error) {
+        logger.error('Error while getting storage savings for resource', resourceDetail, JSON.stringify(error));
+    }
 }
 
 async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<ProtectionResponseType | undefined> {
@@ -200,19 +189,12 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
 
     const { resource_id: resourceId, region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
+    const { credentialsId } = metadata as Metadata;
 
     try {
         const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
-            isAWSBackupEnabled(credentialsId, region!, fileSystemId!),
-            getOntapVolumesSnapshotCount(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                fsxSecret,
-                activeNodeInstanceId,
-                standbyNodeInstanceId
-            ),
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata),
+            getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getNativeSQLProtection(resourceId)
         ]);
 
@@ -221,7 +203,7 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
         );
 
         return {
-            isAwsBackUpEnabled: awsBackup,
+            isAwsBackUpEnabled: Boolean(awsBackup),
             isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };
