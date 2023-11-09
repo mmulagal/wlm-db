@@ -62,8 +62,8 @@ const StorageCapacity = () => {
     };
 
     const checkError = () => {
-        if ((selectedUnit?.label === 'TiB' && Number(inputCapacity) > 130) || 
-        (selectedUnit?.label === 'GiB' && Number(inputCapacity) > 133120)) {
+        if ((selectedUnit?.label === 'TiB' && (Number(inputCapacity) > 130 || Number(inputCapacity) < 1)) || 
+        (selectedUnit?.label === 'GiB' && (Number(inputCapacity) > 133120 || Number(inputCapacity) < 120))) {
             return GENERAL.ERROR_CAPACITY;
         }
     };
