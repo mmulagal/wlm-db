@@ -103,7 +103,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             {
                 id: 'downloadYaml',
                 displayName: CODE_VIEWER.DOWNLOAD_YAML,
-                disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
+                disabled: true // disable below line till CF template issue gets resolved
+                // disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
             }
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,11 +136,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     // This is to set disableCopy flag value
     useEffect(() => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
-            if (!getRightPanelTemplateResponse(openKey)?.template || isRightPanelTemplateLoading) {
-                setDisableCopy(true);
-            } else {
-                setDisableCopy(false);
-            }
+            setDisableCopy(true); // disable below code till CF template issue gets resolved
+            // if (!getRightPanelTemplateResponse(openKey)?.template || isRightPanelTemplateLoading) {
+            //     setDisableCopy(true);
+            // } else {
+            //     setDisableCopy(false);
+            // }
         } else if (dropDownValue === CODE_VIEWER.REST_API) {
             const rightPanelResponse = getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW);
             if (!rightPanelResponse || isRightPanelDataLoading) {
