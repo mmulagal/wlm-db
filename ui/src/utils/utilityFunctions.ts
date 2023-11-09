@@ -355,7 +355,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                 ).toString(),
                 // performance table text to search in table
                 performanceText:
-                    val?.performance && val.performance?.assessment + ' ( <' + val.performance?.latency + ' ms )',
+                    val?.performance && val.performance?.assessment,
                 // Storage saving table text to search in table
                 storageSavingsText:
                     val?.storage &&
