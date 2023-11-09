@@ -517,7 +517,7 @@ function validateText(text: string, key: string) {
         return {
             key,
             status: 'error',
-            message: `Please provide the value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
+            message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
             type: key.toLowerCase().includes('password') ? 'password' : 'text'
         };
     }
