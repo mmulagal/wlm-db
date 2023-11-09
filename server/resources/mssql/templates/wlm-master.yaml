@@ -534,7 +534,7 @@ Resources:
       DatabaseType: 'Microsoft SQL server'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
-    # DependsOn: TrackStackDeployment
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -576,7 +576,7 @@ Resources:
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
     Condition: IsFailoverCluster
-    # DependsOn: TrackStackDeployment
+    DependsOn: TrackStackDeployment
     Properties:
       TemplateURL: {{ValidationTemplate}}
       Parameters:
@@ -619,13 +619,13 @@ Resources:
     Type: AWS::CloudFormation::WaitConditionHandle
     Condition: IsFailoverCluster
     DependsOn: 
-      # - TrackStackDeployment
+      - TrackStackDeployment
       - ValidationStack2
       - ValidationStack1
   SIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
     DependsOn: 
-      # - TrackStackDeployment
+      - TrackStackDeployment
       - ValidationStack1
   WaitCondition:
     Type: AWS::CloudFormation::WaitCondition
