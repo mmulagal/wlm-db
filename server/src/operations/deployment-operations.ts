@@ -35,6 +35,8 @@ import {
     TEMPLATE_CLOUD_PROVIDER_ID,
     MASTER_TEMPLATE_PATH,
     TEMPLATE_OPTIONAL_PARAMETERS,
+    WLMDB,
+    TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_ACCOUNT_ID,
     SUCCESS,
     ACTION_BUTTON_DASHBOARD,
@@ -61,7 +63,13 @@ import {
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE
 } from '../utils/consts';
-import { generateDeploymentParams, isNetworkConfigurationViolated, sleep } from '../utils/utils';
+import {
+    derivePropertiesFromARN,
+    generateDeploymentParams,
+    getSnsArn,
+    isNetworkConfigurationViolated,
+    sleep
+} from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
@@ -100,12 +108,16 @@ async function formatTemplateParameters(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
 
@@ -312,7 +324,10 @@ async function createCloudFormationTemplateForUserDeployment(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}`;
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
+
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
