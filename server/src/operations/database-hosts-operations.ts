@@ -30,6 +30,7 @@ import {
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount
 } from './aws/fsx-operations';
+import Metadata from '../utils/common-types';
 
 const logger = getLogger();
 
@@ -40,13 +41,6 @@ interface Topology {
     standbyNodeInstanceName?: string;
     sqlDeploymentType?: string;
     fileSystemType?: string;
-}
-
-interface Metadata {
-    credentialsId: string;
-    activeNodeInstanceId: string;
-    standbyNodeInstanceId: string;
-    fsxSecret: string;
 }
 
 type VolumeSpaceRecord = {
@@ -200,19 +194,12 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
 
     const { resource_id: resourceId, region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
+    const { credentialsId } = metadata as Metadata;
 
     try {
         const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
-            isAWSBackupEnabled(credentialsId, region!, fileSystemId!),
-            getOntapVolumesSnapshotCount(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                fsxSecret,
-                activeNodeInstanceId,
-                standbyNodeInstanceId
-            ),
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata),
+            getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getNativeSQLProtection(resourceId)
         ]);
 
@@ -221,7 +208,7 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
         );
 
         return {
-            isAwsBackUpEnabled: awsBackup,
+            isAwsBackUpEnabled: Boolean(awsBackup),
             isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };

@@ -3,6 +3,7 @@ import ms from 'ms';
 import {
     BXP_USER_CRED_TYPE,
     USER_TENANCY_CACHE_TYPE,
+    SSM_COMMAND_CACHE_TYPE,
     WF_USER_CRED_TYPE,
     WF_SVC_TOKEN_TYPE,
     BXP_SVC_TOKEN_TYPE
@@ -34,6 +35,11 @@ const BXP_SVC_TOKEN_CACHE = new LRUCache({
     max: 100
 });
 
+const SSM_COMMAND_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('60m')
+});
+
 function getCacheByType(type: string) {
     logger.debug('Getting cache by type:', type);
 
@@ -48,20 +54,23 @@ function getCacheByType(type: string) {
             return WF_SVC_TOKEN_CACHE;
         case BXP_SVC_TOKEN_TYPE:
             return BXP_SVC_TOKEN_CACHE;
+        case SSM_COMMAND_CACHE_TYPE:
+            return SSM_COMMAND_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }
 }
 
-function writeToCache(type: string, key: string, data: any, ttl?: number) {
+function writeToCache(type: string, key: string, data: any, ttl?: number | string) {
     logger.debug('Writing to cache:', { key, data });
 
     const cache = getCacheByType(type);
-    if (ttl) {
-        cache?.set(key, data, { ttl });
-    } else {
-        cache?.set(key, data);
-    }
+
+    const opts = {
+        ...(ttl && { ttl: typeof ttl === 'string' ? ms(ttl) : ttl })
+    };
+
+    cache?.set(key, data, opts);
 }
 
 function readFromCacheByKey(type: string, key: string) {
