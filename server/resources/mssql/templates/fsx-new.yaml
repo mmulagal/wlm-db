@@ -351,6 +351,9 @@ Resources:
                         !Ref AWS::NoValue
                     ]
                 ThroughputCapacity: !Ref FSxVolumeThroughputCapacity
+            Tags:
+                - Key: Name
+                  Value: !Ref FSxFileSystemName
 
     FSxSvmConfiguration:
         Type: AWS::FSx::StorageVirtualMachine
