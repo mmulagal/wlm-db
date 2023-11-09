@@ -4,7 +4,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
-import mockGetProductsResponse from '../../simulator/scopes/aws/pricing-scope';
+import mockfsxStoragePriceGetProductsResponse from '../../simulator/scopes/aws/pricing-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import getProducts from '../../../src/lib/aws/pricing';
 
@@ -16,7 +16,7 @@ describe('Pricing Lib', () => {
                 {
                     Type: 'TERM_MATCH',
                     Field: 'regionCode',
-                    Value: 'ap-southeast-1'
+                    Value: 'us-east-1'
                 },
                 {
                     Type: 'TERM_MATCH',
@@ -43,6 +43,6 @@ describe('Pricing Lib', () => {
             FormatVersion: 'aws_v1'
         };
         const resp = await getProducts(CREDENTIALS_ID, productFilters);
-        expect(resp).toEqual(mockGetProductsResponse);
+        expect(resp).toEqual(mockfsxStoragePriceGetProductsResponse);
     });
 });
