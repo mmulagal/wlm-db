@@ -181,25 +181,21 @@ async function getStorageDataUsingSSM(
 ) {
     logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
 
-    try {
-        const commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
-        ];
+    const commands = [
+        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+    ];
 
-        const response = await callSsmExecution(
-            credentialsId,
-            region,
-            commands,
-            activeNodeInstanceId,
-            standbyNodeInstanceId
-        );
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
 
-        const cleanResponse = response?.replaceAll('\r\n', '');
-        const jsonResponse = JSON.parse(cleanResponse!);
-        return jsonResponse;
-    } catch (error) {
-        logger.error('Failed to fetch storage savings details. Reason:', { error });
-    }
+    const cleanResponse = response?.replaceAll('\r\n', '');
+    const jsonResponse = JSON.parse(cleanResponse!);
+    return jsonResponse;
 }
 
 async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {
