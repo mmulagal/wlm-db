@@ -12,7 +12,8 @@ export interface DatabaseHostItem {
         serverMode: string;
         fileSystemType: string;
         fsxFilesystemId: string;
-        ec2Details: Array<object>
+        vpcId?: string;
+        ec2Details: Array<Ec2Details>
     };
     protection: {
         isAwsBackUpEnabled: boolean;
@@ -41,6 +42,12 @@ export interface DatabaseHostItem {
     totalCost?: string;
 }
 
+export interface Ec2Details {
+    id?: string;
+    name?: string;
+    ebsVolumeId?: string;
+}
+
 export interface DatabaseJobsItem {
     id: string;
     type?: string;
@@ -53,12 +60,14 @@ export interface DatabaseJobsItem {
         serverType: string;
         serverMode: string;
         fileSystemType: string;
+        vpcId?: string;
     };
     topology?: {
         region: string;
         serverType: string;
         serverMode: string;
         fileSystemType: string;
+        vpcId?: string;
     };
 }
 
