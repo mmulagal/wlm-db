@@ -7,9 +7,167 @@
     },
     "RouteTables": [
         {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-0ecd9c22c93c8ebec",
+                    "RouteTableId": "rtb-00d7acd615fac5414",
+                    "SubnetId": "subnet-01658e739d1a77038",
+                    "AssociationState": { "State": "associated" }
+                }
+            ],
             "PropagatingVgws": [],
-            "RouteTableId": "rtb-0252de162c006de11",
-            "VpcId": "vpc-116d9174",
+            "RouteTableId": "rtb-00d7acd615fac5414",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "GatewayId": "igw-0b5982d86291bbf85",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                { "Key": "Name", "Value": "public route table2" },
+                { "Key": "AmazonFSx", "Value": "ManagedByAmazonFSx" }
+            ],
+            "VpcId": "vpc-0cc5f7db796df218c",
+            "OwnerId": "464262061435"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": true,
+                    "RouteTableAssociationId": "rtbassoc-09ab04307c9b5554c",
+                    "RouteTableId": "rtb-0dde1132a1c54f5e6",
+                    "AssociationState": { "State": "associated" }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-0dde1132a1c54f5e6",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "GatewayId": "igw-0b5982d86291bbf85",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [{ "Key": "AmazonFSx", "Value": "ManagedByAmazonFSx" }],
+            "VpcId": "vpc-0cc5f7db796df218c",
+            "OwnerId": "464262061435"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-08df2c7d88a8cb059",
+                    "RouteTableId": "rtb-038202b41d26f6871",
+                    "SubnetId": "subnet-090a7d6a3f0fc3a92",
+                    "AssociationState": { "State": "associated" }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-038202b41d26f6871",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "GatewayId": "igw-0b5982d86291bbf85",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                },
+                {
+                    "DestinationPrefixListId": "pl-6fa54006",
+                    "GatewayId": "vpce-0a3d2e6da9db0907d",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                { "Key": "AmazonFSx", "Value": "ManagedByAmazonFSx" },
+                { "Key": "Name", "Value": "wlmdb-new-rtb-private2-ap-southeast-1b" }
+            ],
+            "VpcId": "vpc-0cc5f7db796df218c",
+            "OwnerId": "464262061435"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-0d3c56afbccd46e09",
+                    "RouteTableId": "rtb-0ad5a545a57619e61",
+                    "SubnetId": "subnet-0bd8043bb775f1b3a",
+                    "AssociationState": { "State": "associated" }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-0ad5a545a57619e61",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "GatewayId": "igw-0b5982d86291bbf85",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                { "Key": "AmazonFSx", "Value": "ManagedByAmazonFSx" },
+                { "Key": "Name", "Value": "wlmdb-new-rtb-public" }
+            ],
+            "VpcId": "vpc-0cc5f7db796df218c",
+            "OwnerId": "464262061435"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-0bdcb2fa6dd3b002d",
+                    "RouteTableId": "rtb-0f68f3fcaf13a4864",
+                    "SubnetId": "subnet-02a220365ef38f1b6",
+                    "AssociationState": { "State": "associated" }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-0f68f3fcaf13a4864",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "10.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationPrefixListId": "pl-6fa54006",
+                    "GatewayId": "vpce-0a3d2e6da9db0907d",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [{ "Key": "Name", "Value": "wlmdb-new-rtb-private1-ap-southeast-1a" }],
+            "VpcId": "vpc-0cc5f7db796df218c",
             "OwnerId": "464262061435"
         }
     ]
