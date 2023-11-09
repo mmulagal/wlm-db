@@ -42,7 +42,8 @@ const useInitialize = () => {
             !window.location ||
             !window.location.ancestorOrigins ||
             !window.location.ancestorOrigins.length ||
-            window.location.ancestorOrigins[0] !== 'https://staging.cloudmanager.netapp.com';
+            (window.location.ancestorOrigins[0] !== 'https://staging.cloudmanager.netapp.com' &&
+                window.location.ancestorOrigins[0] !== 'https://staging.console.bluexp.netapp.com/');
         // dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
         dispatch(updateIsWorkloadfactory(isWorkloadFactory));
 
