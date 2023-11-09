@@ -526,11 +526,11 @@ function validateText(text: string, key: string) {
 
 function validateDbSize(size: number, key: string) {
     logger.debug('Validate DB Size', { size });
-    if (!size || typeof size !== 'number' || (size < 1024 && size >= 1024 ** 3)) {
+    if (!size || typeof size !== 'number' || (size < 120 && size >= 133120)) {
         return {
             key,
             status: 'error',
-            message: `Enter a value for database size between 1024 to ${1024 ** 3}`,
+            message: 'Enter a value for data drive size(GiB) between 120 to 133120',
             type: 'text'
         };
     }
