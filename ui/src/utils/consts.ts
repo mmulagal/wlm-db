@@ -165,7 +165,7 @@ export const CRED_PLACEHOLDERS = {
     TOKEN: '<Token>'
 };
 
-export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549';
+export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads';
 
 export const DB_HOME_DATA_TYPE = {
     HOSTS: 'hosts',
