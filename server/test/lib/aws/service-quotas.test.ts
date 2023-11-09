@@ -2,6 +2,7 @@ import { getServiceQuotasClient, listServiceQuota } from '../../../src/lib/aws/s
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import { DEFAULT_AWS_REGION, AWSServiceNames } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/aws/service-quota-scope';

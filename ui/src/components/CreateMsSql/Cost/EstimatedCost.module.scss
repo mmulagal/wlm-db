@@ -17,7 +17,7 @@
 
         .computeContainer {
             margin-top: 10px;
-            background-color: var(--grey-10);
+            background-color: var(--loader-skeleton-bg);
             height: 88px;
             display: flex;
         }
@@ -51,7 +51,7 @@
         .storageContainer {
             height: 120px;
             margin-top: 1px;
-            background-color: var(--grey-10);
+            background-color: var(--loader-skeleton-bg);
             display: flex;
         }
 
@@ -59,14 +59,14 @@
         .adContainer {
             height: 80px;
             margin-top: 1px;
-            background-color: var(--grey-10);
+            background-color: var(--loader-skeleton-bg);
             display: flex;
         }
 
         .lastContainer {
             height: 72px;
             margin-top: 8px;
-            background-color: var(--blue-20);
+            background-color: var(--table-header-background);
             display: flex;
 
             .ecCost {

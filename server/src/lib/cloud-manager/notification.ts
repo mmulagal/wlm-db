@@ -3,7 +3,7 @@ import { CLOUD_MANAGER_ENDPOINT, SERVICE_TOKEN, HEADERS } from '../../utils/cons
 import { gotInstanceForInternalRequest } from '../../utils/got.js';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage.js';
 import getLogger from '../../utils/logger.js';
-import { getServiceToken } from './tenancy';
+import { getBxpServiceToken } from './auth.js';
 
 const logger = getLogger();
 
@@ -12,7 +12,7 @@ export default async function sendNotification(requestBody: any) {
     // Blocking for simulator
     if (process.env.NODE_ENV !== 'demo') {
         try {
-            const { token } = await getServiceToken();
+            const { token } = await getBxpServiceToken();
             return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/pubsub/publish`, {
                 headers: {
                     [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(SERVICE_TOKEN) || token

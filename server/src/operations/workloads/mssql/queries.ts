@@ -1,8 +1,5 @@
 const SET_NOCOUNT = 'SET NOCOUNT ON;';
 const FOR_JSON_PATH = 'FOR JSON PATH';
-const DEVICE_TYPE_DISK = 2; // Storage is in local disk
-const BACKUP_TYPE_DATA = 'D'; // Data, not logs
-const SYSTEM_DATABASES = ['msdb', 'tempdb', 'model', 'master'];
 
 const DATABASES = (offset: number, rowscount: number) =>
     `${SET_NOCOUNT} SELECT databaseId = d.database_id,
@@ -89,7 +86,7 @@ const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalC
 const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT 
                                             [ServerIOLatency] =
                                                 CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)
-                                                    THEN 0 ELSE (SUM(io_stall) / (SUM(num_of_reads) + SUM(num_of_writes))) END
+                                                    THEN 0 ELSE (CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))) END
                                             FROM
                                                 sys.dm_io_virtual_file_stats (NULL,NULL)
                                             )
@@ -115,9 +112,9 @@ const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     FROM msdb.dbo.backupset AS backupset
     INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
     ON backupset.media_set_id = backupmedia.media_set_id
-    WHERE backupmedia.device_type = ${DEVICE_TYPE_DISK}
-    AND backupset.type = ${BACKUP_TYPE_DATA}
-    AND backupset.database_name NOT IN (${SYSTEM_DATABASES.join()})
+    WHERE backupmedia.device_type = 2
+    AND backupset.type = 'D'
+    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') ${FOR_JSON_PATH}
 `;
 
 export {

@@ -11,8 +11,8 @@ import {
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
-import { getServiceToken } from './tenancy';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { getBxpServiceToken, getWfServiceToken } from './auth';
 
 const logger = getLogger();
 
@@ -92,7 +92,7 @@ async function getBxpCredentialDetails(credentialsId: string, accountId?: string
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
 
-    const { token } = await getServiceToken();
+    const { token } = await getBxpServiceToken();
 
     const response = await gotInstanceForInternalRequest
         .get(`credentials/accounts/${tenancyAccountId}/credentials/${credentialsId}`, {
@@ -123,11 +123,13 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
 
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
+    const { token } = await getWfServiceToken();
+
     return gotInstanceForInternalRequest
         .get(`accounts/${accountId}/credentials/v1/credentials`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
-                [HEADERS.AUTHORIZATION]: getAsyncLocalStorageResource(USER_TOKEN)
+                [HEADERS.AUTHORIZATION]: token
             },
             ...(nextToken && {
                 searchParams: {
@@ -157,7 +159,7 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
     }
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
-    const { token } = await getServiceToken();
+    const { token } = await getWfServiceToken();
 
     const response = await gotInstanceForInternalRequest
         .get(`accounts/${tenancyAccountId}/credentials/v1/generic/${credentialsId}`, {
@@ -185,7 +187,7 @@ async function associateResource(credentialsId: string, accountId: string, resou
     logger.info('Associating resource for credentials', { credentialsId, accountId, resources });
 
     const tenancyAccountId = getAsyncLocalStorageResource(ACCOUNT_ID) || accountId;
-    const { token } = await getServiceToken();
+    const { token } = await getWfServiceToken();
     return gotInstanceForInternalRequest
         .post(`accounts/${tenancyAccountId}/credentials/v1/associations`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,

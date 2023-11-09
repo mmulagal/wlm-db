@@ -6,6 +6,7 @@ import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope'
 import '../../simulator/scopes/aws/ssm-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
+import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 
 describe('executeSsmDocument', () => {
     it('executeSsmDocument', async () => {

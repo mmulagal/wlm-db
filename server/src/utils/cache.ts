@@ -1,6 +1,12 @@
 import { LRUCache } from 'lru-cache';
 import ms from 'ms';
-import { BXP_USER_CRED_TYPE, USER_TENANCY_CACHE_TYPE, WF_USER_CRED_TYPE } from './consts.js';
+import {
+    BXP_USER_CRED_TYPE,
+    USER_TENANCY_CACHE_TYPE,
+    WF_USER_CRED_TYPE,
+    WF_SVC_TOKEN_TYPE,
+    BXP_SVC_TOKEN_TYPE
+} from './consts.js';
 import getLogger from './logger.js';
 
 const logger = getLogger();
@@ -20,6 +26,14 @@ const BXP_USER_CRED_CACHE = new LRUCache({
     ttl: ms('10m')
 });
 
+const WF_SVC_TOKEN_CACHE = new LRUCache({
+    max: 100
+});
+
+const BXP_SVC_TOKEN_CACHE = new LRUCache({
+    max: 100
+});
+
 function getCacheByType(type: string) {
     logger.debug('Getting cache by type:', type);
 
@@ -30,17 +44,24 @@ function getCacheByType(type: string) {
             return WF_USER_CRED_CACHE;
         case BXP_USER_CRED_TYPE:
             return BXP_USER_CRED_CACHE;
+        case WF_SVC_TOKEN_TYPE:
+            return WF_SVC_TOKEN_CACHE;
+        case BXP_SVC_TOKEN_TYPE:
+            return BXP_SVC_TOKEN_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }
 }
 
-function writeToCache(type: string, key: string, data: any) {
+function writeToCache(type: string, key: string, data: any, ttl?: number) {
     logger.debug('Writing to cache:', { key, data });
 
     const cache = getCacheByType(type);
-
-    cache?.set(key, data);
+    if (ttl) {
+        cache?.set(key, data, { ttl });
+    } else {
+        cache?.set(key, data);
+    }
 }
 
 function readFromCacheByKey(type: string, key: string) {

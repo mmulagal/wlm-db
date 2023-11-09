@@ -575,7 +575,9 @@ async function createDeploymentMockDataInDB(
         metadata: {
             credentialsId: credentialId,
             sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-            fileSystemType: FileSystemTypes.FSXONTAP
+            fileSystemType: FileSystemTypes.FSXONTAP,
+            activeNodeInstanceId: `i-${randomize('A0', 17)}`,
+            activeNodeInstanceName: `sqlnode-${randomize('0', 5)}`
         }
     });
 }

@@ -202,7 +202,7 @@ $Body = @{
     "tiering-minimum-cooling-days" = "7"
     "snapshot-policy" = "none"
     "autosize-mode" = "grow"
-    "tiering-object-tags" = "wlmDeploymentId=$Stackname.Replace('-', '_')"
+    "tiering-object-tags" = @( "wlmDeploymentId=" + $($Stackname.split('-')[0..2] -join "_") )
 }
 
 $JsonBody = $Body | ConvertTo-Json
@@ -217,7 +217,7 @@ try{
     $restcert = returncert -region $region
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
-    Write-Output "Volume modification failed"
+    Write-Output "Volume modification failed." $_
 }
 Start-Sleep 5
 
@@ -236,7 +236,7 @@ try{
     $restcert = returncert -region $region
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
-    Write-Output "Volume modification failed"
+    Write-Output "Volume modification failed." $_
 }
 Start-Sleep 5
 
@@ -255,7 +255,7 @@ try{
     $restcert = returncert -region $region
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
-    Write-Output "Volume modification failed"
+    Write-Output "Volume modification failed." $_
 }
 Start-Sleep 5
 
@@ -264,11 +264,19 @@ $URI=@"
 https://$($MgmtDNS)/api/$($VolUriDynamicPart)?vserver=$($SQLVMName)&volume=$($FSxQuorumVolumeName)
 "@
 
+$Params = @{
+    "URI"     = "$URI"
+    "Method"  = "PATCH"
+    "Headers" = @{"Authorization" = "Basic $base64"}
+    "Body" =  "$JsonBody"
+    "ContentType" = "application/json"
+}
+
 try{
     $restcert = returncert -region $region
     Invoke-RestMethod @Params -Certificate $restcert
 }catch{
-    Write-Output "Volume modification failed"
+    Write-Output "Volume modification failed." $_
 }
 }
 Start-Sleep 5
@@ -418,7 +426,7 @@ foreach ($perlun in $lunPathlist) {
         Invoke-RestMethod @Params -Certificate $restcert
         }
         catch{
-        Write-Output "LUN modification failed"
+        Write-Output "LUN modification failed." $_
         }
         Start-Sleep 2
         $Body = @{
@@ -437,7 +445,7 @@ foreach ($perlun in $lunPathlist) {
         Invoke-RestMethod @Params -Certificate $restcert
         }
         catch{
-        Write-Output "LUN modification failed"
+        Write-Output "LUN modification failed." $_
         }
         Start-Sleep 3
     }
