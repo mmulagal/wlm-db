@@ -6,7 +6,7 @@ import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg'
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
@@ -30,6 +30,9 @@ const DatabaseTable = () => {
 
     const [removeDatabaseHosts] = useRemoveMSSQLMutation();
     const [removeDatabaseJobs] = useRemoveDatabaseJobsMutation();
+
+    const [resetPage, setResetPage] = useState(false);
+    const [pageSize, setPageSize] = useState(25);
 
     const menuItems = [
         {
@@ -74,6 +77,7 @@ const DatabaseTable = () => {
 
     // To delete MSSQL Resources
     const deleteMssqlResource = (id: string, type: string) => {
+        setResetPage(true);
         if(type === DB_HOME_DATA_TYPE.JOBS){
             // removeDatabaseJobs delete API call when data getting from jobs API
             removeDatabaseJobs(id)
@@ -377,11 +381,20 @@ const DatabaseTable = () => {
         isSorting: false,
         columns: DatabasesColDefs,
         rows: databaseTableSort(databaseHostsList) || [],
-        pageSize: 10,
+        pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
         isLazyLoading: databaseHostsLoading || databaseJobsLoading
     });
+
+    useEffect(() => {
+        if (resetPage) {
+            if ((databaseHostsList || []).length % pageSize === 1) {
+                tableProps.pagination?.gotoPage(0);
+            }
+        }
+        setResetPage(false);
+    }, [resetPage]);
 
     const tableComponentProps = {
         lazyLoadingText: 'Loading'
