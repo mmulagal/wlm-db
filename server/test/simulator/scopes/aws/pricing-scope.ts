@@ -4,11 +4,35 @@ import { mockClient } from 'aws-sdk-client-mock';
 
 const pricingMock = mockClient(PricingClient);
 
-const price: LazyJsonString = LazyJsonString.fromObject(
-    '{"product":{"productFamily":"Compute Instance","attributes":{"servicecode":"AmazonEC2","instanceType":"t3.micro","location":"US East (N. Virginia)","memory":"1 GiB","vcpu":"2"}},"terms":{"OnDemand":{"us-east-1":{"priceDimensions":{"us-east-1-ondemand":{"pricePerUnit":{"USD":"0.0058"}}}}}}}'
+const ec2InstancePrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Compute Instance", "attributes": {"servicecode": "AmazonEC2","instanceType": "m5.xlarge","location": "US East (N. Virginia)","memory": "1 GiB","vcpu": "2"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.192"}}}}}}}'
 );
 
-const mockGetProductsResponse = {
+const ec2StoragePrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Storage", "attributes": {"servicecode": "AmazonEC2","location": "US East (N. Virginia)"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.08"}}}}}}}'
+);
+
+const fsxStoragePrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Storage", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.25"}}}}}}}'
+);
+
+const fsxIopsPrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Provisioned IOPS", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.034"}}}}}}}'
+);
+
+const fsxReadPrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Request", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ","fileSystemType": "ONTAP", "requestType": "Read"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.0000004"}}}}}}}'
+);
+
+const fsxWritePrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Request", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP", "requestType": "Write"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.000005"}}}}}}}'
+);
+
+const fsxThroughputPrice: LazyJsonString = LazyJsonString.fromObject(
+    '{ "product": {"productFamily": "Provisioned Throughput", "attributes": {"servicecode": "AmazonFSx","location": "US East (N. Virginia)", "deploymentOption": "Multi-AZ", "fileSystemType": "ONTAP", "requestType": "Write"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "1.20"}}}}}}}'
+);
+
+const mockec2InstancePriceGetProductsResponse = {
     $metadata: {
         httpStatusCode: 200,
         requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
@@ -18,9 +42,307 @@ const mockGetProductsResponse = {
         totalRetryDelay: 0
     },
     FormatVersion: 'aws_v1',
-    PriceList: [price]
+    PriceList: [ec2InstancePrice]
 };
 
-pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
+const mockec2StoragePriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [ec2StoragePrice]
+};
+const mockfsxStoragePriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [fsxStoragePrice]
+};
+const mockfsxIopsPriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [fsxIopsPrice]
+};
+const mockfsxReadPriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [fsxReadPrice]
+};
+const mockfsxWritePriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [fsxWritePrice]
+};
+const mockfsxThroughputPriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [fsxThroughputPrice]
+};
 
-export default mockGetProductsResponse;
+const FSXREADREQUESTSRATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'deploymentOption',
+            Value: 'Multi-AZ'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Request'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'fileSystemType',
+            Value: 'ONTAP'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'requestType',
+            Value: 'Read'
+        }
+    ],
+    ServiceCode: 'AmazonFSx',
+    FormatVersion: 'aws_v1'
+};
+
+const EC2STORAGERATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Storage'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'volumeType',
+            Value: 'General Purpose'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'volumeApiName',
+            Value: 'gp2'
+        }
+    ],
+    ServiceCode: 'AmazonEC2',
+    FormatVersion: 'aws_v1'
+};
+
+const FSXTHROUGHPUTRATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'deploymentOption',
+            Value: 'Multi-AZ'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Provisioned Throughput'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'fileSystemType',
+            Value: 'ONTAP'
+        }
+    ],
+    ServiceCode: 'AmazonFSx',
+    FormatVersion: 'aws_v1'
+};
+
+const FSXIOPSRATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'deploymentOption',
+            Value: 'Multi-AZ'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Provisioned IOPS'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'fileSystemType',
+            Value: 'ONTAP'
+        }
+    ],
+    ServiceCode: 'AmazonFSx',
+    FormatVersion: 'aws_v1'
+};
+
+const FSXSTORAGERATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'deploymentOption',
+            Value: 'Multi-AZ'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Storage'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'fileSystemType',
+            Value: 'ONTAP'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'StorageType',
+            Value: 'SSD'
+        }
+    ],
+    ServiceCode: 'AmazonFSx',
+    FormatVersion: 'aws_v1'
+};
+
+const EC2INSTANCERATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'preInstalledSw',
+            Value: 'SQL std'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Compute Instance'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'instanceType',
+            Value: 'm5.xlarge'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'operatingSystem',
+            Value: 'windows'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'tenancy',
+            Value: 'Shared'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'CapacityStatus',
+            Value: 'Used'
+        }
+    ],
+    ServiceCode: 'AmazonEC2',
+    FormatVersion: 'aws_v1'
+};
+
+const FSXWRITEREQUESTSRATEFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'us-east-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'deploymentOption',
+            Value: 'Multi-AZ'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'productFamily',
+            Value: 'Request'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'fileSystemType',
+            Value: 'ONTAP'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'requestType',
+            Value: 'Write'
+        }
+    ],
+    ServiceCode: 'AmazonFSx',
+    FormatVersion: 'aws_v1'
+};
+
+pricingMock.on(GetProductsCommand, FSXIOPSRATEFILTER).resolves(mockfsxIopsPriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, FSXREADREQUESTSRATEFILTER).resolves(mockfsxReadPriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, FSXSTORAGERATEFILTER).resolves(mockfsxStoragePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, FSXTHROUGHPUTRATEFILTER).resolves(mockfsxThroughputPriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, FSXWRITEREQUESTSRATEFILTER).resolves(mockfsxWritePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2InstancePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
+
+export default mockfsxStoragePriceGetProductsResponse;

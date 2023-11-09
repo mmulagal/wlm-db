@@ -6,7 +6,11 @@ const CREDENTIALS_ID = 'credentialsId';
 const REGION = 'region';
 const VPC_ID = 'vpcId';
 const AZ_1 = 'availabilityZone1';
+const PRIVATE_SUBNET_1 = 'privateSubnet1Id';
+const ROUTE_TABLE_1 = 'routeTable1Id';
 const AZ_2 = 'availabilityZone2';
+const PRIVATE_SUBNET_2 = 'privateSubnet2Id';
+const ROUTE_TABLE_2 = 'routeTable2Id';
 const VPC_CIDR = 'vpcCidr';
 const WL_INSTANCE_TYPE = 'workloadInstanceType';
 const KEY_PAIR_NAME = 'keyPairName';
@@ -69,7 +73,8 @@ const CHATBOT_UI_PARAMS_FSX = [
             },
             {
                 [FSX_TYPE]: {
-                    required: true
+                    required: true,
+                    dependsOn: VPC_ID
                 }
             }
         ]
@@ -96,6 +101,34 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [AZ_2]: {
                     required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ },
                     dependsOn: VPC_ID
+                }
+            }
+        ]
+    },
+    {
+        subnetConfiguration: [
+            {
+                [PRIVATE_SUBNET_1]: {
+                    required: true
+                }
+            },
+            {
+                [PRIVATE_SUBNET_2]: {
+                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ }
+                }
+            }
+        ]
+    },
+    {
+        routeTableConfiguration: [
+            {
+                [ROUTE_TABLE_1]: {
+                    required: true
+                }
+            },
+            {
+                [ROUTE_TABLE_2]: {
+                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ }
                 }
             }
         ]
@@ -309,5 +342,9 @@ export {
     NEW,
     EXISTING,
     KEY_LABEL_MAP,
-    ENABLE_CLOUD_WATCH
+    ENABLE_CLOUD_WATCH,
+    PRIVATE_SUBNET_1,
+    PRIVATE_SUBNET_2,
+    ROUTE_TABLE_1,
+    ROUTE_TABLE_2
 };

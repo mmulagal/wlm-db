@@ -46,7 +46,11 @@ import {
     SINGLE_AZ,
     STANDALONE,
     FCI,
-    ENABLE_CLOUD_WATCH
+    ENABLE_CLOUD_WATCH,
+    PRIVATE_SUBNET_1,
+    PRIVATE_SUBNET_2,
+    ROUTE_TABLE_1,
+    ROUTE_TABLE_2
 } from './consts';
 
 const logger = getLogger();
@@ -92,7 +96,7 @@ async function validateParams(
     schemaParams: any
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
-    logger.info('Validate Params', oldParams, { params, oldParams });
+    logger.info('Validate Params', { params, oldParams });
     let validatedParams: Params = {};
     const promises = [];
     const errors: Array<ValidationResponse> = [];
@@ -162,13 +166,19 @@ async function validate(
             case VPC_ID:
             case AZ_1:
             case AZ_2:
-            case VPC_CIDR: {
+            case VPC_CIDR:
+            case PRIVATE_SUBNET_1:
+            case PRIVATE_SUBNET_2:
+            case ROUTE_TABLE_1:
+            case ROUTE_TABLE_2: {
                 response = await validateVpcId(
-                    params.credentialsId,
-                    params.region,
-                    params.vpcId,
-                    params.availabilityZone1,
-                    params.availabilityZone2,
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[VPC_ID],
+                    params[AZ_1],
+                    params[AZ_2],
+                    params[PRIVATE_SUBNET_1],
+                    params[PRIVATE_SUBNET_2],
                     key
                 );
                 break;
