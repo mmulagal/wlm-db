@@ -16,7 +16,8 @@ import {
     SINGLE_AZ,
     MULTI_AZ,
     NEW,
-    EXISTING
+    EXISTING,
+    KEY_LABEL_MAP
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -376,6 +377,23 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
         value: isValidFsx?.fileSystemId || null
     };
 }
+async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
+    logger.info(' Validate Cloud Watch', { enableCloudWatch, key });
+    if (typeof enableCloudWatch !== 'boolean') {
+        return {
+            key,
+            status: 'error',
+            message: 'Do you want to enable CloudWatch monitoring',
+            allowedValues: [
+                { label: 'Yes', value: true },
+                { label: 'No', value: false }
+            ]
+        };
+    }
+    return {
+        value: enableCloudWatch
+    };
+}
 
 async function validateDomain(
     credentialsId: string,
@@ -401,7 +419,7 @@ async function validateDomain(
             )
         };
     }
-    const errorResponse = { status: 'error', message: 'Please provide the domain ip address', type: 'text' };
+    const errorResponse = { status: 'error', message: 'Enter the value of domain ip address', type: 'text' };
     const isAWSManagedDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
     switch (key) {
         case DOMAIN_DNS:
@@ -424,7 +442,7 @@ function validateText(text: string, key: string) {
         return {
             key,
             status: 'error',
-            message: `Please provide the value for ${key}`,
+            message: `Please provide the value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
             type: key.toLowerCase().includes('password') ? 'password' : 'text'
         };
     }
@@ -564,5 +582,6 @@ export {
     validateCredentials,
     validateAdScenarioType,
     checkFsxType,
-    validateFsx
+    validateFsx,
+    validateCloudWatch
 };

@@ -28,6 +28,7 @@ const FSX_IOPS = 'fsxIOPS';
 const ONTAP_SG_ID = 'ontapSgGroupId';
 const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
+const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -197,6 +198,11 @@ const CHATBOT_UI_PARAMS_FSX = [
                     required: true,
                     dependsOn: VPC_ID
                 }
+            },
+            {
+                [ENABLE_CLOUD_WATCH]: {
+                    required: true
+                }
             }
         ]
     },
@@ -233,6 +239,35 @@ const CHATBOT_UI_PARAMS_FSX = [
         ]
     }
 ];
+
+const KEY_LABEL_MAP = {
+    [CREDENTIALS_ID]: 'credential id',
+    [REGION]: 'region',
+    [VPC_ID]: 'vpc',
+    [AZ_1]: 'availability zone',
+    [AZ_2]: 'availability zone',
+    [VPC_CIDR]: 'vpc cidr',
+    [WL_INSTANCE_TYPE]: 'workload instance type',
+    [KEY_PAIR_NAME]: 'key pair name',
+    [SQL_AMI]: 'sql ami id',
+    [AD_SCENARIO_TYPE]: 'active directory scenario type',
+    [DNS_IP]: 'dns ip address',
+    [DOMAIN_DNS]: 'domain dns name',
+    [DOMAIN_USERNAME]: 'domain user name',
+    [DOMAIN_PASS]: 'domain password',
+    [FSX_USERNAME]: 'fsx user name',
+    [FSX_PASS]: 'fsx password',
+    [SERVICE_ACCOUNT_NAME]: 'service account name',
+    [SERVICE_ACCOUNT_PASS]: 'service account password',
+    [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
+    [SQL_DEPLOYMENT_MODE]: 'sql deployment mode',
+    [DB_SIZE]: 'database size',
+    [FSX_VOL_THROUGHPUT]: 'fsx volume throughput',
+    [FSX_IOPS]: 'fsx IOPS',
+    [ONTAP_SG_ID]: 'ontap security group id',
+    [FSX_TYPE]: 'fsx type',
+    [FSX_FILE_SYSTEM_ID]: 'fsx file system id'
+};
 
 export {
     MODEL,
@@ -272,5 +307,7 @@ export {
     STANDALONE,
     FCI,
     NEW,
-    EXISTING
+    EXISTING,
+    KEY_LABEL_MAP,
+    ENABLE_CLOUD_WATCH
 };
