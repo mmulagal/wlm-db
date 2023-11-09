@@ -30,7 +30,6 @@ export interface DatabaseHostItem {
         size: number;
         used: number;
         spaceSavings: number;
-        spaceSavingsPercent: number;
     };
     storageSavingsText?: string;
     estimatedUsageCost: {
