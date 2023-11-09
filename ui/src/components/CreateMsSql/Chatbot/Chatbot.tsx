@@ -159,12 +159,17 @@ const Chatbot = () => {
                         };
                         const option: any = generateOptionType(selectedAzNode1, selectedAzNode1, '', false, '', data);
                         dispatch(setSelectedAzNode1(option));
-                        const subnet = option?.data?.subnets?.[0];
-                        dispatch(
-                            setSelectedSubnetNode1(
-                                generateOptionType(subnet?.cidrBlock, value, subnet?.id, false, '', subnet)
-                            )
-                        );
+                    }
+                    break;
+                case 'privateSubnet1Id':
+                    if (mssqlFormData?.availabilityZones?.selectedSubnetNode1?.value !== value) {
+                        const subnetData = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.availabilityZones?.[
+                            params.availabilityZone1
+                        ]?.filter((item: any) => item.id === value)[0];
+                        const label2 = subnetData?.id;
+                        const val = subnetData?.cidrBlock;
+                        const option = generateOptionType(val, val, label2, false, '', subnetData);
+                        dispatch(setSelectedSubnetNode1(option));
                     }
                     break;
                 case 'availabilityZone2':
@@ -180,12 +185,17 @@ const Chatbot = () => {
                         };
                         const option: any = generateOptionType(selectedAzNode1, selectedAzNode1, '', false, '', data);
                         dispatch(setSelectedAzNode2(option));
-                        const subnet = option?.data?.subnets?.[0];
-                        dispatch(
-                            setSelectedSubnetNode2(
-                                generateOptionType(subnet?.cidrBlock, value, subnet?.id, false, '', subnet)
-                            )
-                        );
+                    }
+                    break;
+                case 'privateSubnet2Id':
+                    if (mssqlFormData?.availabilityZones?.selectedSubnetNode2?.value !== value) {
+                        const subnetData = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.availabilityZones?.[
+                            params.availabilityZone2
+                        ]?.filter((item: any) => item.id === value)[0];
+                        const label2 = subnetData?.id;
+                        const val = subnetData?.cidrBlock;
+                        const option = generateOptionType(val, val, label2, false, '', subnetData);
+                        dispatch(setSelectedSubnetNode2(option));
                     }
                     break;
                 case 'keyPairName':
@@ -257,7 +267,7 @@ const Chatbot = () => {
                     }
                     break;
                 case 'sqlAmiId':
-                    if (mssqlFormData?.license?.selectedLicenseId !== value) {
+                    if (mssqlFormData?.license?.selectedLicenseId?.value !== value) {
                         const selectedLicense = mssqlData.getAmiList?.amiData?.amis?.filter(
                             item => item.imageId === value
                         )[0];

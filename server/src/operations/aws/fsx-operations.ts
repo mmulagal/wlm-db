@@ -1,7 +1,7 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { attempt } from 'lodash-es';
+import { attempt, isEmpty } from 'lodash-es';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
@@ -14,10 +14,13 @@ import {
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
-    FSX_BATCH_CONCURRENCY_VALUE
+    FSX_BATCH_CONCURRENCY_VALUE,
+    SSM_COMMAND_CACHE_TYPE
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
+import Metadata from '../../utils/common-types';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 
 const logger = getLogger();
 
@@ -153,21 +156,6 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     return { filesystems: ontapFSxFilesystems };
 }
 
-async function getVolumesUuids(credentialsId: string, region: string, fsxId: string) {
-    logger.info('Getting UUIDs of volumes:', { credentialsId, region, fsxId });
-
-    const volumeUuidList: string[] = [];
-    const volumeList = await describeFSxVolumes(credentialsId, region, fsxId);
-
-    volumeList.Volumes?.forEach(volume => {
-        if (volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.OntapConfiguration?.UUID) {
-            volumeUuidList.push(volume.OntapConfiguration.UUID);
-        }
-    });
-
-    return volumeUuidList;
-}
-
 async function getStorageDataUsingSSM(
     credentialsId: string,
     region: string,
@@ -198,66 +186,144 @@ async function getStorageDataUsingSSM(
     return jsonResponse;
 }
 
-async function getVolumeIds(credentialsId: string, region: string, fsxId: string) {
-    logger.info('List volume ids in an fsx', { credentialsId, region, fsxId });
+async function getVolumeIdsFromUuids(credentialsId: string, region: string, fsxId: string, volumeUuids: string[]) {
+    logger.info('List volume ids in an fsx', {
+        credentialsId,
+        region,
+        fsxId,
+        volumeUuids
+    });
 
     const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fsxId);
-    const volumeIds: Array<string> = [];
 
-    volumes
-        ?.filter(volume => volume?.OntapConfiguration?.StorageVirtualMachineRoot === false && volume?.VolumeId)
-        .map(volume => volumeIds.push(volume.VolumeId!));
+    const volumeIds = (volumes || [])
+        .filter(({ OntapConfiguration: { UUID = '' } = {} }) => volumeUuids.includes(UUID))
+        .map(volume => volume.VolumeId);
 
     logger.debug('List volume ids in an fsx response', volumeIds);
 
     return volumeIds;
 }
 
-async function isAWSBackupEnabled(credentialsId: string, region: string, fsxId: string) {
-    logger.info('Check if AWS backup is enabled', credentialsId, region, fsxId);
+async function isAWSBackupEnabled(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {
+    logger.info('Check if AWS backup is enabled', {
+        credentialsId,
+        region,
+        fileSystemId,
+        metadata
+    });
 
-    const volumeIds = await getVolumeIds(credentialsId, region, fsxId);
-    const backups = await describeFSxBackups(credentialsId, region, volumeIds);
+    const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
 
-    return backups.Backups?.length !== 0;
+    if (!isEmpty(volumeUuids)) {
+        const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
+        const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
+
+        return backups.Backups?.length !== 0;
+    }
 }
 
 async function getOntapVolumesSnapshotCount(
     credentialsId: string,
     region: string,
     fileSystemId: string,
-    fsxSecret: string,
-    activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    metadata: Metadata
 ) {
-    logger.info('Fetching ontap snapshots count ', credentialsId, region, activeNodeInstanceId);
+    logger.info('Fetching ontap snapshots count ', {
+        credentialsId,
+        region,
+        fileSystemId,
+        metadata
+    });
+
+    const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
+
+    const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-snapshot-count`;
+    if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
+        return response;
+    }
 
     try {
-        const volumeUuids = await getVolumesUuids(credentialsId, region, fileSystemId);
+        const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
 
-        const apiEndpoint = 'storage/volumes';
-        const apiFilter = `uuid=${volumeUuids?.join()}`;
-        const apiQuery = 'fields=snapshot_count';
+        if (!isEmpty(volumeUuids)) {
+            const apiEndpoint = 'storage/volumes';
+            const apiFilter = `uuid=${volumeUuids?.join()}`;
+            const apiQuery = 'fields=snapshot_count';
 
+            const commands = [
+                `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            ];
+
+            const response = await callSsmExecution(
+                credentialsId,
+                region,
+                commands,
+                activeNodeInstanceId,
+                standbyNodeInstanceId
+            );
+
+            const cleanResponse = response?.replaceAll('\r\n', '');
+            let parsedResponse = attempt(JSON.parse, cleanResponse);
+
+            logger.debug({ parsedResponse });
+            parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+            if (parsedResponse) {
+                writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, '6h');
+                return parsedResponse;
+            }
+        }
+    } catch (err) {
+        logger.error('Failed executing SSM script to get ontap snapshots', { err });
+    }
+}
+
+async function getMappedOntapVolumes(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {
+    logger.info('Get ontap volumes mapped to data drive of all databases in a server', {
+        credentialsId,
+        region,
+        fileSystemId,
+        metadata
+    });
+
+    const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata;
+
+    const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-mapped-volumes`;
+    if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheKey)) {
+        const response = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheKey);
+        return response;
+    }
+
+    try {
         const commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region}`
         ];
 
         const response = await callSsmExecution(
             credentialsId,
-            region,
+            region!,
             commands,
             activeNodeInstanceId,
             standbyNodeInstanceId
         );
 
         const cleanResponse = response?.replaceAll('\r\n', '');
-        const parsedResponse = attempt(JSON.parse, cleanResponse);
+        let parsedResponse = attempt(JSON.parse, cleanResponse);
 
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
         logger.debug({ parsedResponse });
-        return parsedResponse instanceof Error ? undefined : parsedResponse;
+
+        if (parsedResponse) {
+            const volumeUuids = parsedResponse?.records?.map(({ uuid }: { uuid: string }) => uuid);
+
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, volumeUuids, '24h');
+
+            return volumeUuids;
+        }
     } catch (err) {
-        logger.error('Failed executing SSM script to get ontap snapshots', { err });
+        logger.error('Failed executing SSM script to get ontap mapped volumes', { err });
     }
 }
 
@@ -265,6 +331,6 @@ export {
     getFSxFileSystemsList,
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
-    getVolumesUuids,
-    getStorageDataUsingSSM
+    getStorageDataUsingSSM,
+    getMappedOntapVolumes
 };
