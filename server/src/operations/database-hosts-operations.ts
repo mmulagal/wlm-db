@@ -166,7 +166,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
             standbyNodeInstanceId
         );
 
-        logger.info(`Storage data for volumes with deploymentId ${deploymentId}: ${info}`);
+        logger.info(`Storage data for volumes with deploymentId ${deploymentId}:`, info);
 
         let totalSize = 0;
         let totalUsed = 0;
@@ -186,7 +186,7 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
             spaceSavings: totalSpaceSavings
         };
     } catch (error) {
-        logger.error('Error while getting storage savings', resourceDetail, JSON.stringify(error));
+        logger.error('Error while getting storage savings for resource', resourceDetail, JSON.stringify(error));
     }
 }
 
