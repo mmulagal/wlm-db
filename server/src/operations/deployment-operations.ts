@@ -543,7 +543,11 @@ async function createDeploymentMockDataInDB(
 
     const cloudProviderId = randomize('0', 8);
     const resourceName = `sqlnode-${randomize('0', 5)}`;
-
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        sqlDeploymentMode = 'FCI';
+    } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
+        sqlDeploymentMode = 'Standalone';
+    }
     await createDeployment(accountId, {
         deploymentId: stackId,
         cloudProviderAccountId: cloudProviderId,
