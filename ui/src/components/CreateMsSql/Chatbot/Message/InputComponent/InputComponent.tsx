@@ -135,6 +135,7 @@ const InputComponent = ({
                     info={tooltipText()}
                     value={value}
                     className={styles.fieldComponent}
+                    type={fieldType === 'number' ? 'number' : undefined}
                 />
             )}
             {/* <div className="select-component-heading">{heading}</div>

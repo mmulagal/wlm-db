@@ -58,6 +58,7 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
                         handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
                         handleSendMsg={handleSendMsg}
                         messages={messages}
+                        isBotReplying={isBotReplying}
                     />
                 ))}
                 <ChatBotResponseLoader isBotReplying={isBotReplying} />

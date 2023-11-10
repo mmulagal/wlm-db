@@ -41,7 +41,7 @@ import {
     setStorageUnit,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
-import { GENERAL } from '../../../utils/appConstants';
+import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
 type optionsType = {
@@ -61,8 +61,7 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const messages = useAppSelector(state => state.chatbot.messages);
-    const currentIntent = useAppSelector(state => state.chatbot.currentIntent);
+    const { messages, currentIntent, isReceivingMsg } = useAppSelector(state => state.chatbot);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
     //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
@@ -451,6 +450,10 @@ const Chatbot = () => {
     };
 
     useEffect(() => {
+        setIsBotReplying(isReceivingMsg);
+    }, [isReceivingMsg]);
+
+    useEffect(() => {
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
         return () => {
@@ -482,17 +485,19 @@ const Chatbot = () => {
             updatedMessages[updatedMessages.length - 1] = {
                 ...updatedMessages[updatedMessages.length - 1],
                 errors: null,
-                msg: `Provide value${Object.keys(paramObj).length > 1 ? 's' : ''} for ${Object.keys(paramObj).join(
-                    ', '
-                )}`
+                msg: `Provide value${Object.keys(paramObj).length > 1 ? 's' : ''} for ${Object.keys(paramObj)
+                    .map(item => CHATBOT_FIELD_MAPPING[item])
+                    .join(', ')}`
             };
         }
         updatedMessages.push({
             sender: 'user',
             msg: Object.keys(paramObj)
                 .map(
-                    key =>
-                        `Selected ${key}: ${key.toLowerCase().includes('password') ? '********' : paramObj[key].label}`
+                    (key: string) =>
+                        `Selected ${CHATBOT_FIELD_MAPPING[key]}: ${
+                            key.toLowerCase().includes('password') ? '********' : paramObj[key].label
+                        }`
                 )
                 .join(', ')
         });
