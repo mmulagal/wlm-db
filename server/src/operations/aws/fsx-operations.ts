@@ -27,6 +27,9 @@ const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
 
+const TWENTYFOUR_HOURS = '24h';
+const SIX_HOURS = '6h';
+
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
     const enetInterfaces: DescribeNetworkInterfacesRequest = {
@@ -277,7 +280,7 @@ async function getOntapVolumesSnapshotCount(
                 );
 
                 if (atleastOneVolumeHasSnapshots) {
-                    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, '6h');
+                    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, SIX_HOURS);
                     return parsedResponse;
                 }
             }
@@ -364,7 +367,7 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
         if (parsedResponse && !isEmpty(parsedResponse.records)) {
             const volumeUuids = parsedResponse.records.map(({ uuid }: { uuid: string }) => uuid);
 
-            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, volumeUuids, '24h');
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, volumeUuids, TWENTYFOUR_HOURS);
 
             return volumeUuids;
         }
