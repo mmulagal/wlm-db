@@ -21,7 +21,9 @@ import {
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
-    ROUTE_TABLE_2
+    ROUTE_TABLE_2,
+    STANDALONE,
+    FCI
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -610,16 +612,16 @@ async function validateSecurityGroup(
     };
 }
 
-async function validateFSxDeploymentMode(deploymentType: string, key: string) {
-    logger.debug('Validate FSX Deployment Mode', { deploymentType });
+async function validateSqlDeploymentType(deploymentType: string, key: string) {
+    logger.debug('Validate sql deployment mode', { deploymentType });
     if (![SINGLE_AZ, MULTI_AZ].includes(deploymentType)) {
         return {
             key,
             status: 'error',
-            message: 'Select database deployment type.',
+            message: 'Select database deployment model.',
             allowedValues: [
-                { label: 'Single Instance', value: SINGLE_AZ },
-                { label: 'Failover Cluster Instance (FCI)', value: MULTI_AZ }
+                { label: 'Single Instance', value: STANDALONE },
+                { label: 'Failover Cluster Instance (FCI)', value: FCI }
             ]
         };
     }
@@ -654,7 +656,7 @@ export {
     validateDbSize,
     validateThroughPut,
     validateSecurityGroup,
-    validateFSxDeploymentMode,
+    validateSqlDeploymentType,
     validateCredentials,
     validateAdScenarioType,
     checkFsxType,
