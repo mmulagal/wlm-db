@@ -33,6 +33,7 @@ type DeployMsSqlParams = {
     dnsIpaddress?: string;
     securityGroupId?: string;
     sqlDeploymentMode?: string;
+    sqlServerName?: string;
     sqlAmiId?: string;
     serviceAccountName?: string;
     serviceAccountPassword?: string;
@@ -44,6 +45,7 @@ type DeployMsSqlParams = {
     encryptionKey?: string;
     ontapSgGroupId?: string;
     fsxFileSystemId?: string;
+    enableCloudWatch?: boolean;
 };
 
 // Deploy MS SQL
