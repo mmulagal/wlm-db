@@ -23,6 +23,7 @@ const TopologyResponse = Type.Object({
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
+    vpcId: Type.String(),
     ec2Details: Type.Array(EC2InstanceDetailsResponse)
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;
