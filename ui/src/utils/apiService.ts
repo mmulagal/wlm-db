@@ -11,7 +11,7 @@ import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
-import { sortListOfDict } from './utilityFunctions';
+import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -276,7 +276,14 @@ export const configApi = createApi({
                 }
             }),
             getConfigData: builder.query({
-                query: ({ configId }) => ({ url: `configs/${configId}` })
+                query: ({ configId }) => ({ url: `configs/${configId}` }),
+                transformResponse: (response:any) => {
+                    // For load config generate random DB name as saved config name can't be repeated for deployment
+                    if (response && response?.data) {
+                        response.data.dbName = generateRandomDBName();
+                    }
+                    return response;
+                }
             }),
             saveConfigData: builder.mutation({
                 query: ({ payload }) => ({
