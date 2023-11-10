@@ -102,18 +102,16 @@ const CloudFormation = () => {
 
     return (
         <div className={`${styles['cloud-formation']} ${showPanel ? styles['with-panel'] : ''}`}>
-            {!isDemoMode && (
-                <div className={styles.inner}>
-                    <Button
-                        Component="button"
-                        variant="link"
-                        onClick={handleTemplateView}
-                        className={CommonStyles.buttonClass}
-                    >
-                        {GENERAL.SAVE_FORM_AS_CLOUD}
-                    </Button>
-                </div>
-            )}
+            <div className={styles.inner}>
+                <Button
+                    Component="button"
+                    variant="link"
+                    onClick={handleTemplateView}
+                    className={CommonStyles.buttonClass}
+                >
+                    {GENERAL.SAVE_FORM_AS_CLOUD}
+                </Button>
+            </div>
         </div>
     );
 };
