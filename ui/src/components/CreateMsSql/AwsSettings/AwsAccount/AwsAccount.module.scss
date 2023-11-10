@@ -45,7 +45,7 @@
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
-        width: 518px;
+        width: 918px;
         line-height: 24px; /* 171.429% */
     }
 
@@ -80,6 +80,8 @@
     }
 
     .buttonStyle {
+        width: 800px;
+        margin-bottom: 8px;
         button {
             span:first-letter {
                 text-transform: lowercase;

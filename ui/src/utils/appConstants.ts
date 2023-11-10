@@ -80,6 +80,7 @@ export const GENERAL = {
     RENAME: 'Rename',
     DELETE: 'Delete',
     API_REQUEST: 'API request',
+    REQUIRED_PERMISSIONS: 'Required Permissions',
     CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',
@@ -94,6 +95,14 @@ export const GENERAL = {
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
         'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT1:
+        'Use Automate mode by selecting credentials that grant BlueXP the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT2:
+        'Use Read mode by selecting credentials that grant BlueXP the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+    AWS_ACCOUNT_SUB_TEXT_WF1:
+        'Use Automate mode by selecting credentials that grant Workload Factory the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT_WF2:
+        'Use Read mode by selecting credentials that grant Workload Factory the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:

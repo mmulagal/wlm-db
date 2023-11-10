@@ -4,7 +4,8 @@ import {
     Typography,
     Button,
     SelectField,
-    useAccordionContext
+    useAccordionContext,
+    useDialog
 } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
@@ -16,12 +17,21 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
 import { setCreatePressed } from '../../../../store/mssql/msSqlActionSlice';
-import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, CREDENTIAL_WF_PROD_LINK, CREDENTIAL_WF_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
+import { 
+    CREDENTIAL_PROD_LINK, 
+    CREDENTIAL_STAGE_LINK, 
+    CREDENTIAL_WF_PROD_LINK, 
+    CREDENTIAL_WF_STAGE_LINK, 
+    PRODUCTION 
+} from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import RequiredPermissions from './RequiredPermissions/RequiredPermissions';
 
 const AwsAccount = () => {
+    const { setDialog } = useDialog();
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const dispatch = useDispatch();
 
@@ -138,6 +148,17 @@ const AwsAccount = () => {
         window.open(url, '_blank', 'noopener');
     };
 
+    const openDialog = (type: string) => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.REQUIRED_PERMISSIONS}
+                content={<RequiredPermissions type={type} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    }
+
     return (
         <div className={styles['aws-account']}>
             <AccordionCard
@@ -190,21 +211,23 @@ const AwsAccount = () => {
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
-                                {isWorkloadFactoryStatus && (
-                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT_WF}</div>
-                                )}
-                                {!isWorkloadFactoryStatus && (
-                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
-                                )}
                                 <Typography variant="Regular_14" className={styles.buttonStyle}>
-                                    {GENERAL.FOR_MORE_INFO}{' '}
+                                    {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF1 : GENERAL.AWS_ACCOUNT_SUB_TEXT1}{GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
-                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
-                                            {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                        <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
+                                            {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}.
                                         </Button>
                                     </span>
                                 </Typography>
-
+                                <Typography variant="Regular_14" className={styles.buttonStyle}>
+                                    {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF2 : GENERAL.AWS_ACCOUNT_SUB_TEXT2}{GENERAL.FOR_MORE_INFO}{' '}
+                                    <span>
+                                        <Button Component="button" variant="text" onClick={() => openDialog('view')} className={CommonStyles.buttonClass}>
+                                            {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}.
+                                        </Button>
+                                    </span>
+                                </Typography>
+                                
                                 <div className={styles.selectField}>
                                     <SelectField
                                         label={GENERAL.CREDENTIAL_WITHOUT_DOT}
