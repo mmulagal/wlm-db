@@ -47,6 +47,7 @@ const CodeBox = () => {
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
+    const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
@@ -57,8 +58,8 @@ const CodeBox = () => {
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const MenuOptions = [
-        { 
-            id: 'copy', 
+        {
+            id: 'copy',
             displayName: CODE_VIEWER.COPY,
             // disable copy for CF till CF template issue gets resolved
             disabled: dropDownValue === CODE_VIEWER.CLOUDFORMATION ? true : false
@@ -125,7 +126,11 @@ const CodeBox = () => {
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails} apiResForSearch={rightPanelResponse}>
+                <HighlighterWord
+                    highlight={searchInput}
+                    count={countDetails}
+                    apiResForSearch={rightPanelMaskedHidePasswordResponse}
+                >
                     <CodeBoxColor
                         credID={credDetails.credId}
                         region={credDetails.region}
@@ -330,6 +335,7 @@ const CodeBox = () => {
         );
         //@ts-ignore
         setRightPanelMaskedResponse(resBody);
+        setRightPanelMaskedHidePasswordResponse(highlightedString);
     };
 
     useEffect(() => {
