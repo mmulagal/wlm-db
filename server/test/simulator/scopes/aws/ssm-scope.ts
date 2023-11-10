@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 // workaroud for the sdk type issue.. remove this @ts-nocheck once the sdk mock works fine
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
@@ -17,7 +18,6 @@ const ssmMock = mockClient(SSMClient);
 
 const cpuParams = {
     commands: [
-        // eslint-disable-next-line quotes
         "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; set quoted_identifier ON;DECLARE @ts BIGINT;\n                                DECLARE @lastNmin TINYINT;\n                                SET @lastNmin = 1;\n                                SELECT @ts =(SELECT cpu_ticks/(cpu_ticks/ms_ticks) FROM sys.dm_os_sys_info); \n                                SELECT TOP(@lastNmin)\n                                        SQLProcessUtilization AS [percentUsed], \n                                        SQLProcessUtilization AS [used],\n                                        SQLProcessUtilization+SystemIdle+(100 - SystemIdle - SQLProcessUtilization) AS [total],\n                                        100-SQLProcessUtilization AS [remaining]\n                                FROM (SELECT record.value('(./Record/@id)[1]','int')AS record_id, \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/SystemIdle)[1]','int')AS [SystemIdle], \n                                record.value('(./Record/SchedulerMonitorEvent/SystemHealth/ProcessUtilization)[1]','int')AS [SQLProcessUtilization], \n                                [timestamp]      \n                                FROM (SELECT[timestamp], convert(xml, record) AS [record]             \n                                FROM sys.dm_os_ring_buffers             \n                                WHERE ring_buffer_type =N'RING_BUFFER_SCHEDULER_MONITOR'AND record LIKE'%%')AS x )AS y \n                                ORDER BY record_id DESC FOR JSON PATH\""
     ]
 };
@@ -64,7 +64,6 @@ const clusterNodesParams = {
 
 const serStateParams = {
     commands: [
-        // eslint-disable-next-line quotes
         "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'\""
     ]
 };
@@ -83,7 +82,6 @@ const tablesListParams = {
 };
 const diskSizeParams = {
     commands: [
-        // eslint-disable-next-line quotes
         "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query 'SET NOCOUNT ON; SELECT CAST(SUM(CAST(size AS bigint)) * 8 * 1024 AS bigint) AS TotalSize FROM sys.master_files FOR JSON PATH'"
     ]
 };
@@ -111,17 +109,20 @@ const serverIOLatencyParams = {
 };
 
 const nativeSqlBackupParams = {
-    // eslint-disable-next-line quotes
     commands: [
-        // eslint-disable-next-line quotes
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\""
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\'\n    AND backupset.database_name NOT IN (\'msdb\',\'tempdb\',\'model\',\'master\') FOR JSON PATH\n"'
     ]
 };
 
 const getOntapSnapshotCountParams = {
     commands: [
-        // eslint-disable-next-line quotes
-        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName 'fsx-fs-03773e21b2f0e39b4'  -FSxID 'fs-03773e21b2f0e39b4' -FSxRegion 'us-east-1' -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=volumeid' -OntapResourceQuery 'fields=snapshot_count'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
+    ]
+};
+
+const getOntapMappedVolumesParams = {
+    commands: [
+        'C:\\SSM\\Get-MappedOntapVolumes.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1'
     ]
 };
 
@@ -167,7 +168,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: nativeSqlBackupParams })
     .resolves(listSendCommandCommandResponse.nativeSqlBackupCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
-    .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse);
+    .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
+    .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
+    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -207,6 +210,8 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-nativeSqlBackup' })
     .resolves(getCommandInvocationResponse.nativeSqlBackupInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
-    .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse);
+    .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapMappedVolumes' })
+    .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

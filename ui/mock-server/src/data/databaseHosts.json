@@ -13,6 +13,7 @@
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx Windows",
                 "fsxFilesystemId": "fsx-id-1",
+                "vpcId": "vpc1",
                 "ec2Details": [
                     {
                         "id": "id1",
@@ -36,8 +37,7 @@
             {
                 "size": 0,
                 "used": 0,
-                "spaceSavings": 0,
-                "spaceSavingsPercent": 0
+                "spaceSavings": 0
             },    
             "estimatedUsageCost":
             {
@@ -59,6 +59,7 @@
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP",
                 "fsxFilesystemId": "fsx-id-2",
+                "vpcId": "vpc1",
                 "ec2Details": [
                     {
                         "id": "id2",
@@ -82,8 +83,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -105,6 +105,7 @@
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-3",
+                "vpcId": "vpc1",
                 "ec2Details": [
                     {
                         "id": "id3",
@@ -128,8 +129,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -151,6 +151,7 @@
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "EBS",
                 "fsxFilesystemId": "fsx-id-4",
+                "vpcId": "vpc1",
                 "ec2Details": [
                     {
                         "id": "id4",
@@ -174,8 +175,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -220,8 +220,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -266,8 +265,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -312,8 +310,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -358,8 +355,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -404,8 +400,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -450,8 +445,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -496,8 +490,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -542,8 +535,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -588,8 +580,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -634,8 +625,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -680,8 +670,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {
@@ -726,8 +715,7 @@
             {
                 "size": 3932364972032,
                 "used": 181537648640,
-                "spaceSavings": 10737418240,
-                "spaceSavingsPercent": 6
+                "spaceSavings": 10737418240
             },
             "estimatedUsageCost":
             {

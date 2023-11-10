@@ -56,7 +56,12 @@ const CodeBox = () => {
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const MenuOptions = [
-        { id: 'copy', displayName: CODE_VIEWER.COPY },
+        { 
+            id: 'copy', 
+            displayName: CODE_VIEWER.COPY,
+            // disable copy for CF till CF template issue gets resolved
+            disabled: dropDownValue === CODE_VIEWER.CLOUDFORMATION ? true : false
+        },
         { id: 'redirect', displayName: GENERAL.SAVE_FORM_AS_CLOUD }
     ];
 
