@@ -37,6 +37,8 @@ import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
 const CodeBox = () => {
+    const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [copyText, setCopyText] = useState('');
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -375,12 +377,23 @@ const CodeBox = () => {
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Typography>
                 </div>
-                <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
-                    <DownloadIcon />
-                    <Typography variant="Semibold_14" className={styles.configText}>
-                        {SELECT_CONFIG.LOAD_CONFIG}
-                    </Typography>
-                </div>
+                {configData && configData.length > 0 && 
+                    <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
+                        <DownloadIcon />
+                        <Typography variant="Semibold_14" className={styles.configText}>
+                            {SELECT_CONFIG.LOAD_CONFIG}
+                        </Typography>
+                    </div>
+                }
+                {!configData || configData.length === 0 && 
+                    <div className={styles.configActionsDisabled}>
+                        <DownloadIcon />
+                        <Typography variant="Semibold_14" className={styles.configText}>
+                            {SELECT_CONFIG.LOAD_CONFIG}
+                        </Typography>
+                    </div>
+                }
+                
                 <div className={styles.menuContainer}>
                     <MenuPopover
                         isMenuOpen={isMenuOpen}
