@@ -16,8 +16,10 @@ import { setCurrentIntent, setMessages } from '../../../store/chatbot/chatbotSli
 import {
     setDBCredentialsName,
     setDBCredentialsPassword,
+    setExistingFsxnName,
     setFsxNExistingUserName,
     setFsxNPassword,
+    setFsxNType,
     setInstanceType,
     setSelectedADDomainAddress,
     setSelectedADDomainName,
@@ -176,14 +178,14 @@ const Chatbot = () => {
                     if (mssqlFormData?.availabilityZones?.selectedAzNode2?.data?.availabilityZone !== value) {
                         const azData = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.availabilityZones;
                         const zones = azData ? Object.keys(azData) : [];
-                        const selectedAzNode1 = zones.filter(val => val === value)[0];
+                        const selectedAzNode2 = zones.filter(val => val === value)[0];
                         const subnetsList: Array<string> = [];
-                        azData[selectedAzNode1].map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                        azData[selectedAzNode2]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
                         const data: any = {
-                            availabilityZone: selectedAzNode1,
+                            availabilityZone: selectedAzNode2,
                             subnets: subnetsList
                         };
-                        const option: any = generateOptionType(selectedAzNode1, selectedAzNode1, '', false, '', data);
+                        const option: any = generateOptionType(selectedAzNode2, selectedAzNode2, '', false, '', data);
                         dispatch(setSelectedAzNode2(option));
                     }
                     break;
@@ -243,17 +245,31 @@ const Chatbot = () => {
                         const selectedDomainName = mssqlData.getAdsList?.adsData?.directories?.filter(
                             item => item.domainName === value
                         )[0];
-                        const verVal = selectedDomainName?.domainName;
-                        const data = {
-                            domainName: selectedDomainName?.domainName,
-                            dnsIpAddress: (selectedDomainName?.dnsIpAddress || '').toString(),
-                            securityGroupId: selectedDomainName?.vpcSettings?.securityGroupId,
-                            adScenarioType: AWS_MANAGED_AD
-                        };
-                        const option = generateOptionType(verVal, verVal, '', false, '', data);
-                        dispatch(setSelectedADDomainName(option));
-                        dispatch(setSelectedADDomainAddress(data?.dnsIpAddress));
-                        dispatch(setSelectedADScenarioType(data?.adScenarioType || USER_MANAGED_AD));
+                        if (selectedDomainName) {
+                            const verVal = selectedDomainName?.domainName;
+                            const data = {
+                                domainName: selectedDomainName?.domainName,
+                                dnsIpAddress: (selectedDomainName?.dnsIpAddress || '').toString(),
+                                securityGroupId: selectedDomainName?.vpcSettings?.securityGroupId,
+                                adScenarioType: AWS_MANAGED_AD
+                            };
+                            const option = generateOptionType(verVal, verVal, '', false, '', data);
+                            dispatch(setSelectedADDomainName(option));
+                            dispatch(setSelectedADDomainAddress(data?.dnsIpAddress));
+                            dispatch(setSelectedADScenarioType(AWS_MANAGED_AD));
+                        } else {
+                            const option = generateOptionType(value, value, '', false, '', {
+                                domainName: value,
+                                adScenarioType: USER_MANAGED_AD
+                            });
+                            dispatch(setSelectedADDomainName(option));
+                            dispatch(setSelectedADScenarioType(USER_MANAGED_AD));
+                        }
+                    }
+                    break;
+                case 'dnsIpaddress':
+                    if (mssqlFormData?.activeDirectory?.domainAddress !== value) {
+                        dispatch(setSelectedADDomainAddress(value));
                     }
                     break;
                 case 'serviceAccountName':
@@ -280,6 +296,26 @@ const Chatbot = () => {
                         };
                         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
                         dispatch(setSelectedLicenseId(option));
+                    }
+                    break;
+                case 'fsxFileSystemId':
+                    dispatch(setFsxNType(GENERAL.SELECT_EXISTING_FSX));
+                    if (mssqlFormData?.fsxN?.fsxNExistingName?.fileSystemId !== value) {
+                        const selectedFsx = mssqlData?.getFsxnList?.fsxnData?.filesystems?.filter(
+                            (item: any) => item.fileSystemId === value
+                        )[0];
+                        const val = (selectedFsx?.name ? selectedFsx.name + ' | ' : '') + selectedFsx?.fileSystemId;
+                        const data = {
+                            fileSystemId: selectedFsx?.fileSystemId,
+                            fileSystemName: selectedFsx?.name,
+                            securityGroups: selectedFsx?.securityGroups,
+                            throughput: selectedFsx?.ontapConfiguration?.throughputCapacity,
+                            iops: selectedFsx?.ontapConfiguration?.diskIopsConfiguration?.iops,
+                            preferredSubnetId: selectedFsx?.ontapConfiguration?.preferredSubnetId,
+                            kmsKeyId: selectedFsx?.kmsKeyId
+                        };
+                        const option = generateOptionType(val, val, '', false, '', data);
+                        dispatch(setExistingFsxnName(option));
                     }
                     break;
                 case 'fsxUsername':
