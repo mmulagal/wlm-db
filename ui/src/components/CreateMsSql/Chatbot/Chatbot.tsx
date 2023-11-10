@@ -179,7 +179,11 @@ const Chatbot = () => {
                         const zones = azData ? Object.keys(azData) : [];
                         const selectedAzNode2 = zones.filter(val => val === value)[0];
                         const subnetsList: Array<string> = [];
+<<<<<<< ours
                         azData[selectedAzNode2]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+=======
+                        azData[selectedAzNode2].map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+>>>>>>> theirs
                         const data: any = {
                             availabilityZone: selectedAzNode2,
                             subnets: subnetsList
