@@ -198,11 +198,13 @@
             height: calc(100vh - 180px);
             background-color: var(--grey-65);
             padding-top: 10px;
+            padding-left: 10px;
             .scrollContainer {
                 overflow-y: auto;
                 height: calc(100% - 72px);
                 width: calc(100% - 16px);
-                padding: 0 40px 0 40px;
+                padding: 0 40px 0 30px;
+                white-space: nowrap;
             }
         }
     }

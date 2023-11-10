@@ -1,0 +1,40 @@
+.codeBox {
+    margin-top: 20px;
+
+    .tokenStyle {
+        background-color: var(--grey-30);
+        color: var(--grey-55);
+    }
+
+    .marginFIfteen {
+        margin-left: 15px;
+        color: var(--blue-50);
+    }
+
+    .marginThirty {
+        margin-left: 30px;
+    }
+
+    .singleArrayItem {
+        margin-left: 30px;
+        color: var(--green-40);
+    }
+
+    .startArray {
+        margin-left: 15px;
+        color: var(--blue-50);
+    }
+
+    .blue50Color {
+        color: var(--blue-50);
+    }
+
+    .green40Color {
+        color: var(--green-40);
+    }
+
+    .startFlex {
+        display: flex;
+        margin-left: 15px;
+    }
+}
