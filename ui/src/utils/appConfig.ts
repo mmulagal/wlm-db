@@ -15,7 +15,7 @@ import {
     updateResourceName,
     updateWorkspaceId
 } from '../store/authSlice';
-import { DATABASE_SERVICE_PATH } from './consts';
+import { DATABASE_SERVICE_PATH, WORKLOADS } from './consts';
 import { encodeAll } from './utilityFunctions';
 
 const navigateToCanvas = (pathname: string) => {
@@ -42,8 +42,7 @@ const useInitialize = () => {
             !window.location ||
             !window.location.ancestorOrigins ||
             !window.location.ancestorOrigins.length ||
-            (window.location.ancestorOrigins[0] !== 'https://staging.cloudmanager.netapp.com' &&
-                window.location.ancestorOrigins[0] !== 'https://staging.console.bluexp.netapp.com/');
+            window.location.ancestorOrigins[0].includes(WORKLOADS);
         // dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
         dispatch(updateIsWorkloadfactory(isWorkloadFactory));
 

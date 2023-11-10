@@ -12,7 +12,8 @@ import {
     validateFSxDeploymentMode,
     validateCredentials,
     checkFsxType,
-    validateFsx
+    validateFsx,
+    validateCloudWatch
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -45,10 +46,12 @@ import {
     SINGLE_AZ,
     STANDALONE,
     FCI,
+    ENABLE_CLOUD_WATCH,
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
-    ROUTE_TABLE_2
+    ROUTE_TABLE_2,
+    SQL_SERVER_NAME
 } from './consts';
 
 const logger = getLogger();
@@ -205,6 +208,7 @@ async function validate(
                 );
                 break;
             }
+            case SQL_SERVER_NAME:
             case DOMAIN_USERNAME:
             case DOMAIN_PASS:
             case FSX_USERNAME:
@@ -252,6 +256,10 @@ async function validate(
                 response = await validateFsx(params[CREDENTIALS_ID], params[REGION], params[VPC_ID], params[key], key);
                 break;
             }
+            case ENABLE_CLOUD_WATCH: {
+                response = await validateCloudWatch(key, params[key]);
+                break;
+            }
             default:
         }
     } else {
@@ -262,7 +270,7 @@ async function validate(
         errors.push(response as ValidationResponse);
     }
 
-    if (response?.value) {
+    if (response?.value !== null && response?.value !== undefined) {
         validatedParams[key] = response?.value;
         params[key] = response?.value;
     }

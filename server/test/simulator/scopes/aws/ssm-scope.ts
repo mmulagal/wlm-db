@@ -110,7 +110,7 @@ const serverIOLatencyParams = {
 
 const nativeSqlBackupParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\'\n    AND backupset.database_name NOT IN (\'msdb\',\'tempdb\',\'model\',\'master\') FOR JSON PATH\n"'
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\""
     ]
 };
 
@@ -126,6 +126,11 @@ const getOntapMappedVolumesParams = {
     ]
 };
 
+const getStorageParams = {
+    commands: [
+        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion ap-southeast-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
+    ]
+};
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -170,7 +175,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
-    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse);
+    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
+    .on(SendCommandCommand, { Parameters: getStorageParams })
+    .resolves(listSendCommandCommandResponse.storageCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -212,6 +219,8 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
     .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapMappedVolumes' })
-    .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse);
+    .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-storageSummary' })
+    .resolves(getCommandInvocationResponse.storageInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

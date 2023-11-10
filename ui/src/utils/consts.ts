@@ -95,6 +95,8 @@ export const REGIONS_CODE_LIST = [
 
 export const DATABASE_SERVICE_PATH = 'database-services';
 
+export const WORKLOADS = 'workloads';
+
 export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',

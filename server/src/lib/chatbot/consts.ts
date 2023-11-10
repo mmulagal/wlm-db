@@ -32,6 +32,8 @@ const FSX_IOPS = 'fsxIOPS';
 const ONTAP_SG_ID = 'ontapSgGroupId';
 const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
+const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
+const SQL_SERVER_NAME = 'sqlServerName';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -187,6 +189,11 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [SERVICE_ACCOUNT_PASS]: {
                     required: true
                 }
+            },
+            {
+                [SQL_SERVER_NAME]: {
+                    required: true
+                }
             }
         ]
     },
@@ -230,6 +237,11 @@ const CHATBOT_UI_PARAMS_FSX = [
                     required: true,
                     dependsOn: VPC_ID
                 }
+            },
+            {
+                [ENABLE_CLOUD_WATCH]: {
+                    required: true
+                }
             }
         ]
     },
@@ -266,6 +278,40 @@ const CHATBOT_UI_PARAMS_FSX = [
         ]
     }
 ];
+
+const KEY_LABEL_MAP = {
+    [CREDENTIALS_ID]: 'credential id',
+    [REGION]: 'region',
+    [VPC_ID]: 'vpc',
+    [AZ_1]: 'availability zone for primary node',
+    [AZ_2]: 'availability zone for secondary node',
+    [VPC_CIDR]: 'vpc cidr',
+    [PRIVATE_SUBNET_1]: 'subnet for primary node',
+    [ROUTE_TABLE_1]: 'route table for primary node',
+    [PRIVATE_SUBNET_2]: 'subnet for secondary node',
+    [ROUTE_TABLE_2]: 'route table for secondary node',
+    [WL_INSTANCE_TYPE]: 'workload instance type',
+    [KEY_PAIR_NAME]: 'key pair name',
+    [SQL_AMI]: 'sql ami id',
+    [AD_SCENARIO_TYPE]: 'active directory scenario type',
+    [DNS_IP]: 'dns ip address',
+    [DOMAIN_DNS]: 'domain dns name',
+    [DOMAIN_USERNAME]: 'domain user name',
+    [DOMAIN_PASS]: 'domain password',
+    [FSX_USERNAME]: 'fsx user name',
+    [FSX_PASS]: 'fsx password',
+    [SERVICE_ACCOUNT_NAME]: 'service account name',
+    [SERVICE_ACCOUNT_PASS]: 'service account password',
+    [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
+    [SQL_DEPLOYMENT_MODE]: 'sql deployment mode',
+    [DB_SIZE]: 'database size',
+    [FSX_VOL_THROUGHPUT]: 'fsx volume throughput',
+    [FSX_IOPS]: 'fsx IOPS',
+    [ONTAP_SG_ID]: 'ontap security group id',
+    [FSX_TYPE]: 'fsx type',
+    [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
+    [SQL_SERVER_NAME]: 'database cluster name'
+};
 
 export {
     MODEL,
@@ -306,8 +352,11 @@ export {
     FCI,
     NEW,
     EXISTING,
+    KEY_LABEL_MAP,
+    ENABLE_CLOUD_WATCH,
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
-    ROUTE_TABLE_2
+    ROUTE_TABLE_2,
+    SQL_SERVER_NAME
 };

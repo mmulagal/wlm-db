@@ -44,9 +44,13 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
             } else {
                 return (
                     <div className={styles.startFlex} key={key}>
-                        <div className={styles.blue50Color}>{`"${key}": `}</div>
+                        <div className={styles.blue50Color}>{`"${key}": `}</div>&nbsp;
                         {/* @ts-ignore */}
-                        <div className={styles.green40Color}>{`"${value}",`}</div>
+                        {value === '' ? (
+                            <div className={styles.red20Color}>{`"${value}",`}</div>
+                        ) : (
+                            <div className={styles.green40Color}>{`"${value}",`}</div>
+                        )}
                     </div>
                 );
             }

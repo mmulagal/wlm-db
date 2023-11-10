@@ -40,7 +40,6 @@ import {
     TEMPLATE_ACCOUNT_ID,
     SUCCESS,
     ACTION_BUTTON_DASHBOARD,
-    REDIRECT_URL,
     STANDARD_DEPLOYMENT_ACTION,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
     AWS_RESOURCES_ACTION_MAP,
@@ -457,7 +456,7 @@ async function deployCloudFormationTemplate(
         subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
         uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
         actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
-        redirectURL: REDIRECT_URL,
+        redirectURL: '/',
         label: ACTION_BUTTON_DASHBOARD,
         priority: SUCCESS
     };
@@ -544,7 +543,11 @@ async function createDeploymentMockDataInDB(
 
     const cloudProviderId = randomize('0', 8);
     const resourceName = `sqlnode-${randomize('0', 5)}`;
-
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        sqlDeploymentMode = 'FCI';
+    } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
+        sqlDeploymentMode = 'Standalone';
+    }
     await createDeployment(accountId, {
         deploymentId: stackId,
         cloudProviderAccountId: cloudProviderId,
