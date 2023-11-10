@@ -488,7 +488,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: TrackStackDeployment
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=8794a00f08cbd2d7744a13652e37defa9d58ba365b9278cad3b3cdc8139190d2&X-Amz-SignedHeaders=host&x-id=GetObject
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummycreds%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummycreds&X-Amz-SignedHeaders=host&x-id=GetObject
       Parameters:
         DomainAdminSecretName:
           Ref: DomainAdminSecretName
@@ -533,7 +533,7 @@ Resources:
     Condition: IsFailoverCluster
     DependsOn: TrackStackDeployment
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=8794a00f08cbd2d7744a13652e37defa9d58ba365b9278cad3b3cdc8139190d2&X-Amz-SignedHeaders=host&x-id=GetObject
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummycreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
       Parameters:
         DomainAdminSecretName:
           Ref: DomainAdminSecretName
@@ -607,7 +607,7 @@ Resources:
     Condition: NewOntapFsx
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-new.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=9908c42ed2e8637ee39d205af561493396a613dc053b4606c7ad66fd7fc4b013&X-Amz-SignedHeaders=host&x-id=GetObject
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-new.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=9908c42ed2e8637ee39d205af561493396a613dc053b4606c7ad66fd7fc4b013&X-Amz-SignedHeaders=host&x-id=GetObject
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
@@ -667,7 +667,7 @@ Resources:
     Condition: ExistingOntapFsx
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-existing.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=5bf2b0ae3d2b890ea8dfc126990e0c97d3cb861f00fcf50f60610cba89a7bc7a&X-Amz-SignedHeaders=host&x-id=GetObject
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-existing.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
       Parameters:
         DeploymentMode:
           Ref: DeploymentMode
@@ -705,7 +705,7 @@ Resources:
     Condition: IsFailoverCluster
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/sql-windows-fci-config_nosignal.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=0fe924e0f5f1443c204e8944f35d5586723483ff6fcc88536e19231dc0eb988d&X-Amz-SignedHeaders=host&x-id=GetObject
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/sql-windows-fci-config_nosignal.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
       Parameters:
         UniqueID:
           Ref: UniqueID
@@ -812,7 +812,7 @@ Resources:
     Condition: IsStandalone
     DependsOn: WaitCondition
     Properties:
-      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/standalone-deployment.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIA2OPDPEVT4HHFDECD%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=b3fb57a81b51b5ecb7dc7f1432de39274f8fa891278b01c06534a8c9a64cd5a1&X-Amz-SignedHeaders=host&x-id=GetObject
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/standalone-deployment.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummysig&X-Amz-SignedHeaders=host&x-id=GetObject
       Parameters:
         UniqueID:
           Ref: UniqueID
