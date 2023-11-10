@@ -616,7 +616,7 @@ async function validateFSxDeploymentMode(deploymentType: string, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Select a FSx deployment type.',
+            message: 'Select database deployment type.',
             allowedValues: [
                 { label: 'Single Instance', value: SINGLE_AZ },
                 { label: 'Failover Cluster Instance (FCI)', value: MULTI_AZ }
