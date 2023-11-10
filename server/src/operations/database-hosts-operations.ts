@@ -192,19 +192,15 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
     const { credentialsId } = metadata as Metadata;
 
     try {
-        const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
+        const [awsBackup, ontapProtection, nativeSqlProtection] = await Promise.all([
             isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getNativeSQLProtection(resourceId)
         ]);
 
-        const atleastOneVolumeHasSnapshots = ontapData?.records?.some(
-            ({ snapshot_count: snapshotCount }: { snapshot_count: number }) => snapshotCount
-        );
-
         return {
             isAwsBackUpEnabled: Boolean(awsBackup),
-            isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
+            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };
     } catch (error) {

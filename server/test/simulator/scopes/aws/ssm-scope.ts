@@ -110,7 +110,7 @@ const serverIOLatencyParams = {
 
 const nativeSqlBackupParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\'\n    AND backupset.database_name NOT IN (\'msdb\',\'tempdb\',\'model\',\'master\') FOR JSON PATH\n"'
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\""
     ]
 };
 
