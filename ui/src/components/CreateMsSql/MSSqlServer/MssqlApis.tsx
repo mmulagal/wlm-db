@@ -31,6 +31,7 @@ import { formatKmsData } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
 import { selectDefaultEncryption, selectDefaultInstanceType, selectDefaultLicense } from './MSSqlUtils';
+import { setIsReceivingMsg } from '../../../store/chatbot/chatbotSlice';
 
 const MssqlApis = () => {
     const dispatch = useAppDispatch();
@@ -421,6 +422,11 @@ const MssqlApis = () => {
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, configLoading, configError]);
+
+    //To update chatbot msg loading status
+    useEffect(() => {
+        dispatch(setIsReceivingMsg(vpcLoading));
+    }, [vpcLoading]);
 
     return;
 };
