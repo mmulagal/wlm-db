@@ -639,7 +639,7 @@ function checkFsxType(type: string, key: string) {
         };
     }
     return {
-        value: type
+        value: type.toUpperCase()
     };
 }
 
