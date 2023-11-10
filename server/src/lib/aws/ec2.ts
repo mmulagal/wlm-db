@@ -20,7 +20,9 @@ import {
     DescribeImagesCommandOutput,
     DescribeNetworkInterfacesCommandInput,
     DescribeNetworkInterfacesCommandOutput,
-    DescribeNetworkInterfacesCommand
+    DescribeNetworkInterfacesCommand,
+    DescribeInstancesCommand,
+    DescribeInstancesCommandInput
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -83,9 +85,23 @@ async function getAmis(
     const ec2 = await getEC2Client(region, credentialsId);
 
     const resp = await ec2.send(new DescribeImagesCommand(params));
-    logger.debug('descibeSecurityGroupss response:', resp);
+    logger.debug('DescribeImagesCommand response:', resp);
 
     return resp;
+}
+
+async function describeInstance(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstancesCommandInput
+): Promise<DescribeImagesCommandOutput> {
+    logger.info('Describe EC2 instance', { credentialsId, region, params });
+
+    const client = await getEC2Client(region, credentialsId);
+    const response = await client.send(new DescribeInstancesCommand(params));
+    logger.info('Describe instance response:', response);
+
+    return response;
 }
 
 async function describeRegions(
@@ -194,6 +210,7 @@ export {
     describeSubnets,
     describeSecurityGroups,
     getAmis,
+    describeInstance,
     describeRegions,
     describeInstanceTypes,
     describeRouteTable,
