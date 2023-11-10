@@ -33,6 +33,7 @@ const ONTAP_SG_ID = 'ontapSgGroupId';
 const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
 const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
+const SQL_SERVER_NAME = 'sqlServerName';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -188,6 +189,11 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [SERVICE_ACCOUNT_PASS]: {
                     required: true
                 }
+            },
+            {
+                [SQL_SERVER_NAME]: {
+                    required: true
+                }
             }
         ]
     },
@@ -303,7 +309,8 @@ const KEY_LABEL_MAP = {
     [FSX_IOPS]: 'fsx IOPS',
     [ONTAP_SG_ID]: 'ontap security group id',
     [FSX_TYPE]: 'fsx type',
-    [FSX_FILE_SYSTEM_ID]: 'fsx file system id'
+    [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
+    [SQL_SERVER_NAME]: 'database cluster name'
 };
 
 export {
@@ -350,5 +357,6 @@ export {
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
-    ROUTE_TABLE_2
+    ROUTE_TABLE_2,
+    SQL_SERVER_NAME
 };

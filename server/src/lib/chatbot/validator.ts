@@ -428,9 +428,9 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
         return {
             key,
             status: 'error',
-            message: 'Select a fsx information.',
+            message: 'Select a FSxN name.',
             allowedValues: filesystems.map(({ name, fileSystemId }) => ({
-                label: name,
+                label: `${name ? `${name} | ` : ''}${fileSystemId}`,
                 value: fileSystemId
             }))
         };
@@ -531,7 +531,7 @@ function validateDbSize(size: number, key: string) {
             key,
             status: 'error',
             message: 'Enter a value for data drive size(GiB) between 120 to 133120',
-            type: 'text'
+            type: 'number'
         };
     }
 
@@ -627,7 +627,7 @@ async function validateFSxDeploymentMode(deploymentType: string, key: string) {
 }
 
 function checkFsxType(type: string, key: string) {
-    if (type !== NEW && type !== EXISTING) {
+    if (type?.toUpperCase() !== NEW && type?.toUpperCase() !== EXISTING) {
         return {
             key,
             status: 'error',

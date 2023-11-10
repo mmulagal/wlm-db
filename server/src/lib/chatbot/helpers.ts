@@ -50,7 +50,8 @@ import {
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
-    ROUTE_TABLE_2
+    ROUTE_TABLE_2,
+    SQL_SERVER_NAME
 } from './consts';
 
 const logger = getLogger();
@@ -207,6 +208,7 @@ async function validate(
                 );
                 break;
             }
+            case SQL_SERVER_NAME:
             case DOMAIN_USERNAME:
             case DOMAIN_PASS:
             case FSX_USERNAME:
