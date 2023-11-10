@@ -104,13 +104,13 @@ const serNameParams = {
 const serverIOLatencyParams = {
     commands: [
         // eslint-disable-next-line quotes
-        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; WITH DatabaseLatency as (SELECT \n                                            [ServerIOLatency] =\n                                                CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)\n                                                    THEN 0 ELSE (CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))) END\n                                            FROM\n                                                sys.dm_io_virtual_file_stats (NULL,NULL)\n                                            )\n                                            select ServerIOLatency as latency,\n                                            [assessment] = \n                                                    CASE \n                                                        WHEN ServerIOLatency = 0 THEN 'N/A' \n                                                        ELSE \n                                                            CASE WHEN ServerIOLatency <= 1 THEN 'Excellent'\n                                                                 WHEN ServerIOLatency < 5 THEN 'Very good'\n                                                                 WHEN ServerIOLatency < 10 THEN 'Good'\n                                                                 WHEN ServerIOLatency < 20 THEN 'Poor'\n                                                                 WHEN ServerIOLatency < 100 THEN 'Bad'\n                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad'\n                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful'\n                                                            END \n                                                    END\n                                            from DatabaseLatency\n                                FOR JSON PATH\""
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; WITH DatabaseLatency as (SELECT \n                                            [ServerIOLatency] =\n                                                CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)\n                                                    THEN 0 ELSE ROUND((CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))), 2) END\n                                            FROM\n                                                sys.dm_io_virtual_file_stats (NULL,NULL)\n                                            )\n                                            select ServerIOLatency as latency,\n                                            [assessment] = \n                                                    CASE \n                                                        WHEN ServerIOLatency = 0 THEN 'N/A' \n                                                        ELSE \n                                                            CASE WHEN ServerIOLatency <= 1 THEN 'Excellent ( <=1 ms )'\n                                                                 WHEN ServerIOLatency < 5 THEN 'Very good ( <5 ms )'\n                                                                 WHEN ServerIOLatency < 10 THEN 'Good ( <10 ms )'\n                                                                 WHEN ServerIOLatency < 20 THEN 'Poor ( <20 ms )'\n                                                                 WHEN ServerIOLatency < 100 THEN 'Bad ( <100 ms )'\n                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad ( <500 ms )'\n                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful ( >=500 ms )'\n                                                            END \n                                                    END\n                                            from DatabaseLatency\n                                FOR JSON PATH\""
     ]
 };
 
 const nativeSqlBackupParams = {
     commands: [
-        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\'\n    AND backupset.database_name NOT IN (\'msdb\',\'tempdb\',\'model\',\'master\') FOR JSON PATH\n"'
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT\n    COUNT(DISTINCT backupset.database_name) as backupCount\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = 'D'\n    AND backupset.database_name NOT IN ('msdb','tempdb','model','master') FOR JSON PATH\n\""
     ]
 };
 
@@ -126,6 +126,11 @@ const getOntapMappedVolumesParams = {
     ]
 };
 
+const getStorageParams = {
+    commands: [
+        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion ap-southeast-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
+    ]
+};
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -170,7 +175,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
-    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse);
+    .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
+    .on(SendCommandCommand, { Parameters: getStorageParams })
+    .resolves(listSendCommandCommandResponse.storageCommandResponse);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -212,6 +219,8 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
     .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapMappedVolumes' })
-    .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse);
+    .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-storageSummary' })
+    .resolves(getCommandInvocationResponse.storageInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);

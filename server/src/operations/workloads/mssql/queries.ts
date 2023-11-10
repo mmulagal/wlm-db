@@ -86,7 +86,7 @@ const TABLES_COUNT_QUERY = `${SET_NOCOUNT} SELECT COUNT(DISTINCT name) AS totalC
 const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT 
                                             [ServerIOLatency] =
                                                 CASE WHEN (SUM(num_of_reads) = 0 AND SUM(num_of_writes) = 0)
-                                                    THEN 0 ELSE (CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))) END
+                                                    THEN 0 ELSE ROUND((CAST (SUM(io_stall) AS FLOAT) / (SUM(num_of_reads) + SUM(num_of_writes))), 2) END
                                             FROM
                                                 sys.dm_io_virtual_file_stats (NULL,NULL)
                                             )
@@ -95,13 +95,13 @@ const SERVER_IO_LATENCY = `${SET_NOCOUNT} WITH DatabaseLatency as (SELECT
                                                     CASE 
                                                         WHEN ServerIOLatency = 0 THEN 'N/A' 
                                                         ELSE 
-                                                            CASE WHEN ServerIOLatency <= 1 THEN 'Excellent'
-                                                                 WHEN ServerIOLatency < 5 THEN 'Very good'
-                                                                 WHEN ServerIOLatency < 10 THEN 'Good'
-                                                                 WHEN ServerIOLatency < 20 THEN 'Poor'
-                                                                 WHEN ServerIOLatency < 100 THEN 'Bad'
-                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad'
-                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful'
+                                                            CASE WHEN ServerIOLatency <= 1 THEN 'Excellent ( <=1 ms )'
+                                                                 WHEN ServerIOLatency < 5 THEN 'Very good ( <5 ms )'
+                                                                 WHEN ServerIOLatency < 10 THEN 'Good ( <10 ms )'
+                                                                 WHEN ServerIOLatency < 20 THEN 'Poor ( <20 ms )'
+                                                                 WHEN ServerIOLatency < 100 THEN 'Bad ( <100 ms )'
+                                                                 WHEN ServerIOLatency < 500 THEN 'Very bad ( <500 ms )'
+                                                                 WHEN ServerIOLatency >= 500 THEN 'Awful ( >=500 ms )'
                                                             END 
                                                     END
                                             from DatabaseLatency

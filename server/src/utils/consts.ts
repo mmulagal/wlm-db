@@ -557,6 +557,7 @@ const FCI_NETWORK_VIOLATION_MESSAGE =
     'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
+const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
@@ -1030,5 +1031,6 @@ export {
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     DATABASE_TYPE,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    CONFIG_NOT_FOUND
 };

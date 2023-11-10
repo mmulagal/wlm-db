@@ -19,6 +19,7 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isSaveConfigLoading = useAppSelector(state => state.msSqlAction.isSaveConfigLoading);
     const saveConfigName = useAppSelector(state => state.mssqlForm.saveConfigName);
+    const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
 
     // To show loader on primary button in load config and save config dialog
     const primaryButtonLoad = (() => {
@@ -42,6 +43,11 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
         closeDialog(null);
     }
 
+    const disabledCheck = () => {
+        return ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && saveConfigName === '') || 
+        (dialogFrom === FROM_DIALOG.LOAD_CONFIG && (!configData || configData.length === 0))
+    }
+
     return (
         <DialogLayout>
             <DialogHeader>{header}</DialogHeader>
@@ -51,8 +57,7 @@ const DialogComponent = ({ header, content, primaryButton, secondaryButton, call
                     variant={'primary'}
                     className={'continue-button'}
                     isThin={true}
-                    isDisabled={(dialogFrom === FROM_DIALOG.SAVE_CONFIG || 
-                        dialogFrom === FROM_DIALOG.HEADER_CROSS) && saveConfigName === ''}
+                    isDisabled={disabledCheck()}
                     isLoading={primaryButtonLoad}
                     onClick={primaryButtonClick}
                 >

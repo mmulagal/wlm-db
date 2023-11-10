@@ -9,7 +9,7 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import { HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
+import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -34,7 +34,12 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
 async function deleteSavedConfig(accountId: string, id: string): Promise<void> {
     logger.info('Delete saved config ', accountId, id);
 
-    await deleteConfig(accountId, id);
+    try {
+        await deleteConfig(accountId, id);
+    } catch (error) {
+        logger.error(`Error occured while deleting saved config ${id}. Error: ${error}`);
+        throw createError(HttpErrorCodes.NOT_FOUND, CONFIG_NOT_FOUND(id));
+    }
 }
 
 async function getAllSavedConfig(accountId: string): Promise<FormConfigListResponseType> {

@@ -22,7 +22,7 @@ interface Notification {
     uiNotificationDescription: string;
     mailNotificationDescription?: string;
     actionLabel: string;
-    redirectURL: string;
+    redirectURL?: string;
     label: string;
     priority?: string;
     params?: any;
@@ -128,7 +128,7 @@ async function handleNotification(
                                 },
                                 ...(data.label && {
                                     link: {
-                                        url: '/database-services',
+                                        url: data.redirectURL,
                                         label: MOREINFO
                                     }
                                 })
@@ -154,7 +154,7 @@ async function handleNotification(
                                 service: WLMDB_RESOURCE_CLASS,
                                 ...(data.label && {
                                     link: {
-                                        url: `${WLMDB_ABSOLUTE_ENDPOINT}/database-services`,
+                                        url: `${WLMDB_ABSOLUTE_ENDPOINT}${data.redirectURL}`,
                                         label: MOREINFO
                                     }
                                 })
