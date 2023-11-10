@@ -33,6 +33,7 @@ import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import { setMaskedPassword, addEscapeInCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
+import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -117,13 +118,22 @@ const CodeBox = () => {
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
+            // Getting saved config data using API
+            const actualData = mssqlFormData;
+            // To get accountid, credid and region from saved config
+            const credDetails = getCredDetails(actualData);
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
+                <HighlighterWord highlight={searchInput} count={countDetails} apiResForSearch={rightPanelResponse}>
+                    <CodeBoxColor
+                        credID={credDetails.credId}
+                        region={credDetails.region}
+                        actualData={rightPanelMaskedResponse}
+                    />
+                    {/* <pre className={styles.colorAutomation}>
                         {rightPanelMaskedResponse}
-                    </pre>
+                    </pre> */}
                 </HighlighterWord>
             );
         }
@@ -208,7 +218,7 @@ const CodeBox = () => {
     }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for current payload.
-    const getTemplateResponse = (redirect=false) => {
+    const getTemplateResponse = (redirect = false) => {
         setIsRightPanelTemplateLoading(true);
         // Current form data
         const actualData = mssqlFormData;
@@ -319,7 +329,7 @@ const CodeBox = () => {
             />
         );
         //@ts-ignore
-        setRightPanelMaskedResponse(highlightedString);
+        setRightPanelMaskedResponse(resBody);
     };
 
     useEffect(() => {
