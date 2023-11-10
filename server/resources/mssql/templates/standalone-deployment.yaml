@@ -519,7 +519,11 @@ Resources:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
                             waitAfterCompletion: 0
                         d-install-dsc-modules:
-                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1"
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlNode -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
                         e-config-LCM:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlfci\LCM-Config.ps1"
                             waitAfterCompletion: 0
