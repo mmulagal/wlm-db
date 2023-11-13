@@ -14,6 +14,10 @@
         margin-top: 0px;
     }
 
+    .awsCli {
+        white-space: initial;
+    }
+
     .topBar {
         height: 60px;
         background-color: var(--grey-65);
@@ -49,6 +53,20 @@
 
             .configText {
                 color: var(--blue-40);
+            }
+        }
+
+        .configActionsDisabled {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            svg {
+                path {
+                    fill: var(--grey-25);
+                }
+            }
+            .configText {
+                color: var(--grey-25);
             }
         }
 

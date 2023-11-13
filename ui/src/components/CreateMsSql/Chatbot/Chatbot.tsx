@@ -14,8 +14,10 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useSendMsgMutation } from '../../../utils/apiService';
 import { setCurrentIntent, setMessages } from '../../../store/chatbot/chatbotSlice';
 import {
+    setCloudWatch,
     setDBCredentialsName,
     setDBCredentialsPassword,
+    setDBName,
     setExistingFsxnName,
     setFsxNExistingUserName,
     setFsxNPassword,
@@ -34,6 +36,7 @@ import {
     setSelectedKeyPair,
     setSelectedLicenseId,
     setSelectedRegionData,
+    setSelectedSecurityGroup,
     setSelectedSubnetNode1,
     setSelectedSubnetNode2,
     setSelectedVPC,
@@ -41,7 +44,7 @@ import {
     setStorageUnit,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
-import { GENERAL } from '../../../utils/appConstants';
+import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
 type optionsType = {
@@ -61,8 +64,7 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const messages = useAppSelector(state => state.chatbot.messages);
-    const currentIntent = useAppSelector(state => state.chatbot.currentIntent);
+    const { messages, currentIntent, isReceivingMsg } = useAppSelector(state => state.chatbot);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
     //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
@@ -360,10 +362,20 @@ const Chatbot = () => {
                             const sgValue = selectedSg?.id;
                             const sgLabel = selectedSg?.securityGroupName || selectedSg?.name || '-';
                             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
+                            dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
                             dispatch(setSelectedExistingSecurityGroup(option));
                         }
                     }
                     break;
+                case 'sqlServerName':
+                    if (mssqlFormData?.dbName !== value) {
+                        dispatch(setDBName(value));
+                    }
+                    break;
+                case 'enableCloudWatch':
+                    if (mssqlFormData.cloudWatch !== value) {
+                        dispatch(setCloudWatch(value));
+                    }
             }
         });
     };
@@ -451,6 +463,10 @@ const Chatbot = () => {
     };
 
     useEffect(() => {
+        setIsBotReplying(isReceivingMsg);
+    }, [isReceivingMsg]);
+
+    useEffect(() => {
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
         return () => {
@@ -482,17 +498,19 @@ const Chatbot = () => {
             updatedMessages[updatedMessages.length - 1] = {
                 ...updatedMessages[updatedMessages.length - 1],
                 errors: null,
-                msg: `Provide value${Object.keys(paramObj).length > 1 ? 's' : ''} for ${Object.keys(paramObj).join(
-                    ', '
-                )}`
+                msg: `Provide value${Object.keys(paramObj).length > 1 ? 's' : ''} for ${Object.keys(paramObj)
+                    .map(item => CHATBOT_FIELD_MAPPING[item] || item)
+                    .join(', ')}`
             };
         }
         updatedMessages.push({
             sender: 'user',
             msg: Object.keys(paramObj)
                 .map(
-                    key =>
-                        `Selected ${key}: ${key.toLowerCase().includes('password') ? '********' : paramObj[key].label}`
+                    (key: string) =>
+                        `Selected ${CHATBOT_FIELD_MAPPING[key] || key}: ${
+                            key.toLowerCase().includes('password') ? '********' : paramObj[key].label
+                        }`
                 )
                 .join(', ')
         });
@@ -521,6 +539,11 @@ const Chatbot = () => {
     //@ts-ignore
     const messagesToShow = useMemo(() => {
         const lastMsg = messages ? messages[messages.length - 1] : {};
+        const updatedMsgs = messages
+            ? messages.map((msg: any, idx: number) => {
+                  return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
+              })
+            : null;
         if (
             lastMsg &&
             lastMsg.sender === 'bot' &&
@@ -528,7 +551,7 @@ const Chatbot = () => {
             currentIntent &&
             currentIntent.type === 'DeployMsSql'
         ) {
-            const existingMessages = messages ? messages : [];
+            const existingMessages = updatedMsgs ? updatedMsgs : [];
             return [
                 ...existingMessages,
                 {
@@ -553,7 +576,7 @@ const Chatbot = () => {
                 }
             ];
         } else {
-            return messages;
+            return updatedMsgs;
         }
     }, [messages, currentIntent]);
 

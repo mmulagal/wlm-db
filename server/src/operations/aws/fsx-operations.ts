@@ -1,6 +1,7 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
+import { Tag } from '@aws-sdk/client-fsx';
 import { attempt, isEmpty } from 'lodash-es';
 import {
     describeFSxFileSystems,
@@ -25,6 +26,9 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 const logger = getLogger();
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
+
+const TWENTYFOUR_HOURS = '24h';
+const SIX_HOURS = '6h';
 
 async function getFSXDetails(credentialsId: string, region: string, fileSys: any) {
     const enetInterfaceIds = fileSys.NetworkInterfaceIds;
@@ -169,9 +173,17 @@ async function getStorageDataUsingSSM(
 ) {
     logger.info('Fetching storage savings details', credentialsId, region, activeNodeInstanceId);
 
-    const commands = [
-        `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
-    ];
+    let commands;
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        commands = [
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID test-fsx2345 -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        ];
+    } else {
+        commands = [
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+        ];
+    }
 
     const response = await callSsmExecution(
         credentialsId,
@@ -213,7 +225,7 @@ async function isAWSBackupEnabled(credentialsId: string, region: string, fileSys
         metadata
     });
 
-    const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
+    const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata);
 
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
@@ -245,7 +257,7 @@ async function getOntapVolumesSnapshotCount(
     }
 
     try {
-        const volumeUuids = await getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
+        const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata);
 
         if (!isEmpty(volumeUuids)) {
             const apiEndpoint = 'storage/volumes';
@@ -270,13 +282,58 @@ async function getOntapVolumesSnapshotCount(
             logger.debug({ parsedResponse });
             parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
 
-            if (parsedResponse) {
-                writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, '6h');
-                return parsedResponse;
+            if (parsedResponse && !isEmpty(parsedResponse.records)) {
+                const atleastOneVolumeHasSnapshots = parsedResponse.records.some(
+                    ({ snapshot_count: snapshotCount }: { snapshot_count: number }) => snapshotCount
+                );
+
+                if (atleastOneVolumeHasSnapshots) {
+                    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, SIX_HOURS);
+                    return parsedResponse;
+                }
             }
         }
     } catch (err) {
         logger.error('Failed executing SSM script to get ontap snapshots', { err });
+    }
+}
+
+async function getDataVolumes(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {
+    logger.info('Get data volumes', {
+        credentialsId,
+        region,
+        fileSystemId,
+        metadata
+    });
+
+    // First check AWS tags, if empty, get through SSM
+    const stackRegex = /(?<stackname>^.+)-fsx$/;
+    const { stackname } = metadata?.fsxSecret?.match(stackRegex)?.groups || {};
+
+    const logicalIdTag = 'cloudformation:logical-id';
+    const stackNameTag = 'cloudformation:stack-name';
+    const dataTagValue = 'FSxDataVolumeConfiguration';
+
+    const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fileSystemId);
+
+    const dataVolumes = volumes
+        ?.filter(volume => {
+            const { Tags: tags } = volume;
+
+            const isValidStackName = tags?.some(
+                ({ Key, Value }: Tag) => Key?.includes(stackNameTag) && Value?.includes(stackname)
+            );
+
+            const isValidDataTag = tags?.some(
+                ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
+            );
+
+            return isValidStackName && isValidDataTag;
+        })
+        ?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
+
+    if (isEmpty(dataVolumes)) {
+        return getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
     }
 }
 
@@ -315,10 +372,10 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
         logger.debug({ parsedResponse });
 
-        if (parsedResponse) {
-            const volumeUuids = parsedResponse?.records?.map(({ uuid }: { uuid: string }) => uuid);
+        if (parsedResponse && !isEmpty(parsedResponse.records)) {
+            const volumeUuids = parsedResponse.records.map(({ uuid }: { uuid: string }) => uuid);
 
-            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, volumeUuids, '24h');
+            writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, volumeUuids, TWENTYFOUR_HOURS);
 
             return volumeUuids;
         }

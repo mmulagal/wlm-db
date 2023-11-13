@@ -48,7 +48,7 @@ const HighlighterWord = ({ children, highlight, isAWSCli, count, apiResForSearch
     return (
         <div className={'highlighter'}>
             {isAWSCli && <>{parts}</>}
-            {!isAWSCli && <pre>{parts}</pre>}
+            {!isAWSCli && <pre className="fontFamily">{parts}</pre>}
         </div>
     );
 };

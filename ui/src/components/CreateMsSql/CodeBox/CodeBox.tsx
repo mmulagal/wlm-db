@@ -37,6 +37,8 @@ import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
 const CodeBox = () => {
+    const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [copyText, setCopyText] = useState('');
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -47,6 +49,7 @@ const CodeBox = () => {
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
+    const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
@@ -57,8 +60,8 @@ const CodeBox = () => {
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const MenuOptions = [
-        { 
-            id: 'copy', 
+        {
+            id: 'copy',
             displayName: CODE_VIEWER.COPY,
             // disable copy for CF till CF template issue gets resolved
             disabled: dropDownValue === CODE_VIEWER.CLOUDFORMATION ? true : false
@@ -125,7 +128,11 @@ const CodeBox = () => {
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails} apiResForSearch={rightPanelResponse}>
+                <HighlighterWord
+                    highlight={searchInput}
+                    count={countDetails}
+                    apiResForSearch={rightPanelMaskedHidePasswordResponse}
+                >
                     <CodeBoxColor
                         credID={credDetails.credId}
                         region={credDetails.region}
@@ -142,7 +149,7 @@ const CodeBox = () => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
-                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                    <Typography variant="Regular_16" className={`${styles.colorAutomation} ${styles.awsCli}`}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
@@ -330,6 +337,7 @@ const CodeBox = () => {
         );
         //@ts-ignore
         setRightPanelMaskedResponse(resBody);
+        setRightPanelMaskedHidePasswordResponse(highlightedString);
     };
 
     useEffect(() => {
@@ -375,12 +383,23 @@ const CodeBox = () => {
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Typography>
                 </div>
-                <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
-                    <DownloadIcon />
-                    <Typography variant="Semibold_14" className={styles.configText}>
-                        {SELECT_CONFIG.LOAD_CONFIG}
-                    </Typography>
-                </div>
+                {configData && configData.length > 0 && 
+                    <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
+                        <DownloadIcon />
+                        <Typography variant="Semibold_14" className={styles.configText}>
+                            {SELECT_CONFIG.LOAD_CONFIG}
+                        </Typography>
+                    </div>
+                }
+                {!configData || configData.length === 0 && 
+                    <div className={styles.configActionsDisabled}>
+                        <DownloadIcon />
+                        <Typography variant="Semibold_14" className={styles.configText}>
+                            {SELECT_CONFIG.LOAD_CONFIG}
+                        </Typography>
+                    </div>
+                }
+                
                 <div className={styles.menuContainer}>
                     <MenuPopover
                         isMenuOpen={isMenuOpen}
