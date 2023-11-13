@@ -229,18 +229,32 @@ async function getCloudformationTemplate(
 
     let masterTemplateContents;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        const filePath = path.join(
+        const filePath1 = path.join(
             process.cwd(),
             '..',
-            '..',
+            'wlmdb',
             'test',
             'simulator',
             'responses',
             'aws',
             'mock-master-template.yaml'
         );
-
-        const yamlString = fs.readFileSync(filePath, 'utf8');
+        const filePath2 = path.join(
+            process.cwd(),
+            '..',
+            'server',
+            'test',
+            'simulator',
+            'responses',
+            'aws',
+            'mock-master-template.yaml'
+        );
+        let yamlString;
+        try {
+            yamlString = fs.readFileSync(filePath1, 'utf8');
+        } catch (error) {
+            yamlString = fs.readFileSync(filePath2, 'utf8');
+        }
 
         masterTemplateContents = yamlString;
     } else {
