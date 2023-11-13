@@ -14,7 +14,7 @@ $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 try{
     "Setting up Powershell Gallery to Install DSC Modules"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Register-PSRepository -Default -Verbose
+#Register-PSRepository -Default -Verbose
 Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 
