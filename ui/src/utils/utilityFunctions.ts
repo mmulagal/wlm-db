@@ -542,11 +542,11 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     const totalCost = storageCost + computeCost + connectivityCost + otherCost;
 
     return {
-        storageCost: storageCost,
-        computeCost: computeCost,
-        connectivityCost: connectivityCost,
-        otherCost: otherCost,
-        totalCost: totalCost,
+        storageCost: formatFractionalNumber(storageCost, 2),
+        computeCost: formatFractionalNumber(computeCost, 2),
+        connectivityCost: formatFractionalNumber(connectivityCost, 2),
+        otherCost: formatFractionalNumber(otherCost, 2),
+        totalCost: formatFractionalNumber(totalCost, 2),
         storageCostPercent: formatFractionalNumber((storageCost / totalCost) * 100),
         computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
         connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),

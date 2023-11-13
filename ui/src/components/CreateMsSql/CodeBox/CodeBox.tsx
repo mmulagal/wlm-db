@@ -149,7 +149,7 @@ const CodeBox = () => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
-                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                    <Typography variant="Regular_16" className={`${styles.colorAutomation} ${styles.awsCli}`}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>

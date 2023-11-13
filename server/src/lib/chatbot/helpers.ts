@@ -9,7 +9,7 @@ import {
     validateText,
     validateVpcId,
     validateSecurityGroup,
-    validateFSxDeploymentMode,
+    validateSqlDeploymentType,
     validateCredentials,
     checkFsxType,
     validateFsx,
@@ -45,13 +45,13 @@ import {
     FSX_FILE_SYSTEM_ID,
     SINGLE_AZ,
     STANDALONE,
-    FCI,
     ENABLE_CLOUD_WATCH,
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
-    SQL_SERVER_NAME
+    SQL_SERVER_NAME,
+    MULTI_AZ
 } from './consts';
 
 const logger = getLogger();
@@ -218,12 +218,12 @@ async function validate(
                 response = validateText(params[key], key);
                 break;
             }
-            case FSX_DEPLOYMENT_MODE: {
-                response = await validateFSxDeploymentMode(params[key], key);
+            case SQL_DEPLOYMENT_MODE: {
+                response = await validateSqlDeploymentType(params[key], key);
                 break;
             }
-            case SQL_DEPLOYMENT_MODE: {
-                response = { value: params[FSX_DEPLOYMENT_MODE] === SINGLE_AZ ? STANDALONE : FCI };
+            case FSX_DEPLOYMENT_MODE: {
+                response = { value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
                 break;
             }
             case DB_SIZE: {

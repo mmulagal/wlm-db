@@ -131,8 +131,14 @@ async function getTopology(
             fileSystemType
         } = metadata as unknown as Topology);
 
-        const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-        const vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+        let vpcId;
+        try {
+            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+        } catch (error) {
+            logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
+            vpcId = '';
+        }
 
         // Fetch topology data
         topologyData = {
@@ -219,19 +225,15 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
     const { credentialsId } = metadata as Metadata;
 
     try {
-        const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
+        const [awsBackup, ontapProtection, nativeSqlProtection] = await Promise.all([
             isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getNativeSQLProtection(resourceId)
         ]);
 
-        const atleastOneVolumeHasSnapshots = ontapData?.records?.some(
-            ({ snapshot_count: snapshotCount }: { snapshot_count: number }) => snapshotCount
-        );
-
         return {
             isAwsBackUpEnabled: Boolean(awsBackup),
-            isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
+            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };
     } catch (error) {

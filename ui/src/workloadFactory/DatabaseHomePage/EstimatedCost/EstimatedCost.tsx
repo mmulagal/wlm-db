@@ -5,19 +5,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
 const EstimatedCost = () => {
-    // const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
-    // Hardcoded values for Estimated Cost Summary
-    const hostData = {
-        storageCost: 1200,
-        computeCost: 3200,
-        connectivityCost: 1600,
-        otherCost: 384,
-        totalCost: 6384,
-        storageCostPercent: 18.7,
-        computeCostPercent: 50.1,
-        connectivityCostPercent: 25.06,
-        otherCostPercent: 6.14
-    };
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);

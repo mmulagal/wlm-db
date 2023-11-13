@@ -6,7 +6,7 @@ import {
     DescribeNetworkInterfacesCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, EC2_INSTANCE_TYPE_EXCLUDE_LIST } from '../../utils/consts';
+import { AWSQueryFields } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -371,18 +371,13 @@ async function getInstanceTypes(credentialsId: string, region: string) {
         went through the instances listed in Launch wizard and excluded few types. Needs work to filter out
         Created a list of instance that can be excluded EC2_INSTANCE_TYPE_EXCLUDE_LIST
         */
-    const filteredInstances = response
-        .filter(
-            ({ InstanceType }) =>
-                !EC2_INSTANCE_TYPE_EXCLUDE_LIST.some((excludedType: string) => InstanceType?.includes(excludedType))
-        )
-        .map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo, ProcessorInfo }) => ({
-            instanceType: InstanceType,
-            iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
-            vCpus: VCpuInfo?.DefaultVCpus,
-            ramInMib: MemoryInfo?.SizeInMiB,
-            architecture: ProcessorInfo?.SupportedArchitectures
-        }));
+    const filteredInstances = response.map(({ InstanceType, EbsInfo, VCpuInfo, MemoryInfo, ProcessorInfo }) => ({
+        instanceType: InstanceType,
+        iopsInMbps: EbsInfo?.EbsOptimizedInfo?.MaximumBandwidthInMbps,
+        vCpus: VCpuInfo?.DefaultVCpus,
+        ramInMib: MemoryInfo?.SizeInMiB,
+        architecture: ProcessorInfo?.SupportedArchitectures
+    }));
 
     return { instanceTypes: filteredInstances };
 }

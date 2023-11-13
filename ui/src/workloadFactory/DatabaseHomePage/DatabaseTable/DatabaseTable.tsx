@@ -15,7 +15,7 @@ import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort } from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -322,7 +322,7 @@ const DatabaseTable = () => {
                                 <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
                                     {DatabaseEstimatedCost({ ...costData, totalCost: totalCost })}
                                 </TooltipInfo>
-                                <Typography variant="Regular_14">{totalCost}</Typography>
+                                <Typography variant="Regular_14">{`$ ${formatFractionalNumber(totalCost, 2)}`}</Typography>
                             </div>
                         )}
                         {!costData && notAvailable()}
