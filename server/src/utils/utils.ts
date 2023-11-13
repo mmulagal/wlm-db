@@ -132,13 +132,16 @@ function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigura
     if (deploymentMode === STANDALONE) {
         return !networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id;
     }
-    return (
+    const isViolated =
         !networkConfiguration.privateSubnet1Id ||
         !networkConfiguration.privateSubnet2Id ||
         !networkConfiguration.routeTable1Id ||
-        !networkConfiguration.routeTable2Id ||
-        networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id
-    );
+        !networkConfiguration.routeTable2Id;
+    // In simulator route table 1 and route table 2 id will be always same, so we cant check that condition
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return isViolated;
+    }
+    return isViolated || networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id;
 }
 
 function checkAndRetrieveJsonObject(str: string | undefined) {

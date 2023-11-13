@@ -11,7 +11,7 @@ import store, { RootState } from '../store/store';
 import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
-import { sortListOfDict } from './utilityFunctions';
+import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -169,7 +169,11 @@ export const awsApi = createApi({
                     databaseEdition,
                     databaseVersion
                 }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&osVersion=${osVersion}&databaseType=${databaseType}&databaseEdition=${databaseEdition}&databaseVersion=${databaseVersion}`
+                    url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&${
+                        osVersion ? `osVersion=${osVersion}&` : ''
+                    }databaseType=${databaseType}&${databaseEdition ? `databaseEdition=${databaseEdition}&` : ''}${
+                        databaseVersion ? `databaseVersion=${databaseVersion}` : ''
+                    }`
                 })
             }),
             getSnsTopics: builder.query({
@@ -267,12 +271,19 @@ export const configApi = createApi({
         return {
             getConfigList: builder.query({
                 query: () => ({ url: `configs` }),
-                transformResponse: (response) => {
+                transformResponse: response => {
                     return response ? sortListOfDict(response, 'creationTime', false) : [];
                 }
             }),
             getConfigData: builder.query({
-                query: ({ configId }) => ({ url: `configs/${configId}` })
+                query: ({ configId }) => ({ url: `configs/${configId}` }),
+                transformResponse: (response:any) => {
+                    // For load config generate random DB name as saved config name can't be repeated for deployment
+                    if (response && response?.data) {
+                        response.data.dbName = generateRandomDBName();
+                    }
+                    return response;
+                }
             }),
             saveConfigData: builder.mutation({
                 query: ({ payload }) => ({
@@ -308,7 +319,7 @@ export const databaseHomeApi = createApi({
                     `database-hosts?fields=performance,storage,protection,estimatedUsageCost&nextToken=${nextToken}`
             }),
             getDatabaseJobs: builder.query({
-                query: ({ nextToken = null }) => 
+                query: ({ nextToken = null }) =>
                     `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
             }),
             getJobsSummary: builder.query({
@@ -328,7 +339,7 @@ export const databaseHomeApi = createApi({
                 async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
                     return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
                 }
-            }),
+            })
         };
     }
 });

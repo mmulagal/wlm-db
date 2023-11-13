@@ -15,7 +15,7 @@ type DeployMsSqlParams = {
     credentialsId?: string;
     fsxType?: string;
     region?: string; // region name or code as provided by the user
-    fsxDeploymentMode?: string;
+    sqlDeploymentMode?: string;
     vpcId?: string; // VPC id for the instance
     vpcCidr?: string; // VPC CIDR block
     availabilityZone1?: string; // Availability Zone 1
@@ -32,10 +32,11 @@ type DeployMsSqlParams = {
     domainDnsname?: string;
     dnsIpaddress?: string;
     securityGroupId?: string;
-    sqlDeploymentMode?: string;
+    sqlServerName?: string;
     sqlAmiId?: string;
     serviceAccountName?: string;
     serviceAccountPassword?: string;
+    fsxDeploymentMode?: string;
     fsxUsername?: string;
     fsxPassword?: string;
     databaseSize?: number;
@@ -44,6 +45,7 @@ type DeployMsSqlParams = {
     encryptionKey?: string;
     ontapSgGroupId?: string;
     fsxFileSystemId?: string;
+    enableCloudWatch?: boolean;
 };
 
 // Deploy MS SQL

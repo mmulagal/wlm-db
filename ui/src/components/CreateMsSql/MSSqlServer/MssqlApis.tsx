@@ -30,16 +30,13 @@ import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } fro
 import { formatKmsData } from '../../../utils/utilityFunctions';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
-import { 
-    selectDefaultEncryption, 
-    selectDefaultInstanceType,
-    selectDefaultLicense
- } from './MSSqlUtils';
-
+import { selectDefaultEncryption, selectDefaultInstanceType, selectDefaultLicense } from './MSSqlUtils';
+import { setIsReceivingMsg } from '../../../store/chatbot/chatbotSlice';
 
 const MssqlApis = () => {
     const dispatch = useAppDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
+    const isShowChatbot = useAppSelector(state => state.chatbot.isShow);
 
     // CredentialId state
     const [selectedCredId, setSelectedCredId] = useState(undefined);
@@ -125,10 +122,10 @@ const MssqlApis = () => {
             credentialId: selectedCredId,
             region: selectedRegionCode,
             osType: OS_TYPE,
-            osVersion: osVersion?.value,
+            osVersion: isShowChatbot ? null : osVersion?.value,
             databaseType: DATABASE_TYPE,
-            databaseEdition: dbEdition?.value,
-            databaseVersion: dbVersion?.value
+            databaseEdition: isShowChatbot ? null : dbEdition?.value,
+            databaseVersion: isShowChatbot ? null : dbVersion?.value
         },
         {
             skip: licenseAmiSkip
@@ -196,16 +193,12 @@ const MssqlApis = () => {
     );
 
     // API call to get saved configuration list
-    const {
-        data: configData,
-        isFetching: configLoading,
-        isError: configError
-    } = useGetConfigListQuery({});
+    const { data: configData, isFetching: configLoading, isError: configError } = useGetConfigListQuery({});
 
     // To add credentials information in MssqlEntities
     useEffect(() => {
         dispatch(addCredentials({ credentialData, credentialLoading, credentialError }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [credentialData, credentialLoading, credentialError]);
 
     //Handle dependency cases
@@ -218,7 +211,7 @@ const MssqlApis = () => {
         }
         if (vpcId) {
             setSelectedVpcId(vpcId);
-        } 
+        }
         if (credId) {
             setCredSkip(false);
             setSelectedCredId(credId);
@@ -249,10 +242,15 @@ const MssqlApis = () => {
         } else {
             dispatch(addRegions({ regionsData, regionsLoading, regionsError }));
         }
-        if(!regionsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.REGION)){
+        if (
+            !regionsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.REGION)
+        ) {
             dispatch(setRefetchApiCountRan(API_NAME.REGION));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [regionsData, regionsError, regionsLoading]);
 
     // To add VPC information in MssqlEntities
@@ -262,10 +260,15 @@ const MssqlApis = () => {
         } else {
             dispatch(addVpcList({ vpcData, vpcLoading, vpcError }));
         }
-        if(!vpcLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.VPC)){
-            dispatch(setRefetchApiCountRan(API_NAME.VPC))
+        if (
+            !vpcLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.VPC)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.VPC));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [vpcData, vpcLoading, vpcError]);
 
     // To add Ads information in MssqlEntities
@@ -275,10 +278,15 @@ const MssqlApis = () => {
         } else {
             dispatch(addAdsList({ adsData, adsLoading, adsError }));
         }
-        if(!adsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.ADS)){
-            dispatch(setRefetchApiCountRan(API_NAME.ADS))
+        if (
+            !adsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.ADS)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.ADS));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [adsData, adsLoading, adsError]);
 
     // To add AMI information in MssqlEntities
@@ -287,14 +295,19 @@ const MssqlApis = () => {
             dispatch(addAmiList({ undefined, amiLoading, amiError }));
         } else {
             dispatch(addAmiList({ amiData, amiLoading, amiError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+            if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
                 selectDefaultLicense(amiData, dispatch);
             }
         }
-        if(!amiLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.AMI)){
-            dispatch(setRefetchApiCountRan(API_NAME.AMI))
+        if (
+            !amiLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.AMI)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.AMI));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [amiData, amiLoading, amiError]);
 
     // To add SNS information in MssqlEntities
@@ -304,10 +317,15 @@ const MssqlApis = () => {
         } else {
             dispatch(addSnsList({ snsData, snsLoading, snsError }));
         }
-        if(!snsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.SNS)){
-            dispatch(setRefetchApiCountRan(API_NAME.SNS))
+        if (
+            !snsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.SNS)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.SNS));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [snsData, snsLoading, snsError]);
 
     // To add KMS Keys in MssqlEntities
@@ -317,14 +335,19 @@ const MssqlApis = () => {
         } else {
             const kmsData = formatKmsData(kmsList);
             dispatch(addKmsKeysList({ kmsData, kmsLoading, kmsError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+            if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
                 selectDefaultEncryption(kmsData, dispatch);
             }
         }
-        if(!kmsLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KMS)){
-            dispatch(setRefetchApiCountRan(API_NAME.KMS))
+        if (
+            !kmsLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.KMS)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.KMS));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [kmsList, kmsLoading, kmsError]);
 
     // To add Key Pair in MssqlEntities
@@ -334,10 +357,15 @@ const MssqlApis = () => {
         } else {
             dispatch(addKeyPairList({ keyPairData, keyPairLoading, keyPairError }));
         }
-        if(!keyPairLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.KEYPAIR)){
-            dispatch(setRefetchApiCountRan(API_NAME.KEYPAIR))
+        if (
+            !keyPairLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.KEYPAIR)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.KEYPAIR));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [keyPairData, keyPairLoading, keyPairError]);
 
     // To add Instance Type in MssqlEntities
@@ -346,20 +374,25 @@ const MssqlApis = () => {
             dispatch(addInstanceTypeList({ undefined, instanceTypeLoading, instanceTypeError }));
         } else {
             dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
-            if(selectedConfig === SELECT_CONFIG.EASY_CREATE){
+            if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
                 selectDefaultInstanceType(instanceTypeData, dispatch);
             }
         }
-        if(!instanceTypeLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.INSTANCE)){
-            dispatch(setRefetchApiCountRan(API_NAME.INSTANCE))
+        if (
+            !instanceTypeLoading &&
+            isLoadConfig &&
+            refetchApiCount?.isLoading &&
+            refetchApiCount?.expected.includes(API_NAME.INSTANCE)
+        ) {
+            dispatch(setRefetchApiCountRan(API_NAME.INSTANCE));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [instanceTypeData, instanceTypeLoading, instanceTypeError]);
 
     // To add FSxN in MssqlEntities
     useEffect(() => {
         const vpcId = selectedVpcData?.data ? selectedVpcData?.data?.id : undefined;
-        if(!vpcId){
+        if (!vpcId) {
             dispatch(addFsxnList({ undefined, fsxnLoading, fsxnError }));
         } else {
             if (fsxnError) {
@@ -367,23 +400,33 @@ const MssqlApis = () => {
             } else {
                 dispatch(addFsxnList({ fsxnData, fsxnLoading, fsxnError }));
             }
-            if(!fsxnLoading && isLoadConfig && refetchApiCount?.isLoading && refetchApiCount?.expected.includes(API_NAME.FSXN)){
-                dispatch(setRefetchApiCountRan(API_NAME.FSXN))
+            if (
+                !fsxnLoading &&
+                isLoadConfig &&
+                refetchApiCount?.isLoading &&
+                refetchApiCount?.expected.includes(API_NAME.FSXN)
+            ) {
+                dispatch(setRefetchApiCountRan(API_NAME.FSXN));
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fsxnData, fsxnLoading, fsxnError, selectedVpcData]);
 
     // To add saved configuration list
     useEffect(() => {
-        if(configError) {
-            dispatch(addSavedConfigList({undefined, configLoading, configError}));
+        if (configError) {
+            dispatch(addSavedConfigList({ undefined, configLoading, configError }));
         } else {
-            dispatch(addSavedConfigList({configData, configLoading, configError}));
+            dispatch(addSavedConfigList({ configData, configLoading, configError }));
         }
-        
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [configData, configLoading, configError]);
+
+    //To update chatbot msg loading status
+    useEffect(() => {
+        dispatch(setIsReceivingMsg(vpcLoading));
+    }, [vpcLoading]);
 
     return;
 };

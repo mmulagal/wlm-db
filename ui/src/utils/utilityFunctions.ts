@@ -355,7 +355,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                 ).toString(),
                 // performance table text to search in table
                 performanceText:
-                    val?.performance && val.performance?.assessment + ' ( <' + val.performance?.latency + ' ms )',
+                    val?.performance && val.performance?.assessment,
                 // Storage saving table text to search in table
                 storageSavingsText:
                     val?.storage &&
@@ -506,16 +506,34 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     let connectivityCost = 0;
     let otherCost = 0;
 
+    let storageList: (string | undefined)[] = [];
+    let vpcList: (string | undefined)[] = [];
+
     data?.map(val => {
         if (val?.estimatedUsageCost?.compute) {
             storageCost += val.estimatedUsageCost.compute;
         }
-        if (val?.estimatedUsageCost?.storage) {
+
+        // If storage cost is already added than no need to add again based on FSXId
+        let fsxVal = '';
+        if (val?.topology?.fsxFilesystemId) {
+            fsxVal = val.topology.fsxFilesystemId;
+        }
+        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage) {
             computeCost += val.estimatedUsageCost.storage;
+            if (fsxVal) {storageList.push(fsxVal)};
         }
-        if (val?.estimatedUsageCost?.connectivity) {
+
+        // If connectivity cost is already added than no need to add again based on VPCId
+        let vpcVal = '';
+        if (val?.topology?.vpcId) {
+            vpcVal = val.topology.vpcId;
+        }
+        if ((!vpcVal || !vpcList.includes(vpcVal)) && val?.estimatedUsageCost?.connectivity) {
             connectivityCost += val.estimatedUsageCost.connectivity;
+            if (vpcVal) {vpcList.push(vpcVal)};
         }
+        
         if (val?.estimatedUsageCost?.others) {
             otherCost += val.estimatedUsageCost.others;
         }
@@ -529,10 +547,10 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
         connectivityCost: connectivityCost,
         otherCost: otherCost,
         totalCost: totalCost,
-        storageCostPercent: (storageCost / totalCost) * 100,
-        computeCostPercent: (computeCost / totalCost) * 100,
-        connectivityCostPercent: (connectivityCost / totalCost) * 100,
-        otherCostPercent: (otherCost / totalCost) * 100
+        storageCostPercent: formatFractionalNumber((storageCost / totalCost) * 100),
+        computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
+        connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),
+        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100)
     };
 };
 

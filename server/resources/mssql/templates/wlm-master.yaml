@@ -26,6 +26,7 @@ Metadata:
           - NodeNetBIOSNames
           - KeyPairName
           - ValidationAmi
+          - Ec2RoleName
       - Label:
           default: Microsoft Active Directory Configuration
         Parameters:
@@ -59,6 +60,7 @@ Metadata:
           - ONTAPSecurityGroupID
           - FileSystemEncryptionKeyId
           - FSxDiskIops
+          - SQLSvmName
       - Label:
           default: Microsoft SQL Server Configuration
         Parameters:
@@ -82,7 +84,7 @@ Metadata:
           - MSSQLMediaBucketName
           - MSSQLMediaPathKey
       - Label:
-          default: Custom Resource configuration
+          default: Custom Resource configuration ( DO NOT EDIT )
         Parameters:
           - AccountId
           - CloudProviderAccountId
@@ -460,25 +462,30 @@ Parameters:
     MinLength: 1
   
   RoleCredentialsId:
-    Description: Account credentials id to deploy and manage resources
+    Description: WLM account credentials id to deploy and manage resources (DO NOT EDIT)
     Type: String
+    NoEcho: true
   
   AccountId:
-    Description: BlueXP account id
+    Description: WLM tenancy account id (DO NOT EDIT)
     Type: String
+    NoEcho: true
     
   CloudProviderAccountId:
-    Description: BlueXP CloudProviderAccountId id
+    Description: AWS CloudProviderAccountId id (DO NOT EDIT)
     Type: String
+    NoEcho: true
   
   JwtToken:
-    Description: JWT Token to grant access to a resource
+    Description: JWT Token to grant access to a resource (DO NOT EDIT)
     Type: String
+    NoEcho: true
 
   SnsServiceToken:
-    Description: SNS ARN to push cloud formation messages
+    Description: SNS ARN to push cloud formation messages (DO NOT EDIT)
     Type: String
-
+    NoEcho: true
+    
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -569,9 +576,9 @@ Resources:
           Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Ref SnsServiceToken]
+        - [!Ref SnsServiceToken]
       {{Tags}}
   ValidationStack2:
     Type: AWS::CloudFormation::Stack
@@ -611,9 +618,9 @@ Resources:
           Ref: AWS::StackName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Ref SnsServiceToken]
+        - [!Ref SnsServiceToken]
       {{Tags}}
   FCIWaitHandler: 
     Type: AWS::CloudFormation::WaitConditionHandle
@@ -702,9 +709,9 @@ Resources:
           Ref: FSxDiskIops 
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Ref SnsServiceToken]
+        - [!Ref SnsServiceToken]
       {{Tags}}
   ExistingFSxStack:
     Type: AWS::CloudFormation::Stack
@@ -737,9 +744,9 @@ Resources:
           Ref: FSxQuorumVolumeSize
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Ref SnsServiceToken]
+        - [!Ref SnsServiceToken]
       {{Tags}}
   SQLServerStack:
     Type: AWS::CloudFormation::Stack
@@ -849,9 +856,9 @@ Resources:
           Ref: FSxLogVolumeName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Ref SnsServiceToken]
+        - [!Ref SnsServiceToken]
       {{Tags}}
   SQLStandaloneStack:
     Type: AWS::CloudFormation::Stack
@@ -947,9 +954,9 @@ Resources:
           Ref: SqlServerName
       NotificationARNs:
         Fn::If:
-          - IncludeNotification
-          - [Ref: NotificationARN, Ref: SnsServiceToken]
-          - [Ref: SnsServiceToken]
+        - IncludeNotification
+        - [Ref: NotificationARN, !Ref SnsServiceToken]
+        - [!Ref SnsServiceToken]
       {{Tags}}
   PostStackDeployment:
     Type: Custom::MyCustomResource

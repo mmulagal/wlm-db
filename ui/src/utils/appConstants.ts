@@ -172,7 +172,7 @@ export const GENERAL = {
     UNIT: 'Unit',
     CAPACITY_TOOLTIP:
         'Specify the SQL data drive size only. The provisioning for log drive, tempdb, and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration. You can change the recommended defaults to meet your requirements.',
-    ERROR_CAPACITY: 'The maximum supported capacity is 130 TiB.',
+    ERROR_CAPACITY: 'Supported capacity should be between 120 GiB to 130 TiB.',
     //Provisioned IOPS
     AUTOMATIC: 'Automatic',
     USER_PROVISIONED: 'User-provisioned',
@@ -428,4 +428,37 @@ export const CODE_VIEWER = {
     CREATION_DATE: 'Creation date:',
     DEPLOYMENT: 'Deployment:',
     CREATE_DATABASE: 'Create database'
+};
+
+export const CHATBOT_FIELD_MAPPING: any = {
+    credentialsId: 'credential id',
+    region: 'region',
+    vpcId: 'vpc',
+    availabilityZone1: 'availability zone for primary node',
+    availabilityZone2: 'availability zone for secondary node',
+    vpcCidr: 'vpc cidr',
+    privateSubnet1Id: 'subnet for primary node',
+    routeTable1Id: 'route table for primary node',
+    privateSubnet2Id: 'subnet for secondary node',
+    routeTable2Id: 'route table for secondary node',
+    workloadInstanceType: 'workload instance type',
+    keyPairName: 'key pair name',
+    sqlAmiId: 'sql ami id',
+    adScenarioType: 'active directory scenario type',
+    dnsIpaddress: 'dns ip address',
+    domainDnsname: 'domain dns name',
+    domainUsername: 'domain user name',
+    domainPassword: 'domain password',
+    fsxUsername: 'fsx user name',
+    fsxPassword: 'fsx password',
+    serviceAccountName: 'service account name',
+    serviceAccountPassword: 'service account password',
+    fsxDeploymentMode: 'fsx deployment mode',
+    sqlDeploymentMode: 'sql deployment mode',
+    databaseSize: 'database size',
+    fsxVolThroughput: 'fsx volume throughput',
+    fsxIOPS: 'fsx IOPS',
+    ontapSgGroupId: 'ontap security group id',
+    fsxType: 'fsx type',
+    fsxFileSystemId: 'fsx file system id'
 };

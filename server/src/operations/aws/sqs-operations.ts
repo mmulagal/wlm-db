@@ -284,7 +284,7 @@ async function processCloudFormationMessages() {
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
                                                         uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been deployed successfully`,
                                                         actionLabel: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-                                                        redirectURL: REDIRECT_URL,
+                                                        redirectURL: `${REDIRECT_URL}/${resourceId}`,
                                                         label: ACTION_BUTTON_DASHBOARD,
                                                         priority: SUCCESS,
                                                         accountId
@@ -312,7 +312,7 @@ async function processCloudFormationMessages() {
                                                     subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
                                                     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
                                                     actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                    redirectURL: REDIRECT_URL,
+                                                    redirectURL: '/',
                                                     label: ACTION_BUTTON_DASHBOARD,
                                                     priority: CRITICAL,
                                                     accountId
@@ -336,7 +336,7 @@ async function processCloudFormationMessages() {
                                                 subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
                                                 uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
                                                 actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                redirectURL: REDIRECT_URL,
+                                                redirectURL: '/',
                                                 label: ACTION_BUTTON_DASHBOARD,
                                                 priority: CRITICAL,
                                                 accountId

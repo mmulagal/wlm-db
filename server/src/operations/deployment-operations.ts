@@ -34,13 +34,12 @@ import {
     TEMPLATE_CREDENTIALS_ID,
     TEMPLATE_CLOUD_PROVIDER_ID,
     MASTER_TEMPLATE_PATH,
+    TEMPLATE_OPTIONAL_PARAMETERS,
     WLMDB,
     TEMPLATE_SNS_SERVICE_TOKEN,
-    TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_ACCOUNT_ID,
     SUCCESS,
     ACTION_BUTTON_DASHBOARD,
-    REDIRECT_URL,
     STANDARD_DEPLOYMENT_ACTION,
     SQL_DEPLOYMENET_INITIATED_SUBJECT,
     AWS_RESOURCES_ACTION_MAP,
@@ -119,8 +118,8 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
-        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
-        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken }
+        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -327,8 +326,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-
-    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region, WLMDB) : '';
+    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
 
@@ -458,7 +456,7 @@ async function deployCloudFormationTemplate(
         subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
         uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
         actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
-        redirectURL: REDIRECT_URL,
+        redirectURL: '/',
         label: ACTION_BUTTON_DASHBOARD,
         priority: SUCCESS
     };
@@ -545,7 +543,11 @@ async function createDeploymentMockDataInDB(
 
     const cloudProviderId = randomize('0', 8);
     const resourceName = `sqlnode-${randomize('0', 5)}`;
-
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        sqlDeploymentMode = 'FCI';
+    } else if (sqlDeploymentMode.toLowerCase() === 'standalone') {
+        sqlDeploymentMode = 'Standalone';
+    }
     await createDeployment(accountId, {
         deploymentId: stackId,
         cloudProviderAccountId: cloudProviderId,

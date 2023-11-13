@@ -34,7 +34,11 @@ const SelectComponent = ({
 
     //@ts-ignore
     useEffect(() => {
-        setOptionsToShow(options);
+        setOptionsToShow(
+            options.map((item: any) => {
+                return { label: item.label || item.value, value: item.value };
+            })
+        );
     }, [options]);
 
     useEffect(() => {

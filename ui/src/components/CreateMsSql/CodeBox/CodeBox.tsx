@@ -33,9 +33,12 @@ import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import { setMaskedPassword, addEscapeInCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
+import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
 const CodeBox = () => {
+    const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [copyText, setCopyText] = useState('');
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -46,6 +49,7 @@ const CodeBox = () => {
     const [isRightPanelDataLoading, setIsRightPanelDataLoading] = useState(false);
     const [rightPanelResponse, setRightPanelResponse] = useState<any>('');
     const [rightPanelMaskedResponse, setRightPanelMaskedResponse] = useState<any>('');
+    const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
     const { setDialog, closeDialog } = useDialog();
@@ -56,7 +60,12 @@ const CodeBox = () => {
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const MenuOptions = [
-        { id: 'copy', displayName: CODE_VIEWER.COPY },
+        {
+            id: 'copy',
+            displayName: CODE_VIEWER.COPY,
+            // disable copy for CF till CF template issue gets resolved
+            disabled: dropDownValue === CODE_VIEWER.CLOUDFORMATION ? true : false
+        },
         { id: 'redirect', displayName: GENERAL.SAVE_FORM_AS_CLOUD }
     ];
 
@@ -112,13 +121,26 @@ const CodeBox = () => {
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
+            // Getting saved config data using API
+            const actualData = mssqlFormData;
+            // To get accountid, credid and region from saved config
+            const credDetails = getCredDetails(actualData);
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
+                <HighlighterWord
+                    highlight={searchInput}
+                    count={countDetails}
+                    apiResForSearch={rightPanelMaskedHidePasswordResponse}
+                >
+                    <CodeBoxColor
+                        credID={credDetails.credId}
+                        region={credDetails.region}
+                        actualData={rightPanelMaskedResponse}
+                    />
+                    {/* <pre className={styles.colorAutomation}>
                         {rightPanelMaskedResponse}
-                    </pre>
+                    </pre> */}
                 </HighlighterWord>
             );
         }
@@ -127,7 +149,7 @@ const CodeBox = () => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
-                    <Typography variant="Regular_16" className={styles.colorAutomation}>
+                    <Typography variant="Regular_16" className={`${styles.colorAutomation} ${styles.awsCli}`}>
                         {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
@@ -203,7 +225,7 @@ const CodeBox = () => {
     }, [searchInput]);
 
     // This will call template API to get CloudFormation and AWS CLI response for current payload.
-    const getTemplateResponse = (redirect=false) => {
+    const getTemplateResponse = (redirect = false) => {
         setIsRightPanelTemplateLoading(true);
         // Current form data
         const actualData = mssqlFormData;
@@ -314,7 +336,8 @@ const CodeBox = () => {
             />
         );
         //@ts-ignore
-        setRightPanelMaskedResponse(highlightedString);
+        setRightPanelMaskedResponse(resBody);
+        setRightPanelMaskedHidePasswordResponse(highlightedString);
     };
 
     useEffect(() => {
@@ -360,12 +383,23 @@ const CodeBox = () => {
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Typography>
                 </div>
-                <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
-                    <DownloadIcon />
-                    <Typography variant="Semibold_14" className={styles.configText}>
-                        {SELECT_CONFIG.LOAD_CONFIG}
-                    </Typography>
-                </div>
+                {configData && configData.length > 0 && 
+                    <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
+                        <DownloadIcon />
+                        <Typography variant="Semibold_14" className={styles.configText}>
+                            {SELECT_CONFIG.LOAD_CONFIG}
+                        </Typography>
+                    </div>
+                }
+                {!configData || configData.length === 0 && 
+                    <div className={styles.configActionsDisabled}>
+                        <DownloadIcon />
+                        <Typography variant="Semibold_14" className={styles.configText}>
+                            {SELECT_CONFIG.LOAD_CONFIG}
+                        </Typography>
+                    </div>
+                }
+                
                 <div className={styles.menuContainer}>
                     <MenuPopover
                         isMenuOpen={isMenuOpen}

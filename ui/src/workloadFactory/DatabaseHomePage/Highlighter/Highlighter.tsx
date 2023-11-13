@@ -1,16 +1,21 @@
 import React from 'react';
 import './Highlighter.scss';
 
-const HighlighterWord = ({ children, highlight, isAWSCli, count }: any) => {
+const HighlighterWord = ({ children, highlight, isAWSCli, count, apiResForSearch }: any) => {
     if (!highlight || highlight.length < 2) return children;
     const regexp = new RegExp(highlight, 'g');
     let content = '';
-    if (children?.props?.children || children?.props?.children?.props?.textToHighlight) {
-        content = children?.props?.children?.props?.textToHighlight
-            ? children?.props?.children?.props?.textToHighlight
-            : children?.props?.children;
+
+    if (apiResForSearch) {
+        content = apiResForSearch?.props?.textToHighlight;
     } else {
-        content = children;
+        if (children?.props?.children || children?.props?.children?.props?.textToHighlight) {
+            content = children?.props?.children?.props?.textToHighlight
+                ? children?.props?.children?.props?.textToHighlight
+                : children?.props?.children;
+        } else {
+            content = children;
+        }
     }
 
     const matches = content.match(regexp)!;
@@ -43,7 +48,7 @@ const HighlighterWord = ({ children, highlight, isAWSCli, count }: any) => {
     return (
         <div className={'highlighter'}>
             {isAWSCli && <>{parts}</>}
-            {!isAWSCli && <pre>{parts}</pre>}
+            {!isAWSCli && <pre className="fontFamily">{parts}</pre>}
         </div>
     );
 };

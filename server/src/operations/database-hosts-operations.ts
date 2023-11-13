@@ -1,4 +1,5 @@
 import { resource } from '@prisma/client';
+import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { listResources } from '../lib/database/db';
@@ -8,14 +9,22 @@ import {
     PerformanceResponseType,
     TopologyResponseType,
     ProtectionResponseType,
-    StorageResponseType
+    StorageResponseType,
+    UsageCostResponseType
 } from '../routes/types/database-hosts.types';
+import { describeInstance, getAmis } from '../lib/aws/ec2';
+import { describeFSxN } from '../lib/aws/fsx';
+import { PricingServiceRequestType, PricingServiceResponseType } from '../routes/types/pricing.types';
+
+import calculatePrice from './aws/pricing-operations';
 import {
     DatabaseHostsQueryFields,
     HttpErrorCodes,
     RESOURCESTYPE,
     ServerState,
-    SERVER_TYPE_MAPPING
+    SERVER_TYPE_MAPPING,
+    STANDALONE,
+    FCI
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -24,12 +33,8 @@ import {
     getNativeSQLProtection,
     getDatabasesCount
 } from './workloads/mssql/mssql-operations';
-import {
-    getVolumesUuids,
-    getStorageDataUsingSSM,
-    isAWSBackupEnabled,
-    getOntapVolumesSnapshotCount
-} from './aws/fsx-operations';
+import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
+import Metadata from '../utils/common-types';
 
 const logger = getLogger();
 
@@ -40,13 +45,6 @@ interface Topology {
     standbyNodeInstanceName?: string;
     sqlDeploymentType?: string;
     fileSystemType?: string;
-}
-
-interface Metadata {
-    credentialsId: string;
-    activeNodeInstanceId: string;
-    standbyNodeInstanceId: string;
-    fsxSecret: string;
 }
 
 type VolumeSpaceRecord = {
@@ -77,6 +75,18 @@ type ResourceDetails = {
     metadata: unknown;
 };
 
+type EstimationEc2Type = {
+    resourceType: string;
+    sqlSoftwareType: string;
+};
+
+type EstimationFSxType = {
+    diskSize: number;
+    throughput: number;
+    iops: number;
+    deploymentOption: string;
+};
+
 async function getTopology(
     accountId: string,
     region: string,
@@ -93,6 +103,7 @@ async function getTopology(
     }
 
     const { resource_type: resourceType, co_relation_id: fileSystemId, metadata } = resourceData;
+    const { credentialsId } = metadata as { credentialsId: string };
 
     let topologyData: TopologyResponseType = {
         region,
@@ -100,6 +111,7 @@ async function getTopology(
         serverInstallationMode: '',
         fileSystemId: fileSystemId!,
         fileSystemType: '',
+        vpcId: '',
         ec2Details: []
     };
 
@@ -119,6 +131,9 @@ async function getTopology(
             fileSystemType
         } = metadata as unknown as Topology);
 
+        const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+        const vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+
         // Fetch topology data
         topologyData = {
             region,
@@ -126,6 +141,7 @@ async function getTopology(
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
+            vpcId: vpcId!,
             ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
         };
         if (standbyNodeInstanceId) {
@@ -139,60 +155,60 @@ async function getTopology(
     return topologyData;
 }
 
-async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageResponseType> {
+async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageResponseType | undefined> {
     logger.info('Getting storage data:', { resourceDetail });
 
-    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+    try {
+        const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
-        credentialsId: string;
-        activeNodeInstanceId: string;
-        standbyNodeInstanceId: string;
-        fsxSecret: string;
-    };
+        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as {
+            credentialsId: string;
+            activeNodeInstanceId: string;
+            standbyNodeInstanceId: string;
+            fsxSecret: string;
+        };
 
-    const volumeUuids = await getVolumesUuids(credentialsId, region!, fileSystemId!);
-    const volumeUuidList = volumeUuids.join(',');
+        // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
+        // deploymentID from the fsxSecret, which has an additional '-fsx'
+        // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
+        //     ONTAP tags have '_' instead of '-' in the stack name.  So we
+        // tune tag accordingly with replaceAll.
+        const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
 
-    // DeploymentID is same as AWS CloudFormation stack name.  We retrieve
-    // deploymentID from the fsxSecret, which has an additional '-fsx'
-    // suffix to stack name (e.g., WLMDB-SqlFciStack-1698992271319-fsx).
-    //     ONTAP tags have '_' instead of '-' in the stack name.  So we
-    // tune tag accordingly with replaceAll.
-    const deploymentId = fsxSecret?.replace('-fsx', '')?.replaceAll('-', '_');
+        const info = await getStorageDataUsingSSM(
+            credentialsId,
+            region!,
+            fileSystemId!,
+            fsxSecret,
+            'storage/volumes',
+            `tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
+            'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
 
-    const info = await getStorageDataUsingSSM(
-        credentialsId,
-        region!,
-        fileSystemId!,
-        fsxSecret,
-        'storage/volumes',
-        `uuid=${volumeUuidList}&tiering.object_tags="wlmDeploymentId=${deploymentId}"`,
-        'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used',
-        activeNodeInstanceId,
-        standbyNodeInstanceId
-    );
+        logger.info(`Storage data for volumes with deploymentId ${deploymentId}:`, info);
 
-    let totalSize = 0;
-    let totalUsed = 0;
-    let totalSpaceSavings = 0;
-    let totalSpaceSavingsPercent = 0;
-    info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
-        const { size, used } = space;
-        const { total, total_percent: totalPercent } = efficiency.space_savings;
+        let totalSize = 0;
+        let totalUsed = 0;
+        let totalSpaceSavings = 0;
+        info?.records?.forEach(({ efficiency, space }: VolumeSpaceRecord) => {
+            const { size, used } = space;
+            const { total } = efficiency.space_savings;
 
-        totalSize += size;
-        totalUsed += used;
-        totalSpaceSavings += total;
-        totalSpaceSavingsPercent += totalPercent;
-    });
+            totalSize += size;
+            totalUsed += used;
+            totalSpaceSavings += total;
+        });
 
-    return {
-        size: totalSize,
-        used: totalUsed,
-        spaceSavings: totalSpaceSavings,
-        spaceSavingsPercent: totalSpaceSavingsPercent
-    };
+        return {
+            size: totalSize,
+            used: totalUsed,
+            spaceSavings: totalSpaceSavings
+        };
+    } catch (error) {
+        logger.error('Error while getting storage savings for resource', resourceDetail, JSON.stringify(error));
+    }
 }
 
 async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<ProtectionResponseType | undefined> {
@@ -200,34 +216,122 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
 
     const { resource_id: resourceId, region, co_relation_id: fileSystemId, metadata } = resourceDetail;
 
-    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
+    const { credentialsId } = metadata as Metadata;
 
     try {
-        const [awsBackup, ontapData, nativeSqlProtection] = await Promise.all([
-            isAWSBackupEnabled(credentialsId, region!, fileSystemId!),
-            getOntapVolumesSnapshotCount(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                fsxSecret,
-                activeNodeInstanceId,
-                standbyNodeInstanceId
-            ),
+        const [awsBackup, ontapProtection, nativeSqlProtection] = await Promise.all([
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as Metadata),
+            getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as Metadata),
             getNativeSQLProtection(resourceId)
         ]);
 
-        const atleastOneVolumeHasSnapshots = ontapData?.records?.some(
-            ({ snapshot_count: snapshotCount }: { snapshot_count: number }) => snapshotCount
-        );
-
         return {
-            isAwsBackUpEnabled: awsBackup,
-            isFsxOntapSnapshotsEnabled: atleastOneVolumeHasSnapshots,
+            isAwsBackUpEnabled: Boolean(awsBackup),
+            isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };
     } catch (error) {
         logger.error('Error while getting protection status', resourceDetail);
     }
+}
+
+async function getUsageEstimationData(resourceDetail: ResourceDetails) {
+    logger.info('Get AWS resources estimation data:', resourceDetail);
+
+    try {
+        const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+        const { credentialsId, sqlDeploymentType, activeNodeInstanceId } = metadata as {
+            credentialsId: string;
+            sqlDeploymentType: string;
+            activeNodeInstanceId: string;
+        };
+
+        const [ec2ResourceInfo, fsxResourceInfo] = await Promise.all([
+            getEc2ResourceInfo(credentialsId, region!, activeNodeInstanceId),
+            getFsxResourceInfo(credentialsId, region!, fileSystemId!)
+        ]);
+
+        const pricingRequest: PricingServiceRequestType = {
+            compute: {
+                regionCode: region!,
+                instanceType: ec2ResourceInfo.resourceType,
+                sqlDeploymentMode: sqlDeploymentType.toLowerCase() === FCI ? FCI : STANDALONE,
+                sqlSoftwareType: ec2ResourceInfo.sqlSoftwareType
+            },
+            storage: {
+                regionCode: region!,
+                diskSize: fsxResourceInfo.diskSize,
+                throughput: fsxResourceInfo.throughput,
+                iops: fsxResourceInfo.iops,
+                deploymentOption: fsxResourceInfo.deploymentOption
+            },
+            vpc: {
+                regionCode: region!
+            }
+        };
+
+        const pricingResponse: PricingServiceResponseType = await calculatePrice(
+            credentialsId,
+            pricingRequest.compute,
+            pricingRequest.storage,
+            pricingRequest.vpc
+        );
+        return {
+            compute: pricingResponse?.compute,
+            storage: (pricingResponse?.storage?.capacity || 0) + (pricingResponse?.storage?.throughput || 0),
+            connectivity: pricingResponse?.vpc,
+            others: 0 // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
+        };
+    } catch (error) {
+        logger.error('Failed to get resources estimation data for resource:', resourceDetail, JSON.stringify(error));
+    }
+}
+
+async function getEc2ResourceInfo(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string
+): Promise<EstimationEc2Type> {
+    logger.info('Getting EC2 resource info:', { credentialsId, region, activeNodeInstanceId });
+
+    const ec2Info: DescribeInstancesCommandOutput = await describeInstance(credentialsId, region!, {
+        InstanceIds: [activeNodeInstanceId]
+    });
+    logger.info('Estimation info for EC2:', ec2Info);
+    const resourceType = ec2Info?.Reservations?.[0].Instances?.[0].InstanceType;
+    const imageId = ec2Info?.Reservations?.[0].Instances?.[0].ImageId;
+
+    const amiInfo = await getAmis(credentialsId, region, { ImageIds: [imageId!] });
+    logger.info('Estimation info for AMI:', amiInfo);
+    const sqlPlatform = amiInfo?.Images?.[0].PlatformDetails;
+
+    let sqlSoftwareType: string = 'SQL std'; // Let's 'Windows with SQL Server Standard' be default
+    if (sqlPlatform === 'Windows with SQL Server Enterprise') {
+        sqlSoftwareType = 'SQL ent';
+    }
+
+    return {
+        resourceType: resourceType!,
+        sqlSoftwareType
+    };
+}
+
+async function getFsxResourceInfo(
+    credentialsId: string,
+    region: string,
+    filesystemId: string
+): Promise<EstimationFSxType> {
+    logger.info('Getting FSxN resource info:', { credentialsId, region, filesystemId });
+
+    const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [filesystemId] });
+    logger.info('Estimation info for FSxN:', fsxInfo);
+
+    const diskSize = (fsxInfo?.FileSystems?.[0].StorageCapacity || 0) * 100;
+    const throughput = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
+    const iops = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DiskIopsConfiguration?.Iops;
+    const deploymentOption = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
+
+    return { diskSize, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
 }
 
 async function getDatabaseHostsSummary(
@@ -253,6 +357,7 @@ async function getDatabaseHostsSummary(
     const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
+    const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -271,18 +376,27 @@ async function getDatabaseHostsSummary(
                     let performanceData: PerformanceResponseType | undefined;
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
+                    let usageEstimationData: UsageCostResponseType | undefined;
 
-                    [serverStatus, dbCount, topologyData, performanceData, storageData, protectionData] =
-                        await Promise.all(
-                            [
-                                getServerState(resourceId), // Fetch server status
-                                getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
-                                getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
-                                ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                                ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                                ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]) // Fetch protection status
-                            ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
-                        );
+                    [
+                        serverStatus,
+                        dbCount,
+                        topologyData,
+                        performanceData,
+                        storageData,
+                        protectionData,
+                        usageEstimationData
+                    ] = await Promise.all(
+                        [
+                            getServerState(resourceId), // Fetch server status
+                            getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
+                            getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                            ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                            ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                            ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]), // Fetch protection status
+                            ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]) // Fetch pricing estimate data
+                        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+                    );
 
                     databaseHosts.push({
                         id: resourceId,
@@ -292,7 +406,8 @@ async function getDatabaseHostsSummary(
                         topology: topologyData!,
                         ...(performanceData && { performance: performanceData }),
                         ...(storageData && { storage: storageData }),
-                        ...(protectionData && { protection: protectionData })
+                        ...(protectionData && { protection: protectionData }),
+                        ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
                     });
                 })
         );

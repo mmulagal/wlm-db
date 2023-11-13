@@ -23,6 +23,7 @@ const TopologyResponse = Type.Object({
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
+    vpcId: Type.String(),
     ec2Details: Type.Array(EC2InstanceDetailsResponse)
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;
@@ -45,9 +46,6 @@ const StorageResponse = Type.Object({
     used: Type.Number({ description: 'The virtual space used before storage efficiency, in bytes.' }),
     spaceSavings: Type.Number({
         description: 'Total disk space saved in the volume due to storage efficiency, in bytes.'
-    }),
-    spaceSavingsPercent: Type.Number({
-        description: 'Percentage of total disk space saved in the volume due to storage efficiency'
     })
 });
 type StorageResponseType = Static<typeof StorageResponse>;

@@ -568,6 +568,8 @@ Resources:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\common\ExecuteQueryFromSSM.ps1 -Destination (New-Item -Path C:\SSM\ -Type Directory )  -Recurse
                         n-move-ontapscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\OntapRestGet.ps1 -Destination C:\SSM\
+                        o-move-mappedontapvolumesscript:
+                            command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:
@@ -586,7 +588,11 @@ Resources:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
                             waitAfterCompletion: 0
                         e-install-dsc-modules:
-                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1"
+                            command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlFSxInstanceMAD1 -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
                         f-config-LCM:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlfci\LCM-Config.ps1"
                             waitAfterCompletion: 0
@@ -1141,7 +1147,11 @@ Resources:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
                             waitAfterCompletion: 0
                         e-install-dsc-modules:
-                            command: powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1"
+                                command: !Join
+                                - ''
+                                - - powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlFSxInstanceMAD2 -Stackname '"
+                                  - !Ref 'AWS::StackName'
+                                  - '''"'
                         f-config-LCM:
                             command: powershell.exe -Command "C:\cfn\scripts\sqlfci\LCM-Config.ps1"
                             waitAfterCompletion: 0
