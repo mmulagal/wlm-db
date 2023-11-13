@@ -1,5 +1,7 @@
 import createError from 'http-errors';
 import randomize from 'randomatic';
+import fs from 'fs';
+import path from 'path';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -225,12 +227,29 @@ async function getCloudformationTemplate(
         customMasterTemplatePath
     );
 
-    // Sleep for 2 seconds for master template to be uploaded
-    await sleep(2000);
+    let masterTemplateContents;
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const filePath = path.join(
+            process.cwd(),
+            '..',
+            'server',
+            'test',
+            'simulator',
+            'responses',
+            'aws',
+            'mock-master-template.yaml'
+        );
 
-    const response = await getObjectBucket(ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
-    const masterTemplateContents = await response.Body?.transformToString();
+        const yamlString = fs.readFileSync(filePath, 'utf8');
 
+        masterTemplateContents = yamlString;
+    } else {
+        // Sleep for 2 seconds for master template to be uploaded
+        await sleep(2000);
+
+        const response = await getObjectBucket(ASSETS_BUCKET_REGION, BUCKET_NAME, customMasterTemplatePath);
+        masterTemplateContents = await response.Body?.transformToString();
+    }
     // Generate parameters list for cli command
     let cliParams: string = '';
     templateParameters.forEach(e => {

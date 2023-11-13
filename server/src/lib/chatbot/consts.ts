@@ -67,7 +67,7 @@ const CHATBOT_UI_PARAMS_FSX = [
                 }
             },
             {
-                [FSX_DEPLOYMENT_MODE]: {
+                [SQL_DEPLOYMENT_MODE]: {
                     required: true,
                     dependsOn: CREDENTIALS_ID
                 }
@@ -171,11 +171,6 @@ const CHATBOT_UI_PARAMS_FSX = [
     {
         sqlConfiguration: [
             {
-                [SQL_DEPLOYMENT_MODE]: {
-                    required: true
-                }
-            },
-            {
                 [SQL_AMI]: {
                     required: true
                 }
@@ -199,6 +194,11 @@ const CHATBOT_UI_PARAMS_FSX = [
     },
     {
         fsxConfiguration: [
+            {
+                [FSX_DEPLOYMENT_MODE]: {
+                    required: true
+                }
+            },
             {
                 [FSX_FILE_SYSTEM_ID]: {
                     required: { key: FSX_TYPE, operand: EQ, value: EXISTING },

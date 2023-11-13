@@ -1,3 +1,4 @@
+import config from 'config';
 import {
     EC2Client,
     DescribeVpcsCommand,
@@ -121,6 +122,8 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
     logger.info('Describe AWS instance types:', { credentialsId, region });
 
     const client = await getEC2Client(region, credentialsId);
+
+    const vpcFilter = config.get('ec2.vpcu-filter') as Array<string>;
     const paginator = paginateDescribeInstanceTypes(
         { client, pageSize: 100 },
         {
@@ -129,7 +132,7 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
                 { Name: 'processor-info.supported-architecture', Values: ['x86_64'] },
                 { Name: 'supported-usage-class', Values: ['on-demand'] },
                 { Name: 'supported-virtualization-type', Values: ['hvm'] },
-                { Name: 'vcpu-info.default-vcpus', Values: ['4', '8', '16', '32', '64', '72'] },
+                { Name: 'vcpu-info.default-vcpus', Values: vpcFilter },
                 {
                     Name: 'memory-info.size-in-mib',
                     Values: [
