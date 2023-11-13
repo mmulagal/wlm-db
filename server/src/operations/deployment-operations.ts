@@ -232,7 +232,7 @@ async function getCloudformationTemplate(
         const filePath = path.join(
             process.cwd(),
             '..',
-            'server',
+            'wlmdb',
             'test',
             'simulator',
             'responses',
