@@ -3,7 +3,6 @@ import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const EstimatedCost = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
@@ -22,7 +21,7 @@ const EstimatedCost = () => {
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
-                        $ {formatFractionalNumber(hostData?.totalCost, 2)}
+                        $ {hostData?.totalCost}
                     </Typography>
                 )}
             </div>
@@ -102,17 +101,17 @@ const EstimatedCost = () => {
                 {/* Ends here */}
 
                 <div className={styles.bottomSection}>
-                    <SquareComponent value={'$' + formatFractionalNumber(hostData?.storageCost, 2)} color="var(--chart-9)" text={'Storage'} />
+                    <SquareComponent value={'$' + hostData?.storageCost} color="var(--chart-9)" text={'Storage'} />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value={'$' + formatFractionalNumber(hostData?.computeCost, 2)} color="var(--chart-1)" text={'Compute'} />
+                    <SquareComponent value={'$' + hostData?.computeCost} color="var(--chart-1)" text={'Compute'} />
                     <div className={styles.storageSeparator} />
                     <SquareComponent
-                        value={'$' + formatFractionalNumber(hostData?.connectivityCost, 2)}
+                        value={'$' + hostData?.connectivityCost}
                         color="var(--chart-3)"
                         text={'Connectivity'}
                     />
                     <div className={styles.storageSeparator} />
-                    <SquareComponent value={'$' + formatFractionalNumber(hostData?.otherCost, 2)} color="var(--chart-4)" text={'Other'} />
+                    <SquareComponent value={'$' + hostData?.otherCost} color="var(--chart-4)" text={'Other'} />
                 </div>
             </div>
         </div>
