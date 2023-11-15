@@ -177,7 +177,6 @@ Parameters:
   Ec2RoleName:
     Description: EC2 instance role name
     Type: String
-    MinLength: 1
 
   UniqueID:
     Description: Automation Execution Unique ID.
@@ -674,7 +673,7 @@ Resources:
         VPCID:
           Ref: VPCID
         Ec2RoleName:
-          Ref: Ec2RoleName
+          Ref: AWS::StackName
         PerformADCheck: "true"
         AssetsBucketName:
           Ref: AssetsBucketName
@@ -716,7 +715,7 @@ Resources:
         VPCID:
           Ref: VPCID
         Ec2RoleName:
-          Ref: Ec2RoleName
+          Ref: AWS::StackName
         PerformADCheck: "false"  
         AssetsBucketName:
           Ref: AssetsBucketName
@@ -755,21 +754,12 @@ Resources:
       Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
       Timeout: '7200'
       Count: 0
-  # WLMSQLResourceGroup:
-  #   Type: AWS::ResourceGroups::Group
-  #   DependsOn: WaitCondition
-  #   Properties:
-  #     Name:
-  #       Ref: AWS::StackName
-  #     ResourceQuery:
-  #       Type: CLOUDFORMATION_STACK_1_0
   FSxNSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub ${AWS::StackName}-fsx
       Description: Secret for FSxN filesystem
       SecretString: !Sub '{ "username": "${FSxAdminUsername}", "password": "${FSxAdminPassword}" }'
-
   NewFSxStack:
     Type: AWS::CloudFormation::Stack
     Condition: NewOntapFsx
@@ -872,7 +862,7 @@ Resources:
         UniqueID:
           Ref: UniqueID
         Ec2RoleName:
-          Ref: Ec2RoleName
+          Ref: AWS::StackName
         ADDnsIpAddresses:
           Fn::Select:
             - "0"
@@ -984,7 +974,7 @@ Resources:
         UniqueID:
           Ref: UniqueID
         Ec2RoleName:
-          Ref: Ec2RoleName
+          Ref: AWS::StackName
         ADDnsIpAddresses:
           Fn::Select:
             - "0"
