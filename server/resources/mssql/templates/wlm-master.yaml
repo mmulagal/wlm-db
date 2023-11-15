@@ -520,6 +520,120 @@ Resources:
       Name: !Sub ${AWS::StackName}-sql
       Description: Secret for SQL Service Account
       SecretString: !Sub '{ "username": "${SQLServiceAccountName}", "password": "${SQLServiceAccountPassword}" }'
+  
+  EC2IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref 'AWS::StackName'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Sid: SecretManagerListStatement
+                Effect: Allow
+                Action:
+                  - secretsmanager:ListSecrets
+                  - secretsmanager:GetSecretValue
+                Resource: '*'
+              - Sid: CloudWatchDeploymentStatement
+                Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DeleteAlarms
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:List*
+                  - cloudwatch:Get*
+                  - cloudwatch:Describe*
+                Resource: '*'
+              - Sid: CloudLogDeploymentCreateStatement
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:GetLogEvents
+                  - logs:GetLogDelivery
+                  - logs:GetLogRecord
+                  - logs:ListLogDeliveries
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                  - logs:TagResource
+                Resource: '*'
+              - Sid: CloudFormationDeploymentStatement
+                Effect: Allow
+                Action:
+                  - cloudformation:ListStacks
+                  - cloudformation:SignalResource
+                Resource: 
+                  - arn:aws:cloudformation:*:*:stack/WLMDB*'
+              - Sid: STSStatement
+                Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: '*'
+              - Sid: IAMStatement
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:GetPolicy
+                  - iam:GetRolePolicy
+                  - iam:PassRole
+                  - iam:GetUser
+                  - iam:GetPolicyVersion
+                Resource: '*'
+              - Sid: SSMListStatement
+                Effect: Allow
+                Action:
+                  - ssm:DescribeAssociation
+                  - ssm:GetDeployablePatchSnapshotForInstance
+                  - ssm:GetDocument
+                  - ssm:DescribeDocument
+                  - ssm:GetManifest
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                  - ssm:ListAssociations
+                  - ssm:ListInstanceAssociations
+                  - ssm:GetParametersByPath
+                  - ssm:GetCommandInvocation
+                  - ec2messages:GetEndpoint
+                  - ec2messages:GetMessages
+                Resource: '*'
+              - Sid: SSMCreateStatement
+                Effect: Allow
+                Action:
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                  - ssm:PutInventory
+                  - ssm:PutComplianceItems
+                  - ssm:PutConfigurePackageResult
+                  - ssm:UpdateAssociationStatus
+                  - ssm:UpdateInstanceAssociationStatus
+                  - ssm:UpdateInstanceInformation
+                  - ssm:SendCommand
+                Resource: '*'
+              - Sid: EC2MessagesStatement
+                Effect: Allow
+                Action:
+                  - ec2messages:AcknowledgeMessage
+                  - ec2messages:DeleteMessage
+                  - ec2messages:FailMessage
+                  - ec2messages:SendReply
+                Resource: '*'
+          PolicyName: !Join
+            - ''
+            - - !Ref 'AWS::StackName'
+              - WLMDB_Policy_I
 
   TrackStackDeployment:
     Type: Custom::MyCustomResource
