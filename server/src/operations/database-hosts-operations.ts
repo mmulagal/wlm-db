@@ -81,7 +81,7 @@ type EstimationEc2Type = {
 };
 
 type EstimationFSxType = {
-    diskSize: number;
+    storageCapacity: number;
     throughput: number;
     iops: number;
     deploymentOption: string;
@@ -266,10 +266,11 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails) {
             },
             storage: {
                 regionCode: region!,
-                diskSize: fsxResourceInfo.diskSize,
+                storageCapacity: fsxResourceInfo.storageCapacity,
                 throughput: fsxResourceInfo.throughput,
                 iops: fsxResourceInfo.iops,
-                deploymentOption: fsxResourceInfo.deploymentOption
+                deploymentOption: fsxResourceInfo.deploymentOption,
+                diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
             },
             vpc: {
                 regionCode: region!
@@ -332,12 +333,12 @@ async function getFsxResourceInfo(
     const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [filesystemId] });
     logger.info('Estimation info for FSxN:', fsxInfo);
 
-    const diskSize = (fsxInfo?.FileSystems?.[0].StorageCapacity || 0) * 100;
+    const storageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity || 0;
     const throughput = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
     const iops = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DiskIopsConfiguration?.Iops;
     const deploymentOption = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
 
-    return { diskSize, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
+    return { storageCapacity, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
 }
 
 async function getDatabaseHostsSummary(
