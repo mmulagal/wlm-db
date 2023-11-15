@@ -708,6 +708,11 @@ export const validateChatbotField = (fieldName: string, val: any) => {
             return isValidUserName(val) || '';
         case 'serviceAccountPassword':
             return dbPassVal(val) || '';
+        case 'databaseSize':
+            const numValue = parseInt(val);
+            return !isNaN(numValue) && numValue >= 120 && numValue <= 13320
+                ? ''
+                : `Supported capacity should be between 120 GiB to 13320 GiB`;
     }
 };
 
@@ -739,4 +744,81 @@ export const delay = (ms: number) => {
             resolve('');
         }, ms);
     });
+};
+
+export const getChatbotParamsFromPayload = (payload: any) => {
+    let params: any = {};
+    if (payload?.awsAccount?.selectedCredential?.data?.credentialsId) {
+        params.credentialsId = payload.awsAccount.selectedCredential.data.credentialsId;
+    }
+    if (payload?.dbDeploymentModel?.value) {
+        params.fsxDeploymentMode = payload.dbDeploymentModel.value === 'fci' ? 'MULTI_AZ_1' : 'SINGLE_AZ_1';
+    }
+    if (payload?.regionAndVpc?.selectedRegion?.data?.regionCode) {
+        params.region = payload.regionAndVpc.selectedRegion.data.regionCode;
+    }
+    if (payload?.regionAndVpc?.selectedVPC?.data?.id) {
+        params.vpcId = payload.regionAndVpc.selectedVPC.data.id;
+    }
+    if (payload?.availabilityZones?.selectedAzNode1?.data?.availabilityZone) {
+        params.availabilityZone1 = payload.availabilityZones.selectedAzNode1.data.availabilityZone;
+    }
+    if (payload?.availabilityZones?.selectedSubnetNode1?.value) {
+        params.privateSubnet1Id = payload.availabilityZones.selectedSubnetNode1.value;
+    }
+    if (payload?.availabilityZones?.selectedAzNode2?.data?.availabilityZone) {
+        params.availabilityZone2 = payload.availabilityZones.selectedAzNode2.data.availabilityZone;
+    }
+    if (payload?.availabilityZones?.selectedSubnetNode2?.value) {
+        params.privateSubnet2Id = payload.availabilityZones.selectedSubnetNode2.value;
+    }
+    if (payload?.keyPair?.selectedKeyPair?.data?.name) {
+        params.keyPairName = payload.keyPair.selectedKeyPair.data.name;
+    }
+    if (payload?.instanceType?.data?.instanceType) {
+        params.workloadInstanceType = payload.instanceType.data.instanceType;
+    }
+    if (payload?.activeDirectory?.userName) {
+        params.domainUsername = payload.activeDirectory.userName;
+    }
+    if (payload?.activeDirectory?.password) {
+        params.domainPassword = payload.activeDirectory.password;
+    }
+    if (payload?.activeDirectory?.domainName) {
+        params.domainDnsname = payload.activeDirectory.domainName;
+    }
+    if (payload?.activeDirectory?.domainAddress) {
+        params.dnsIpaddress = payload.activeDirectory.domainAddress;
+    }
+    if (payload?.dbCredentials?.name) {
+        params.serviceAccountName = payload.dbCredentials.name;
+    }
+    if (payload?.dbCredentials?.password) {
+        params.serviceAccountPassword = payload.dbCredentials.password;
+    }
+    if (payload?.license?.selectedLicenseId?.value) {
+        params.sqlAmiId = payload.license.selectedLicenseId.value;
+    }
+    if (payload?.fsxN?.fsxNExistingName?.fileSystemId) {
+        params.fsxFileSystemId = payload.fsxN.fsxNExistingName.fileSystemId;
+    }
+    if (payload?.fsxN?.fsxNNewUserName) {
+        params.fsxUsername = payload.fsxN.fsxNNewUserName;
+    }
+    if (payload?.fsxN?.fsxNPassword) {
+        params.fsxPassword = payload.fsxN.fsxNPassword;
+    }
+    // if (payload?.throughput?.value) {
+    //     params.fsxVolThroughput = payload.throughput.value;
+    // }
+    if (payload?.securityGroup?.sgValue) {
+        params.ontapSgGroupId = payload.securityGroup.sgValue;
+    }
+    if (payload?.dbName) {
+        params.sqlServerName = payload.dbName;
+    }
+    if (payload?.cloudWatch) {
+        params.enableCloudWatch = payload.cloudWatch;
+    }
+    return params;
 };

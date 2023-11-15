@@ -133,13 +133,20 @@ const InputComponent = ({
                     //@ts-ignore
                     isErrorPrefixHidden
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        onChange(selectKey, e.target.value);
-                        setValue(e.target.value);
+                        if (fieldType === 'number') {
+                            const re = /^[0-9\b]+$/;
+                            if (e.target.value === '' || re.test(e.target.value)) {
+                                onChange(selectKey, e.target.value);
+                                setValue(e.target.value);
+                            }
+                        } else {
+                            onChange(selectKey, e.target.value);
+                            setValue(e.target.value);
+                        }
                     }}
                     info={tooltipText()}
                     value={value}
                     className={`${styles.fieldComponent} ${activeField === selectKey ? styles['highlight-input'] : ''}`}
-                    type={fieldType === 'number' ? 'number' : undefined}
                 />
             )}
             {/* <div className="select-component-heading">{heading}</div>
