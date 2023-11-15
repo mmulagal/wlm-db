@@ -47,7 +47,7 @@ import {
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
-import { addEscapeInCli, setMaskedPassword } from './CodeboxUtility';
+import { addEscapeInCli, maskAwsCli, setMaskedPassword } from './CodeboxUtility';
 
 type ConfigType = {
     id?: string;
@@ -459,7 +459,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={styles.colorAutomation}>
-                        {getRightPanelTemplateResponse(openKey)?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
+                        {maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand) || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
             );

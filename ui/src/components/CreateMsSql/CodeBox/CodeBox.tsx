@@ -32,7 +32,11 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
-import { setMaskedPassword, addEscapeInCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
+import {
+    setMaskedPassword,
+    addEscapeInCli,
+    maskAwsCli
+} from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
@@ -149,8 +153,8 @@ const CodeBox = () => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
-                    <Typography variant="Regular_16" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
+                    <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
+                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
             );
@@ -383,23 +387,24 @@ const CodeBox = () => {
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Typography>
                 </div>
-                {configData && configData.length > 0 && 
+                {configData && configData.length > 0 && (
                     <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
                         <DownloadIcon />
                         <Typography variant="Semibold_14" className={styles.configText}>
                             {SELECT_CONFIG.LOAD_CONFIG}
                         </Typography>
                     </div>
-                }
-                {!configData || configData.length === 0 && 
-                    <div className={styles.configActionsDisabled}>
-                        <DownloadIcon />
-                        <Typography variant="Semibold_14" className={styles.configText}>
-                            {SELECT_CONFIG.LOAD_CONFIG}
-                        </Typography>
-                    </div>
-                }
-                
+                )}
+                {!configData ||
+                    (configData.length === 0 && (
+                        <div className={styles.configActionsDisabled}>
+                            <DownloadIcon />
+                            <Typography variant="Semibold_14" className={styles.configText}>
+                                {SELECT_CONFIG.LOAD_CONFIG}
+                            </Typography>
+                        </div>
+                    ))}
+
                 <div className={styles.menuContainer}>
                     <MenuPopover
                         isMenuOpen={isMenuOpen}
