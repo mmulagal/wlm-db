@@ -13,14 +13,15 @@ import {
     DNS_IP,
     AWS_MANAGED_AD,
     USER_MANAGED_AD,
-    SINGLE_AZ,
-    MULTI_AZ,
     NEW,
     EXISTING,
+    KEY_LABEL_MAP,
     PRIVATE_SUBNET_1,
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
-    ROUTE_TABLE_2
+    ROUTE_TABLE_2,
+    STANDALONE,
+    FCI
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -164,10 +165,10 @@ async function validateVpcId(
 
     switch (key) {
         case VPC_ID:
-            return { value: isValidVpc.id || null };
+            return { value: isValidVpc.id };
         case VPC_CIDR:
             return {
-                value: isValidVpc.cidrBlock?.[0].CidrBlock || null
+                value: isValidVpc.cidrBlock?.[0].CidrBlock
             };
         case AZ_1: {
             if (!az1) {
@@ -327,7 +328,7 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
         };
     }
     return {
-        value: isValidKey.name || null
+        value: isValidKey.name
     };
 }
 
@@ -365,7 +366,7 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
         };
     }
     return {
-        value: isValidAmi.imageId || null
+        value: isValidAmi.imageId
     };
 }
 
@@ -416,7 +417,7 @@ async function validateInstanceType(credentialsId: string, region: string, workl
         };
     }
     return {
-        value: isValidType.instanceType || null
+        value: isValidType.instanceType
     };
 }
 
@@ -427,9 +428,9 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
         return {
             key,
             status: 'error',
-            message: 'Select a fsx information.',
+            message: 'Select a FSxN name.',
             allowedValues: filesystems.map(({ name, fileSystemId }) => ({
-                label: name,
+                label: `${name ? `${name} | ` : ''}${fileSystemId}`,
                 value: fileSystemId
             }))
         };
@@ -448,7 +449,24 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
     }
 
     return {
-        value: isValidFsx?.fileSystemId || null
+        value: isValidFsx.fileSystemId
+    };
+}
+async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
+    logger.info(' Validate Cloud Watch', { enableCloudWatch, key });
+    if (typeof enableCloudWatch !== 'boolean') {
+        return {
+            key,
+            status: 'error',
+            message: 'Do you want to enable CloudWatch monitoring',
+            allowedValues: [
+                { label: 'Yes', value: true },
+                { label: 'No', value: false }
+            ]
+        };
+    }
+    return {
+        value: enableCloudWatch
     };
 }
 
@@ -476,11 +494,7 @@ async function validateDomain(
             )
         };
     }
-    const errorResponse = {
-        status: 'error',
-        message: 'The domain name that you provided is not correct. Please provide a valid domain name.',
-        type: 'text'
-    };
+    const errorResponse = { status: 'error', message: 'Enter the value of domain ip address', type: 'text' };
     const isAWSManagedDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
     switch (key) {
         case DOMAIN_DNS:
@@ -503,7 +517,7 @@ function validateText(text: string, key: string) {
         return {
             key,
             status: 'error',
-            message: `Enter a value for ${key}.`,
+            message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
             type: key.toLowerCase().includes('password') ? 'password' : 'text'
         };
     }
@@ -512,12 +526,12 @@ function validateText(text: string, key: string) {
 
 function validateDbSize(size: number, key: string) {
     logger.debug('Validate DB Size', { size });
-    if (!size || typeof size !== 'number' || (size < 1024 && size >= 1024 ** 3)) {
+    if (!size || typeof size !== 'number' || (size < 120 && size >= 133120)) {
         return {
             key,
             status: 'error',
-            message: `Enter a value for database size between 1024 to ${1024 ** 3}`,
-            type: 'text'
+            message: 'Enter a value for data drive size(GiB) between 120 to 133120',
+            type: 'number'
         };
     }
 
@@ -551,7 +565,7 @@ function validateThroughPut(iops: number, key: string) {
             allowedValues: ThroughPut
         };
     }
-    return { value: isValid.value || null };
+    return { value: isValid.value };
 }
 
 async function validateSecurityGroup(
@@ -592,20 +606,20 @@ async function validateSecurityGroup(
         };
     }
     return {
-        value: isValid.id || null
+        value: isValid.id
     };
 }
 
-async function validateFSxDeploymentMode(deploymentType: string, key: string) {
-    logger.debug('Validate FSX Deployment Mode', { deploymentType });
-    if (![SINGLE_AZ, MULTI_AZ].includes(deploymentType)) {
+async function validateSqlDeploymentType(deploymentType: string, key: string) {
+    logger.debug('Validate sql deployment mode', { deploymentType });
+    if (![STANDALONE, FCI].includes(deploymentType)) {
         return {
             key,
             status: 'error',
-            message: 'Select a FSx deployment type.',
+            message: 'Select database deployment model.',
             allowedValues: [
-                { label: 'Single Instance', value: SINGLE_AZ },
-                { label: 'Failover Cluster Instance (FCI)', value: MULTI_AZ }
+                { label: 'Single Instance', value: STANDALONE },
+                { label: 'Failover Cluster Instance (FCI)', value: FCI }
             ]
         };
     }
@@ -613,7 +627,7 @@ async function validateFSxDeploymentMode(deploymentType: string, key: string) {
 }
 
 function checkFsxType(type: string, key: string) {
-    if (type !== NEW && type !== EXISTING) {
+    if (type?.toUpperCase() !== NEW && type?.toUpperCase() !== EXISTING) {
         return {
             key,
             status: 'error',
@@ -625,7 +639,7 @@ function checkFsxType(type: string, key: string) {
         };
     }
     return {
-        value: type
+        value: type.toUpperCase()
     };
 }
 
@@ -640,9 +654,10 @@ export {
     validateDbSize,
     validateThroughPut,
     validateSecurityGroup,
-    validateFSxDeploymentMode,
+    validateSqlDeploymentType,
     validateCredentials,
     validateAdScenarioType,
     checkFsxType,
-    validateFsx
+    validateFsx,
+    validateCloudWatch
 };

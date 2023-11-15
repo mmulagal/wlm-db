@@ -71,7 +71,7 @@ export const GENERAL = {
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
     RENAME_CONFIG_CONTENT: ['Enter a new name to ', ' configuration'],
-    RENAME_CONFIG_NOTIFICATION: 'Configuration name changes successfully.',
+    RENAME_CONFIG_NOTIFICATION: 'Configuration name changed successfully.',
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
     CLOSE: 'Close',
@@ -386,7 +386,7 @@ export const GENERAL = {
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
     DB_HOST_DOWN: 'Down',
-    DB_HOST_INITIALIZING: 'In Progress',
+    DB_HOST_INITIALIZING: 'Initializing',
     DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
     DATABASE_PROTECTION: ' Protected database distribution',

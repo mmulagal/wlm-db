@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ReactComponent as SendButton } from '../../../../assets/send-button.svg';
 import { ReactComponent as BedrockPoweredIcon } from '../../../../assets/bedrock-powered-icon.svg';
 import Message from '../Message/Message';
@@ -29,12 +29,19 @@ type ChatBoxPropTypes = {
     sendMsg: (msg?: string, add?: boolean, msgs?: messageType[]) => void;
     isBotReplying: boolean;
     messagesToShow: any;
+    activeField: any;
 };
 
-const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, messagesToShow }: ChatBoxPropTypes) => {
+const ChatBox = ({
+    messages,
+    handleSelectButtonClicked,
+    sendMsg,
+    isBotReplying,
+    messagesToShow,
+    activeField
+}: ChatBoxPropTypes) => {
     const [userInput, setUserInput] = useState('');
-    const el = document.querySelector('.current-msg-input');
-    const isCurrentMsgActive = el === document.activeElement;
+    const inputRef = useRef(null);
 
     const handleSendMsg = () => {
         if (userInput.trim()) {
@@ -42,6 +49,14 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
             setUserInput('');
         }
     };
+
+    useEffect(() => {
+        if (!isBotReplying && inputRef && inputRef.current) {
+            const refToFocus: any = inputRef.current;
+            refToFocus.focus();
+        }
+    }, [isBotReplying]);
+
     return (
         <div className={styles['chat-container']}>
             <div className={styles['chat-window']} id="chat_id">
@@ -59,16 +74,13 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
                         handleSendMsg={handleSendMsg}
                         messages={messages}
                         isBotReplying={isBotReplying}
+                        activeField={activeField}
                     />
                 ))}
                 <ChatBotResponseLoader isBotReplying={isBotReplying} />
             </div>
             <div className={styles['current-msg-container']}>
-                <div
-                    className={`${styles['current-msg']} ${isBotReplying ? styles['chat-disabled'] : ''} ${
-                        isCurrentMsgActive ? styles['current-msg-active'] : ''
-                    }`}
-                >
+                <div className={`${styles['current-msg']} ${isBotReplying ? styles['chat-disabled'] : ''}`}>
                     <input
                         value={userInput}
                         onChange={e => {
@@ -81,6 +93,8 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
                         }}
                         disabled={isBotReplying}
                         className="current-msg-input"
+                        ref={inputRef}
+                        autoFocus
                     ></input>
                     <div onClick={() => handleSendMsg()}>
                         <SendButton />

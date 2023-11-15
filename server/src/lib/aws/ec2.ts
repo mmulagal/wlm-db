@@ -1,3 +1,4 @@
+import config from 'config';
 import {
     EC2Client,
     DescribeVpcsCommand,
@@ -20,7 +21,9 @@ import {
     DescribeImagesCommandOutput,
     DescribeNetworkInterfacesCommandInput,
     DescribeNetworkInterfacesCommandOutput,
-    DescribeNetworkInterfacesCommand
+    DescribeNetworkInterfacesCommand,
+    DescribeInstancesCommand,
+    DescribeInstancesCommandInput
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -83,9 +86,23 @@ async function getAmis(
     const ec2 = await getEC2Client(region, credentialsId);
 
     const resp = await ec2.send(new DescribeImagesCommand(params));
-    logger.debug('descibeSecurityGroupss response:', resp);
+    logger.debug('DescribeImagesCommand response:', resp);
 
     return resp;
+}
+
+async function describeInstance(
+    credentialsId: string,
+    region: string,
+    params: DescribeInstancesCommandInput
+): Promise<DescribeImagesCommandOutput> {
+    logger.info('Describe EC2 instance', { credentialsId, region, params });
+
+    const client = await getEC2Client(region, credentialsId);
+    const response = await client.send(new DescribeInstancesCommand(params));
+    logger.info('Describe instance response:', response);
+
+    return response;
 }
 
 async function describeRegions(
@@ -105,6 +122,8 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
     logger.info('Describe AWS instance types:', { credentialsId, region });
 
     const client = await getEC2Client(region, credentialsId);
+
+    const vpcFilter = config.get('ec2.vpcu-filter') as Array<string>;
     const paginator = paginateDescribeInstanceTypes(
         { client, pageSize: 100 },
         {
@@ -113,7 +132,7 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
                 { Name: 'processor-info.supported-architecture', Values: ['x86_64'] },
                 { Name: 'supported-usage-class', Values: ['on-demand'] },
                 { Name: 'supported-virtualization-type', Values: ['hvm'] },
-                { Name: 'vcpu-info.default-vcpus', Values: ['4', '8', '16', '32', '64', '72'] },
+                { Name: 'vcpu-info.default-vcpus', Values: vpcFilter },
                 {
                     Name: 'memory-info.size-in-mib',
                     Values: [
@@ -194,6 +213,7 @@ export {
     describeSubnets,
     describeSecurityGroups,
     getAmis,
+    describeInstance,
     describeRegions,
     describeInstanceTypes,
     describeRouteTable,
