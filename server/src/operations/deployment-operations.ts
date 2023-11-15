@@ -229,7 +229,7 @@ async function getCloudformationTemplate(
 
     let masterTemplateContents;
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        const filePath = path.join(
+        const filePathSim = path.join(
             process.cwd(),
             '..',
             'server',
@@ -240,8 +240,18 @@ async function getCloudformationTemplate(
             'mock-master-template.yaml'
         );
 
+        const filePathDemo = path.join(
+            process.cwd(),
+            '..',
+            'wlmdb',
+            'test',
+            'simulator',
+            'responses',
+            'aws',
+            'mock-master-template.yaml'
+        );
+        const filePath = process.env.NODE_ENV === 'demo' ? filePathDemo : filePathSim;
         const yamlString = fs.readFileSync(filePath, 'utf8');
-
         masterTemplateContents = yamlString;
     } else {
         // Sleep for 2 seconds for master template to be uploaded
