@@ -32,7 +32,7 @@ import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import Highlighter from 'react-highlight-words';
 import { useAppSelector } from '../../../store/storeHooks';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
-import { setMaskedPassword, addEscapeInCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
+import { setMaskedPassword, addEscapeInCli, maskAwsCli } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
@@ -150,7 +150,7 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_16" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {rightPanelTemplateResponse?.cliCommand || CODE_VIEWER.NO_DATA_MSG}
+                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || CODE_VIEWER.NO_DATA_MSG}
                     </Typography>
                 </HighlighterWord>
             );

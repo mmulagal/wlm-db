@@ -24,3 +24,38 @@ export const addEscapeInCli = (data: TemplateRes) => {
     }
     return result;
 }
+
+export const maskAwsCli = (data: string | undefined) => {
+    if (!data) {
+        return data;
+    }
+    let updatedStr = data;
+    let domainAdminRegex = /DomainAdminPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
+    updatedStr = updatedStr.replace(domainAdminRegex, (match, p1) => {
+        if (p1 && p1 !== '') {
+            return 'DomainAdminPassword\\",ParameterValue=\\"****\\" ParameterKey='
+        } else {
+            return 'DomainAdminPassword\\",ParameterValue=\\"\\" ParameterKey='
+        }
+    });
+
+    let fsxAdminRegex = /FSxAdminPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
+    updatedStr = updatedStr.replace(fsxAdminRegex, (match, p1) => {
+        if (p1 && p1 !== '') {
+            return 'FSxAdminPassword\\",ParameterValue=\\"****\\" ParameterKey=';
+        } else {
+            return 'FSxAdminPassword\\",ParameterValue=\\"\\" ParameterKey=';
+        } 
+    });
+
+    let sqlServiceAccRegex = /SQLServiceAccountPassword\\",ParameterValue=\\"(.*?)\\" ParameterKey=/;
+    updatedStr = updatedStr.replace(sqlServiceAccRegex, (match, p1) => {
+        if (p1 && p1 !== '') {
+            return 'SQLServiceAccountPassword\\",ParameterValue=\\"****\\" ParameterKey=';
+        } else {
+            return 'SQLServiceAccountPassword\\",ParameterValue=\\"\\" ParameterKey=';
+        }  
+    });
+
+    return updatedStr;
+}
