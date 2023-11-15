@@ -386,7 +386,7 @@ export const GENERAL = {
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
     DB_HOST_DOWN: 'Down',
-    DB_HOST_INITIALIZING: 'In Progress',
+    DB_HOST_INITIALIZING: 'Initializing',
     DB_HOST_FAILED: 'Failed',
     // Database Host protection constants
     DATABASE_PROTECTION: ' Protected database distribution',
