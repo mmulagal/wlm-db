@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
+    delay,
     formatSize,
     formatVpcSubnetsData,
     generateOptionType,
@@ -72,11 +73,39 @@ const Chatbot = () => {
     //const [currentIntent, setCurrentIntent] = useState<any>('');
     const [isPayloadReady, setIsPayloadReady] = useState(false);
     const [payloadContent, setPayloadContent] = useState<any>('');
+    const [activeField, setActiveField] = useState<any>('');
     const dispatch = useAppDispatch();
 
     const [sendMsgToBot] = useSendMsgMutation();
 
     MssqlApis();
+
+    const handleKeyPress = async (e: any) => {
+        await delay(0);
+        const activeElement = document.activeElement;
+        if (activeElement?.tagName === 'INPUT') {
+            if (activeElement.getAttribute('id') && activeElement.getAttribute('id')?.includes('react-select')) {
+                if (document?.activeElement?.parentElement?.parentElement?.parentElement) {
+                    setActiveField(document.activeElement.parentElement.parentElement.parentElement.getAttribute('id'));
+                }
+            } else {
+                setActiveField(activeElement.getAttribute('id'));
+            }
+        }
+        if (activeElement?.tagName === 'BUTTON') {
+            if (activeElement.getAttribute('id') === 'continue-button') {
+                setActiveField('continue-button');
+            }
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyPress);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        };
+    });
 
     const mapParamsToPayload = (params: any) => {
         Object.keys(params).map(key => {
@@ -590,6 +619,7 @@ const Chatbot = () => {
                     sendMsg={sendMsg}
                     messagesToShow={messagesToShow ? messagesToShow : []}
                     messages={messages ? messages : []}
+                    activeField={activeField}
                 />
             </div>
         </div>
