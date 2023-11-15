@@ -117,6 +117,18 @@ const mockfsxThroughputPriceGetProductsResponse = {
     FormatVersion: 'aws_v1',
     PriceList: [fsxThroughputPrice]
 };
+const mockVPCPriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [ec2StoragePrice]
+};
 
 const FSXREADREQUESTSRATEFILTER = {
     Filters: [
@@ -155,7 +167,7 @@ const EC2STORAGERATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -182,7 +194,7 @@ const FSXTHROUGHPUTRATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -209,7 +221,7 @@ const FSXIOPSRATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -236,7 +248,7 @@ const FSXSTORAGERATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -268,7 +280,7 @@ const EC2INSTANCERATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -310,7 +322,7 @@ const FSXWRITEREQUESTSRATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -337,6 +349,28 @@ const FSXWRITEREQUESTSRATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
+const VPCFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'ap-southeast-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'group',
+            Value: 'AWSClientVPN'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'operation',
+            Value: 'ClientVPNConnections'
+        }
+    ],
+    ServiceCode: 'AmazonVPC',
+    FormatVersion: 'aws_v1'
+};
+
 pricingMock.on(GetProductsCommand, FSXIOPSRATEFILTER).resolves(mockfsxIopsPriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXREADREQUESTSRATEFILTER).resolves(mockfsxReadPriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXSTORAGERATEFILTER).resolves(mockfsxStoragePriceGetProductsResponse);
@@ -344,5 +378,6 @@ pricingMock.on(GetProductsCommand, FSXTHROUGHPUTRATEFILTER).resolves(mockfsxThro
 pricingMock.on(GetProductsCommand, FSXWRITEREQUESTSRATEFILTER).resolves(mockfsxWritePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2InstancePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
 
 export default mockfsxStoragePriceGetProductsResponse;

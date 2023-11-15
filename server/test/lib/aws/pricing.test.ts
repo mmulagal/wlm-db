@@ -16,7 +16,7 @@ describe('Pricing Lib', () => {
                 {
                     Type: 'TERM_MATCH',
                     Field: 'regionCode',
-                    Value: 'us-east-1'
+                    Value: 'ap-southeast-1'
                 },
                 {
                     Type: 'TERM_MATCH',
