@@ -216,30 +216,6 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     }
 }
 
-function maskPasswords(data: string | object): string | object {
-    if (typeof data === 'string') {
-        const regex1 = /(password"\s*:\s*")([^"]*)("[^,}]*)/gi;
-        const regex2 = /(password as )([^,\n]+)/gi;
-        data = data.replace(regex1, '$1********$3');
-        data = data.replace(regex2, '$1********');
-        return data;
-    }
-    if (typeof data === 'object') {
-        const maskedObj: any = {};
-        for (const [key, value] of Object.entries(data)) {
-            if (typeof value === 'object') {
-                maskedObj[key] = maskPasswords(value);
-            } else if (typeof value === 'string' && key.toLowerCase().includes('password')) {
-                maskedObj[key] = '*'.repeat(value.length);
-            } else {
-                maskedObj[key] = maskPasswords(value);
-            }
-        }
-        return maskedObj;
-    }
-    return data;
-}
-
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -254,6 +230,5 @@ export {
     getSnsArn,
     generateHash,
     calculateFsxStorageCapacity,
-    sizeInGigaBytes,
-    maskPasswords
+    sizeInGigaBytes
 };
