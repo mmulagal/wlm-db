@@ -69,6 +69,10 @@
             flex-direction: row;
             justify-content: space-between;
             padding: 0 50px 0 50px;
+
+            .highlight-button {
+                background-color: var(--button-primary-hover-bg);
+            }
         }
     }
 }

@@ -29,9 +29,17 @@ type ChatBoxPropTypes = {
     sendMsg: (msg?: string, add?: boolean, msgs?: messageType[]) => void;
     isBotReplying: boolean;
     messagesToShow: any;
+    activeField: any;
 };
 
-const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, messagesToShow }: ChatBoxPropTypes) => {
+const ChatBox = ({
+    messages,
+    handleSelectButtonClicked,
+    sendMsg,
+    isBotReplying,
+    messagesToShow,
+    activeField
+}: ChatBoxPropTypes) => {
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef(null);
 
@@ -66,6 +74,7 @@ const ChatBox = ({ messages, handleSelectButtonClicked, sendMsg, isBotReplying, 
                         handleSendMsg={handleSendMsg}
                         messages={messages}
                         isBotReplying={isBotReplying}
+                        activeField={activeField}
                     />
                 ))}
                 <ChatBotResponseLoader isBotReplying={isBotReplying} />

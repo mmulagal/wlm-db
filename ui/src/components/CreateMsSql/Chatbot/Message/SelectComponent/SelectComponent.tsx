@@ -10,6 +10,7 @@ type selectComponentPropType = {
     selectKey: string;
     paramObj: any;
     allowCreate?: boolean;
+    activeField?: any;
 };
 
 const delay = () => {
@@ -26,7 +27,8 @@ const SelectComponent = ({
     heading,
     selectKey,
     paramObj,
-    allowCreate = false
+    allowCreate = false,
+    activeField
 }: selectComponentPropType) => {
     const [selected, setSelected] = useState('');
     const [optionsToShow, setOptionsToShow] = useState<any>([]);
@@ -61,6 +63,7 @@ const SelectComponent = ({
         <div className={styles['select-component']}>
             <div className={styles['select-component-heading']}>{heading}</div>
             <SelectField
+                id={selectKey}
                 label={''}
                 isClearable={false}
                 defaultValue={options[0]}
@@ -74,6 +77,7 @@ const SelectComponent = ({
                 }}
                 isSearchable={optionsToShow.length > 5 || allowCreate}
                 options={optionsToShow}
+                className={activeField === selectKey ? styles['select-component-highlight'] : ''}
             />
             {/* {options.length > 4 && (
                 <div className={styles['search-container']}>

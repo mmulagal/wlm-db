@@ -14,6 +14,11 @@
         color: var(--grey-55);
     }
 
+    .select-component-highlight {
+        border: 1px solid var(--field-border-selected);
+        border-radius: 4px;
+    }
+
     .search-container {
         display: flex;
         flex-direction: row;
