@@ -80,7 +80,7 @@
 
         .middleContainer {
             margin-top: 1px;
-            background-color: var(--grey-10);
+            background-color: var(--loader-skeleton-bg);
             height: 36px;
             display: flex;
             gap: 48px;
@@ -94,7 +94,7 @@
         .lastContainer {
             height: 36px;
             margin-top: 8px;
-            background-color: var(--blue-20);
+            background-color: var(--table-header-background);
             display: flex;
             gap: 20px;
 

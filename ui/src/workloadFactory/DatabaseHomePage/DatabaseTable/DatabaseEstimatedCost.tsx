@@ -1,6 +1,7 @@
 import { Typography } from "@netapp/design-system";
 import { GENERAL } from "../../../utils/appConstants";
 import styles from './DatabaseTable.module.scss';
+import { formatFractionalNumber } from "../../../utils/utilityFunctions";
 
 const DatabaseEstimatedCost = (data: any) => {
     return (
@@ -19,7 +20,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.COMPUTE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {data?.compute}
+                    {`$ ${formatFractionalNumber(data?.compute, 2)}`}
                 </Typography>
             </div>
 
@@ -28,7 +29,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.STORAGE}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {data?.storage}
+                    {`$ ${formatFractionalNumber(data?.storage, 2)}`}
                 </Typography>
             </div>
 
@@ -37,7 +38,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.CONNECTIVITY}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {data?.connectivity}
+                    {`$ ${formatFractionalNumber(data?.connectivity, 2)}`}
                 </Typography>
             </div>
 
@@ -46,7 +47,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.OTHER}
                 </Typography>
                 <Typography variant="Regular_13" className={styles.middle}>
-                    {data?.others}
+                    {`$ ${formatFractionalNumber(data?.others, 2)}`}
                 </Typography>
             </div>
 
@@ -55,7 +56,7 @@ const DatabaseEstimatedCost = (data: any) => {
                     {GENERAL.ESTIMATED_MONTHLY_COST}
                 </Typography>
                 <Typography variant="Semibold_13" className={styles.totalCost}>
-                    {data?.totalCost}
+                    {`$ ${formatFractionalNumber(data?.totalCost, 2)}`}
                 </Typography>
             </div>
         </div>

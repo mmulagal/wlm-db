@@ -23,7 +23,8 @@ import {
     SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
-    WF
+    WF,
+    DEPLOYMENT_JOBS_FAILED_STATUS
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -385,7 +386,6 @@ async function processCloudFormationMessages() {
                                         cloud_provider_account_id: cloudProviderAccountId,
                                         cloud_provider_name: cloudProviderName,
                                         credentials_id: credentialsId,
-                                        deployment_name: masterDeploymentName,
                                         deployment_status: masterDeploymentStatus,
                                         deployment_model: stackSqlDeploymentType,
                                         data
@@ -394,42 +394,66 @@ async function processCloudFormationMessages() {
                                     /**
                                              a master stack deployment record is created as part of the custom resource definition in master       template. As part of stack message additional deployment details for the master template deployment are  available.
                                              *In addition, all nested stack deployment messages are also available, if its master template related message then update the existing record, otherwise if its related to nested deployment insert a deployment record; a master template may have a set of nested templates deployed;
+
+                                             Cloudformation does not send a notfication for parent stack deployment. We rely on nested template notification to capture the status of master stack.
+                                             During initial deployment, cloudformation status would begin with 'CREATE_'. If any of the nested stacks fail (CREATE_FAILED) master stack is marked as CREATE_FAILED.
+                                             It could be the case other nested stacks deploy successfully, however master stack should be CREATE_FAILED since one (or more) nested stack may have failed.
+
+                                             Retry failed stack
+                                             ==================
+                                             User may retry failed stack, cloudformation status would now begin with 'UPDATE_'.
+                                             Master stack will be updated with 'UPDATE_' status. If any of the nested stack is 'UPDATE_FAILED', then master stack will be marked as 'UPDATE_FAILED'.
                                         * */
-                                    if (
-                                        stackName === masterDeploymentName &&
-                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.CREATE_FAILED &&
-                                        masterDeploymentStatus !== DEPLOYMENT_STATUS.UPDATE_FAILED
+
+                                    // there may be several events related to the same deployment, so upserting deployment information
+                                    await upsertDeployment(accountId, {
+                                        deploymentId: stackId,
+                                        deploymentName: stackName,
+                                        deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                        deploymentStatusReason: resourceStatusReason,
+                                        cloudProviderAccountId: cloudProviderAccountId || '',
+                                        cloudProviderName: cloudProviderName || CloudProviders.AWS,
+                                        region,
+                                        parentDeploymentId:
+                                            masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
+                                        credentialsId,
+                                        startTime: new Date(timestamp).valueOf(),
+                                        deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
+                                        data: data as object
+                                    });
+
+                                    let [mainCFStatusClass] = resourceStatus.split('_'); // CREATE, UPDATE, ROLLBACK, DELETE
+                                    if (resourceStatus.includes('UPDATE_ROLLBACK')) {
+                                        mainCFStatusClass = 'UPDATE_ROLLBACK';
+                                    }
+
+                                    /**
+                                     * mainCFStatusClass can be in CREATE, UPDATE, ROLLBACK, DELETE.
+                                     * master stack status is NOT updated when it is already in '_FAILED' for the same mainCFStatusClass as in new notification
+                                     * Example: masterDeploymentStatus = 'CREATE_FAILED' and resourceStatus = 'CREATE_IN_PROGRESS', then masterDeploymentStatus WILL REMAIN 'CREATE_FAILED'.
+                                     * If mainCFStatusClass in master status status and new notification status DO NOT MATCH then masterDeploymentStatus is updated.
+                                     * Example: masterDeploymentStatus = 'CREATE_FAILED' and resourceStatus = 'UPDATE_IN_PROGRESS', then masterDeploymentStatus WILL BE UPDATED TO 'UPDATE_IN_PROGRESS'.
+                                     */
+
+                                    if (DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)) {
+                                        // if any of the underlying resource is in CREATE_FAILED, DELETE_FAILED, ROLLBACK_FAILED, UPDATE_FAILED, UPDATE_ROLLBACK_FAILED mark the parent stack stack status as FAILED
+                                        await updateDeployment(accountId, id, {
+                                            deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                            endTime: DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)
+                                                ? new Date(timestamp).valueOf()
+                                                : undefined
+                                        });
+                                    } else if (
+                                        !masterDeploymentStatus.startsWith(mainCFStatusClass) &&
+                                        !masterDeploymentStatus.includes('FAILED')
                                     ) {
                                         await updateDeployment(accountId, id, {
                                             deploymentName: stackName,
                                             deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
                                             deploymentStatusReason: resourceStatusReason
                                         });
-                                    } else {
-                                        // there may be several events related to the same deployment, so upserting deployment information
-                                        await upsertDeployment(accountId, {
-                                            deploymentId: stackId,
-                                            deploymentName: stackName,
-                                            deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                            deploymentStatusReason: resourceStatusReason,
-                                            cloudProviderAccountId: cloudProviderAccountId || '',
-                                            cloudProviderName: cloudProviderName || CloudProviders.AWS,
-                                            region,
-                                            parentDeploymentId:
-                                                masterDeploymentId === stackId ? undefined : masterDeploymentId, // if the stack ID not matching master stack ID, update the parentDeploymentId to be that of the master stack
-                                            credentialsId,
-                                            startTime: new Date(timestamp).valueOf(),
-                                            deploymentModel: stackSqlDeploymentType as DEPLOYMENT_MODEL,
-                                            data: data as object
-                                        });
-                                        if (resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED) {
-                                            // if any of the underlying resource is in CREATE_FAILED, mark the parent stack stack status as FAILED
-                                            await updateDeployment(accountId, id, {
-                                                deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                                endTime: new Date(timestamp).valueOf()
-                                            });
-                                        }
                                     }
+
                                     try {
                                         await createEvent({
                                             deploymentId: stackId,

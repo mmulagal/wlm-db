@@ -456,21 +456,6 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-west-2', 'US West (Oregon)']
 ]);
 
-const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
-    '.nano',
-    '.micro',
-    '.small',
-    '.large',
-    'gd',
-    'gn',
-    't3a',
-    't3g',
-    'mac',
-    'm7g',
-    'C7g',
-    'Im4gn'
-];
-
 const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = config.get<string>('templates.bucket');
@@ -836,6 +821,14 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
     'UPDATE_FAILED'
 ];
 
+const DEPLOYMENT_JOBS_FAILED_STATUS = [
+    'CREATE_FAILED',
+    'DELETE_FAILED',
+    'ROLLBACK_FAILED',
+    'UPDATE_FAILED',
+    'UPDATE_ROLLBACK_FAILED'
+];
+
 const NOT_AVAILABLE = 'N/A';
 
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
@@ -910,7 +903,6 @@ export {
     BUCKET_NAME,
     MASTER_TEMPLATE_PATH,
     CLOUD_FORMATION_STACK_URL,
-    EC2_INSTANCE_TYPE_EXCLUDE_LIST,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
@@ -1030,6 +1022,7 @@ export {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
+    DEPLOYMENT_JOBS_FAILED_STATUS,
     DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
     CONFIG_NOT_FOUND

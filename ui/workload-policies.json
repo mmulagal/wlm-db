@@ -91,7 +91,8 @@
                     "ec2:CreateTags",
                     "ec2:CreateSecurityGroup",
                     "ec2:DescribeSecurityGroups",
-                    "ec2:RunInstances"
+                    "ec2:RunInstances",
+                    "ec2:DescribeTags"
                 ],
                 "Resource": [
                     "*"
@@ -174,7 +175,11 @@
                     "logs:GetLogEvents",
                     "logs:GetLogDelivery",
                     "logs:GetLogRecord",
-                    "logs:ListLogDeliveries"
+                    "logs:ListLogDeliveries",
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                    "logs:TagResource"
                 ],
                 "Resource": [
                     "*"
@@ -185,10 +190,8 @@
                 "Effect": "Allow",
                 "Action": [
                     "logs:DeleteLogStream",
-                    "logs:TagResource",
                     "logs:DeleteLogGroup",
-                    "logs:UntagResource",
-                    "logs:PutLogEvents"
+                    "logs:UntagResource"
                 ],
                 "Resource": [
                     "arn:aws:logs:*:*:log-group:WLMDB*"
@@ -359,7 +362,10 @@
                     "ssm:GetParameters",
                     "ssm:ListAssociations",
                     "ssm:ListInstanceAssociations",
-                    "ssm:GetParametersByPath"
+                    "ssm:GetParametersByPath",
+                    "ssm:GetCommandInvocation",
+                    "ec2messages:GetEndpoint",
+                    "ec2messages:GetMessages"
                 ],
                 "Resource": "*"
             },
@@ -377,18 +383,9 @@
                     "ssm:UpdateAssociationStatus",
                     "ssm:UpdateInstanceAssociationStatus",
                     "ssm:UpdateInstanceInformation",
-                    "ssm:SendCommand",
-                    "ec2messages:GetEndpoint",
-                    "ec2messages:GetMessages"
+                    "ssm:SendCommand"
                 ],
-                "Resource": "*",
-                "Condition": {
-                    "StringLike": {
-                        "ec2:ResourceTag/aws:cloudformation:stack-name": [
-                            "WLMDB*"
-                        ]
-                    }
-                }
+                "Resource": "*"
             },
             {
                 "Sid": "EC2MessagesStatement",
@@ -399,15 +396,8 @@
                     "ec2messages:FailMessage",
                     "ec2messages:SendReply"
                 ],
-                "Resource": "*",
-                "Condition": {
-                    "StringLike": {
-                        "ec2:ResourceTag/aws:cloudformation:stack-name": [
-                            "WLMDB*"
-                        ]
-                    }
-                }
-            }
+                "Resource": "*"
+            }    
         ]
     },
     "view": {

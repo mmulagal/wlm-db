@@ -32,6 +32,7 @@ type MessagePropType = {
     handleSendMsg: () => void;
     messages: messageType[];
     isBotReplying: boolean;
+    activeField: any;
 };
 
 const Message = ({
@@ -40,7 +41,8 @@ const Message = ({
     handleSelectButtonClicked,
     handleSendMsg,
     messages,
-    isBotReplying
+    isBotReplying,
+    activeField
 }: MessagePropType) => {
     const key = 'errors';
     const isUserInputRequired = msgObj[key];
@@ -98,6 +100,7 @@ const Message = ({
                                                         selectKey={item.key}
                                                         paramObj={paramObj}
                                                         allowCreate={item.allowCreate}
+                                                        activeField={activeField}
                                                     />
                                                 </div>
                                             ) : (
@@ -118,6 +121,7 @@ const Message = ({
                                                             fieldType={item.type}
                                                             errorFields={errorFields}
                                                             setErrorFields={setErrorFields}
+                                                            activeField={activeField}
                                                         />
                                                     </div>
                                                 )
@@ -128,13 +132,16 @@ const Message = ({
                                 <div className={styles['buttons-container']}>
                                     {/* <button className="discard-button">Discard</button> */}
                                     <Button
-                                        className={styles['select-chosen-button']}
+                                        className={`${styles['select-chosen-button']} ${
+                                            activeField === 'continue-button' ? styles['highlight-button'] : ''
+                                        }`}
                                         onClick={() => {
                                             if (!isContinueDisabled) {
                                                 handleSelectButtonClicked(paramObj);
                                             }
                                         }}
                                         disabled={isContinueDisabled}
+                                        id="continue-button"
                                     >
                                         Continue
                                     </Button>
