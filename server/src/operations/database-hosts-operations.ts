@@ -91,7 +91,8 @@ async function getTopology(
     accountId: string,
     region: string,
     resourceId: string,
-    resourceData: resource
+    resourceData: resource,
+    additionalFields?: { [key: string]: boolean }
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
 
@@ -132,12 +133,14 @@ async function getTopology(
         } = metadata as unknown as Topology);
 
         let vpcId;
-        try {
-            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-        } catch (error) {
-            logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
-            vpcId = '';
+        if (additionalFields?.vpc) {
+            try {
+                const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+            } catch (error) {
+                logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
+                vpcId = '';
+            }
         }
 
         // Fetch topology data
@@ -365,6 +368,9 @@ async function getDatabaseHostsSummary(
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
+    const additionalFields = {
+        vpc: Boolean(getUsageEstimation)
+    };
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -397,7 +403,7 @@ async function getDatabaseHostsSummary(
                         [
                             getServerState(resourceId), // Fetch server status
                             getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
-                            getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
                             ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
                             ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                             ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]), // Fetch protection status
