@@ -831,11 +831,11 @@ const DEPLOYMENT_JOBS_FAILED_STATUS = [
 
 const NOT_AVAILABLE = 'N/A';
 
-const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
-    'DomainAdminPassword',
-    'SQLServiceAccountPassword',
-    'FSxAdminPassword'
-];
+const DOMAIN_ADMIN_PASSWORD = 'DomainAdminPassword';
+const SQL_SA_PASSWORD = 'SQLServiceAccountPassword';
+const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
+
+const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
 const DATABASE_TYPE = 'Microsoft SQL Server';
 export {
@@ -1025,5 +1025,8 @@ export {
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
-    CONFIG_NOT_FOUND
+    CONFIG_NOT_FOUND,
+    DOMAIN_ADMIN_PASSWORD,
+    SQL_SA_PASSWORD,
+    FSX_ADMIN_PASSWORD
 };

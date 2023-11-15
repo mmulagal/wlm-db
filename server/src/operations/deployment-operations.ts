@@ -64,7 +64,10 @@ import {
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     FileSystemTypes,
-    DATABASE_TYPE
+    DATABASE_TYPE,
+    FSX_ADMIN_PASSWORD,
+    SQL_SA_PASSWORD,
+    DOMAIN_ADMIN_PASSWORD
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -263,7 +266,15 @@ async function getCloudformationTemplate(
     // Generate parameters list for cli command
     let cliParams: string = '';
     templateParameters.forEach(e => {
-        cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+        if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${fsxConfiguration.fsxPassword}" `;
+        } else if (e.ParameterKey === SQL_SA_PASSWORD) {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${sqlConfiguration.serviceAccountPassword}" `;
+        } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${adConfiguration.domainPassword}" `;
+        } else {
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
+        }
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
         region || DEFAULT_AWS_REGION
