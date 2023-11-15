@@ -340,7 +340,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             } else if (val?.protection) {
                 protectionText = GENERAL.NOT_PROTECTED;
             }
-            const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0
+            const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
             val = {
                 ...val,
                 type: DB_HOME_DATA_TYPE.HOSTS,
@@ -354,12 +354,14 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                     (val?.estimatedUsageCost?.others || 0)
                 ).toString(),
                 // performance table text to search in table
-                performanceText:
-                    val?.performance && val.performance?.assessment,
+                performanceText: val?.performance && val.performance?.assessment,
                 // Storage saving table text to search in table
                 storageSavingsText:
                     val?.storage &&
-                    formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
+                    formatFractionalNumber(storagePercent, 2) +
+                        '% (' +
+                        formatSizeOnePrecision(val.storage?.spaceSavings) +
+                        ')'
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);
@@ -379,7 +381,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                 type: DB_HOME_DATA_TYPE.JOBS,
                 databaseHostname: (val?.name || '') + (status || ''),
                 status: status,
-                topology: val?.metadata,
+                topology: val?.metadata
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);
@@ -521,7 +523,9 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
         }
         if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage) {
             computeCost += val.estimatedUsageCost.storage;
-            if (fsxVal) {storageList.push(fsxVal)};
+            if (fsxVal) {
+                storageList.push(fsxVal);
+            }
         }
 
         // If connectivity cost is already added than no need to add again based on VPCId
@@ -531,9 +535,11 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
         }
         if ((!vpcVal || !vpcList.includes(vpcVal)) && val?.estimatedUsageCost?.connectivity) {
             connectivityCost += val.estimatedUsageCost.connectivity;
-            if (vpcVal) {vpcList.push(vpcVal)};
+            if (vpcVal) {
+                vpcList.push(vpcVal);
+            }
         }
-        
+
         if (val?.estimatedUsageCost?.others) {
             otherCost += val.estimatedUsageCost.others;
         }
@@ -725,4 +731,12 @@ export const databaseTableSort = (data: DatabaseHostItem[] | null) => {
         return 0;
     });
     return newDataList;
+};
+
+export const delay = (ms: number) => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve('');
+        }, ms);
+    });
 };

@@ -3,6 +3,10 @@ import './Highlighter.scss';
 
 const HighlighterWord = ({ children, highlight, isAWSCli, count, apiResForSearch }: any) => {
     if (!highlight || highlight.length < 2) return children;
+    const checkForSpecialChars = /^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
+    if (highlight.match(checkForSpecialChars)) {
+        return children;
+    }
     const regexp = new RegExp(highlight, 'g');
     let content = '';
 
@@ -47,7 +51,7 @@ const HighlighterWord = ({ children, highlight, isAWSCli, count, apiResForSearch
     }
     return (
         <div className={'highlighter'}>
-            {isAWSCli && <>{parts}</>}
+            {isAWSCli && <div className="aws-cli">{parts}</div>}
             {!isAWSCli && <pre className="fontFamily">{parts}</pre>}
         </div>
     );
