@@ -540,13 +540,18 @@ async function calculatePrice(
     let fsxStorageCost = 0;
     let fsxThroughputCost = 0;
     let fsxDiskSizes;
-    if (storage && storage.diskSize) {
+    let fsxDisksize;
+    if (storage) {
         // If the input size is database size, we need to calculate the total FSX storage capacity
         // In cases where the input is total FSx Storage capacity, we don't this calculation.
-        fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
-        storage.diskSize = fsxDiskSizes.FSxStorageCapacity;
+        if (storage.diskSize) {
+            fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
+            fsxDisksize = fsxDiskSizes.FSxStorageCapacity;
+        } else {
+            fsxDisksize = storage?.storageCapacity;
+        }
 
-        const fsxDisksize = storage?.diskSize || MIN_DISKSIZE;
+        fsxDisksize = fsxDisksize || MIN_DISKSIZE;
         const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
         let fsxIops = storage?.iops || 3 * fsxDisksize;
 
