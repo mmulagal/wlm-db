@@ -5,20 +5,14 @@ import { Spinner, ThemeProvider } from '@netapp/design-system';
 import ErrorPage from './common/ErrorPage/ErrorPage';
 import { useInitialize } from './utils/appConfig';
 import FullStoryComp from './common/FullStoryComp';
-import { useEffect, useState } from 'react';
 
 function App() {
     const { loading, accountId } = useAppSelector(state => state.auth);
-    // const [darkTheme, setDarkTheme] = useState(false);
 
     useInitialize();
 
     //@ts-ignore
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-
-    // useEffect(() => {
-    //     setDarkTheme(isDarkTheme);
-    // }, [isDarkTheme]);
 
     return (
         <>

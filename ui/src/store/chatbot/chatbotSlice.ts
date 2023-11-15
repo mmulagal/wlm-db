@@ -4,7 +4,8 @@ import { ChatbotEntities } from '../../utils/types/chatbotTypes';
 const initialState: ChatbotEntities = {
     messages: [],
     currentIntent: '',
-    isShow: false
+    isShow: false,
+    isReceivingMsg: false
 };
 
 const chatbotSlice = createSlice({
@@ -19,9 +20,12 @@ const chatbotSlice = createSlice({
         },
         setIsShow: (state, action: PayloadAction<any>) => {
             state.isShow = action.payload;
+        },
+        setIsReceivingMsg: (state, action: PayloadAction<any>) => {
+            state.isReceivingMsg = action.payload;
         }
     }
 });
 
-export const { setMessages, setCurrentIntent, setIsShow } = chatbotSlice.actions;
+export const { setMessages, setCurrentIntent, setIsShow, setIsReceivingMsg } = chatbotSlice.actions;
 export default chatbotSlice;

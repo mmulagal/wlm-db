@@ -456,21 +456,6 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-west-2', 'US West (Oregon)']
 ]);
 
-const EC2_INSTANCE_TYPE_EXCLUDE_LIST = [
-    '.nano',
-    '.micro',
-    '.small',
-    '.large',
-    'gd',
-    'gn',
-    't3a',
-    't3g',
-    'mac',
-    'm7g',
-    'C7g',
-    'Im4gn'
-];
-
 const WLMDB = 'wlmdb';
 
 const BUCKET_NAME = config.get<string>('templates.bucket');
@@ -557,6 +542,7 @@ const FCI_NETWORK_VIOLATION_MESSAGE =
     'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
+const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
 
@@ -810,6 +796,7 @@ const WF_USER_CRED_TYPE = 'WF_USER_CRED';
 const BXP_USER_CRED_TYPE = 'BXP_USER_CRED';
 const WF_SVC_TOKEN_TYPE = 'WF_SVC_TOKEN';
 const BXP_SVC_TOKEN_TYPE = 'BXP_SVC_TOKEN';
+const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -832,6 +819,14 @@ const DEPLOYMENT_JOBS_STATUS_FILTER: Array<DEPLOYMENT_STATUS> = [
     'UPDATE_IN_PROGRESS',
     'UPDATE_COMPLETE',
     'UPDATE_FAILED'
+];
+
+const DEPLOYMENT_JOBS_FAILED_STATUS = [
+    'CREATE_FAILED',
+    'DELETE_FAILED',
+    'ROLLBACK_FAILED',
+    'UPDATE_FAILED',
+    'UPDATE_ROLLBACK_FAILED'
 ];
 
 const NOT_AVAILABLE = 'N/A';
@@ -908,7 +903,6 @@ export {
     BUCKET_NAME,
     MASTER_TEMPLATE_PATH,
     CLOUD_FORMATION_STACK_URL,
-    EC2_INSTANCE_TYPE_EXCLUDE_LIST,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
@@ -1028,5 +1022,8 @@ export {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
-    DATABASE_TYPE
+    DEPLOYMENT_JOBS_FAILED_STATUS,
+    DATABASE_TYPE,
+    SSM_COMMAND_CACHE_TYPE,
+    CONFIG_NOT_FOUND
 };

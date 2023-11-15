@@ -95,6 +95,8 @@ export const REGIONS_CODE_LIST = [
 
 export const DATABASE_SERVICE_PATH = 'database-services';
 
+export const WORKLOADS = 'workloads';
+
 export const FROM_DIALOG = {
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
@@ -165,7 +167,7 @@ export const CRED_PLACEHOLDERS = {
     TOKEN: '<Token>'
 };
 
-export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads?hs_preview=YHevsPEM-140577339549';
+export const MARKETING_PAGE_URL = 'https://workloads.netapp.com/database-workloads';
 
 export const DB_HOME_DATA_TYPE = {
     HOSTS: 'hosts',

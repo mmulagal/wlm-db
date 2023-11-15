@@ -5,19 +5,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 
 const EstimatedCost = () => {
-    // const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
-    // Hardcoded values for Estimated Cost Summary
-    const hostData = {
-        storageCost: 11200,
-        computeCost: 3200,
-        connectivityCost: 1600,
-        otherCost: 384,
-        totalCost: 16384,
-        storageCostPercent: 68.359375,
-        computeCostPercent: 19.53125,
-        connectivityCostPercent: 9.765625,
-        otherCostPercent: 2.34375
-    };
+    const hostData = useAppSelector(state => state.databaseHome.aggregatedCosts);
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
@@ -41,9 +29,24 @@ const EstimatedCost = () => {
             <div className={styles.mainSection}>
                 {/* Progress Bar */}
                 <div className={styles.progressBar}>
+                    {hostData?.storageCostPercent === 0 && 
+                        hostData?.computeCostPercent === 0 && 
+                        hostData?.connectivityCostPercent === 0 && 
+                        hostData?.otherCostPercent === 0 && (
+                        <div
+                            className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
+                            style={{
+                                width: `${100}%`,
+                                backgroundColor: 'var(--chart-disabled)'
+                            }}
+                        ></div>
+                    )}
                     {hostData?.storageCostPercent !== 0 && (
                         <div
-                            className={`${styles.progress} ${styles.leftCurveBar}`}
+                            className={`${styles.progress} ${styles.leftCurveBar} 
+                                ${hostData?.computeCostPercent === 0 && 
+                                hostData?.connectivityCostPercent === 0 && 
+                                hostData?.otherCostPercent === 0 && styles.rightCurveBar}`}
                             style={{
                                 width: `${hostData?.storageCostPercent}%`,
                                 backgroundColor: 'var(--chart-9)'
@@ -53,7 +56,11 @@ const EstimatedCost = () => {
                     <div className={styles.separator}></div>
                     {hostData?.computeCostPercent !== 0 && (
                         <div
-                            className={`${styles.progress}`}
+                            className={`${styles.progress} 
+                                        ${hostData?.storageCostPercent === 0 && styles.leftCurveBar} 
+                                        ${hostData?.connectivityCostPercent === 0 && 
+                                            hostData?.otherCostPercent === 0 && 
+                                            styles.rightCurveBar}`}
                             style={{
                                 width: `${hostData?.computeCostPercent}%`,
                                 backgroundColor: 'var(--chart-1)'
@@ -63,7 +70,12 @@ const EstimatedCost = () => {
                     <div className={styles.separator}></div>
                     {hostData?.connectivityCostPercent !== 0 && (
                         <div
-                            className={`${styles.progress}`}
+                            className={`${styles.progress} 
+                                        ${hostData?.storageCostPercent === 0 && 
+                                            hostData?.computeCostPercent === 0 && 
+                                            styles.leftCurveBar} 
+                                        ${hostData?.otherCostPercent === 0 && 
+                                            styles.rightCurveBar}`}
                             style={{
                                 width: `${hostData?.connectivityCostPercent}%`,
                                 backgroundColor: 'var(--chart-3)'
@@ -73,7 +85,12 @@ const EstimatedCost = () => {
                     <div className={styles.separator}></div>
                     {hostData?.otherCostPercent !== 0 && (
                         <div
-                            className={`${styles.progress} ${styles.rightCurveBar}`}
+                            className={`${styles.progress} 
+                                        ${hostData?.storageCostPercent === 0 && 
+                                            hostData?.computeCostPercent === 0 && 
+                                            hostData?.connectivityCostPercent === 0 && 
+                                            styles.leftCurveBar} 
+                                        ${styles.rightCurveBar}`}
                             style={{
                                 width: `${hostData?.otherCostPercent}%`,
                                 backgroundColor: 'var(--chart-4)'

@@ -6,7 +6,7 @@ import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg'
 import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DatabaseEstimatedCost from './DatabaseEstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DB_HOME_DATA_TYPE, STATUS_CONST } from '../../../utils/consts';
@@ -15,7 +15,7 @@ import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
 import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort } from '../../../utils/utilityFunctions';
+import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -31,26 +31,29 @@ const DatabaseTable = () => {
     const [removeDatabaseHosts] = useRemoveMSSQLMutation();
     const [removeDatabaseJobs] = useRemoveDatabaseJobsMutation();
 
+    const [resetPage, setResetPage] = useState(false);
+    const [pageSize, setPageSize] = useState(25);
+
     const menuItems = [
         {
             id: 'resourceView',
             displayName: 'View resource details'
         },
-        {
-            id: 'clone',
-            displayName: 'Clone',
-            disabled: true
-        },
-        {
-            id: 'migrate',
-            displayName: 'Migrate',
-            disabled: true
-        },
-        {
-            id: 'protect',
-            displayName: 'Protect',
-            disabled: true
-        },
+        // {
+        //     id: 'clone',
+        //     displayName: 'Clone',
+        //     disabled: true
+        // },
+        // {
+        //     id: 'migrate',
+        //     displayName: 'Migrate',
+        //     disabled: true
+        // },
+        // {
+        //     id: 'protect',
+        //     displayName: 'Protect',
+        //     disabled: true
+        // },
         {
             id: 'remove',
             displayName: 'Remove'
@@ -74,28 +77,27 @@ const DatabaseTable = () => {
 
     // To delete MSSQL Resources
     const deleteMssqlResource = (id: string, type: string) => {
-        if(type === DB_HOME_DATA_TYPE.JOBS){
+        setResetPage(true);
+        if (type === DB_HOME_DATA_TYPE.JOBS) {
             // removeDatabaseJobs delete API call when data getting from jobs API
-            removeDatabaseJobs(id)
-                .then((data: any) => {
-                    if (!data?.error) {
-                        dispatch(setRefetchJobSummaryApi(true));
-                        const newList = databaseJobsData?.filter((val:any) => val?.id !== id);
-                        dispatch(addDatabaseJobs({databaseJobsData: newList, databaseJobsLoading: false, undefined}));
-                    }
-                })
+            removeDatabaseJobs(id).then((data: any) => {
+                if (!data?.error) {
+                    dispatch(setRefetchJobSummaryApi(true));
+                    const newList = databaseJobsData?.filter((val: any) => val?.id !== id);
+                    dispatch(addDatabaseJobs({ databaseJobsData: newList, databaseJobsLoading: false, undefined }));
+                }
+            });
         } else {
             // removeDatabaseHosts delete API call when data getting from database-hosts API
-            removeDatabaseHosts(id)
-                .then((data: any) => {
-                    if (!data?.error) {
-                        dispatch(setRefetchJobSummaryApi(true));
-                        const newList = databaseHostsData?.filter((val:any) => val?.id !== id);
-                        dispatch(addDatabaseHosts({databaseHostsData: newList, databaseHostsLoading: false, undefined}));
-                    }
-                })
+            removeDatabaseHosts(id).then((data: any) => {
+                if (!data?.error) {
+                    dispatch(setRefetchJobSummaryApi(true));
+                    const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
+                    dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
+                }
+            });
         }
-    }
+    };
 
     const handleRemoveDialog = (row: any) => {
         setDialog(
@@ -193,7 +195,9 @@ const DatabaseTable = () => {
                             )}
                             <Typography variant="Regular_13">{rowData?.status || GENERAL.NOT_AVAILABLE}</Typography>
                             <div className={CommonStyles.separator} />
-                            <Typography variant="Regular_13">{rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}</Typography>
+                            <Typography variant="Regular_13">
+                                {rowData?.topology?.serverType || GENERAL.NOT_AVAILABLE}
+                            </Typography>
                         </div>
                     </div>
                 );
@@ -318,7 +322,10 @@ const DatabaseTable = () => {
                                 <TooltipInfo className={styles.tooltipClass} onVisibleChange={function noRefCheck() {}}>
                                     {DatabaseEstimatedCost({ ...costData, totalCost: totalCost })}
                                 </TooltipInfo>
-                                <Typography variant="Regular_14">{totalCost}</Typography>
+                                <Typography variant="Regular_14">{`$ ${formatFractionalNumber(
+                                    totalCost,
+                                    2
+                                )}`}</Typography>
                             </div>
                         )}
                         {!costData && notAvailable()}
@@ -377,11 +384,20 @@ const DatabaseTable = () => {
         isSorting: false,
         columns: DatabasesColDefs,
         rows: databaseTableSort(databaseHostsList) || [],
-        pageSize: 10,
+        pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
         isLazyLoading: databaseHostsLoading || databaseJobsLoading
     });
+
+    useEffect(() => {
+        if (resetPage) {
+            if ((databaseHostsList || []).length % pageSize === 1) {
+                tableProps.pagination?.gotoPage(0);
+            }
+        }
+        setResetPage(false);
+    }, [resetPage]);
 
     const tableComponentProps = {
         lazyLoadingText: 'Loading'

@@ -12,6 +12,7 @@ type inputComponentPropType = {
     selectKey: string;
     errorFields: string[];
     setErrorFields: (errorFields: string[]) => void;
+    activeField: any;
 };
 
 const InputComponent = ({
@@ -20,7 +21,8 @@ const InputComponent = ({
     fieldType,
     onChange,
     errorFields,
-    setErrorFields
+    setErrorFields,
+    activeField
 }: inputComponentPropType) => {
     const [value, setValue] = useState('');
 
@@ -110,6 +112,7 @@ const InputComponent = ({
         <div className={styles['select-component']}>
             {fieldType === 'password' ? (
                 <PasswordField
+                    id={selectKey}
                     label={heading}
                     error={validateChatbotField(selectKey, value)}
                     //@ts-ignore
@@ -120,10 +123,11 @@ const InputComponent = ({
                     }}
                     info={tooltipText()}
                     value={value}
-                    className={styles.fieldComponent}
+                    className={`${styles.fieldComponent} ${activeField === selectKey ? styles['highlight-input'] : ''}`}
                 />
             ) : (
                 <TextField
+                    id={selectKey}
                     label={heading}
                     error={validateChatbotField(selectKey, value)}
                     //@ts-ignore
@@ -134,7 +138,8 @@ const InputComponent = ({
                     }}
                     info={tooltipText()}
                     value={value}
-                    className={styles.fieldComponent}
+                    className={`${styles.fieldComponent} ${activeField === selectKey ? styles['highlight-input'] : ''}`}
+                    type={fieldType === 'number' ? 'number' : undefined}
                 />
             )}
             {/* <div className="select-component-heading">{heading}</div>

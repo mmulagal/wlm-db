@@ -17,6 +17,24 @@
         "Status": "Success",
         "StatusDetails": "Success"
     },
+    "storageInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\r\n    \"records\":  [\r\n                    {\r\n                        \"uuid\":  \"bc62f502-7dec-11ee-b185-8329e8fcbf44\",\r\n                        \"name\":  \"wlmdb_sqldata_1699415666478\",\r\n                        \"tiering\":  {\r\n                                        \"object_tags\":  [\r\n                                                            \"wlmDeploymentId=WLMDB_SqlFciStack_1699415666478\"\r\n                                                        ]\r\n                                    },\r\n                        \"efficiency\":  {\r\n                                           \"space_savings\":  {\r\n                                                                 \"total\":  21588676608,\r\n                                                                 \"total_percent\":  2\r\n                                                             }\r\n                                       },\r\n                        \"space\":  {\r\n                                      \"size\":  1209463209984,\r\n                                      \"used\":  1082326048768\r\n                                  },\r\n                        \"_links\":  {\r\n                                       \"self\":  {\r\n                                                    \"href\":  \"/api/storage/volumes/bc62f502-7dec-11ee-b185-8329e8fcbf44\"\r\n                                                }\r\n                                   }\r\n                    },\r\n                    {\r\n                        \"uuid\":  \"bc75c596-7dec-11ee-b185-8329e8fcbf44\",\r\n                        \"name\":  \"wlmdb_sqltemp_1699415666478\",\r\n                        \"tiering\":  {\r\n                                        \"object_tags\":  [\r\n                                                            \"wlmDeploymentId=WLMDB_SqlFciStack_1699415666478\"\r\n                                                        ]\r\n                                    },\r\n                        \"efficiency\":  {\r\n                                           \"space_savings\":  {\r\n                                                                 \"total\":  28561408,\r\n                                                                 \"total_percent\":  0\r\n                                                             }\r\n                                       },\r\n                        \"space\":  {\r\n                                      \"size\":  120946950144,\r\n                                      \"used\":  110357622784\r\n                                  },\r\n                        \"_links\":  {\r\n                                       \"self\":  {\r\n                                                    \"href\":  \"/api/storage/volumes/bc75c596-7dec-11ee-b185-8329e8fcbf44\"\r\n                                                }\r\n                                   }\r\n                    },\r\n                    {\r\n                        \"uuid\":  \"bc95cfa9-7dec-11ee-b185-8329e8fcbf44\",\r\n                        \"name\":  \"wlmdb_sqllog_1699415666478\",\r\n                        \"tiering\":  {\r\n                                        \"object_tags\":  [\r\n                                                            \"wlmDeploymentId=WLMDB_SqlFciStack_1699415666478\"\r\n                                                        ]\r\n                                    },\r\n                        \"efficiency\":  {\r\n                                           \"space_savings\":  {\r\n                                                                 \"total\":  16666882048,\r\n                                                                 \"total_percent\":  6\r\n                                                             }\r\n                                       },\r\n                        \"space\":  {\r\n                                      \"size\":  302366326784,\r\n                                      \"used\":  259690729472\r\n                                  },\r\n                        \"_links\":  {\r\n                                       \"self\":  {\r\n                                                    \"href\":  \"/api/storage/volumes/bc95cfa9-7dec-11ee-b185-8329e8fcbf44\"\r\n                                                }\r\n                                   }\r\n                    },\r\n                    {\r\n                        \"uuid\":  \"bc9ad104-7dec-11ee-b185-8329e8fcbf44\",\r\n                        \"name\":  \"wlmdb_quorum_1699415666478\",\r\n                        \"tiering\":  {\r\n                                        \"object_tags\":  [\r\n                                                            \"wlmDeploymentId=WLMDB_SqlFciStack_1699415666478\"\r\n                                                        ]\r\n                                    },\r\n                        \"efficiency\":  {\r\n                                           \"space_savings\":  {\r\n                                                                 \"total\":  24956928,\r\n                                                                 \"total_percent\":  0\r\n                                                             }\r\n                                       },\r\n                        \"space\":  {\r\n                                      \"size\":  12809269248,\r\n                                      \"used\":  10755747840\r\n                                  },\r\n                        \"_links\":  {\r\n                                       \"self\":  {\r\n                                                    \"href\":  \"/api/storage/volumes/bc9ad104-7dec-11ee-b185-8329e8fcbf44\"\r\n                                                }\r\n                                   }\r\n                    }\r\n                ],\r\n    \"num_records\":  4,\r\n    \"_links\":  {\r\n                   \"self\":  {\r\n                                \"href\":  \"/api/storage/volumes?tiering.object_tags=%22wlmDeploymentId=WLMDB_SqlFciStack_1699415666478%22\\u0026fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used\"\r\n                            }\r\n               }\r\n}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
     "dbCountInvocationResponse": {
         "$metadata": {
             "httpStatusCode": 200,
@@ -300,7 +318,7 @@
         "ResponseCode": 0,
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
-        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"Very good\"}]\r\n",
+        "StandardOutputContent": "[{\"latency\":2,\"assessment\":\"Very good ( <5 ms )\"}]\r\n",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"
@@ -337,6 +355,24 @@
         "StandardErrorContent": "",
         "StandardErrorUrl": "",
         "StandardOutputContent": "{\r\n\"records\":[\r\n{\r\n\"uuid\":\"032cd032-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqltemp_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":{\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/032cd032-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":\"03486072-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":\"wlmdb_sqldata_1698276677110\",\r\n\"snapshot_count\":3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/03486072-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"035b0b46-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_sqllog_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/035b0b46-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n},\r\n{\r\n\"uuid\":  \"095e5132-7391-11ee-8151-1feabed00a0f\",\r\n\"name\":  \"wlmdb_quorum_1698276677110\",\r\n\"snapshot_count\":  3,\r\n\"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes/095e5132-7391-11ee-8151-1feabed00a0f\"\r\n}\r\n}\r\n}\r\n],\r\n    \"num_records\":  4,\r\n    \"_links\":  {\r\n\"self\":  {\r\n\"href\":  \"/api/storage/volumes?uuid=032cd032-7391-11ee-8151-1feabed00a0f,095e5132-7391-11ee-8151-1feabed00a0f,03486072-7391-11ee-8151-1feabed00a0f,035b0b46-7391-11ee-8151-1feabed00a0f\\u0026fields=snapshot_count\"\r\n}\r\n}\r\n}\r\n",
+        "StandardOutputUrl": "",
+        "Status": "Success",
+        "StatusDetails": "Success"
+    },
+    "ontapMappedVolumesInvocationResponse": {
+        "$metadata": {
+            "httpStatusCode": 200,
+            "requestId": "17601055-7787-4476-8450-2abb4851432a",
+            "attempts": 1,
+            "totalRetryDelay": 0
+        },
+        "DocumentName": "AWS-RunPowerShellScript",
+        "InstanceId": "i-0880a21327284f67c",
+        "PluginName": "aws:runPowerShellScript",
+        "ResponseCode": 0,
+        "StandardErrorContent": "",
+        "StandardErrorUrl": "",
+        "StandardOutputContent": "{\"records\":  [{\"uuid\":  \"939a4ec9-7c14-11ee-b185-8329e8fcbf44\",\"name\":  \"wlmdb_sqldata_1699212952850\"}]}",
         "StandardOutputUrl": "",
         "Status": "Success",
         "StatusDetails": "Success"

@@ -6,7 +6,11 @@ const CREDENTIALS_ID = 'credentialsId';
 const REGION = 'region';
 const VPC_ID = 'vpcId';
 const AZ_1 = 'availabilityZone1';
+const PRIVATE_SUBNET_1 = 'privateSubnet1Id';
+const ROUTE_TABLE_1 = 'routeTable1Id';
 const AZ_2 = 'availabilityZone2';
+const PRIVATE_SUBNET_2 = 'privateSubnet2Id';
+const ROUTE_TABLE_2 = 'routeTable2Id';
 const VPC_CIDR = 'vpcCidr';
 const WL_INSTANCE_TYPE = 'workloadInstanceType';
 const KEY_PAIR_NAME = 'keyPairName';
@@ -28,6 +32,8 @@ const FSX_IOPS = 'fsxIOPS';
 const ONTAP_SG_ID = 'ontapSgGroupId';
 const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
+const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
+const SQL_SERVER_NAME = 'sqlServerName';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -61,14 +67,15 @@ const CHATBOT_UI_PARAMS_FSX = [
                 }
             },
             {
-                [FSX_DEPLOYMENT_MODE]: {
+                [SQL_DEPLOYMENT_MODE]: {
                     required: true,
                     dependsOn: CREDENTIALS_ID
                 }
             },
             {
                 [FSX_TYPE]: {
-                    required: true
+                    required: true,
+                    dependsOn: VPC_ID
                 }
             }
         ]
@@ -95,6 +102,34 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [AZ_2]: {
                     required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ },
                     dependsOn: VPC_ID
+                }
+            }
+        ]
+    },
+    {
+        subnetConfiguration: [
+            {
+                [PRIVATE_SUBNET_1]: {
+                    required: true
+                }
+            },
+            {
+                [PRIVATE_SUBNET_2]: {
+                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ }
+                }
+            }
+        ]
+    },
+    {
+        routeTableConfiguration: [
+            {
+                [ROUTE_TABLE_1]: {
+                    required: true
+                }
+            },
+            {
+                [ROUTE_TABLE_2]: {
+                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ }
                 }
             }
         ]
@@ -136,11 +171,6 @@ const CHATBOT_UI_PARAMS_FSX = [
     {
         sqlConfiguration: [
             {
-                [SQL_DEPLOYMENT_MODE]: {
-                    required: true
-                }
-            },
-            {
                 [SQL_AMI]: {
                     required: true
                 }
@@ -154,11 +184,21 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [SERVICE_ACCOUNT_PASS]: {
                     required: true
                 }
+            },
+            {
+                [SQL_SERVER_NAME]: {
+                    required: true
+                }
             }
         ]
     },
     {
         fsxConfiguration: [
+            {
+                [FSX_DEPLOYMENT_MODE]: {
+                    required: true
+                }
+            },
             {
                 [FSX_FILE_SYSTEM_ID]: {
                     required: { key: FSX_TYPE, operand: EQ, value: EXISTING },
@@ -197,6 +237,11 @@ const CHATBOT_UI_PARAMS_FSX = [
                     required: true,
                     dependsOn: VPC_ID
                 }
+            },
+            {
+                [ENABLE_CLOUD_WATCH]: {
+                    required: true
+                }
             }
         ]
     },
@@ -233,6 +278,40 @@ const CHATBOT_UI_PARAMS_FSX = [
         ]
     }
 ];
+
+const KEY_LABEL_MAP = {
+    [CREDENTIALS_ID]: 'credential id',
+    [REGION]: 'region',
+    [VPC_ID]: 'vpc',
+    [AZ_1]: 'availability zone for primary node',
+    [AZ_2]: 'availability zone for secondary node',
+    [VPC_CIDR]: 'vpc cidr',
+    [PRIVATE_SUBNET_1]: 'subnet for primary node',
+    [ROUTE_TABLE_1]: 'route table for primary node',
+    [PRIVATE_SUBNET_2]: 'subnet for secondary node',
+    [ROUTE_TABLE_2]: 'route table for secondary node',
+    [WL_INSTANCE_TYPE]: 'workload instance type',
+    [KEY_PAIR_NAME]: 'key pair name',
+    [SQL_AMI]: 'sql ami id',
+    [AD_SCENARIO_TYPE]: 'active directory scenario type',
+    [DNS_IP]: 'dns ip address',
+    [DOMAIN_DNS]: 'domain dns name',
+    [DOMAIN_USERNAME]: 'domain user name',
+    [DOMAIN_PASS]: 'domain password',
+    [FSX_USERNAME]: 'fsx user name',
+    [FSX_PASS]: 'fsx password',
+    [SERVICE_ACCOUNT_NAME]: 'service account name',
+    [SERVICE_ACCOUNT_PASS]: 'service account password',
+    [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
+    [SQL_DEPLOYMENT_MODE]: 'sql deployment mode',
+    [DB_SIZE]: 'database size',
+    [FSX_VOL_THROUGHPUT]: 'fsx volume throughput',
+    [FSX_IOPS]: 'fsx IOPS',
+    [ONTAP_SG_ID]: 'ontap security group id',
+    [FSX_TYPE]: 'fsx type',
+    [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
+    [SQL_SERVER_NAME]: 'database cluster name'
+};
 
 export {
     MODEL,
@@ -272,5 +351,12 @@ export {
     STANDALONE,
     FCI,
     NEW,
-    EXISTING
+    EXISTING,
+    KEY_LABEL_MAP,
+    ENABLE_CLOUD_WATCH,
+    PRIVATE_SUBNET_1,
+    PRIVATE_SUBNET_2,
+    ROUTE_TABLE_1,
+    ROUTE_TABLE_2,
+    SQL_SERVER_NAME
 };

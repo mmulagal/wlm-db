@@ -340,7 +340,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
             } else if (val?.protection) {
                 protectionText = GENERAL.NOT_PROTECTED;
             }
-            const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0
+            const storagePercent = val?.storage ? (val.storage?.spaceSavings / val.storage?.used) * 100 : 0;
             val = {
                 ...val,
                 type: DB_HOME_DATA_TYPE.HOSTS,
@@ -354,12 +354,14 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                     (val?.estimatedUsageCost?.others || 0)
                 ).toString(),
                 // performance table text to search in table
-                performanceText:
-                    val?.performance && val.performance?.assessment + ' ( <' + val.performance?.latency + ' ms )',
+                performanceText: val?.performance && val.performance?.assessment,
                 // Storage saving table text to search in table
                 storageSavingsText:
                     val?.storage &&
-                    formatFractionalNumber(storagePercent, 2) + '% (' + formatSizeOnePrecision(val.storage?.spaceSavings) + ')'
+                    formatFractionalNumber(storagePercent, 2) +
+                        '% (' +
+                        formatSizeOnePrecision(val.storage?.spaceSavings) +
+                        ')'
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);
@@ -379,7 +381,7 @@ export const mergeDatabaseHostsData = (hostsData: DatabaseHostItem[] | null, job
                 type: DB_HOME_DATA_TYPE.JOBS,
                 databaseHostname: (val?.name || '') + (status || ''),
                 status: status,
-                topology: val?.metadata,
+                topology: val?.metadata
             };
             mergedList.push(val);
             uniqueIds.push(val?.id);
@@ -506,16 +508,38 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     let connectivityCost = 0;
     let otherCost = 0;
 
+    let storageList: (string | undefined)[] = [];
+    let vpcList: (string | undefined)[] = [];
+
     data?.map(val => {
         if (val?.estimatedUsageCost?.compute) {
             storageCost += val.estimatedUsageCost.compute;
         }
-        if (val?.estimatedUsageCost?.storage) {
+
+        // If storage cost is already added than no need to add again based on FSXId
+        let fsxVal = '';
+        if (val?.topology?.fsxFilesystemId) {
+            fsxVal = val.topology.fsxFilesystemId;
+        }
+        if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage) {
             computeCost += val.estimatedUsageCost.storage;
+            if (fsxVal) {
+                storageList.push(fsxVal);
+            }
         }
-        if (val?.estimatedUsageCost?.connectivity) {
+
+        // If connectivity cost is already added than no need to add again based on VPCId
+        let vpcVal = '';
+        if (val?.topology?.vpcId) {
+            vpcVal = val.topology.vpcId;
+        }
+        if ((!vpcVal || !vpcList.includes(vpcVal)) && val?.estimatedUsageCost?.connectivity) {
             connectivityCost += val.estimatedUsageCost.connectivity;
+            if (vpcVal) {
+                vpcList.push(vpcVal);
+            }
         }
+
         if (val?.estimatedUsageCost?.others) {
             otherCost += val.estimatedUsageCost.others;
         }
@@ -524,15 +548,15 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     const totalCost = storageCost + computeCost + connectivityCost + otherCost;
 
     return {
-        storageCost: storageCost,
-        computeCost: computeCost,
-        connectivityCost: connectivityCost,
-        otherCost: otherCost,
-        totalCost: totalCost,
-        storageCostPercent: (storageCost / totalCost) * 100,
-        computeCostPercent: (computeCost / totalCost) * 100,
-        connectivityCostPercent: (connectivityCost / totalCost) * 100,
-        otherCostPercent: (otherCost / totalCost) * 100
+        storageCost: formatFractionalNumber(storageCost, 2),
+        computeCost: formatFractionalNumber(computeCost, 2),
+        connectivityCost: formatFractionalNumber(connectivityCost, 2),
+        otherCost: formatFractionalNumber(otherCost, 2),
+        totalCost: formatFractionalNumber(totalCost, 2),
+        storageCostPercent: formatFractionalNumber((storageCost / totalCost) * 100),
+        computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
+        connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),
+        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100)
     };
 };
 
@@ -707,4 +731,12 @@ export const databaseTableSort = (data: DatabaseHostItem[] | null) => {
         return 0;
     });
     return newDataList;
+};
+
+export const delay = (ms: number) => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve('');
+        }, ms);
+    });
 };
