@@ -223,6 +223,13 @@
                 width: calc(100% - 16px);
                 padding: 0 40px 0 30px;
                 white-space: nowrap;
+
+                // Disable copy from code box
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+                -o-user-select: none;
+                user-select: none;
             }
         }
     }
