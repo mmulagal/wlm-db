@@ -52,7 +52,7 @@ async function createStack(
         TemplateURL: templateUrl,
         Parameters: templateParams,
         DisableRollback: disableRollback,
-        Capabilities: [CAPABILITY_IAM],
+        Capabilities: [CAPABILITY_IAM, 'CAPABILITY_NAMED_IAM'],
         TimeoutInMinutes: timeoutInMinutes,
         NotificationARNs: topicArn ? [topicArn] : []
     };

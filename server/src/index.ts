@@ -10,6 +10,7 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import sensible from '@fastify/sensible';
 import SwaggerParser from '@apidevtools/swagger-parser';
+import { escapeRegExp } from 'lodash-es';
 import getLogger from './utils/logger';
 import {
     ACCOUNT_ID,
@@ -53,6 +54,8 @@ import chatbotRoutes from './routes/chatbot';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
+
+logger.info(escapeRegExp('netapp1$'));
 
 const { verifyToken, authorizeJwt } = jwtOperation;
 

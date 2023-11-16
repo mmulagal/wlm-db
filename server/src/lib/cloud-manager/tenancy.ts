@@ -26,7 +26,7 @@ interface MetaData {
 
 function generateAuthToken(user: object) {
     logger.info('Generating auth token');
-    const token = jwt.sign({ user }, SECRETS.CLIENT_ID as string, {
+    const token = jwt.sign({ user }, 'f4b33665-e96d-4615-9028-ac2a1012226d' as string, {
         expiresIn: config.get('jwt-token-expiry')
     });
 

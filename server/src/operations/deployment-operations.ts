@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
+import { escapeRegExp } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -70,7 +71,7 @@ import {
     DOMAIN_ADMIN_PASSWORD
 } from '../utils/consts';
 import {
-    derivePropertiesFromARN,
+    // derivePropertiesFromARN,
     generateDeploymentParams,
     getSnsArn,
     isNetworkConfigurationViolated,
@@ -114,7 +115,8 @@ async function formatTemplateParameters(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
-    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const awsAccountId = '464262061435';
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
 
     const templateParams: Array<Parameter> = [
@@ -267,18 +269,24 @@ async function getCloudformationTemplate(
     let cliParams: string = '';
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${fsxConfiguration.fsxPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                fsxConfiguration.fsxPassword.replace('!', '\\!')
+            )}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${sqlConfiguration.serviceAccountPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                sqlConfiguration.serviceAccountPassword.replace('!', '\\!')
+            )}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${adConfiguration.domainPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                adConfiguration.domainPassword.replace('!', '\\!')
+            )}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
         region || DEFAULT_AWS_REGION
-    } --parameters ${cliParams}`;
+    } --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
@@ -365,7 +373,8 @@ async function createCloudFormationTemplateForUserDeployment(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
-    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const awsAccountId = '464262061435';
     const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
