@@ -30,7 +30,7 @@ async function getSavedConfig(accountId: string, id: string): Promise<FormConfig
             ...(modifiedTime && { modifiedTime: moment(modifiedTime).unix() * 1000 })
         };
     } catch (error) {
-        logger.error(`Error occured while deleting saved config ${id}. Error: ${error}`);
+        logger.error(`Error occured while fetching saved config ${id}. Error: ${error}`);
         throw createError(HttpErrorCodes.NOT_FOUND, CONFIG_NOT_FOUND(id));
     }
 }
