@@ -24,7 +24,8 @@ import {
     ServerState,
     SERVER_TYPE_MAPPING,
     STANDALONE,
-    FCI
+    FCI,
+    AWS_REGIONS
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -145,7 +146,7 @@ async function getTopology(
 
         // Fetch topology data
         topologyData = {
-            region,
+            region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
