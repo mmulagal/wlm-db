@@ -11,7 +11,7 @@ export interface DatabaseHostItem {
         serverType: string;
         serverMode: string;
         fileSystemType: string;
-        fsxFilesystemId: string;
+        fileSystemId: string;
         vpcId?: string;
         ec2Details: Array<Ec2Details>
     };
