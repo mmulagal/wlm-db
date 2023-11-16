@@ -150,7 +150,7 @@ async function getTopology(
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
-            vpcId,
+            vpcId: vpcId!,
             ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
         };
         if (standbyNodeInstanceId) {
