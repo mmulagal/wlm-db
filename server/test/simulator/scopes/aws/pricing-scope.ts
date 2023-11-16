@@ -350,7 +350,7 @@ const FSXWRITEREQUESTSRATEFILTER = {
 };
 
 const price: LazyJsonString = LazyJsonString.fromObject(
-    '{"product":{"productFamily":"Compute Instance","attributes":{"servicecode":"AmazonEC2","instanceType":"t3.micro","location":"US East (N. Virginia)","memory":"1 GiB","vcpu":"2"}},"terms":{"OnDemand":{"us-east-1":{"priceDimensions":{"us-east-1-ondemand":{"pricePerUnit":{"USD":"0.00058"}}}}}}}'
+    '{"product":{"productFamily":"Compute Instance","attributes":{"servicecode":"AmazonEC2","instanceType":"t3.micro","location":"US East (N. Virginia)","memory":"1 GiB","vcpu":"2"}},"terms":{"OnDemand":{"us-east-1":{"priceDimensions":{"us-east-1-ondemand":{"pricePerUnit":{"USD":"0.00158"}}}}}}}'
 );
 
 const mockGetProductsResponse = {
