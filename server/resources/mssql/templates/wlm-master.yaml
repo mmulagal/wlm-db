@@ -629,6 +629,21 @@ Resources:
                   - ec2messages:FailMessage
                   - ec2messages:SendReply
                 Resource: '*'
+              - Sid: FsxStatement
+                Effect: Allow
+                Action:
+                  - fsx:DescribeFileSystems
+                  - fsx:DescribeVolumes
+                  - fsx:DescribeStorageVirtualMachines
+                Resource: '*'
+              - Sid: EC2Statement
+                Effect: Allow
+                Action:
+                  - ec2:Get*
+                  - ec2:DescribeTags
+                  - ec2:DescribeVolumes
+                  - ec2:CreateTags
+                Resource: '*'
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'
