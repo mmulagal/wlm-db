@@ -545,6 +545,7 @@ const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not f
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
+const CAPABILITY_NAMED_IAM = 'CAPABILITY_NAMED_IAM';
 
 // Signed URL Valid for 24 hours
 const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry-hours')}`, 'hours').asSeconds();
@@ -1028,5 +1029,6 @@ export {
     CONFIG_NOT_FOUND,
     DOMAIN_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
-    FSX_ADMIN_PASSWORD
+    FSX_ADMIN_PASSWORD,
+    CAPABILITY_NAMED_IAM
 };

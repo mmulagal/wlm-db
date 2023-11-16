@@ -4,6 +4,7 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache.js
 import {
     BXP_SVC_TOKEN_TYPE,
     HEADERS,
+    SECRETS,
     // SECRETS,
     WF_SVC_TOKEN_TYPE,
     WLMDB,
@@ -40,8 +41,8 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
         } = await gotInstanceForInternalRequest
             .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token`, {
                 json: {
-                    client_id: 'f4b33665-e96d-4615-9028-ac2a1012226d',
-                    client_secret: 'ddfa645c-14a6-4857-ac28-1d89d5db9921',
+                    client_id: SECRETS.AUTH_CLIENT_ID,
+                    client_secret: SECRETS.AUTH_CLIENT_SECRET,
                     grant_type: 'client_credentials'
                 }
             })

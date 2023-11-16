@@ -47,8 +47,8 @@
     "jwt-token-expiry": "168h",
     "signed-url-expiry-hours": "168",
     "templates": {
-        "bucket": "bucketkrithi",
-        "region": "ap-southeast-1"
+        "bucket": "staging.wlmdb.workloads.netapp.com",
+        "region": "us-east-1"
     },
     "ec2": {
         "vpcu-filter": ["2", "4", "8", "16", "32", "64", "72"]

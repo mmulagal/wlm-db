@@ -7,7 +7,7 @@ import {
     Parameter
 } from '@aws-sdk/client-cloudformation';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
-import { CAPABILITY_IAM, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
+import { CAPABILITY_IAM, CAPABILITY_NAMED_IAM, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { gotInstanceForExternalRequest } from '../../utils/got';
 
@@ -52,7 +52,7 @@ async function createStack(
         TemplateURL: templateUrl,
         Parameters: templateParams,
         DisableRollback: disableRollback,
-        Capabilities: [CAPABILITY_IAM, 'CAPABILITY_NAMED_IAM'],
+        Capabilities: [CAPABILITY_IAM, CAPABILITY_NAMED_IAM],
         TimeoutInMinutes: timeoutInMinutes,
         NotificationARNs: topicArn ? [topicArn] : []
     };
