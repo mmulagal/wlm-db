@@ -7,6 +7,7 @@ const PromptRequestBodySchema = Type.Object({
 
 const queryBotResponse = Type.Object({
     message: Type.Optional(Type.String()),
+    status: Type.Optional(Type.String()),
     errors: Type.Optional(
         Type.Array(
             Type.Object({
