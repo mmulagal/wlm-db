@@ -133,14 +133,13 @@ async function getTopology(
             fileSystemType
         } = metadata as unknown as Topology);
 
-        let vpcId;
+        let vpcId = '';
         if (additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+                vpcId = fsxInfo?.FileSystems?.[0].VpcId || '';
             } catch (error) {
                 logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
-                vpcId = '';
             }
         }
 
