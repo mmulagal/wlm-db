@@ -100,7 +100,7 @@ const CHATBOT_UI_PARAMS_FSX = [
             },
             {
                 [AZ_2]: {
-                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ },
+                    required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
                     dependsOn: VPC_ID
                 }
             }
@@ -115,7 +115,7 @@ const CHATBOT_UI_PARAMS_FSX = [
             },
             {
                 [PRIVATE_SUBNET_2]: {
-                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ }
+                    required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
                 }
             }
         ]
@@ -129,7 +129,7 @@ const CHATBOT_UI_PARAMS_FSX = [
             },
             {
                 [ROUTE_TABLE_2]: {
-                    required: { key: FSX_DEPLOYMENT_MODE, operand: EQ, value: MULTI_AZ }
+                    required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
                 }
             }
         ]

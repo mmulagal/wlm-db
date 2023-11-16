@@ -518,8 +518,8 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
 
         // If storage cost is already added than no need to add again based on FSXId
         let fsxVal = '';
-        if (val?.topology?.fsxFilesystemId) {
-            fsxVal = val.topology.fsxFilesystemId;
+        if (val?.topology?.fileSystemId) {
+            fsxVal = val.topology.fileSystemId;
         }
         if ((!fsxVal || !storageList.includes(fsxVal)) && val?.estimatedUsageCost?.storage) {
             storageCost += val.estimatedUsageCost.storage;

@@ -39,10 +39,7 @@ const useInitialize = () => {
         const workspaceIdAsString = Array.isArray(workspaceId) ? workspaceId[0] : workspaceId;
         // const isDemoFlag = Array.isArray(isDemoMode) ? isDemoMode[0] : isDemoMode;
         const isWorkloadFactory =
-            !window.location ||
-            !window.location.ancestorOrigins ||
-            !window.location.ancestorOrigins.length ||
-            window.location.ancestorOrigins[0].includes(WORKLOADS);
+            !window.location || !window.location.hostname || window.location.hostname.includes(WORKLOADS);
         // dispatch(updateIsDemoMode(isDemoFlag === 'true' ? true : false));
         dispatch(updateIsWorkloadfactory(isWorkloadFactory));
 

@@ -37,7 +37,12 @@ async function validateCredentials(credentialsId: string, key: string) {
             key,
             status: 'error',
             message: 'No credentials found, please add and try again',
-            allowedValues: []
+            allowedValues: [],
+            link: {
+                text: 'Credentials',
+                url: 'https://staging.console.workloads.netapp.com/credentials',
+                description: 'To add a new credentials, visit'
+            }
         };
     }
 
@@ -45,8 +50,12 @@ async function validateCredentials(credentialsId: string, key: string) {
         return {
             key,
             status: 'error',
-            message:
-                'I would need the credentialsId information to proceed further, please select a credentialsId of your choice',
+            link: {
+                text: 'Credentials',
+                url: 'https://staging.console.workloads.netapp.com/credentials',
+                description: 'To add a new credentials, visit'
+            },
+            message: 'Select a credential to proceed further',
             allowedValues: credentials.map(credential => ({
                 label: credential.name,
                 value: credential.credentialsId
@@ -59,6 +68,11 @@ async function validateCredentials(credentialsId: string, key: string) {
         return {
             key,
             status: 'error',
+            link: {
+                text: 'Credentials',
+                url: 'https://staging.console.workloads.netapp.com/credentials',
+                description: 'To add a new credentials, visit'
+            },
             message:
                 'The credential that you provided is not valid. Please select a set of credentials from the list below.',
             allowedValues: credentials.map(cred => ({ label: cred.name, value: cred.credentialsId }))

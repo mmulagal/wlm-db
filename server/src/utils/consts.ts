@@ -211,6 +211,16 @@ const SECRET_WORDS = [
     'serviceAccountPassword'
 ];
 
+const SECRET_STRING_WORDS = [
+    'param_FSxAdminPassword',
+    'param_SQLServiceAccountPassword',
+    'param_DomainAdminPassword',
+    'domainPassword',
+    'serviceAccountPassword',
+    'fsxPassword',
+    'password'
+];
+
 const SQL_AMI_NAMES = [
     'Windows_Server-2016-English-Full-SQL_2017_Enterprise*',
     'Windows_Server-2016-English-Full-SQL_2019_Standard*',
@@ -864,6 +874,7 @@ export {
     AWSQueryFields,
     SQL_AMI_NAMES,
     SECRET_WORDS,
+    SECRET_STRING_WORDS,
     DEMO_ACCOUNT_ID,
     SECRETS,
     AUTH0_AUDIENCE,

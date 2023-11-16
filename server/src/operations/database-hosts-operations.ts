@@ -24,7 +24,8 @@ import {
     ServerState,
     SERVER_TYPE_MAPPING,
     STANDALONE,
-    FCI
+    FCI,
+    AWS_REGIONS
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -132,20 +133,19 @@ async function getTopology(
             fileSystemType
         } = metadata as unknown as Topology);
 
-        let vpcId: string = '';
+        let vpcId = '';
         if (additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
                 vpcId = fsxInfo?.FileSystems?.[0].VpcId || '';
             } catch (error) {
                 logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
-                vpcId = '';
             }
         }
 
         // Fetch topology data
         topologyData = {
-            region,
+            region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',

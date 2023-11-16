@@ -349,6 +349,22 @@ const FSXWRITEREQUESTSRATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
+const price: LazyJsonString = LazyJsonString.fromObject(
+    '{"product":{"productFamily":"Compute Instance","attributes":{"servicecode":"AmazonEC2","instanceType":"t3.micro","location":"US East (N. Virginia)","memory":"1 GiB","vcpu":"2"}},"terms":{"OnDemand":{"us-east-1":{"priceDimensions":{"us-east-1-ondemand":{"pricePerUnit":{"USD":"0.00058"}}}}}}}'
+);
+
+const mockGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [price]
+};
 const VPCFILTER = {
     Filters: [
         {
@@ -378,6 +394,7 @@ pricingMock.on(GetProductsCommand, FSXTHROUGHPUTRATEFILTER).resolves(mockfsxThro
 pricingMock.on(GetProductsCommand, FSXWRITEREQUESTSRATEFILTER).resolves(mockfsxWritePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2InstancePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
 pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
 
-export default mockfsxStoragePriceGetProductsResponse;
+export default mockGetProductsResponse;
