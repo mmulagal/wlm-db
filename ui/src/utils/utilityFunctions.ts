@@ -808,17 +808,25 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.fsxN?.fsxNPassword) {
         params.fsxPassword = payload.fsxN.fsxNPassword;
     }
-    // if (payload?.throughput?.value) {
-    //     params.fsxVolThroughput = payload.throughput.value;
-    // }
+    if (payload?.throughput?.value) {
+        params.fsxVolThroughput = payload.throughput.value.split(' ')[0];
+    }
     if (payload?.securityGroup?.sgValue) {
         params.ontapSgGroupId = payload.securityGroup.sgValue;
     }
     if (payload?.dbName) {
         params.sqlServerName = payload.dbName;
     }
-    if (payload?.cloudWatch) {
-        params.enableCloudWatch = payload.cloudWatch;
+    if (payload?.fsxN?.fsxNType) {
+        params.fsxType = payload.fsxN.fsxNType === GENERAL.CREATE_NEW_FSXN ? 'NEW' : 'EXISTING';
     }
+    if (payload?.dbDeploymentModel?.value) {
+        params.sqlDeploymentMode = payload.dbDeploymentModel.value;
+    }
+    if (payload?.storageCapacity?.capacity) {
+        params.databaseSize =
+            parseInt(payload.storageCapacity.capacity) * (payload.storageCapacity.unit.value === 'GiB' ? 1 : 1024);
+    }
+    params.enableCloudWatch = payload.cloudWatch || false;
     return params;
 };
