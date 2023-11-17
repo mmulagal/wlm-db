@@ -5,7 +5,8 @@ const initialState: ChatbotEntities = {
     messages: [],
     currentIntent: '',
     isShow: false,
-    isReceivingMsg: false
+    isReceivingMsg: false,
+    loadConfigClicked: false
 };
 
 const chatbotSlice = createSlice({
@@ -23,9 +24,13 @@ const chatbotSlice = createSlice({
         },
         setIsReceivingMsg: (state, action: PayloadAction<any>) => {
             state.isReceivingMsg = action.payload;
+        },
+        setLoadConfigClicked: (state, action: PayloadAction<any>) => {
+            state.loadConfigClicked = action.payload;
         }
     }
 });
 
-export const { setMessages, setCurrentIntent, setIsShow, setIsReceivingMsg } = chatbotSlice.actions;
+export const { setMessages, setCurrentIntent, setIsShow, setIsReceivingMsg, setLoadConfigClicked } =
+    chatbotSlice.actions;
 export default chatbotSlice;

@@ -98,7 +98,7 @@ async function validateParams(
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
-    let validatedParams: Params = {};
+    let validatedParams: Params = { ...oldParams };
     const promises = [];
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of schemaParams) {
