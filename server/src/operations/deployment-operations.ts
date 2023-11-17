@@ -2,10 +2,10 @@ import createError from 'http-errors';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
+import { escapeRegExp } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { escapeRegExp } from 'lodash-es';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
@@ -285,7 +285,7 @@ async function getCloudformationTemplate(
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
         region || DEFAULT_AWS_REGION
-    } --parameters ${cliParams}`;
+    } --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
