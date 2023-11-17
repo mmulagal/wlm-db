@@ -31,6 +31,7 @@ const queryBotResponse = Type.Object({
         Type.Object({
             complete: Type.Optional(Type.Boolean()),
             type: Type.Optional(Type.String()),
+            userParams: Type.Optional(Type.Any()),
             params: Type.Any()
         })
     )

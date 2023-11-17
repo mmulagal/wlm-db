@@ -113,7 +113,7 @@ async function getTopology(
         serverInstallationMode: '',
         fileSystemId: fileSystemId!,
         fileSystemType: '',
-        vpcId: '',
+        vpcId: undefined,
         ec2Details: []
     };
 
@@ -133,11 +133,11 @@ async function getTopology(
             fileSystemType
         } = metadata as unknown as Topology);
 
-        let vpcId = '';
+        let vpcId;
         if (additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-                vpcId = fsxInfo?.FileSystems?.[0].VpcId || '';
+                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
             } catch (error) {
                 logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
             }
@@ -150,7 +150,7 @@ async function getTopology(
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
-            vpcId: vpcId!,
+            ...(vpcId && { vpcId }),
             ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
         };
         if (standbyNodeInstanceId) {
