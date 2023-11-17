@@ -671,8 +671,14 @@ const Chatbot = () => {
                 .join(', ')
         });
         dispatch(setMessages(updatedMessages));
-        const msgToBot = Object.keys(paramObj)
-            .map(key => `Use ${key} as ${paramObj[key].value}`)
+        const objectToValidate = { ...paramObj, ...(currentIntent.userParams || {}) };
+        const msgToBot = Object.keys(objectToValidate)
+            .map(
+                key =>
+                    `Use ${key} as ${
+                        typeof objectToValidate[key] === 'object' ? objectToValidate[key].value : objectToValidate[key]
+                    }`
+            )
             .join(', ');
         await handleSendMsg(msgToBot, false, updatedMessages);
     };
