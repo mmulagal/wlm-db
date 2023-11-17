@@ -573,6 +573,7 @@ async function calculatePrice(
             fsxThroughput,
             fsxIops
         );
+        logger.info('FSx  throughput cost value for demo', fsxThroughputCost);
     }
 
     return {
