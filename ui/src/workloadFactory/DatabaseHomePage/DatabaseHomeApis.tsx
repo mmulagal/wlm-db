@@ -7,10 +7,10 @@ import {
     addAggregatedStorageSavings, 
     addAggregateHostsCountData, 
     addDatabaseHosts, 
-    addDatabaseHostsList,
+    addDatabaseHostsList, 
     addDatabaseJobs, 
-    addJobsSummary,
-    addStatus,
+    addJobsSummary, 
+    addStatus
 } from "../../store/workloadFactory/databaseHomeSlice";
 import { 
     useGetDatabaseHostsQuery, 

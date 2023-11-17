@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@netapp/design-system';
 
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ import { ReactComponent as Clone } from '../../../assets/ic_copy_replicate_blue.
 import { ReactComponent as Protect } from '../../../assets/ic_protected.svg';
 import styles from './TopBarButtons.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
-import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
+import { useAppDispatch } from '../../../store/storeHooks';
 import { databaseHomeApi } from '../../../utils/apiService';
 import { addInitialData, initialDBHomepageState } from '../../../store/workloadFactory/databaseHomeSlice';
 
@@ -17,7 +18,6 @@ import { addInitialData, initialDBHomepageState } from '../../../store/workloadF
 const TopBarButton = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const refetchHomepageApi = useAppSelector(state => state.msSqlAction.refetchHomepageApi);
 
     const refreshPage = () => {
         dispatch(databaseHomeApi.util.resetApiState());
