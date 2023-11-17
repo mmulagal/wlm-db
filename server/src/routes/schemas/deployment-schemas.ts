@@ -21,7 +21,8 @@ const baseRequest = {
 // Create cloud formation template for user deployment Schema
 const CreateCloudFormationTemplateSchema = {
     ...baseRequest,
-    description: 'Create Cloud Formation template in a region for existing vpc',
+    summary: 'Create Cloud Formation template',
+    description: 'Create Cloud Formation template in a region for existing VPC',
     body: CloudFormationTemplateRequestBody,
     response: {
         200: CloudFormationTemplateResponse
@@ -32,6 +33,7 @@ const CreateCloudFormationTemplateSchema = {
 const CloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
+    summary: 'Create Cloud Formation template',
     description: 'Cloud Formation template url, yaml and cli format for user deployment',
     body: CloudFormationStaticTemplateRequestBody,
     response: {
@@ -42,6 +44,7 @@ const CloudFormationTemplateSchema = {
 // Create cloud formation template for user deployment Schema
 const DeployTemplateSchema = {
     ...baseRequest,
+    summary: 'Deploy Cloud Formation template',
     description: 'Deploy Cloud Formation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
     response: {
@@ -52,6 +55,8 @@ const DeployTemplateSchema = {
 // Get status of all Cloudformation stacks
 const DeploymentStatusListSchema = {
     ...baseRequest,
+    summary: 'List Cloud Formation deployments',
+    description: 'List Cloud Formation deployment details',
     response: {
         200: DeploymentStatusListResponse
     }
@@ -60,6 +65,8 @@ const DeploymentStatusListSchema = {
 // Get Cloudformation stack by id or name
 const DeploymentStatusSchema = {
     ...baseRequest,
+    summary: 'Get Cloud Formation deployment details',
+    description: 'Get Cloud Formation deployment details for a given deployment Id',
     params: DeploymentStatusObjectParams,
     response: {
         200: DeploymentStatusResponse

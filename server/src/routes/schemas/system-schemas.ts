@@ -4,6 +4,7 @@ import { HealthResponse, AboutResponse, StatusResponse, StatusParams } from '../
 const GetHealthinessSchema = {
     tags: ['System'],
     hide: true,
+    summary: 'Health and liveness',
     description: 'Health and liveness',
     response: { 200: HealthResponse }
 };

@@ -4,6 +4,7 @@ import { AwsParams } from '../types/aws.types';
 
 const CalculatePriceSchema = {
     tags: [RouteTags.PRICING],
+    summary: 'Deployment cost estimation',
     description: 'Estimates monthly cost of deployable resources in USD',
     params: AwsParams,
     body: PricingServiceRequest,
