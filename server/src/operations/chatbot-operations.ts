@@ -1,3 +1,4 @@
+import { omit } from 'lodash-es';
 import Chatbot from '../lib/chatbot/chatbot';
 import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib/chatbot/helpers';
 import { queryBotResponseType } from '../routes/types/chatbot.types';
@@ -45,7 +46,8 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                         intent: {
                             complete: false,
                             type: intent?.type,
-                            params: validationResponse.params
+                            params: validationResponse.params,
+                            userParams: omit(params, Object.keys(validationResponse.params))
                         }
                     };
                 }

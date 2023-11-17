@@ -269,16 +269,16 @@ async function getCloudformationTemplate(
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
-                fsxConfiguration.fsxPassword.replace('!', '\\!')
-            )}" `;
+                fsxConfiguration.fsxPassword
+            ).replace('!', '\\!')}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
-                sqlConfiguration.serviceAccountPassword.replace('!', '\\!')
-            )}" `;
+                sqlConfiguration.serviceAccountPassword
+            ).replace('!', '\\!')}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
-                adConfiguration.domainPassword.replace('!', '\\!')
-            )}" `;
+                adConfiguration.domainPassword
+            ).replace('!', '\\!')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
