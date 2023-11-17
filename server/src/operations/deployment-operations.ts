@@ -5,6 +5,7 @@ import path from 'path';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { escapeRegExp } from 'lodash-es';
 import { createStack } from '../lib/aws/cloud-formation';
 import getMissingPermissionsList from './aws/iam-operations';
 import { getObjectBucket, preSignedUrl } from '../lib/aws/s3';
@@ -267,11 +268,17 @@ async function getCloudformationTemplate(
     let cliParams: string = '';
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${fsxConfiguration.fsxPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                fsxConfiguration.fsxPassword
+            ).replace('!', '\\!')}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${sqlConfiguration.serviceAccountPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                sqlConfiguration.serviceAccountPassword
+            ).replace('!', '\\!')}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${adConfiguration.domainPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                adConfiguration.domainPassword
+            ).replace('!', '\\!')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
