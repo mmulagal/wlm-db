@@ -7,10 +7,10 @@ import {
     addAggregatedStorageSavings, 
     addAggregateHostsCountData, 
     addDatabaseHosts, 
-    addDatabaseHostsList, 
+    addDatabaseHostsList,
     addDatabaseJobs, 
-    addJobsSummary, 
-    addStatus
+    addJobsSummary,
+    addStatus,
 } from "../../store/workloadFactory/databaseHomeSlice";
 import { 
     useGetDatabaseHostsQuery, 
@@ -142,7 +142,7 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsData, databaseJobsData]);
 
-    return;
+    return <></>;
 }
 
 export default DatabaseHomeApis;

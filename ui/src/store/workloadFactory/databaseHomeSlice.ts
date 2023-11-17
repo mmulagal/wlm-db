@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DatabaseHostsEntities } from "../../utils/types/databaseHomeTypes";
 
-const initialState: DatabaseHostsEntities = {
+export const initialDBHomepageState: DatabaseHostsEntities = {
     getDatabaseHosts: {
         databaseHostsData: null,
         databaseHostsLoading: false,
@@ -60,19 +60,31 @@ const initialState: DatabaseHostsEntities = {
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
-    initialState,
+    initialState: initialDBHomepageState,
     reducers: {
         addDatabaseHosts: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts = action.payload;
         },
+        addDatabaseHostsLoading: (state, action: PayloadAction<any>) => {
+            state.getDatabaseHosts.databaseHostsLoading = action.payload;
+        },
         addDatabaseJobs: (state, action: PayloadAction<any>) => {
             state.getDatabaseJobs = action.payload;
+        },
+        addDatabaseJobsLoading: (state, action: PayloadAction<any>) => {
+            state.getDatabaseJobs.databaseJobsLoading = action.payload;
         },
         addJobsSummary: (state, action: PayloadAction<any>) => {
             state.getJobsSummary = action.payload;
         },
+        addJobsSummaryLoading: (state, action: PayloadAction<any>) => {
+            state.getJobsSummary.jobsSummaryLoading = action.payload;
+        },
         addStatus: (state, action: PayloadAction<any>) => {
             state.getStatus = action.payload;
+        },
+        addStatusLoading: (state, action: PayloadAction<any>) => {
+            state.getStatus.statusLoading = action.payload;
         },
         addDatabaseHostsList: (state, action: PayloadAction<any>) => {
             state.databaseHostsList = action.payload;
@@ -88,20 +100,28 @@ const databaseHomeSlice = createSlice({
         },
         addAggregatedCosts: (state, action: PayloadAction<any>) => {
             state.aggregatedCosts = action.payload;
+        },
+        addInitialData: (state, action: PayloadAction<any>) => {
+            return { ...state, ...action.payload };
         }
     }
 });
 
 export const {
     addDatabaseHosts,
+    addDatabaseHostsLoading,
     addDatabaseJobs,
+    addDatabaseJobsLoading,
     addJobsSummary,
+    addJobsSummaryLoading,
     addStatus,
+    addStatusLoading,
     addDatabaseHostsList,
     addAggregateHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
-    addAggregatedCosts
+    addAggregatedCosts, 
+    addInitialData
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
