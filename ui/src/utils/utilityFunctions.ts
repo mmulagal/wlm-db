@@ -747,7 +747,6 @@ export const delay = (ms: number) => {
 };
 
 export const getChatbotParamsFromPayload = (payload: any) => {
-    console.log(payload);
     let params: any = {};
     if (payload?.awsAccount?.selectedCredential?.data?.credentialsId) {
         params.credentialsId = payload.awsAccount.selectedCredential.data.credentialsId;
