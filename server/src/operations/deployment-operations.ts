@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
+import { escapeRegExp } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { randomUUID } from 'crypto';
@@ -267,18 +268,24 @@ async function getCloudformationTemplate(
     let cliParams: string = '';
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${fsxConfiguration.fsxPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                fsxConfiguration.fsxPassword
+            ).replace('!', '\\!')}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${sqlConfiguration.serviceAccountPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                sqlConfiguration.serviceAccountPassword
+            ).replace('!', '\\!')}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
-            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${adConfiguration.domainPassword}" `;
+            cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
+                adConfiguration.domainPassword
+            ).replace('!', '\\!')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
     const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
         region || DEFAULT_AWS_REGION
-    } --parameters ${cliParams}`;
+    } --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
