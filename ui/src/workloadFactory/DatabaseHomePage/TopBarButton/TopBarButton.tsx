@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Typography } from '@netapp/design-system';
+import { Button } from '@netapp/design-system';
 
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
@@ -10,11 +10,33 @@ import { ReactComponent as Clone } from '../../../assets/ic_copy_replicate_blue.
 import { ReactComponent as Protect } from '../../../assets/ic_protected.svg';
 import styles from './TopBarButtons.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppDispatch } from '../../../store/storeHooks';
+import { databaseHomeApi } from '../../../utils/apiService';
+import { addInitialData, initialDBHomepageState } from '../../../store/workloadFactory/databaseHomeSlice';
+
 
 const TopBarButton = () => {
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+
+    const refreshPage = () => {
+        dispatch(databaseHomeApi.util.resetApiState());
+        dispatch(addInitialData(initialDBHomepageState));
+    }
+    
     return (
         <div className={styles.topBarButtons}>
+            {/* <Button
+                variant="secondary"
+                onClick={() => {
+                    refreshPage();
+                }}
+            >
+                <div className={styles.buttonStyle}>
+                    <SpaceShip />
+                    {'Refresh'}
+                </div>
+            </Button> */}
             <Button
                 variant="secondary"
                 onClick={() => {
