@@ -4,6 +4,7 @@ import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
+import { inspect } from 'util';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
 import {
@@ -126,8 +127,10 @@ async function processCloudFormationMessages() {
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
         try {
-            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, { QueueUrl: queueUrl });
-
+            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
+                QueueUrl: queueUrl,
+                AttributeNames: ['All']
+            });
             logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
         } catch (e) {
             logger.error(`Queue attributes error: ${e}`);
@@ -501,7 +504,8 @@ async function processCloudFormationMessages() {
                 logger.warn(`'${queueUrl}' queue invalid client token. Not polling for messages`);
             } else {
                 logger.debug('Possibly no new messages in queue');
-                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, err);
+                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, inspect(err));
+                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, err.code);
                 setTimeout(() => processCloudFormationMessages(), ms(config.get<string>('sqs-poll-interval')));
             }
         }
