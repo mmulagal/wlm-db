@@ -24,6 +24,7 @@ const PostSqlServerSchema = {
     tags: [RouteTags.DATABASE],
     params: MsSqlServerDiscoveryParams,
     body: MsSqlServerDiscoverRequestBody,
+    summary: 'Discover MSSQL',
     description: 'Discover Microsoft SQL Server',
     response: {
         200: MsSqlServerDiscoveryResponse
@@ -32,7 +33,8 @@ const PostSqlServerSchema = {
 
 const GetDatabasesSchema = {
     ...baseRequest,
-    description: 'List of Databases',
+    summary: 'List databases',
+    description: 'List Databases for the given resource',
     response: {
         200: DatabasesResponseBody
     }
@@ -42,7 +44,8 @@ const DeleteDatabaseSchema = {
     headers: DatabaseHeaders,
     tags: [RouteTags.DATABASE],
     params: DatabaseParams,
-    description: 'Remove the given MS SQL Server resource',
+    summary: 'Remove MSSQL resource',
+    description: 'Remove the given MSSQL Server resource',
     response: {
         200: DatabaseDeleteResponseBody
     }
@@ -50,7 +53,8 @@ const DeleteDatabaseSchema = {
 
 const GetServerSummarySchema = {
     ...baseRequest,
-    description: 'Summary of database',
+    summary: 'Get MSSQL summary',
+    description: 'Get MSSQL summary of the given resource',
     response: {
         200: ServerSummaryResponse
     }
@@ -58,6 +62,7 @@ const GetServerSummarySchema = {
 
 const DatabaseUtilisationResponseSchema = {
     ...baseRequest,
+    summary: 'Get MSSQL resource utilisation',
     description: 'Database Resource(CPU, Storage, Memory) Utilisation',
     response: {
         200: UtilisationResponseBody
@@ -67,7 +72,8 @@ const DatabaseUtilisationResponseSchema = {
 const GetTablesSchema = {
     ...baseRequest,
     params: Tablesparams,
-    description: 'List of tables in a database',
+    summary: 'List tables',
+    description: 'List of tables in the given database',
     response: {
         200: TablesResponseBody
     }
