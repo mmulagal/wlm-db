@@ -3,8 +3,14 @@ import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
-import { deploymentJobsCount, listDeployments, deleteDeploymentJobById } from '../lib/database/db';
-import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes, NOT_AVAILABLE, AWS_REGIONS } from '../utils/consts';
+import { deploymentJobsCount, deleteDeploymentJobById, listDeployments, findFirstDeployment } from '../lib/database/db';
+import {
+    DEPLOYMENT_JOBS_STATUS_FILTER,
+    HttpErrorCodes,
+    NOT_AVAILABLE,
+    AWS_REGIONS,
+    API_PAGE_SIZE
+} from '../utils/consts';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
@@ -38,7 +44,7 @@ async function getDeploymentJobsCount(accountId: string, duration: number = 90) 
     }
 }
 
-async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
+async function getDeploymentJobsSummary(accountId: string, statuses?: string, nextToken?: string) {
     logger.info('Getting deployment jobs summary based on statuses', accountId, statuses);
 
     let deploymentStatuses: Array<DEPLOYMENT_STATUS> | undefined;
@@ -47,7 +53,16 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         deploymentStatuses = statuses?.toUpperCase()?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
     }
-    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses, true);
+
+    const deploymentDetails = await listDeployments(
+        accountId,
+        undefined,
+        undefined,
+        deploymentStatuses,
+        true,
+        API_PAGE_SIZE,
+        nextToken
+    );
 
     if (isEmpty(deploymentDetails)) {
         logger.error(`No deployments found for account ${accountId} with statuses ${statuses}`);
@@ -77,7 +92,13 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         })
     );
 
-    return { count: response.length, items: response, nextToken: '' };
+    const lastIndex = response.length - 1;
+    const hasNextPage = response.length === API_PAGE_SIZE;
+    nextToken = hasNextPage ? response[lastIndex].id : undefined;
+
+    const remainingRecord = hasNextPage ? findFirstDeployment(nextToken, accountId, deploymentStatuses, true) : null;
+
+    return { count: response.length, items: response, nextToken: remainingRecord ? nextToken : undefined };
 }
 
 async function deleteDeploymentJob(accountId: string, jobId: string) {

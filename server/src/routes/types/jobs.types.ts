@@ -5,7 +5,8 @@ const DeploymentJobsCountQueryString = Type.Object({
 });
 
 const DeploymentJobsSummaryQueryString = Type.Object({
-    statuses: Type.Optional(Type.String())
+    statuses: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String())
 });
 
 const DeploymentJobsSummaryResponse = Type.Object({
@@ -27,7 +28,7 @@ type DeploymentJobsSummaryResponseType = Static<typeof DeploymentJobsSummaryResp
 const DeploymentJobsSummaryListResponse = Type.Object({
     count: Type.Number(),
     items: Type.Array(DeploymentJobsSummaryResponse),
-    nextToken: Type.String()
+    nextToken: Type.Optional(Type.String())
 });
 
 type DeploymentJobsSummaryListResponseType = Static<typeof DeploymentJobsSummaryListResponse>;

@@ -56,7 +56,9 @@ async function listDeployments(
     deploymentId?: string,
     deploymentName?: string,
     statuses?: Array<DEPLOYMENT_STATUS>,
-    parentStackOnly?: boolean
+    parentStackOnly?: boolean,
+    pageSize?: number,
+    nextToken?: string
 ) {
     logger.info('Listing deployments', { accountId, deploymentId, deploymentName, statuses });
     return prisma.client.deployment.findMany({
@@ -72,12 +74,41 @@ async function listDeployments(
             ...(parentStackOnly && { parent_deployment_id: null })
         },
         orderBy: {
-            start_time: 'desc'
+            id: 'asc'
         },
-        take: 100
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && { cursor: nextToken ? { id: nextToken } : undefined }),
+        skip: nextToken ? 1 : 0
     });
 }
 
+async function findFirstDeployment(
+    nextToken?: string,
+    accountId?: string,
+    statuses?: Array<DEPLOYMENT_STATUS>,
+    parentStackOnly?: boolean
+) {
+    logger.info('Verifying if there are any records with id greater than nextToken for given statuses ', {
+        accountId,
+        nextToken,
+        statuses
+    });
+    return prisma.client.deployment.findFirst({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(statuses && {
+                deployment_status: {
+                    in: statuses
+                }
+            }),
+            ...(parentStackOnly && { parent_deployment_id: null }),
+            id: { gt: nextToken }
+        },
+        select: {
+            id: true
+        }
+    });
+}
 async function createDeployment(accountId: string, params: Deployment) {
     logger.info('Creating deployment', { accountId, params });
     const {
@@ -409,5 +440,6 @@ export {
     deleteConfig,
     listRelationshipsResources,
     deploymentJobsCount,
-    deleteDeploymentJobById
+    deleteDeploymentJobById,
+    findFirstDeployment
 };
