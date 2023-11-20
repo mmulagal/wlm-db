@@ -233,7 +233,6 @@ async function validate(
             }
             case SQL_DEPLOYMENT_MODE: {
                 response = await validateSqlDeploymentType(params[key], key);
-                logger.info('SQL DEP RESP>>', response);
                 break;
             }
             case FSX_DEPLOYMENT_MODE: {

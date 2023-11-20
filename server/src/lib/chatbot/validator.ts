@@ -214,24 +214,13 @@ async function validateVpcId(
             };
         }
         case AZ_2: {
+            const azs2 = azs.filter(az => az.value !== az2);
             if (!az2) {
                 return {
                     key,
                     status: 'error',
                     message: 'Select an Availability Zone for the secondary SQL node.',
-                    allowedValues: azs
-                };
-            }
-
-            const azs2 = azs.filter(az => az.value !== az2);
-
-            if (isEmpty(azs2)) {
-                return {
-                    key,
-                    status: 'error',
-                    message:
-                        'This VPC contains only one subnet, please select a different VPC to support FCI deployment',
-                    allowedValues: []
+                    allowedValues: azs2
                 };
             }
 
