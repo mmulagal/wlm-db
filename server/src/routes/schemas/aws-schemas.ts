@@ -26,7 +26,7 @@ const baseRequest = {
 const GetVpcsListSchema = {
     ...baseRequest,
     summary: 'List VPCs',
-    description: 'List VPCs in the given region',
+    description: 'List VPCs in the given AWS region',
     querystring: AwsVpcQueryString,
     response: {
         200: VpcListResponse
@@ -37,7 +37,7 @@ const GetVpcsListSchema = {
 const GetAdsSchema = {
     ...baseRequest,
     summary: 'List AWS managed Active Directories',
-    description: 'List AWS managed Active Directories in the given region',
+    description: 'List AWS managed Active Directories in the given AWS region',
     response: {
         200: AdsResponse
     }
@@ -47,7 +47,7 @@ const GetAdsSchema = {
 const GetAmiSchema = {
     ...baseRequest,
     summary: 'List AMIs',
-    description: 'List AMIs in the given region for the provided parameters',
+    description: 'List AMIs in the given AWS region for the provided parameters',
     querystring: AmiQueryString,
     response: {
         200: AmiResponse
@@ -68,7 +68,7 @@ const GetInstanceTypesSchema = {
 const GetSnsTopicsSchema = {
     ...baseRequest,
     summary: 'Get SNS Topics',
-    description: 'Get SNS Topics in the given region',
+    description: 'Get SNS Topics in the given AWS region',
     response: {
         200: SnsResponse
     }
@@ -78,7 +78,7 @@ const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AwsParams,
     summary: 'List AWS regions that supports FSx',
-    descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
+    descriptions: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse
     }
@@ -87,7 +87,7 @@ const GetFSxRegionsSchema = {
 const GetFSxFileSystemsSchema = {
     tags: [RouteTags.AWS],
     params: FSxFileSystemParams,
-    summary: 'List FSx for NetApp ONTAP',
+    summary: 'List FSx for NetApp ONTAP filesystems',
     description: 'List Amazon FSx for NetApp ONTAP filesystems',
     response: {
         200: FSxFileSystemsResponse
@@ -98,7 +98,7 @@ const GetFSxFileSystemsSchema = {
 const GetKmsKeysListSchema = {
     ...baseRequest,
     summary: 'List KMS keys',
-    description: 'List KMS Keys in the given region',
+    description: 'List KMS Keys in the given AWS region',
     response: {
         200: KmsKeysListResponse
     }
@@ -106,8 +106,8 @@ const GetKmsKeysListSchema = {
 
 const GetKeyPairsSchema = {
     ...baseRequest,
-    summary: 'List key-Pairs',
-    description: 'List Key-Pairs in the given region',
+    summary: 'List Key Pairs',
+    description: 'List Key Pairs in the given AWS region',
     response: {
         200: KeyPairsResponse
     }

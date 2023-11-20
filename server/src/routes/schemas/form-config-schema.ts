@@ -24,8 +24,8 @@ const FormConfigListSchema = {
 const FormConfigObjectSchema = {
     tags: ['Config'],
     params: FormConfigObjectParams,
-    summary: 'Get individual saved configuration',
-    description: 'Get individual saved configuration detail for given Id',
+    summary: 'Get a saved configuration',
+    description: 'Get a saved configuration detail for given Id',
     response: {
         200: FormConfigObjectResponse
     }
@@ -34,7 +34,7 @@ const FormConfigObjectSchema = {
 const FormConfigObjectDeleteSchema = {
     tags: ['Config'],
     params: FormConfigObjectParams,
-    summary: 'Delete individual saved configuration',
+    summary: 'Delete a saved configuration',
     description: 'Delete saved configuration for the given Id',
     response: {
         200: FormConfigObjectDeleteResponse
@@ -55,7 +55,7 @@ const FormConfigCreateSchema = {
 const FormConfigUpdateSchema = {
     tags: ['Config'],
     params: FormConfigUpdateParams,
-    summary: 'Update individual saved configuration',
+    summary: 'Update a saved configuration',
     description: 'Update the configuration of given Id with data provided',
     body: UpdateConfigRequestBody,
     response: {

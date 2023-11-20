@@ -34,7 +34,7 @@ const CloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
     summary: 'Create CloudFormation template',
-    description: 'CloudFormation template URL, YAML and CLI format for user deployment',
+    description: 'Create CloudFormation template in URL, YAML and CLI format for user deployment',
     body: CloudFormationStaticTemplateRequestBody,
     response: {
         200: CloudFormationStaticTemplateResponse
