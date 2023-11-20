@@ -13,6 +13,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppDispatch } from '../../../store/storeHooks';
 import { databaseHomeApi } from '../../../utils/apiService';
 import { addInitialData, initialDBHomepageState } from '../../../store/workloadFactory/databaseHomeSlice';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 
 
 const TopBarButton = () => {
@@ -26,17 +27,9 @@ const TopBarButton = () => {
     
     return (
         <div className={styles.topBarButtons}>
-            {/* <Button
-                variant="secondary"
-                onClick={() => {
-                    refreshPage();
-                }}
-            >
-                <div className={styles.buttonStyle}>
-                    <SpaceShip />
-                    {'Refresh'}
-                </div>
-            </Button> */}
+            <div className={styles.refreshIcon} onClick={() => {refreshPage()}}>
+                <RefreshIcon />                      
+            </div>
             <Button
                 variant="secondary"
                 onClick={() => {
