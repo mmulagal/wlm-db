@@ -62,12 +62,11 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
             }
             default: {
                 if (response.success === false) {
-                    const messages =
-                        response?.message?.split('Response is not JSON:') ||
-                        response?.message?.split('response:') ||
-                        [];
+                    const invalidResponse =
+                        response?.message?.includes('Response is not JSON') ||
+                        response?.message?.includes('JSON validation failed');
                     return {
-                        message: messages[messages.length - 1] || 'Sorry! I could not understand your request',
+                        message: invalidResponse ? 'Sorry! I could not understand your request' : response.message,
                         status: 'error'
                     };
                 }

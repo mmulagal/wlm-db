@@ -51,7 +51,10 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
-    MULTI_AZ
+    MULTI_AZ,
+    OS_VERSION,
+    DATABASE_EDITION,
+    DATABASE_VERSION
 } from './consts';
 
 const logger = getLogger();
@@ -98,11 +101,10 @@ async function validateParams(
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
-    let validatedParams: Params = { ...oldParams };
+    let validatedParams: Params = {};
     const promises = [];
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of schemaParams) {
-        let response: ValidationResponse | { value: any } | undefined;
         if (reqParam.required !== false) {
             const keys = Object.keys(reqParam);
             for (const key of keys) {
@@ -110,7 +112,7 @@ async function validateParams(
 
                 if (Array.isArray(reqParam[key])) {
                     const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    logger.debug('Response from Recursive Call>>>', response);
+                    logger.debug('Response from Recursive Call>>>', recursiveValidationResponse);
                     validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
                     if (recursiveValidationResponse?.errors?.length) {
                         return { errors: recursiveValidationResponse.errors, params: validatedParams };
@@ -192,8 +194,19 @@ async function validate(
                 response = await validateKeyName(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
+            case OS_VERSION:
+            case DATABASE_EDITION:
+            case DATABASE_VERSION:
             case SQL_AMI: {
-                response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
+                response = await validateImageId(
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[SQL_AMI],
+                    params[OS_VERSION],
+                    params[DATABASE_EDITION],
+                    params[DATABASE_VERSION],
+                    key
+                );
                 break;
             }
             case AD_SCENARIO_TYPE:
@@ -267,12 +280,15 @@ async function validate(
     }
     if ((response as ValidationResponse)?.status === 'error') {
         delete params[key];
+        delete oldParams[key];
+        delete validatedParams[key];
         errors.push(response as ValidationResponse);
     }
 
     if (response?.value !== null && response?.value !== undefined) {
         validatedParams[key] = response?.value;
         params[key] = response?.value;
+        oldParams[key] = response?.value;
     }
 }
 
