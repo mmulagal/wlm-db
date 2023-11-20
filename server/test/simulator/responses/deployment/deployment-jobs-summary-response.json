@@ -8,7 +8,7 @@
             "name": "930cbff",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -21,7 +21,7 @@
             "name": "692ef02",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "US East (N. Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -34,7 +34,7 @@
             "name": "56d3afa",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -47,7 +47,7 @@
             "name": "77f8332",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -60,7 +60,7 @@
             "name": "b732d8b",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -73,7 +73,7 @@
             "name": "c953d5f",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -86,7 +86,7 @@
             "name": "a996c86",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -99,7 +99,7 @@
             "name": "6642ae9",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -112,7 +112,7 @@
             "name": "6f01ccf",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -125,7 +125,7 @@
             "name": "14bc1bd",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -138,7 +138,7 @@
             "name": "e07a8e0",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -151,7 +151,7 @@
             "name": "9b4dcef",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -164,7 +164,7 @@
             "name": "3bfa7f4",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -177,7 +177,7 @@
             "name": "04d118e",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -190,7 +190,7 @@
             "name": "1ac27f2",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -203,7 +203,7 @@
             "name": "513c963",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -216,7 +216,7 @@
             "name": "6bfed3d",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -229,7 +229,7 @@
             "name": "78fbcb9",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -242,7 +242,7 @@
             "name": "4f81b0d",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -255,7 +255,7 @@
             "name": "e083b6f",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -268,7 +268,7 @@
             "name": "ec72e1b",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -281,7 +281,7 @@
             "name": "ba29b31",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -294,7 +294,7 @@
             "name": "9820273",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -307,7 +307,7 @@
             "name": "928550b",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -320,7 +320,7 @@
             "name": "3de4855",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -333,7 +333,7 @@
             "name": "6eb9cec",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -346,7 +346,7 @@
             "name": "4582046",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -359,7 +359,7 @@
             "name": "fc8b3b6",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -372,7 +372,7 @@
             "name": "25985eb",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -385,7 +385,7 @@
             "name": "465f947",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -398,7 +398,7 @@
             "name": "405a7c3",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -411,7 +411,7 @@
             "name": "645449c",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"
@@ -424,7 +424,7 @@
             "name": "c5e3c60",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -437,7 +437,7 @@
             "name": "11bba33",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
                 "fileSystemType": "FSx ONTAP"
@@ -450,7 +450,7 @@
             "name": "3b3025d",
             "status": "CREATE_IN_PROGRESS",
             "metadata": {
-                "region": "region",
+                "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
                 "fileSystemType": "FSx ONTAP"

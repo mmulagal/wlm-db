@@ -211,6 +211,16 @@ const SECRET_WORDS = [
     'serviceAccountPassword'
 ];
 
+const SECRET_STRING_WORDS = [
+    'param_FSxAdminPassword',
+    'param_SQLServiceAccountPassword',
+    'param_DomainAdminPassword',
+    'domainPassword',
+    'serviceAccountPassword',
+    'fsxPassword',
+    'password'
+];
+
 const SQL_AMI_NAMES = [
     'Windows_Server-2016-English-Full-SQL_2017_Enterprise*',
     'Windows_Server-2016-English-Full-SQL_2019_Standard*',
@@ -545,6 +555,7 @@ const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not f
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
 
 const CAPABILITY_IAM = 'CAPABILITY_IAM';
+const CAPABILITY_NAMED_IAM = 'CAPABILITY_NAMED_IAM';
 
 // Signed URL Valid for 24 hours
 const S3_BUCKET_SIGNED_URL_EXPIRY = moment.duration(`${config.get('signed-url-expiry-hours')}`, 'hours').asSeconds();
@@ -829,13 +840,20 @@ const DEPLOYMENT_JOBS_FAILED_STATUS = [
     'UPDATE_ROLLBACK_FAILED'
 ];
 
+const DEPLOYMENT_JOBS_LIST_FILTER: Array<DEPLOYMENT_STATUS> = [
+    'CREATE_IN_PROGRESS',
+    'CREATE_FAILED',
+    'UPDATE_IN_PROGRESS',
+    'UPDATE_FAILED'
+];
+
 const NOT_AVAILABLE = 'N/A';
 
-const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [
-    'DomainAdminPassword',
-    'SQLServiceAccountPassword',
-    'FSxAdminPassword'
-];
+const DOMAIN_ADMIN_PASSWORD = 'DomainAdminPassword';
+const SQL_SA_PASSWORD = 'SQLServiceAccountPassword';
+const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
+
+const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
 const DATABASE_TYPE = 'Microsoft SQL Server';
 export {
@@ -863,6 +881,7 @@ export {
     AWSQueryFields,
     SQL_AMI_NAMES,
     SECRET_WORDS,
+    SECRET_STRING_WORDS,
     DEMO_ACCOUNT_ID,
     SECRETS,
     AUTH0_AUDIENCE,
@@ -1023,7 +1042,12 @@ export {
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
+    DEPLOYMENT_JOBS_LIST_FILTER,
     DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
-    CONFIG_NOT_FOUND
+    CONFIG_NOT_FOUND,
+    DOMAIN_ADMIN_PASSWORD,
+    SQL_SA_PASSWORD,
+    FSX_ADMIN_PASSWORD,
+    CAPABILITY_NAMED_IAM
 };

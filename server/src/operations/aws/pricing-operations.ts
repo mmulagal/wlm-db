@@ -432,7 +432,7 @@ function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentM
 }
 
 function calculateFsxStorageCost(instanceRate: number, diskSize: number): number {
-    logger.debug('Calculating fsx storage cost', { instanceRate, diskSize });
+    logger.info('Calculating fsx storage cost', { instanceRate, diskSize });
 
     return getPriceUtil(instanceRate, diskSize);
 }
@@ -540,18 +540,25 @@ async function calculatePrice(
     let fsxStorageCost = 0;
     let fsxThroughputCost = 0;
     let fsxDiskSizes;
-    if (storage && storage.diskSize) {
+    let fsxDisksize;
+    if (storage) {
         // If the input size is database size, we need to calculate the total FSX storage capacity
         // In cases where the input is total FSx Storage capacity, we don't this calculation.
-        fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
-        storage.diskSize = fsxDiskSizes.FSxStorageCapacity;
+        if (storage.diskSize) {
+            fsxDiskSizes = calculateFsxStorageCapacity(storage.diskSize);
+            fsxDisksize = fsxDiskSizes.FSxStorageCapacity;
+        } else {
+            fsxDisksize = storage?.storageCapacity;
+        }
 
-        const fsxDisksize = storage?.diskSize || MIN_DISKSIZE;
+        fsxDisksize = fsxDisksize || MIN_DISKSIZE;
         const fsxThroughput = storage?.throughput || MIN_THROUGHPUT;
         let fsxIops = storage?.iops || 3 * fsxDisksize;
 
         fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
-
+        // Adding this to test demo price value will revert after check
+        logger.info('Calculating Fsx Price for demo', fsxThroughput, fsxDisksize, fsxIops);
+        logger.info('FSx cost value for demo', fsxStorageCost);
         if (fsxIops > 3 * fsxDisksize) {
             fsxIops -= 3 * fsxDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
         } else {
@@ -566,6 +573,7 @@ async function calculatePrice(
             fsxThroughput,
             fsxIops
         );
+        logger.info('FSx  throughput cost value for demo', fsxThroughputCost);
     }
 
     return {

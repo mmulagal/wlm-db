@@ -25,6 +25,7 @@ const baseRequest = {
 // GET VPC List Schema
 const GetVpcsListSchema = {
     ...baseRequest,
+    summary: 'List Vpcs',
     description: 'List Vpcs in a region',
     querystring: AwsVpcQueryString,
     response: {

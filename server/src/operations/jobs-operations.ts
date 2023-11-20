@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
 import { deploymentJobsCount, listDeployments, deleteDeploymentJobById } from '../lib/database/db';
-import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes, NOT_AVAILABLE } from '../utils/consts';
+import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes, NOT_AVAILABLE, AWS_REGIONS } from '../utils/consts';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
@@ -69,7 +69,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
             name: (metaData as JSONObject).resourceName as string,
             status,
             metadata: {
-                region: deploymentRegion,
+                region: AWS_REGIONS.has(deploymentRegion) ? AWS_REGIONS.get(deploymentRegion)! : deploymentRegion,
                 serverType: (metaData as JSONObject).databaseType as string,
                 fileSystemType: (metaData as JSONObject).fileSystemType as string,
                 serverInstallationMode: deploymentModel === null ? NOT_AVAILABLE : deploymentModel

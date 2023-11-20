@@ -4,6 +4,7 @@
     "to": "/databases",
     "hasMenuItem": true,
     "hasPolicies": true,
+    "apiDocUrl": "https://staging.api.workloads.netapp.com/wlmdb/documentation/json",
     "stageIntegrations": [
         {
             "path": "/",

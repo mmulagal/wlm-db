@@ -11,10 +11,16 @@ const PricingServiceRequest = Type.Object({
     storage: Type.Optional(
         Type.Object({
             regionCode: Type.String(),
-            diskSize: Type.Number({ description: 'Size is in GiB' }),
+            diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
             throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
             iops: Type.Optional(Type.Number()),
-            deploymentOption: Type.Optional(Type.String({ enum: [SINGLE_AZ, MULTI_AZ] }))
+            deploymentOption: Type.Optional(Type.String({ enum: [SINGLE_AZ, MULTI_AZ] })),
+            storageCapacity: Type.Optional(
+                Type.Number({
+                    description:
+                        'The total FSxN storage capacity in GB. "storageCapacity" and "diskSize" are mutually exclusive'
+                })
+            )
         })
     ),
     vpc: Type.Optional(

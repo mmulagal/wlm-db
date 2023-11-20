@@ -13,7 +13,8 @@ import {
     describeFSxFileSystems,
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
-    describeFSxBackups
+    describeFSxBackups,
+    describeFSxN
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
@@ -43,5 +44,13 @@ describe('Testcases for Amazon FSx resources', () => {
     it('List FSx Backups', async () => {
         const response = await describeFSxBackups(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, [VOLUME_ID]);
         expect(response).toEqual(fsxbackups);
+    });
+
+    it('Describe a FSxN filesystem', async () => {
+        const response = await describeFSxN(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {
+            FileSystemIds: [FSX_FILESYSTEM_ID]
+        });
+
+        expect(response).toEqual(fsxFilesystems.FileSystems[0]);
     });
 });

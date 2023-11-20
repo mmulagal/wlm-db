@@ -7,6 +7,7 @@ const PromptRequestBodySchema = Type.Object({
 
 const queryBotResponse = Type.Object({
     message: Type.Optional(Type.String()),
+    status: Type.Optional(Type.String()),
     errors: Type.Optional(
         Type.Array(
             Type.Object({
@@ -30,6 +31,7 @@ const queryBotResponse = Type.Object({
         Type.Object({
             complete: Type.Optional(Type.Boolean()),
             type: Type.Optional(Type.String()),
+            userParams: Type.Optional(Type.Any()),
             params: Type.Any()
         })
     )
