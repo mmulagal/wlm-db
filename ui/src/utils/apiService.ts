@@ -167,12 +167,13 @@ export const awsApi = createApi({
                     osVersion,
                     databaseType,
                     databaseEdition,
-                    databaseVersion
+                    databaseVersion,
+                    filterAmis
                 }) => ({
                     url: `credentials/${credentialId}/regions/${region}/amis?osType=${osType}&${
-                        osVersion ? `osVersion=${osVersion}&` : ''
-                    }databaseType=${databaseType}&${databaseEdition ? `databaseEdition=${databaseEdition}&` : ''}${
-                        databaseVersion ? `databaseVersion=${databaseVersion}` : ''
+                        filterAmis ? `osVersion=${osVersion}&` : ''
+                    }databaseType=${databaseType}&${filterAmis ? `databaseEdition=${databaseEdition}&` : ''}${
+                        filterAmis ? `databaseVersion=${databaseVersion}` : ''
                     }`
                 })
             }),
@@ -277,7 +278,7 @@ export const configApi = createApi({
             }),
             getConfigData: builder.query({
                 query: ({ configId }) => ({ url: `configs/${configId}` }),
-                transformResponse: (response:any) => {
+                transformResponse: (response: any) => {
                     // For load config generate random DB name as saved config name can't be repeated for deployment
                     if (response && response?.data) {
                         response.data.dbName = generateRandomDBName();

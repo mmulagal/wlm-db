@@ -110,6 +110,7 @@ const Chatbot = () => {
 
     useEffect(() => {
         if (loadConfigClicked) {
+            setIsBotReplying(true);
             sendMsgToBot({
                 payload: {
                     prompt: wrapContext(
@@ -156,8 +157,8 @@ const Chatbot = () => {
                         }
 
                         dispatch(setMessages(updatedMessages));
-                        setIsBotReplying(false);
                     }
+                    setIsBotReplying(false);
                     dispatch(setLoadConfigClicked(false));
                 })
                 .catch((error: any) => {
@@ -561,10 +562,7 @@ const Chatbot = () => {
     };
 
     useEffect(() => {
-        setIsBotReplying(isReceivingMsg);
-    }, [isReceivingMsg]);
-
-    useEffect(() => {
+        setIsBotReplying(true);
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
         // handleSendMsg(
@@ -747,7 +745,7 @@ const Chatbot = () => {
             {/* <Header /> */}
             <div className={styles['page-content']}>
                 <ChatBox
-                    isBotReplying={isBotReplying}
+                    isBotReplying={isBotReplying || isReceivingMsg}
                     handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
                     sendMsg={sendMsg}
                     messagesToShow={messagesToShow ? messagesToShow : []}
