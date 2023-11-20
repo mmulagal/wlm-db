@@ -1,16 +1,16 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
-import { STANDALONE, FCI, SINGLE_AZ, MULTI_AZ } from '../../utils/consts';
+import { STANDALONE, FCI, SINGLE_AZ, MULTI_AZ, SQL_STD, SQL_ENT, SQL_WEB } from '../../utils/consts';
 
 const PricingServiceRequest = Type.Object({
     compute: Type.Object({
-        regionCode: Type.String(),
-        instanceType: Type.String(),
-        sqlSoftwareType: Type.String(),
+        regionCode: Type.String({ minLength: 1 }),
+        instanceType: Type.String({ minLength: 1 }),
+        sqlSoftwareType: Type.String({ enum: [SQL_STD, SQL_ENT, SQL_WEB] }),
         sqlDeploymentMode: Type.String({ enum: [FCI, STANDALONE] })
     }),
     storage: Type.Optional(
         Type.Object({
-            regionCode: Type.String(),
+            regionCode: Type.String({ minLength: 1 }),
             diskSize: Type.Number({ description: 'Database "data" volume size in GiB' }),
             throughput: Type.Optional(Type.Number({ description: 'Throughput is in MBps' })),
             iops: Type.Optional(Type.Number()),
@@ -25,7 +25,7 @@ const PricingServiceRequest = Type.Object({
     ),
     vpc: Type.Optional(
         Type.Object({
-            regionCode: Type.String()
+            regionCode: Type.String({ minLength: 1 })
         })
     )
 });
