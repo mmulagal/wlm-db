@@ -24,7 +24,7 @@ const PostSqlServerSchema = {
     tags: [RouteTags.DATABASE],
     params: MsSqlServerDiscoveryParams,
     body: MsSqlServerDiscoverRequestBody,
-    summary: 'Discover MS SQL',
+    summary: 'Discover MSSQL',
     description: 'Discover Microsoft SQL Server',
     response: {
         200: MsSqlServerDiscoveryResponse
@@ -44,8 +44,8 @@ const DeleteDatabaseSchema = {
     headers: DatabaseHeaders,
     tags: [RouteTags.DATABASE],
     params: DatabaseParams,
-    summary: 'Remove MS SQL resource',
-    description: 'Remove the given MS SQL Server resource',
+    summary: 'Remove MSSQL resource',
+    description: 'Remove the given MSSQL Server resource',
     response: {
         200: DatabaseDeleteResponseBody
     }
@@ -53,8 +53,8 @@ const DeleteDatabaseSchema = {
 
 const GetServerSummarySchema = {
     ...baseRequest,
-    summary: 'Get MS SQL summary',
-    description: 'Get MS SQL summary of the given resource',
+    summary: 'Get MSSQL summary',
+    description: 'Get MSSQL summary of the given resource',
     response: {
         200: ServerSummaryResponse
     }
@@ -62,7 +62,7 @@ const GetServerSummarySchema = {
 
 const DatabaseUtilisationResponseSchema = {
     ...baseRequest,
-    summary: 'Get MS SQL resource utilisation',
+    summary: 'Get MSSQL resource utilisation',
     description: 'Database Resource(CPU, Storage, Memory) Utilisation',
     response: {
         200: UtilisationResponseBody

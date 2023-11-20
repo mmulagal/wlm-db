@@ -36,8 +36,8 @@ const GetVpcsListSchema = {
 // Get AD Schema
 const GetAdsSchema = {
     ...baseRequest,
-    summary: 'List Active Directories',
-    description: 'List Active Directories in the given region',
+    summary: 'List AWS managed Active Directories',
+    description: 'List AWS managed Active Directories in the given region',
     response: {
         200: AdsResponse
     }
@@ -54,11 +54,11 @@ const GetAmiSchema = {
     }
 };
 
-// GET EC2 instncetypes
+// GET EC2 instance types
 const GetInstanceTypesSchema = {
     ...baseRequest,
-    summary: 'List EC2 instnce types',
-    description: 'Get EC2 instnce types in the region supported for MS SQL deployment',
+    summary: 'List EC2 instance types',
+    description: 'Get EC2 instance types in the region supported for MS SQL deployment',
     response: {
         200: InstanceTypes
     }
@@ -87,7 +87,7 @@ const GetFSxRegionsSchema = {
 const GetFSxFileSystemsSchema = {
     tags: [RouteTags.AWS],
     params: FSxFileSystemParams,
-    summary: 'List FSx for Netapp ONTAP',
+    summary: 'List FSx for NetApp ONTAP',
     description: 'List Amazon FSx for NetApp ONTAP filesystems',
     response: {
         200: FSxFileSystemsResponse

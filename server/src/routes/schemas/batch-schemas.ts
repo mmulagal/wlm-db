@@ -10,8 +10,8 @@ const BaseRequest = {
 // Batch Schema
 const BatchSchema = {
     ...BaseRequest,
-    summary: 'Make concurrent api calls',
-    description: 'Make the batch of api calls concurrently',
+    summary: 'Make concurrent API calls',
+    description: 'Make the batch of API calls concurrently',
     body: BatchRequestBody,
     response: {
         200: BatchResponse
