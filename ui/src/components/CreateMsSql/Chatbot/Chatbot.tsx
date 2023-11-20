@@ -197,14 +197,14 @@ const Chatbot = () => {
                         dispatch(setSelectedCredentials(value ? option : null));
                     }
                     break;
-                case 'fsxDeploymentMode':
+                case 'sqlDeploymentMode':
                     if (
-                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'SINGLE_AZ_1') ||
-                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'MULTI_AZ_1')
+                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'standalone') ||
+                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'fci')
                     ) {
                         dispatch(
                             setSelectedDBDeploymentModel(
-                                value === 'SINGLE_AZ_1'
+                                value === 'standalone'
                                     ? {
                                           label: GENERAL.SINGLE_INSTANCE,
                                           value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
@@ -504,7 +504,8 @@ const Chatbot = () => {
                     (currentIntent?.type
                         ? wrapContext(
                               `${currentIntent.type} with params ${JSON.stringify({
-                                  ...currentIntent.params
+                                  ...currentIntent.params,
+                                  ...(currentIntent.userParams || {})
                               })}`
                           ) + 'Sure!'
                         : '') + wrapContext(msg),
@@ -669,14 +670,8 @@ const Chatbot = () => {
                 .join(', ')
         });
         dispatch(setMessages(updatedMessages));
-        const objectToValidate = { ...paramObj, ...(currentIntent.userParams || {}) };
-        const msgToBot = Object.keys(objectToValidate)
-            .map(
-                key =>
-                    `Use ${key} as ${
-                        typeof objectToValidate[key] === 'object' ? objectToValidate[key].value : objectToValidate[key]
-                    }`
-            )
+        const msgToBot = Object.keys(paramObj)
+            .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
         await handleSendMsg(msgToBot, false, updatedMessages);
     };
