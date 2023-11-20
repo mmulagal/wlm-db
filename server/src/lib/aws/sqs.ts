@@ -65,7 +65,7 @@ async function deleteMessage(region: string, input: DeleteMessageCommandInput) {
     return resp;
 }
 
-// Delete message in WLMDB account
+// Get SQS queue message in WLMDB account
 async function getQueueAttribute(region: string, input: GetQueueAttributesCommandInput) {
     logger.info('Get SQS queue attributes', { region, input });
 
