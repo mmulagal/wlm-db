@@ -51,7 +51,10 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
-    MULTI_AZ
+    MULTI_AZ,
+    OS_VERSION,
+    DATABASE_EDITION,
+    DATABASE_VERSION
 } from './consts';
 
 const logger = getLogger();
@@ -192,8 +195,19 @@ async function validate(
                 response = await validateKeyName(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
+            case OS_VERSION:
+            case DATABASE_EDITION:
+            case DATABASE_VERSION:
             case SQL_AMI: {
-                response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
+                response = await validateImageId(
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[SQL_AMI],
+                    params[OS_VERSION],
+                    params[DATABASE_EDITION],
+                    params[DATABASE_VERSION],
+                    key
+                );
                 break;
             }
             case AD_SCENARIO_TYPE:
