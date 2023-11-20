@@ -456,7 +456,9 @@ async function processCloudFormationMessages() {
                                             });
                                         } catch (error) {
                                             logger.error(
-                                                `Error while updating block 1 ${id} ${resourceStatus} ${stackName}`
+                                                `Error while updating main stack with failed status: ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                    error
+                                                )}`
                                             );
                                         }
                                     } else if (
@@ -465,13 +467,12 @@ async function processCloudFormationMessages() {
                                     ) {
                                         try {
                                             await updateDeployment(accountId, id, {
-                                                deploymentName: stackName,
                                                 deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
                                                 deploymentStatusReason: resourceStatusReason
                                             });
                                         } catch (error) {
                                             logger.error(
-                                                `Error while updating block 2 ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                `Error while updating block main stack with non-failed status: ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
                                                     error
                                                 )}`
                                             );
