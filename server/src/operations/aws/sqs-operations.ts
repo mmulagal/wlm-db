@@ -128,7 +128,7 @@ async function processCloudFormationMessages() {
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, { QueueUrl: queueUrl });
 
-            logger.info(`Queue attributes: ${queueAttributes}`);
+            logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
         } catch (e) {
             logger.error(`Queue attributes error: ${e}`);
         }
