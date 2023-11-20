@@ -122,10 +122,11 @@ const MssqlApis = () => {
             credentialId: selectedCredId,
             region: selectedRegionCode,
             osType: OS_TYPE,
-            osVersion: isShowChatbot ? null : osVersion?.value,
+            osVersion: osVersion?.value,
             databaseType: DATABASE_TYPE,
-            databaseEdition: isShowChatbot ? null : dbEdition?.value,
-            databaseVersion: isShowChatbot ? null : dbVersion?.value
+            databaseEdition: dbEdition?.value,
+            databaseVersion: dbVersion?.value,
+            filterAmis: !isShowChatbot
         },
         {
             skip: licenseAmiSkip

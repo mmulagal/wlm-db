@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
-import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
+import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
 import {
     ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
@@ -125,6 +125,13 @@ async function processCloudFormationMessages() {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
+        try {
+            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, { QueueUrl: queueUrl });
+
+            logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
+        } catch (e) {
+            logger.error(`Queue attributes error: ${e}`);
+        }
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (sqsMessages) {

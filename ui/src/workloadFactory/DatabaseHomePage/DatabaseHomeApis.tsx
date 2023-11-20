@@ -142,7 +142,7 @@ const DatabaseHomeApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHostsData, databaseJobsData]);
 
-    return;
+    return <></>;
 }
 
 export default DatabaseHomeApis;
