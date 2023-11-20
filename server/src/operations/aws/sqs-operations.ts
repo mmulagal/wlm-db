@@ -126,8 +126,10 @@ async function processCloudFormationMessages() {
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
         try {
-            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, { QueueUrl: queueUrl });
-
+            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
+                QueueUrl: queueUrl,
+                AttributeNames: ['All']
+            });
             logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
         } catch (e) {
             logger.error(`Queue attributes error: ${e}`);
