@@ -771,7 +771,7 @@ const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQue
 const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
-const API_PAGE_SIZE = 50;
+const API_PAGE_SIZE = 100;
 
 const FCI_STACKNAME = 'SqlFciStack';
 const STANDALONE_STACKNAME = 'SqlStandaloneStack';
