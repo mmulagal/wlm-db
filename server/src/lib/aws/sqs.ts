@@ -7,7 +7,9 @@ import {
     ReceiveMessageCommandInput,
     paginateListQueues,
     DeleteMessageCommand,
-    DeleteMessageCommandInput
+    DeleteMessageCommandInput,
+    GetQueueAttributesCommand,
+    GetQueueAttributesCommandInput
 } from '@aws-sdk/client-sqs';
 import { compact } from 'lodash-es';
 import getLogger from '../../utils/logger';
@@ -62,4 +64,15 @@ async function deleteMessage(region: string, input: DeleteMessageCommandInput) {
 
     return resp;
 }
-export { createQueue, listQueues, receiveMessage, deleteMessage };
+
+// Delete message in WLMDB account
+async function getQueueAttribute(region: string, input: GetQueueAttributesCommandInput) {
+    logger.info('Get SQS queue attributes', { region, input });
+
+    const sqs = new SQSClient({ region });
+    const resp = await sqs.send(new GetQueueAttributesCommand(input));
+    logger.debug('Get SQS queue attributese response', resp);
+
+    return resp;
+}
+export { createQueue, listQueues, receiveMessage, deleteMessage, getQueueAttribute };
