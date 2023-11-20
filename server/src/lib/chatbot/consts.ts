@@ -214,7 +214,8 @@ const CHATBOT_UI_PARAMS_FSX = [
         fsxConfiguration: [
             {
                 [FSX_DEPLOYMENT_MODE]: {
-                    required: true
+                    required: true,
+                    dependsOn: SQL_DEPLOYMENT_MODE
                 }
             },
             {

@@ -105,7 +105,6 @@ async function validateParams(
     const promises = [];
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of schemaParams) {
-        let response: ValidationResponse | { value: any } | undefined;
         if (reqParam.required !== false) {
             const keys = Object.keys(reqParam);
             for (const key of keys) {
@@ -113,7 +112,7 @@ async function validateParams(
 
                 if (Array.isArray(reqParam[key])) {
                     const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    logger.debug('Response from Recursive Call>>>', response);
+                    logger.debug('Response from Recursive Call>>>', recursiveValidationResponse);
                     validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
                     if (recursiveValidationResponse?.errors?.length) {
                         return { errors: recursiveValidationResponse.errors, params: validatedParams };
@@ -234,6 +233,7 @@ async function validate(
             }
             case SQL_DEPLOYMENT_MODE: {
                 response = await validateSqlDeploymentType(params[key], key);
+                logger.info('SQL DEP RESP>>', response);
                 break;
             }
             case FSX_DEPLOYMENT_MODE: {
@@ -281,12 +281,15 @@ async function validate(
     }
     if ((response as ValidationResponse)?.status === 'error') {
         delete params[key];
+        delete oldParams[key];
+        delete validatedParams[key];
         errors.push(response as ValidationResponse);
     }
 
     if (response?.value !== null && response?.value !== undefined) {
         validatedParams[key] = response?.value;
         params[key] = response?.value;
+        oldParams[key] = response?.value;
     }
 }
 
