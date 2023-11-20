@@ -506,6 +506,7 @@ async function processCloudFormationMessages() {
                 logger.debug('Possibly no new messages in queue');
                 logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, inspect(err));
                 logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, err.code);
+                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error with messsage`, err.message);
                 setTimeout(() => processCloudFormationMessages(), ms(config.get<string>('sqs-poll-interval')));
             }
         }
