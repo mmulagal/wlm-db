@@ -471,7 +471,9 @@ async function processCloudFormationMessages() {
                                             });
                                         } catch (error) {
                                             logger.error(
-                                                `Error while updating block 2 ${id} ${resourceStatus} ${stackName}`
+                                                `Error while updating block 2 ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                    error
+                                                )}`
                                             );
                                         }
                                     }
