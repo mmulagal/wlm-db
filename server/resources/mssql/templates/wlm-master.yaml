@@ -640,10 +640,8 @@ Resources:
                 Effect: Allow
                 Action:
                   - ec2:Get*
-                  - ec2:DescribeTags
-                  - ec2:DescribeVolumes
+                  - ec2:Describe*
                   - ec2:CreateTags
-                  - ec2:DescribeImages
                 Resource: '*'
           PolicyName: !Join
             - ''
