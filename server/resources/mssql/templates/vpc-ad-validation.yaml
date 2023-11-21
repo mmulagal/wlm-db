@@ -307,6 +307,9 @@ Resources:
                                   - ' -DomainAdminSecretName '
                                   - !Ref 'DomainAdminSecretName'
                                   - ' -isSecretManagerSupported  1'
+                                  - ' -Stackname'
+                                  - !Ref 'AWS::StackName'
+                                  - ' -ResourceID ValidationNode1'
                                   - '"'
                             waitAfterCompletion: '0'
                         c-signal-resource:

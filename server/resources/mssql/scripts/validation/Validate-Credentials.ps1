@@ -15,12 +15,21 @@
         [Parameter(Mandatory=$false)]
         [string]$UserCredentials
 
+        [Parameter(Mandatory=$true)]
+        [string]$Stackname  
 
-
+        [Parameter(Mandatory=$true)]
+        [string]$ResourceID  
     )
-
+    
     $Failed= $false
     $FailedUsers = @()
+    
+    Start-Transcript -Path C:\cfn\log\validatecredentials.ps1.txt -Append
+
+    #get Instance ID
+    $token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri "http://169.254.169.254/latest/api/token"
+    $instanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 
     try
     {
@@ -36,6 +45,7 @@
             catch {
                 $Failed = $true
                 Write-Output @{status= "Failed"; reason="Unable to fetch secret, check secret name $DomainAdminSecretName and access to Secrets Manager"} | ConvertTo-Json -Compress
+                Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
                 exit(1)
             }
         }
@@ -92,6 +102,7 @@
     catch
     {
         Write-Output @{ status = "Failed"; reason = "Failed to join domain with provided Active Directory credentials. Exception: $_" } | ConvertTo-Json -Compress
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         exit(1)
     }
 
