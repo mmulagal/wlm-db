@@ -20,10 +20,10 @@ const TopBarButton = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const refreshPage = () => {
-        dispatch(databaseHomeApi.util.resetApiState());
-        dispatch(addInitialData(initialDBHomepageState));
-    }
+    // const refreshPage = () => {
+    //     dispatch(databaseHomeApi.util.resetApiState());
+    //     dispatch(addInitialData(initialDBHomepageState));
+    // }
     
     return (
         <div className={styles.topBarButtons}>
