@@ -126,7 +126,8 @@ enum HttpErrorCodes {
     NOT_FOUND = 404,
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
-    VALIDATION_ERROR = 422
+    VALIDATION_ERROR = 422,
+    SERVICE_UNAVAILABLE = 503
 }
 
 enum SqlServerDeploymentModel {
