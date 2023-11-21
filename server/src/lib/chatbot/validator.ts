@@ -295,34 +295,35 @@ async function validateVpcId(
                 value: key === PRIVATE_SUBNET_1 ? subnet1 : subnet2
             };
         }
-        case ROUTE_TABLE_1:
+        case ROUTE_TABLE_1: {
+            return {
+                value: isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId
+            };
+        }
         case ROUTE_TABLE_2: {
-            const routeTable1 = isValidVpc.subnets?.find(
-                ({ id }) => key === ROUTE_TABLE_1 && id === subnet1
-            )?.routeTableId;
-            const routeTable2 = isValidVpc.subnets?.find(
-                ({ id }) => key === ROUTE_TABLE_2 && id === subnet2
-            )?.routeTableId;
+            const routeTable1 = isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId;
+            const routeTable2 = isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId;
 
             if (routeTable1 === routeTable2) {
                 return {
-                    key,
+                    key: PRIVATE_SUBNET_2,
                     status: 'error',
                     message:
-                        'AWS FSx requires route tables to be different for subnets in multi-zone deployment. Select a different subnet',
+                        'AWS FSx requires route tables to be different for subnets in multi-zone deployment. Select a different subnet for secondary node ',
                     allowedValues: uniqBy(
-                        isValidVpc.subnets?.map(({ id, name }) => ({
-                            label: name,
-                            value: id
-                        })),
+                        isValidVpc.subnets
+                            ?.filter(({ availabilityZone }) => availabilityZone === az2)
+                            ?.map(({ id, name }) => ({
+                                label: name,
+                                value: id
+                            })),
                         'value'
                     )
                 };
             }
 
             return {
-                value: isValidVpc.subnets?.find(({ id }) => (key === ROUTE_TABLE_1 ? id === subnet1 : id === subnet2))
-                    ?.routeTableId
+                value: isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId
             };
         }
         default:
@@ -372,10 +373,8 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
         ({ name }) =>
             (name.includes('Windows_Server-2016') || name.includes('Windows_Server-2019')) &&
             (name.includes('SQL_2016') || name.includes('SQL_2019') || name.includes('SQL_2022')) &&
-            name.includes('Enterprise') &&
-            name.includes('Standard')
+            (name.includes('Enterprise') || name.includes('Standard'))
     );
-
     if (!imageId) {
         return {
             key,
