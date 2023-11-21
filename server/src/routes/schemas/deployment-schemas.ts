@@ -21,7 +21,7 @@ const baseRequest = {
 // Create CloudFormation template for user deployment Schema
 const CreateCloudFormationTemplateSchema = {
     ...baseRequest,
-    summary: 'Create CloudFormation template',
+    summary: 'Create CloudFormation template URL',
     description: 'Create CloudFormation template in a region for existing VPC',
     body: CloudFormationTemplateRequestBody,
     response: {

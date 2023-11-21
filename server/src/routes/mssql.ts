@@ -1,7 +1,9 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    DatabaseUtilisationResponseSchema,
+    DatabaseCpuUtilisationResponseSchema,
+    DatabaseMemoryUtilisationResponseSchema,
+    DatabaseStorageUtilisationResponseSchema,
     GetDatabasesSchema,
     GetServerSummarySchema,
     GetTablesSchema,
@@ -61,7 +63,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
-        { schema: DatabaseUtilisationResponseSchema },
+        { schema: DatabaseCpuUtilisationResponseSchema },
         async (request, reply) => {
             const {
                 params: { resourceId }
@@ -73,7 +75,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/memory`,
-        { schema: DatabaseUtilisationResponseSchema },
+        { schema: DatabaseMemoryUtilisationResponseSchema },
         async (request, reply) => {
             const {
                 params: { resourceId }
@@ -85,7 +87,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
 
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/disk`,
-        { schema: DatabaseUtilisationResponseSchema },
+        { schema: DatabaseStorageUtilisationResponseSchema },
         async (request, reply) => {
             const {
                 params: { resourceId }
