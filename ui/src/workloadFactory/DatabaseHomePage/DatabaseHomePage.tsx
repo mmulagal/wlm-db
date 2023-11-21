@@ -25,7 +25,7 @@ const DatabaseHomePage = () => {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
             window.parent.postMessage(
-                { type: 'SERVICE:NAVIGATE', payload: { pathname: '../marketing', replace: true } },
+                { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
                 '*'
             );
         }
