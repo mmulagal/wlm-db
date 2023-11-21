@@ -24,7 +24,7 @@ const InputComponent = ({
     setErrorFields,
     activeField
 }: inputComponentPropType) => {
-    const [value, setValue] = useState('');
+    const [value, setValue] = useState<any>('');
 
     const handleErrorFields = () => {
         const isError = validateChatbotField(selectKey, value);
@@ -136,8 +136,8 @@ const InputComponent = ({
                         if (fieldType === 'number') {
                             const re = /^[0-9\b]+$/;
                             if (e.target.value === '' || re.test(e.target.value)) {
-                                onChange(selectKey, e.target.value);
-                                setValue(e.target.value);
+                                onChange(selectKey, parseInt(e.target.value));
+                                setValue(parseInt(e.target.value));
                             }
                         } else {
                             onChange(selectKey, e.target.value);
