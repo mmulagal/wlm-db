@@ -173,6 +173,7 @@ const RegionVpc = () => {
                             defaultValue={selectedRegionData ? [selectedRegionData] : [generateRegionsData[0]]}
                             onChange={(selectedOptions: any): void => {
                                 dispatch(setSelectedRegionData(selectedOptions));
+                                dispatch(setSelectedVPC(null));
                             }}
                             isSearchable={generateRegionsData.length > 5}
                             options={generateRegionsData}

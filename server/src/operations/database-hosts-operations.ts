@@ -219,6 +219,11 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         };
     } catch (error) {
         logger.error('Error while getting storage savings for resource', resourceDetail, JSON.stringify(error));
+        let { message } = error as { message: string };
+        if (message?.toLocaleLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
+            message += '. Retry the operation.';
+            throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, message);
+        }
     }
 }
 

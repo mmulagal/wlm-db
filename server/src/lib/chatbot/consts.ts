@@ -34,9 +34,7 @@ const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
 const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
 const SQL_SERVER_NAME = 'sqlServerName';
-const OS_VERSION = 'osVersion';
-const DATABASE_EDITION = 'databaseEdition';
-const DATABASE_VERSION = 'databaseVersion';
+const TAGS = 'tags';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -174,21 +172,6 @@ const CHATBOT_UI_PARAMS_FSX = [
     {
         sqlConfiguration: [
             {
-                [OS_VERSION]: {
-                    required: true
-                }
-            },
-            {
-                [DATABASE_EDITION]: {
-                    required: true
-                }
-            },
-            {
-                [DATABASE_VERSION]: {
-                    required: true
-                }
-            },
-            {
                 [SQL_AMI]: {
                     required: true
                 }
@@ -261,6 +244,11 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [ENABLE_CLOUD_WATCH]: {
                     required: true
                 }
+            },
+            {
+                [TAGS]: {
+                    reuired: true
+                }
             }
         ]
     },
@@ -330,9 +318,7 @@ const KEY_LABEL_MAP = {
     [FSX_TYPE]: 'fsx type',
     [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
     [SQL_SERVER_NAME]: 'database cluster name',
-    [OS_VERSION]: 'operating system on which to install SQL Server',
-    [DATABASE_EDITION]: 'database edition',
-    [DATABASE_VERSION]: 'database version'
+    [TAGS]: 'tags'
 };
 
 export {
@@ -381,7 +367,5 @@ export {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
-    OS_VERSION,
-    DATABASE_EDITION,
-    DATABASE_VERSION
+    TAGS
 };
