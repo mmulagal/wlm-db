@@ -641,8 +641,13 @@ Resources:
                 Action:
                   - ec2:Get*
                   - ec2:Describe*
-                  - ec2:CreateTags
                 Resource: '*'
+              - Sid: EC2TaggingStatement
+                Effect: Allow
+                Action:
+                  - ec2:CreateTags
+                Resource:
+                  - arn:aws:cloudformation:*:*:stack/WLMDB*
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'
