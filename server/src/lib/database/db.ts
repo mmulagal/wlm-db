@@ -84,33 +84,6 @@ async function listDeployments(
     });
 }
 
-async function findFirstDeployment(
-    nextToken?: string,
-    accountId?: string,
-    statuses?: Array<DEPLOYMENT_STATUS>,
-    parentStackOnly?: boolean
-) {
-    logger.info('Verifying if there are any records with id greater than nextToken for given statuses ', {
-        accountId,
-        nextToken,
-        statuses
-    });
-    return prisma.client.deployment.findFirst({
-        where: {
-            ...(accountId && { account_id: accountId }),
-            ...(statuses && {
-                deployment_status: {
-                    in: statuses
-                }
-            }),
-            ...(parentStackOnly && { parent_deployment_id: null }),
-            id: { gt: nextToken }
-        },
-        select: {
-            id: true
-        }
-    });
-}
 async function createDeployment(accountId: string, params: Deployment) {
     logger.info('Creating deployment', { accountId, params });
     const {
@@ -442,6 +415,5 @@ export {
     deleteConfig,
     listRelationshipsResources,
     deploymentJobsCount,
-    deleteDeploymentJobById,
-    findFirstDeployment
+    deleteDeploymentJobById
 };

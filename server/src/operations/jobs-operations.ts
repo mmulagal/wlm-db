@@ -1,9 +1,8 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
-import { deploymentJobsCount, deleteDeploymentJobById, listDeployments, findFirstDeployment } from '../lib/database/db';
+import { deploymentJobsCount, deleteDeploymentJobById, listDeployments } from '../lib/database/db';
 import {
     DEPLOYMENT_JOBS_STATUS_FILTER,
     HttpErrorCodes,
@@ -64,10 +63,6 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string, ne
         nextToken
     );
 
-    if (isEmpty(deploymentDetails)) {
-        logger.error(`No deployments found for account ${accountId} with statuses ${statuses}`);
-        return { count: 0, items: [], nextToken: '' };
-    }
     const response = deploymentDetails.map(
         ({
             id,
@@ -92,13 +87,11 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string, ne
         })
     );
 
-    const lastIndex = response.length - 1;
-    const hasNextPage = response.length === API_PAGE_SIZE;
-    nextToken = hasNextPage ? response[lastIndex].id : undefined;
-
-    const remainingRecord = hasNextPage ? findFirstDeployment(nextToken, accountId, deploymentStatuses, true) : null;
-
-    return { count: response.length, items: response, nextToken: remainingRecord ? nextToken : undefined };
+    return {
+        count: response.length,
+        items: response,
+        nextToken: response?.length > 0 ? response[response.length - 1].id : undefined
+    };
 }
 
 async function deleteDeploymentJob(accountId: string, jobId: string) {
