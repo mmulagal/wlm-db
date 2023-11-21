@@ -140,6 +140,8 @@ export const MAX_SAVED_CONFIG = 100;
 
 export const WLF_TO_FORM_NAVIGATE = '../add-working-environment/database-services/mssql/create';
 
+export const FORM_TO_WLF_NAVIGATE = '../databases';
+
 export const RECOMMENDED_TEMPLATES = {
     DEV_ID: '0',
     PROD_ID: '1',
