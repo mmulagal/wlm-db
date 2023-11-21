@@ -1,18 +1,19 @@
 import { Button } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
+import { FORM_TO_WLF_NAVIGATE, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
 import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
-
+import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
 
 const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
@@ -61,7 +62,7 @@ const MSSqlFooter = () => {
                         }
                         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
                         setTimeout(() => {
-                            navigateToCanvas('/');
+                            navigate(FORM_TO_WLF_NAVIGATE);
                         }, 3000);
                     }
                 })
