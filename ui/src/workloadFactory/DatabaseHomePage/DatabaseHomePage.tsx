@@ -18,15 +18,18 @@ const DatabaseHomePage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [statusChk, setStatusChk] = useState(false);
 
-    const {statusData, statusLoading} = useAppSelector(state => state.databaseHome.getStatus);
+    const { statusData, statusLoading } = useAppSelector(state => state.databaseHome.getStatus);
 
     useEffect(() => {
-        if(statusData && statusData?.isActive) {
+        if (statusData && statusData?.isActive) {
             setStatusChk(true);
         } else if (statusData && !statusData?.isActive) {
-            window.location.replace(MARKETING_PAGE_URL);
+            window.parent.postMessage(
+                { type: 'SERVICE:NAVIGATE', payload: { pathname: '../marketing', replace: true } },
+                '*'
+            );
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);
 
     DatabaseHomeApis();
@@ -35,12 +38,12 @@ const DatabaseHomePage = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    return (
-        (statusLoading || !statusChk) ? 
+    return statusLoading || !statusChk ? (
         <div className={styles.loader}>
             <Spinner isLarge />
-        </div> :
-        (statusChk && 
+        </div>
+    ) : (
+        statusChk && (
             <div className={styles.databaseHome}>
                 <div className={styles.leftSide}>
                     <div className={styles.topContainer}>
