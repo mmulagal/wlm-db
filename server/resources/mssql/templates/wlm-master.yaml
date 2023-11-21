@@ -573,7 +573,7 @@ Resources:
                   - cloudformation:ListStacks
                   - cloudformation:SignalResource
                 Resource: 
-                  - arn:aws:cloudformation:*:*:stack/WLMDB*'
+                  - arn:aws:cloudformation:*:*:stack/WLMDB*
               - Sid: STSStatement
                 Effect: Allow
                 Action:
@@ -643,6 +643,7 @@ Resources:
                   - ec2:DescribeTags
                   - ec2:DescribeVolumes
                   - ec2:CreateTags
+                  - ec2:DescribeImages
                 Resource: '*'
           PolicyName: !Join
             - ''
