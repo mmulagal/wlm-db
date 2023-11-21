@@ -27,9 +27,9 @@ const TopBarButton = () => {
     
     return (
         <div className={styles.topBarButtons}>
-            <div className={styles.refreshIcon} onClick={() => {refreshPage()}}>
+            {/* <div className={styles.refreshIcon} onClick={() => {refreshPage()}}>
                 <RefreshIcon />                      
-            </div>
+            </div> */}
             <Button
                 variant="secondary"
                 onClick={() => {
