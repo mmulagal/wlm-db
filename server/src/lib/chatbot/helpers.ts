@@ -13,7 +13,8 @@ import {
     validateCredentials,
     checkFsxType,
     validateFsx,
-    validateCloudWatch
+    validateCloudWatch,
+    validateTags
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -52,9 +53,7 @@ import {
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
     MULTI_AZ,
-    OS_VERSION,
-    DATABASE_EDITION,
-    DATABASE_VERSION
+    TAGS
 } from './consts';
 
 const logger = getLogger();
@@ -194,19 +193,8 @@ async function validate(
                 response = await validateKeyName(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
-            case OS_VERSION:
-            case DATABASE_EDITION:
-            case DATABASE_VERSION:
             case SQL_AMI: {
-                response = await validateImageId(
-                    params[CREDENTIALS_ID],
-                    params[REGION],
-                    params[SQL_AMI],
-                    params[OS_VERSION],
-                    params[DATABASE_EDITION],
-                    params[DATABASE_VERSION],
-                    key
-                );
+                response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
             case AD_SCENARIO_TYPE:
@@ -271,6 +259,10 @@ async function validate(
             }
             case ENABLE_CLOUD_WATCH: {
                 response = await validateCloudWatch(key, params[key]);
+                break;
+            }
+            case TAGS: {
+                response = await validateTags(key, params[key]);
                 break;
             }
             default:

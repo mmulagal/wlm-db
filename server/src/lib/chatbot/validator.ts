@@ -21,11 +21,7 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     STANDALONE,
-    FCI,
-    OS_VERSION,
-    DATABASE_VERSION,
-    DATABASE_EDITION,
-    SQL_AMI
+    FCI
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -301,6 +297,29 @@ async function validateVpcId(
         }
         case ROUTE_TABLE_1:
         case ROUTE_TABLE_2: {
+            const routeTable1 = isValidVpc.subnets?.find(
+                ({ id }) => key === ROUTE_TABLE_1 && id === subnet1
+            )?.routeTableId;
+            const routeTable2 = isValidVpc.subnets?.find(
+                ({ id }) => key === ROUTE_TABLE_2 && id === subnet2
+            )?.routeTableId;
+
+            if (routeTable1 === routeTable2) {
+                return {
+                    key,
+                    status: 'error',
+                    message:
+                        'AWS FSx requires route tables to be different for subnets in multi-zone deployment. Select a different subnet',
+                    allowedValues: uniqBy(
+                        isValidVpc.subnets?.map(({ id, name }) => ({
+                            label: name,
+                            value: id
+                        })),
+                        'value'
+                    )
+                };
+            }
+
             return {
                 value: isValidVpc.subnets?.find(({ id }) => (key === ROUTE_TABLE_1 ? id === subnet1 : id === subnet2))
                     ?.routeTableId
@@ -339,157 +358,57 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
     };
 }
 
-async function validateImageId(
-    credentialsId: string,
-    region: string,
-    imageId: string,
-    osVersion: string,
-    databaseEdition: string,
-    databaseVersion: string,
-    key: string
-) {
+async function validateImageId(credentialsId: string, region: string, imageId: string, key: string) {
     logger.debug('Validate Image Id', {
         credentialsId,
         region,
         imageId,
-        osVersion,
-        databaseEdition,
-        databaseVersion,
         key
     });
-    switch (key) {
-        case OS_VERSION: {
-            if (!osVersion) {
-                return {
-                    key,
-                    status: 'error',
-                    message: 'Select an operating system on which to install SQL Server.',
-                    allowedValues: [
-                        { label: 'Windows server 2016', value: '2016' },
-                        { label: 'Windows server 2019', value: '2019' }
-                    ]
-                };
-            }
-            return { value: osVersion };
-        }
-        case DATABASE_VERSION: {
-            if (!databaseVersion) {
-                return {
-                    key,
-                    status: 'error',
-                    message: 'Select a database version.',
-                    allowedValues: [
-                        { label: 'SQL Server 2016', value: '2016' },
-                        { label: 'SQL Server 2019', value: '2019' },
-                        { label: 'SQL Server 2022', value: '2022' }
-                    ]
-                };
-            }
-            return { value: databaseVersion };
-        }
-        case DATABASE_EDITION: {
-            if (!databaseEdition) {
-                return {
-                    key,
-                    status: 'error',
-                    message: 'Select a database edition.',
-                    allowedValues: [
-                        { label: 'SQL Server Standard Edition', value: 'Standard' },
-                        { label: 'SQL Server Enterprise Edition', value: 'Enterprise' }
-                    ]
-                };
-            }
-            return { value: databaseEdition };
-        }
-        case SQL_AMI: {
-            const { amis } = await getAmiList(
-                credentialsId,
-                region,
-                'windows',
-                'sql',
-                osVersion,
-                databaseVersion,
-                databaseEdition
-            );
-            if (!imageId) {
-                return {
-                    key,
-                    status: 'error',
-                    message: 'Select an AWS AMI for the database.',
-                    allowedValues: amis.map(({ name, imageId: amiId, description }) => ({
-                        label: name,
-                        value: amiId,
-                        metadata: {
-                            description
-                        }
-                    }))
-                };
-            }
 
-            const isValidAmi = amis?.find(ami => ami.imageId === imageId);
-            if (!isValidAmi) {
-                return {
-                    key,
-                    status: 'error',
-                    message: 'The image id that you provided is not correct. Please select a valid image id.',
-                    allowedValues: amis.map(({ name, imageId: amiId, description }) => ({
-                        label: name,
-                        value: amiId,
-                        metadata: {
-                            description
-                        }
-                    }))
-                };
-            }
-            return {
-                value: isValidAmi.imageId
-            };
-        }
-        default:
-            return {};
+    const { amis } = await getAmiList(credentialsId, region, 'windows', 'sql');
+
+    const filteredAmis = amis?.filter(
+        ({ name }) =>
+            (name.includes('Windows_Server-2016') || name.includes('Windows_Server-2019')) &&
+            (name.includes('SQL_2016') || name.includes('SQL_2019') || name.includes('SQL_2022')) &&
+            name.includes('Enterprise') &&
+            name.includes('Standard')
+    );
+
+    if (!imageId) {
+        return {
+            key,
+            status: 'error',
+            message: 'Select an AWS AMI for the database.',
+            allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
+                label: name,
+                value: amiId,
+                metadata: {
+                    description
+                }
+            }))
+        };
     }
-    // const { amis } = await getAmiList(
-    //     credentialsId,
-    //     region,
-    //     'windows',
-    //     'sql',
-    //     osVersion,
-    //     databaseVersion,
-    //     databaseEdition
-    // );
-    // if (!imageId) {
-    //     return {
-    //         key,
-    //         status: 'error',
-    //         message: 'Select an AWS AMI for the database.',
-    //         allowedValues: amis.map(({ name, imageId: amiId, description }) => ({
-    //             label: name,
-    //             value: amiId,
-    //             metadata: {
-    //                 description
-    //             }
-    //         }))
-    //     };
-    // }
 
-    // const isValidAmi = amis?.find(ami => ami.imageId === imageId);
-    // if (!isValidAmi) {
-    //     return {
-    //         key,
-    //         status: 'error',
-    //         message: 'The image id that you provided is not correct. Please select a valid image id.',
-    //         allowedValues: amis.map(({ name, imageId: amiId, description }) => ({
-    //             label: name,
-    //             value: amiId,
-    //             metadata: {
-    //                 description
-    //             }
-    //         }))
-    //     };
-    // }
-    // return {
-    //     value: isValidAmi.imageId
-    // };
+    const isValidAmi = filteredAmis?.find(ami => ami.imageId === imageId);
+    if (!isValidAmi) {
+        return {
+            key,
+            status: 'error',
+            message: 'The image id that you provided is not correct. Please select a valid image id.',
+            allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
+                label: name,
+                value: amiId,
+                metadata: {
+                    description
+                }
+            }))
+        };
+    }
+    return {
+        value: isValidAmi.imageId
+    };
 }
 
 async function validateAdScenarioType(type: string, key: string) {
@@ -589,6 +508,21 @@ async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
     }
     return {
         value: enableCloudWatch
+    };
+}
+
+async function validateTags(key: string, tags?: Array<{ key: string; value: string }>) {
+    logger.info(' Validate Cloud Watch', { tags, key });
+    if (!tags) {
+        return {
+            key,
+            status: 'error',
+            message: 'Add upto 40 tags',
+            type: 'tags'
+        };
+    }
+    return {
+        value: tags
     };
 }
 
@@ -781,5 +715,6 @@ export {
     validateAdScenarioType,
     checkFsxType,
     validateFsx,
-    validateCloudWatch
+    validateCloudWatch,
+    validateTags
 };

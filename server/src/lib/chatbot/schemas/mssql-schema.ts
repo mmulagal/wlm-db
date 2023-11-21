@@ -49,6 +49,7 @@ type DeployMsSqlParams = {
     osVersion?: string;
     databaseEdition?: string;
     databaseVersion?: string;
+    tags?: Array<{ key: string; value: string }>;
 };
 
 // Deploy MS SQL
