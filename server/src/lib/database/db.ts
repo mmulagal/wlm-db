@@ -77,8 +77,10 @@ async function listDeployments(
             id: 'asc'
         },
         ...(pageSize && { take: pageSize }),
-        ...(nextToken && { cursor: nextToken ? { id: nextToken } : undefined }),
-        skip: nextToken ? 1 : 0
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
