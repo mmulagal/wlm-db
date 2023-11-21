@@ -126,4 +126,20 @@ describe('EC2 Lib', () => {
         );
         expect(response).toEqual(instanceTypeOfferings);
     });
+
+    it('Desribe EC2 instance type offerings for invalid region and instance-type', async () => {
+        try {
+            await describeInstanceTypeOfferings(
+                DEFAULT_AWS_CREDENTIALS_TYPE,
+                'INVALID_REGION',
+                'INVALID_INSTANCE_TYPE'
+            );
+        } catch (error) {
+            const { message } = error as { message: string };
+            expect(message).toEqual(
+                // eslint-disable-next-line quotes
+                "Instance type 'INVALID_INSTANCE_TYPE' is not available in region 'INVALID_REGION'."
+            );
+        }
+    });
 });

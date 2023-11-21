@@ -83,3 +83,20 @@ ec2Mock.on(DescribeInstancesCommand).resolves(describeInstanceResponse);
 
 ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOfferingsResponse);
 
+ec2Mock
+    .on(DescribeInstanceTypeOfferingsCommand, {
+        DryRun: false,
+        LocationType: 'region',
+        Filters: [
+            {
+                Name: 'location',
+                Values: ['INVALID_REGION']
+            },
+            {
+                Name: 'instance-type',
+                Values: ['INVALID_INSTANCE_TYPE']
+            }
+        ]
+    })
+    // eslint-disable-next-line quotes
+    .resolves("Instance type 'INVALID_INSTANCE_TYPE' is not available in region 'INVALID_REGION'.");
