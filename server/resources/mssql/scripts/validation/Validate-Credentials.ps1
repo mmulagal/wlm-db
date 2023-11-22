@@ -13,10 +13,10 @@
         [boolean]$isSecretManagerSupported,
 
         [Parameter(Mandatory=$false)]
-        [string]$UserCredentials
+        [string]$UserCredentials,
 
         [Parameter(Mandatory=$true)]
-        [string]$Stackname  
+        [string]$Stackname,
 
         [Parameter(Mandatory=$true)]
         [string]$ResourceID  
