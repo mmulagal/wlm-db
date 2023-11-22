@@ -131,7 +131,7 @@ const AwsAccount = () => {
     const openCredentialTab = () => {
         let url;
         if (isWorkloadFactoryStatus) {
-            url = process.env.CREDENTIAL_WF_LINK;
+            url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
         } else {
             url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         }
