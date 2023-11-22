@@ -459,7 +459,7 @@ const Chatbot = () => {
                             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
                             dispatch(
                                 setSelectedSecurityGroup(
-                                    value ? GENERAL.GENERATED_SECURITY_GROUP : GENERAL.USE_AN_EXISTING_SECURITY
+                                    value ? GENERAL.USE_AN_EXISTING_SECURITY : GENERAL.GENERATED_SECURITY_GROUP
                                 )
                             );
                             dispatch(setSelectedExistingSecurityGroup(value ? option : null));
