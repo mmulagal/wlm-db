@@ -64,7 +64,7 @@ const API_PATH_HEALTH: string = '/health';
 //     ? config.get<string>('urls.local-connector')
 //     : config.get<string>('urls.cloud-manager');
 
-// const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
+const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
 const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt'];
@@ -929,6 +929,7 @@ export {
     CLOUD_MANAGER_ENDPOINT,
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_REGION,
+    CLOUD_MANAGER_SERVER_ADDRESS,
     API_PATH_HEALTH,
     HEADERS,
     AUTH0_SERVER_ADDRESS,
