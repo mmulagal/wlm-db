@@ -513,10 +513,17 @@ async function validatePricingRegionParameters(
     logger.debug('Validating pricing parameters:', { compute, storage, vpc });
 
     try {
+        const regions: string[] = [];
+        for (const region of [compute.regionCode, storage?.regionCode, vpc?.regionCode]) {
+            if (region && !regions.includes(region)) {
+                regions.push(region);
+            }
+        }
+
         const regionsInput = {
             DryRun: false,
             AllRegions: true,
-            RegionNames: [compute.regionCode as string, storage?.regionCode as string, vpc?.regionCode as string]
+            RegionNames: regions
         };
         await describeRegions(regionsInput, credentialsId);
     } catch (error) {
