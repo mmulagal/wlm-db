@@ -218,7 +218,7 @@ async function describeInstanceTypeOfferings(credentialsId: string, region: stri
         Filters: [
             {
                 Name: 'location',
-                Values: [region] // try invalid region and check
+                Values: [region]
             },
             {
                 Name: 'instance-type',
