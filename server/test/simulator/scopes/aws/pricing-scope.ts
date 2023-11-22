@@ -1,8 +1,11 @@
 import { PricingClient, GetProductsCommand } from '@aws-sdk/client-pricing';
+import { EC2Client, DescribeInstanceTypeOfferingsCommand } from '@aws-sdk/client-ec2';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { mockClient } from 'aws-sdk-client-mock';
+import describeInstanceTypeOfferingsResponse from '../../responses/aws/describe-instance-type-offerings.json';
 
 const pricingMock = mockClient(PricingClient);
+const ec2Mock = mockClient(EC2Client);
 
 const ec2InstancePrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Compute Instance", "attributes": {"servicecode": "AmazonEC2","instanceType": "m5.xlarge","location": "US East (N. Virginia)","memory": "1 GiB","vcpu": "2"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.192"}}}}}}}'
@@ -396,5 +399,7 @@ pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2Instan
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
 pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
+
+ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOfferingsResponse);
 
 export default mockGetProductsResponse;

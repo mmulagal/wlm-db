@@ -122,11 +122,12 @@ enum RouteTags {
 }
 
 enum HttpErrorCodes {
-    INTERNAL_SERVER_ERROR = 500,
-    NOT_FOUND = 404,
+    BAD_REQUEST = 400,
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
+    NOT_FOUND = 404,
     VALIDATION_ERROR = 422,
+    INTERNAL_SERVER_ERROR = 500,
     SERVICE_UNAVAILABLE = 503
 }
 
@@ -772,6 +773,7 @@ const ERROR_CODE_SQS_NON_EXISTENT_QUEUE = 'AWS.SimpleQueueService.NonExistentQue
 const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
+const INVALID_PARAMETER_VALUE = 'InvalidParameterValue';
 
 const FCI_STACKNAME = 'SqlFciStack';
 const STANDALONE_STACKNAME = 'SqlStandaloneStack';
@@ -857,6 +859,17 @@ const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
 const DATABASE_TYPE = 'Microsoft SQL Server';
+
+// SQL software types
+const SQL_STD = 'SQL std';
+const SQL_ENT = 'SQL ent';
+const SQL_WEB = 'SQL web';
+const SQL_SOFTWARE_TYPES = new Map<string, string>([
+    ['standard', SQL_STD],
+    ['enterprise', SQL_ENT],
+    ['web', SQL_WEB]
+]);
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1050,5 +1063,10 @@ export {
     DOMAIN_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     FSX_ADMIN_PASSWORD,
-    CAPABILITY_NAMED_IAM
+    CAPABILITY_NAMED_IAM,
+    SQL_SOFTWARE_TYPES,
+    SQL_STD,
+    SQL_ENT,
+    SQL_WEB,
+    INVALID_PARAMETER_VALUE
 };
