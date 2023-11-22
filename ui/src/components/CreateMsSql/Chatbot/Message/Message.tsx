@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
+import TagsComponent from './TagsComponent/TagsComponent';
 
 type optionsType = {
     value?: string | number;
@@ -126,6 +127,15 @@ const Message = ({
                                                     </div>
                                                 )
                                             )}
+                                            {msgObj.active && item.type === 'tags' &&
+                                                <TagsComponent 
+                                                    onChange={(key: string, val: string) => {
+                                                        setParamObj({
+                                                            ...paramObj,
+                                                            [key]: {label: val, value: val}
+                                                        });
+                                                    }}
+                                                    />}
                                         </>
                                     );
                                 })}

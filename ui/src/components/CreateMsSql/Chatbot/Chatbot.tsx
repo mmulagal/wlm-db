@@ -44,11 +44,14 @@ import {
     setSelectedVPC,
     setStorageCapacity,
     setStorageUnit,
+    setTags,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
 import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
+const _ = require('lodash');
+
 type optionsType = {
     value?: string | number;
     label?: string;
@@ -475,6 +478,12 @@ const Chatbot = () => {
                     if (mssqlFormData.cloudWatch !== value) {
                         dispatch(setCloudWatch(value || null));
                     }
+                    break;
+                case 'tags':
+                    if (!_.isEqual(mssqlFormData?.tags, value)) {
+                        dispatch(setTags(value || []));
+                    }
+                    break;
             }
         });
     };
