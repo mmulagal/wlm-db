@@ -26,6 +26,7 @@ import routeTablesResponse from '../../responses/aws/list-route-tables.json';
 import networkInterfaceResponse from '../../responses/aws/list-network-interfaces.json';
 import describeInstanceResponse from '../../responses/aws/describe-instance.json';
 import describeInstanceTypeOfferingsResponse from '../../responses/aws/describe-instance-type-offerings.json';
+import describeInstanceTypeOfferingsInvalidParameters from '../../responses/aws/describe-instance-type-offerings-invalid-parameters.json';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -82,7 +83,6 @@ ec2Mock.on(DescribeNetworkInterfacesCommand).resolves(networkInterfaceResponse);
 ec2Mock.on(DescribeInstancesCommand).resolves(describeInstanceResponse);
 
 ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOfferingsResponse);
-
 ec2Mock
     .on(DescribeInstanceTypeOfferingsCommand, {
         DryRun: false,
@@ -98,5 +98,4 @@ ec2Mock
             }
         ]
     })
-    // eslint-disable-next-line quotes
-    .resolves("Instance type 'INVALID_INSTANCE_TYPE' is not available in region 'INVALID_REGION'.");
+    .resolves(describeInstanceTypeOfferingsInvalidParameters);

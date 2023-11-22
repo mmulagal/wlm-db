@@ -30,6 +30,7 @@ import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
 import instanceTypeOfferings from '../../simulator/responses/aws/describe-instance-type-offerings.json';
+import describeInstanceTypeOfferingsInvalidParameters from '../../simulator/responses/aws/describe-instance-type-offerings-invalid-parameters.json';
 
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
@@ -136,10 +137,7 @@ describe('EC2 Lib', () => {
             );
         } catch (error) {
             const { message } = error as { message: string };
-            expect(message).toEqual(
-                // eslint-disable-next-line quotes
-                "Instance type 'INVALID_INSTANCE_TYPE' is not available in region 'INVALID_REGION'."
-            );
+            expect(message).toEqual(describeInstanceTypeOfferingsInvalidParameters.message);
         }
     });
 });
