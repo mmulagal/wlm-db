@@ -646,6 +646,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - ec2:CreateTags
+                  - ec2:AuthorizeSecurityGroupIngress
                 Resource: '*'
                 Condition:
                   StringLike:
