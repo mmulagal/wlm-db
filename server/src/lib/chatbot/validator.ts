@@ -210,7 +210,7 @@ async function validateVpcId(
             };
         }
         case AZ_2: {
-            const azs2 = azs.filter(az => az.value !== az2);
+            const azs2 = azs.filter(az => az.value !== az1);
             if (!az2) {
                 return {
                     key,
@@ -237,7 +237,7 @@ async function validateVpcId(
                     status: 'error',
                     message:
                         'The availability zone that you provided is not valid. Please choose a valid availability zone.',
-                    allowedValues: azs
+                    allowedValues: azs2
                 };
             }
 
@@ -251,7 +251,7 @@ async function validateVpcId(
                 return {
                     key,
                     status: 'error',
-                    message: 'Select the subnet id',
+                    message: `Select the ${key === PRIVATE_SUBNET_1 ? 'primary' : 'secondary'} subnet id`,
                     allowedValues: uniqBy(
                         isValidVpc.subnets
                             ?.filter(({ availabilityZone }) =>
