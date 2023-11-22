@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
+import { isEmpty } from 'lodash-es';
 import { deploymentJobsCount, deleteDeploymentJobById, listDeployments } from '../lib/database/db';
 import {
     DEPLOYMENT_JOBS_STATUS_FILTER,
@@ -63,6 +64,10 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string, ne
         nextToken
     );
 
+    if (isEmpty(deploymentDetails)) {
+        return { count: 0, items: [] };
+    }
+
     const response = deploymentDetails.map(
         ({
             id,
@@ -90,7 +95,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string, ne
     return {
         count: response.length,
         items: response,
-        nextToken: response?.length > 0 ? response[response.length - 1].id : undefined
+        nextToken: response?.length === API_PAGE_SIZE ? response[response.length - 1].id : undefined
     };
 }
 
