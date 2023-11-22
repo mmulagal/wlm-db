@@ -216,7 +216,7 @@ async function validate(
             case FSX_PASS:
             case SERVICE_ACCOUNT_NAME:
             case SERVICE_ACCOUNT_PASS: {
-                response = validateText(params[key], key);
+                response = validateText(params[key], key, params[FSX_TYPE]);
                 break;
             }
             case SQL_DEPLOYMENT_MODE: {

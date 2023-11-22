@@ -3,12 +3,26 @@ kind: ConfigMap
 metadata:
   name: wlmdb-config
 data:
-  AUTH0_ENDPOINT: staging-netapp-cloud-account.auth0.com
+  AUTH0_AUDIENCE: api.cloud.netapp.com
   SECRET_NAME: wlmdb
-  REGION: us-east-1
+  REGION: {{ .Values.global.region }}
   isActive: "{{ .Values.global.isActive }}"
   isPrimary: "{{ .Values.global.isPrimary }}"
   TRACE_EXPORTER_URL: http://signoz-otel-collector.signoz.svc.cluster.local:4318
-  {{ if or (eq .Values.global.NODE_ENV "production") (eq .Values.global.NODE_ENV "demo") }}
+  SIGNOZ_ENDPOINT: signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces
+  WLMDB_BUCKET_REGION: {{ .Values.global.region }}
+  {{ if eq .Values.global.environment "production" }}
   AUTH0_ENDPOINT: netapp-cloud-account.auth0.com
+  CLOUD_MANAGER_ENDPOINT: api.bluexp.netapp.com
+  WORKLOAD_FACTORY_ENDPOINT: api.workloads.netapp.com
+  WLMDB_ABSOLUTE_ENDPOINT: cloudmanager.netapp.com
+  KINESIS_STREAM_NAME: audit-service-prod-stream
+  WLMDB_BUCKET_NAME: production.wlmdb.workloads.netapp.com
+  {{ else }}
+  AUTH0_ENDPOINT: staging-netapp-cloud-account.auth0.com
+  CLOUD_MANAGER_ENDPOINT: staging.api.bluexp.netapp.com
+  WORKLOAD_FACTORY_ENDPOINT: staging.api.workloads.netapp.com
+  WLMDB_ABSOLUTE_ENDPOINT: staging.cloudmanager.netapp.com
+  KINESIS_STREAM_NAME: audit-service-staging-stream
+  WLMDB_BUCKET_NAME: staging.wlmdb.workloads.netapp.com
   {{ end }}
