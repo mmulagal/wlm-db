@@ -14,7 +14,7 @@
         {
             "path": "/",
             "renderType": "iframe/v2",
-            "iframeUrl": "https://preprod.console.workloads.netapp.com/wlmdb/index.html"
+            "iframeUrl": "https://staging.console.workloads.netapp.com/wlmdb/index.html"
         }
     ],
     "homepage": {
