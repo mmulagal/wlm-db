@@ -38,7 +38,8 @@
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
         "build:local": "dotenv -e .env.development react-scripts build",
         "build:staging": "dotenv -e .env.staging react-scripts build",
-        "build:production": "dotenv -e .env.production react-scripts build",
+        "build:preprod": "dotenv -e .env.preprod react-scripts build && cp workload-config.json workload-policies.json build/",
+        "build:production": "dotenv -e .env.production react-scripts build && cp workload-config.json workload-policies.json build/",
         "test": "react-scripts test --coverage",
         "eject": "react-scripts eject"
     },

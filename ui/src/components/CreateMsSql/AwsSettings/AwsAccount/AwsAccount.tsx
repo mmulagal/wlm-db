@@ -16,7 +16,7 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
 import { setCreatePressed } from '../../../../store/mssql/msSqlActionSlice';
-import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, CREDENTIAL_WF_PROD_LINK, CREDENTIAL_WF_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
+import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -131,7 +131,7 @@ const AwsAccount = () => {
     const openCredentialTab = () => {
         let url;
         if (isWorkloadFactoryStatus) {
-            url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_WF_PROD_LINK : CREDENTIAL_WF_STAGE_LINK;
+            url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
         } else {
             url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         }

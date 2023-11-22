@@ -13,7 +13,8 @@ import {
     validateCredentials,
     checkFsxType,
     validateFsx,
-    validateCloudWatch
+    validateCloudWatch,
+    validateTags
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -51,7 +52,8 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
-    MULTI_AZ
+    MULTI_AZ,
+    TAGS
 } from './consts';
 
 const logger = getLogger();
@@ -98,11 +100,10 @@ async function validateParams(
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
-    let validatedParams: Params = { ...oldParams };
+    let validatedParams: Params = {};
     const promises = [];
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of schemaParams) {
-        let response: ValidationResponse | { value: any } | undefined;
         if (reqParam.required !== false) {
             const keys = Object.keys(reqParam);
             for (const key of keys) {
@@ -110,7 +111,7 @@ async function validateParams(
 
                 if (Array.isArray(reqParam[key])) {
                     const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    logger.debug('Response from Recursive Call>>>', response);
+                    logger.debug('Response from Recursive Call>>>', recursiveValidationResponse);
                     validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
                     if (recursiveValidationResponse?.errors?.length) {
                         return { errors: recursiveValidationResponse.errors, params: validatedParams };
@@ -260,6 +261,10 @@ async function validate(
                 response = await validateCloudWatch(key, params[key]);
                 break;
             }
+            case TAGS: {
+                response = await validateTags(key, params[key]);
+                break;
+            }
             default:
         }
     } else {
@@ -267,12 +272,15 @@ async function validate(
     }
     if ((response as ValidationResponse)?.status === 'error') {
         delete params[key];
+        delete oldParams[key];
+        delete validatedParams[key];
         errors.push(response as ValidationResponse);
     }
 
     if (response?.value !== null && response?.value !== undefined) {
         validatedParams[key] = response?.value;
         params[key] = response?.value;
+        oldParams[key] = response?.value;
     }
 }
 

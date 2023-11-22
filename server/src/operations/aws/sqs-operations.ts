@@ -447,21 +447,36 @@ async function processCloudFormationMessages() {
 
                                     if (DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)) {
                                         // if any of the underlying resource is in CREATE_FAILED, DELETE_FAILED, ROLLBACK_FAILED, UPDATE_FAILED, UPDATE_ROLLBACK_FAILED mark the parent stack stack status as FAILED
-                                        await updateDeployment(accountId, id, {
-                                            deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                            endTime: DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)
-                                                ? new Date(timestamp).valueOf()
-                                                : undefined
-                                        });
+                                        try {
+                                            await updateDeployment(accountId, id, {
+                                                deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                endTime: DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)
+                                                    ? new Date(timestamp).valueOf()
+                                                    : undefined
+                                            });
+                                        } catch (error) {
+                                            logger.error(
+                                                `Error while updating main stack with failed status: ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                    error
+                                                )}`
+                                            );
+                                        }
                                     } else if (
                                         !masterDeploymentStatus.startsWith(mainCFStatusClass) &&
                                         !masterDeploymentStatus.includes('FAILED')
                                     ) {
-                                        await updateDeployment(accountId, id, {
-                                            deploymentName: stackName,
-                                            deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                            deploymentStatusReason: resourceStatusReason
-                                        });
+                                        try {
+                                            await updateDeployment(accountId, id, {
+                                                deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                deploymentStatusReason: resourceStatusReason
+                                            });
+                                        } catch (error) {
+                                            logger.error(
+                                                `Error while updating block main stack with non-failed status: ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                    error
+                                                )}`
+                                            );
+                                        }
                                     }
 
                                     try {

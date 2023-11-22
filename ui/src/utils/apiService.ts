@@ -143,6 +143,7 @@ async function handleRootListItems<T extends DatabaseTables>(
 export const awsApi = createApi({
     reducerPath: 'aws',
     baseQuery: dynamicBaseQuery,
+    refetchOnMountOrArgChange: true, // Will always refetch data and will not get from cache
     endpoints: builder => {
         return {
             getCredentials: builder.query({

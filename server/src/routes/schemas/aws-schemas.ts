@@ -25,8 +25,8 @@ const baseRequest = {
 // GET VPC List Schema
 const GetVpcsListSchema = {
     ...baseRequest,
-    summary: 'List Vpcs',
-    description: 'List Vpcs in a region',
+    summary: 'List VPCs',
+    description: 'List VPCs in the given AWS region',
     querystring: AwsVpcQueryString,
     response: {
         200: VpcListResponse
@@ -36,7 +36,8 @@ const GetVpcsListSchema = {
 // Get AD Schema
 const GetAdsSchema = {
     ...baseRequest,
-    description: 'List Active Directories',
+    summary: 'List AWS managed Active Directories',
+    description: 'List AWS managed Active Directories in the given AWS region',
     response: {
         200: AdsResponse
     }
@@ -45,17 +46,19 @@ const GetAdsSchema = {
 // GET AMI Schema
 const GetAmiSchema = {
     ...baseRequest,
-    description: 'Get AMIs in a region',
+    summary: 'List AMIs',
+    description: 'List AMIs in the given AWS region for the provided parameters',
     querystring: AmiQueryString,
     response: {
         200: AmiResponse
     }
 };
 
-// GET EC2 instncetypes
+// GET EC2 instance types
 const GetInstanceTypesSchema = {
     ...baseRequest,
-    description: 'Get EC2 instnce types in the region',
+    summary: 'List EC2 instance types',
+    description: 'Get EC2 instance types in the region supported for MS SQL deployment',
     response: {
         200: InstanceTypes
     }
@@ -64,7 +67,8 @@ const GetInstanceTypesSchema = {
 // GET SNS Topics
 const GetSnsTopicsSchema = {
     ...baseRequest,
-    description: 'Get SNS Topics in the region',
+    summary: 'Get SNS Topics',
+    description: 'Get SNS Topics in the given AWS region',
     response: {
         200: SnsResponse
     }
@@ -73,7 +77,8 @@ const GetSnsTopicsSchema = {
 const GetFSxRegionsSchema = {
     tags: [RouteTags.AWS],
     params: AwsParams,
-    descriptions: 'List the AWS regions enabled for the given account and support Amazon FSx for NetApp ONTAP',
+    summary: 'List AWS regions that supports FSx',
+    descriptions: 'List the AWS regions enabled for the given account and supports Amazon FSx for NetApp ONTAP',
     response: {
         200: FSxRegionsResponse
     }
@@ -82,6 +87,7 @@ const GetFSxRegionsSchema = {
 const GetFSxFileSystemsSchema = {
     tags: [RouteTags.AWS],
     params: FSxFileSystemParams,
+    summary: 'List FSx for NetApp ONTAP filesystems',
     description: 'List Amazon FSx for NetApp ONTAP filesystems',
     response: {
         200: FSxFileSystemsResponse
@@ -91,7 +97,8 @@ const GetFSxFileSystemsSchema = {
 // GET Kms Keys List Schema
 const GetKmsKeysListSchema = {
     ...baseRequest,
-    description: 'List Kms Keys in a region',
+    summary: 'List KMS keys',
+    description: 'List KMS Keys in the given AWS region',
     response: {
         200: KmsKeysListResponse
     }
@@ -99,7 +106,8 @@ const GetKmsKeysListSchema = {
 
 const GetKeyPairsSchema = {
     ...baseRequest,
-    description: 'List Key-Pairs in the given region',
+    summary: 'List Key Pairs',
+    description: 'List Key Pairs in the given AWS region',
     response: {
         200: KeyPairsResponse
     }
