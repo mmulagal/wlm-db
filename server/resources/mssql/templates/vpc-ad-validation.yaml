@@ -307,7 +307,7 @@ Resources:
                                   - ' -DomainAdminSecretName '
                                   - !Ref 'DomainAdminSecretName'
                                   - ' -isSecretManagerSupported  1'
-                                  - ' -Stackname'
+                                  - ' -Stackname '
                                   - !Ref 'AWS::StackName'
                                   - ' -ResourceID ValidationNode1'
                                   - '"'
