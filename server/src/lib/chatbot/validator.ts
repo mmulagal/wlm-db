@@ -568,23 +568,14 @@ async function validateDomain(
     }
 }
 
-function validateText(text: string, key: string) {
+function validateText(text: string, key: string, fsxType?: string) {
     if (!text) {
-        if (key === FSX_USERNAME) {
-            return {
-                key,
-                status: 'error',
-                message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
-                type: key.toLowerCase().includes('password') ? 'password' : 'text',
-                disable: true,
-                default: 'fsxadmin'
-            };
-        }
         return {
             key,
             status: 'error',
             message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
-            type: key.toLowerCase().includes('password') ? 'password' : 'text'
+            type: key.toLowerCase().includes('password') ? 'password' : 'text',
+            ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
         };
     }
     return { value: text };
