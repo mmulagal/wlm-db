@@ -57,13 +57,14 @@ enum HEADERS {
 
 const API_PATH_HEALTH: string = '/health';
 
-const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
-    ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
-    : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-    ? config.get<string>('urls.local-connector')
-    : config.get<string>('urls.cloud-manager');
+// TODO: These variables are not used anywhere. Remove them later.
+// const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
+//     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
+//     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+//     ? config.get<string>('urls.local-connector')
+//     : config.get<string>('urls.cloud-manager');
 
-const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
+// const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
 const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt'];
@@ -71,14 +72,22 @@ const DEFAULT_AWS_REGION = 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 
-const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
+const CLOUD_MANAGER_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
+    ? `https://${process.env.CLOUD_MANAGER_ENDPOINT}`
+    : config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
-const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
-const WORKLOAD_FACTORY_ENDPOINT: string = config.get<string>('urls.workload-factory');
-const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
+const SIGNOZ_ENDPOINT: string = process.env.SIGNOZ_ENDPOINT
+    ? `http://${process.env.SIGNOZ_ENDPOINT}`
+    : config.get<string>('urls.signoz');
+const WORKLOAD_FACTORY_ENDPOINT: string = process.env.WORKLOAD_FACTORY_ENDPOINT
+    ? `https://${process.env.WORKLOAD_FACTORY_ENDPOINT}`
+    : config.get<string>('urls.workload-factory');
+const WLMDB_ABSOLUTE_ENDPOINT: string = process.env.WLMDB_ABSOLUTE_ENDPOINT
+    ? `https://${process.env.WLMDB_ABSOLUTE_ENDPOINT}`
+    : config.get('urls.wlm-db-redirect-url');
 
-const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
+const CREDENTIALS_ENDPOINT: string = CLOUD_MANAGER_ENDPOINT || config.get<string>('urls.cloud-manager');
 
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
@@ -91,7 +100,7 @@ enum DatabaseTypes {
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
 // Kinesis
-const KINESIS_STREAM_NAME = 'audit-service-staging-stream';
+const KINESIS_STREAM_NAME = process.env.KINESIS_STREAM_NAME || config.get('kinesis.stream-name');
 
 enum CredentialsType {
     AWS = 'aws_assume_role',
@@ -152,7 +161,9 @@ enum AWSServiceNames {
 
 const CARGO = 'cargo';
 
-const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE
+    ? `https://${process.env.AUTH0_AUDIENCE}`
+    : config.get<string>('jwt.audience.tenancy');
 
 const SECRETS: Record<string, string | undefined> = {
     CLIENT_ID: process.env.CLIENT_ID
@@ -470,8 +481,8 @@ const AWS_REGIONS = new Map<string, string>([
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = config.get<string>('templates.bucket');
-const ASSETS_BUCKET_REGION = config.get<string>('templates.region');
+const BUCKET_NAME = process.env.WLMDB_BUCKET_NAME || config.get<string>('templates.bucket');
+const ASSETS_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
 const VALIDATION_AMI = 'ValidationAmi';
@@ -918,8 +929,6 @@ export {
     CLOUD_MANAGER_ENDPOINT,
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_REGION,
-    CLOUD_MANAGER_SERVER_ADDRESS,
-    CONNECTOR_ENDPOINT,
     API_PATH_HEALTH,
     HEADERS,
     AUTH0_SERVER_ADDRESS,
