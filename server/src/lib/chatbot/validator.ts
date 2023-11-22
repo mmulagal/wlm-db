@@ -21,7 +21,8 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     STANDALONE,
-    FCI
+    FCI,
+    FSX_USERNAME
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -569,6 +570,16 @@ async function validateDomain(
 
 function validateText(text: string, key: string) {
     if (!text) {
+        if (key === FSX_USERNAME) {
+            return {
+                key,
+                status: 'error',
+                message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
+                type: key.toLowerCase().includes('password') ? 'password' : 'text',
+                disable: true,
+                default: 'fsxadmin'
+            };
+        }
         return {
             key,
             status: 'error',
