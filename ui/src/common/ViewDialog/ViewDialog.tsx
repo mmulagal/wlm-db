@@ -2,15 +2,10 @@ import { Typography } from '@netapp/design-system';
 import { Popover } from '@netapp/design-system/dist/components/Popover';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
-import { useAppSelector } from '../../../../../store/storeHooks';
+import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
+import styles from './ViewDialog.module.scss';
 
-import styles from './RequiredPermissions.module.scss';
-import { PERMISSIONS } from '../../../../../utils/consts';
-
-const RequiredPermissions = ({type} : {type: string}) => {
-    const state = useAppSelector(state => state);
-    const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
+const ViewDialog = ({data} : {data: string}) => {
     return (
         <div className={styles['dialog-content']}>
             <div className={styles['dialog-body']}>
@@ -37,4 +32,4 @@ const RequiredPermissions = ({type} : {type: string}) => {
     );
 };
 
-export default RequiredPermissions;
+export default ViewDialog;

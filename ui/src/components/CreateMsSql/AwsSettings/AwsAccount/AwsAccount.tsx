@@ -17,12 +17,12 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
 import { setCreatePressed } from '../../../../store/mssql/msSqlActionSlice';
-import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
+import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PERMISSIONS, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import RequiredPermissions from './RequiredPermissions/RequiredPermissions';
+import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();
@@ -143,10 +143,11 @@ const AwsAccount = () => {
     };
 
     const openDialog = (type: string) => {
+        const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
         setDialog(
             <DialogComponent
                 header={GENERAL.REQUIRED_PERMISSIONS}
-                content={<RequiredPermissions type={type} />}
+                content={<ViewDialog data={data} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
