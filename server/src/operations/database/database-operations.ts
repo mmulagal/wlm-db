@@ -1,6 +1,14 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { createConfig, updateConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
+import {
+    createConfig,
+    updateConfig,
+    deleteConfig,
+    listConfig,
+    listDeployments,
+    listResources
+} from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
     FormConfigListResponseType,
@@ -12,6 +20,35 @@ import getLogger from '../../utils/logger';
 import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
 
 const logger = getLogger();
+interface DeploymentData {
+    id: string;
+    account_id: string;
+    deployment_id: string;
+    parent_deployment_id?: string;
+    deployment_name: string;
+    cloud_provider_account_id?: string;
+    region: string;
+    credentials_id: string;
+    deployment_status: string;
+    deployment_model?: string;
+    deployment_status_reason?: string;
+    start_time: string;
+    end_time: string;
+    data: any;
+}
+
+interface ResourceData {
+    id: string;
+    account_id: string;
+    resource_id: string;
+    resource_name?: string;
+    resource_type: string;
+    co_relation_id?: string;
+    cloud_provider_account_id?: string;
+    cloud_provider_name?: string;
+    region?: string;
+    metadata?: any;
+}
 
 async function getSavedConfig(accountId: string, id: string): Promise<FormConfigObjectResponseType> {
     logger.info('Load individual saved config ', accountId);
@@ -68,17 +105,20 @@ async function saveConfig(
     logger.info('Save config ', accountId);
     logger.debug('Save config data', data);
 
-    const {
-        id,
-        account_id: configAccountId,
-        creation_time: configCreationTime
-    } = await createConfig(accountId, {
+    const { id, creation_time: configCreationTime } = await createConfig(accountId, {
         user,
         name,
         creationTime: Date.now(),
         data
     });
-    return { id, accountId: configAccountId, creationTime: moment(configCreationTime).unix() * 1000, user, data, name };
+    return {
+        id,
+        accountId,
+        creationTime: moment(configCreationTime).unix() * 1000,
+        user,
+        data,
+        name
+    };
 }
 
 async function modifyConfig(
@@ -144,6 +184,55 @@ async function getDeploymentStatusByName(accountId: string, name: string): Promi
     }
 }
 
+async function getDeployments(
+    accountId?: string,
+    deploymentId?: string,
+    deploymentName?: string,
+    statuses?: Array<DEPLOYMENT_STATUS>,
+    parentStackOnly?: boolean
+): Promise<Array<DeploymentData>> {
+    logger.info(' Get the Deployments', { accountId, deploymentId, deploymentName, statuses, parentStackOnly });
+
+    try {
+        const records = await listDeployments(accountId, deploymentId, deploymentName, statuses, parentStackOnly);
+        return trimAccountIdForDemo(records);
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the deployments');
+    }
+}
+
+async function getResources(
+    accountId: string,
+    resourceId?: string,
+    resourceType?: string
+): Promise<Array<ResourceData>> {
+    logger.info(' Get the Resources', { accountId, resourceId, resourceType });
+
+    try {
+        const records = await listResources(accountId, resourceId, resourceType);
+        return trimAccountIdForDemo(records);
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
+    }
+}
+
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
+function trimAccountIdForDemo(records) {
+    logger.debug('records', records);
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (records && records.length) {
+            const modifiedData = records.map(record => {
+                const { account_id: accountId, ...rest } = record;
+                const [modifiedAccountId] = accountId.split('_');
+                return { account_id: modifiedAccountId, ...rest };
+            });
+            return modifiedData;
+        }
+    }
+    return records;
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -151,5 +240,7 @@ export {
     modifyConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
-    getDeploymentStatusByName
+    getDeploymentStatusByName,
+    getDeployments,
+    getResources
 };

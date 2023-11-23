@@ -236,6 +236,7 @@ async function createEvent(params: Event) {
 
 async function deleteDeployment(accountId: string, deploymentId: string) {
     logger.info('Deleting deployment', { accountId, deploymentId });
+    accountId = checkAccount(accountId);
     return prisma.client.deployment.deleteMany({
         where: {
             account_id: accountId,
@@ -246,6 +247,7 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 
 async function listResources(accountId: string, resourceId?: string, resourceType?: string) {
     logger.info('Listing resources', { accountId, resourceId, resourceType });
+    accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
@@ -291,6 +293,7 @@ async function createResource(accountId: string, params: Resource) {
 async function deleteResource(accountId: string, resourceId: string) {
     logger.info('Deleting resource', { accountId, resourceId });
 
+    accountId = checkAccount(accountId);
     return prisma.client.resource.deleteMany({
         where: {
             account_id: accountId,
@@ -419,13 +422,16 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
 function checkAccount(accountId: string) {
     logger.info('checking account id', accountId);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return `${accountId}-${getSubjectFromBearerToken() as string}`;
+        return `${accountId}_${getSubjectFromBearerToken() as string}`;
     }
     return accountId;
 }
+
 export {
     Resource,
     listDeployments,

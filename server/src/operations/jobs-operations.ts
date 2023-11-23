@@ -3,7 +3,8 @@ import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
-import { deploymentJobsCount, listDeployments, deleteDeploymentJobById } from '../lib/database/db';
+import { deploymentJobsCount, deleteDeploymentJobById } from '../lib/database/db';
+import { getDeployments } from './database/database-operations';
 import { DEPLOYMENT_JOBS_STATUS_FILTER, HttpErrorCodes, NOT_AVAILABLE } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -47,8 +48,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string) {
         // remove the empty spaces in the string & split the fields by comma separated array values
         deploymentStatuses = statuses?.toUpperCase()?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
     }
-    const deploymentDetails = await listDeployments(accountId, undefined, undefined, deploymentStatuses, true);
-
+    const deploymentDetails = await getDeployments(accountId, undefined, undefined, deploymentStatuses, true);
     if (isEmpty(deploymentDetails)) {
         logger.error(`No deployments found for account ${accountId} with statuses ${statuses}`);
         return { count: 0, items: [], nextToken: '' };
