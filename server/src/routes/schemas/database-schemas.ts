@@ -20,7 +20,7 @@ const baseRequest = {
     params: DatabaseParams
 };
 
-const resourceBaseRequest = {
+const resourceUtilizationBaseRequest = {
     ...baseRequest,
     response: {
         200: UtilisationResponseBody
@@ -68,19 +68,19 @@ const GetServerSummarySchema = {
 };
 
 const DatabaseCpuUtilisationResponseSchema = {
-    ...resourceBaseRequest,
+    ...resourceUtilizationBaseRequest,
     summary: 'Get MSSQL CPU utilisation',
     description: 'Database Resource CPU Utilisation'
 };
 
 const DatabaseStorageUtilisationResponseSchema = {
-    ...resourceBaseRequest,
+    ...resourceUtilizationBaseRequest,
     summary: 'Get MSSQL Storage utilisation',
     description: 'Database Resource Storage Utilisation'
 };
 
 const DatabaseMemoryUtilisationResponseSchema = {
-    ...resourceBaseRequest,
+    ...resourceUtilizationBaseRequest,
     summary: 'Get MSSQL Memory utilisation',
     description: 'Database Resource Memory Utilisation'
 };
