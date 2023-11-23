@@ -317,12 +317,22 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({ nextToken = null }) =>
-                    `database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`
+                query: ({ nextToken = null }) => {
+                    if (nextToken) {
+                        return `database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
+                    } else {
+                        return `database-hosts?fields=performance,storage,protection,usageEstimation`;
+                    }
+                }
             }),
             getDatabaseJobs: builder.query({
-                query: ({ nextToken = null }) =>
-                    `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`
+                query: ({ nextToken = null }) => {
+                    if (nextToken) {
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`;
+                    } else {
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED`;
+                    }
+                }
             }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`

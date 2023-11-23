@@ -56,7 +56,9 @@ async function listDeployments(
     deploymentId?: string,
     deploymentName?: string,
     statuses?: Array<DEPLOYMENT_STATUS>,
-    parentStackOnly?: boolean
+    parentStackOnly?: boolean,
+    pageSize?: number,
+    nextToken?: string
 ) {
     logger.info('Listing deployments', { accountId, deploymentId, deploymentName, statuses });
     return prisma.client.deployment.findMany({
@@ -72,9 +74,13 @@ async function listDeployments(
             ...(parentStackOnly && { parent_deployment_id: null })
         },
         orderBy: {
-            start_time: 'desc'
+            id: 'asc'
         },
-        take: 100
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 

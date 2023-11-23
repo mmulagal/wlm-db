@@ -92,9 +92,7 @@ const DatabaseHomeApis = () => {
             let oldList = databaseHostsData || [];
             let newList = databaseHosts?.items || [];
             dispatch(addDatabaseHosts({databaseHostsData: [...oldList, ...newList], databaseHostsLoading, databaseHostsError}));
-            if (databaseHosts?.nextToken) {
                 setHostCursor(databaseHosts?.nextToken);
-            }
         }  
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
@@ -106,9 +104,7 @@ const DatabaseHomeApis = () => {
             let oldList = databaseJobsData || [];
             let newList = databaseJobs?.items || [];
             dispatch(addDatabaseJobs({databaseJobsData: [...oldList, ...newList], databaseJobsLoading, databaseJobsError}));
-            if (databaseJobs?.nextToken) {
                 setJobsCursor(databaseJobs?.nextToken);
-            }
         }  
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseJobs, databaseJobsLoading, databaseJobsError]);
