@@ -27,6 +27,7 @@ interface DeploymentData {
     parent_deployment_id?: string;
     deployment_name: string;
     cloud_provider_account_id?: string;
+    cloud_provider_name?: string;
     region: string;
     credentials_id: string;
     deployment_status: string;
@@ -218,7 +219,7 @@ async function getResources(
 
 // To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
 // So while saving & retrieving we have to maintain the same in demo mode
-function trimAccountIdForDemo(records) {
+function trimAccountIdForDemo(records: any) {
     logger.debug('records', records);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         if (records && records.length) {
