@@ -199,12 +199,30 @@ async function getDeployments(
     deploymentId?: string,
     deploymentName?: string,
     statuses?: Array<DEPLOYMENT_STATUS>,
-    parentStackOnly?: boolean
+    parentStackOnly?: boolean,
+    API_PAGE_SIZE?: number,
+    nextToken?: string
 ): Promise<Array<DeploymentData>> {
-    logger.info(' Get the Deployments', { accountId, deploymentId, deploymentName, statuses, parentStackOnly });
+    logger.info(' Get the Deployments', {
+        accountId,
+        deploymentId,
+        deploymentName,
+        statuses,
+        parentStackOnly,
+        API_PAGE_SIZE,
+        nextToken
+    });
 
     try {
-        const records = await listDeployments(accountId, deploymentId, deploymentName, statuses, parentStackOnly);
+        const records = await listDeployments(
+            accountId,
+            deploymentId,
+            deploymentName,
+            statuses,
+            parentStackOnly,
+            API_PAGE_SIZE,
+            nextToken
+        );
         return trimAccountIdForDemo(records);
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the deployments');
