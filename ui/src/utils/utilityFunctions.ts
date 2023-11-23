@@ -15,7 +15,7 @@ import {
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST
 } from './consts';
-import { AvailabilityZonesObj, KmsKeys, Regions, Subnets } from './types/mssqlTypes';
+import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
 const moment = require('moment');
@@ -834,6 +834,12 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.storageCapacity?.capacity) {
         params.databaseSize =
             parseInt(payload.storageCapacity.capacity) * (payload.storageCapacity.unit.value === 'GiB' ? 1 : 1024);
+    }
+    if (payload?.tags) {
+        const tags = payload.tags.filter((tag: TagObj) => tag.key);
+        if (tags.length > 0) {
+            params.tags = tags;
+        }
     }
     params.enableCloudWatch = payload.cloudWatch || false;
     return params;
