@@ -11,6 +11,7 @@ data:
   TRACE_EXPORTER_URL: http://signoz-otel-collector.signoz.svc.cluster.local:4318
   SIGNOZ_ENDPOINT: signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces
   WLMDB_BUCKET_REGION: {{ .Values.global.region }}
+  NODE_ENV: {{ .Values.global.NODE_ENV }}
   {{ if eq .Values.global.environment "production" }}
   AUTH0_ENDPOINT: netapp-cloud-account.auth0.com
   CLOUD_MANAGER_ENDPOINT: api.bluexp.netapp.com

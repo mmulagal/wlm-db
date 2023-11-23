@@ -456,6 +456,5 @@
                 "fileSystemType": "FSx ONTAP"
             }
         }
-    ],
-    "nextToken": ""
+    ]
 }
