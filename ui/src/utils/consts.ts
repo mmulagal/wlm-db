@@ -183,418 +183,198 @@ export const CODEBOX_REST_RES = {
 };
 
 export const PERMISSIONS = {
-    'operate': {
+    "operate": {
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "EC2BackendListStatement",
+                "Sid": "EC2Group",
                 "Effect": "Allow",
                 "Action": [
-                    "ec2:DescribeVpcs",
-                    "ec2:DescribeSubnets",
-                    "ec2:DescribeSecurityGroups",
-                    "ec2:DescribeImages",
-                    "ec2:DescribeRegions",
-                    "ec2:DescribeRouteTables",
-                    "ec2:DescribeKeyPairs",
-                    "ec2:DescribeNetworkInterfaces",
-                    "ec2:DescribeInstanceTypes"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "EC2DeploymentOperationStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ec2:StartInstances",
-                    "ec2:StopInstances",
-                    "ec2:TerminateInstances",
-                    "ec2:ModifyInstanceAttribute",
-                    "ec2:ModifySubnetAttribute",
-                    "ec2:ModifyVolumeAttribute",
-                    "ec2:ModifyVpcAttribute",
-                    "ec2:ModifyNetworkInterfaceAttribute",
-                    "ec2:ModifyVolume",
-                    "ec2:ModifyInstancePlacement",
+                    "ec2:AllocateAddress",
+                    "ec2:AllocateHosts",
+                    "ec2:AssignPrivateIpAddresses",
+                    "ec2:AssociateAddress",
+                    "ec2:AssociateRouteTable",
+                    "ec2:AssociateSubnetCidrBlock",
+                    "ec2:AssociateVpcCidrBlock",
                     "ec2:AttachInternetGateway",
                     "ec2:AttachNetworkInterface",
                     "ec2:AttachVolume",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:CreateVolume",
                     "ec2:DeleteLaunchTemplate",
                     "ec2:DeleteLaunchTemplateVersions",
                     "ec2:DeleteNetworkInterface",
+                    "ec2:DeleteSecurityGroup",
                     "ec2:DeleteTags",
                     "ec2:DeleteVolume",
-                    "ec2:DeleteSecurityGroup",
-                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ec2:DetachNetworkInterface",
+                    "ec2:DetachVolume",
+                    "ec2:DisassociateAddress",
+                    "ec2:DisassociateIamInstanceProfile",
+                    "ec2:DisassociateRouteTable",
+                    "ec2:DisassociateSubnetCidrBlock",
+                    "ec2:DisassociateVpcCidrBlock",
+                    "ec2:ModifyInstanceAttribute",
+                    "ec2:ModifyInstancePlacement",
+                    "ec2:ModifyNetworkInterfaceAttribute",
+                    "ec2:ModifySubnetAttribute",
+                    "ec2:ModifyVolume",
+                    "ec2:ModifyVolumeAttribute",
+                    "ec2:ModifyVpcAttribute",
+                    "ec2:ReleaseAddress",
+                    "ec2:ReplaceRoute",
                     "ec2:ReplaceRouteTableAssociation",
                     "ec2:RevokeSecurityGroupEgress",
-                    "ec2:AssignPrivateIpAddresses",
-                    "ec2:DisassociateRouteTable",
                     "ec2:RevokeSecurityGroupIngress",
-                    "ec2:DisassociateIamInstanceProfile",
-                    "ec2:DisassociateAddress",
-                    "ec2:ReleaseAddress",
-                    "ec2:DisassociateSubnetCidrBlock",
-                    "ec2:AllocateHosts",
-                    "ec2:AssociateVpcCidrBlock",
-                    "ec2:ReplaceRoute",
-                    "ec2:DisassociateVpcCidrBlock",
-                    "ec2:AssociateRouteTable",
-                    "ec2:DetachVolume",
-                    "ec2:AssociateSubnetCidrBlock",
-                    "ec2:AssociateAddress",
-                    "ec2:AuthorizeSecurityGroupEgress",
-                    "ec2:DetachNetworkInterface",
-                    "ec2:AllocateAddress",
-                    "ec2:CreateVolume"
+                    "ec2:StartInstances",
+                    "ec2:StopInstances",
+                    "ec2:TerminateInstances"
                 ],
-                "Resource": [
-                    "*"
-                ],
+                "Resource": "*",
                 "Condition": {
                     "StringLike": {
-                        "ec2:ResourceTag/aws:cloudformation:stack-name": [
-                            "WLMDB*"
-                        ]
+                        "ec2:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
                     }
                 }
             },
             {
-                "Sid": "EC2DeploymentListStatement",
+                "Sid": "FSxNGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "ec2:Get*",
-                    "ec2:DescribeLaunchTemplates",
-                    "ec2:DescribeInstances",
-                    "ec2:DescribeVolumes",
-                    "ec2:CreateNetworkInterface",
+                    "fsx:DeleteFileSystem",
+                    "fsx:DeleteStorageVirtualMachine",
+                    "fsx:DeleteVolume",
+                    "fsx:TagResource",
+                    "fsx:UntagResource"
+                ],
+                "Resource": "*",
+                "Condition": {
+                    "StringLike": {
+                        "aws:ResourceTag/aws:cloudformation:stack-name": "WLMDB*"
+                    }
+                }
+            },
+            {
+                "Sid": "CommonGroup",
+                "Effect": "Allow",
+                "Action": [
+                    "cloudformation:CreateStack",
+                    "cloudformation:DescribeStackEvents",
+                    "cloudformation:DescribeStacks",
+                    "cloudformation:ListStacks",
+                    "cloudformation:ValidateTemplate",
+                    "cloudwatch:DeleteAlarms",
+                    "cloudwatch:Describe*",
+                    "cloudwatch:Get*",
+                    "cloudwatch:List*",
+                    "cloudwatch:PutMetricAlarm",
+                    "ds:DescribeDirectories",
+                    "ec2:AuthorizeSecurityGroupEgress",
+                    "ec2:AuthorizeSecurityGroupIngress",
                     "ec2:CreateLaunchTemplate",
                     "ec2:CreateLaunchTemplateVersion",
-                    "ec2:CreateTags",
+                    "ec2:CreateNetworkInterface",
                     "ec2:CreateSecurityGroup",
-                    "ec2:DescribeSecurityGroups",
-                    "ec2:RunInstances"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "SNSListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "sns:ListTopics"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "SNSStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "sns:Publish"
-                ],
-                "Resource": [
-                    "arn:aws:sns:*:*:wlmdb"
-                ]
-            },
-            {
-                "Sid": "SecretManagerListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "secretsmanager:CreateSecret",
-                    "secretsmanager:ListSecrets",
-                    "secretsmanager:GetSecretValue"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "SecretManagerStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "secretsmanager:DeleteResourcePolicy",
-                    "secretsmanager:DeleteSecret",
-                    "secretsmanager:TagResource",
-                    "secretsmanager:PutResourcePolicy",
-                    "secretsmanager:UntagResource"
-                ],
-                "Resource": [
-                    "arn:aws:secretsmanager:*:*:secret:wlmdb*"
-                ]
-            },
-            {
-                "Sid": "CloudWatchDeploymentCreateStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "cloudwatch:PutMetricAlarm",
-                    "cloudwatch:DeleteAlarms"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudWatchDeploymentListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "cloudwatch:DescribeAlarms",
-                    "cloudwatch:List*",
-                    "cloudwatch:Get*",
-                    "cloudwatch:Describe*"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudLogDeploymentCreateStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "logs:CreateLogStream",
-                    "logs:CreateLogGroup",
-                    "logs:GetLogEvents",
-                    "logs:GetLogDelivery",
-                    "logs:GetLogRecord",
-                    "logs:ListLogDeliveries"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudLogDeploymentStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "logs:DeleteLogStream",
-                    "logs:TagResource",
-                    "logs:DeleteLogGroup",
-                    "logs:UntagResource",
-                    "logs:PutLogEvents"
-                ],
-                "Resource": [
-                    "arn:aws:logs:*:*:log-group:WLMDB*"
-                ]
-            },
-            {
-                "Sid": "KMSListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "kms:ListAliases",
-                    "kms:ListKeys",
-                    "kms:DescribeKey"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudFormationListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "cloudformation:ListStacks",
-                    "cloudformation:CreateStack",
-                    "cloudformation:ValidateTemplate"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudFormationDeploymentStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "cloudformation:DeleteStack",
-                    "cloudformation:SignalResource"
-                ],
-                "Resource": [
-                    "arn:aws:cloudformation:*:*:stack/WLMDB*"
-                ]
-            },
-            {
-                "Sid": "DirectoryServiceStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ds:DescribeDirectories"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "FSXListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "fsx:DescribeVolumes",
-                    "fsx:DescribeBackups",
-                    "fsx:DescribeStorageVirtualMachines",
-                    "fsx:DescribeFileSystems",
+                    "ec2:CreateTags",
+                    "ec2:DeleteSecurityGroup",
+                    "ec2:Describe*",
+                    "ec2:Get*",
+                    "ec2:RevokeSecurityGroupEgress",
+                    "ec2:RevokeSecurityGroupIngress",
+                    "ec2:RunInstances",
+                    "ec2messages:AcknowledgeMessage",
+                    "ec2messages:DeleteMessage",
+                    "ec2messages:FailMessage",
+                    "ec2messages:GetEndpoint",
+                    "ec2messages:GetMessages",
+                    "ec2messages:SendReply",
                     "fsx:CreateFileSystem",
+                    "fsx:CreateStorageVirtualMachine",
                     "fsx:CreateVolume",
-                    "fsx:CreateStorageVirtualMachine"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "FSXDeploymentStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "fsx:UntagResource",
-                    "fsx:TagResource",
-                    "fsx:DeleteFileSystem",
-                    "fsx:DeleteVolume",
-                    "fsx:DeleteStorageVirtualMachine"
-                ],
-                "Resource": [
-                    "*"
-                ],
-                "Condition": {
-                    "StringLike": {
-                        "aws:ResourceTag/aws:cloudformation:stack-name": [
-                            "WLMDB*"
-                        ]
-                    }
-                }
-            },
-            {
-                "Sid": "ResourceGroupListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "resource-groups:List*",
-                    "resource-groups:Get*",
-                    "resource-groups:CreateGroup"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "ResourceGroupStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "resource-groups:DeleteGroup"
-                ],
-                "Resource": [
-                    "arn:aws:resource-groups:*:*:group/WLMDB*"
-                ]
-            },
-            {
-                "Sid": "QuotaStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "servicequotas:ListServiceQuotas"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "PricingStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "pricing:GetProducts"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "STSStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "sts:GetCallerIdentity"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "IAMStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "iam:AddRoleToInstanceProfile",
-                    "iam:GetRole",
-                    "iam:GetPolicy",
-                    "iam:GetRolePolicy",
-                    "iam:CreateInstanceProfile",
-                    "iam:PassRole",
-                    "iam:DeleteInstanceProfile",
-                    "iam:GetUser",
-                    "iam:GetPolicyVersion",
-                    "iam:RemoveRoleFromInstanceProfile",
-                    "iam:SimulatePrincipalPolicy"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "SSMListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ssm:DescribeAssociation",
-                    "ssm:GetDeployablePatchSnapshotForInstance",
-                    "ssm:GetDocument",
-                    "ssm:DescribeDocument",
-                    "ssm:GetManifest",
-                    "ssm:GetParameter",
-                    "ssm:GetParameters",
-                    "ssm:ListAssociations",
-                    "ssm:ListInstanceAssociations",
-                    "ssm:GetParametersByPath"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "SSMCreateStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "fsx:Describe*",
+                    "fsx:List*",
+                    "kms:CreateGrant",
+                    "kms:Describe*",
+                    "kms:List*",
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:DescribeLog*",
+                    "logs:GetLog*",
+                    "logs:ListLogDeliveries",
+                    "logs:PutLogEvents",
+                    "logs:TagResource",
+                    "pricing:GetProducts",
+                    "secretsmanager:CreateSecret",
+                    "secretsmanager:GetSecretValue",
+                    "secretsmanager:ListSecrets",
+                    "servicequotas:ListServiceQuotas",
+                    "sns:ListTopics",
+                    "ssm:Describe*",
+                    "ssm:Get*",
+                    "ssm:List*",
+                    "ssm:PutComplianceItems",
+                    "ssm:PutConfigurePackageResult",
+                    "ssm:PutInventory",
+                    "ssm:SendCommand",
+                    "ssm:UpdateAssociationStatus",
+                    "ssm:UpdateInstanceAssociationStatus",
+                    "ssm:UpdateInstanceInformation",
                     "ssmmessages:CreateControlChannel",
                     "ssmmessages:CreateDataChannel",
                     "ssmmessages:OpenControlChannel",
                     "ssmmessages:OpenDataChannel",
-                    "ssm:PutInventory",
-                    "ssm:PutComplianceItems",
-                    "ssm:PutConfigurePackageResult",
-                    "ssm:UpdateAssociationStatus",
-                    "ssm:UpdateInstanceAssociationStatus",
-                    "ssm:UpdateInstanceInformation",
-                    "ssm:SendCommand",
-                    "ec2messages:GetEndpoint",
-                    "ec2messages:GetMessages"
+                    "sts:GetCallerIdentity"
                 ],
-                "Resource": "*",
-                "Condition": {
-                    "StringLike": {
-                        "ec2:ResourceTag/aws:cloudformation:stack-name": [
-                            "WLMDB*"
-                        ]
-                    }
-                }
+                "Resource": "*"
             },
             {
-                "Sid": "EC2MessagesStatement",
+                "Sid": "ArnGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "ec2messages:AcknowledgeMessage",
-                    "ec2messages:DeleteMessage",
-                    "ec2messages:FailMessage",
-                    "ec2messages:SendReply"
+                    "cloudformation:DeleteStack",
+                    "cloudformation:SignalResource",
+                    "logs:DeleteLogGroup",
+                    "logs:DeleteLogStream",
+                    "logs:UntagResource",
+                    "secretsmanager:DeleteResourcePolicy",
+                    "secretsmanager:DeleteSecret",
+                    "secretsmanager:PutResourcePolicy",
+                    "secretsmanager:TagResource",
+                    "secretsmanager:UntagResource",
+                    "sns:Publish"
                 ],
-                "Resource": "*",
-                "Condition": {
-                    "StringLike": {
-                        "ec2:ResourceTag/aws:cloudformation:stack-name": [
-                            "WLMDB*"
-                        ]
-                    }
-                }
+                "Resource": [
+                    "arn:aws:cloudformation:*:*:stack/WLMDB*",
+                    "arn:aws:logs:*:*:log-group:WLMDB*",
+                    "arn:aws:secretsmanager:*:*:secret:wlmdb*",
+                    "arn:aws:sns:*:*:wlmdb"
+                ]
+            },
+            {
+                "Sid": "IAMGroup",
+                "Effect": "Allow",
+                "Action": [
+                    "iam:AddRoleToInstanceProfile",
+                    "iam:CreateInstanceProfile",
+                    "iam:CreateRole",
+                    "iam:CreateServiceLinkedRole",
+                    "iam:DeleteInstanceProfile",
+                    "iam:GetPolicy",
+                    "iam:GetPolicyVersion",
+                    "iam:GetRole",
+                    "iam:GetRolePolicy",
+                    "iam:GetUser",
+                    "iam:PutRolePolicy",
+                    "iam:RemoveRoleFromInstanceProfile",
+                    "iam:SimulatePrincipalPolicy"
+                ],
+                "Resource": "*"
             }
         ]
     },
-    'view': {
+    "view": {
         "Version": "2012-10-17",
         "Statement": [
             {
@@ -703,6 +483,16 @@ export const PERMISSIONS = {
                 "Effect": "Allow",
                 "Action": [
                     "iam:SimulatePrincipalPolicy"
+                ],
+                "Resource": [
+                    "*"
+                ]
+            },
+            {
+                "Sid": "SSMStatement",
+                "Effect": "Allow",
+                "Action": [
+                    "ssm:GetParametersByPath"
                 ],
                 "Resource": [
                     "*"
