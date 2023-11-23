@@ -37,9 +37,9 @@
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
         "build:local": "dotenv -e .env.development react-scripts build",
-        "build:staging": "dotenv -e .env.staging react-scripts build && cp-cli workload-config-stage.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
-        "build:preprod": "dotenv -e .env.preprod react-scripts build && cp-cli workload-config-preprod.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
-        "build:production": "dotenv -e .env.production react-scripts build && cp-cli workload-config-production.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
+        "build:staging": "dotenv -e .env.staging react-scripts build && cp-cli workload-config.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
+        "build:preprod": "dotenv -e .env.preprod react-scripts build && cp-cli workload-config.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
+        "build:production": "dotenv -e .env.production react-scripts build && cp-cli workload-config.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
         "test": "react-scripts test --coverage",
         "eject": "react-scripts eject"
     },
