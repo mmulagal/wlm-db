@@ -13,7 +13,12 @@ import { generateOptionType, getCredDetails } from '../../../utils/utilityFuncti
 import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import LoadConfig from '../LoadConfig/LoadConfig';
-import { LoadConfiguration, SaveConfiguration, resetRefetchApiCheck } from '../Configuration/LoadConfiguration';
+import {
+    LoadConfiguration,
+    SaveConfiguration,
+    resetChecksAfterLoad,
+    resetRefetchApiCheck
+} from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import {
     getBaseUrl,
@@ -62,6 +67,22 @@ const CodeBox = () => {
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const { refetch: configListRefetch } = useGetConfigListQuery({});
     const [loadTemplateData] = useGetTemplatesMutation();
+
+    const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+
+    useEffect(() => {
+        if (isLoadConfig) {
+            if (
+                refetchApiCount?.isLoading &&
+                (refetchApiCount?.expected.length === 0 ||
+                    _.uniq(refetchApiCount?.ran).length === _.uniq(refetchApiCount?.expected).length)
+            ) {
+                resetChecksAfterLoad(dispatch, closeDialog);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoadConfig, refetchApiCount]);
 
     const MenuOptions = [
         {

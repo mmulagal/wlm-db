@@ -14,7 +14,8 @@ import {
 const FormConfigListSchema = {
     tags: ['Config'],
     params: FormConfigListParams,
-    description: 'List saved config',
+    summary: 'List saved configurations',
+    description: 'List all the saved configurations',
     response: {
         200: FormConfigListResponse
     }
@@ -23,7 +24,8 @@ const FormConfigListSchema = {
 const FormConfigObjectSchema = {
     tags: ['Config'],
     params: FormConfigObjectParams,
-    description: 'Get individual saved config',
+    summary: 'Get a saved configuration',
+    description: 'Get a saved configuration detail for given Id',
     response: {
         200: FormConfigObjectResponse
     }
@@ -32,7 +34,8 @@ const FormConfigObjectSchema = {
 const FormConfigObjectDeleteSchema = {
     tags: ['Config'],
     params: FormConfigObjectParams,
-    description: 'Delete individual saved config',
+    summary: 'Delete a saved configuration',
+    description: 'Delete saved configuration for the given Id',
     response: {
         200: FormConfigObjectDeleteResponse
     }
@@ -41,7 +44,8 @@ const FormConfigObjectDeleteSchema = {
 const FormConfigCreateSchema = {
     tags: ['Config'],
     params: FormConfigListParams,
-    description: 'Create a config',
+    summary: 'Create a configuration',
+    description: 'Create a configuration with given details for given account',
     body: CreateConfigRequestBody,
     response: {
         200: FormConfigCreateResponse
@@ -51,7 +55,8 @@ const FormConfigCreateSchema = {
 const FormConfigUpdateSchema = {
     tags: ['Config'],
     params: FormConfigUpdateParams,
-    description: 'Update a config',
+    summary: 'Update a saved configuration',
+    description: 'Update the configuration of given Id with data provided',
     body: UpdateConfigRequestBody,
     response: {
         200: FormConfigUpdateResponse

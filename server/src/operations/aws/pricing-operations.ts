@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import { GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
@@ -7,13 +8,16 @@ import { calculateFsxStorageCapacity, sizeInGigaBytes } from '../../utils/utils'
 import {
     DEFAULT_AWS_REGION,
     FCI,
+    INVALID_PARAMETER_VALUE,
     MAX_READ_REQUEST_FSXN,
     MAX_WRITE_REQUEST_FSXN,
     MIN_DISKSIZE,
     MIN_THROUGHPUT,
-    SINGLE_AZ
+    SINGLE_AZ,
+    SQL_SOFTWARE_TYPES
 } from '../../utils/consts';
 import getProducts from '../../lib/aws/pricing';
+import { describeRegions, describeInstanceTypeOfferings } from '../../lib/aws/ec2';
 
 const logger = getLogger();
 
@@ -64,12 +68,6 @@ interface ProductOutput {
 
 const HOURS_IN_MONTH = 730;
 const DEFAULT_EBS_STORAGE = 100; // 100GB
-
-const sqlSoftwareTypes = new Map<string, string>([
-    ['standard', 'SQL std'],
-    ['enterprise', 'SQL ent'],
-    ['web', 'SQL web']
-]);
 
 const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
@@ -128,7 +126,7 @@ function getDeploymentOption(deploymentOption?: string): Filter {
 function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     logger.debug('Get sql software edition for filter', { sqlSoftwareType });
 
-    const edition = sqlSoftwareTypes.get(sqlSoftwareType?.toLocaleLowerCase()) || sqlSoftwareTypes.get('standard');
+    const edition = SQL_SOFTWARE_TYPES.get(sqlSoftwareType?.toLocaleLowerCase()) || SQL_SOFTWARE_TYPES.get('standard');
 
     return {
         Type: AWS_PRICING_FILTER_TERM_MATCH,
@@ -432,7 +430,7 @@ function calculateEc2Cost(instanceRate: number, storageRate: number, deploymentM
 }
 
 function calculateFsxStorageCost(instanceRate: number, diskSize: number): number {
-    logger.info('Calculating fsx storage cost', { instanceRate, diskSize });
+    logger.debug('Calculating fsx storage cost', { instanceRate, diskSize });
 
     return getPriceUtil(instanceRate, diskSize);
 }
@@ -492,6 +490,48 @@ function getInputs(
     ];
 }
 
+async function validatePricingParameters(
+    credentialsId: string,
+    compute: PricingServiceRequestType['compute'],
+    storage: PricingServiceRequestType['storage'],
+    vpc: PricingServiceRequestType['vpc']
+) {
+    logger.debug('Validating pricing parameters:', { compute, storage, vpc });
+
+    await Promise.all([
+        validatePricingRegionParameters(credentialsId, compute, storage, vpc),
+        describeInstanceTypeOfferings(credentialsId, compute.regionCode, compute.instanceType)
+    ]);
+}
+
+async function validatePricingRegionParameters(
+    credentialsId: string,
+    compute: PricingServiceRequestType['compute'],
+    storage: PricingServiceRequestType['storage'],
+    vpc: PricingServiceRequestType['vpc']
+) {
+    logger.debug('Validating pricing parameters:', { compute, storage, vpc });
+
+    try {
+        const regions = compact([...new Set([compute.regionCode, storage?.regionCode, vpc?.regionCode])]);
+        const regionsInput = {
+            DryRun: false,
+            AllRegions: true,
+            RegionNames: regions
+        };
+        await describeRegions(regionsInput, credentialsId);
+    } catch (error) {
+        logger.error('Failed to describe regions:', JSON.stringify(error));
+        const { Code, message, $metadata } = error as { Code: string; message: string; $metadata: unknown };
+        const { httpStatusCode } = $metadata as { httpStatusCode: number };
+
+        if (Code === INVALID_PARAMETER_VALUE) {
+            throw createError(httpStatusCode, message);
+        }
+        throw error;
+    }
+}
+
 async function calculatePrice(
     credentialsId: string,
     compute: PricingServiceRequestType['compute'],
@@ -503,6 +543,8 @@ async function calculatePrice(
         storage,
         vpc
     });
+
+    await validatePricingParameters(credentialsId, compute, storage, vpc);
 
     const inputList: ProductInput[] = compact(getInputs(compute, storage, vpc));
 
@@ -556,9 +598,6 @@ async function calculatePrice(
         let fsxIops = storage?.iops || 3 * fsxDisksize;
 
         fsxStorageCost = calculateFsxStorageCost(fsxStorageRate, fsxDisksize);
-        // Adding this to test demo price value will revert after check
-        logger.info('Calculating Fsx Price for demo', fsxThroughput, fsxDisksize, fsxIops);
-        logger.info('FSx cost value for demo', fsxStorageCost);
         if (fsxIops > 3 * fsxDisksize) {
             fsxIops -= 3 * fsxDisksize; // Iops cost is only charged when its greater than 3 * diskSize and charging is only on the difference
         } else {

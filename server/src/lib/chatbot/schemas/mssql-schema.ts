@@ -46,6 +46,7 @@ type DeployMsSqlParams = {
     ontapSgGroupId?: string;
     fsxFileSystemId?: string;
     enableCloudWatch?: boolean;
+    tags?: Array<{ key: string; value: string }>;
 };
 
 // Deploy MS SQL

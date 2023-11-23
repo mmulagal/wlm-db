@@ -15,6 +15,8 @@ const baseRequest = {
 // Get Database hosts summary details
 const DatabaseHostsSummarySchema = {
     ...baseRequest,
+    summary: 'Get databse hosts details',
+    description: 'Get database hosts summary details',
     params: DatabaseHostObjectParams,
     querystring: DatabaseHostQueryString,
     response: {

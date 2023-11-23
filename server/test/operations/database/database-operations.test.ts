@@ -130,6 +130,7 @@ describe('Database operations', () => {
         expect(response.deployment_status).toEqual(resp.deploymentStatus);
 
         resp = await getDeploymentStatusByName(ACCOUNT_ID, 'wlmdb-45678');
+        expect(resp);
         expect(response1.deployment_name).toEqual(resp.deploymentName);
         expect(response1.deployment_status).toEqual(resp.deploymentStatus);
 

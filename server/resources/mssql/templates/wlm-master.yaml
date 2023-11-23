@@ -573,7 +573,7 @@ Resources:
                   - cloudformation:ListStacks
                   - cloudformation:SignalResource
                 Resource: 
-                  - arn:aws:cloudformation:*:*:stack/WLMDB*'
+                  - arn:aws:cloudformation:*:*:stack/WLMDB*
               - Sid: STSStatement
                 Effect: Allow
                 Action:
@@ -640,10 +640,18 @@ Resources:
                 Effect: Allow
                 Action:
                   - ec2:Get*
-                  - ec2:DescribeTags
-                  - ec2:DescribeVolumes
-                  - ec2:CreateTags
+                  - ec2:Describe*
                 Resource: '*'
+              - Sid: EC2TaggingStatement
+                Effect: Allow
+                Action:
+                  - ec2:CreateTags
+                  - ec2:AuthorizeSecurityGroupIngress
+                Resource: '*'
+                Condition:
+                  StringLike:
+                    aws:ResourceTag/aws:cloudformation:stack-name:
+                      - WLMDB*
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'

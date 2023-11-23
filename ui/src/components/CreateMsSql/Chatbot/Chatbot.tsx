@@ -110,6 +110,7 @@ const Chatbot = () => {
 
     useEffect(() => {
         if (loadConfigClicked) {
+            setIsBotReplying(true);
             sendMsgToBot({
                 payload: {
                     prompt: wrapContext(
@@ -156,8 +157,8 @@ const Chatbot = () => {
                         }
 
                         dispatch(setMessages(updatedMessages));
-                        setIsBotReplying(false);
                     }
+                    setIsBotReplying(false);
                     dispatch(setLoadConfigClicked(false));
                 })
                 .catch((error: any) => {
@@ -196,14 +197,14 @@ const Chatbot = () => {
                         dispatch(setSelectedCredentials(value ? option : null));
                     }
                     break;
-                case 'fsxDeploymentMode':
+                case 'sqlDeploymentMode':
                     if (
-                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'SINGLE_AZ_1') ||
-                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'MULTI_AZ_1')
+                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'standalone') ||
+                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'fci')
                     ) {
                         dispatch(
                             setSelectedDBDeploymentModel(
-                                value === 'SINGLE_AZ_1'
+                                value === 'standalone'
                                     ? {
                                           label: GENERAL.SINGLE_INSTANCE,
                                           value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
@@ -458,7 +459,7 @@ const Chatbot = () => {
                             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
                             dispatch(
                                 setSelectedSecurityGroup(
-                                    value ? GENERAL.GENERATED_SECURITY_GROUP : GENERAL.USE_AN_EXISTING_SECURITY
+                                    value ? GENERAL.USE_AN_EXISTING_SECURITY : GENERAL.GENERATED_SECURITY_GROUP
                                 )
                             );
                             dispatch(setSelectedExistingSecurityGroup(value ? option : null));
@@ -503,7 +504,8 @@ const Chatbot = () => {
                     (currentIntent?.type
                         ? wrapContext(
                               `${currentIntent.type} with params ${JSON.stringify({
-                                  ...currentIntent.params
+                                  ...currentIntent.params,
+                                  ...(currentIntent.userParams || {})
                               })}`
                           ) + 'Sure!'
                         : '') + wrapContext(msg),
@@ -561,10 +563,7 @@ const Chatbot = () => {
     };
 
     useEffect(() => {
-        setIsBotReplying(isReceivingMsg);
-    }, [isReceivingMsg]);
-
-    useEffect(() => {
+        setIsBotReplying(true);
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
         // handleSendMsg(
@@ -671,14 +670,8 @@ const Chatbot = () => {
                 .join(', ')
         });
         dispatch(setMessages(updatedMessages));
-        const objectToValidate = { ...paramObj, ...(currentIntent.userParams || {}) };
-        const msgToBot = Object.keys(objectToValidate)
-            .map(
-                key =>
-                    `Use ${key} as ${
-                        typeof objectToValidate[key] === 'object' ? objectToValidate[key].value : objectToValidate[key]
-                    }`
-            )
+        const msgToBot = Object.keys(paramObj)
+            .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
         await handleSendMsg(msgToBot, false, updatedMessages);
     };
@@ -747,7 +740,7 @@ const Chatbot = () => {
             {/* <Header /> */}
             <div className={styles['page-content']}>
                 <ChatBox
-                    isBotReplying={isBotReplying}
+                    isBotReplying={isBotReplying || isReceivingMsg}
                     handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
                     sendMsg={sendMsg}
                     messagesToShow={messagesToShow ? messagesToShow : []}

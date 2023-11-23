@@ -34,6 +34,7 @@ const FSX_TYPE = 'fsxType';
 const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
 const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
 const SQL_SERVER_NAME = 'sqlServerName';
+const TAGS = 'tags';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -196,7 +197,8 @@ const CHATBOT_UI_PARAMS_FSX = [
         fsxConfiguration: [
             {
                 [FSX_DEPLOYMENT_MODE]: {
-                    required: true
+                    required: true,
+                    dependsOn: SQL_DEPLOYMENT_MODE
                 }
             },
             {
@@ -241,6 +243,11 @@ const CHATBOT_UI_PARAMS_FSX = [
             {
                 [ENABLE_CLOUD_WATCH]: {
                     required: true
+                }
+            },
+            {
+                [TAGS]: {
+                    reuired: true
                 }
             }
         ]
@@ -310,7 +317,8 @@ const KEY_LABEL_MAP = {
     [ONTAP_SG_ID]: 'ontap security group id',
     [FSX_TYPE]: 'fsx type',
     [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
-    [SQL_SERVER_NAME]: 'database cluster name'
+    [SQL_SERVER_NAME]: 'database cluster name',
+    [TAGS]: 'tags'
 };
 
 export {
@@ -358,5 +366,6 @@ export {
     PRIVATE_SUBNET_2,
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
-    SQL_SERVER_NAME
+    SQL_SERVER_NAME,
+    TAGS
 };

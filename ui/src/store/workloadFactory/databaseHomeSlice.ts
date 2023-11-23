@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DatabaseHostsEntities } from "../../utils/types/databaseHomeTypes";
 
-const initialState: DatabaseHostsEntities = {
+export const initialDBHomepageState: DatabaseHostsEntities = {
     getDatabaseHosts: {
         databaseHostsData: null,
         databaseHostsLoading: false,
@@ -60,7 +60,7 @@ const initialState: DatabaseHostsEntities = {
 
 const databaseHomeSlice = createSlice({
     name: 'databaseHome',
-    initialState,
+    initialState: initialDBHomepageState,
     reducers: {
         addDatabaseHosts: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts = action.payload;
@@ -88,6 +88,9 @@ const databaseHomeSlice = createSlice({
         },
         addAggregatedCosts: (state, action: PayloadAction<any>) => {
             state.aggregatedCosts = action.payload;
+        },
+        addInitialData: (state, action: PayloadAction<any>) => {
+            return { ...state, ...action.payload };
         }
     }
 });
@@ -101,7 +104,8 @@ export const {
     addAggregateHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
-    addAggregatedCosts
+    addAggregatedCosts, 
+    addInitialData
 } = databaseHomeSlice.actions;
 
 export default databaseHomeSlice;
