@@ -15,14 +15,14 @@ data:
   AUTH0_ENDPOINT: netapp-cloud-account.auth0.com
   CLOUD_MANAGER_ENDPOINT: api.bluexp.netapp.com
   WORKLOAD_FACTORY_ENDPOINT: api.workloads.netapp.com
-  WLMDB_ABSOLUTE_ENDPOINT: cloudmanager.netapp.com
+  WLMDB_ABSOLUTE_ENDPOINT: console.bluexp.netapp.com
   KINESIS_STREAM_NAME: audit-service-prod-stream
   WLMDB_BUCKET_NAME: production.wlmdb.workloads.netapp.com
   {{ else }}
   AUTH0_ENDPOINT: staging-netapp-cloud-account.auth0.com
   CLOUD_MANAGER_ENDPOINT: staging.api.bluexp.netapp.com
   WORKLOAD_FACTORY_ENDPOINT: staging.api.workloads.netapp.com
-  WLMDB_ABSOLUTE_ENDPOINT: staging.cloudmanager.netapp.com
+  WLMDB_ABSOLUTE_ENDPOINT: staging.console.bluexp.netapp.com
   KINESIS_STREAM_NAME: audit-service-staging-stream
   WLMDB_BUCKET_NAME: staging.wlmdb.workloads.netapp.com
   {{ end }}
