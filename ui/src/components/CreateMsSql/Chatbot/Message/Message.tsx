@@ -135,7 +135,7 @@ const Message = ({
                                                             [key]: {label: val, value: val}
                                                         });
                                                     }}
-                                                    />}
+                                            />}
                                         </>
                                     );
                                 })}
