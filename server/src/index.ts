@@ -85,8 +85,8 @@ interface Headers {
 
 await initiateSecrets();
 
+// TODO: For debugging only. Remove after verifying.
 logger.info('CHECK PROCESS ENV>>>', process.env);
-logger.info('CHECK PROCESS ENV STRINGIFIED>>>', JSON.stringify(process.env));
 
 const app = fastify({
     trustProxy: true,
