@@ -21,7 +21,8 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     STANDALONE,
-    FCI
+    FCI,
+    FSX_USERNAME
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -210,7 +211,7 @@ async function validateVpcId(
             };
         }
         case AZ_2: {
-            const azs2 = azs.filter(az => az.value !== az2);
+            const azs2 = azs.filter(az => az.value !== az1);
             if (!az2) {
                 return {
                     key,
@@ -237,7 +238,7 @@ async function validateVpcId(
                     status: 'error',
                     message:
                         'The availability zone that you provided is not valid. Please choose a valid availability zone.',
-                    allowedValues: azs
+                    allowedValues: azs2
                 };
             }
 
@@ -251,7 +252,7 @@ async function validateVpcId(
                 return {
                     key,
                     status: 'error',
-                    message: 'Select the subnet id',
+                    message: `Select the ${key === PRIVATE_SUBNET_1 ? 'primary' : 'secondary'} subnet id`,
                     allowedValues: uniqBy(
                         isValidVpc.subnets
                             ?.filter(({ availabilityZone }) =>
@@ -567,13 +568,14 @@ async function validateDomain(
     }
 }
 
-function validateText(text: string, key: string) {
+function validateText(text: string, key: string, fsxType?: string) {
     if (!text) {
         return {
             key,
             status: 'error',
             message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
-            type: key.toLowerCase().includes('password') ? 'password' : 'text'
+            type: key.toLowerCase().includes('password') ? 'password' : 'text',
+            ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
         };
     }
     return { value: text };

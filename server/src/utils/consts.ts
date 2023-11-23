@@ -57,11 +57,12 @@ enum HEADERS {
 
 const API_PATH_HEALTH: string = '/health';
 
-const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
-    ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
-    : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
-    ? config.get<string>('urls.local-connector')
-    : config.get<string>('urls.cloud-manager');
+// TODO: These variables are not used anywhere. Remove them later.
+// const CONNECTOR_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
+//     ? `http://${process.env.CLOUD_MANAGER_ENDPOINT}`
+//     : !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+//     ? config.get<string>('urls.local-connector')
+//     : config.get<string>('urls.cloud-manager');
 
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
@@ -71,14 +72,22 @@ const DEFAULT_AWS_REGION = 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 
-const CLOUD_MANAGER_ENDPOINT: string = config.get<string>('urls.cloud-manager');
+const CLOUD_MANAGER_ENDPOINT: string = process.env.CLOUD_MANAGER_ENDPOINT
+    ? `https://${process.env.CLOUD_MANAGER_ENDPOINT}`
+    : config.get<string>('urls.cloud-manager');
 const TENANCY_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/tenancy`;
 const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgmt`;
-const SIGNOZ_ENDPOINT: string = config.get<string>('urls.signoz');
-const WORKLOAD_FACTORY_ENDPOINT: string = config.get<string>('urls.workload-factory');
-const WLMDB_ABSOLUTE_ENDPOINT: string = config.get('urls.wlm-db-redirect-url');
+const SIGNOZ_ENDPOINT: string = process.env.SIGNOZ_ENDPOINT
+    ? `http://${process.env.SIGNOZ_ENDPOINT}`
+    : config.get<string>('urls.signoz');
+const WORKLOAD_FACTORY_ENDPOINT: string = process.env.WORKLOAD_FACTORY_ENDPOINT
+    ? `https://${process.env.WORKLOAD_FACTORY_ENDPOINT}`
+    : config.get<string>('urls.workload-factory');
+const WLMDB_ABSOLUTE_ENDPOINT: string = process.env.WLMDB_ABSOLUTE_ENDPOINT
+    ? `https://${process.env.WLMDB_ABSOLUTE_ENDPOINT}`
+    : config.get('urls.wlm-db-redirect-url');
 
-const CREDENTIALS_ENDPOINT: string = config.get<string>('urls.cloud-manager');
+const CREDENTIALS_ENDPOINT: string = CLOUD_MANAGER_ENDPOINT || config.get<string>('urls.cloud-manager');
 
 const CLOUD_MANAGER_GET_CVO_WE_PREFIX = '/occm/api/working-environments';
 
@@ -91,7 +100,7 @@ enum DatabaseTypes {
 const AWS_RESOURCE_NAME_TAG = 'Name';
 
 // Kinesis
-const KINESIS_STREAM_NAME = 'audit-service-staging-stream';
+const KINESIS_STREAM_NAME = process.env.KINESIS_STREAM_NAME || config.get('kinesis.stream-name');
 
 enum CredentialsType {
     AWS = 'aws_assume_role',
@@ -118,15 +127,17 @@ enum RouteTags {
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
     BATCH = 'Batch',
-    PRICING = 'Pricing'
+    PRICING = 'Pricing',
+    CHATBOT = 'Chatbot'
 }
 
 enum HttpErrorCodes {
-    INTERNAL_SERVER_ERROR = 500,
-    NOT_FOUND = 404,
+    BAD_REQUEST = 400,
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
+    NOT_FOUND = 404,
     VALIDATION_ERROR = 422,
+    INTERNAL_SERVER_ERROR = 500,
     SERVICE_UNAVAILABLE = 503
 }
 
@@ -151,7 +162,9 @@ enum AWSServiceNames {
 
 const CARGO = 'cargo';
 
-const AUTH0_AUDIENCE = config.get<string>('jwt.audience.tenancy');
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE
+    ? `https://${process.env.AUTH0_AUDIENCE}`
+    : config.get<string>('jwt.audience.tenancy');
 
 const SECRETS: Record<string, string | undefined> = {
     CLIENT_ID: process.env.CLIENT_ID
@@ -469,8 +482,8 @@ const AWS_REGIONS = new Map<string, string>([
 
 const WLMDB = 'wlmdb';
 
-const BUCKET_NAME = config.get<string>('templates.bucket');
-const ASSETS_BUCKET_REGION = config.get<string>('templates.region');
+const BUCKET_NAME = process.env.WLMDB_BUCKET_NAME || config.get<string>('templates.bucket');
+const ASSETS_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
 const EC2_ROLE_NAME = 'Ec2RoleName';
 const VALIDATION_AMI = 'ValidationAmi';
@@ -773,6 +786,7 @@ const ERROR_CODE_SQS_INVALID_TOKEN = 'InvalidClientTokenId';
 const METHODS_WITH_PAYLOAD = ['POST', 'PUT', 'PATCH'];
 const BATCH_API_CONCURRENCY_LIMIT = 10;
 const API_PAGE_SIZE = 100;
+const INVALID_PARAMETER_VALUE = 'InvalidParameterValue';
 
 const FCI_STACKNAME = 'SqlFciStack';
 const STANDALONE_STACKNAME = 'SqlStandaloneStack';
@@ -858,6 +872,17 @@ const FSX_ADMIN_PASSWORD = 'FSxAdminPassword';
 const SKIP_TEMPLATE_PASSWORD_PARAMETERS: Array<string> = [DOMAIN_ADMIN_PASSWORD, SQL_SA_PASSWORD, FSX_ADMIN_PASSWORD];
 
 const DATABASE_TYPE = 'Microsoft SQL Server';
+
+// SQL software types
+const SQL_STD = 'SQL std';
+const SQL_ENT = 'SQL ent';
+const SQL_WEB = 'SQL web';
+const SQL_SOFTWARE_TYPES = new Map<string, string>([
+    ['standard', SQL_STD],
+    ['enterprise', SQL_ENT],
+    ['web', SQL_WEB]
+]);
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -907,7 +932,6 @@ export {
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_REGION,
     CLOUD_MANAGER_SERVER_ADDRESS,
-    CONNECTOR_ENDPOINT,
     API_PATH_HEALTH,
     HEADERS,
     AUTH0_SERVER_ADDRESS,
@@ -1052,5 +1076,10 @@ export {
     DOMAIN_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     FSX_ADMIN_PASSWORD,
-    CAPABILITY_NAMED_IAM
+    CAPABILITY_NAMED_IAM,
+    SQL_SOFTWARE_TYPES,
+    SQL_STD,
+    SQL_ENT,
+    SQL_WEB,
+    INVALID_PARAMETER_VALUE
 };

@@ -20,6 +20,13 @@ const baseRequest = {
     params: DatabaseParams
 };
 
+const resourceUtilizationBaseRequest = {
+    ...baseRequest,
+    response: {
+        200: UtilisationResponseBody
+    }
+};
+
 const PostSqlServerSchema = {
     tags: [RouteTags.DATABASE],
     params: MsSqlServerDiscoveryParams,
@@ -60,13 +67,22 @@ const GetServerSummarySchema = {
     }
 };
 
-const DatabaseUtilisationResponseSchema = {
-    ...baseRequest,
-    summary: 'Get MSSQL resource utilisation',
-    description: 'Database Resource(CPU, Storage, Memory) Utilisation',
-    response: {
-        200: UtilisationResponseBody
-    }
+const DatabaseCpuUtilisationResponseSchema = {
+    ...resourceUtilizationBaseRequest,
+    summary: 'Get MSSQL CPU utilisation',
+    description: 'Database Resource CPU Utilisation'
+};
+
+const DatabaseStorageUtilisationResponseSchema = {
+    ...resourceUtilizationBaseRequest,
+    summary: 'Get MSSQL Storage utilisation',
+    description: 'Database Resource Storage Utilisation'
+};
+
+const DatabaseMemoryUtilisationResponseSchema = {
+    ...resourceUtilizationBaseRequest,
+    summary: 'Get MSSQL Memory utilisation',
+    description: 'Database Resource Memory Utilisation'
 };
 
 const GetTablesSchema = {
@@ -81,7 +97,9 @@ const GetTablesSchema = {
 
 export {
     GetDatabasesSchema,
-    DatabaseUtilisationResponseSchema,
+    DatabaseCpuUtilisationResponseSchema,
+    DatabaseStorageUtilisationResponseSchema,
+    DatabaseMemoryUtilisationResponseSchema,
     PostSqlServerSchema,
     DeleteDatabaseSchema,
     GetServerSummarySchema,
