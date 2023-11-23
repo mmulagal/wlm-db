@@ -6,7 +6,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
+import { adPassVal, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
@@ -62,7 +62,10 @@ const ActiveDirectory = () => {
 
     const addNewOption = async (option: any) => {
         setIsCreating(true);
-        const newVer = [...versions, { domainName: option, dnsIpAddress: '', securityGroupId: '', adScenarioType: USER_MANAGED_AD }];
+        const newVer = [
+            ...versions,
+            { domainName: option, dnsIpAddress: '', securityGroupId: '', adScenarioType: USER_MANAGED_AD }
+        ];
         setVersions(sortListOfDict(newVer, 'domainName'));
         await delay();
         dispatch(setSelectedADDomainAddress(''));
@@ -77,7 +80,7 @@ const ActiveDirectory = () => {
         const verList: any[] = [];
         adsData?.directories?.map((val, ids: number) => {
             const adState = val?.status;
-            if(adState && adState === 'Active') {
+            if (adState && adState === 'Active') {
                 const newItem = {
                     domainName: val?.domainName,
                     dnsIpAddress: val?.dnsIpAddress,
@@ -108,7 +111,7 @@ const ActiveDirectory = () => {
     }, [versions]);
 
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig) {
             dispatch(setSelectedADDomainName(null));
             dispatch(setSelectedADDomainAddress(''));
             dispatch(setSelectedADScenarioType(''));
@@ -204,7 +207,11 @@ const ActiveDirectory = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedADDomainName(selectedOptions));
                                     dispatch(setSelectedADDomainAddress(selectedOptions?.data?.dnsIpAddress));
-                                    dispatch(setSelectedADScenarioType(selectedOptions?.data?.adScenarioType || USER_MANAGED_AD));
+                                    dispatch(
+                                        setSelectedADScenarioType(
+                                            selectedOptions?.data?.adScenarioType || USER_MANAGED_AD
+                                        )
+                                    );
                                 }}
                                 placeholder="example.com"
                                 isSearchable={true}
@@ -278,7 +285,7 @@ const ActiveDirectory = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADPassword(e.target.value));
                                 }}
-                                error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : ''}
+                                error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : adPassVal(password)}
                                 //@ts-ignore
                                 isErrorPrefixHidden
                                 customErrorWarningIcon={

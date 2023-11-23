@@ -3,7 +3,9 @@
         "auth0": "https://netapp-cloud-account.auth0.com",
         "cloud-manager": "https://api.bluexp.netapp.com",
         "tenancy": "https://api.bluexp.netapp.com",
-        "credentials": "https://api.bluexp.netapp.com"
+        "credentials": "https://api.bluexp.netapp.com",
+        "workload-factory": "https://api.workloads.netapp.com",
+        "wlm-db-redirect-url": "https://cloudmanager.netapp.com"
     },
     "kinesis": {
         "stream-name": "audit-service-prod-stream"

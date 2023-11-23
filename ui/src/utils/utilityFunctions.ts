@@ -145,6 +145,12 @@ export const dbPassVal = (password: string) => {
     }
 };
 
+export const adPassVal = (password: string) => {
+    if (password.length && password.length < 8) {
+        return GENERAL.PASSWORD_MIN_LENGTH_8;
+    }
+};
+
 export const fsxPassVal = (password: string) => {
     if (password.length) {
         const state = store.getState();
@@ -713,6 +719,8 @@ export const validateChatbotField = (fieldName: string, val: any) => {
             return !isNaN(numValue) && numValue >= 120 && numValue <= 13320
                 ? ''
                 : `Supported capacity should be between 120 GiB to 13320 GiB`;
+        case 'domainPassword':
+            return adPassVal(val) || '';
     }
 };
 
