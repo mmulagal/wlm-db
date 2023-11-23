@@ -27,7 +27,7 @@ import {
 import { SECRETS } from '../../src/utils/consts';
 
 const credentialsid = `${faker.string.alphanumeric(20)}`;
-SECRETS.CLIENT_ID = `${faker.string.alphanumeric(20)}`;
+SECRETS.AUTH_CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 SECRETS.SIGNURL_SECRET_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
