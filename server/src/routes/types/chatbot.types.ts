@@ -18,6 +18,13 @@ const queryBotResponse = Type.Object({
                 disable: Type.Optional(Type.Boolean()),
                 default: Type.Optional(Type.String()),
                 allowCreate: Type.Optional(Type.Boolean()),
+                link: Type.Optional(
+                    Type.Object({
+                        text: Type.Optional(Type.String()),
+                        path: Type.Optional(Type.String()),
+                        description: Type.Optional(Type.String())
+                    })
+                ),
                 allowedValues: Type.Optional(
                     Type.Array(
                         Type.Object({

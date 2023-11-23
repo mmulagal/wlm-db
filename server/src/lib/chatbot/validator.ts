@@ -31,6 +31,7 @@ const logger = getLogger();
 
 async function validateCredentials(credentialsId: string, key: string) {
     logger.debug('Validate Credentials', { credentialsId });
+    const CREDENTIAL_PATH = '/credentials';
     const credentials = (await getCredentials('aws_assume_role')) || [];
 
     if (isEmpty(credentials)) {
@@ -41,7 +42,7 @@ async function validateCredentials(credentialsId: string, key: string) {
             allowedValues: [],
             link: {
                 text: 'Credentials',
-                url: 'https://staging.console.workloads.netapp.com/credentials',
+                path: CREDENTIAL_PATH,
                 description: 'To add a new credentials, visit'
             }
         };
@@ -53,7 +54,7 @@ async function validateCredentials(credentialsId: string, key: string) {
             status: 'error',
             link: {
                 text: 'Credentials',
-                url: 'https://staging.console.workloads.netapp.com/credentials',
+                path: CREDENTIAL_PATH,
                 description: 'To add a new credentials, visit'
             },
             message: 'Select a credential to proceed further',
@@ -71,7 +72,7 @@ async function validateCredentials(credentialsId: string, key: string) {
             status: 'error',
             link: {
                 text: 'Credentials',
-                url: 'https://staging.console.workloads.netapp.com/credentials',
+                path: CREDENTIAL_PATH,
                 description: 'To add a new credentials, visit'
             },
             message:
