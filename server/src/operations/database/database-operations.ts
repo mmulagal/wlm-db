@@ -223,10 +223,11 @@ function trimAccountIdForDemo(records: any) {
     logger.debug('records', records);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         if (records && records.length) {
-            const modifiedData = records.map(record => {
+            const modifiedData = records.map((record: any) => {
                 const { account_id: accountId, ...rest } = record;
                 const [modifiedAccountId] = accountId.split('_');
-                return { account_id: modifiedAccountId, ...rest };
+                // For test cases there will not be bearer token so the user id will be undefined.. To handle that using accountId as it is
+                return { account_id: modifiedAccountId || accountId, ...rest };
             });
             return modifiedData;
         }

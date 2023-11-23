@@ -427,7 +427,8 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
 function checkAccount(accountId: string) {
     logger.info('checking account id', accountId);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return `${accountId}_${getSubjectFromBearerToken() as string}`;
+        const userId = getSubjectFromBearerToken();
+        return userId ? `${accountId}_${userId}` : accountId;
     }
     return accountId;
 }
