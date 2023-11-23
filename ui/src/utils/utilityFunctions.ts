@@ -835,7 +835,12 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         params.databaseSize =
             parseInt(payload.storageCapacity.capacity) * (payload.storageCapacity.unit.value === 'GiB' ? 1 : 1024);
     }
-    params.tags = payload.tags.filter((tag: TagObj) => tag.key);
+    if (payload?.tags) {
+        const tags = payload.tags.filter((tag: TagObj) => tag.key);
+        if (tags.length > 0) {
+            params.tags = tags;
+        }
+    }
     params.enableCloudWatch = payload.cloudWatch || false;
     return params;
 };
