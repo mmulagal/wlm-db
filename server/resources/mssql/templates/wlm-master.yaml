@@ -646,8 +646,12 @@ Resources:
                 Effect: Allow
                 Action:
                   - ec2:CreateTags
-                Resource:
-                  - arn:aws:cloudformation:*:*:stack/WLMDB*
+                  - ec2:AuthorizeSecurityGroupIngress
+                Resource: '*'
+                Condition:
+                  StringLike:
+                    aws:ResourceTag/aws:cloudformation:stack-name:
+                      - WLMDB*
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'

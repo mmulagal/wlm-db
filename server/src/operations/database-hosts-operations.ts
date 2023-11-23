@@ -25,7 +25,9 @@ import {
     SERVER_TYPE_MAPPING,
     STANDALONE,
     FCI,
-    AWS_REGIONS
+    AWS_REGIONS,
+    SQL_STD,
+    SQL_ENT
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -320,9 +322,9 @@ async function getEc2ResourceInfo(
     logger.info('Estimation info for AMI:', amiInfo);
     const sqlPlatform = amiInfo?.Images?.[0].PlatformDetails;
 
-    let sqlSoftwareType: string = 'SQL std'; // Let's 'Windows with SQL Server Standard' be default
+    let sqlSoftwareType: string = SQL_STD; // Let's 'Windows with SQL Server Standard' be default
     if (sqlPlatform === 'Windows with SQL Server Enterprise') {
-        sqlSoftwareType = 'SQL ent';
+        sqlSoftwareType = SQL_ENT;
     }
 
     return {
