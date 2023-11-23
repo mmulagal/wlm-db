@@ -2,24 +2,30 @@ import { Dispatch } from 'redux';
 import store from '../../../store/store';
 import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { setMssqlForm } from '../../../store/mssql/mssqlFormSlice';
-import { 
+import {
     setIsLoadConfig,
     setIsLoading,
-    setIsSaveConfigLoading, 
-    setRefetchApiCountExpected, 
-    setRefetchApiCountLoading, 
-    setRefetchApiCountRan, 
-    setSavedConfig 
+    setIsSaveConfigLoading,
+    setRefetchApiCountExpected,
+    setRefetchApiCountLoading,
+    setRefetchApiCountRan,
+    setSavedConfig
 } from '../../../store/mssql/msSqlActionSlice';
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { API_NAME, FROM_DIALOG } from '../../../utils/consts';
 import { navigateToCanvas } from '../../../utils/appConfig';
+import { setLoadConfigClicked } from '../../../store/chatbot/chatbotSlice';
 
 /*
 This function is used to load config data on click on config load. 
 */
-export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, closeDialog:any, selectedConfig?:string | undefined) => {
-    if(!selectedConfig){
+export const LoadConfiguration = (
+    dispatch: Dispatch,
+    loadConfigDataExe: any,
+    closeDialog: any,
+    selectedConfig?: string | undefined
+) => {
+    if (!selectedConfig) {
         const state = store.getState();
         selectedConfig = state.mssqlForm.loadConfig;
     }
@@ -27,29 +33,34 @@ export const LoadConfiguration = (dispatch: Dispatch, loadConfigDataExe: any, cl
     dispatch(setIsLoadConfig(true));
     loadConfigDataExe({ configId: selectedConfig })
         .then((data: any) => {
-            if(data?.data?.data){
+            if (data?.data?.data) {
                 dispatch(setSavedConfig(data?.data?.data));
                 const apiList = apiCallsList(dispatch, data?.data?.data);
-                if(apiList) {
+                if (apiList) {
                     dispatch(setRefetchApiCountExpected(apiList));
                     dispatch(setRefetchApiCountLoading(true));
                 }
                 dispatch(setMssqlForm(data?.data?.data));
+                dispatch(setLoadConfigClicked(true));
             } else {
                 dispatch(setIsLoadConfig(false));
                 dispatch(setIsLoading(false));
-                if(closeDialog){
+                if (closeDialog) {
                     closeDialog();
                 }
-                dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
-                    message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.WARNING,
+                        message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE
+                    })
+                );
             }
         })
         .catch((error: any) => {
-            console.log("Error while loading data - ", error);
+            console.log('Error while loading data - ', error);
             dispatch(setIsLoadConfig(false));
             dispatch(setIsLoading(false));
-            if(closeDialog){
+            if (closeDialog) {
                 closeDialog();
             }
         });
@@ -61,29 +72,38 @@ This function is used to load recommended config data
 */
 export const LoadRecommendedConfig = (dispatch: Dispatch, mssqlFormData: any) => {
     resetRefetchApiCheck(dispatch);
-    if(mssqlFormData){
+    if (mssqlFormData) {
         dispatch(setMssqlForm(mssqlFormData));
         dispatch(setIsLoading(false));
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-            message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.SUCCESS,
+                message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS
+            })
+        );
     } else {
         dispatch(setIsLoading(false));
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.WARNING, 
-            message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE }));     
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.WARNING,
+                message: SELECT_CONFIG.MISSING_FIELDS_MESSAGE
+            })
+        );
     }
 };
 
 /* 
 This function is used to reset all load config related action states once data is loaded.
 */
-export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog:any) => {
+export const resetChecksAfterLoad = (dispatch: Dispatch, closeDialog: any) => {
     dispatch(setIsLoadConfig(false));
     dispatch(setIsLoading(false));
     closeDialog();
-    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-        message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS }));
+    dispatch(
+        addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, message: SELECT_CONFIG.LOAD_CONFIG_SUCCESS })
+    );
     resetRefetchApiCheck(dispatch);
-}
+};
 
 /* 
 This function is used to reset refetch API checks
@@ -92,7 +112,7 @@ export const resetRefetchApiCheck = (dispatch: Dispatch) => {
     dispatch(setRefetchApiCountExpected([]));
     dispatch(setRefetchApiCountRan(null));
     dispatch(setRefetchApiCountLoading(false));
-}
+};
 
 /* 
 On click of load config this function will check how many get APIs call will run on change on any dependent fields.
@@ -116,10 +136,10 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
     const isSameDbVersion = state.mssqlForm?.dbVersion?.value === dbVersion;
     const isSameDbEdition = state.mssqlForm?.dbEdition?.value === dbEdition;
 
-    if(credId && !isSameCred){
+    if (credId && !isSameCred) {
         apis.push(API_NAME.REGION);
     }
-    if(credId && regionId && (!isSameRegion || !isSameCred)){
+    if (credId && regionId && (!isSameRegion || !isSameCred)) {
         apis.push(API_NAME.VPC);
         apis.push(API_NAME.ADS);
         apis.push(API_NAME.SNS);
@@ -127,28 +147,44 @@ export const apiCallsList = (dispatch: Dispatch, loadData: any) => {
         apis.push(API_NAME.KEYPAIR);
         apis.push(API_NAME.INSTANCE);
     }
-    if(credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)){
+    if (credId && regionId && vpcId && (!isSameRegion || !isSameCred || !isSameVpc)) {
         apis.push(API_NAME.FSXN);
     }
-    if(credId && regionId && osVersion && dbEdition && dbVersion 
-        && (!isSameRegion || !isSameCred || !isSameOs || !isSameDbVersion || !isSameDbEdition)){
+    if (
+        credId &&
+        regionId &&
+        osVersion &&
+        dbEdition &&
+        dbVersion &&
+        (!isSameRegion || !isSameCred || !isSameOs || !isSameDbVersion || !isSameDbEdition)
+    ) {
         apis.push(API_NAME.AMI);
     }
     return apis;
-}
+};
 
 /*
 On click of save config it will call API to store config data.
 */
-export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, configListRefetch: any, closeDialog:any, dialogFrom: string) => {
+export const SaveConfiguration = (
+    dispatch: Dispatch,
+    saveConfigData: any,
+    configListRefetch: any,
+    closeDialog: any,
+    dialogFrom: string
+) => {
     const state = store.getState();
     const saveConfigName = state.mssqlForm.saveConfigName;
     const existingSavedConfig = state.msSqlAction.savedConfig;
-    const payload = {name: saveConfigName, data:state.mssqlForm};
+    const payload = { name: saveConfigName, data: state.mssqlForm };
     const isDuplicate = duplicateSaveCheck(state.mssqlForm, existingSavedConfig);
-    if(isDuplicate){
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, 
-            message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG }));
+    if (isDuplicate) {
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: SELECT_CONFIG.DUPLICATE_SAVED_CONFIG
+            })
+        );
         closeSaveDialog(dialogFrom, closeDialog);
     } else {
         dispatch(setIsSaveConfigLoading(true));
@@ -156,15 +192,19 @@ export const SaveConfiguration = (dispatch: Dispatch, saveConfigData: any, confi
             .then((data: any) => {
                 if (!data?.error) {
                     dispatch(setSavedConfig(state.mssqlForm));
-                    dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.SUCCESS, 
-                        message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS }));
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: SELECT_CONFIG.SAVE_CONFIG_SUCCESS
+                        })
+                    );
                     configListRefetch();
                 }
                 closeSaveDialog(dialogFrom, closeDialog);
                 dispatch(setIsSaveConfigLoading(false));
             })
             .catch((error: any) => {
-                console.log("Error while saving data - ",error);
+                console.log('Error while saving data - ', error);
                 dispatch(setIsSaveConfigLoading(false));
                 closeDialog();
             });
@@ -177,30 +217,39 @@ Close dialog in case of save configuration. If save configuration is clicked fro
 */
 const closeSaveDialog = (dialogFrom: string, closeDialog: any) => {
     closeDialog();
-    if(dialogFrom === FROM_DIALOG.HEADER_CROSS){
+    if (dialogFrom === FROM_DIALOG.HEADER_CROSS) {
         setTimeout(() => {
             navigateToCanvas('/');
-        },3000);
+        }, 3000);
     }
-}
+};
 
 /*
 This function is used to avoid saving config again if saved just now.
 If data is loaded recently and user is trying to save same data again than also it will not allow to save. 
 */
-const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
-    if(!oldConfig){
+const duplicateSaveCheck = (newConfig: any, oldConfig: any) => {
+    if (!oldConfig) {
         return false;
     }
     const cred = newConfig?.awsAccount?.selectedCredential?.value === oldConfig?.awsAccount?.selectedCredential?.value;
     const region = newConfig?.regionAndVpc?.selectedRegion?.value === oldConfig?.regionAndVpc?.selectedRegion?.value;
     const vpcId = newConfig?.regionAndVpc?.selectedVPC?.label2 === oldConfig?.regionAndVpc?.selectedVPC?.label2;
-    const availabilityZone1 = newConfig?.availabilityZones?.selectedAzNode1?.value === oldConfig?.availabilityZones?.selectedAzNode1?.value;
-    const availabilityZone2 = newConfig?.availabilityZones?.selectedAzNode2?.value === oldConfig?.availabilityZones?.selectedAzNode2?.value;
-    const privateSubnet1Id = newConfig?.availabilityZones?.selectedSubnetNode1?.label2 === oldConfig?.availabilityZones?.selectedSubnetNode1?.label2;
-    const privateSubnet2Id = newConfig?.availabilityZones?.selectedSubnetNode2?.label2 === oldConfig?.availabilityZones?.selectedSubnetNode2?.label2;
-    const securityGroupType = newConfig?.securityGroup?.selectedSecurityType === oldConfig?.securityGroup?.selectedSecurityType;
-    const securityGroup = newConfig?.securityGroup?.selectedExistingSecurityGroup?.value === oldConfig?.securityGroup?.selectedExistingSecurityGroup?.value;
+    const availabilityZone1 =
+        newConfig?.availabilityZones?.selectedAzNode1?.value === oldConfig?.availabilityZones?.selectedAzNode1?.value;
+    const availabilityZone2 =
+        newConfig?.availabilityZones?.selectedAzNode2?.value === oldConfig?.availabilityZones?.selectedAzNode2?.value;
+    const privateSubnet1Id =
+        newConfig?.availabilityZones?.selectedSubnetNode1?.label2 ===
+        oldConfig?.availabilityZones?.selectedSubnetNode1?.label2;
+    const privateSubnet2Id =
+        newConfig?.availabilityZones?.selectedSubnetNode2?.label2 ===
+        oldConfig?.availabilityZones?.selectedSubnetNode2?.label2;
+    const securityGroupType =
+        newConfig?.securityGroup?.selectedSecurityType === oldConfig?.securityGroup?.selectedSecurityType;
+    const securityGroup =
+        newConfig?.securityGroup?.selectedExistingSecurityGroup?.value ===
+        oldConfig?.securityGroup?.selectedExistingSecurityGroup?.value;
     const operatingSystem = newConfig?.operatingSystem?.label === oldConfig?.operatingSystem?.label;
     const deploymentModel = newConfig?.dbDeploymentModel?.value === oldConfig?.dbDeploymentModel?.value;
     const edition = newConfig?.dbEdition?.value === oldConfig?.dbEdition?.value;
@@ -231,8 +280,12 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
     const encryptionRow = (() => {
         const newConfigEncryption = newConfig?.encryption?.selectedRow;
         const oldConfigEncryption = oldConfig?.encryption?.selectedRow;
-        if(newConfigEncryption && newConfigEncryption.length > 0  && 
-            oldConfigEncryption && oldConfigEncryption.length > 0) {
+        if (
+            newConfigEncryption &&
+            newConfigEncryption.length > 0 &&
+            oldConfigEncryption &&
+            oldConfigEncryption.length > 0
+        ) {
             return newConfigEncryption[0]?.id === oldConfigEncryption[0]?.id;
         } else {
             return true;
@@ -242,10 +295,47 @@ const duplicateSaveCheck = (newConfig:any, oldConfig:any) => {
     const tags = newConfig?.tags === oldConfig?.tags;
     const snsKey = newConfig?.simpleNotification?.snsARN?.value === oldConfig?.simpleNotification?.snsARN?.value;
     const cloudWatch = newConfig?.cloudWatch === oldConfig?.cloudWatch;
-    return cred && region && vpcId && availabilityZone1 && availabilityZone2 && privateSubnet1Id && privateSubnet2Id && 
-            securityGroupType && securityGroup && operatingSystem && deploymentModel && edition && dbVersion && licenseType && 
-            license && dbName && dbUsername && dbPass && keyPair && adType && adName && adIPAddress && adUser && adPass && 
-            dbInstanceType && fsxType && fsxNewName && fsxNewUserName && fsxExName && fsxExUserName && fsxPass && dataDriveSize && 
-            dataDriveUnit && provisionedIops && throughput && encryptionType && encryptionRow && encryptionArn && tags && 
-            snsKey && cloudWatch;
+    return (
+        cred &&
+        region &&
+        vpcId &&
+        availabilityZone1 &&
+        availabilityZone2 &&
+        privateSubnet1Id &&
+        privateSubnet2Id &&
+        securityGroupType &&
+        securityGroup &&
+        operatingSystem &&
+        deploymentModel &&
+        edition &&
+        dbVersion &&
+        licenseType &&
+        license &&
+        dbName &&
+        dbUsername &&
+        dbPass &&
+        keyPair &&
+        adType &&
+        adName &&
+        adIPAddress &&
+        adUser &&
+        adPass &&
+        dbInstanceType &&
+        fsxType &&
+        fsxNewName &&
+        fsxNewUserName &&
+        fsxExName &&
+        fsxExUserName &&
+        fsxPass &&
+        dataDriveSize &&
+        dataDriveUnit &&
+        provisionedIops &&
+        throughput &&
+        encryptionType &&
+        encryptionRow &&
+        encryptionArn &&
+        tags &&
+        snsKey &&
+        cloudWatch
+    );
 };

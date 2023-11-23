@@ -505,7 +505,8 @@ Resources:
                         o-move-mappedontapvolumesscript:
                             command: powershell.exe -Command  Copy-Item  C:\cfn\scripts\sqlontap\Get-MappedOntapVolumes.ps1 -Destination C:\SSM\
                         p-hide-ssm:
-                            command: powershell.exe -Command attrib +h C:\SSM
+                            command: powershell.exe -Command C:\cfn\scripts\common\HideAllSSMScripts.ps1
+                
                 InitialSetup:
                     commands:
                         a-unpack-launchwizard-module:

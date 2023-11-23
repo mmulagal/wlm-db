@@ -3,4 +3,5 @@ export interface ChatbotEntities {
     currentIntent: any;
     isShow: boolean;
     isReceivingMsg: boolean;
+    loadConfigClicked: boolean;
 }

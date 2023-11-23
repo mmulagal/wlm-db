@@ -4,13 +4,15 @@ import { HealthResponse, AboutResponse, StatusResponse, StatusParams } from '../
 const GetHealthinessSchema = {
     tags: ['System'],
     hide: true,
-    description: 'Health and liveness',
+    summary: 'Health of system',
+    description: 'Health of system',
     response: { 200: HealthResponse }
 };
 
 const GetSystemInfoSchema = {
     tags: ['System'],
-    description: 'Get system information',
+    summary: 'Get system information',
+    description: 'Get information about the system',
     response: {
         200: AboutResponse
     }
@@ -19,7 +21,8 @@ const GetSystemInfoSchema = {
 const GetSystemStatusSchema = {
     tags: ['System'],
     params: StatusParams,
-    description: 'Get system information',
+    summary: 'Get status of the user',
+    description: 'Get status of the user',
     response: {
         200: StatusResponse
     }

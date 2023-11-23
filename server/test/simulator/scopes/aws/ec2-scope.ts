@@ -11,7 +11,9 @@ import {
     DescribeRouteTablesCommand,
     DescribeKeyPairsCommand,
     DescribeInstanceTypesCommand,
-    DescribeNetworkInterfacesCommand
+    DescribeNetworkInterfacesCommand,
+    DescribeInstancesCommand,
+    DescribeInstanceTypeOfferingsCommand
 } from '@aws-sdk/client-ec2';
 import { mockClient } from 'aws-sdk-client-mock';
 import vpcsResponse from '../../responses/aws/list-vpcs.json';
@@ -22,6 +24,9 @@ import fsxRegionsResponse from '../../responses/aws/list-fsx-regions.json';
 import ec2InstanaceTypes from '../../responses/aws/ec2-instance-types.json';
 import routeTablesResponse from '../../responses/aws/list-route-tables.json';
 import networkInterfaceResponse from '../../responses/aws/list-network-interfaces.json';
+import describeInstanceResponse from '../../responses/aws/describe-instance.json';
+import describeInstanceTypeOfferingsResponse from '../../responses/aws/describe-instance-type-offerings.json';
+import describeInstanceTypeOfferingsInvalidParameters from '../../responses/aws/describe-instance-type-offerings-invalid-parameters.json';
 
 const KeyPairId = `${faker.string.alphanumeric(20)}`;
 const KeyFingerprint = `${faker.string.alphanumeric(20)}`;
@@ -74,3 +79,23 @@ ec2Mock.on(DescribeRouteTablesCommand).resolves(routeTablesResponse);
 ec2Mock.on(DescribeKeyPairsCommand).resolves(keyPairsResponse);
 
 ec2Mock.on(DescribeNetworkInterfacesCommand).resolves(networkInterfaceResponse);
+
+ec2Mock.on(DescribeInstancesCommand).resolves(describeInstanceResponse);
+
+ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOfferingsResponse);
+ec2Mock
+    .on(DescribeInstanceTypeOfferingsCommand, {
+        DryRun: false,
+        LocationType: 'region',
+        Filters: [
+            {
+                Name: 'location',
+                Values: ['INVALID_REGION']
+            },
+            {
+                Name: 'instance-type',
+                Values: ['INVALID_INSTANCE_TYPE']
+            }
+        ]
+    })
+    .resolves(describeInstanceTypeOfferingsInvalidParameters);

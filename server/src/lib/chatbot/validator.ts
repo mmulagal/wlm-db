@@ -21,7 +21,8 @@ import {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     STANDALONE,
-    FCI
+    FCI,
+    FSX_USERNAME
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -30,6 +31,7 @@ const logger = getLogger();
 
 async function validateCredentials(credentialsId: string, key: string) {
     logger.debug('Validate Credentials', { credentialsId });
+    const CREDENTIAL_PATH = '/credentials';
     const credentials = (await getCredentials('aws_assume_role')) || [];
 
     if (isEmpty(credentials)) {
@@ -37,7 +39,12 @@ async function validateCredentials(credentialsId: string, key: string) {
             key,
             status: 'error',
             message: 'No credentials found, please add and try again',
-            allowedValues: []
+            allowedValues: [],
+            link: {
+                text: 'Credentials',
+                path: CREDENTIAL_PATH,
+                description: 'To add a new credentials, visit'
+            }
         };
     }
 
@@ -45,8 +52,12 @@ async function validateCredentials(credentialsId: string, key: string) {
         return {
             key,
             status: 'error',
-            message:
-                'I would need the credentialsId information to proceed further, please select a credentialsId of your choice',
+            link: {
+                text: 'Credentials',
+                path: CREDENTIAL_PATH,
+                description: 'To add a new credentials, visit'
+            },
+            message: 'Select a credential to proceed further',
             allowedValues: credentials.map(credential => ({
                 label: credential.name,
                 value: credential.credentialsId
@@ -59,6 +70,11 @@ async function validateCredentials(credentialsId: string, key: string) {
         return {
             key,
             status: 'error',
+            link: {
+                text: 'Credentials',
+                path: CREDENTIAL_PATH,
+                description: 'To add a new credentials, visit'
+            },
             message:
                 'The credential that you provided is not valid. Please select a set of credentials from the list below.',
             allowedValues: credentials.map(cred => ({ label: cred.name, value: cred.credentialsId }))
@@ -196,24 +212,13 @@ async function validateVpcId(
             };
         }
         case AZ_2: {
+            const azs2 = azs.filter(az => az.value !== az1);
             if (!az2) {
                 return {
                     key,
                     status: 'error',
                     message: 'Select an Availability Zone for the secondary SQL node.',
-                    allowedValues: azs
-                };
-            }
-
-            const azs2 = azs.filter(az => az.value !== az2);
-
-            if (isEmpty(azs2)) {
-                return {
-                    key,
-                    status: 'error',
-                    message:
-                        'This VPC contains only one subnet, please select a different VPC to support FCI deployment',
-                    allowedValues: []
+                    allowedValues: azs2
                 };
             }
 
@@ -234,7 +239,7 @@ async function validateVpcId(
                     status: 'error',
                     message:
                         'The availability zone that you provided is not valid. Please choose a valid availability zone.',
-                    allowedValues: azs
+                    allowedValues: azs2
                 };
             }
 
@@ -248,7 +253,7 @@ async function validateVpcId(
                 return {
                     key,
                     status: 'error',
-                    message: 'Select the subnet id',
+                    message: `Select the ${key === PRIVATE_SUBNET_1 ? 'primary' : 'secondary'} subnet id`,
                     allowedValues: uniqBy(
                         isValidVpc.subnets
                             ?.filter(({ availabilityZone }) =>
@@ -292,11 +297,35 @@ async function validateVpcId(
                 value: key === PRIVATE_SUBNET_1 ? subnet1 : subnet2
             };
         }
-        case ROUTE_TABLE_1:
-        case ROUTE_TABLE_2: {
+        case ROUTE_TABLE_1: {
             return {
-                value: isValidVpc.subnets?.find(({ id }) => (key === ROUTE_TABLE_1 ? id === subnet1 : id === subnet2))
-                    ?.routeTableId
+                value: isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId
+            };
+        }
+        case ROUTE_TABLE_2: {
+            const routeTable1 = isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId;
+            const routeTable2 = isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId;
+
+            if (routeTable1 === routeTable2) {
+                return {
+                    key: PRIVATE_SUBNET_2,
+                    status: 'error',
+                    message:
+                        'AWS FSx requires route tables to be different for subnets in multi-zone deployment. Select a different subnet for secondary node ',
+                    allowedValues: uniqBy(
+                        isValidVpc.subnets
+                            ?.filter(({ availabilityZone }) => availabilityZone === az2)
+                            ?.map(({ id, name }) => ({
+                                label: name,
+                                value: id
+                            })),
+                        'value'
+                    )
+                };
+            }
+
+            return {
+                value: isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId
             };
         }
         default:
@@ -333,14 +362,27 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
 }
 
 async function validateImageId(credentialsId: string, region: string, imageId: string, key: string) {
-    logger.debug('Validate Image Id', { credentialsId, region, imageId });
-    const { amis } = await getAmiList(credentialsId, region, 'Windows', 'SQL');
+    logger.debug('Validate Image Id', {
+        credentialsId,
+        region,
+        imageId,
+        key
+    });
+
+    const { amis } = await getAmiList(credentialsId, region, 'windows', 'sql');
+
+    const filteredAmis = amis?.filter(
+        ({ name }) =>
+            (name.includes('Windows_Server-2016') || name.includes('Windows_Server-2019')) &&
+            (name.includes('SQL_2016') || name.includes('SQL_2019') || name.includes('SQL_2022')) &&
+            (name.includes('Enterprise') || name.includes('Standard'))
+    );
     if (!imageId) {
         return {
             key,
             status: 'error',
             message: 'Select an AWS AMI for the database.',
-            allowedValues: amis.map(({ name, imageId: amiId, description }) => ({
+            allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
                 label: name,
                 value: amiId,
                 metadata: {
@@ -350,13 +392,13 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
         };
     }
 
-    const isValidAmi = amis?.find(ami => ami.imageId === imageId);
+    const isValidAmi = filteredAmis?.find(ami => ami.imageId === imageId);
     if (!isValidAmi) {
         return {
             key,
             status: 'error',
             message: 'The image id that you provided is not correct. Please select a valid image id.',
-            allowedValues: amis.map(({ name, imageId: amiId, description }) => ({
+            allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
                 label: name,
                 value: amiId,
                 metadata: {
@@ -470,6 +512,21 @@ async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
     };
 }
 
+async function validateTags(key: string, tags?: Array<{ key: string; value: string }>) {
+    logger.info(' Validate Cloud Watch', { tags, key });
+    if (!tags) {
+        return {
+            key,
+            status: 'error',
+            message: 'Add upto 40 tags',
+            type: 'tags'
+        };
+    }
+    return {
+        value: tags
+    };
+}
+
 async function validateDomain(
     credentialsId: string,
     region: string,
@@ -512,13 +569,14 @@ async function validateDomain(
     }
 }
 
-function validateText(text: string, key: string) {
+function validateText(text: string, key: string, fsxType?: string) {
     if (!text) {
         return {
             key,
             status: 'error',
             message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
-            type: key.toLowerCase().includes('password') ? 'password' : 'text'
+            type: key.toLowerCase().includes('password') ? 'password' : 'text',
+            ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
         };
     }
     return { value: text };
@@ -659,5 +717,6 @@ export {
     validateAdScenarioType,
     checkFsxType,
     validateFsx,
-    validateCloudWatch
+    validateCloudWatch,
+    validateTags
 };

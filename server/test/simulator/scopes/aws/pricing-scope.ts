@@ -1,8 +1,11 @@
 import { PricingClient, GetProductsCommand } from '@aws-sdk/client-pricing';
+import { EC2Client, DescribeInstanceTypeOfferingsCommand } from '@aws-sdk/client-ec2';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { mockClient } from 'aws-sdk-client-mock';
+import describeInstanceTypeOfferingsResponse from '../../responses/aws/describe-instance-type-offerings.json';
 
 const pricingMock = mockClient(PricingClient);
+const ec2Mock = mockClient(EC2Client);
 
 const ec2InstancePrice: LazyJsonString = LazyJsonString.fromObject(
     '{ "product": {"productFamily": "Compute Instance", "attributes": {"servicecode": "AmazonEC2","instanceType": "m5.xlarge","location": "US East (N. Virginia)","memory": "1 GiB","vcpu": "2"}},"terms": {"OnDemand": {"us-east-1": {"priceDimensions": {"us-east-1-ondemand": {"pricePerUnit": {"USD": "0.192"}}}}}}}'
@@ -117,6 +120,18 @@ const mockfsxThroughputPriceGetProductsResponse = {
     FormatVersion: 'aws_v1',
     PriceList: [fsxThroughputPrice]
 };
+const mockVPCPriceGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [ec2StoragePrice]
+};
 
 const FSXREADREQUESTSRATEFILTER = {
     Filters: [
@@ -155,7 +170,7 @@ const EC2STORAGERATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -182,7 +197,7 @@ const FSXTHROUGHPUTRATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -209,7 +224,7 @@ const FSXIOPSRATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -236,7 +251,7 @@ const FSXSTORAGERATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -268,7 +283,7 @@ const EC2INSTANCERATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -310,7 +325,7 @@ const FSXWRITEREQUESTSRATEFILTER = {
         {
             Type: 'TERM_MATCH',
             Field: 'regionCode',
-            Value: 'us-east-1'
+            Value: 'ap-southeast-1'
         },
         {
             Type: 'TERM_MATCH',
@@ -337,6 +352,44 @@ const FSXWRITEREQUESTSRATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
+const price: LazyJsonString = LazyJsonString.fromObject(
+    '{"product":{"productFamily":"Compute Instance","attributes":{"servicecode":"AmazonEC2","instanceType":"t3.micro","location":"US East (N. Virginia)","memory":"1 GiB","vcpu":"2"}},"terms":{"OnDemand":{"us-east-1":{"priceDimensions":{"us-east-1-ondemand":{"pricePerUnit":{"USD":"0.00158"}}}}}}}'
+);
+
+const mockGetProductsResponse = {
+    $metadata: {
+        httpStatusCode: 200,
+        requestId: 'c8501a83-530c-47ce-9ebd-3a8b9674f759',
+        extendedRequestId: undefined,
+        cfId: undefined,
+        attempts: 1,
+        totalRetryDelay: 0
+    },
+    FormatVersion: 'aws_v1',
+    PriceList: [price]
+};
+const VPCFILTER = {
+    Filters: [
+        {
+            Type: 'TERM_MATCH',
+            Field: 'regionCode',
+            Value: 'ap-southeast-1'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'group',
+            Value: 'AWSClientVPN'
+        },
+        {
+            Type: 'TERM_MATCH',
+            Field: 'operation',
+            Value: 'ClientVPNConnections'
+        }
+    ],
+    ServiceCode: 'AmazonVPC',
+    FormatVersion: 'aws_v1'
+};
+
 pricingMock.on(GetProductsCommand, FSXIOPSRATEFILTER).resolves(mockfsxIopsPriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXREADREQUESTSRATEFILTER).resolves(mockfsxReadPriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, FSXSTORAGERATEFILTER).resolves(mockfsxStoragePriceGetProductsResponse);
@@ -344,5 +397,9 @@ pricingMock.on(GetProductsCommand, FSXTHROUGHPUTRATEFILTER).resolves(mockfsxThro
 pricingMock.on(GetProductsCommand, FSXWRITEREQUESTSRATEFILTER).resolves(mockfsxWritePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2INSTANCERATEFILTER).resolves(mockec2InstancePriceGetProductsResponse);
 pricingMock.on(GetProductsCommand, EC2STORAGERATEFILTER).resolves(mockec2StoragePriceGetProductsResponse);
+pricingMock.on(GetProductsCommand).resolves(mockGetProductsResponse);
+pricingMock.on(GetProductsCommand, VPCFILTER).resolves(mockVPCPriceGetProductsResponse);
 
-export default mockfsxStoragePriceGetProductsResponse;
+ec2Mock.on(DescribeInstanceTypeOfferingsCommand).resolves(describeInstanceTypeOfferingsResponse);
+
+export default mockGetProductsResponse;

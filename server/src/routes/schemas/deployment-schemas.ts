@@ -18,31 +18,34 @@ const baseRequest = {
     params: AwsParamsWithRegion
 };
 
-// Create cloud formation template for user deployment Schema
+// Create CloudFormation template for user deployment Schema
 const CreateCloudFormationTemplateSchema = {
     ...baseRequest,
-    description: 'Create Cloud Formation template in a region for existing vpc',
+    summary: 'Create CloudFormation template URL',
+    description: 'Create CloudFormation template in a region for existing VPC',
     body: CloudFormationTemplateRequestBody,
     response: {
         200: CloudFormationTemplateResponse
     }
 };
 
-// Cloud formation template
+// CloudFormation template
 const CloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
-    description: 'Cloud Formation template url, yaml and cli format for user deployment',
+    summary: 'Create CloudFormation template',
+    description: 'Create CloudFormation template in URL, YAML and CLI format for user deployment',
     body: CloudFormationStaticTemplateRequestBody,
     response: {
         200: CloudFormationStaticTemplateResponse
     }
 };
 
-// Create cloud formation template for user deployment Schema
+// Create CloudFormation template for user deployment Schema
 const DeployTemplateSchema = {
     ...baseRequest,
-    description: 'Deploy Cloud Formation template to provision SQL FCI',
+    summary: 'Deploy CloudFormation template',
+    description: 'Deploy CloudFormation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
     response: {
         200: DeployTemplateResponse
@@ -52,6 +55,8 @@ const DeployTemplateSchema = {
 // Get status of all Cloudformation stacks
 const DeploymentStatusListSchema = {
     ...baseRequest,
+    summary: 'List CloudFormation deployments',
+    description: 'List CloudFormation deployment details',
     response: {
         200: DeploymentStatusListResponse
     }
@@ -60,6 +65,8 @@ const DeploymentStatusListSchema = {
 // Get Cloudformation stack by id or name
 const DeploymentStatusSchema = {
     ...baseRequest,
+    summary: 'Get CloudFormation deployment details',
+    description: 'Get CloudFormation deployment details for a given deployment Id',
     params: DeploymentStatusObjectParams,
     response: {
         200: DeploymentStatusResponse

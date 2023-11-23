@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import config from 'config';
 import {
     EC2Client,
@@ -23,11 +24,12 @@ import {
     DescribeNetworkInterfacesCommandOutput,
     DescribeNetworkInterfacesCommand,
     DescribeInstancesCommand,
-    DescribeInstancesCommandInput
+    DescribeInstancesCommandInput,
+    DescribeInstanceTypeOfferingsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
 async function getEC2Client(region: string, credentialsId?: string) {
@@ -124,6 +126,10 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
     const client = await getEC2Client(region, credentialsId);
 
     const vpcFilter = config.get('ec2.vpcu-filter') as Array<string>;
+
+    // Needs to be removed - debug DBS-1382
+    logger.info(`vCPU filter : ${vpcFilter}`);
+
     const paginator = paginateDescribeInstanceTypes(
         { client, pageSize: 100 },
         {
@@ -207,6 +213,42 @@ async function describeNetworkInterfaces(
     return response;
 }
 
+async function describeInstanceTypeOfferings(credentialsId: string, region: string, instanceType: string) {
+    logger.info('Describe EC2 instance offerings:', { region, instanceType });
+
+    const input = {
+        DryRun: false,
+        LocationType: 'region',
+        Filters: [
+            {
+                Name: 'location',
+                Values: [region]
+            },
+            {
+                Name: 'instance-type',
+                Values: [instanceType]
+            }
+        ]
+    };
+
+    const client = await getEC2Client(region, credentialsId);
+    const command = new DescribeInstanceTypeOfferingsCommand(input);
+    const response = await client.send(command);
+    logger.info('EC2 instance type offerings response:', response);
+
+    if (
+        response.InstanceTypeOfferings?.length !== 1 ||
+        response.InstanceTypeOfferings?.[0].InstanceType !== instanceType
+    ) {
+        logger.error('EC2 instance type offerings failure response:', response?.InstanceTypeOfferings);
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            `Instance type '${instanceType}' is not available in region '${region}'.`
+        );
+    }
+    return response;
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -218,5 +260,6 @@ export {
     describeInstanceTypes,
     describeRouteTable,
     describeKeyPairs,
-    describeNetworkInterfaces
+    describeNetworkInterfaces,
+    describeInstanceTypeOfferings
 };

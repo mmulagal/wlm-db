@@ -7,9 +7,13 @@ import {
     describeSecurityGroups,
     describeSubnets,
     describeInstanceTypes,
-    describeRouteTable
+    describeRouteTable,
+    describeInstance,
+    describeInstanceTypeOfferings
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
+
+// This file.  describeRegions is there.  Add similarly for describeInstance.
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -19,12 +23,15 @@ import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import ec2Images from '../../simulator/responses/aws/ec2-images.json';
 import fsxRegions from '../../simulator/responses/aws/list-fsx-regions.json';
-
 import routeTables from '../../simulator/responses/aws/list-route-tables.json';
 import vpcList from '../../simulator/responses/aws/list-vpcs.json';
 import subnetsList from '../../simulator/responses/aws/list-subnets.json';
 import sgList from '../../simulator/responses/aws/list-security-groups.json';
 import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.json';
+import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
+import instanceTypeOfferings from '../../simulator/responses/aws/describe-instance-type-offerings.json';
+import describeInstanceTypeOfferingsInvalidParameters from '../../simulator/responses/aws/describe-instance-type-offerings-invalid-parameters.json';
+
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
@@ -101,5 +108,36 @@ describe('EC2 Lib', () => {
     it('List of key-pairs in a given AWS region', async () => {
         const response = await describeKeyPairs(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, {});
         expect(response).toBeDefined();
+    });
+
+    it('Describe an EC2 instance', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        const response = await describeInstance(credentialsId, DEFAULT_AWS_REGION, {
+            InstanceIds: ['i-0880a21327284f67c']
+        });
+
+        expect(response).toEqual(ec2Instances);
+    });
+
+    it('Describe EC2 instance type offerings in regions', async () => {
+        const response = await describeInstanceTypeOfferings(
+            DEFAULT_AWS_CREDENTIALS_TYPE,
+            'ap-southeast-1',
+            'm5.xlarge'
+        );
+        expect(response).toEqual(instanceTypeOfferings);
+    });
+
+    it('Desribe EC2 instance type offerings for invalid region and instance-type', async () => {
+        try {
+            await describeInstanceTypeOfferings(
+                DEFAULT_AWS_CREDENTIALS_TYPE,
+                'INVALID_REGION',
+                'INVALID_INSTANCE_TYPE'
+            );
+        } catch (error) {
+            const { message } = error as { message: string };
+            expect(message).toEqual(describeInstanceTypeOfferingsInvalidParameters.message);
+        }
     });
 });

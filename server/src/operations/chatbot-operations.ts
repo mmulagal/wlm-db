@@ -1,3 +1,4 @@
+import { omit } from 'lodash-es';
 import Chatbot from '../lib/chatbot/chatbot';
 import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib/chatbot/helpers';
 import { queryBotResponseType } from '../routes/types/chatbot.types';
@@ -45,7 +46,8 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                         intent: {
                             complete: false,
                             type: intent?.type,
-                            params: validationResponse.params
+                            params: validationResponse.params,
+                            userParams: omit(params, Object.keys(validationResponse.params))
                         }
                     };
                 }
@@ -60,18 +62,20 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
             }
             default: {
                 if (response.success === false) {
-                    const messages =
-                        response?.message?.split('Response is not JSON:') ||
-                        response?.message?.split('response:') ||
-                        [];
-                    return { message: messages[messages.length - 1] || 'Sorry! I could not understand your request' };
+                    const invalidResponse =
+                        response?.message?.includes('Response is not JSON') ||
+                        response?.message?.includes('JSON validation failed');
+                    return {
+                        message: invalidResponse ? 'Sorry! I could not understand your request' : response.message,
+                        status: 'error'
+                    };
                 }
                 throw new Error('Intent did not match');
             }
         }
-    } catch (e) {
-        logger.error('Failed to get the query response', e);
-        return { message: 'Sorry, I could not find anything related to your query, please try again' };
+    } catch (e: any) {
+        logger.error('Failed to get the query response', e?.message, e);
+        return { message: 'Sorry, I could not find anything related to your query, please try again', status: 'error' };
     }
 }
 

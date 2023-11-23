@@ -4,6 +4,7 @@ import {
     formatSize,
     formatVpcSubnetsData,
     generateOptionType,
+    getChatbotParamsFromPayload,
     getWlmdbPayload,
     wrapContext
 } from '../../../utils/utilityFunctions';
@@ -13,7 +14,7 @@ import ChatBox from './ChatBox/Chatbox';
 import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useSendMsgMutation } from '../../../utils/apiService';
-import { setCurrentIntent, setMessages } from '../../../store/chatbot/chatbotSlice';
+import { setCurrentIntent, setLoadConfigClicked, setMessages } from '../../../store/chatbot/chatbotSlice';
 import {
     setCloudWatch,
     setDBCredentialsName,
@@ -43,11 +44,14 @@ import {
     setSelectedVPC,
     setStorageCapacity,
     setStorageUnit,
+    setTags,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
 import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
+const _ = require('lodash');
+
 type optionsType = {
     value?: string | number;
     label?: string;
@@ -65,7 +69,7 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const { messages, currentIntent, isReceivingMsg } = useAppSelector(state => state.chatbot);
+    const { messages, currentIntent, isReceivingMsg, loadConfigClicked } = useAppSelector(state => state.chatbot);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
     //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
@@ -107,6 +111,72 @@ const Chatbot = () => {
         };
     });
 
+    useEffect(() => {
+        if (loadConfigClicked) {
+            setIsBotReplying(true);
+            sendMsgToBot({
+                payload: {
+                    prompt: wrapContext(
+                        `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`
+                    ),
+                    intent: 'DeployMsSql',
+                    params: getChatbotParamsFromPayload(mssqlFormData)
+                }
+            })
+                .then((res: any) => {
+                    if (res.data) {
+                        const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                        if (intent) {
+                            dispatch(setCurrentIntent(intent));
+                            if (!intent.complete) {
+                                setPayloadContent(getWlmdbPayload(intent.params));
+                                mapParamsToPayload(intent.params);
+                            } else {
+                                setPayloadContent(intent.validatedJson);
+                                mapParamsToPayload(intent.params);
+                            }
+                            setIsPayloadReady(intent.complete);
+                        }
+
+                        const updatedMessages = [
+                            {
+                                sender: 'bot',
+                                msg: message,
+                                key: key,
+                                list: allowedValues,
+                                allowCreate: allowCreate,
+                                intent: intent,
+                                type: type,
+                                active: true,
+                                errors: errors,
+                                status: status
+                            }
+                        ];
+
+                        if (currentIntent && !intent) {
+                            updatedMessages[updatedMessages.length - 3] = {
+                                ...updatedMessages[updatedMessages.length - 3],
+                                active: false
+                            };
+                        }
+
+                        dispatch(setMessages(updatedMessages));
+                    }
+                    setIsBotReplying(false);
+                    dispatch(setLoadConfigClicked(false));
+                })
+                .catch((error: any) => {
+                    setIsBotReplying(false);
+                    console.log('Error while fetching data - ', error);
+                    dispatch(setLoadConfigClicked(false));
+                });
+            return () => {
+                dispatch(setShowPreviewPanel(false));
+                dispatch(setPanelType(''));
+            };
+        }
+    }, [loadConfigClicked]);
+
     const mapParamsToPayload = (params: any) => {
         Object.keys(params).map(key => {
             const value = params[key];
@@ -128,24 +198,24 @@ const Chatbot = () => {
                             '',
                             selectedCredentialOption
                         );
-                        dispatch(setSelectedCredentials(option));
+                        dispatch(setSelectedCredentials(value ? option : null));
                     }
                     break;
-                case 'fsxDeploymentMode':
+                case 'sqlDeploymentMode':
                     if (
-                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'SINGLE_AZ_1') ||
-                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'MULTI_AZ_1')
+                        (mssqlFormData?.dbDeploymentModel?.value === 'fci' && value === 'standalone') ||
+                        (mssqlFormData?.dbDeploymentModel?.value === 'standalone' && value === 'fci')
                     ) {
                         dispatch(
                             setSelectedDBDeploymentModel(
-                                value === 'MULTI_AZ_1'
+                                value === 'standalone'
                                     ? {
-                                          label: GENERAL.FAILOVER_CLUSTER,
-                                          value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
-                                      }
-                                    : {
                                           label: GENERAL.SINGLE_INSTANCE,
                                           value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                                      }
+                                    : {
+                                          label: GENERAL.FAILOVER_CLUSTER,
+                                          value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
                                       }
                             )
                         );
@@ -159,7 +229,7 @@ const Chatbot = () => {
                         const credValue =
                             selectedRegionOption?.regionCode + ' | Account: ' + selectedRegionOption?.regionName;
                         const option = generateOptionType(credValue, credValue, '', false, '', selectedRegionOption);
-                        dispatch(setSelectedRegionData(option));
+                        dispatch(setSelectedRegionData(value ? option : null));
                     }
                     break;
                 case 'vpcId':
@@ -176,7 +246,7 @@ const Chatbot = () => {
                             availabilityZones: formatVpcSubnetsData(selectedVpcId || { subnets: [] })
                         };
                         const option = generateOptionType(vpcValue, vpcValue, vpcLabel2, false, '', vpcData);
-                        dispatch(setSelectedVPC(option));
+                        dispatch(setSelectedVPC(value ? option : null));
                     }
                     break;
                 case 'availabilityZone1':
@@ -191,7 +261,7 @@ const Chatbot = () => {
                             subnets: subnetsList
                         };
                         const option: any = generateOptionType(selectedAzNode1, selectedAzNode1, '', false, '', data);
-                        dispatch(setSelectedAzNode1(option));
+                        dispatch(setSelectedAzNode1(value ? option : null));
                     }
                     break;
                 case 'privateSubnet1Id':
@@ -202,7 +272,7 @@ const Chatbot = () => {
                         const label2 = subnetData?.id;
                         const val = subnetData?.cidrBlock;
                         const option = generateOptionType(val, val, label2, false, '', subnetData);
-                        dispatch(setSelectedSubnetNode1(option));
+                        dispatch(setSelectedSubnetNode1(value ? option : null));
                     }
                     break;
                 case 'availabilityZone2':
@@ -217,7 +287,7 @@ const Chatbot = () => {
                             subnets: subnetsList
                         };
                         const option: any = generateOptionType(selectedAzNode2, selectedAzNode2, '', false, '', data);
-                        dispatch(setSelectedAzNode2(option));
+                        dispatch(setSelectedAzNode2(value ? option : null));
                     }
                     break;
                 case 'privateSubnet2Id':
@@ -228,7 +298,7 @@ const Chatbot = () => {
                         const label2 = subnetData?.id;
                         const val = subnetData?.cidrBlock;
                         const option = generateOptionType(val, val, label2, false, '', subnetData);
-                        dispatch(setSelectedSubnetNode2(option));
+                        dispatch(setSelectedSubnetNode2(value ? option : null));
                     }
                     break;
                 case 'keyPairName':
@@ -238,7 +308,7 @@ const Chatbot = () => {
                         )[0];
                         const keyPairName = selectedKayPair?.name || '';
                         const option = generateOptionType(keyPairName, keyPairName, '', false, '', selectedKayPair);
-                        dispatch(setSelectedKeyPair(option));
+                        dispatch(setSelectedKeyPair(value ? option : null));
                     }
                     break;
                 case 'workloadInstanceType':
@@ -258,17 +328,17 @@ const Chatbot = () => {
                             label2 += selectedInstance?.iopsInMbps + 'Mbps';
                         }
                         const option = generateOptionType(value, value, label2, false, '', selectedInstance);
-                        dispatch(setInstanceType(option));
+                        dispatch(setInstanceType(value ? option : null));
                     }
                     break;
                 case 'domainUsername':
                     if (mssqlFormData?.activeDirectory?.userName !== value) {
-                        dispatch(setSelectedADUserName(value));
+                        dispatch(setSelectedADUserName(value || null));
                     }
                     break;
                 case 'domainPassword':
                     if (mssqlFormData?.activeDirectory?.password !== value) {
-                        dispatch(setSelectedADPassword(value));
+                        dispatch(setSelectedADPassword(value || null));
                     }
                     break;
                 case 'domainDnsname':
@@ -293,24 +363,24 @@ const Chatbot = () => {
                                 domainName: value,
                                 adScenarioType: USER_MANAGED_AD
                             });
-                            dispatch(setSelectedADDomainName(option));
+                            dispatch(setSelectedADDomainName(value ? option : null));
                             dispatch(setSelectedADScenarioType(USER_MANAGED_AD));
                         }
                     }
                     break;
                 case 'dnsIpaddress':
                     if (mssqlFormData?.activeDirectory?.domainAddress !== value) {
-                        dispatch(setSelectedADDomainAddress(value));
+                        dispatch(setSelectedADDomainAddress(value || null));
                     }
                     break;
                 case 'serviceAccountName':
                     if (mssqlFormData?.dbCredentials?.name !== value) {
-                        dispatch(setDBCredentialsName(value));
+                        dispatch(setDBCredentialsName(value || null));
                     }
                     break;
                 case 'serviceAccountPassword':
                     if (mssqlFormData?.dbCredentials?.password !== value) {
-                        dispatch(setDBCredentialsPassword(value));
+                        dispatch(setDBCredentialsPassword(value || null));
                     }
                     break;
                 case 'sqlAmiId':
@@ -326,7 +396,7 @@ const Chatbot = () => {
                             amiName: selectedLicense?.name
                         };
                         const option = generateOptionType(amiVal, amiVal, amiName, false, '', data);
-                        dispatch(setSelectedLicenseId(option));
+                        dispatch(setSelectedLicenseId(value ? option : null));
                     }
                     break;
                 case 'fsxFileSystemId':
@@ -346,17 +416,17 @@ const Chatbot = () => {
                             kmsKeyId: selectedFsx?.kmsKeyId
                         };
                         const option = generateOptionType(val, val, '', false, '', data);
-                        dispatch(setExistingFsxnName(option));
+                        dispatch(setExistingFsxnName(value ? option : null));
                     }
                     break;
                 case 'fsxUsername':
                     if (mssqlFormData?.fsxN?.fsxNNewUserName !== value) {
-                        dispatch(setFsxNExistingUserName(value));
+                        dispatch(setFsxNExistingUserName(value || null));
                     }
                     break;
                 case 'fsxPassword':
                     if (mssqlFormData?.fsxN?.fsxNPassword !== value) {
-                        dispatch(setFsxNPassword(value));
+                        dispatch(setFsxNPassword(value || null));
                     }
                     break;
                 case 'fsxVolThroughput':
@@ -364,7 +434,7 @@ const Chatbot = () => {
                     const convertedVal = numVal < 1024 ? `${numVal} MBps` : `${numVal / 1024} GBps`;
                     if (mssqlFormData?.throughput?.value !== convertedVal) {
                         const option = generateOptionType(convertedVal, convertedVal, '', false, '');
-                        dispatch(setThroughputValue(option));
+                        dispatch(setThroughputValue(value ? option : null));
                     }
                     break;
                 case 'databaseSize':
@@ -375,7 +445,7 @@ const Chatbot = () => {
                     if (convertToGb !== value) {
                         dispatch(setStorageCapacity(value));
                         const option = generateOptionType('GiB', 'GiB', '', false, '');
-                        dispatch(setStorageUnit(option));
+                        dispatch(setStorageUnit(value ? option : null));
                     }
                     break;
                 case 'ontapSgGroupId':
@@ -391,20 +461,30 @@ const Chatbot = () => {
                             const sgValue = selectedSg?.id;
                             const sgLabel = selectedSg?.securityGroupName || selectedSg?.name || '-';
                             const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
-                            dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
-                            dispatch(setSelectedExistingSecurityGroup(option));
+                            dispatch(
+                                setSelectedSecurityGroup(
+                                    value ? GENERAL.USE_AN_EXISTING_SECURITY : GENERAL.GENERATED_SECURITY_GROUP
+                                )
+                            );
+                            dispatch(setSelectedExistingSecurityGroup(value ? option : null));
                         }
                     }
                     break;
                 case 'sqlServerName':
                     if (mssqlFormData?.dbName !== value) {
-                        dispatch(setDBName(value));
+                        dispatch(setDBName(value || null));
                     }
                     break;
                 case 'enableCloudWatch':
                     if (mssqlFormData.cloudWatch !== value) {
-                        dispatch(setCloudWatch(value));
+                        dispatch(setCloudWatch(value || null));
                     }
+                    break;
+                case 'tags':
+                    if (!_.isEqual(mssqlFormData?.tags, value)) {
+                        dispatch(setTags(value || []));
+                    }
+                    break;
             }
         });
     };
@@ -434,7 +514,8 @@ const Chatbot = () => {
                     (currentIntent?.type
                         ? wrapContext(
                               `${currentIntent.type} with params ${JSON.stringify({
-                                  ...currentIntent.params
+                                  ...currentIntent.params,
+                                  ...(currentIntent.userParams || {})
                               })}`
                           ) + 'Sure!'
                         : '') + wrapContext(msg),
@@ -446,7 +527,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -470,7 +551,8 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors
+                            errors: errors,
+                            status: status
                         }
                     ];
 
@@ -491,17 +573,77 @@ const Chatbot = () => {
             });
     };
 
-    useEffect(() => {
-        setIsBotReplying(isReceivingMsg);
-    }, [isReceivingMsg]);
-
-    useEffect(() => {
+    const setContext = () => {
+        setIsBotReplying(true);
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
+        // handleSendMsg(
+        //     `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`,
+        //     false,
+        //     messages
+        // );
+        sendMsgToBot({
+            payload: {
+                prompt: wrapContext(
+                    `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`
+                ),
+                intent: 'DeployMsSql',
+                params: getChatbotParamsFromPayload(mssqlFormData)
+            }
+        })
+            .then((res: any) => {
+                if (res.data) {
+                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    if (intent) {
+                        dispatch(setCurrentIntent(intent));
+                        if (!intent.complete) {
+                            setPayloadContent(getWlmdbPayload(intent.params));
+                            mapParamsToPayload(intent.params);
+                        } else {
+                            setPayloadContent(intent.validatedJson);
+                            mapParamsToPayload(intent.params);
+                        }
+                        setIsPayloadReady(intent.complete);
+                    }
+
+                    const updatedMessages = [
+                        {
+                            sender: 'bot',
+                            msg: message,
+                            key: key,
+                            list: allowedValues,
+                            allowCreate: allowCreate,
+                            intent: intent,
+                            type: type,
+                            active: true,
+                            errors: errors,
+                            status: status
+                        }
+                    ];
+
+                    if (currentIntent && !intent) {
+                        updatedMessages[updatedMessages.length - 3] = {
+                            ...updatedMessages[updatedMessages.length - 3],
+                            active: false
+                        };
+                    }
+
+                    dispatch(setMessages(updatedMessages));
+                    setIsBotReplying(false);
+                }
+            })
+            .catch((error: any) => {
+                setIsBotReplying(false);
+                console.log('Error while fetching data - ', error);
+            });
         return () => {
             dispatch(setShowPreviewPanel(false));
             dispatch(setPanelType(''));
         };
+    };
+
+    useEffect(() => {
+        setContext();
     }, []);
 
     useEffect(() => {
@@ -545,7 +687,7 @@ const Chatbot = () => {
         });
         dispatch(setMessages(updatedMessages));
         const msgToBot = Object.keys(paramObj)
-            .map(key => `Use ${key} as ${paramObj[key].value}`)
+            .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
         await handleSendMsg(msgToBot, false, updatedMessages);
     };
@@ -573,7 +715,44 @@ const Chatbot = () => {
                   return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
               })
             : null;
-        if (
+        if (lastMsg && lastMsg.status === 'error') {
+            const existingMessages = updatedMsgs ? updatedMsgs : [];
+            return [
+                ...existingMessages,
+                {
+                    sender: 'bot',
+                    type: 'confirm',
+                    active: true,
+                    msg: `Error getting response. Do you want to retry?`,
+                    confirmData: {
+                        confirmMsg: `Error getting response. Do you want to retry?`,
+                        confirmBtnTxt: 'Yes',
+                        cancelBtnTxt: 'No',
+                        onConfirm: async (messages: messageType[]) => {
+                            const lastUserMsg = messages.filter(item => item.sender === 'user').reverse()?.[0];
+                            if (lastUserMsg) {
+                                await sendMsg(lastUserMsg.msg, existingMessages);
+                            } else {
+                                setContext();
+                            }
+                        },
+                        onCancel: () => {
+                            dispatch(
+                                setMessages(
+                                    existingMessages.map((msg: any) => {
+                                        return {
+                                            ...msg,
+                                            status: null
+                                        };
+                                    })
+                                )
+                            );
+                            dispatch(setCurrentIntent(''));
+                        }
+                    }
+                }
+            ];
+        } else if (
             lastMsg &&
             lastMsg.sender === 'bot' &&
             !lastMsg.intent &&
@@ -614,7 +793,7 @@ const Chatbot = () => {
             {/* <Header /> */}
             <div className={styles['page-content']}>
                 <ChatBox
-                    isBotReplying={isBotReplying}
+                    isBotReplying={isBotReplying || isReceivingMsg}
                     handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
                     sendMsg={sendMsg}
                     messagesToShow={messagesToShow ? messagesToShow : []}

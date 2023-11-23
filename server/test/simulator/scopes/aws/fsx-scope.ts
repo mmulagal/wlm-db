@@ -13,9 +13,12 @@ import fsxVolumesResponse from '../../responses/aws/list-fsx-volumes.json';
 import fsxSVMResponse from '../../responses/aws/list-fsx-svms.json';
 import fsxBackupResponse from '../../responses/aws/list-fsx-backups.json';
 
+const FSX_FILTER = { FileSystemIds: ['fs-03773e21b2f0e39b4'] };
+
 const fsxMock = mockClient(FSxClient);
 
 fsxMock.on(DescribeFileSystemsCommand).resolves(fsxFileSystemsResponse);
 fsxMock.on(DescribeVolumesCommand).resolves(fsxVolumesResponse);
 fsxMock.on(DescribeStorageVirtualMachinesCommand).resolves(fsxSVMResponse);
 fsxMock.on(DescribeBackupsCommand).resolves(fsxBackupResponse);
+fsxMock.on(DescribeFileSystemsCommand, FSX_FILTER).resolves(fsxFileSystemsResponse.FileSystems[0]);

@@ -18,6 +18,7 @@ const baseRequest = {
 // Get Deployment jobs summary details
 const DeploymentJobsCountSchema = {
     ...baseRequest,
+    summary: 'Get deployment jobs count',
     description: 'API to get deployment jobs count for given duration in days',
     querystring: DeploymentJobsCountQueryString,
     response: {
@@ -27,6 +28,7 @@ const DeploymentJobsCountSchema = {
 
 const DeploymentJobsSummaryListSchema = {
     ...baseRequest,
+    summary: 'Get deployment jobs summary',
     description: 'API to get deployment jobs summary for given deployment status types',
     querystring: DeploymentJobsSummaryQueryString,
     response: {
@@ -37,7 +39,8 @@ const DeploymentJobsSummaryListSchema = {
 const DeleteDeploymentJobsSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: JobsParams,
-    description: 'Delete deployment Job',
+    summary: 'Delete deployment Job',
+    description: 'Delete deployment Job for the given job Id',
     response: {
         200: DeleteJobResponse
     }

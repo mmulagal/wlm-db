@@ -24,7 +24,10 @@ import {
     ServerState,
     SERVER_TYPE_MAPPING,
     STANDALONE,
-    FCI
+    FCI,
+    AWS_REGIONS,
+    SQL_STD,
+    SQL_ENT
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -81,7 +84,7 @@ type EstimationEc2Type = {
 };
 
 type EstimationFSxType = {
-    diskSize: number;
+    storageCapacity: number;
     throughput: number;
     iops: number;
     deploymentOption: string;
@@ -91,7 +94,8 @@ async function getTopology(
     accountId: string,
     region: string,
     resourceId: string,
-    resourceData: resource
+    resourceData: resource,
+    additionalFields?: { [key: string]: boolean }
 ): Promise<TopologyResponseType> {
     logger.info('Fetching topology data', accountId, region, resourceId, resourceData);
 
@@ -111,7 +115,7 @@ async function getTopology(
         serverInstallationMode: '',
         fileSystemId: fileSystemId!,
         fileSystemType: '',
-        vpcId: '',
+        vpcId: undefined,
         ec2Details: []
     };
 
@@ -132,22 +136,23 @@ async function getTopology(
         } = metadata as unknown as Topology);
 
         let vpcId;
-        try {
-            const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
-            vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-        } catch (error) {
-            logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
-            vpcId = '';
+        if (additionalFields?.vpc) {
+            try {
+                const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
+                vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+            } catch (error) {
+                logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
+            }
         }
 
         // Fetch topology data
         topologyData = {
-            region,
+            region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
-            vpcId: vpcId!,
+            ...(vpcId && { vpcId }),
             ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
         };
         if (standbyNodeInstanceId) {
@@ -214,6 +219,11 @@ async function getStorageData(resourceDetail: ResourceDetails): Promise<StorageR
         };
     } catch (error) {
         logger.error('Error while getting storage savings for resource', resourceDetail, JSON.stringify(error));
+        let { message } = error as { message: string };
+        if (message?.toLocaleLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
+            message += '. Retry the operation.';
+            throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, message);
+        }
     }
 }
 
@@ -266,10 +276,11 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails) {
             },
             storage: {
                 regionCode: region!,
-                diskSize: fsxResourceInfo.diskSize,
+                storageCapacity: fsxResourceInfo.storageCapacity,
                 throughput: fsxResourceInfo.throughput,
                 iops: fsxResourceInfo.iops,
-                deploymentOption: fsxResourceInfo.deploymentOption
+                deploymentOption: fsxResourceInfo.deploymentOption,
+                diskSize: 0 // As we are calculating post deployment cost usage, we don't need disk size, we can use storageCapacity instead.
             },
             vpc: {
                 regionCode: region!
@@ -311,9 +322,9 @@ async function getEc2ResourceInfo(
     logger.info('Estimation info for AMI:', amiInfo);
     const sqlPlatform = amiInfo?.Images?.[0].PlatformDetails;
 
-    let sqlSoftwareType: string = 'SQL std'; // Let's 'Windows with SQL Server Standard' be default
+    let sqlSoftwareType: string = SQL_STD; // Let's 'Windows with SQL Server Standard' be default
     if (sqlPlatform === 'Windows with SQL Server Enterprise') {
-        sqlSoftwareType = 'SQL ent';
+        sqlSoftwareType = SQL_ENT;
     }
 
     return {
@@ -332,12 +343,12 @@ async function getFsxResourceInfo(
     const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [filesystemId] });
     logger.info('Estimation info for FSxN:', fsxInfo);
 
-    const diskSize = (fsxInfo?.FileSystems?.[0].StorageCapacity || 0) * 100;
+    const storageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity || 0;
     const throughput = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
     const iops = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DiskIopsConfiguration?.Iops;
     const deploymentOption = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
 
-    return { diskSize, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
+    return { storageCapacity, throughput: throughput!, iops: iops!, deploymentOption: deploymentOption! };
 }
 
 async function getDatabaseHostsSummary(
@@ -364,6 +375,9 @@ async function getDatabaseHostsSummary(
     const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
     const getProtection = fieldsValues?.includes(DatabaseHostsQueryFields.PROTECTION);
     const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
+    const additionalFields = {
+        vpc: Boolean(getUsageEstimation)
+    };
 
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
@@ -396,7 +410,7 @@ async function getDatabaseHostsSummary(
                         [
                             getServerState(resourceId), // Fetch server status
                             getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
-                            getTopology(accountId, region!, resourceId, resourceDetail), // Fetch topology data
+                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
                             ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
                             ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                             ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]), // Fetch protection status

@@ -4,8 +4,9 @@ import config from 'config';
 import { randomUUID } from 'crypto';
 import { Message } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
+import { inspect } from 'util';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
-import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
+import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
 import {
     ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
@@ -124,6 +125,15 @@ async function processCloudFormationMessages() {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
+        try {
+            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
+                QueueUrl: queueUrl,
+                AttributeNames: ['All']
+            });
+            logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
+        } catch (e) {
+            logger.error(`Queue attributes error: ${e}`);
+        }
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             if (sqsMessages) {
@@ -436,21 +446,36 @@ async function processCloudFormationMessages() {
 
                                     if (DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)) {
                                         // if any of the underlying resource is in CREATE_FAILED, DELETE_FAILED, ROLLBACK_FAILED, UPDATE_FAILED, UPDATE_ROLLBACK_FAILED mark the parent stack stack status as FAILED
-                                        await updateDeployment(accountId, id, {
-                                            deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                            endTime: DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)
-                                                ? new Date(timestamp).valueOf()
-                                                : undefined
-                                        });
+                                        try {
+                                            await updateDeployment(accountId, id, {
+                                                deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                endTime: DEPLOYMENT_JOBS_FAILED_STATUS.includes(resourceStatus)
+                                                    ? new Date(timestamp).valueOf()
+                                                    : undefined
+                                            });
+                                        } catch (error) {
+                                            logger.error(
+                                                `Error while updating main stack with failed status: ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                    error
+                                                )}`
+                                            );
+                                        }
                                     } else if (
                                         !masterDeploymentStatus.startsWith(mainCFStatusClass) &&
                                         !masterDeploymentStatus.includes('FAILED')
                                     ) {
-                                        await updateDeployment(accountId, id, {
-                                            deploymentName: stackName,
-                                            deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
-                                            deploymentStatusReason: resourceStatusReason
-                                        });
+                                        try {
+                                            await updateDeployment(accountId, id, {
+                                                deploymentStatus: resourceStatus as DEPLOYMENT_STATUS,
+                                                deploymentStatusReason: resourceStatusReason
+                                            });
+                                        } catch (error) {
+                                            logger.error(
+                                                `Error while updating block main stack with non-failed status: ${id} ${resourceStatus} ${stackName}. Error: ${JSON.stringify(
+                                                    error
+                                                )}`
+                                            );
+                                        }
                                     }
 
                                     try {
@@ -493,7 +518,12 @@ async function processCloudFormationMessages() {
                 logger.warn(`'${queueUrl}' queue invalid client token. Not polling for messages`);
             } else {
                 logger.debug('Possibly no new messages in queue');
-                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, err);
+                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, inspect(err));
+                logger.warn(`Delaying polling for SQS queue '${queueUrl}' due to error`, err.code);
+                logger.warn(
+                    `Delaying polling for SQS queue '${queueUrl}' due to error with messsage`,
+                    JSON.stringify(err)
+                );
                 setTimeout(() => processCloudFormationMessages(), ms(config.get<string>('sqs-poll-interval')));
             }
         }
