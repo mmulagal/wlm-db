@@ -247,7 +247,7 @@ const CHATBOT_UI_PARAMS_FSX = [
             },
             {
                 [TAGS]: {
-                    reuired: true
+                    required: true
                 }
             }
         ]
