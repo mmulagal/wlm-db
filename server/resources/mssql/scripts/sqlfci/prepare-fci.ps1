@@ -105,7 +105,8 @@ $Service = Get-Service -Name 'MSSQLSERVER'
 }
 catch {
         Write-Output "Failed to create SQLServer(MSSQLSERVER) service"
-        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId  
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+        $_ | Write-AWSLaunchWizardException  
 }
 }
  else {
