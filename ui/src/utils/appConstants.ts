@@ -81,6 +81,8 @@ export const GENERAL = {
     DELETE: 'Delete',
     API_REQUEST: 'API request',
     REQUIRED_PERMISSIONS: 'Required Permissions',
+    REQUIRED_VIEW_PERMISSIONS: 'Required View Permissions',
+    REQUIRED_OPERATE_PERMISSIONS: 'Required Operate Permissions',
     CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Step 1:',

@@ -146,7 +146,7 @@ const AwsAccount = () => {
         const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
         setDialog(
             <DialogComponent
-                header={GENERAL.REQUIRED_PERMISSIONS}
+                header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS: GENERAL.REQUIRED_OPERATE_PERMISSIONS}
                 content={<ViewDialog data={data} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
