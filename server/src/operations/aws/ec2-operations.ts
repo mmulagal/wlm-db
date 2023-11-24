@@ -312,8 +312,8 @@ async function getAmiList(
     if (!amis?.Images) {
         throw createError(404, `The requested ${osType} ${databaseType} AMI could not be found`);
     }
-
-    const response = amis.Images.map(
+    // https://jira.ngage.netapp.com/browse/DBS-1403 - Temp fix to exclude 2023.11.15 since FCI installations are failing
+    const response = amis.Images.filter(image => !image.Name?.includes('2023.11.15')).map(
         ({
             Name,
             Description,
