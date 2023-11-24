@@ -182,6 +182,7 @@ export const CODEBOX_REST_RES = {
     COPY: 'copy'
 };
 
+// This Permissions should be in sync with workload-policies.json file
 export const PERMISSIONS = {
     "operate": {
         "Version": "2012-10-17",
