@@ -18,38 +18,9 @@ import {
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
 import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
+import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 
 const logger = getLogger();
-interface DeploymentData {
-    id: string;
-    account_id: string;
-    deployment_id: string;
-    parent_deployment_id?: string;
-    deployment_name: string;
-    cloud_provider_account_id?: string;
-    cloud_provider_name?: string;
-    region: string;
-    credentials_id: string;
-    deployment_status: string;
-    deployment_model?: string;
-    deployment_status_reason?: string;
-    start_time: string;
-    end_time: string;
-    data: any;
-}
-
-interface ResourceData {
-    id: string;
-    account_id: string;
-    resource_id: string;
-    resource_name?: string;
-    resource_type: string;
-    co_relation_id?: string;
-    cloud_provider_account_id?: string;
-    cloud_provider_name?: string;
-    region?: string;
-    metadata?: any;
-}
 
 async function getSavedConfig(accountId: string, id: string): Promise<FormConfigObjectResponseType> {
     logger.info('Load individual saved config ', accountId);
@@ -202,7 +173,7 @@ async function getDeployments(
     parentStackOnly?: boolean,
     API_PAGE_SIZE?: number,
     nextToken?: string
-): Promise<Array<DeploymentData>> {
+): Promise<Array<DeploymentDetails>> {
     logger.info(' Get the Deployments', {
         accountId,
         deploymentId,
@@ -233,7 +204,7 @@ async function getResources(
     accountId: string,
     resourceId?: string,
     resourceType?: string
-): Promise<Array<ResourceData>> {
+): Promise<Array<ResourceDetails>> {
     logger.info(' Get the Resources', { accountId, resourceId, resourceType });
 
     try {

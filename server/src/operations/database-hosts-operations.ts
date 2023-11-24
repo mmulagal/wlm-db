@@ -37,7 +37,7 @@ import {
     getDatabasesCount
 } from './workloads/mssql/mssql-operations';
 import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
-import Metadata from '../utils/common-types';
+import { Metadata, ResourceDetails } from '../utils/common-types';
 
 const logger = getLogger();
 
@@ -63,19 +63,6 @@ type VolumeSpaceRecord = {
         size: number;
         used: number;
     };
-};
-
-type ResourceDetails = {
-    id: string;
-    account_id: string;
-    resource_id: string;
-    resource_name: string | null;
-    resource_type: string;
-    co_relation_id: string | null;
-    cloud_provider_account_id: string | null;
-    cloud_provider_name: string | null;
-    region: string | null;
-    metadata: unknown;
 };
 
 type EstimationEc2Type = {
