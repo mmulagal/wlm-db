@@ -85,9 +85,6 @@ interface Headers {
 
 await initiateSecrets();
 
-// TODO: For debugging only. Remove after verifying.
-logger.info('CHECK PROCESS ENV>>>', process.env);
-
 const app = fastify({
     trustProxy: true,
     genReqId: () => `WLM-DB-${randomize('Aa0', 8)}`,
