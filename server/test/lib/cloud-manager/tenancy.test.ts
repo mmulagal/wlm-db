@@ -16,7 +16,7 @@ import getTenancyResourceResponse from '../../simulator/responses/cloud-manager/
 import tenancyAccountsResponse from '../../simulator/responses/cloud-manager/tenancy-accounts.json';
 import { SECRETS } from '../../../src/utils/consts';
 
-SECRETS.CLIENT_ID = `${faker.string.uuid()}`;
+SECRETS.AUTH_CLIENT_ID = `${faker.string.uuid()}`;
 
 function generateBearerToken() {
     const secretKey = faker.random.alphaNumeric(32);

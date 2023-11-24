@@ -10,6 +10,16 @@
         "userRole": "Role-2"
     },
     {
+        "accountPublicId": "account-j3aZttuL",
+        "accountName": "Demo_SIM_Preprod",
+        "isSaas": true,
+        "isGov": false,
+        "isPrivatePreviewEnabled": false,
+        "is3rdPartyServicesEnabled": false,
+        "accountSerial": "96047492333825192656",
+        "userRole": "Role-2"
+    },
+    {
         "accountPublicId": "account-Xy9lYV5u",
         "accountName": "gil_-gil",
         "isSaas": true,

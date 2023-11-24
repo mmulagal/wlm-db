@@ -2,6 +2,7 @@ import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
+import { getSubjectFromBearerToken } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -56,9 +57,13 @@ async function listDeployments(
     deploymentId?: string,
     deploymentName?: string,
     statuses?: Array<DEPLOYMENT_STATUS>,
-    parentStackOnly?: boolean
+    parentStackOnly?: boolean,
+    pageSize?: number,
+    nextToken?: string
 ) {
     logger.info('Listing deployments', { accountId, deploymentId, deploymentName, statuses });
+
+    accountId = accountId ? checkAccount(accountId) : '';
     return prisma.client.deployment.findMany({
         where: {
             ...(accountId && { account_id: accountId }),
@@ -72,9 +77,13 @@ async function listDeployments(
             ...(parentStackOnly && { parent_deployment_id: null })
         },
         orderBy: {
-            start_time: 'desc'
+            id: 'asc'
         },
-        take: 100
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
@@ -95,6 +104,9 @@ async function createDeployment(accountId: string, params: Deployment) {
         region,
         data
     } = params;
+
+    accountId = checkAccount(accountId);
+
     return prisma.client.deployment.create({
         data: {
             account_id: accountId,
@@ -230,6 +242,7 @@ async function createEvent(params: Event) {
 
 async function deleteDeployment(accountId: string, deploymentId: string) {
     logger.info('Deleting deployment', { accountId, deploymentId });
+    accountId = checkAccount(accountId);
     return prisma.client.deployment.deleteMany({
         where: {
             account_id: accountId,
@@ -240,6 +253,7 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
 
 async function listResources(accountId: string, resourceId?: string, resourceType?: string) {
     logger.info('Listing resources', { accountId, resourceId, resourceType });
+    accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
@@ -262,6 +276,9 @@ async function createResource(accountId: string, params: Resource) {
         region,
         metadata
     } = params;
+
+    accountId = checkAccount(accountId);
+
     return prisma.client.resource.create({
         data: {
             account_id: accountId,
@@ -282,6 +299,7 @@ async function createResource(accountId: string, params: Resource) {
 async function deleteResource(accountId: string, resourceId: string) {
     logger.info('Deleting resource', { accountId, resourceId });
 
+    accountId = checkAccount(accountId);
     return prisma.client.resource.deleteMany({
         where: {
             account_id: accountId,
@@ -292,6 +310,8 @@ async function deleteResource(accountId: string, resourceId: string) {
 
 async function listConfig(accountId: string, id?: string) {
     logger.info('Listing config', accountId, id);
+
+    accountId = checkAccount(accountId);
     return prisma.client.config.findMany({
         where: {
             account_id: accountId,
@@ -313,6 +333,8 @@ async function listConfig(accountId: string, id?: string) {
 async function createConfig(accountId: string, params: Config) {
     logger.info('Creating config', { accountId, params });
     const { user, creationTime, data, name } = params;
+    accountId = checkAccount(accountId);
+
     return prisma.client.config.create({
         data: {
             account_id: accountId,
@@ -326,7 +348,10 @@ async function createConfig(accountId: string, params: Config) {
 
 async function updateConfig(accountId: string, configId: string, params: Config) {
     logger.info('Updating config', { accountId, configId, params });
+
     const { data, name } = params;
+    accountId = checkAccount(accountId);
+
     return prisma.client.config.update({
         where: {
             id: configId
@@ -340,6 +365,9 @@ async function updateConfig(accountId: string, configId: string, params: Config)
 }
 async function deleteConfig(accountId: string, id: string) {
     logger.info('Deleting config', { accountId, id });
+
+    accountId = checkAccount(accountId);
+
     return prisma.client.config.delete({
         where: {
             account_id: accountId,
@@ -350,6 +378,9 @@ async function deleteConfig(accountId: string, id: string) {
 
 async function listRelationshipsResources(accountId: string, resourceId?: string) {
     logger.info('Listing resources which has relation', { accountId });
+
+    accountId = checkAccount(accountId);
+
     return prisma.client.resource.findMany({
         where: {
             account_id: accountId,
@@ -367,6 +398,9 @@ async function listRelationshipsResources(accountId: string, resourceId?: string
 
 async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: Array<DEPLOYMENT_STATUS>) {
     logger.info('Deployment jobs count', accountId, fromDate, statuses);
+
+    accountId = checkAccount(accountId);
+
     return prisma.client.deployment.findMany({
         where: {
             account_id: accountId,
@@ -384,12 +418,25 @@ async function deploymentJobsCount(accountId: string, fromDate: Date, statuses: 
 async function deleteDeploymentJobById(accountId: string, jobId: string) {
     logger.info('Deleting Deployment Job by Id', { accountId, jobId });
 
+    accountId = checkAccount(accountId);
+
     return prisma.client.deployment.deleteMany({
         where: {
             account_id: accountId,
             id: jobId
         }
     });
+}
+
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
+function checkAccount(accountId: string) {
+    logger.info('checking account id', accountId);
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const userId = getSubjectFromBearerToken();
+        return userId ? `${accountId}_${userId}` : accountId;
+    }
+    return accountId;
 }
 
 export {

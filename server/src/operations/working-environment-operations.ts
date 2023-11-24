@@ -4,7 +4,8 @@ import { RESOURCESTYPE, HttpErrorCodes, ACCOUNT_ID } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getDatabasesCount, getResourceDetails } from './workloads/mssql/mssql-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
-import { listResources, listRelationshipsResources } from '../lib/database/db';
+import { listRelationshipsResources } from '../lib/database/db';
+import { getResources } from './database/database-operations';
 
 interface WorkingEnvironment {
     id: string;
@@ -18,7 +19,7 @@ async function getWorkingEnvironments() {
     logger.info('Getting working environment list');
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const mssqlResources = (await listResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[];
+    const mssqlResources = (await getResources(accountId, undefined, RESOURCESTYPE.MSSQL)) as resource[];
     const workingEnvironments: WorkingEnvironment[] = mssqlResources.map(
         ({
             resource_id: resourceId,
@@ -63,7 +64,7 @@ async function getMSSQLEnvData(resourceDetails: any, resourceId: string) {
 async function getWorkingEnvironment(id: string) {
     logger.info('Getting MSSQL working environment data for resource:', id);
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-    const [resourceDetails] = await listResources(accountId, id, RESOURCESTYPE.MSSQL);
+    const [resourceDetails] = await getResources(accountId, id, RESOURCESTYPE.MSSQL);
 
     if (resourceDetails) {
         const response = await getMSSQLEnvData(resourceDetails, id);

@@ -1,5 +1,5 @@
 import { TextField, Typography, Button } from '@netapp/design-system';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { ReactComponent as CloseIcon } from '../../../../../assets/close-icon.svg';
 import styles from './TagsComponent.module.scss';
@@ -11,6 +11,12 @@ type inputComponentPropType = {
 
 const TagsComponent = ({onChange} : inputComponentPropType) => {
     const [tags, setTags] = useState<any>([{key: '', value: ''}]);
+
+    useEffect(() => {
+        setTimeout(() => {
+            onChange('tags', JSON.stringify(tags.filter((tag: TagObj) => tag.key)));
+        }, 0);
+    }, []);
 
     //@ts-ignore
     const emptyTagItems = useMemo(() => {
