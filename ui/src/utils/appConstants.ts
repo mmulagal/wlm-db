@@ -407,7 +407,15 @@ export const GENERAL = {
     PROTECTION_DATABASES: 'DB',
     PROTECTION: 'Protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
-    TERRAFORM: 'Terraform'
+    TERRAFORM: 'Terraform',
+    // Redirect to CF text
+    CONTINUE: 'Continue',
+    REDIRECT_TO_CF_DESC: 'The operation you attempted could not be completed due to insufficient permissions in the selected AWS credentials. You have the option to proceed manually by redirecting to AWS CloudFormation and execute the operation yourself. Please ensure you have the required permissions to complete this task within AWS CloudFormation.',
+    RCF_DESC1: 'The instructions below describe how to create the link from the AWS CloudFormation Service. After you are done, return to Workload Factory.',
+    RCF_POINT1: ['1 ', '| Select ', 'Continue ', 'below to load the AWS Management Console.'],
+    RCF_POINT2: ['2 ', '| Log in to AWS account where the FSx for ONTAP file system resides.'],
+    RCF_POINT3: ['3 ', '| On the ', 'Quick create stack', 'page, under ', 'Capabilities',', select I ', 'acknowledge that AWS CloudFormation ','might create IAM resources.'],
+    RCF_POINT4: ['4 ','| Select ','Create Stack.'],
 };
 
 export const CODE_VIEWER = {
