@@ -37,10 +37,11 @@ import {
     WF
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
-import { createResource, listResources, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
+import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
 import { generateHash } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
+import { getResources } from '../../database/database-operations';
 
 const logger = getLogger();
 
@@ -63,11 +64,7 @@ async function getResourceDetails(resourceId: string) {
     let region;
 
     try {
-        [{ metadata, region }] = (await listResources(
-            accountId,
-            resourceId,
-            DatabaseTypes.MS_SQL_SERVER
-        )) as resource[];
+        [{ metadata, region }] = (await getResources(accountId, resourceId, DatabaseTypes.MS_SQL_SERVER)) as resource[];
     } catch (error) {
         throw createError(HttpErrorCodes.NOT_FOUND, `Error Tenancy resource not found for resource id: ${resourceId}`);
     }
@@ -460,7 +457,8 @@ async function discoverMsSqlServer(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
-    const [resourceDetails] = await listResources(accountId, resourceId);
+    const [resourceDetails] = await getResources(accountId, resourceId);
+
     if (!isEmpty(resourceDetails)) {
         throw createError(409, 'MSSQL server already exists in your tenancy account');
     }

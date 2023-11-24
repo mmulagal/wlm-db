@@ -3,7 +3,8 @@ import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 import { JSONObject } from '@fastify/swagger';
 import { isEmpty } from 'lodash-es';
-import { deploymentJobsCount, deleteDeploymentJobById, listDeployments } from '../lib/database/db';
+import { deploymentJobsCount, deleteDeploymentJobById } from '../lib/database/db';
+import { getDeployments } from './database/database-operations';
 import {
     DEPLOYMENT_JOBS_STATUS_FILTER,
     HttpErrorCodes,
@@ -54,7 +55,7 @@ async function getDeploymentJobsSummary(accountId: string, statuses?: string, ne
         deploymentStatuses = statuses?.toUpperCase()?.replace(/\s+/g, '')?.split(',') as Array<DEPLOYMENT_STATUS>;
     }
 
-    const deploymentDetails = await listDeployments(
+    const deploymentDetails = await getDeployments(
         accountId,
         undefined,
         undefined,

@@ -34,8 +34,6 @@ import {
     createDeployment,
     createEvent,
     createResource,
-    listDeployments,
-    listResources,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
@@ -44,6 +42,7 @@ import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
 import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
+import { getDeployments, getResources } from '../database/database-operations';
 
 const logger = getLogger();
 
@@ -75,7 +74,7 @@ async function getMatchingMasterStackDeployment(stackName: string) {
     const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
     if (matchingMasterStack) {
         const [masterStackName] = matchingMasterStack;
-        const [masterStackDeployment] = await listDeployments(undefined, undefined, masterStackName);
+        const [masterStackDeployment] = await getDeployments(undefined, undefined, masterStackName);
         return masterStackDeployment;
     }
 }
@@ -209,7 +208,7 @@ async function processCloudFormationMessages() {
                                             } else {
                                                 // Post deployment completion another custom resource is Created, to mark the successful completion of deployment
                                                 // CREATE_FAILED event for any underlying resource is considered as a failure event for master deployment; the same is updated later in the code execution flow
-                                                const [masterStackDeployment] = await listDeployments(
+                                                const [masterStackDeployment] = await getDeployments(
                                                     undefined,
                                                     undefined,
                                                     stackName
@@ -237,7 +236,7 @@ async function processCloudFormationMessages() {
                                                         DomainAdminSecretName: domainAdminSecret,
                                                         SQLServiceAccountSecret: sqlServiceAccountSecret
                                                     } = resourceProperties;
-                                                    const [resourceDetails] = await listResources(
+                                                    const [resourceDetails] = await getResources(
                                                         accountId,
                                                         fsxId,
                                                         RESOURCESTYPE.FSX
@@ -306,7 +305,7 @@ async function processCloudFormationMessages() {
                                                 }
                                             }
                                         } else {
-                                            const [masterStackDeployment] = await listDeployments(
+                                            const [masterStackDeployment] = await getDeployments(
                                                 undefined,
                                                 undefined,
                                                 stackName
