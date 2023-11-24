@@ -1,0 +1,30 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "3a8fad81-c1da-4a09-b0fd-b5d5a1d666ac",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Tags": [
+        {
+            "Key": "aws:cloudformation:logical-id",
+            "Value": "FSxTempDbVolumeConfiguration"
+        },
+        {
+            "Key": "aws:cloudformation:stack-id",
+            "Value": "arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1700811183134-NewFSxStack-DGU5QUEM53SI/6e61b620-8a9d-11ee-8eaa-02a63976a860"
+        },
+        {
+            "Key": "aws:cloudformation:stack-name",
+            "Value": "WLMDB-SqlFciStack-1700811183134-NewFSxStack-DGU5QUEM53SI"
+        },
+        {
+            "Key": "created_by_flow",
+            "Value": "WLMDB"
+        },
+        {
+            "Key": "user",
+            "Value": "wlmdb"
+        }
+    ]
+}
