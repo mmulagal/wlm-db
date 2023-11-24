@@ -264,8 +264,6 @@ app.listen({ port, host }, err => {
         logger.error('Failed to start server', err.message);
         process.exit(1);
     }
-    logger.info('CHECK PROCESS ENV>>>', process.env);
-    logger.info('CHECK PROCESS ENV STRINGIFIED>>>', JSON.stringify(process.env));
     logger.info(`Server listening on ${host}:${port}`);
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
     validateSchema();

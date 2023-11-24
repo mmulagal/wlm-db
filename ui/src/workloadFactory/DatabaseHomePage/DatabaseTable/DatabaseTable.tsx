@@ -35,10 +35,10 @@ const DatabaseTable = () => {
     const [pageSize, setPageSize] = useState(25);
 
     const menuItems = [
-        {
-            id: 'resourceView',
-            displayName: 'View resource details'
-        },
+        // {
+        //     id: 'resourceView',
+        //     displayName: 'View resource details'
+        // },
         // {
         //     id: 'clone',
         //     displayName: 'Clone',

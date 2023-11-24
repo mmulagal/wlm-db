@@ -1,6 +1,14 @@
 import createError from 'http-errors';
 import moment from 'moment';
-import { createConfig, updateConfig, deleteConfig, listConfig, listDeployments } from '../../lib/database/db';
+import { DEPLOYMENT_STATUS } from '@prisma/client';
+import {
+    createConfig,
+    updateConfig,
+    deleteConfig,
+    listConfig,
+    listDeployments,
+    listResources
+} from '../../lib/database/db';
 import {
     FormConfigCreateResponseType,
     FormConfigListResponseType,
@@ -10,6 +18,7 @@ import {
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
 import { CONFIG_NOT_FOUND, HttpErrorCodes, STACK_NOT_FOUND } from '../../utils/consts';
+import { ResourceDetails, DeploymentDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -72,17 +81,20 @@ async function saveConfig(
     logger.info('Save config ', accountId);
     logger.debug('Save config data', data);
 
-    const {
-        id,
-        account_id: configAccountId,
-        creation_time: configCreationTime
-    } = await createConfig(accountId, {
+    const { id, creation_time: configCreationTime } = await createConfig(accountId, {
         user,
         name,
         creationTime: Date.now(),
         data
     });
-    return { id, accountId: configAccountId, creationTime: moment(configCreationTime).unix() * 1000, user, data, name };
+    return {
+        id,
+        accountId,
+        creationTime: moment(configCreationTime).unix() * 1000,
+        user,
+        data,
+        name
+    };
 }
 
 async function modifyConfig(
@@ -153,6 +165,74 @@ async function getDeploymentStatusByName(accountId: string, name: string): Promi
     }
 }
 
+async function getDeployments(
+    accountId?: string,
+    deploymentId?: string,
+    deploymentName?: string,
+    statuses?: Array<DEPLOYMENT_STATUS>,
+    parentStackOnly?: boolean,
+    API_PAGE_SIZE?: number,
+    nextToken?: string
+): Promise<Array<DeploymentDetails>> {
+    logger.info(' Get the Deployments', {
+        accountId,
+        deploymentId,
+        deploymentName,
+        statuses,
+        parentStackOnly,
+        API_PAGE_SIZE,
+        nextToken
+    });
+
+    try {
+        const records = await listDeployments(
+            accountId,
+            deploymentId,
+            deploymentName,
+            statuses,
+            parentStackOnly,
+            API_PAGE_SIZE,
+            nextToken
+        );
+        return trimAccountIdForDemo(records);
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the deployments');
+    }
+}
+
+async function getResources(
+    accountId: string,
+    resourceId?: string,
+    resourceType?: string
+): Promise<Array<ResourceDetails>> {
+    logger.info(' Get the Resources', { accountId, resourceId, resourceType });
+
+    try {
+        const records = await listResources(accountId, resourceId, resourceType);
+        return trimAccountIdForDemo(records);
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to list the resources');
+    }
+}
+
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
+function trimAccountIdForDemo(records: any) {
+    logger.debug('records', records);
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        if (records && records.length) {
+            const modifiedData = records.map((record: any) => {
+                const { account_id: accountId, ...rest } = record;
+                const [modifiedAccountId] = accountId.split('_');
+                // For test cases there will not be bearer token so the user id will be undefined.. To handle that using accountId as it is
+                return { account_id: modifiedAccountId || accountId, ...rest };
+            });
+            return modifiedData;
+        }
+    }
+    return records;
+}
+
 export {
     getSavedConfig,
     getAllSavedConfig,
@@ -160,5 +240,7 @@ export {
     modifyConfig,
     deleteSavedConfig,
     getAllDeploymentStatus,
-    getDeploymentStatusByName
+    getDeploymentStatusByName,
+    getDeployments,
+    getResources
 };

@@ -21,9 +21,15 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                                 return (
                                     <div className={styles.marginFIfteen} key={key}>
                                         <div className={styles.marginFIfteen}>{`{`}</div>
-                                        <div className={styles.marginThirty}>{`"key": "${item.key}", `}</div>
+                                        <div className={styles.marginThirty}>
+                                            {`"key":  `}
+                                            <span className={styles.green40Color}>{`"${item.key}",`}</span>
+                                        </div>
                                         {/* @ts-ignore */}
-                                        <div className={styles.marginThirty}>{`"value": "${item.value}"`}</div>
+                                        <div className={styles.marginThirty}>
+                                            {`"value": `}
+                                            <span className={styles.green40Color}>{`"${item.value}"`}</span>
+                                        </div>
                                         <div className={styles.marginFIfteen}>{`}`}</div>
                                     </div>
                                 );
@@ -47,7 +53,7 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                         <div className={styles.startFlex} key={key}>
                             <div className={styles.blue50Color}>{`"${key}": `}</div>&nbsp;
                             {/* @ts-ignore */}
-                            {!value ? (
+                            {(!value && (typeof value !== 'boolean')) ? (
                                 <div className={styles.red20Color}>{`"${value || ''}",`}</div>
                             ) : (
                                 <div className={styles.green40Color}>{`"${value}",`}</div>

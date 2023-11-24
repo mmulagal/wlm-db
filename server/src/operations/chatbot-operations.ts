@@ -73,8 +73,8 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                 throw new Error('Intent did not match');
             }
         }
-    } catch (e) {
-        logger.error('Failed to get the query response', e);
+    } catch (e: any) {
+        logger.error('Failed to get the query response', e?.message, e);
         return { message: 'Sorry, I could not find anything related to your query, please try again', status: 'error' };
     }
 }

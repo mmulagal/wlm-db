@@ -126,6 +126,10 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
     const client = await getEC2Client(region, credentialsId);
 
     const vpcFilter = config.get('ec2.vpcu-filter') as Array<string>;
+
+    // Needs to be removed - debug DBS-1382
+    logger.info(`vCPU filter : ${vpcFilter}`);
+
     const paginator = paginateDescribeInstanceTypes(
         { client, pageSize: 100 },
         {

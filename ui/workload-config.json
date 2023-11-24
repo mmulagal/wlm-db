@@ -4,7 +4,7 @@
     "to": "/databases",
     "hasMenuItem": true,
     "hasPolicies": true,
-    "apiDocUrl": "https://staging.api.workloads.netapp.com/wlmdb/documentation/json",
+    "apiDocUrl": "/wlmdb/documentation/json",
     "stageIntegrations": [
         {
             "path": "/marketing",
@@ -14,7 +14,7 @@
         {
             "path": "/",
             "renderType": "iframe/v2",
-            "iframeUrl": "https://staging.console.workloads.netapp.com/wlmdb/index.html"
+            "iframeUrl": "/wlmdb/index.html"
         }
     ],
     "homepage": {

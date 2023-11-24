@@ -44,11 +44,14 @@ import {
     setSelectedVPC,
     setStorageCapacity,
     setStorageUnit,
+    setTags,
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
 import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
+const _ = require('lodash');
+
 type optionsType = {
     value?: string | number;
     label?: string;
@@ -122,7 +125,7 @@ const Chatbot = () => {
             })
                 .then((res: any) => {
                     if (res.data) {
-                        const { message, key, allowedValues, allowCreate, intent, type, errors } = res.data;
+                        const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
                         if (intent) {
                             dispatch(setCurrentIntent(intent));
                             if (!intent.complete) {
@@ -145,7 +148,8 @@ const Chatbot = () => {
                                 intent: intent,
                                 type: type,
                                 active: true,
-                                errors: errors
+                                errors: errors,
+                                status: status
                             }
                         ];
 
@@ -475,6 +479,12 @@ const Chatbot = () => {
                     if (mssqlFormData.cloudWatch !== value) {
                         dispatch(setCloudWatch(value || null));
                     }
+                    break;
+                case 'tags':
+                    if (!_.isEqual(mssqlFormData?.tags, value)) {
+                        dispatch(setTags(value || []));
+                    }
+                    break;
             }
         });
     };
@@ -517,7 +527,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -541,7 +551,8 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors
+                            errors: errors,
+                            status: status
                         }
                     ];
 
@@ -562,7 +573,7 @@ const Chatbot = () => {
             });
     };
 
-    useEffect(() => {
+    const setContext = () => {
         setIsBotReplying(true);
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
@@ -582,7 +593,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -605,7 +616,8 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors
+                            errors: errors,
+                            status: status
                         }
                     ];
 
@@ -628,6 +640,10 @@ const Chatbot = () => {
             dispatch(setShowPreviewPanel(false));
             dispatch(setPanelType(''));
         };
+    };
+
+    useEffect(() => {
+        setContext();
     }, []);
 
     useEffect(() => {
@@ -699,7 +715,44 @@ const Chatbot = () => {
                   return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
               })
             : null;
-        if (
+        if (lastMsg && lastMsg.status === 'error') {
+            const existingMessages = updatedMsgs ? updatedMsgs : [];
+            return [
+                ...existingMessages,
+                {
+                    sender: 'bot',
+                    type: 'confirm',
+                    active: true,
+                    msg: `Error getting response. Do you want to retry?`,
+                    confirmData: {
+                        confirmMsg: `Error getting response. Do you want to retry?`,
+                        confirmBtnTxt: 'Yes',
+                        cancelBtnTxt: 'No',
+                        onConfirm: async (messages: messageType[]) => {
+                            const lastUserMsg = messages.filter(item => item.sender === 'user').reverse()?.[0];
+                            if (lastUserMsg) {
+                                await sendMsg(lastUserMsg.msg, existingMessages);
+                            } else {
+                                setContext();
+                            }
+                        },
+                        onCancel: () => {
+                            dispatch(
+                                setMessages(
+                                    existingMessages.map((msg: any) => {
+                                        return {
+                                            ...msg,
+                                            status: null
+                                        };
+                                    })
+                                )
+                            );
+                            dispatch(setCurrentIntent(''));
+                        }
+                    }
+                }
+            ];
+        } else if (
             lastMsg &&
             lastMsg.sender === 'bot' &&
             !lastMsg.intent &&
