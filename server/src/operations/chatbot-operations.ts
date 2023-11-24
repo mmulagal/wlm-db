@@ -34,11 +34,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                     const changedKeys = findChangedKeys(params, oldParams);
                     resetNextParamsOnUpdate(CHATBOT_UI_PARAMS_FSX, params, oldParams, new Set(changedKeys));
                 }
-                const validationResponse = await validateParams(
-                    params,
-                    oldParams as [{ [x: string]: any }],
-                    CHATBOT_UI_PARAMS_FSX
-                );
+                const validationResponse = await validateParams(params, oldParams || {}, CHATBOT_UI_PARAMS_FSX);
 
                 if (validationResponse?.errors?.length) {
                     return {
