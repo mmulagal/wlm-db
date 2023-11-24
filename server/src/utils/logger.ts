@@ -13,13 +13,15 @@ function isPatternLayout(layout: Layout): layout is PatternLayout {
 
 function hideSecretsValues(obj: any) {
     if (isArray(obj)) {
-        obj.forEach(arrayObj => hideSecretsValues(arrayObj));
+        obj.forEach((arrayObj, i) => {
+            obj[i] = hideSecretsValues(arrayObj);
+        });
     } else if (isObject(obj)) {
         Object.keys(obj).forEach(key => {
             if (SECRET_WORDS.includes(key)) {
                 (obj as { [index: string]: string })[key] = '*******';
             } else if (isPlainObject(obj[key as keyof typeof obj]) || isArray(obj[key as keyof typeof obj])) {
-                hideSecretsValues(obj[key as keyof object]);
+                obj[key] = hideSecretsValues(obj[key as keyof object]);
             }
         });
     } else if (isString(obj)) {
@@ -31,7 +33,7 @@ function hideSecretsValues(obj: any) {
         });
     }
 
-    return JSON.stringify(obj);
+    return obj;
 }
 
 function getActiveTraceId() {
