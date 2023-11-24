@@ -792,8 +792,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.activeDirectory?.password) {
         params.domainPassword = payload.activeDirectory.password;
     }
-    if (payload?.activeDirectory?.domainName) {
-        params.domainDnsname = payload.activeDirectory.domainName;
+    if (payload?.activeDirectory?.domainName?.value) {
+        params.domainDnsname = payload.activeDirectory.domainName?.value;
     }
     if (payload?.activeDirectory?.domainAddress) {
         params.dnsIpaddress = payload.activeDirectory.domainAddress;
@@ -819,8 +819,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.throughput?.value) {
         params.fsxVolThroughput = payload.throughput.value.split(' ')[0];
     }
-    if (payload?.securityGroup?.sgValue) {
-        params.ontapSgGroupId = payload.securityGroup.sgValue;
+    if (payload?.securityGroup?.selectedExistingSecurityGroup?.value) {
+        params.ontapSgGroupId = payload.securityGroup.selectedExistingSecurityGroup.value;
     }
     if (payload?.dbName) {
         params.sqlServerName = payload.dbName;
