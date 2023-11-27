@@ -12,7 +12,7 @@
                     "Main": false,
                     "RouteTableAssociationId": "rtbassoc-0ecd9c22c93c8ebec",
                     "RouteTableId": "rtb-00d7acd615fac5414",
-                    "SubnetId": "subnet-01658e739d1a77038",
+                    "SubnetId": "subnet-74a1b303",
                     "AssociationState": { "State": "associated" }
                 }
             ],
@@ -42,9 +42,10 @@
         {
             "Associations": [
                 {
-                    "Main": true,
+                    "Main": false,
                     "RouteTableAssociationId": "rtbassoc-09ab04307c9b5554c",
                     "RouteTableId": "rtb-0dde1132a1c54f5e6",
+                    "SubnetId": "subnet-5a37222d",
                     "AssociationState": { "State": "associated" }
                 }
             ],
