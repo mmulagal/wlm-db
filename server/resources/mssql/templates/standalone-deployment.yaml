@@ -450,8 +450,6 @@ Resources:
                             source: {{ ScriptSQLONTAP }}
                         C:\cfn\DSC.zip:
                             source: {{ DSC }}
-                        C:\cfn\DSC.zip.sig:
-                            source: {{ DSCSignature }}
                         C:\cfn\Installer\powershell.zip:
                             source: {{ PowerShell }}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
