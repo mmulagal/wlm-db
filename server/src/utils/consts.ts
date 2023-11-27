@@ -600,50 +600,50 @@ const SQL_RESOURCE_ASSETS = [
         name: 'DSC',
         url: 'DSC.zip'
     },
-    {
-        name: 'DSCSignature',
-        url: 'DSC.zip.sig'
-    },
+    // {
+    //     name: 'DSCSignature',
+    //     url: 'DSC.zip.sig'
+    // },
     {
         name: 'PowerShell',
         url: 'Installer/powershell.zip'
     },
-    {
-        name: 'PowerShellSignature',
-        url: 'Installer/powershell.zip.sig'
-    },
+    // {
+    //     name: 'PowerShellSignature',
+    //     url: 'Installer/powershell.zip.sig'
+    // },
     {
         name: 'Sqlspcu',
         url: 'Installer/sqlspcu.zip'
     },
-    {
-        name: 'SqlspcuSignature',
-        url: 'Installer/sqlspcu.zip.sig'
-    },
+    // {
+    //     name: 'SqlspcuSignature',
+    //     url: 'Installer/sqlspcu.zip.sig'
+    // },
     {
         name: 'AmazonFailoverCluster',
         url: 'modules/AmznFailoverCluster.zip'
     },
-    {
-        name: 'AmazonFailoverClusterSignature',
-        url: 'modules/AmznFailoverCluster.zip.sig'
-    },
+    // {
+    //     name: 'AmazonFailoverClusterSignature',
+    //     url: 'modules/AmznFailoverCluster.zip.sig'
+    // },
     {
         name: 'AmazonLaunchWizardForCFN',
         url: 'modules/AWSLaunchWizardForCFN.zip'
     },
-    {
-        name: 'AmazonLaunchWizardForCFNSignature',
-        url: 'modules/AWSLaunchWizardForCFN.zip.sig'
-    },
+    // {
+    //     name: 'AmazonLaunchWizardForCFNSignature',
+    //     url: 'modules/AWSLaunchWizardForCFN.zip.sig'
+    // },
     {
         name: 'AmazonLaunchWizardForSSM',
         url: 'modules/AWSLaunchWizardForSSM.zip'
     },
-    {
-        name: 'AmazonLaunchWizardForSSMSignature',
-        url: 'modules/AWSLaunchWizardForSSM.zip.sig'
-    },
+    // {
+    //     name: 'AmazonLaunchWizardForSSMSignature',
+    //     url: 'modules/AWSLaunchWizardForSSM.zip.sig'
+    // },
     {
         name: 'ScriptVerifySignature',
         url: 'scripts/Verify-Signature.ps1'
@@ -656,26 +656,26 @@ const SQL_RESOURCE_ASSETS = [
         name: 'ScriptCommon',
         url: 'scripts/common.zip'
     },
-    {
-        name: 'ScriptCommonSignature',
-        url: 'scripts/common.zip.sig'
-    },
+    // {
+    //     name: 'ScriptCommonSignature',
+    //     url: 'scripts/common.zip.sig'
+    // },
     {
         name: 'ScriptSQLFCI',
         url: 'scripts/sqlfci.zip'
     },
-    {
-        name: 'ScriptSQLFCISignature',
-        url: 'scripts/sqlfci.zip.sig'
-    },
+    // {
+    //     name: 'ScriptSQLFCISignature',
+    //     url: 'scripts/sqlfci.zip.sig'
+    // },
     {
         name: 'ScriptSQLONTAP',
         url: 'scripts/sqlontap.zip'
     },
-    {
-        name: 'ScriptSQLONTAPSignature',
-        url: 'scripts/sqlontap.zip.sig'
-    },
+    // {
+    //     name: 'ScriptSQLONTAPSignature',
+    //     url: 'scripts/sqlontap.zip.sig'
+    // },
     {
         name: 'ScriptVpcCheck',
         url: 'validation/Validate-VPCConnectivity.ps1'
