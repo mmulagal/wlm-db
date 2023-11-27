@@ -8,13 +8,15 @@ import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.j
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
 import fsxbackups from '../../simulator/responses/aws/list-fsx-backups.json';
+import fsxResourceTagsResponse from '../../simulator/responses/aws/list-fsx-resource-tags.json';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
-    describeFSxN
+    describeFSxN,
+    listResourceTags
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
@@ -52,5 +54,11 @@ describe('Testcases for Amazon FSx resources', () => {
         });
 
         expect(response).toEqual(fsxFilesystems.FileSystems[0]);
+    });
+
+    it('List Fsx resource tags', async () => {
+        const response = await listResourceTags(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, 'Resource ARN');
+
+        expect(response).toEqual(fsxResourceTagsResponse);
     });
 });

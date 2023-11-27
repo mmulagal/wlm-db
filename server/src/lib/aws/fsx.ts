@@ -8,7 +8,9 @@ import {
     DescribeBackupsCommand,
     DescribeFileSystemsCommand,
     DescribeFileSystemsCommandInput,
-    DescribeFileSystemsCommandOutput
+    DescribeFileSystemsCommandOutput,
+    ListTagsForResourceCommand,
+    ListTagsForResourceCommandOutput
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -107,10 +109,29 @@ async function describeFSxBackups(
     return response;
 }
 
+async function listResourceTags(
+    credentialsId: string,
+    region: string,
+    resourceArn: string
+): Promise<ListTagsForResourceCommandOutput> {
+    logger.info('List all the resource tags by arn:', { credentialsId, region, resourceArn });
+
+    const client = await getFSxClient(credentialsId, region);
+
+    const command = new ListTagsForResourceCommand({ ResourceARN: resourceArn });
+
+    const response = await client.send(command);
+
+    logger.debug('List Amazon FSx resource tags:', response);
+
+    return response;
+}
+
 export {
     describeFSxFileSystems,
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
-    describeFSxN
+    describeFSxN,
+    listResourceTags
 };
