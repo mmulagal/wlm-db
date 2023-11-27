@@ -1,4 +1,8 @@
-import { ResourceGroupsTaggingAPIClient, TagResourcesCommand } from '@aws-sdk/client-resource-groups-tagging-api';
+import {
+    ResourceGroupsTaggingAPIClient,
+    TagResourcesCommand,
+    TagResourcesCommandOutput
+} from '@aws-sdk/client-resource-groups-tagging-api';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 
 import getLogger from '../../utils/logger';
@@ -33,8 +37,12 @@ async function resourceTagging(
     };
     try {
         const command = new TagResourcesCommand(params);
-        const response = await client.send(command);
+        const response: TagResourcesCommandOutput = await client.send(command);
+        if (response.FailedResourcesMap) {
+            throw new Error(response.FailedResourcesMap[resourceArn].ErrorMessage);
+        }
         logger.debug('Resource tagged successfully:', response);
+        return response;
     } catch (error) {
         logger.error('Error tagging resource:', error);
     }
