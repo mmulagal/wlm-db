@@ -901,8 +901,6 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
     ['web', SQL_WEB]
 ]);
 
-const TAG_NAME_KEY = 'Name';
-
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1097,7 +1095,6 @@ export {
     SQL_ENT,
     SQL_WEB,
     INVALID_PARAMETER_VALUE,
-    TAG_NAME_KEY,
     LOG_GROUP_ARN,
     WLMDB_RESOURCE_TAG_VALUE
 };
