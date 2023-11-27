@@ -339,7 +339,7 @@ async function createCloudFormationTemplateForUserDeployment(
     //     region
     // );
 
-    // let errMsg = '';
+    const errMsg = '';
     // if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
     //     errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
     //     logger.error(errMsg);
@@ -408,7 +408,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
-    return { cloudFormationUrl: signedTemplateURL };
+    return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
 }
 
 async function deployCloudFormationTemplate(
