@@ -49,12 +49,9 @@ import {
     AWS_RESOURCES_STRICT_ACTION_MAP,
     SECRET_MANAGER_ARN,
     CLOUD_FORMATION_ARN,
-    RESOURCE_GROUP_ARN,
     EC2_TAG_CONDITION,
-    WLMDB_RESOURCE_CLASS,
     FSX_TAG_CONDITION,
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-    SNS_ARN,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
     DEFAULT_AWS_REGION,
@@ -68,7 +65,9 @@ import {
     DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
-    DOMAIN_ADMIN_PASSWORD
+    DOMAIN_ADMIN_PASSWORD,
+    LOG_GROUP_ARN,
+    WLMDB_RESOURCE_TAG_VALUE
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -334,17 +333,17 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
     }
 
-    // commented to test the iam permissions with strict policy.. It will be added once we finalise the permissions
-    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-        credentialsId,
-        region
-    );
+    // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
+    // const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+    //     credentialsId,
+    //     region
+    // );
 
-    const errMsg = '';
-    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        // errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
-        // logger.error(errMsg);
-    }
+    // let errMsg = '';
+    // if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
+    //     errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
+    //     logger.error(errMsg);
+    // }
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
@@ -409,7 +408,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
-    return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
+    return { cloudFormationUrl: signedTemplateURL };
 }
 
 async function deployCloudFormationTemplate(
@@ -544,7 +543,7 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
         credentialsId,
         region,
         AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
     );
     const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
         credentialsId,
@@ -557,13 +556,13 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
                 ContextKeyName: EC2_TAG_CONDITION,
                 ContextKeyValues: [
                     // ContextKeyValueListType
-                    WLMDB_RESOURCE_CLASS
+                    WLMDB_RESOURCE_TAG_VALUE
                 ],
                 ContextKeyType: 'string'
             },
             {
                 ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: ['WLMDB*'],
+                ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
                 ContextKeyType: 'string'
             }
         ]
