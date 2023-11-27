@@ -42,7 +42,6 @@ async function resourceTagging(
             throw new Error(response.FailedResourcesMap[resourceArn].ErrorMessage);
         }
         logger.debug('Resource tagged successfully:', response);
-        return response;
     } catch (error) {
         logger.error('Error tagging resource:', error);
     }
