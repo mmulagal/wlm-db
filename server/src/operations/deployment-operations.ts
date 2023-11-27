@@ -21,7 +21,7 @@ import {
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
-    // MISSING_PERMISSIONS,
+    MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
@@ -448,7 +448,7 @@ async function deployCloudFormationTemplate(
     );
 
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        // throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
