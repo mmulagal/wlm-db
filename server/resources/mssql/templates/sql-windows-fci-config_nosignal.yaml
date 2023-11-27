@@ -506,40 +506,22 @@ Resources:
                             source: {{ ScriptUnzipArchive }}
                         C:\cfn\scripts\common.zip:
                             source: {{ ScriptCommon }}
-                        C:\cfn\scripts\common.zip.sig:
-                            source: {{ ScriptCommonSignature }}
                         C:\cfn\scripts\sqlfci.zip:
                             source: {{ ScriptSQLFCI }}
-                        C:\cfn\scripts\sqlfci.zip.sig:
-                            source: {{ ScriptSQLFCISignature }}
                         C:\cfn\scripts\sqlontap.zip:
                             source: {{ ScriptSQLONTAP }}
-                        C:\cfn\scripts\sqlontap.zip.sig:
-                            source: {{ ScriptSQLONTAPSignature }}
                         C:\cfn\DSC.zip:
                             source: {{ DSC }}
-                        C:\cfn\DSC.zip.sig:
-                            source: {{ DSCSignature }}
                         C:\cfn\Installer\powershell.zip:
                             source: {{ PowerShell }}
-                        C:\cfn\Installer\powershell.zip.sig:
-                            source: {{ PowerShellSignature }}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{ AmazonLaunchWizardForCFN }}
-                        C:\cfn\modules\AWSLaunchWizardForCFN.zip.sig:
-                            source: {{ AmazonLaunchWizardForCFNSignature }}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
                             source: {{ AmazonLaunchWizardForSSM }}
-                        C:\cfn\modules\AWSLaunchWizardForSSM.zip.sig:
-                            source: {{ AmazonLaunchWizardForSSMSignature }}
                         C:\cfn\modules\AmznFailoverCluster.zip:
                             source: {{ AmazonFailoverCluster }}
-                        C:\cfn\modules\AmznFailoverCluster.zip.sig:
-                            source: {{ AmazonFailoverClusterSignature }}
                         C:\cfn\Installer\sqlspcu.zip:
                             source: {{ Sqlspcu }}
-                        C:\cfn\Installer\sqlspcu.zip.sig:
-                            source: {{ SqlspcuSignature }}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -1069,40 +1051,22 @@ Resources:
                             source: {{ ScriptUnzipArchive }}
                         C:\cfn\scripts\common.zip:
                             source: {{ ScriptCommon }}
-                        C:\cfn\scripts\common.zip.sig:
-                            source: {{ ScriptCommonSignature }}
                         C:\cfn\scripts\sqlfci.zip:
                             source: {{ ScriptSQLFCI }}
-                        C:\cfn\scripts\sqlfci.zip.sig:
-                            source: {{ ScriptSQLFCISignature }}
                         C:\cfn\scripts\sqlontap.zip:
                             source: {{ ScriptSQLONTAP }}
-                        C:\cfn\scripts\sqlontap.zip.sig:
-                            source: {{ ScriptSQLONTAPSignature }}
                         C:\cfn\DSC.zip:
                             source: {{ DSC }}
-                        C:\cfn\DSC.zip.sig:
-                            source: {{ DSCSignature }}
                         C:\cfn\Installer\powershell.zip:
                             source: {{ PowerShell }}
-                        C:\cfn\Installer\powershell.zip.sig:
-                            source: {{ PowerShellSignature }}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
                             source: {{ AmazonLaunchWizardForCFN }}
-                        C:\cfn\modules\AWSLaunchWizardForCFN.zip.sig:
-                            source: {{ AmazonLaunchWizardForCFNSignature }}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
                             source: {{ AmazonLaunchWizardForSSM }}
-                        C:\cfn\modules\AWSLaunchWizardForSSM.zip.sig:
-                            source: {{ AmazonLaunchWizardForSSMSignature }}
                         C:\cfn\modules\AmznFailoverCluster.zip:
                             source: {{ AmazonFailoverCluster }}
-                        C:\cfn\modules\AmznFailoverCluster.zip.sig:
-                            source: {{ AmazonFailoverClusterSignature }}
                         C:\cfn\Installer\sqlspcu.zip:
                             source: {{ Sqlspcu }}
-                        C:\cfn\Installer\sqlspcu.zip.sig:
-                            source: {{ SqlspcuSignature }}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
