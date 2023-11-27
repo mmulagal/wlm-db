@@ -25,7 +25,8 @@ import {
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
     WF,
-    DEPLOYMENT_JOBS_FAILED_STATUS
+    DEPLOYMENT_JOBS_FAILED_STATUS,
+    WLMDB_COST_TAG
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -43,6 +44,7 @@ import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments, getResources } from '../database/database-operations';
+import { tagEc2Resource, tagFsxResource } from './tags-operations';
 
 const logger = getLogger();
 
@@ -117,6 +119,25 @@ async function handleResourceAssociation(
         }
     } catch (error) {
         logger.error('Failed to associate resource with credentials service', error);
+    }
+}
+
+async function tagResources(
+    credentialsId: string,
+    region: string,
+    awsAccountId: string,
+    fsxId: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    tagFsxResource(credentialsId, region, awsAccountId, fsxId, { [WLMDB_COST_TAG]: fsxId });
+    tagEc2Resource(credentialsId, region, awsAccountId, activeNodeInstanceId, {
+        [WLMDB_COST_TAG]: activeNodeInstanceId
+    });
+    if (standbyNodeInstanceId) {
+        tagEc2Resource(credentialsId, region, awsAccountId, standbyNodeInstanceId, {
+            [WLMDB_COST_TAG]: standbyNodeInstanceId
+        });
     }
 }
 async function processCloudFormationMessages() {
@@ -288,6 +309,16 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
+
+                                                    await tagResources(
+                                                        credentialsId,
+                                                        region,
+                                                        cloudProviderAccountId,
+                                                        fsxId,
+                                                        activeNodeInstanceId,
+                                                        standbyNodeInstanceId
+                                                    );
+
                                                     const notificationData = {
                                                         notificationAction: STANDARD_DEPLOYMENT_ACTION,
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,

@@ -167,6 +167,14 @@ function getSnsArn(accountId: string, region: string, snsName: string) {
     return `arn:aws:sns:${region}:${accountId}:${snsName}`;
 }
 
+function getFsxArn(accountId: string, region: string, fsxId: string) {
+    return `arn:aws:fsx:${region}:${accountId}:file-system/${fsxId}`;
+}
+
+function getEc2Arn(accountId: string, region: string, fsxId: string) {
+    return `arn:aws:ec2:${region}:${accountId}:instance/${fsxId}`;
+}
+
 function getQueueUrl(accountId: string, queueName: string) {
     return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
 }
@@ -228,6 +236,8 @@ export {
     derivePropertiesFromARN,
     sleep,
     getSnsArn,
+    getFsxArn,
+    getEc2Arn,
     generateHash,
     calculateFsxStorageCapacity,
     sizeInGigaBytes

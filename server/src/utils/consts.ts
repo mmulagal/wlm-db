@@ -98,7 +98,7 @@ enum DatabaseTypes {
 }
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
-
+const WLMDB_COST_TAG = 'wlmdb-cost-resource';
 // Kinesis
 const KINESIS_STREAM_NAME = process.env.KINESIS_STREAM_NAME || config.get('kinesis.stream-name');
 
@@ -958,6 +958,7 @@ export {
     MASTER_STACK_TIMEOUT_MINUTES,
     SECRETS_MANAGER_KEYS,
     AWS_RESOURCE_NAME_TAG,
+    WLMDB_COST_TAG,
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
