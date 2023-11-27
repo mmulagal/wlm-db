@@ -2,7 +2,7 @@ import Promise from 'bluebird';
 import { describeRegions } from '../../lib/aws/ec2';
 import { createTopic, listTopics, setTopicAttributes, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
-import { DEFAULT_AWS_REGION, WLMDB } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, TAG_NAME_KEY, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { derivePropertiesFromARN, getQueueArn } from '../../utils/utils';
 
@@ -79,6 +79,9 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                             }
                         ]
                     })
+                },
+                tags: {
+                    Name: WLMDB
                 }
             });
             if (regions && QueueUrl) {
@@ -104,7 +107,8 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                                 Name: queueName,
                                 Attributes: {
                                     Policy: JSON.stringify(policyStatement)
-                                }
+                                },
+                                Tags: [{ Key: TAG_NAME_KEY, Value: WLMDB }]
                             });
 
                             const accountId = QueueUrl?.split('/')[3];
