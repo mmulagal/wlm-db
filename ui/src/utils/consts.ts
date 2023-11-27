@@ -204,8 +204,6 @@ export const PERMISSIONS = {
                     "ec2:AuthorizeSecurityGroupEgress",
                     "ec2:AuthorizeSecurityGroupIngress",
                     "ec2:CreateVolume",
-                    "ec2:DeleteLaunchTemplate",
-                    "ec2:DeleteLaunchTemplateVersions",
                     "ec2:DeleteNetworkInterface",
                     "ec2:DeleteSecurityGroup",
                     "ec2:DeleteTags",
@@ -244,11 +242,7 @@ export const PERMISSIONS = {
                 "Sid": "FSxNGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "fsx:DeleteFileSystem",
-                    "fsx:DeleteStorageVirtualMachine",
-                    "fsx:DeleteVolume",
-                    "fsx:TagResource",
-                    "fsx:UntagResource"
+                    "fsx:TagResource"
                 ],
                 "Resource": "*",
                 "Condition": {
@@ -266,11 +260,6 @@ export const PERMISSIONS = {
                     "cloudformation:DescribeStacks",
                     "cloudformation:ListStacks",
                     "cloudformation:ValidateTemplate",
-                    "cloudwatch:DeleteAlarms",
-                    "cloudwatch:Describe*",
-                    "cloudwatch:Get*",
-                    "cloudwatch:List*",
-                    "cloudwatch:PutMetricAlarm",
                     "ds:DescribeDirectories",
                     "ec2:AuthorizeSecurityGroupEgress",
                     "ec2:AuthorizeSecurityGroupIngress",
@@ -285,12 +274,7 @@ export const PERMISSIONS = {
                     "ec2:RevokeSecurityGroupEgress",
                     "ec2:RevokeSecurityGroupIngress",
                     "ec2:RunInstances",
-                    "ec2messages:AcknowledgeMessage",
-                    "ec2messages:DeleteMessage",
-                    "ec2messages:FailMessage",
-                    "ec2messages:GetEndpoint",
-                    "ec2messages:GetMessages",
-                    "ec2messages:SendReply",
+                    "ec2messages:*",
                     "fsx:CreateFileSystem",
                     "fsx:CreateStorageVirtualMachine",
                     "fsx:CreateVolume",
@@ -312,6 +296,7 @@ export const PERMISSIONS = {
                     "secretsmanager:ListSecrets",
                     "servicequotas:ListServiceQuotas",
                     "sns:ListTopics",
+                    "sns:Publish",
                     "ssm:Describe*",
                     "ssm:Get*",
                     "ssm:List*",
@@ -322,11 +307,7 @@ export const PERMISSIONS = {
                     "ssm:UpdateAssociationStatus",
                     "ssm:UpdateInstanceAssociationStatus",
                     "ssm:UpdateInstanceInformation",
-                    "ssmmessages:CreateControlChannel",
-                    "ssmmessages:CreateDataChannel",
-                    "ssmmessages:OpenControlChannel",
-                    "ssmmessages:OpenDataChannel",
-                    "sts:GetCallerIdentity"
+                    "ssmmessages:*"
                 ],
                 "Resource": "*"
             },
@@ -334,23 +315,14 @@ export const PERMISSIONS = {
                 "Sid": "ArnGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "cloudformation:DeleteStack",
                     "cloudformation:SignalResource",
-                    "logs:DeleteLogGroup",
-                    "logs:DeleteLogStream",
-                    "logs:UntagResource",
-                    "secretsmanager:DeleteResourcePolicy",
-                    "secretsmanager:DeleteSecret",
                     "secretsmanager:PutResourcePolicy",
-                    "secretsmanager:TagResource",
-                    "secretsmanager:UntagResource",
-                    "sns:Publish"
+                    "secretsmanager:TagResource"
                 ],
                 "Resource": [
                     "arn:aws:cloudformation:*:*:stack/WLMDB*",
                     "arn:aws:logs:*:*:log-group:WLMDB*",
-                    "arn:aws:secretsmanager:*:*:secret:wlmdb*",
-                    "arn:aws:sns:*:*:wlmdb"
+                    "arn:aws:secretsmanager:*:*:secret:wlmdb*"
                 ]
             },
             {
@@ -367,6 +339,7 @@ export const PERMISSIONS = {
                     "iam:GetRole",
                     "iam:GetRolePolicy",
                     "iam:GetUser",
+                    "iam:PassRole",
                     "iam:PutRolePolicy",
                     "iam:RemoveRoleFromInstanceProfile",
                     "iam:SimulatePrincipalPolicy"
