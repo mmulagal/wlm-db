@@ -276,171 +276,189 @@ enum FileSystemTypes {
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
-const SECRECTS_MANAGER_ACTION_NAMES = ['GetSecretValue', 'CreateSecret', 'ListSecrets'].map(
+const SECRECTS_MANAGER_ACTION_NAMES = ['CreateSecret', 'GetSecretValue', 'ListSecrets'].map(
     action => `${SECRETS_MANAGER}:${action}`
 );
 
-const SECRECTS_MANAGER_STRICT_ACTION_NAMES = [
-    'DeleteSecret',
-    'TagResource',
-    'UntagResource',
-    'PutResourcePolicy',
-    'DeleteResourcePolicy'
-].map(action => `${SECRETS_MANAGER}:${action}`);
+const SSM = 'ssm';
+const SSM_ACTION_NAMES = [
+    'Describe*',
+    'Get*',
+    'List*',
+    'PutComplianceItems',
+    'PutConfigurePackageResult',
+    'PutInventory',
+    'SendCommand',
+    'UpdateAssociationStatus',
+    'UpdateInstanceAssociationStatus',
+    'UpdateInstanceInformation'
+].map(action => `${SSM}:${action}`);
 
 const KMS = 'kms';
-const KMS_ACTION_NAMES = ['ListKeys', 'ListAliases'].map(action => `${KMS}:${action}`);
+const KMS_ACTION_NAMES = ['CreateGrant', 'Describe*', 'List*'].map(action => `${KMS}:${action}`);
+
+const LOGS = 'logs';
+const LOGS_ACTION_NAMES = [
+    'CreateLogGroup',
+    'CreateLogStream',
+    'DescribeLog*',
+    'GetLog*',
+    'ListLogDeliveries',
+    'PutLogEvents',
+    'TagResource'
+].map(action => `${LOGS}:${action}`);
+
+const PRICING = 'pricing';
+const PRICING_ACTION_NAMES = ['GetProducts'].map(action => `${PRICING}:${action}`);
 
 const EC2 = 'ec2';
 const EC2_ACTION_NAMES = [
-    'CreateVpc',
-    'AssignPrivateIpAddresses',
-    'RunInstances',
-    'AttachNetworkInterface',
-    'AssociateRouteTable',
-    'GetConsoleOutput',
-    'CreateKeyPair',
-    'AssociateAddress',
-    'AttachVolume',
-    'AssociateVpcCidrBlock',
-    'DetachNetworkInterface',
-    'GetPasswordData',
-    'CreateRoute',
-    'CreateNetworkInterface',
-    'ModifyInstanceAttribute',
-    'DisassociateAddress',
-    'ReplaceRoute',
-    'CreateRouteTable',
-    'CreateVolume',
-    'ModifySubnetAttribute',
-    'DisassociateVpcCidrBlock',
-    'ReleaseAddress',
-    'CreateSubnet',
-    'CreateVpcEndpoint',
-    'ModifyVolumeAttribute',
-    'ModifyNetworkInterfaceAttribute',
-    'ReplaceRouteTableAssociation',
-    'AllocateAddress',
-    'CreateTags',
-    'ModifyVpcAttribute',
-    'ModifyVolume',
-    'RevokeSecurityGroupEgress',
-    'AllocateHosts',
-    'AssociateSubnetCidrBlock',
-    'DetachVolume',
     'AuthorizeSecurityGroupEgress',
-    'RevokeSecurityGroupIngress',
-    'DisassociateIamInstanceProfile',
-    'DisassociateRouteTable',
-    'DisassociateSubnetCidrBlock',
-    'ModifyInstancePlacement',
-    'CreatePlacementGroup',
-    'Describe*',
-    'Get*'
-].map(action => `${EC2}:${action}`);
-const EC2_STRICT_ACTION_NAMES = [
-    'StartInstances',
-    'StopInstances',
-    'Delete*',
-    'TerminateInstances',
-    'DeleteSubnet',
+    'AuthorizeSecurityGroupIngress',
+    'CreateLaunchTemplate',
+    'CreateLaunchTemplateVersion',
+    'CreateNetworkInterface',
+    'CreateSecurityGroup',
+    'CreateTags',
     'DeleteSecurityGroup',
-    'DeleteNetworkAcl',
-    'DeleteVolume',
-    'DeleteNetworkInterface',
-    'DeleteKeyPair',
-    'DeleteNetworkInterfacePermission',
-    'DeleteVpc',
-    'DeleteRoute',
-    'DeleteTags',
-    'DeleteRouteTable',
-    'DeletePlacementGroup'
+    'Describe*',
+    'Get*',
+    'RevokeSecurityGroupEgress',
+    'RevokeSecurityGroupIngress',
+    'RunInstances'
 ].map(action => `${EC2}:${action}`);
+
 const CLOUDFORMATION = 'cloudformation';
 const CLOUDFORMATION_ACTION_NAMES = [
-    'GetTemplateSummary',
-    'DescribeStack*',
-    'Get*',
-    'ListStacks',
-    'SignalResource',
-    'DescribeAccountLimits',
-    'DescribeStackDriftDetectionStatus',
-    'List*',
-    'Describe*',
     'CreateStack',
+    'DescribeStackEvents',
+    'DescribeStacks',
+    'ListStacks',
     'ValidateTemplate'
 ].map(action => `${CLOUDFORMATION}:${action}`);
 
-const CLOUDFORMATION_STRICT_ACTION_NAMES = ['DeleteStack'].map(action => `${CLOUDFORMATION}:${action}`);
-
 const IAM = 'iam';
 const IAM_ACTION_NAMES = [
-    'CreateInstanceProfile',
-    'DeleteInstanceProfile',
-    'RemoveRoleFromInstanceProfile',
     'AddRoleToInstanceProfile',
-    'GetRole',
-    'GetUser',
+    'CreateInstanceProfile',
+    'CreateRole',
+    'CreateServiceLinkedRole',
+    'DeleteInstanceProfile',
+    'GetPolicy',
     'GetPolicyVersion',
-    'GetPolicy'
+    'GetRole',
+    'GetRolePolicy',
+    'GetUser',
+    'PassRole',
+    'PutRolePolicy',
+    'RemoveRoleFromInstanceProfile',
+    'SimulatePrincipalPolicy'
 ].map(action => `${IAM}:${action}`);
 
+const DS = 'ds';
+const DS_ACTION_NAMES = ['DescribeDirectories'].map(action => `${DS}:${action}`);
+
+const EC2_MESSAGES = 'ec2messages';
+const EC2_MESSAGES_ACTION_NAMES = ['*'].map(action => `${EC2_MESSAGES}:${action}`);
+
+const SSM_MESSAGES = 'ssmmessages';
+const SSM_MESSAGES_ACTION_NAMES = ['*'].map(action => `${SSM_MESSAGES}:${action}`);
+
 const SNS = 'sns';
-const SNS_ACTION_NAMES = ['ListSubscriptionsByTopic', 'CreateTopic', 'Subscribe', 'Unsubscribe'].map(
-    action => `${SNS}:${action}`
-);
-const SNS_STRICT_ACTION_NAMES = ['Publish', 'DeleteTopic'].map(action => `${SNS}:${action}`);
-
-const RESOURCE_GROUPS = 'resource-groups';
-const RESOURCE_GROUPS_ACTION_NAMES = ['CreateGroup', 'List*', 'Get*'].map(action => `${RESOURCE_GROUPS}:${action}`);
-
-const RESOURCE_GROUPS_STRICT_ACTION_NAMES = ['DeleteGroup'].map(action => `${RESOURCE_GROUPS}:${action}`);
+const SNS_ACTION_NAMES = ['ListTopics', 'Publish'].map(action => `${SNS}:${action}`);
 
 const FSX = 'fsx';
-const FSX_ACTION_NAMES = [
-    'CreateFileSystem',
-    'ListTagsForResource',
-    'TagResource',
-    'UntagResource',
-    'DescribeFileSystems'
-].map(action => `${FSX}:${action}`);
-const FSX_STRICT_ACTION_NAMES = ['DeleteFileSystem'].map(action => `${FSX}:${action}`);
+const FSX_ACTION_NAMES = ['CreateFileSystem', 'CreateStorageVirtualMachine', 'CreateVolume', 'Describe*', 'List*'].map(
+    action => `${FSX}:${action}`
+);
 
 const SERVICE_QUOTAS = 'servicequotas';
-const SERVICE_QUOTAS_ACTION_NAMES = ['GetServiceQuota', 'ListServiceQuotas'].map(
-    action => `${SERVICE_QUOTAS}:${action}`
+const SERVICE_QUOTAS_ACTION_NAMES = ['ListServiceQuotas'].map(action => `${SERVICE_QUOTAS}:${action}`);
+
+// strict actions
+const SECRECTS_MANAGER_STRICT_ACTION_NAMES = ['PutResourcePolicy', 'TagResource'].map(
+    action => `${SECRETS_MANAGER}:${action}`
 );
+
+const CLOUDFORMATION_STRICT_ACTION_NAMES = ['SignalResource'].map(action => `${CLOUDFORMATION}:${action}`);
+
+const EC2_STRICT_CONDITION_ACTION_NAMES = [
+    'AllocateAddress',
+    'AllocateHosts',
+    'AssignPrivateIpAddresses',
+    'AssociateAddress',
+    'AssociateRouteTable',
+    'AssociateSubnetCidrBlock',
+    'AssociateVpcCidrBlock',
+    'AttachInternetGateway',
+    'AttachNetworkInterface',
+    'AttachVolume',
+    'AuthorizeSecurityGroupEgress',
+    'AuthorizeSecurityGroupIngress',
+    'CreateVolume',
+    'DeleteNetworkInterface',
+    'DeleteSecurityGroup',
+    'DeleteTags',
+    'DeleteVolume',
+    'DetachNetworkInterface',
+    'DetachVolume',
+    'DisassociateAddress',
+    'DisassociateIamInstanceProfile',
+    'DisassociateRouteTable',
+    'DisassociateSubnetCidrBlock',
+    'DisassociateVpcCidrBlock',
+    'ModifyInstanceAttribute',
+    'ModifyInstancePlacement',
+    'ModifyNetworkInterfaceAttribute',
+    'ModifySubnetAttribute',
+    'ModifyVolume',
+    'ModifyVolumeAttribute',
+    'ModifyVpcAttribute',
+    'ReleaseAddress',
+    'ReplaceRoute',
+    'ReplaceRouteTableAssociation',
+    'RevokeSecurityGroupEgress',
+    'RevokeSecurityGroupIngress',
+    'StartInstances',
+    'StopInstances',
+    'TerminateInstances'
+].map(action => `${EC2}:${action}`);
+
+const FSX_STRICT_CONDITION_ACTION_NAMES = ['TagResource'].map(action => `${FSX}:${action}`);
 
 const AWS_RESOURCES_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
+    [SSM]: SSM_ACTION_NAMES,
+    [LOGS]: LOGS_ACTION_NAMES,
+    [PRICING]: PRICING_ACTION_NAMES,
     [KMS]: KMS_ACTION_NAMES,
+    [DS]: DS_ACTION_NAMES,
+    [EC2_MESSAGES]: EC2_MESSAGES_ACTION_NAMES,
+    [SSM_MESSAGES]: SSM_MESSAGES_ACTION_NAMES,
     [EC2]: EC2_ACTION_NAMES,
     [CLOUDFORMATION]: CLOUDFORMATION_ACTION_NAMES,
     [IAM]: IAM_ACTION_NAMES,
     [SNS]: SNS_ACTION_NAMES,
-    [RESOURCE_GROUPS]: RESOURCE_GROUPS_ACTION_NAMES,
     [FSX]: FSX_ACTION_NAMES,
     [SERVICE_QUOTAS]: SERVICE_QUOTAS_ACTION_NAMES
 };
 
 const AWS_RESOURCES_STRICT_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_STRICT_ACTION_NAMES,
-    [CLOUDFORMATION]: CLOUDFORMATION_STRICT_ACTION_NAMES,
-    [RESOURCE_GROUPS]: RESOURCE_GROUPS_STRICT_ACTION_NAMES,
-    [SNS]: SNS_STRICT_ACTION_NAMES
+    [CLOUDFORMATION]: CLOUDFORMATION_STRICT_ACTION_NAMES
 };
 
 const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
-    [EC2]: EC2_STRICT_ACTION_NAMES,
-    [FSX]: FSX_STRICT_ACTION_NAMES
+    [EC2]: EC2_STRICT_CONDITION_ACTION_NAMES,
+    [FSX]: FSX_STRICT_CONDITION_ACTION_NAMES
 };
 
 const SECRET_MANAGER_ARN = 'arn:aws:secretsmanager:*:*:secret:wlmdb*';
 const CLOUD_FORMATION_ARN = 'arn:aws:cloudformation:*:*:stack/WLMDB*';
-const RESOURCE_GROUP_ARN = 'arn:aws:resource-groups:*:*:group/WLMDB*';
-const SNS_ARN = 'arn:aws:sns:*:*:wlmdb';
+const LOG_GROUP_ARN = 'arn:aws:logs:*:*:log-group:WLMDB*';
 const EC2_TAG_CONDITION = 'ec2:ResourceTag/aws:cloudformation:stack-name';
 const FSX_TAG_CONDITION = 'aws:ResourceTag/aws:cloudformation:stack-name';
+const WLMDB_RESOURCE_TAG_VALUE = 'WLMDB*';
 
 // List of AWS regions - taken from https://www.aws-services.info/regions.html
 const AWS_REGIONS = new Map<string, string>([
@@ -894,7 +912,6 @@ export {
     FSX_ACTION_NAMES,
     FSX,
     FSX_BATCH_CONCURRENCY_VALUE,
-    RESOURCE_GROUPS_ACTION_NAMES,
     SNS_ACTION_NAMES,
     SNS,
     IAM_ACTION_NAMES,
@@ -1050,20 +1067,16 @@ export {
     ServerState,
     SERVER_TYPE_MAPPING,
     FileSystemTypes,
-    EC2_STRICT_ACTION_NAMES,
+    EC2_STRICT_CONDITION_ACTION_NAMES,
     CLOUDFORMATION_STRICT_ACTION_NAMES,
-    RESOURCE_GROUPS_STRICT_ACTION_NAMES,
-    FSX_STRICT_ACTION_NAMES,
+    FSX_STRICT_CONDITION_ACTION_NAMES,
     SECRECTS_MANAGER_STRICT_ACTION_NAMES,
     AWS_RESOURCES_STRICT_ACTION_MAP,
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
     SECRET_MANAGER_ARN,
     CLOUD_FORMATION_ARN,
-    RESOURCE_GROUP_ARN,
     EC2_TAG_CONDITION,
     FSX_TAG_CONDITION,
-    SNS_ARN,
-    SNS_STRICT_ACTION_NAMES,
     CLOUD_FORMATION_CLI_COMMAND,
     DEPLOYMENT_JOBS_STATUS_FILTER,
     NOT_AVAILABLE,
@@ -1084,5 +1097,7 @@ export {
     SQL_ENT,
     SQL_WEB,
     INVALID_PARAMETER_VALUE,
-    TAG_NAME_KEY
+    TAG_NAME_KEY,
+    LOG_GROUP_ARN,
+    WLMDB_RESOURCE_TAG_VALUE
 };
