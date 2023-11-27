@@ -498,10 +498,10 @@ async function validatePricingParameters(
 ) {
     logger.debug('Validating pricing parameters:', { compute, storage, vpc });
 
-    await Promise.all([
-        validatePricingRegionParameters(credentialsId, compute, storage, vpc),
-        describeInstanceTypeOfferings(credentialsId, compute.regionCode, compute.instanceType)
-    ]);
+    // AWS regions MUST be validated before describeInstanceTypeOfferings(),
+    // without that invalid regions can get passed to latter.
+    await validatePricingRegionParameters(credentialsId, compute, storage, vpc);
+    await describeInstanceTypeOfferings(credentialsId, compute.regionCode, compute.instanceType);
 }
 
 async function validatePricingRegionParameters(
