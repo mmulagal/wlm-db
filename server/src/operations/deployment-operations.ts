@@ -55,7 +55,6 @@ import {
     SNS_ARN,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
-    DEFAULT_AWS_REGION,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
@@ -271,9 +270,9 @@ async function getCloudformationTemplate(
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
-        region || DEFAULT_AWS_REGION
-    } --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
+        region ? `--region ${region}` : ''
+    }`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
