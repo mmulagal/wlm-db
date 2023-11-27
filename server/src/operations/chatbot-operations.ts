@@ -8,7 +8,7 @@ import getLogger from '../utils/logger';
 const logger = getLogger();
 
 async function queryBot(query: string, oldParams?: { [x: string]: any }) {
-    logger.info('Querying Bot', { query, oldParams });
+    logger.debug('Querying Bot', { query, oldParams });
     try {
         let intent;
         const chatbot = new Chatbot();
