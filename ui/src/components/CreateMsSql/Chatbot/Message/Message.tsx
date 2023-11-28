@@ -4,7 +4,7 @@ import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.s
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
 import { useMemo, useState } from 'react';
-import { Button } from '@netapp/design-system';
+import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
@@ -127,15 +127,16 @@ const Message = ({
                                                     </div>
                                                 )
                                             )}
-                                            {msgObj.active && item.type === 'tags' &&
-                                                <TagsComponent 
+                                            {msgObj.active && item.type === 'tags' && (
+                                                <TagsComponent
                                                     onChange={(key: string, val: string) => {
                                                         setParamObj({
                                                             ...paramObj,
-                                                            [key]: {label: val, value: val}
+                                                            [key]: { label: val, value: val }
                                                         });
                                                     }}
-                                            />}
+                                                />
+                                            )}
                                         </>
                                     );
                                 })}
@@ -158,13 +159,14 @@ const Message = ({
                                 </div>
                             </div>
                         ) : (
-                            <div
+                            <Typography
+                                variant="Regular_16"
                                 className={`${styles['message-text']} ${
                                     msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                 }`}
                             >
                                 {`${fieldsArr[0].message}`}
-                            </div>
+                            </Typography>
                         )
                     ) : msgObj.active && msgObj.type === 'confirm' ? (
                         <div className={styles['select-container']}>
@@ -177,13 +179,14 @@ const Message = ({
                             />
                         </div>
                     ) : (
-                        <div
+                        <Typography
+                            variant="Regular_16"
                             className={`${styles['message-text']} ${
                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                             }`}
                         >
                             {`${msgObj.msg}`}
-                        </div>
+                        </Typography>
                     )}
                 </div>
             )}
