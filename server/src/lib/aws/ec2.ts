@@ -125,10 +125,7 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
 
     const client = await getEC2Client(region, credentialsId);
 
-    const vpcFilter = config.get('ec2.vpcu-filter') as Array<string>;
-
-    // Needs to be removed - debug DBS-1382
-    logger.info(`vCPU filter : ${vpcFilter}`);
+    const vcpuFilter = config.get('ec2.vcpu-filter') as Array<string>;
 
     const paginator = paginateDescribeInstanceTypes(
         { client, pageSize: 100 },
@@ -138,7 +135,7 @@ async function describeInstanceTypes(credentialsId: string, region: string) {
                 { Name: 'processor-info.supported-architecture', Values: ['x86_64'] },
                 { Name: 'supported-usage-class', Values: ['on-demand'] },
                 { Name: 'supported-virtualization-type', Values: ['hvm'] },
-                { Name: 'vcpu-info.default-vcpus', Values: vpcFilter },
+                { Name: 'vcpu-info.default-vcpus', Values: vcpuFilter },
                 {
                     Name: 'memory-info.size-in-mib',
                     Values: [

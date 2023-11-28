@@ -1,13 +1,14 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { Tag } from '@aws-sdk/client-fsx';
+import { Tag, Volume } from '@aws-sdk/client-fsx';
 import { attempt, isEmpty } from 'lodash-es';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
-    describeFSxBackups
+    describeFSxBackups,
+    listResourceTags
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -177,7 +178,7 @@ async function getStorageDataUsingSSM(
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         commands = [
-            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID test-fsx2345 -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+            `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
         ];
     } else {
         commands = [
@@ -307,32 +308,33 @@ async function getDataVolumes(credentialsId: string, region: string, fileSystemI
     });
 
     // First check AWS tags, if empty, get through SSM
-    const stackRegex = /(?<stackname>^.+)-fsx$/;
-    const { stackname } = metadata?.fsxSecret?.match(stackRegex)?.groups || {};
 
     const logicalIdTag = 'cloudformation:logical-id';
-    const stackNameTag = 'cloudformation:stack-name';
     const dataTagValue = 'FSxDataVolumeConfiguration';
 
     const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fileSystemId);
 
-    const dataVolumes = volumes
-        ?.filter(volume => {
-            const { Tags: tags } = volume;
+    const dataVolumes: Volume[] = [];
+    for (const volume of volumes!) {
+        let tags;
+        if (volume?.Tags) {
+            tags = volume.Tags;
+        } else {
+            ({ Tags: tags } = await listResourceTags(credentialsId, region, volume.ResourceARN!));
+        }
 
-            const isValidStackName = tags?.some(
-                ({ Key, Value }: Tag) => Key?.includes(stackNameTag) && Value?.includes(stackname)
-            );
+        const isValidDataTag = tags?.some(
+            ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
+        );
 
-            const isValidDataTag = tags?.some(
-                ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
-            );
+        if (isValidDataTag) {
+            dataVolumes.push(volume);
+        }
+    }
 
-            return isValidStackName && isValidDataTag;
-        })
-        ?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
+    const filteredVolumes = dataVolumes?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
 
-    if (isEmpty(dataVolumes)) {
+    if (isEmpty(filteredVolumes)) {
         return getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
     }
 }

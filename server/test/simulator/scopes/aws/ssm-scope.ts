@@ -128,7 +128,7 @@ const getOntapMappedVolumesParams = {
 
 const getStorageParams = {
     commands: [
-        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion ap-southeast-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
+        "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
     ]
 };
 ssmMock
