@@ -484,7 +484,7 @@ Parameters:
     Description: SNS ARN to push cloud formation messages (DO NOT EDIT)
     Type: String
     NoEcho: true
-
+    
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
