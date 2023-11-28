@@ -685,7 +685,7 @@ const Chatbot = () => {
                             key.toLowerCase().includes('password') ? '********' : paramObj[key].label
                         }`
                 )
-                .join(', ')
+                .join('\n')
         });
         dispatch(setMessages(updatedMessages));
         const msgToBot = Object.keys(paramObj)

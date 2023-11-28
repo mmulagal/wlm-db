@@ -719,6 +719,11 @@ export const validateChatbotField = (fieldName: string, val: any) => {
             return !isNaN(numValue) && numValue >= 120 && numValue <= 13320
                 ? ''
                 : `Supported capacity should be between 120 GiB to 13320 GiB`;
+        case 'sqlServerName':
+            return val &&
+                (val.length > 15 || !/^[a-zA-Z0-9]/.test(val.charAt(0) || '') || !/^[a-zA-Z0-9/-]+$/.test(val))
+                ? GENERAL.DB_NAME_TOOLTIP
+                : '';
         case 'domainPassword':
             return adPassVal(val) || '';
     }
