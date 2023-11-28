@@ -130,15 +130,22 @@ async function tagResources(
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
-    tagFsxResource(credentialsId, region, awsAccountId, fsxId, { [WLMDB_COST_TAG]: fsxId });
-    tagEc2Resource(credentialsId, region, awsAccountId, activeNodeInstanceId, {
+    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, { [WLMDB_COST_TAG]: fsxId });
+
+    const tagEc2Promise = tagEc2Resource(credentialsId, region, awsAccountId, activeNodeInstanceId, {
         [WLMDB_COST_TAG]: activeNodeInstanceId
     });
+
+    const promises = [tagFsxPromise, tagEc2Promise];
+
     if (standbyNodeInstanceId) {
-        tagEc2Resource(credentialsId, region, awsAccountId, standbyNodeInstanceId, {
+        const tagStandbyPromise = tagEc2Resource(credentialsId, region, awsAccountId, standbyNodeInstanceId, {
             [WLMDB_COST_TAG]: standbyNodeInstanceId
         });
+        promises.push(tagStandbyPromise);
     }
+
+    await Promise.all(promises);
 }
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
