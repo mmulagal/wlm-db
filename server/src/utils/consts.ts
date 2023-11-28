@@ -612,7 +612,7 @@ const TEMPLATE_JWT_TOKEN = 'JwtToken';
 const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
-const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WLMDBAwsAccountId';
+const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
 
 const SQL_RESOURCE_ASSETS = [
     {
