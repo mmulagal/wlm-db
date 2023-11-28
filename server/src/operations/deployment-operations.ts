@@ -54,11 +54,11 @@ import {
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
+    DEFAULT_AWS_REGION,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
     STANDALONE,
-    DEFAULT_AWS_REGION,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     FileSystemTypes,
@@ -70,11 +70,11 @@ import {
     WLMDB_RESOURCE_TAG_VALUE
 } from '../utils/consts';
 import {
-    generateDeploymentParams,
-    isNetworkConfigurationViolated,
-    sleep,
     derivePropertiesFromARN,
-    getSnsArn
+    generateDeploymentParams,
+    getSnsArn,
+    isNetworkConfigurationViolated,
+    sleep
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
