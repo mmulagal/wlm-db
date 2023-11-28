@@ -10,7 +10,7 @@ import { GENERAL } from '../utils/appConstants';
 import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctions';
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import previewPanelSlice from './previewPanel/previewPanelSlice';
-import chatbotSlice from './chatbot/chatbotSlice';
+import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -51,6 +51,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         } else {
             api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: errorMsg }));
         }
+        api.dispatch(setShowRetry(true));
     }
 
     return next(action);
