@@ -69,9 +69,10 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
     const response = await describeFSxOntapRegions(credentialsId);
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
     response.forEach(({ Value: regionCode }) => {
-        if (regionCode) {
+        if (regionCode && !restrictedRegions.includes(regionCode)) {
             fsxRegionsList.push({
                 regionCode,
                 regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''
