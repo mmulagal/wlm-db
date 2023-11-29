@@ -33,7 +33,7 @@ function hideSecretsValues(obj: any) {
         });
     }
 
-    return obj;
+    return obj instanceof Error ? obj : JSON.stringify(obj);
 }
 
 function getActiveTraceId() {
