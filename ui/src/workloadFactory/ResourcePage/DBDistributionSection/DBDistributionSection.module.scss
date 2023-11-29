@@ -1,0 +1,99 @@
+.dbDistribution {
+    width: 655px;
+    height: 444px;
+    background-color: var(--content-background);
+    box-shadow: 0px -1px 0px 0px #e0e0e0 inset;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .utilizationContainer {
+        display: flex;
+        padding: 40px;
+        gap: 80px;
+
+        .barContainer {
+            width: 244px;
+            height: 288px;
+            display: flex;
+            gap: 32px;
+
+            .firstBar {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+
+                .progressBar {
+                    width: 16px;
+                    height: 200px;
+                    background-color: var(--chart-disabled);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    border-radius: 50px;
+
+                    .progress {
+                        height: 100%;
+                        background-color: var(--chart-disabled);
+                    }
+
+                    .leftCurveBar {
+                        border-top-left-radius: 8px;
+                        border-top-right-radius: 8px;
+                    }
+
+                    .rightCurveBar {
+                        border-bottom-left-radius: 8px;
+                        border-bottom-right-radius: 8px;
+                        border-top-left-radius: 8px;
+                        border-top-right-radius: 8px;
+                    }
+                }
+            }
+        }
+
+        .textContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .separatorProtection {
+                width: 240px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .usedAllocatedSection {
+                display: flex;
+                flex-direction: column;
+
+                .firstRow {
+                    display: flex;
+                    gap: 16px;
+                    align-items: center;
+
+                    .smallSeparator {
+                        height: 16px;
+                        border-left: 1px solid #a7a7a7;
+                    }
+                }
+
+                .secondRow {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    .square {
+                        width: 12px;
+                        height: 12px;
+                    }
+                }
+            }
+        }
+    }
+}

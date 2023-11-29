@@ -1,0 +1,49 @@
+.storagePerformance {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 172px;
+    width: 1064px;
+    background-color: var(--content-background);
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .mainSection {
+        display: flex;
+
+        .tileSection {
+            display: flex;
+            gap: 16px;
+            padding: 24px 0 24px 40px;
+            width: 353px;
+
+            .textContent {
+                display: flex;
+                flex-direction: column;
+
+                .valueText {
+                    display: flex;
+                    gap: 5px;
+                    align-items: center;
+
+                    .smallSeparator {
+                        height: 16px;
+                        border-left: 1px solid #a7a7a7;
+                    }
+                }
+            }
+        }
+
+        .dbHostSeparator {
+            background: var(--border);
+            width: 1px;
+            height: 48px;
+            margin-top: 20px;
+        }
+    }
+}

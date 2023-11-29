@@ -365,6 +365,7 @@ export const GENERAL = {
     // database host headers
     DATABASE_HOST_NAME: 'Database host name',
     DB_HOST_PROTECTION: 'Protection',
+    DB_OVERVIEW_INFO: 'Information',
     DB_HOST_PERFORMANCE: 'Performance',
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
     DB_SS_TT_1:
