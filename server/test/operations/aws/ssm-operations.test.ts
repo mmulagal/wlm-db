@@ -52,10 +52,6 @@ describe('executeSsmDocument', () => {
                     regionName: 'US East (Ohio)'
                 },
                 {
-                    regionCode: 'us-gov-west-1',
-                    regionName: 'AWS GovCloud (US-West)'
-                },
-                {
                     regionCode: 'us-west-2',
                     regionName: 'US West (Oregon)'
                 },
@@ -126,10 +122,6 @@ describe('executeSsmDocument', () => {
                 {
                     regionCode: 'us-east-1',
                     regionName: 'US East (N. Virginia)'
-                },
-                {
-                    regionCode: 'us-gov-east-1',
-                    regionName: 'AWS GovCloud (US-East)'
                 },
                 {
                     regionCode: 'us-west-1',
