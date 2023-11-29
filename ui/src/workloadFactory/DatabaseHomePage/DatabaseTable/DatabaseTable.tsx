@@ -14,11 +14,17 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
+import {
+    addDatabaseHosts,
+    addDatabaseJobs,
+    selectedTabSelection
+} from '../../../store/workloadFactory/databaseHomeSlice';
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
+import { useNavigate } from 'react-router-dom';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
@@ -35,10 +41,14 @@ const DatabaseTable = () => {
     const [pageSize, setPageSize] = useState(25);
 
     const menuItems = [
-        // {
-        //     id: 'resourceView',
-        //     displayName: 'View resource details'
-        // },
+        {
+            id: 'viewOverview',
+            displayName: 'View host overview'
+        },
+        {
+            id: 'viewDatabaseList',
+            displayName: 'View database list'
+        },
         // {
         //     id: 'clone',
         //     displayName: 'Clone',
@@ -138,6 +148,20 @@ const DatabaseTable = () => {
                                 } else if (toggleType === 'selectedOption') {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
+
+                                    if (menuId === 'viewOverview') {
+                                        dispatch(selectedTabSelection('Overview'));
+                                        navigate(
+                                            '../add-working-environment/database-services/mssql/database-overview'
+                                        );
+                                    }
+
+                                    if (menuId === 'viewDatabaseList') {
+                                        dispatch(selectedTabSelection('Database list'));
+                                        navigate(
+                                            '../add-working-environment/database-services/mssql/database-overview'
+                                        );
+                                    }
 
                                     if (menuId === 'remove') {
                                         handleRemoveDialog(rowData);

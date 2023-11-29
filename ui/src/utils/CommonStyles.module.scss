@@ -45,6 +45,16 @@
     }
 }
 
+.row {
+    display: flex;
+    gap: 24px;
+    box-shadow: 0px -1px 0px 0px var(--border) inset;
+    padding: 16px 0 16px 40px;
+}
+.heading {
+    width: 160px;
+}
+
 @media screen and (max-width: 1350px) {
     .accordion-group {
         width: 1032px;

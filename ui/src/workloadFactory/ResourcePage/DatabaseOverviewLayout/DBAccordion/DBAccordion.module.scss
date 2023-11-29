@@ -1,0 +1,34 @@
+.dbAccordion {
+    .accordionContainer {
+        width: 441px;
+
+        background: var(--main-background);
+
+        .accordionHeader {
+            padding: 16px 24px 16px 40px;
+            display: flex;
+            height: 56px;
+            flex-direction: column;
+
+            .firstLevel {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+                .rightMenu {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+            }
+        }
+
+        .contentBorder {
+            border-top: 1px solid var(--border);
+        }
+    }
+
+    .addBorder:hover {
+        background-color: var(--hover-background);
+    }
+}

@@ -1,4 +1,3 @@
-
 export interface DatabaseHostItem {
     id: string;
     type?: string;
@@ -13,7 +12,7 @@ export interface DatabaseHostItem {
         fileSystemType: string;
         fileSystemId: string;
         vpcId?: string;
-        ec2Details: Array<Ec2Details>
+        ec2Details: Array<Ec2Details>;
     };
     protection: {
         isAwsBackUpEnabled: boolean;
@@ -122,6 +121,7 @@ export interface AggregatedCostsRes {
 }
 
 export interface DatabaseHostsEntities {
+    selectedTab: string;
     getDatabaseHosts: {
         databaseHostsData: DatabaseHostItem[] | null;
         databaseHostsLoading: false;

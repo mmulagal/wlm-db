@@ -1,8 +1,8 @@
-.informationSection {
-    width: 521px;
-    height: 1033px;
-    box-shadow: 2px 2px 6px var(--grey-15);
+.diagram {
+    width: 1060px;
+    height: 702px;
     background-color: var(--content-background);
+    box-shadow: 0px -1px 0px 0px var(--border) inset;
 
     .headSection {
         display: flex;
@@ -13,10 +13,9 @@
         justify-content: space-between;
     }
 
-    .accordionSection {
-        margin: 40px 40px 0 40px;
+    .centerContainer {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        justify-content: center;
+        margin-top: 40px;
     }
 }
