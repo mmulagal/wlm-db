@@ -32,3 +32,20 @@
         background-color: var(--hover-background);
     }
 }
+
+.disabledApplied {
+    .addBorder:hover {
+        background-color: var(--main-background);
+    }
+    .firstLevel {
+        div {
+            color: var(--text-disabled);
+        }
+
+        svg {
+            path {
+                fill: var(--text-disabled);
+            }
+        }
+    }
+}

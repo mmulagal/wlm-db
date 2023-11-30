@@ -11,8 +11,9 @@ type AccordionContent = {
 };
 
 const DbAccordion = ({ heading, toggle, open, content }: AccordionContent) => {
+    const disabled: boolean = false;
     return (
-        <div className={styles.dbAccordion}>
+        <div className={disabled ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
             <div
                 className={!open ? `${styles.accordionContainer} ${styles.addBorder}` : `${styles.accordionContainer}`}
             >
