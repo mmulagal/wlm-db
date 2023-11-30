@@ -14,7 +14,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
         const chatbot = new Chatbot();
 
         const response = await chatbot.query(query);
-        logger.info('CHATBOT RESP>>>', JSON.stringify(response));
+        logger.info('CHATBOT RESP>>>', response);
         if (response.success) {
             ({ intent } = response.data);
         }
