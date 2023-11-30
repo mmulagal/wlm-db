@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import styles from './DBDistributionSection.module.scss';
 
 const DBDistributionSection = () => {
@@ -13,6 +13,7 @@ const DBDistributionSection = () => {
                 <Typography variant="Regular_16" className={styles.title}>
                     Resources utilization
                 </Typography>
+                {/* <FlashingDotsLoader /> */}
             </div>
 
             <div className={styles.utilizationContainer}>

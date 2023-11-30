@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import styles from './DBOverviewProtection.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import MultiRingDoughnut from '../../../DatabaseHomePage/MultiRingDoughnut/MultiRingDoughnut';
@@ -11,6 +11,7 @@ const DBOverviewProtection = () => {
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_HOST_PROTECTION}
                 </Typography>
+                {/* <FlashingDotsLoader /> */}
             </div>
 
             <div className={styles.mainContainer}>

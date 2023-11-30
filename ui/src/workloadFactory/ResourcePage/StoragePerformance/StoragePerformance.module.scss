@@ -36,6 +36,15 @@
                         border-left: 1px solid #a7a7a7;
                     }
                 }
+
+                .commonContainer {
+                    display: flex;
+                    gap: 8px;
+                }
+
+                .loaderHeight {
+                    height: 24px;
+                }
             }
         }
 

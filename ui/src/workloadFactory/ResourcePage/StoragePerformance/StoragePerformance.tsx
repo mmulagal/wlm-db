@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { ReactComponent as Latency } from '../../../assets/Latency.svg';
 import { ReactComponent as IOPS } from '../../../assets/IOPS.svg';
 import { ReactComponent as Throughput } from '../../../assets/Throughput.svg';
@@ -44,10 +44,13 @@ const StoragePerformance = () => {
                             <div key={index} className={styles.tileSection}>
                                 {item.image}
                                 <div className={styles.textContent}>
-                                    <div className={styles.valueText}>
-                                        <Typography variant="Semibold_14">Read {item.read} </Typography>
-                                        <div className={styles.smallSeparator} />
-                                        <Typography variant="Semibold_14">Write {item.write}</Typography>
+                                    <div className={styles.commonContainer}>
+                                        <div className={styles.valueText}>
+                                            <Typography variant="Semibold_14">Read {item.read} </Typography>
+                                            <div className={styles.smallSeparator} />
+                                            <Typography variant="Semibold_14">Write {item.write}</Typography>
+                                        </div>
+                                        {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
                                     </div>
 
                                     <Typography variant="Regular_14">{item.text}</Typography>
