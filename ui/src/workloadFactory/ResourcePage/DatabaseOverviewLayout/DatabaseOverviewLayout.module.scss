@@ -1,0 +1,40 @@
+.databaseOverview {
+    width: 100%;
+    display: flex;
+    gap: 24px;
+    margin: 0 120px;
+
+    .secondLevel {
+        margin-top: 24px;
+        display: flex;
+        gap: 24px;
+    }
+
+    .fourthLevelContainer {
+        margin-top: 24px;
+        margin-bottom: 40px; //Temporary
+        display: flex;
+        gap: 24px;
+
+        .barContainer {
+            display: flex;
+
+            gap: 24px;
+
+            .commonContainer {
+                background-color: var(--content-background);
+                box-shadow: 2px 2px 6px var(--grey-15);
+                height: 244px;
+                width: 520px;
+            }
+        }
+    }
+
+    .storagePerformanceContainer {
+        margin-top: 24px;
+    }
+
+    ::-webkit-scrollbar {
+        height: 6px;
+    }
+}

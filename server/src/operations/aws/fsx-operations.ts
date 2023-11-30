@@ -337,6 +337,8 @@ async function getDataVolumes(credentialsId: string, region: string, fileSystemI
     if (isEmpty(filteredVolumes)) {
         return getMappedOntapVolumes(credentialsId, region, fileSystemId, metadata);
     }
+
+    return filteredVolumes;
 }
 
 async function getMappedOntapVolumes(credentialsId: string, region: string, fileSystemId: string, metadata: Metadata) {

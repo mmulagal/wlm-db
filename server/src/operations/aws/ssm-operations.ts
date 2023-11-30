@@ -1,4 +1,7 @@
+import config from 'config';
+import ms from 'ms';
 import {
+    CommandInvocationStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
@@ -6,7 +9,7 @@ import {
 } from '@aws-sdk/client-ssm';
 import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions } from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
-import { SSM_QUERY_EXECUTION_STATUS, AWS_REGIONS } from '../../utils/consts';
+import { AWS_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 
@@ -24,18 +27,33 @@ async function pollCommandStatus(
 
         logger.debug('Polling SSM command execution response', response);
 
-        const status = response.Status;
+        const status = response?.Status;
 
-        if (status === SSM_QUERY_EXECUTION_STATUS.SUCCESS || status === SSM_QUERY_EXECUTION_STATUS.FAILED) {
-            return response;
+        switch (status) {
+            case CommandInvocationStatus.SUCCESS:
+            case CommandInvocationStatus.FAILED:
+            case CommandInvocationStatus.TIMED_OUT:
+            case CommandInvocationStatus.CANCELLED:
+                return response;
+            case CommandInvocationStatus.CANCELLING:
+            case CommandInvocationStatus.DELAYED:
+            case CommandInvocationStatus.IN_PROGRESS:
+            case CommandInvocationStatus.PENDING:
+                logger.debug(`SSM command execution is in ${status} status. Polling again.`);
+                break;
+            default: {
+                const errorMessage = `SSM command execution returned an unexpected status: ${status}`;
+                logger.error(errorMessage);
+                throw new Error(errorMessage);
+            }
         }
 
-        await sleep(100);
+        await sleep(ms(config.get<string>('ssm.poll-interval')));
         return await pollCommandStatus(credentialsId, region, pollParams);
     } catch (error) {
         if (error instanceof InvocationDoesNotExist) {
             logger.info('Command invocation does not exist yet, waiting...');
-            await sleep(100);
+            await sleep(ms(config.get<string>('ssm.poll-interval')));
             return pollCommandStatus(credentialsId, region, pollParams);
         }
         logger.error('Error fetching command status:', error);
@@ -69,9 +87,10 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
     const response = await describeFSxOntapRegions(credentialsId);
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
+    const restrictedRegions: Array<string> = ['us-gov-east-1', 'us-gov-west-1', 'cn-north-1', 'cn-northwest-1'];
 
     response.forEach(({ Value: regionCode }) => {
-        if (regionCode) {
+        if (regionCode && !restrictedRegions.includes(regionCode)) {
             fsxRegionsList.push({
                 regionCode,
                 regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : ''

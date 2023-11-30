@@ -10,7 +10,12 @@ import { GENERAL } from '../../../utils/appConstants';
 
 Chart.register(...registerables);
 
-const MultiRingDoughnut = () => {
+type colorCode = {
+    unProtectColor?: string;
+};
+
+const MultiRingDoughnut = ({ unProtectColor }: colorCode) => {
+    const unProtectedColor = unProtectColor ? unProtectColor : '#FDC300';
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
@@ -33,7 +38,7 @@ const MultiRingDoughnut = () => {
             datasets: [
                 {
                     data: [hostData?.protectedPercent, hostData?.unprotectedPercent],
-                    backgroundColor: ['#68C6B3', '#FDC300']
+                    backgroundColor: ['#68C6B3', unProtectedColor]
                 }
             ]
             //   labels: label,

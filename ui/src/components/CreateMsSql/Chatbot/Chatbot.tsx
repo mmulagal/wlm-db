@@ -14,7 +14,7 @@ import ChatBox from './ChatBox/Chatbox';
 import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useSendMsgMutation } from '../../../utils/apiService';
-import { setCurrentIntent, setLoadConfigClicked, setMessages } from '../../../store/chatbot/chatbotSlice';
+import { setCurrentIntent, setLoadConfigClicked, setMessages, setShowRetry } from '../../../store/chatbot/chatbotSlice';
 import {
     setCloudWatch,
     setDBCredentialsName,
@@ -69,7 +69,9 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const { messages, currentIntent, isReceivingMsg, loadConfigClicked } = useAppSelector(state => state.chatbot);
+    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry } = useAppSelector(
+        state => state.chatbot
+    );
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
     //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
@@ -683,7 +685,7 @@ const Chatbot = () => {
                             key.toLowerCase().includes('password') ? '********' : paramObj[key].label
                         }`
                 )
-                .join(', ')
+                .join('\n')
         });
         dispatch(setMessages(updatedMessages));
         const msgToBot = Object.keys(paramObj)
@@ -715,8 +717,11 @@ const Chatbot = () => {
                   return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
               })
             : null;
-        if (lastMsg && lastMsg.status === 'error') {
+        if ((lastMsg && lastMsg.status === 'error') || showRetry) {
             const existingMessages = updatedMsgs ? updatedMsgs : [];
+            if (showRetry) {
+                setIsBotReplying(false);
+            }
             return [
                 ...existingMessages,
                 {
@@ -729,6 +734,7 @@ const Chatbot = () => {
                         confirmBtnTxt: 'Yes',
                         cancelBtnTxt: 'No',
                         onConfirm: async (messages: messageType[]) => {
+                            dispatch(setShowRetry(false));
                             const lastUserMsg = messages.filter(item => item.sender === 'user').reverse()?.[0];
                             if (lastUserMsg) {
                                 await sendMsg(lastUserMsg.msg, existingMessages);
@@ -737,6 +743,7 @@ const Chatbot = () => {
                             }
                         },
                         onCancel: () => {
+                            dispatch(setShowRetry(false));
                             dispatch(
                                 setMessages(
                                     existingMessages.map((msg: any) => {
@@ -786,7 +793,7 @@ const Chatbot = () => {
         } else {
             return updatedMsgs;
         }
-    }, [messages, currentIntent]);
+    }, [messages, currentIntent, showRetry]);
 
     return (
         <div className={styles['chatbot']}>
