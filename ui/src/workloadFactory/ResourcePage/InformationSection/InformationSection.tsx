@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 
 import { GENERAL } from '../../../utils/appConstants';
 import SQLServer from './SQLServer/SQLServer';
@@ -15,10 +15,6 @@ const InformationSection = () => {
 
     const handleToggle = (key: any) => {
         setOpenKey(openKey !== key ? key : null);
-
-        // else {
-        //     setOpenedItem(key);
-        // }
     };
     return (
         <div className={styles.informationSection}>
@@ -26,6 +22,7 @@ const InformationSection = () => {
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_OVERVIEW_INFO}
                 </Typography>
+                {/* <FlashingDotsLoader /> */}
             </div>
 
             <div className={styles.accordionSection}>
