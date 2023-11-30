@@ -12,9 +12,12 @@ import ISActiveDirectory from './ISActiveDirectory/ISActiveDirectory';
 
 const InformationSection = () => {
     const [openKey, setOpenKey] = useState('');
+    const disabled: boolean = false;
 
     const handleToggle = (key: any) => {
-        setOpenKey(openKey !== key ? key : null);
+        if (!disabled) {
+            setOpenKey(openKey !== key ? key : null);
+        }
     };
     return (
         <div className={styles.informationSection}>
