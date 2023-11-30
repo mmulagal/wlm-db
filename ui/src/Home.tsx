@@ -13,6 +13,7 @@ import styles from './Home.module.scss';
 import { clearNotifications, removeNotification } from './store/notificationSlice';
 import DatabaseHomePage from './workloadFactory/DatabaseHomePage/DatabaseHomePage';
 import PreviewPanel from './components/PreviewPanel/PreviewPanel';
+import DatabaseHostOverview from './workloadFactory/ResourcePage/ResourceHomePage/DatabaseHostOverview';
 
 const Home = () => {
     const notificationsObj = useSelector((state: any) => state.notifications);
@@ -36,6 +37,10 @@ const Home = () => {
                     <Route
                         path={`add-working-environment/database-services/:storage/discover`}
                         element={<DiscoverPage />}
+                    />
+                    <Route
+                        path={`add-working-environment/database-services/:storage/database-overview`}
+                        element={<DatabaseHostOverview />}
                     />
                     <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
                         <Route path={'overview'} element={<MsSqlOverview />} />
