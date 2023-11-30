@@ -179,14 +179,14 @@ const AwsAccount = () => {
                                     </div>
                                 </Typography>
 
-                                <Typography variant="Regular_14" className={styles.info}>
+                                {/* <Typography variant="Regular_14" className={styles.info}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
                                         <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
                                             {GENERAL.REQUIRED_PERMISSION_LINK}
                                         </Button>
                                     </span>
-                                </Typography>
+                                </Typography> */}
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
@@ -196,14 +196,14 @@ const AwsAccount = () => {
                                 {!isWorkloadFactoryStatus && (
                                     <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
                                 )}
-                                <Typography variant="Regular_14" className={styles.buttonStyle}>
+                                {/* <Typography variant="Regular_14" className={styles.buttonStyle}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
                                         <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
                                             {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
                                         </Button>
                                     </span>
-                                </Typography>
+                                </Typography> */}
 
                                 <div className={styles.selectField}>
                                     <SelectField
