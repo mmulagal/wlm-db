@@ -66,7 +66,7 @@ const MultiRingDoughnut = ({ unProtectColor }: colorCode) => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            {(databaseHostsLoading ||
+            {((databaseHostsLoading && !hostData) ||
                 databaseJobsLoading ||
                 !hostData ||
                 (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (
