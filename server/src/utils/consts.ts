@@ -222,7 +222,8 @@ const SECRET_WORDS = [
     'username',
     'domainPassword',
     'fsxPassword',
-    'serviceAccountPassword'
+    'serviceAccountPassword',
+    'fsxNPassword'
 ];
 
 const SECRET_STRING_WORDS = [
