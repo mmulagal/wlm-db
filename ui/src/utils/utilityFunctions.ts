@@ -776,14 +776,14 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.availabilityZones?.selectedAzNode1?.data?.availabilityZone) {
         params.availabilityZone1 = payload.availabilityZones.selectedAzNode1.data.availabilityZone;
     }
-    if (payload?.availabilityZones?.selectedSubnetNode1?.value) {
-        params.privateSubnet1Id = payload.availabilityZones.selectedSubnetNode1.value;
+    if (payload?.availabilityZones?.selectedSubnetNode1?.data?.id) {
+        params.privateSubnet1Id = payload.availabilityZones.selectedSubnetNode1.data.id;
     }
     if (payload?.availabilityZones?.selectedAzNode2?.data?.availabilityZone) {
         params.availabilityZone2 = payload.availabilityZones.selectedAzNode2.data.availabilityZone;
     }
-    if (payload?.availabilityZones?.selectedSubnetNode2?.value) {
-        params.privateSubnet2Id = payload.availabilityZones.selectedSubnetNode2.value;
+    if (payload?.availabilityZones?.selectedSubnetNode2?.data?.id) {
+        params.privateSubnet2Id = payload.availabilityZones.selectedSubnetNode2.data.id;
     }
     if (payload?.keyPair?.selectedKeyPair?.data?.name) {
         params.keyPairName = payload.keyPair.selectedKeyPair.data.name;
@@ -812,8 +812,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.license?.selectedLicenseId?.value) {
         params.sqlAmiId = payload.license.selectedLicenseId.value;
     }
-    if (payload?.fsxN?.fsxNExistingName?.fileSystemId) {
-        params.fsxFileSystemId = payload.fsxN.fsxNExistingName.fileSystemId;
+    if (payload?.fsxN?.fsxNExistingName?.data?.fileSystemId) {
+        params.fsxFileSystemId = payload.fsxN.fsxNExistingName.data.fileSystemId;
     }
     if (payload?.fsxN?.fsxNNewUserName) {
         params.fsxUsername = payload.fsxN.fsxNNewUserName;

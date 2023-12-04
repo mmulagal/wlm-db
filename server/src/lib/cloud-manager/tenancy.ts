@@ -50,7 +50,7 @@ async function registerServiceResource(resource: ServiceResourceRequest) {
     const { token } = await getBxpServiceToken();
 
     try {
-        return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
+        return await gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
             headers: {
                 [HEADERS.AUTHORIZATION]: token
             },
@@ -67,7 +67,7 @@ async function getTenancyResourcesByType(resourceType: string) {
     const { token } = await getBxpServiceToken();
 
     try {
-        return gotInstanceForInternalRequest
+        return await gotInstanceForInternalRequest
             .get(`${CLOUD_MANAGER_ENDPOINT}/tenancy/service-resource`, {
                 searchParams: {
                     resourceType,
@@ -117,12 +117,15 @@ async function removeResource(resourceIdentifier: string) {
     const { token } = await getBxpServiceToken();
 
     try {
-        return gotInstanceForTextResponse.delete(`${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`, {
-            headers: {
-                [HEADERS.AUTHORIZATION]: token,
-                [HEADERS.WORKSPACE_ID_HEADER]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
+        return await gotInstanceForTextResponse.delete(
+            `${CLOUD_MANAGER_ENDPOINT}/tenancy/resource/${resourceIdentifier}`,
+            {
+                headers: {
+                    [HEADERS.AUTHORIZATION]: token,
+                    [HEADERS.WORKSPACE_ID_HEADER]: getAsyncLocalStorageResource<string>(WORKSPACE_ID)
+                }
             }
-        });
+        );
     } catch (err) {
         throw createError(500, `Error occured while deleting resoureces, ${err}`);
     }
