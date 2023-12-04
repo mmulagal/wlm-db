@@ -47,8 +47,8 @@ const Home = () => {
                         <Route path={'databases'} element={<Databases />} />
                         <Route path={'tables'} element={<Tables />} />
                     </Route>
-                    <Route path={'/databases'} element={<DatabaseHomePage />} />
-                    <Route path="*" element={<MainComponent />} />
+                    <Route path={'databases'} element={<DatabaseHomePage />} />
+                    <Route path="*" element={<DatabaseHomePage />} />
                 </Routes>
             </div>
 
