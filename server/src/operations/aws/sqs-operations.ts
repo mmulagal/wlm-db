@@ -23,11 +23,11 @@ import {
     STANDARD_DEPLOYMENT_ACTION,
     SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    WLMDB,
+    // WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS
 } from '../../utils/consts';
-import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
+import { checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -121,9 +121,17 @@ async function handleResourceAssociation(
 }
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
-    if (process.env.AWS_ROLE_ARN) {
-        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-        const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+    // eslint-disable-next-line no-constant-condition
+    if (true) {
+        // eslint-disable-next-line no-constant-condition
+        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        // const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+
+        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        const queueUrl = 'https://sqs.us-east-1.amazonaws.com/464262061435/wlmdb';
+
+        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        // const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
