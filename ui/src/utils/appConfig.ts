@@ -70,7 +70,7 @@ const useInitialize = () => {
             }
         }
 
-        dispatch(updateIsLoading(false));
+        // dispatch(updateIsLoading(false));
     });
 
     useBlueXP({
