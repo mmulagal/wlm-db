@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { ReactComponent as DescriptionIcon } from '../../../../assets/Description Icons.svg';
 import { ReactComponent as Success } from '../../../../assets/success.svg';
 import styles from './DatabaseHostTile.module.scss';
@@ -10,6 +10,7 @@ const DatabaseHostTile = () => {
                 <DescriptionIcon />
                 <div className={styles.secondLevel}>
                     <Typography variant="Semibold_14">Database host name</Typography>
+                    {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
                     <Typography variant="Regular_14">Host name</Typography>
                 </div>
             </div>
@@ -21,13 +22,17 @@ const DatabaseHostTile = () => {
                     <Success />
                     <Typography variant="Semibold_14">Up</Typography>
                 </div>
+                {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
                 <Typography variant="Regular_14">Status</Typography>
             </div>
 
             <div className={styles.dbHostSeparator} />
 
             <div className={styles.commonSection}>
-                <Typography variant="Semibold_14">10</Typography>
+                <div className={styles.commonSectionLevel}>
+                    <Typography variant="Semibold_14">10</Typography>
+                    {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
+                </div>
 
                 <Typography variant="Regular_14">Number of databases</Typography>
             </div>
@@ -35,7 +40,10 @@ const DatabaseHostTile = () => {
             <div className={styles.dbHostSeparator} />
 
             <div className={styles.commonSection}>
-                <Typography variant="Semibold_14">150 TiB</Typography>
+                <div className={styles.commonSectionLevel}>
+                    <Typography variant="Semibold_14">150 TiB</Typography>
+                    {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
+                </div>
 
                 <Typography variant="Regular_14">Total used capacity</Typography>
             </div>
@@ -43,7 +51,10 @@ const DatabaseHostTile = () => {
             <div className={styles.dbHostSeparator} />
 
             <div className={styles.commonSection}>
-                <Typography variant="Semibold_14">200 TiB</Typography>
+                <div className={styles.commonSectionLevel}>
+                    <Typography variant="Semibold_14">200 TiB</Typography>
+                    {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
+                </div>
 
                 <Typography variant="Regular_14">Total allocated capacity</Typography>
             </div>

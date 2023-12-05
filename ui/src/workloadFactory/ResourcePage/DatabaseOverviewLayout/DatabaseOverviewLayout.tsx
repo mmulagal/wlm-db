@@ -6,6 +6,7 @@ import StoragePerformance from '../StoragePerformance/StoragePerformance';
 import DBOverviewProtection from './DBOverviewProtection/DBOverviewProtection';
 import DatabaseHostTile from './DatabaseHostTile/DatabaseHostTile';
 import styles from './DatabaseOverviewLayout.module.scss';
+import Diagram from './Diagram/Diagram';
 
 const DatabaseOverviewLayout = () => {
     return (
@@ -33,6 +34,10 @@ const DatabaseOverviewLayout = () => {
 
                 <div className={styles.storagePerformanceContainer}>
                     <StoragePerformance />
+                </div>
+
+                <div className={styles.diagramContainer}>
+                    <Diagram />
                 </div>
             </div>
 

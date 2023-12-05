@@ -28,6 +28,8 @@ const DatabaseHomePage = () => {
                 { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
                 '*'
             );
+        } else {
+            setStatusChk(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);

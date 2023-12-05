@@ -15,7 +15,7 @@ type colorCode = {
 };
 
 const MultiRingDoughnut = ({ unProtectColor }: colorCode) => {
-    const unProtectedColor = unProtectColor ? unProtectColor : '#FDC300';
+    const unProtectedColor = unProtectColor ? '#E0E0E0' : '#FDC300';
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
 
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
@@ -66,7 +66,7 @@ const MultiRingDoughnut = ({ unProtectColor }: colorCode) => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            {(databaseHostsLoading ||
+            {((databaseHostsLoading && !hostData) ||
                 databaseJobsLoading ||
                 !hostData ||
                 (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (
