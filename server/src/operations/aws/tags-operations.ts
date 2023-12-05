@@ -1,4 +1,4 @@
-import { resourceTagging } from '../../lib/aws/tags';
+import { tagResource } from '../../lib/aws/tags';
 import { getEc2Arn, getFsxArn } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 
@@ -13,7 +13,7 @@ async function tagFsxResource(
 ) {
     logger.info('Adding tag to Fsx resource', credentialsId, region, awsAccountId, fsxId);
     const fsxArn = getFsxArn(awsAccountId, region, fsxId);
-    resourceTagging(credentialsId, region, fsxArn, tags);
+    tagResource(credentialsId, region, fsxArn, tags);
 }
 
 async function tagEc2Resource(
@@ -25,7 +25,7 @@ async function tagEc2Resource(
 ) {
     logger.info('Adding tag to EC2 resource', credentialsId, region, awsAccountId, ec2Id);
     const ec2Arn = getEc2Arn(awsAccountId, region, ec2Id);
-    resourceTagging(credentialsId, region, ec2Arn, tags);
+    tagResource(credentialsId, region, ec2Arn, tags);
 }
 
 export { tagEc2Resource, tagFsxResource };

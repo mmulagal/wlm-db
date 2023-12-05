@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
-import { resourceTagging } from '../../../src/lib/aws/tags';
+import { tagResource } from '../../../src/lib/aws/tags';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
@@ -11,6 +11,6 @@ const tag = { key: 'value' };
 describe('Tags Lib', () => {
     it('Create tag for given resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        await expect(resourceTagging(credentialsId, DEFAULT_AWS_REGION, resourceArn, tag)).resolves.not.toThrow();
+        await expect(tagResource(credentialsId, DEFAULT_AWS_REGION, resourceArn, tag)).resolves.not.toThrow();
     });
 });

@@ -21,12 +21,7 @@ async function getResourceClient(region: string, credentialsId?: string) {
     return new ResourceGroupsTaggingAPIClient({ region, credentials });
 }
 
-async function resourceTagging(
-    credentialsId: string,
-    region: string,
-    resourceArn: string,
-    tags: Record<string, string>
-) {
+async function tagResource(credentialsId: string, region: string, resourceArn: string, tags: Record<string, string>) {
     logger.info('Adding tags to resource', credentialsId, region, resourceArn, tags);
 
     const client = await getResourceClient(region, credentialsId);
@@ -47,4 +42,4 @@ async function resourceTagging(
     }
 }
 
-export { resourceTagging };
+export { tagResource };
