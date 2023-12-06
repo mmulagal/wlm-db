@@ -243,7 +243,11 @@ async function processCloudFormationMessages() {
                                                     undefined,
                                                     stackName
                                                 );
-                                                if (masterStackDeployment) {
+                                                if (
+                                                    masterStackDeployment &&
+                                                    masterStackDeployment.deployment_status !==
+                                                        DEPLOYMENT_STATUS.CREATE_FAILED
+                                                ) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
                                                         endTime: new Date(messageTimestamp).valueOf(),
@@ -350,7 +354,11 @@ async function processCloudFormationMessages() {
                                                 undefined,
                                                 stackName
                                             );
-                                            if (masterStackDeployment) {
+                                            if (
+                                                masterStackDeployment &&
+                                                masterStackDeployment.deployment_status !==
+                                                    DEPLOYMENT_STATUS.CREATE_FAILED
+                                            ) {
                                                 await updateDeployment(accountId, masterStackDeployment.id, {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                     endTime: Date.now()
@@ -375,7 +383,10 @@ async function processCloudFormationMessages() {
                                     } catch (error) {
                                         logger.error('Failed to track deployment in WLMDB', error);
                                         const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
-                                        if (masterStackDeployment) {
+                                        if (
+                                            masterStackDeployment &&
+                                            masterStackDeployment.deployment_status !== DEPLOYMENT_STATUS.CREATE_FAILED
+                                        ) {
                                             await updateDeployment(accountId, masterStackDeployment.id, {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()
