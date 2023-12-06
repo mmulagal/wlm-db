@@ -234,7 +234,7 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
             isSqlNativeEnabled: Boolean(nativeSqlProtection)
         };
     } catch (error) {
-        logger.error('Error while getting protection status', resourceDetail);
+        logger.error('Error while getting protection status', resourceDetail, error);
     }
 }
 
