@@ -356,6 +356,21 @@ export const databaseHomeApi = createApi({
     }
 });
 
+export const workloadFactoryResourceApi = createApi({
+    reducerPath: 'workloadFactoryResourceApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getResourceDetails: builder.query({
+                query: id => ({ url: `database-hosts/${id}` })
+            }),
+            getDatabaseList: builder.query({
+                query: id => ({ url: `database-hosts/${id}/databases` })
+            })
+        };
+    }
+});
+
 export const chatbotApi = createApi({
     reducerPath: 'chatbotApi',
     baseQuery: dynamicBaseQuery,
@@ -414,5 +429,7 @@ export const {
     useGetStatusQuery,
     useRemoveDatabaseJobsMutation
 } = databaseHomeApi;
+
+export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
 export const { useSendMsgMutation } = chatbotApi;

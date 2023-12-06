@@ -486,11 +486,11 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
+export const getAggrStorageSavings = (data: any) => {
     let totalConsume = 0;
     let storageSavings = 0;
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (val?.storage?.used) {
             totalConsume += val.storage.used;
         }
@@ -508,7 +508,7 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrCost = (data: DatabaseHostItem[]) => {
+export const getAggrCost = (data: any) => {
     let storageCost = 0;
     let computeCost = 0;
     let connectivityCost = 0;
@@ -517,7 +517,7 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     let storageList: (string | undefined)[] = [];
     let vpcList: (string | undefined)[] = [];
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (val?.estimatedUsageCost?.compute) {
             computeCost += val.estimatedUsageCost.compute;
         }

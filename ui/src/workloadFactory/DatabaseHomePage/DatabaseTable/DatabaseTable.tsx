@@ -21,6 +21,7 @@ import {
 } from '../../../store/workloadFactory/databaseHomeSlice';
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
+import { updateResourceId } from '../../../store/authSlice';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -151,6 +152,7 @@ const DatabaseTable = () => {
 
                                     if (menuId === 'viewOverview') {
                                         dispatch(selectedTabSelection('Overview'));
+                                        dispatch(updateResourceId(rowData.id));
                                         navigate(
                                             '../add-working-environment/database-services/mssql/database-overview'
                                         );
@@ -158,6 +160,7 @@ const DatabaseTable = () => {
 
                                     if (menuId === 'viewDatabaseList') {
                                         dispatch(selectedTabSelection('Database list'));
+                                        dispatch(updateResourceId(rowData.id));
                                         navigate(
                                             '../add-working-environment/database-services/mssql/database-overview'
                                         );

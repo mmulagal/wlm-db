@@ -1,38 +1,38 @@
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import styles from './DBDistributionSection.module.scss';
+import { useAppSelector } from '../../../store/storeHooks';
+import { formatSize } from '../../../utils/utilityFunctions';
 
 const DBDistributionSection = () => {
-    const data = {
-        storage: 60,
-        memory: 25,
-        cpu: 20
-    };
+    const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
+    const { cpu, disk, memory } = resourceDetails.resourceUtilization || {};
+
     return (
         <div className={styles.dbDistribution}>
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     Resources utilization
                 </Typography>
-                {/* <FlashingDotsLoader /> */}
+                {resourceLoading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.utilizationContainer}>
                 <div className={styles.barContainer}>
                     <div className={styles.firstBar}>
-                        <Typography variant="Semibold_20">60%</Typography>
+                        <Typography variant="Semibold_20">{`${disk?.percentUsed || 0}%`}</Typography>
                         {/* Progress Bar */}
                         <div className={styles.progressBar}>
                             <div
-                                className={`${styles.progress} ${styles.leftCurveBar}`}
+                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                                 style={{
-                                    height: `${100 - data.storage}%`,
+                                    height: `${100 - (parseInt(disk?.percentUsed) || 0)}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
                             ></div>
                             <div
                                 className={`${styles.progress} ${styles.rightCurveBar}`}
                                 style={{
-                                    height: `${data.storage}%`,
+                                    height: `${parseInt(disk?.percentUsed) || 0}%`,
                                     backgroundColor: 'var(--chart-3)'
                                 }}
                             ></div>
@@ -43,20 +43,20 @@ const DBDistributionSection = () => {
                     </div>
 
                     <div className={styles.firstBar}>
-                        <Typography variant="Semibold_20">25%</Typography>
+                        <Typography variant="Semibold_20">{`${memory?.percentUsed || 0}%`}</Typography>
                         {/* Progress Bar */}
                         <div className={styles.progressBar}>
                             <div
-                                className={`${styles.progress} ${styles.leftCurveBar}`}
+                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                                 style={{
-                                    height: `${100 - data.memory}%`,
+                                    height: `${100 - (parseInt(memory?.percentUsed) || 0)}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
                             ></div>
                             <div
                                 className={`${styles.progress} ${styles.rightCurveBar}`}
                                 style={{
-                                    height: `${data.memory}%`,
+                                    height: `${parseInt(memory?.percentUsed) || 0}%`,
                                     backgroundColor: 'var(--chart-2)'
                                 }}
                             ></div>
@@ -67,20 +67,20 @@ const DBDistributionSection = () => {
                     </div>
 
                     <div className={styles.firstBar}>
-                        <Typography variant="Semibold_20">20%</Typography>
+                        <Typography variant="Semibold_20">{`${cpu?.percentUsed || 0}%`}</Typography>
                         {/* Progress Bar */}
                         <div className={styles.progressBar}>
                             <div
-                                className={`${styles.progress} ${styles.leftCurveBar}`}
+                                className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
                                 style={{
-                                    height: `${100 - data.cpu}%`,
+                                    height: `${100 - (parseInt(cpu?.percentUsed) || 0)}%`,
                                     backgroundColor: 'var(--chart-disabled)'
                                 }}
                             ></div>
                             <div
                                 className={`${styles.progress} ${styles.rightCurveBar}`}
                                 style={{
-                                    height: `${data.cpu}%`,
+                                    height: `${parseInt(cpu?.percentUsed) || 0}%`,
                                     backgroundColor: 'var(--chart-1)'
                                 }}
                             ></div>
@@ -100,9 +100,13 @@ const DBDistributionSection = () => {
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">Used 50 TiB</Typography>
+                            <Typography variant="Semibold_14">{`Used ${formatSize(
+                                parseInt(disk?.used) || 0
+                            )}`}</Typography>
                             <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">Allocated 100 TiB</Typography>
+                            <Typography variant="Regular_14">{`Allocated ${formatSize(
+                                parseInt(disk?.total) || 0
+                            )}`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
@@ -114,9 +118,13 @@ const DBDistributionSection = () => {
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">Used 50 TiB</Typography>
+                            <Typography variant="Semibold_14">{`Used ${formatSize(
+                                parseInt(memory?.used) || 0
+                            )}`}</Typography>
                             <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">Allocated 100 TiB</Typography>
+                            <Typography variant="Regular_14">{`Allocated ${formatSize(
+                                parseInt(memory?.total) || 0
+                            )}`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
@@ -128,9 +136,7 @@ const DBDistributionSection = () => {
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">Used 50 TiB</Typography>
-                            <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">Allocated 100 TiB</Typography>
+                            <Typography variant="Semibold_14">{`Current usage ${cpu?.percentUsed || 0}%`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-1)' }} />

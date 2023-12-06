@@ -1,6 +1,13 @@
 import { configureStore, combineReducers, MiddlewareAPI, isRejectedWithValue, Middleware } from '@reduxjs/toolkit';
 import notificationSlice, { addNotification, NOTIFICATION_TYPES } from './notificationSlice';
-import { awsApi, chatbotApi, configApi, databaseHomeApi, resourceApi } from '../utils/apiService';
+import {
+    awsApi,
+    chatbotApi,
+    configApi,
+    databaseHomeApi,
+    resourceApi,
+    workloadFactoryResourceApi
+} from '../utils/apiService';
 import authSlice from './authSlice';
 import mssqlSlice from './mssql/mssqlSlice';
 import mssqlFormSlice from './mssql/mssqlFormSlice';
@@ -11,6 +18,7 @@ import { customErrorMessages, requiredFieldError } from '../utils/utilityFunctio
 import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import previewPanelSlice from './previewPanel/previewPanelSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
+import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -26,7 +34,9 @@ const rootReducer = combineReducers({
     [chatbotApi.reducerPath]: chatbotApi.reducer,
     [databaseHomeSlice.name]: databaseHomeSlice.reducer,
     [previewPanelSlice.name]: previewPanelSlice.reducer,
-    [chatbotSlice.name]: chatbotSlice.reducer
+    [chatbotSlice.name]: chatbotSlice.reducer,
+    [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
+    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer
 });
 
 const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
@@ -66,6 +76,7 @@ const store = configureStore({
             .concat(configApi.middleware)
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
+            .concat(workloadFactoryResourceApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 
