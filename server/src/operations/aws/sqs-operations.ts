@@ -26,7 +26,7 @@ import {
     WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
-    WLMDB_COST_TAG
+    WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -130,17 +130,19 @@ async function tagResources(
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
-    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, { [WLMDB_COST_TAG]: fsxId });
+    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, {
+        [WLMDB_COST_ALLOCATION_TAG]: fsxId
+    });
 
     const tagEc2Promise = tagEc2Resource(credentialsId, region, awsAccountId, activeNodeInstanceId, {
-        [WLMDB_COST_TAG]: activeNodeInstanceId
+        [WLMDB_COST_ALLOCATION_TAG]: activeNodeInstanceId
     });
 
     const promises = [tagFsxPromise, tagEc2Promise];
 
     if (standbyNodeInstanceId) {
         const tagStandbyPromise = tagEc2Resource(credentialsId, region, awsAccountId, standbyNodeInstanceId, {
-            [WLMDB_COST_TAG]: standbyNodeInstanceId
+            [WLMDB_COST_ALLOCATION_TAG]: standbyNodeInstanceId
         });
         promises.push(tagStandbyPromise);
     }

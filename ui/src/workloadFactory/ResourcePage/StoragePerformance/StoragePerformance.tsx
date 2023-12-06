@@ -4,28 +4,30 @@ import { ReactComponent as IOPS } from '../../../assets/IOPS.svg';
 import { ReactComponent as Throughput } from '../../../assets/Throughput.svg';
 
 import styles from './StoragePerformance.module.scss';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const StoragePerformance = () => {
+    const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
     const dataValue = [
         {
             image: <Latency />,
             text: 'Latency',
-            read: '0.05 ms',
-            write: '0.7 ms',
+            read: `${resourceDetails?.performance?.latency?.read} ms`,
+            write: `${resourceDetails?.performance?.latency?.write} ms`,
             separator: true
         },
         {
             image: <IOPS />,
             text: 'IOPS',
-            read: '10k ms',
-            write: '12k ms',
+            read: `${resourceDetails?.performance?.iops?.read} ms`,
+            write: `${resourceDetails?.performance?.iops?.write} ms`,
             separator: true
         },
         {
             image: <Throughput />,
             text: 'Throughput',
-            read: '80 MBPS',
-            write: '80 MBPS',
+            read: `${resourceDetails?.performance?.throughput?.read} MBPS`,
+            write: `${resourceDetails?.performance?.throughput?.write} MBPS`,
             separator: false
         }
     ];
@@ -45,12 +47,15 @@ const StoragePerformance = () => {
                                 {item.image}
                                 <div className={styles.textContent}>
                                     <div className={styles.commonContainer}>
-                                        <div className={styles.valueText}>
-                                            <Typography variant="Semibold_14">Read {item.read} </Typography>
-                                            <div className={styles.smallSeparator} />
-                                            <Typography variant="Semibold_14">Write {item.write}</Typography>
-                                        </div>
-                                        {/* <FlashingDotsLoader className={styles.loaderHeight} /> */}
+                                        {resourceLoading ? (
+                                            <FlashingDotsLoader className={styles.loaderHeight} />
+                                        ) : (
+                                            <div className={styles.valueText}>
+                                                <Typography variant="Semibold_14">Read {item.read} </Typography>
+                                                <div className={styles.smallSeparator} />
+                                                <Typography variant="Semibold_14">Write {item.write}</Typography>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <Typography variant="Regular_14">{item.text}</Typography>

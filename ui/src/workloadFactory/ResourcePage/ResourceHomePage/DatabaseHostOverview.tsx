@@ -6,10 +6,38 @@ import DatabaseOverviewLayout from '../DatabaseOverviewLayout/DatabaseOverviewLa
 import OverviewTabs from '../OverviewTabs/OverviewTabs';
 
 import styles from './DatabaseHostOverview.module.scss';
+import { useGetDatabaseListQuery, useGetResourceDetailsQuery } from '../../../utils/apiService';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setResourceDetails, setResourceLoading } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
+    const resourceId = useAppSelector(state => state.auth.resourceId);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const {
+        data: resourceDetails,
+        isLoading: resourceLoading,
+        refetch: resourceRefetch
+    } = useGetResourceDetailsQuery(resourceId);
+
+    // const {
+    //     data: databaseList,
+    //     isLoading: databaseListLoading,
+    //     refetch: databaseListRefetch
+    // } = useGetDatabaseListQuery(resourceId);
+
+    useEffect(() => {
+        dispatch(setResourceLoading(resourceLoading));
+        if (resourceDetails) {
+            dispatch(setResourceDetails(resourceDetails));
+        }
+    }, [resourceLoading, resourceDetails, dispatch]);
+
+    //useEffect(() => {}, [databaseListLoading, resourceDetails]);
+
     return (
         <div className={styles.resourcePage}>
             <div className={styles.breadCrumb}>

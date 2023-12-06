@@ -1,0 +1,100 @@
+{
+    "id": "1234",
+    "name": "nvirginia29s",
+    "status": "UP",
+    "databaseCount": 10,
+    "operatingSystem": "Windows server 2019",
+    "serverEdition": "Standard",
+    "serverVersion": "SQL2022",
+    "clusterName": "cluster-name-1",
+    "activeConnections": 2,
+    "creationDate": 1693284194,
+    "topology": {
+        "awsAccount": "aws-acc-1",
+        "region": "ap-southeast-1",
+        "serverType": "MSSQL",
+        "serverInstallationMode": "FCI",
+        "fileSystemType": "FSx ONTAP",
+        "fsxFilesystemId": "fs-0d5efc3057c4f12cb",
+        "fileSystemStatus": "Available",
+        "fileSystemStorageCapacity": "1025 GiB",
+        "fileSystemThroughputCapacity": "128MB/s",
+        "vpcId": "vpc-id-1",
+        "keyPairName": "OCCM",
+        "ec2Details": [
+            {
+                "id": "1234",
+                "name": "nvirginia29s",
+                "instanceType": "m5.large",
+                "ebsVolumeId": "ebs-vol-id",
+                "vpcID": "vpc-id-1",
+                "availabilityZone": "us-east-1a",
+                "subnetId": "subnet-ba0146de"
+            }
+        ],
+        "activeDirectoryDetails": {
+            "name": "ad-name-1",
+            "address": "test.com"
+        }
+    },
+
+    "protection": {
+        "isAwsBackUpEnabled": true,
+        "isFsxOntapSnapshotsEnabled": true,
+        "isSqlNativeEnabled": false
+    },
+
+    "performance": {
+        "latency": {
+            "current": 100,
+            "assessment": "MEDIUM",
+            "read": 50,
+            "write": 250
+        },
+        "iops": {
+            "current": 128,
+            "read": 112,
+            "write": 202
+        },
+        "throughput": {
+            "current": 128,
+            "read": 168,
+            "write": 92
+        }
+    },
+
+    "storage": {
+        "size": 10000000000,
+        "used": 90000000,
+        "spaceSavings": 10000000,
+        "spaceSavingsPercent": 10
+    },
+
+    "estimatedUsageCost": {
+        "compute": 1552,
+        "storage": 600,
+        "connectivity": 380,
+        "others": 572
+    },
+
+    "resourceUtilization": {
+        "cpu": {
+            "percentUsed": "70",
+            "used": "70",
+            "total": "100",
+            "remaining": "30"
+        },
+        "disk": {
+            "percentUsed": "40",
+            "used": "80",
+            "total": "200",
+            "remaining": "120"
+        },
+        "memory": {
+            "percentUsed": "10",
+            "used": "30",
+            "total": "300",
+            "remaining": "270"
+        }
+    }
+}
