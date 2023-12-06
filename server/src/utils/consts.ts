@@ -98,7 +98,6 @@ enum DatabaseTypes {
 }
 
 const AWS_RESOURCE_NAME_TAG = 'Name';
-const WLMDB_COST_TAG = 'wlmdb-cost-resource';
 // Kinesis
 const KINESIS_STREAM_NAME = process.env.KINESIS_STREAM_NAME || config.get('kinesis.stream-name');
 
@@ -311,6 +310,7 @@ const LOGS_ACTION_NAMES = [
 
 const PRICING = 'pricing';
 const PRICING_ACTION_NAMES = ['GetProducts'].map(action => `${PRICING}:${action}`);
+const BILLING = 'billing';
 
 const EC2 = 'ec2';
 const EC2_ACTION_NAMES = [
@@ -902,6 +902,7 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
     ['enterprise', SQL_ENT],
     ['web', SQL_WEB]
 ]);
+const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
 export {
     WLMDB,
@@ -977,7 +978,6 @@ export {
     MASTER_STACK_TIMEOUT_MINUTES,
     SECRETS_MANAGER_KEYS,
     AWS_RESOURCE_NAME_TAG,
-    WLMDB_COST_TAG,
     FSX_FILESYSTEM_TYPE,
     FSX_STORAGE_TYPE,
     CAPABILITY_IAM,
@@ -1100,5 +1100,8 @@ export {
     SQL_WEB,
     INVALID_PARAMETER_VALUE,
     LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE
+    WLMDB_RESOURCE_TAG_VALUE,
+    WLMDB_COST_ALLOCATION_TAG,
+    BILLING,
+    PRICING
 };

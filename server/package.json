@@ -31,6 +31,7 @@
         "@apidevtools/swagger-parser": "^10.1.0",
         "@aws-sdk/client-bedrock-runtime": "^3.433.0",
         "@aws-sdk/client-cloudformation": "^3.427.0",
+        "@aws-sdk/client-cost-explorer": "^3.458.0",
         "@aws-sdk/client-directory-service": "^3.427.0",
         "@aws-sdk/client-ec2": "^3.427.0",
         "@aws-sdk/client-fsx": "^3.427.0",
