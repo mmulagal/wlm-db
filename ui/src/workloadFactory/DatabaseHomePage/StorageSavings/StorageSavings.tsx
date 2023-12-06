@@ -7,11 +7,13 @@ import { GENERAL } from '../../../utils/appConstants';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 
-const StorageSavings = () => {
-    const hostData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+type StorageSavingsProps = {
+    hostData: any;
+    hostsLoading?: boolean;
+    jobsLoading?: boolean;
+};
 
+const StorageSavings = ({ hostData, hostsLoading, jobsLoading }: StorageSavingsProps) => {
     const handleProgressBar = () => {
         if (
             hostData?.storageSavingsPercent !== 0 &&
@@ -96,7 +98,7 @@ const StorageSavings = () => {
                     </TooltipInfo>
                 </div>
 
-                {databaseHostsLoading || databaseJobsLoading ? (
+                {hostsLoading || jobsLoading ? (
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Semibold_20" style={{ lineHeight: 'unset' }}>
