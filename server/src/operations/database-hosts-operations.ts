@@ -10,7 +10,8 @@ import {
     TopologyResponseType,
     ProtectionResponseType,
     StorageResponseType,
-    UsageCostResponseType
+    UsageCostResponseType,
+    DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, getAmis } from '../lib/aws/ec2';
 import { describeFSxN } from '../lib/aws/fsx';
@@ -27,14 +28,18 @@ import {
     FCI,
     AWS_REGIONS,
     SQL_STD,
-    SQL_ENT
+    SQL_ENT,
+    MSSQL_DATABASE_TYPES,
+    MSSQL_SYSTEM_DATABASES
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
     getServerIOLatency,
     getServerState,
     getNativeSQLProtection,
-    getDatabasesCount
+    getDatabasesCount,
+    getDataBasesSummary,
+    getNativeSQLBackedupDatabases
 } from './workloads/mssql/mssql-operations';
 import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
@@ -431,4 +436,46 @@ async function getDatabaseHostsSummary(
     return { count: databaseHosts.length, items: databaseHosts, nextToken: '' };
 }
 
-export default getDatabaseHostsSummary;
+async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
+
+    const [resourceDetail] = await listResources(accountId);
+
+    if (isEmpty(resourceDetail)) {
+        logger.error(`No deployed host with id ${databaseHostId} in ${accountId} is found.`);
+        return { count: 0, items: [], nextToken: '' };
+    }
+
+    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+    const { credentialsId } = metadata as unknown as Metadata;
+    const [databases, backedupDatabases, awsBackup, ontapBackup] = await Promise.all([
+        (await getDataBasesSummary(databaseHostId)).databases,
+        getNativeSQLBackedupDatabases(databaseHostId),
+        isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
+        getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
+    ]);
+
+    const response = databases.map(
+        (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
+            name: database.databaseName,
+            size: database.databaseSize,
+            status: database.databaseStatus,
+            type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                ? MSSQL_DATABASE_TYPES.SYSTEM
+                : MSSQL_DATABASE_TYPES.USER,
+            isProtected:
+                awsBackup ||
+                ontapBackup ||
+                backedupDatabases.filter(
+                    (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                ).length > 0
+        })
+    );
+    return {
+        count: response.length,
+        nextToken: '',
+        items: response
+    };
+}
+
+export { getDatabaseHostsSummary, getDatabases };

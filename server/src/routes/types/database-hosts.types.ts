@@ -5,6 +5,12 @@ const DatabaseHostObjectParams = Type.Object({
 });
 type DatabaseHostObjectParamsType = Static<typeof DatabaseHostObjectParams>;
 
+const DatabaseHostSummaryParams = Type.Object({
+    accountId: Type.String({ minLength: 1 }),
+    databaseHostId: Type.String({ minLength: 1 })
+});
+type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
+
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
     fields: Type.Optional(Type.String())
@@ -80,6 +86,22 @@ const DatabaseHostSummaryListResponse = Type.Object({
 type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
 type DatabaseHostSummaryListResponseType = Static<typeof DatabaseHostSummaryListResponse>;
 
+const DatabasesResponse = Type.Object({
+    name: Type.String({ minLength: 1 }),
+    status: Type.String({ minLength: 1 }),
+    type: Type.String({ minLength: 1 }),
+    size: Type.Number(),
+    isProtected: Type.Boolean()
+});
+type DatabasesResponseType = Static<typeof DatabasesResponse>;
+
+const DatabasesListResponse = Type.Object({
+    count: Type.Number(),
+    nextToken: Type.String(),
+    items: Type.Array(DatabasesResponse)
+});
+type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -99,5 +121,11 @@ export {
     StorageResponse,
     StorageResponseType,
     UsageCostResponse,
-    UsageCostResponseType
+    UsageCostResponseType,
+    DatabaseHostSummaryParams,
+    DatabaseHostSummaryParamsType,
+    DatabasesResponse,
+    DatabasesResponseType,
+    DatabasesListResponse,
+    DatabasesListResponseType
 };
