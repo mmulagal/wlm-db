@@ -2,6 +2,7 @@ import { resource } from '@prisma/client';
 import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
+import { GetTagsCommandOutput } from '@aws-sdk/client-cost-explorer';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -27,7 +28,9 @@ import {
     FCI,
     AWS_REGIONS,
     SQL_STD,
-    SQL_ENT
+    SQL_ENT,
+    PRICING,
+    WLMDB_COST_ALLOCATION_TAG
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -38,6 +41,8 @@ import {
 } from './workloads/mssql/mssql-operations';
 import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
+import { calculateBilling, getCostExplorerTimeRange } from './aws/cost-explorer-operations';
+import { getTagsfromCostExplorer } from '../lib/aws/cost-explorer';
 
 const logger = getLogger();
 
@@ -238,6 +243,73 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
     }
 }
 
+async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails) {
+    logger.info('Get AWS resources billing or cost data:', resourceDetail);
+
+    const [billingResponse, pricingResponse] = await Promise.all([
+        getBilling(resourceDetail).catch(error => {
+            logger.error('Failed to get billing data for resource: :', JSON.stringify(error)); // Do not throw error here as we need to call getUsageEstimationData
+        }),
+        getUsageEstimationData(resourceDetail).catch(error => {
+            logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
+            throw error;
+        })
+    ]);
+
+    return billingResponse || pricingResponse;
+}
+
+async function getBilling(resourceDetail: ResourceDetails) {
+    logger.info('Get AWS resources billing data:', resourceDetail);
+    try {
+        const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+            credentialsId: string;
+            activeNodeInstanceId: string;
+            standbyNodeInstanceId: string;
+        };
+        // We need to check here if wlmdb-cost-resource cost allocation tag is activated at account level or not
+        let tagsResponse: GetTagsCommandOutput;
+        try {
+            const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
+            tagsResponse = await getTagsfromCostExplorer(region!, {
+                TimePeriod: {
+                    Start: startTimeFormat,
+                    End: currenTimeFormat
+                }
+            });
+            logger.debug('Cost allocation tag response', tagsResponse);
+        } catch (error) {
+            logger.error('Error while reteriving cost allocation tag');
+            throw error;
+        }
+
+        if (tagsResponse.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
+            const billingResponse: UsageCostResponseType = await calculateBilling(
+                credentialsId,
+                region!,
+                fileSystemId!,
+                activeNodeInstanceId,
+                standbyNodeInstanceId
+            );
+
+            return {
+                compute: billingResponse?.compute,
+                storage: billingResponse?.storage,
+                connectivity: billingResponse?.connectivity || 0,
+                others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
+                estimationType: billingResponse?.estimationType
+            };
+        }
+        throw new Error(
+            `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated`
+        );
+    } catch (error) {
+        logger.error('Failed to get billing data for resource:', resourceDetail, JSON.stringify(error));
+        throw error;
+    }
+}
+
 async function getUsageEstimationData(resourceDetail: ResourceDetails) {
     logger.info('Get AWS resources estimation data:', resourceDetail);
 
@@ -281,13 +353,15 @@ async function getUsageEstimationData(resourceDetail: ResourceDetails) {
             pricingRequest.vpc
         );
         return {
-            compute: pricingResponse?.compute,
+            compute: pricingResponse?.compute || 0,
             storage: (pricingResponse?.storage?.capacity || 0) + (pricingResponse?.storage?.throughput || 0),
-            connectivity: pricingResponse?.vpc,
-            others: 0 // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
+            connectivity: pricingResponse?.vpc || 0,
+            others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
+            estimationType: PRICING
         };
     } catch (error) {
         logger.error('Failed to get resources estimation data for resource:', resourceDetail, JSON.stringify(error));
+        throw error;
     }
 }
 
@@ -401,7 +475,9 @@ async function getDatabaseHostsSummary(
                             ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
                             ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                             ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]), // Fetch protection status
-                            ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]) // Fetch pricing estimate data
+                            ...(getUsageEstimation
+                                ? [getBillingOrPriceEstimation(resourceDetail)]
+                                : [Promise.resolve()]) // Fetch billing or pricing estimate data
                         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
                     );
 

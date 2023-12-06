@@ -1,4 +1,5 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
+import { BILLING, PRICING } from '../../utils/consts';
 
 const DatabaseHostObjectParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -56,7 +57,8 @@ const UsageCostResponse = Type.Object({
     connectivity: Type.Number({ description: 'Connectivity cost in dollars' }),
     others: Type.Number({
         description: 'Other services like active directory, cloudwatch logging, etc costs in dollars'
-    })
+    }),
+    estimationType: Type.String({ enum: [BILLING, PRICING] })
 });
 type UsageCostResponseType = Static<typeof UsageCostResponse>;
 
