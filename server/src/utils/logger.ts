@@ -2,9 +2,9 @@ import { format } from 'util';
 import { readFileSync } from 'fs';
 import log4js, { Configuration, Layout, PatternLayout } from 'log4js';
 import config from 'config';
-import { isObject, isArray, isPlainObject, isEmpty, isString } from 'lodash-es';
+import { isObject, isArray, isPlainObject, isEmpty } from 'lodash-es';
 import { context, trace } from '@opentelemetry/api';
-import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS, SECRET_STRING_WORDS } from './consts';
+import { ACCOUNT_ID, REQUEST_ID, SECRET_WORDS } from './consts';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 function isPatternLayout(layout: Layout): layout is PatternLayout {
@@ -21,19 +21,12 @@ function hideSecretsValues(obj: any) {
             if (SECRET_WORDS.includes(key)) {
                 (obj as { [index: string]: string })[key] = '*******';
             } else if (isPlainObject(obj[key as keyof typeof obj]) || isArray(obj[key as keyof typeof obj])) {
-                obj[key] = hideSecretsValues(obj[key as keyof object]);
+                (obj as { [index: string]: any })[key] = hideSecretsValues(obj[key as keyof object]);
             }
-        });
-    } else if (isString(obj)) {
-        const regexString = `(?<=(${SECRET_STRING_WORDS.join('|')})(?:(?:"\\s?:\\s?")|(\\sas\\s)|(\\=)))[^,"&]+`;
-        const regex = new RegExp(regexString, 'gi');
-        obj = obj.replace(regex, match => {
-            obj = '*'.repeat(match.length);
-            return obj;
         });
     }
 
-    return obj instanceof Error ? obj : JSON.stringify(obj);
+    return obj;
 }
 
 function getActiveTraceId() {
@@ -63,7 +56,7 @@ function initialize() {
                     message: loggingEvent =>
                         format(
                             ...loggingEvent.data.map(log =>
-                                isObject(log) ? hideSecretsValues(structuredClone(log)) : log
+                                isObject(log) ? stringifyObject(hideSecretsValues(structuredClone(log))) : log
                             )
                         )
                 };
@@ -72,6 +65,13 @@ function initialize() {
     });
 
     log4js.configure(configuration);
+}
+
+function stringifyObject(obj: any) {
+    if (obj instanceof Error) {
+        return obj;
+    }
+    return JSON.stringify(obj);
 }
 
 initialize();
