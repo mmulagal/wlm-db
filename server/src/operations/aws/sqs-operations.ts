@@ -252,7 +252,7 @@ async function processCloudFormationMessages() {
                                                 if (
                                                     masterStackDeployment &&
                                                     masterStackDeployment.deployment_status !==
-                                                        DEPLOYMENT_STATUS.CREATE_FAILED
+                                                        DEPLOYMENT_STATUS.CREATE_COMPLETE
                                                 ) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
