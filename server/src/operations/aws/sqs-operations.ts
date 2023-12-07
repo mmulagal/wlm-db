@@ -64,7 +64,12 @@ async function getSqsMessages(region: string, queueUrl: string) {
         // available and the wait time expires, the call returns successfully
         // with an empty list of messages.
         // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html#API_ReceiveMessage_RequestSyntax
-        WaitTimeSeconds: 20
+        WaitTimeSeconds: 20,
+        /*
+         * The duration (in seconds) that the received messages are hidden from subsequent
+         * retrieve requests after being retrieved by a <code>ReceiveMessage</code> request
+         */
+        VisibilityTimeout: 60
     });
     sqsMessages.push(Messages);
 
@@ -166,6 +171,7 @@ async function processCloudFormationMessages() {
         }
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
+            logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
             if (sqsMessages) {
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
