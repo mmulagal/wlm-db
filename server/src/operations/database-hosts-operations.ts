@@ -539,12 +539,14 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
                 ? MSSQL_DATABASE_TYPES.SYSTEM
                 : MSSQL_DATABASE_TYPES.USER,
-            isProtected:
-                awsBackup ||
-                ontapBackup ||
-                backedupDatabases.filter(
-                    (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                ).length > 0
+            protection: {
+                isAWSBackupEnabled: Boolean(awsBackup),
+                isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                isSqlNativeEnabled:
+                    backedupDatabases.filter(
+                        (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                    ).length > 0
+            }
         })
     );
     return {
