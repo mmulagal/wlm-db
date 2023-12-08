@@ -36,7 +36,7 @@ async function tagResource(credentialsId: string, region: string, resourceArn: s
         if (response.FailedResourcesMap) {
             throw new Error(response.FailedResourcesMap[resourceArn].ErrorMessage);
         }
-        logger.debug('Resource tagged successfully:', response);
+        logger.info('Resource tagged successfully:', response);
     } catch (error) {
         logger.error('Error tagging resource:', error);
     }
