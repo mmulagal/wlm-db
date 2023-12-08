@@ -904,6 +904,7 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
+const SQS_MSG_RETENTION = '7200'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1103,5 +1104,6 @@ export {
     WLMDB_RESOURCE_TAG_VALUE,
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
-    PRICING
+    PRICING,
+    SQS_MSG_RETENTION
 };
