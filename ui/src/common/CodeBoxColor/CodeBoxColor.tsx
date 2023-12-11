@@ -53,7 +53,7 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                         <div className={styles.startFlex} key={key}>
                             <div className={styles.blue50Color}>{`"${key}": `}</div>&nbsp;
                             {/* @ts-ignore */}
-                            {(!value && (typeof value !== 'boolean')) ? (
+                            {!value && typeof value !== 'boolean' ? (
                                 <div className={styles.red20Color}>{`"${value || ''}",`}</div>
                             ) : (
                                 <div className={styles.green40Color}>{`"${value}",`}</div>
@@ -66,20 +66,22 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
     };
 
     return (
-        <div className={styles.codeBox}>
-            <div>
-                {`curl --location --request POST ${baseUrl}/credentials/${credID}/regions/${region}/cloudformation/stack' \\`}
+        actualData && (
+            <div className={styles.codeBox}>
+                <div>
+                    {`curl --location --request POST ${baseUrl}/credentials/${credID}/regions/${region}/cloudformation/stack' \\`}
+                </div>
+                <div>
+                    <span>--header 'Authorization: Bearer </span>
+                    <span className={styles.tokenStyle}>{CRED_PLACEHOLDERS.TOKEN}</span>
+                    <span> \</span>
+                </div>
+                <div>{`--header 'Content-Type: application/json' \\`}</div>
+                <div>{`--data-raw '{`}</div>
+                <div className={styles.marginFIfteen}>{renderProperties(actualData)}</div>
+                <div className={styles.marginFIfteen}>{`}'`}</div>
             </div>
-            <div>
-                <span>--header 'Authorization: Bearer </span>
-                <span className={styles.tokenStyle}>{CRED_PLACEHOLDERS.TOKEN}</span>
-                <span> \</span>
-            </div>
-            <div>{`--header 'Content-Type: application/json' \\`}</div>
-            <div>{`--data-raw '{`}</div>
-            <div className={styles.marginFIfteen}>{renderProperties(actualData)}</div>
-            <div className={styles.marginFIfteen}>{`}'`}</div>
-        </div>
+        )
     );
 };
 
