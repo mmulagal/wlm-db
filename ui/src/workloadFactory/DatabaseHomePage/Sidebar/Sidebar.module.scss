@@ -176,7 +176,7 @@
             }
             [class*='design-system-select__control']:hover {
                 box-shadow: 0 1px 0 var(--header-netapp-text-hover);
-                border-bottom: 1px solid var(--blue-40);
+                border-bottom: 1px solid var(--blue-40) !important;
 
                 div {
                     color: var(--header-netapp-text-hover);
@@ -188,9 +188,9 @@
             }
 
             [class*='design-system-select__control'] {
-                border-bottom: 2px solid var(--content-background);
+                border-bottom: 2px solid var(--content-background) !important;
                 svg {
-                    --icon-primary-color: var(--white);
+                    --icon-primary-color: var(--white) !important;
                 }
             }
         }
@@ -301,6 +301,10 @@
                 --button-min-width: 480px;
                 color: var(--blue-40);
                 border: 1px solid var(--blue-40) !important;
+
+                span {
+                    text-transform: none !important;
+                }
             }
         }
 
