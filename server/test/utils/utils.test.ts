@@ -1,14 +1,21 @@
+import { faker } from '@faker-js/faker';
 import { createSecrets } from '../../src/operations/aws/secrets-manager-operations';
 import { DEFAULT_AWS_REGION } from '../../src/utils/consts';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
-import { checkAndRetrieveJsonObject, generateHash } from '../../src/utils/utils';
+import { checkAndRetrieveJsonObject, generateHash, getEc2Arn, getFsxArn } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
 const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 vi.mock('../../src/lib/aws/secrets-manager', () => ({
     createSecret: vi.fn().mockImplementation(async () => secretManagerResponse)
 }));
+
+const awsAccountId = `${faker.datatype.number({ min: 100000000 })}`;
+const ec2Id = `i-${faker.string.alpha(8)}`;
+const fsxId = `fs-${faker.string.alpha(8)}`;
+const ec2Arn = `arn:aws:ec2:${DEFAULT_AWS_REGION}:${awsAccountId}:instance/${ec2Id}`;
+const fsxArn = `arn:aws:fsx:${DEFAULT_AWS_REGION}:${awsAccountId}:file-system/${fsxId}`;
 
 describe(' Secrets Manager string', () => {
     it(' Create Secrets Manager String', async () => {
@@ -35,5 +42,15 @@ describe(' Secrets Manager string', () => {
     it('Generate hash', async () => {
         const response = generateHash(ACTIVE_INSTANCE_ID + STANDBY_INSTANCE_ID);
         expect(response).toBeDefined();
+    });
+
+    it('Generate Ec2 ARN', async () => {
+        const response = getEc2Arn(awsAccountId, DEFAULT_AWS_REGION, ec2Id);
+        expect(response).toBe(ec2Arn);
+    });
+
+    it('Generate Fsx ARN', async () => {
+        const response = getFsxArn(awsAccountId, DEFAULT_AWS_REGION, fsxId);
+        expect(response).toBe(fsxArn);
     });
 });

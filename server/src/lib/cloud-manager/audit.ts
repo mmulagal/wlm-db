@@ -30,6 +30,6 @@ export default async function sendAudit(auditData: {
             ...auditData
         });
     } catch (error) {
-        logger.error('Failed to send audit to audit service', error);
+        logger.error('Failed to send audit to audit service', { error, auditData });
     }
 }

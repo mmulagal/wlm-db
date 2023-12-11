@@ -2,4 +2,32 @@
     margin-left: 120px;
     margin-top: -16px;
     width: 1609px;
+
+    .statusCell {
+        display: flex;
+        gap: 16px;
+        flex-direction: row;
+        align-items: center;
+        .statusIcon {
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+        }
+        .onIcon {
+            background-color: var(--green-60);
+        }
+        .offIcon {
+            background-color: var(--red-30);
+        }
+    }
+
+    .colText {
+        display: flex;
+        gap: 8px;
+
+        .protection {
+            display: flex;
+            gap: 17px;
+        }
+    }
 }

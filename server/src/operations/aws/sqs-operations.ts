@@ -25,7 +25,8 @@ import {
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
     WF,
-    DEPLOYMENT_JOBS_FAILED_STATUS
+    DEPLOYMENT_JOBS_FAILED_STATUS,
+    WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
 import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
@@ -43,6 +44,7 @@ import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments, getResources } from '../database/database-operations';
+import { tagEc2Resource, tagFsxResource } from './tags-operations';
 
 const logger = getLogger();
 
@@ -62,7 +64,12 @@ async function getSqsMessages(region: string, queueUrl: string) {
         // available and the wait time expires, the call returns successfully
         // with an empty list of messages.
         // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html#API_ReceiveMessage_RequestSyntax
-        WaitTimeSeconds: 20
+        WaitTimeSeconds: 20,
+        /*
+         * The duration (in seconds) that the received messages are hidden from subsequent
+         * retrieve requests after being retrieved by a <code>ReceiveMessage</code> request
+         */
+        VisibilityTimeout: 60
     });
     sqsMessages.push(Messages);
 
@@ -119,6 +126,34 @@ async function handleResourceAssociation(
         logger.error('Failed to associate resource with credentials service', error);
     }
 }
+
+async function tagResources(
+    credentialsId: string,
+    region: string,
+    awsAccountId: string,
+    fsxId: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, {
+        [WLMDB_COST_ALLOCATION_TAG]: fsxId
+    });
+
+    const tagEc2Promise = tagEc2Resource(credentialsId, region, awsAccountId, activeNodeInstanceId, {
+        [WLMDB_COST_ALLOCATION_TAG]: activeNodeInstanceId
+    });
+
+    const promises = [tagFsxPromise, tagEc2Promise];
+
+    if (standbyNodeInstanceId) {
+        const tagStandbyPromise = tagEc2Resource(credentialsId, region, awsAccountId, standbyNodeInstanceId, {
+            [WLMDB_COST_ALLOCATION_TAG]: standbyNodeInstanceId
+        });
+        promises.push(tagStandbyPromise);
+    }
+
+    await Promise.all(promises);
+}
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
     if (process.env.AWS_ROLE_ARN) {
@@ -136,6 +171,7 @@ async function processCloudFormationMessages() {
         }
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
+            logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
             if (sqsMessages) {
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
@@ -213,7 +249,11 @@ async function processCloudFormationMessages() {
                                                     undefined,
                                                     stackName
                                                 );
-                                                if (masterStackDeployment) {
+                                                if (
+                                                    masterStackDeployment &&
+                                                    masterStackDeployment.deployment_status !==
+                                                        DEPLOYMENT_STATUS.CREATE_COMPLETE
+                                                ) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
                                                         endTime: new Date(messageTimestamp).valueOf(),
@@ -292,6 +332,16 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
+
+                                                    await tagResources(
+                                                        credentialsId,
+                                                        region,
+                                                        cloudProviderAccountId,
+                                                        fsxId,
+                                                        activeNodeInstanceId,
+                                                        standbyNodeInstanceId
+                                                    );
+
                                                     const notificationData = {
                                                         notificationAction: STANDARD_DEPLOYMENT_ACTION,
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
@@ -314,7 +364,11 @@ async function processCloudFormationMessages() {
                                                 undefined,
                                                 stackName
                                             );
-                                            if (masterStackDeployment) {
+                                            if (
+                                                masterStackDeployment &&
+                                                masterStackDeployment.deployment_status !==
+                                                    DEPLOYMENT_STATUS.CREATE_FAILED
+                                            ) {
                                                 await updateDeployment(accountId, masterStackDeployment.id, {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                     endTime: Date.now()
@@ -339,7 +393,10 @@ async function processCloudFormationMessages() {
                                     } catch (error) {
                                         logger.error('Failed to track deployment in WLMDB', error);
                                         const masterStackDeployment = await getMatchingMasterStackDeployment(stackName);
-                                        if (masterStackDeployment) {
+                                        if (
+                                            masterStackDeployment &&
+                                            masterStackDeployment.deployment_status !== DEPLOYMENT_STATUS.CREATE_FAILED
+                                        ) {
                                             await updateDeployment(accountId, masterStackDeployment.id, {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()

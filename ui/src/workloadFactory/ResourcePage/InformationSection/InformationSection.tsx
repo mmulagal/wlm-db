@@ -9,10 +9,12 @@ import StorageCompute from './StorageCompute/StorageCompute';
 import styles from './InformationSection.module.scss';
 import ISConnectivity from './ISConnectivity/ISConnectivity';
 import ISActiveDirectory from './ISActiveDirectory/ISActiveDirectory';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const InformationSection = () => {
+    const { resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     const [openKey, setOpenKey] = useState('');
-    const disabled: boolean = false;
+    const disabled: boolean = resourceLoading;
 
     const handleToggle = (key: any) => {
         if (!disabled) {
@@ -25,7 +27,7 @@ const InformationSection = () => {
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.DB_OVERVIEW_INFO}
                 </Typography>
-                {/* <FlashingDotsLoader /> */}
+                {resourceLoading && <FlashingDotsLoader />}
             </div>
 
             <div className={styles.accordionSection}>

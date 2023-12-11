@@ -29,9 +29,9 @@
     "scripts": {
         "start": "cross-env HOST=localhost PORT=4300 REACT_APP_USE_CM_FORWARDER=false react-scripts start",
         "build:local": "dotenv -e .env.development react-scripts build",
-        "build:staging": "dotenv -e .env.staging react-scripts build && cp-cli workload-config.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
-        "build:preprod": "dotenv -e .env.preprod react-scripts build && cp-cli workload-config.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
-        "build:production": "dotenv -e .env.production react-scripts build && cp-cli workload-config.json build/workload-config.json && cp-cli workload-policies.json build/workload-policies.json",
+        "build:staging": "dotenv -e .env.staging react-scripts build && dotenv -e .env.staging -- ejs workload-config.json -o build/workload-config.json && ejs workload-policies.json -o build/workload-policies.json",
+        "build:preprod": "dotenv -e .env.preprod react-scripts build && dotenv -e .env.preprod -- ejs workload-config.json -o build/workload-config.json && ejs workload-policies.json -o build/workload-policies.json",
+        "build:production": "dotenv -e .env.production react-scripts build && dotenv -e .env.production -- ejs workload-config.json -o build/workload-config.json && ejs workload-policies.json -o build/workload-policies.json",
         "test": "react-scripts test --coverage",
         "eject": "react-scripts eject"
     },
@@ -56,9 +56,9 @@
     "devDependencies": {
         "@types/numeral": "^2.0.2",
         "@types/redux-mock-store": "^1.0.3",
-        "cp-cli": "^2.0.0",
         "cross-env": "^7.0.3",
         "dotenv-cli": "^4.0.0",
+        "ejs": "^3.1.9",
         "typescript": "5.2.2",
         "jest-teamcity-reporter": "^0.9.0",
         "react-scripts": "5.0.1",

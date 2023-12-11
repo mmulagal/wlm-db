@@ -2,6 +2,7 @@ import { Typography } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type accordionType = {
     handleToggle: any;
@@ -9,6 +10,7 @@ type accordionType = {
 };
 
 const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
+    const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const contentArea = () => {
         return (
             <>
@@ -16,14 +18,18 @@ const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         Domain name:
                     </Typography>
-                    <Typography variant="Regular_14">Domain name</Typography>
+                    <Typography variant="Regular_14">
+                        {resourceDetails?.topology?.activeDirectoryDetails?.name}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         DNS address:
                     </Typography>
-                    <Typography variant="Regular_14">dns.address.aaa.com</Typography>
+                    <Typography variant="Regular_14">
+                        {resourceDetails?.topology?.activeDirectoryDetails?.address}
+                    </Typography>
                 </div>
             </>
         );

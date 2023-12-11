@@ -14,7 +14,13 @@ const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
     const showChatbot = useAppSelector(state => state.auth?.isWorkloadFactory);
 
-    return (
+    return showChatbot && window.location.pathname === '/databases' ? (
+        <div className={styles.mainContainer}>
+            <div className={styles.spinnerPlacement}>
+                <Spinner isLarge />
+            </div>
+        </div>
+    ) : (
         <div className={styles.mainContainer}>
             {loading && (
                 <>
