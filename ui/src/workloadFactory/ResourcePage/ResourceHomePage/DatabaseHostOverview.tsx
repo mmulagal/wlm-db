@@ -9,7 +9,12 @@ import styles from './DatabaseHostOverview.module.scss';
 import { useGetDatabaseListQuery, useGetResourceDetailsQuery } from '../../../utils/apiService';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { setResourceDetails, setResourceLoading } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    setDatabaseList,
+    setDatabaseListLoading,
+    setResourceDetails,
+    setResourceLoading
+} from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -23,11 +28,11 @@ const DatabaseHostOverview = () => {
         refetch: resourceRefetch
     } = useGetResourceDetailsQuery(resourceId);
 
-    // const {
-    //     data: databaseList,
-    //     isLoading: databaseListLoading,
-    //     refetch: databaseListRefetch
-    // } = useGetDatabaseListQuery(resourceId);
+    const {
+        data: databaseList,
+        isLoading: databaseListLoading,
+        refetch: databaseListRefetch
+    } = useGetDatabaseListQuery(resourceId);
 
     useEffect(() => {
         dispatch(setResourceLoading(resourceLoading));
@@ -36,7 +41,12 @@ const DatabaseHostOverview = () => {
         }
     }, [resourceLoading, resourceDetails, dispatch]);
 
-    //useEffect(() => {}, [databaseListLoading, resourceDetails]);
+    useEffect(() => {
+        dispatch(setDatabaseListLoading(databaseListLoading));
+        if (databaseList?.items) {
+            dispatch(setDatabaseList(databaseList.items));
+        }
+    }, [databaseListLoading, databaseList, dispatch]);
 
     return (
         <div className={styles.resourcePage}>

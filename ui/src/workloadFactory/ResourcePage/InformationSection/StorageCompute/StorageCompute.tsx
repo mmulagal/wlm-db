@@ -2,6 +2,7 @@ import { Typography } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type accordionType = {
     handleToggle: any;
@@ -9,6 +10,7 @@ type accordionType = {
 };
 
 const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
+    const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const contentArea = () => {
         return (
             <>
@@ -16,7 +18,9 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         DB Instance type:
                     </Typography>
-                    <Typography variant="Regular_14">c4.2xlarge</Typography>
+                    <Typography variant="Regular_14">
+                        {resourceDetails?.topology?.ec2Details[0].instanceType}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
@@ -30,28 +34,28 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         File system ID:
                     </Typography>
-                    <Typography variant="Regular_14">fs-0d5efc3057c4f12cb</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fsxFilesystemId}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         File system type:
                     </Typography>
-                    <Typography variant="Regular_14">FSx ONTAP</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemType}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         File system status:
                     </Typography>
-                    <Typography variant="Regular_14">Available</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStatus}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         Storage capacity:
                     </Typography>
-                    <Typography variant="Regular_14">1,025 GiB</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStorageCapacity}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
@@ -65,7 +69,9 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         FSx Throughput capacity:
                     </Typography>
-                    <Typography variant="Regular_14">128MB/s</Typography>
+                    <Typography variant="Regular_14">
+                        {resourceDetails?.topology?.fileSystemThroughputCapacity}
+                    </Typography>
                 </div>
             </>
         );

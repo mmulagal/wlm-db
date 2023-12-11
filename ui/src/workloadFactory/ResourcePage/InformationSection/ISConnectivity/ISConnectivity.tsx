@@ -2,6 +2,7 @@ import { Typography } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type accordionType = {
     handleToggle: any;
@@ -9,6 +10,7 @@ type accordionType = {
 };
 
 const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
+    const resourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const contentArea = () => {
         return (
             <>
@@ -16,14 +18,14 @@ const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         Key pair name:
                     </Typography>
-                    <Typography variant="Regular_14">01234567890123456790</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.keyPairName}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         VPC:
                     </Typography>
-                    <Typography variant="Regular_14">VPC</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.vpcId}</Typography>
                 </div>
             </>
         );

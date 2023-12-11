@@ -1,12 +1,14 @@
 export interface WorkloadFactoryResourceEntities {
     resourceLoading: boolean;
     resourceDetails: WorkloadFactoryResourceDetails;
+    databaseListLoading: boolean;
+    databaseList: WorkloadFactoryDatabaseItem[];
 }
 
 export interface WorkloadFactoryResourceDetails {
     id: string;
     name: string;
-    status: 'UP' | 'DOWN';
+    status: string;
     databaseCount: number;
     operatingSystem: string;
     serverEdition: string;
@@ -26,17 +28,15 @@ export interface WorkloadFactoryResourceDetails {
         fileSystemThroughputCapacity: string;
         vpcId: string;
         keyPairName: string;
-        ec2Details: [
-            {
-                id: string;
-                name: string;
-                instanceType: string;
-                ebsVolumeId: string;
-                vpcID: string;
-                availabilityZone: string;
-                subnetId: string;
-            }
-        ];
+        ec2Details: Array<{
+            id: string;
+            name: string;
+            instanceType: string;
+            ebsVolumeId: string;
+            vpcID: string;
+            availabilityZone: string;
+            subnetId: string;
+        }>;
         activeDirectoryDetails: {
             name: string;
             address: string;
@@ -102,4 +102,13 @@ export interface WorkloadFactoryResourceDetails {
             remaining: string;
         };
     };
+}
+
+export interface WorkloadFactoryDatabaseItem {
+    id: string;
+    name: string;
+    status: string;
+    size: number;
+    type: string;
+    isProtected: boolean;
 }
