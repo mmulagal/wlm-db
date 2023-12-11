@@ -1,37 +1,24 @@
 import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as UploadIcon } from '../../../assets/upload-icon.svg';
-import { ReactComponent as DownloadIcon } from '../../../assets/download-icon.svg';
-import { SearchInput, Typography, useDialog } from '@netapp/design-system';
+import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
+
+import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
-import { CODE_VIEWER, GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
-import MenuPopover from '../../../common/MenuPopover/MenuPopover';
+import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { generateOptionType, getCredDetails } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
-import LoadConfig from '../LoadConfig/LoadConfig';
-import {
-    LoadConfiguration,
-    SaveConfiguration,
-    resetChecksAfterLoad,
-    resetRefetchApiCheck
-} from '../Configuration/LoadConfiguration';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
+
+import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
-import {
-    getBaseUrl,
-    useGetConfigListQuery,
-    useGetTemplatesMutation,
-    useLazyGetConfigDataQuery,
-    useSaveConfigDataMutation
-} from '../../../utils/apiService';
-import { setIsLoadConfig, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, FROM_DIALOG } from '../../../utils/consts';
-import SaveConfig from '../SaveConfig/SaveConfig';
-import { setSaveConfigName } from '../../../store/mssql/mssqlFormSlice';
-import { navigateToCanvas } from '../../../utils/appConfig';
+import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
+import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
 import Highlighter from 'react-highlight-words';
@@ -46,8 +33,6 @@ import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 const _ = require('lodash');
 
 const CodeBox = () => {
-    const { configData } = useAppSelector(state => state.mssql.getSavedConfigList);
-
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [copyText, setCopyText] = useState('');
     const [dropDownValue, setDropdownValue] = useState(CODE_VIEWER.REST_API);
@@ -61,11 +46,9 @@ const CodeBox = () => {
     const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
-    const { setDialog, closeDialog } = useDialog();
+    const { closeDialog } = useDialog();
     const dispatch = useDispatch();
-    const [saveConfigData] = useSaveConfigDataMutation();
-    const [loadConfigDataExe] = useLazyGetConfigDataQuery();
-    const { refetch: configListRefetch } = useGetConfigListQuery({});
+
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
@@ -180,44 +163,6 @@ const CodeBox = () => {
                 </HighlighterWord>
             );
         }
-    };
-
-    const handleLoadConfiguration = () => {
-        setDialog(
-            <DialogComponent
-                header={GENERAL.LOAD_CONFIG_HEADER}
-                content={<LoadConfig />}
-                primaryButton={GENERAL.LOAD}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    LoadConfiguration(dispatch, loadConfigDataExe, closeDialog);
-                }}
-                closeCallback={() => {
-                    dispatch(setIsLoadConfig(false));
-                    resetRefetchApiCheck(dispatch);
-                }}
-                dialogFrom={FROM_DIALOG.LOAD_CONFIG}
-            />
-        );
-    };
-
-    const handleSaveConfig = (dialogFrom: string) => {
-        setDialog(
-            <DialogComponent
-                header={GENERAL.SAVE_CONFIG_HEADER}
-                content={<SaveConfig description={GENERAL.SAVE_CONFIG_CONTENT} />}
-                primaryButton={GENERAL.SAVE}
-                secondaryButton={GENERAL.CANCEL}
-                callback={() => SaveConfiguration(dispatch, saveConfigData, configListRefetch, closeDialog, dialogFrom)}
-                closeCallback={() => {
-                    dispatch(setSaveConfigName(''));
-                    if (dialogFrom === FROM_DIALOG.HEADER_CROSS) {
-                        navigateToCanvas('/');
-                    }
-                }}
-                dialogFrom={dialogFrom}
-            />
-        );
     };
 
     // To copy response based on dropdown selection
@@ -402,31 +347,8 @@ const CodeBox = () => {
                 <Typography variant="Regular_16" className={styles.createDBText}>
                     {CODE_VIEWER.CREATE_DATABASE}
                 </Typography>
-                <div className={styles.configActions} onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)}>
-                    <UploadIcon />
-                    <Typography variant="Semibold_14" className={styles.configText}>
-                        {SELECT_CONFIG.SAVE_CONFIG}
-                    </Typography>
-                </div>
-                {configData && configData.length > 0 && (
-                    <div className={styles.configActions} onClick={() => handleLoadConfiguration()}>
-                        <DownloadIcon />
-                        <Typography variant="Semibold_14" className={styles.configText}>
-                            {SELECT_CONFIG.LOAD_CONFIG}
-                        </Typography>
-                    </div>
-                )}
-                {!configData ||
-                    (configData.length === 0 && (
-                        <div className={styles.configActionsDisabled}>
-                            <DownloadIcon />
-                            <Typography variant="Semibold_14" className={styles.configText}>
-                                {SELECT_CONFIG.LOAD_CONFIG}
-                            </Typography>
-                        </div>
-                    ))}
 
-                <div className={styles.menuContainer}>
+                {/* <div className={styles.menuContainer}>
                     <MenuPopover
                         isMenuOpen={isMenuOpen}
                         menuItems={MenuOptions}
@@ -455,33 +377,63 @@ const CodeBox = () => {
                             </Typography>
                         </div>
                     )}
+                </div> */}
+                <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
+                    <SelectField
+                        isClearable={false}
+                        value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
+                        onChange={(selectedOptions: any): void => {
+                            setDropdownValue(selectedOptions?.value);
+                        }}
+                        isSearchable={false}
+                        variant="underline"
+                        options={generateCLIOptions}
+                        defaultValue={[generateCLIOptions[2]]}
+                    />
                 </div>
             </div>
             <div className={styles.payloadContainer}>
                 <div className={styles.payloadHeader}>
                     <div className={styles.inputPart}>
                         <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
-                            {CODE_VIEWER.SHOW_CODE_AS}
+                            {dropDownValue}
                         </Typography>
-                        <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
-                            <SelectField
-                                isClearable={false}
-                                value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
-                                onChange={(selectedOptions: any): void => {
-                                    setDropdownValue(selectedOptions?.value);
-                                }}
-                                isSearchable={false}
-                                variant="underline"
-                                options={generateCLIOptions}
-                                defaultValue={[generateCLIOptions[2]]}
-                            />
-                        </div>
                     </div>
-                    <div className={styles.searchPart}>
+                    <div className={styles.copyPopOver}>
+                        <Popover
+                            popoverClass={styles['copy-popover']}
+                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                            container={
+                                <CopyToClipboard text={copyResponseData()}>
+                                    <div className={styles.menuItem}>
+                                        <Copy />
+                                    </div>
+                                </CopyToClipboard>
+                            }
+                        />
+                    </div>
+
+                    {/* <div className={styles.searchPart}>
                         <SearchInput onChange={e => setSearchInput(e)} className={styles.searchInput} />
-                    </div>
+                    </div> */}
                 </div>
-                <div className={styles.payloadBody}>
+
+                {/* Cloud formation button */}
+                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && (
+                    <div className={styles.cloudFormationButtonContainer}>
+                        <Button variant="secondary" onClick={() => handleRedirectToCF()}>
+                            Redirect to CloudFormation
+                        </Button>
+                    </div>
+                )}
+
+                <div
+                    className={
+                        dropDownValue === CODE_VIEWER.CLOUDFORMATION
+                            ? `${styles.payloadBody} ${styles.payloadBodyHeight}`
+                            : `${styles.payloadBody}`
+                    }
+                >
                     <div className={styles.scrollContainer}>
                         <Typography variant="Regular_14" style={{ color: 'var(--white)' }}>
                             {setDisplayedDataInCodeBox()}
