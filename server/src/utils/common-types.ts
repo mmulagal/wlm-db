@@ -1,8 +1,12 @@
 interface Metadata {
     credentialsId: string;
     activeNodeInstanceId: string;
+    activeNodeInstanceName?: string;
     standbyNodeInstanceId: string;
+    standbyNodeInstanceName?: string;
     fsxSecret: string;
+    activeDirectoryName?: string;
+    activeDirectoryAddress?: string;
 }
 
 interface ResourceDetails {

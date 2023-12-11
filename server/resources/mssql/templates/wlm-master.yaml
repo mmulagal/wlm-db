@@ -1150,3 +1150,5 @@ Resources:
             - 'FCI'
             - 'Standalone'
       FileSystemType: 'FSx ONTAP'
+      ActiveDirectoryName: !Ref DomainDNSName
+      ActiveDirectoryAddress: !Ref DNSIpAddresses
