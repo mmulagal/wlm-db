@@ -61,6 +61,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openKey, setOpenKey] = useState<string | undefined>();
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
+    const [credDetailsData, setCredDetailsData] = useState({});
 
     //To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
@@ -357,16 +358,19 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
             setIsRightPanelDataLoading(false);
             getTemplateResponse(resBody, {}, id);
+            setCredDetailsData({});
             storeRightPanelRestResponse(id, actualData[0].data, highlightedString, highlightedString, resBody);
         } else {
             const data = getRightPanelRestResponse(id, CODEBOX_REST_RES.API);
             if (data) {
                 // If data is already saved that just load data
+                setCredDetailsData(data);
                 loadRestApi(data, id, false);
             } else {
                 // Getting saved config data using API
                 loadConfigDataExe({ configId: id }).then(data => {
                     const actualData = data?.data?.data;
+                    setCredDetailsData(actualData);
                     loadRestApi(actualData, id, true);
                 });
             }
@@ -466,18 +470,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
+            const credDetails = getCredDetails(credDetailsData);
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <CodeBoxColor
-                        credID="123"
-                        region="12345"
+                        credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
+                        region={credDetails.region || CRED_PLACEHOLDERS.REGION}
                         actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
                     />
-                    {/* <pre className={styles.colorAutomation}>
-                        {getRightPanelRestResponse(openKey, CODEBOX_REST_RES.VIEW)}
-                    </pre> */}
                 </HighlighterWord>
             );
         }
@@ -872,7 +874,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             {/* Search bar input code ends here */}
 
                             {/* Cloud formation button */}
-                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && (
+                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && (
                                 <div
                                     className={styles.cloudFormationButtonContainer}
                                     onClick={() => handleViewInAwsCloudFormation()}
