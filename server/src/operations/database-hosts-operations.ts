@@ -143,7 +143,7 @@ async function getTopology(
         let fileSystemStatus;
         let fileSystemStorageCapacity;
         let fileSystemThroughputCapacity;
-        if (additionalFields?.vpc || additionalFields?.fileSystemDetails) {
+        if (additionalFields?.allTopology || additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
                 vpcId = fsxInfo?.FileSystems?.[0].VpcId;
@@ -169,7 +169,8 @@ async function getTopology(
         let standbyAvailabilityZone;
         let standbySubnetId;
         let standbyVolumeId;
-        if (additionalFields?.ec2InstanceDetails) {
+        let activeDirectoryDetails;
+        if (additionalFields?.allTopology) {
             try {
                 ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
                 keyPairName = ec2InstanceDetails.Reservations?.[0].Instances?.[0].KeyName;
@@ -190,15 +191,12 @@ async function getTopology(
             } catch (error) {
                 logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
             }
-        }
-
-        let activeDirectoryDetails;
-        if (additionalFields?.adDetails) {
             activeDirectoryDetails = {
                 name: activeDirectoryName || '',
                 address: activeDirectoryAddress || ''
             };
         }
+
         // Fetch topology data
         topologyData = {
             awsAccount: awsAccountId || '',
@@ -552,10 +550,7 @@ async function getDatabaseHostSummary(
         DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
     );
     const additionalFields = {
-        vpc: Boolean(getUsageEstimation),
-        fileSystemDetails: true,
-        ec2InstanceDetails: true,
-        adDetails: true
+        allTopology: true
     };
 
     const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
