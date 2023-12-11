@@ -172,12 +172,7 @@ async function getDatabasesCount(
 
 async function getDataBasesSummary(resourceId: string) {
     logger.info('Get databases summary for resource:', resourceId);
-    // const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-
-    const credentialsId = '96f49c1a-d757-457a-be52-52095e9c9fe4';
-    const region = 'ap-southeast-1';
-    const activeNodeInstanceId = 'i-0880a21327284f67c';
-    const standbyNodeInstanceId = 'i-008f4b47359bba706';
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');

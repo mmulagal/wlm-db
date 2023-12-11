@@ -159,6 +159,7 @@ async function getTopology(
             ? [activeNodeInstanceId, standbyNodeInstanceId]
             : [activeNodeInstanceId];
 
+        // Todo: These details can be saved in database as part of metadata and AWS calls can be made incase of not found
         let ec2InstanceDetails;
         let keyPairName;
         let activeInstanceType;
