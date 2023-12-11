@@ -4,7 +4,6 @@ import { optionType, SelectField } from '@netapp/design-system/dist/components/S
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
-import { ReactComponent as LoadIcon } from '../../../assets/ic_circle_arrow_down.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
 //@ts-ignore

@@ -154,7 +154,7 @@
             }
 
             [class*='design-system-select__single-value'] {
-                color: var(--white);
+                color: var(--white) !important;
             }
             [class*='design-system-select__menu'] {
                 box-shadow: none;
