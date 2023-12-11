@@ -41,14 +41,14 @@ const DatabaseListTable = () => {
             accessor: 'name',
             isSortable: true,
             id: '1',
-            width: '311px'
+            width: '19.3%'
         },
         {
             Header: 'Status',
             accessor: 'status',
             filterOptions: 'auto',
             id: '2',
-            width: '180px',
+            width: '11.2%',
             renderCell: (cellData: any) => {
                 return (
                     <div className={styles.statusCell}>
@@ -65,7 +65,7 @@ const DatabaseListTable = () => {
             accessor: 'size',
             isSortable: true,
             id: '3',
-            width: '240px',
+            width: '15%',
             renderCell: (cellData: any) => {
                 return formatSize(cellData);
             }
@@ -75,7 +75,7 @@ const DatabaseListTable = () => {
             accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
-            width: '240px',
+            width: '15%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
                 let protectedChk = false;
@@ -138,13 +138,13 @@ const DatabaseListTable = () => {
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',
-            width: '240px'
+            width: '15%'
         },
         {
             Header: '',
             accessor: '',
             id: '6',
-            width: '398px'
+            width: '24.6%'
         }
     ];
 
