@@ -301,6 +301,10 @@
                 --button-min-width: 480px;
                 color: var(--blue-40);
                 border: 1px solid var(--blue-40) !important;
+
+                span {
+                    text-transform: none !important;
+                }
             }
         }
 
