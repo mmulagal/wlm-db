@@ -6,7 +6,7 @@ const initialState: WorkloadFactoryResourceEntities = {
     resourceDetails: {
         id: '',
         name: '',
-        status: 'UP',
+        status: '',
         databaseCount: 0,
         operatingSystem: '',
         serverEdition: '',
@@ -102,7 +102,9 @@ const initialState: WorkloadFactoryResourceEntities = {
                 remaining: ''
             }
         }
-    }
+    },
+    databaseListLoading: true,
+    databaseList: []
 };
 
 const workloadFactoryResourceSlice = createSlice({
@@ -114,9 +116,16 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setResourceDetails: (state, action: PayloadAction<any>) => {
             state.resourceDetails = action.payload;
+        },
+        setDatabaseListLoading: (state, action: PayloadAction<any>) => {
+            state.databaseListLoading = action.payload;
+        },
+        setDatabaseList: (state, action: PayloadAction<any>) => {
+            state.databaseList = action.payload;
         }
     }
 });
 
-export const { setResourceLoading, setResourceDetails } = workloadFactoryResourceSlice.actions;
+export const { setResourceLoading, setResourceDetails, setDatabaseListLoading, setDatabaseList } =
+    workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

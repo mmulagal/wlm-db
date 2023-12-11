@@ -17,7 +17,8 @@ const Diagram = () => {
 
             {!resourceLoading && (
                 <div className={styles.centerContainer}>
-                    {resourceDetails?.topology?.serverInstallationMode === 'FCI' ? <Diagram2 /> : <Diagram4 />}
+                    {resourceDetails?.topology?.serverInstallationMode === 'FCI' && <Diagram2 />}
+                    {resourceDetails?.topology?.serverInstallationMode === 'STANDALONE' && <Diagram4 />}
                 </div>
             )}
         </div>

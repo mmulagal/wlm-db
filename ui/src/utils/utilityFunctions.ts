@@ -440,14 +440,14 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrProtection = (data: DatabaseHostItem[]) => {
+export const getAggrProtection = (data: any) => {
     let protectedDb = 0;
     let unprotectedDb = 0;
     let awsBackupDb = 0;
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (
             val?.protection?.isAwsBackUpEnabled ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||

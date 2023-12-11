@@ -19,7 +19,13 @@ const OverviewTabs = () => {
         dispatch(selectedTabSelection(value));
     };
     return (
-        <div className={styles.overviewTabs}>
+        <div
+            className={
+                selectedTab === 'Overview'
+                    ? `${styles.overviewTabs}`
+                    : `${styles.overviewTabs} ${styles.overviewTabDynamicWidth}`
+            }
+        >
             <Typography
                 variant="Semibold_14"
                 className={
