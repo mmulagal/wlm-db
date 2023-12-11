@@ -4,22 +4,25 @@ import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './MultiRingDoughnut.module.scss';
 import { Typography } from '@netapp/design-system';
-import { useAppSelector } from '../../../store/storeHooks';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 
 Chart.register(...registerables);
 
-type colorCode = {
+type MultiRingDoughnutPropType = {
     unProtectColor?: string;
+    hostData?: any;
+    databaseHostLoading?: boolean;
+    databaseJobsLoading?: boolean;
 };
 
-const MultiRingDoughnut = ({ unProtectColor }: colorCode) => {
+const MultiRingDoughnut = ({
+    unProtectColor,
+    hostData,
+    databaseHostLoading,
+    databaseJobsLoading
+}: MultiRingDoughnutPropType) => {
     const unProtectedColor = unProtectColor ? '#E0E0E0' : '#FDC300';
-    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
@@ -66,7 +69,7 @@ const MultiRingDoughnut = ({ unProtectColor }: colorCode) => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            {((databaseHostsLoading && !hostData) ||
+            {((databaseHostLoading && !hostData) ||
                 databaseJobsLoading ||
                 !hostData ||
                 (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (

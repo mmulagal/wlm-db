@@ -2,6 +2,7 @@ import { Typography } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type accordionType = {
     handleToggle: any;
@@ -9,6 +10,7 @@ type accordionType = {
 };
 
 const Location = ({ handleToggle, openKey }: accordionType) => {
+    const { resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
     const contentArea = () => {
         return (
             <>
@@ -16,43 +18,59 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         AWS account:
                     </Typography>
-                    <Typography variant="Regular_14">01234567890123456790</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.awsAccount}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         Region:
                     </Typography>
-                    <Typography variant="Regular_14">(us-east-1) | US East, N.Virginia</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.region}</Typography>
                 </div>
 
-                <div className={commonStyles.row}>
-                    <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Availability Zone 1:
-                    </Typography>
-                    <Typography variant="Regular_14">us-east-1b</Typography>
-                </div>
+                {resourceDetails?.topology?.ec2Details.length && (
+                    <>
+                        <div className={commonStyles.row}>
+                            <Typography variant="Semibold_14" className={commonStyles.heading}>
+                                Availability Zone 1:
+                            </Typography>
+                            <Typography variant="Regular_14">
+                                {resourceDetails.topology.ec2Details[0].availabilityZone}
+                            </Typography>
+                        </div>
 
-                <div className={commonStyles.row}>
-                    <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Subnet 1:
-                    </Typography>
-                    <Typography variant="Regular_14">10.20.1.0/24</Typography>
-                </div>
+                        <div className={commonStyles.row}>
+                            <Typography variant="Semibold_14" className={commonStyles.heading}>
+                                Subnet 1:
+                            </Typography>
+                            <Typography variant="Regular_14">
+                                {resourceDetails.topology.ec2Details[0].subnetId}
+                            </Typography>
+                        </div>
+                    </>
+                )}
 
-                <div className={commonStyles.row}>
-                    <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Availability Zone 2:
-                    </Typography>
-                    <Typography variant="Regular_14">us-east-1a</Typography>
-                </div>
+                {resourceDetails?.topology?.ec2Details.length > 1 && (
+                    <>
+                        <div className={commonStyles.row}>
+                            <Typography variant="Semibold_14" className={commonStyles.heading}>
+                                Availability Zone 2:
+                            </Typography>
+                            <Typography variant="Regular_14">
+                                {resourceDetails.topology.ec2Details[1].availabilityZone}
+                            </Typography>
+                        </div>
 
-                <div className={commonStyles.row}>
-                    <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Subnet 2:
-                    </Typography>
-                    <Typography variant="Regular_14">10.20.1.0/24</Typography>
-                </div>
+                        <div className={commonStyles.row}>
+                            <Typography variant="Semibold_14" className={commonStyles.heading}>
+                                Subnet 2:
+                            </Typography>
+                            <Typography variant="Regular_14">
+                                {resourceDetails.topology.ec2Details[1].subnetId}
+                            </Typography>
+                        </div>
+                    </>
+                )}
             </>
         );
     };
