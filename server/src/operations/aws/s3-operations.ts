@@ -20,7 +20,7 @@ const newRule: LifecycleRule = {
 };
 
 async function checkAndCreateBucketLifecycleConfiguration() {
-    logger.info('Checking and creating life cycle rule');
+    logger.debug('Checking and creating life cycle rule');
     const configurations = await getBucketLifecycleConfiguration(ASSETS_BUCKET_REGION, BUCKET_NAME);
     logger.debug('Existing configurations', configurations);
     const { Rules: currentLifecycleRules = [] } = configurations || {};

@@ -256,7 +256,7 @@ try {
 try {
     await checkAndCreateBucketLifecycleConfiguration();
 } catch (error) {
-    logger.error('Failed to check and create S3 bucket lifecycle');
+    logger.debug('Failed to check and create S3 bucket lifecycle');
 }
 
 app.listen({ port, host }, err => {

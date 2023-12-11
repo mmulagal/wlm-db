@@ -61,7 +61,7 @@ async function getObjectBucket(region: string, bucketName: string, objectName: s
 }
 
 async function putBucketLifecycleConfiguration(region: string, config: any) {
-    logger.info('Creating bucket lifcycle configuration', { region, config });
+    logger.debug('Creating bucket lifcycle configuration', { region, config });
     const s3 = new S3Client({ region });
     const command = new PutBucketLifecycleConfigurationCommand(config);
     try {
@@ -69,12 +69,12 @@ async function putBucketLifecycleConfiguration(region: string, config: any) {
         logger.debug('Put Bucket Lifecycle Configuration response:', response);
         return response;
     } catch (error) {
-        logger.error('Error configuring lifecycle:', error);
+        logger.debug('Error configuring lifecycle:', error);
     }
 }
 
 async function getBucketLifecycleConfiguration(region: string, bucketName: string) {
-    logger.info('Fetching bucket lifcycle configuration', { region, bucketName });
+    logger.debug('Fetching bucket lifcycle configuration', { region, bucketName });
     const s3 = new S3Client({ region });
     try {
         const command = new GetBucketLifecycleConfigurationCommand({ Bucket: bucketName });
@@ -82,7 +82,7 @@ async function getBucketLifecycleConfiguration(region: string, bucketName: strin
         logger.debug('Get Bucket Lifecycle Configuration response:', response);
         return response;
     } catch (error) {
-        logger.error(error);
+        logger.debug(error);
     }
 }
 
