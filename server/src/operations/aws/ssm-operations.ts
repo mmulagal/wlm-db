@@ -7,7 +7,7 @@ import {
     InvocationDoesNotExist,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions } from '../../lib/aws/ssm';
+import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus } from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
 import { AWS_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
@@ -100,4 +100,12 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
     return { regions: fsxRegionsList };
 }
-export { executeSSMDocument, getFSxOntapRegionsList };
+
+async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {
+    logger.info('Check for successful SSM connection', credentialId, region, instanceId);
+    return getConnectionStatus(credentialId, region, {
+        Target: instanceId
+    });
+}
+
+export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus };

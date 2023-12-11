@@ -2,6 +2,7 @@ import Promise from 'bluebird';
 import createError from 'http-errors';
 import { attempt, isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
@@ -23,7 +24,7 @@ import {
     SERVER_IO_LATENCY,
     NATIVE_SQL_BACKUPS
 } from './queries';
-import { executeSSMDocument } from '../../aws/ssm-operations';
+import { executeSSMDocument, getSSMConnectionStatus } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
@@ -97,6 +98,24 @@ async function callSsmExecution(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
+
+    // Check SSM Connection status
+    let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
+    if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+        if (standbyNodeInstanceId) {
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+            if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+            } else {
+                // Swap active with standby if connection to active is not successful and standby is successful
+                [activeNodeInstanceId, standbyNodeInstanceId] = [standbyNodeInstanceId, activeNodeInstanceId];
+            }
+        }
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
     let response;
     const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,

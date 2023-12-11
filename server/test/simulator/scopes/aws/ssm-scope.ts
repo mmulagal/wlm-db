@@ -7,12 +7,14 @@ import {
     GetCommandInvocationCommand,
     SendCommandCommand,
     SSMClient,
-    GetParametersByPathCommand
+    GetParametersByPathCommand,
+    GetConnectionStatusCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
+import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -224,3 +226,4 @@ ssmMock
     .resolves(getCommandInvocationResponse.storageInvocationResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
+ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

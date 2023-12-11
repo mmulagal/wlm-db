@@ -3,6 +3,7 @@ import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { GetTagsCommandOutput } from '@aws-sdk/client-cost-explorer';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -43,6 +44,7 @@ import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCoun
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostExplorerTimeRange } from './aws/cost-explorer-operations';
 import { getTagsfromCostExplorer } from '../lib/aws/cost-explorer';
+import { getSSMConnectionStatus } from './aws/ssm-operations';
 
 const logger = getLogger();
 
@@ -448,8 +450,35 @@ async function getDatabaseHostsSummary(
                 .map(async resourceDetail => {
                     const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
 
-                    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
+                    let { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
                         metadata as unknown as Metadata;
+
+                    // Check SSM Connection status
+                    let skipDueToSSMConnectionError = false;
+                    let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
+                    if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+                        if (standbyNodeInstanceId) {
+                            connectionStatus = await getSSMConnectionStatus(
+                                credentialsId,
+                                region!,
+                                standbyNodeInstanceId
+                            );
+                            if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                                errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+                                logger.error(errorMessage);
+                                skipDueToSSMConnectionError = true;
+                            } else {
+                                // Swap active with standby if connection to active is not successful and standby is successful
+                                [activeNodeInstanceId, standbyNodeInstanceId] = [
+                                    standbyNodeInstanceId,
+                                    activeNodeInstanceId
+                                ];
+                            }
+                        }
+                        logger.error(errorMessage);
+                        skipDueToSSMConnectionError = true;
+                    }
 
                     let serverStatus: string = ServerState.DOWN;
                     let dbCount;
@@ -458,6 +487,8 @@ async function getDatabaseHostsSummary(
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
                     let usageEstimationData: UsageCostResponseType | undefined;
+                    const activeNodeId = activeNodeInstanceId;
+                    const standbyNodeId = standbyNodeInstanceId;
 
                     [
                         serverStatus,
@@ -469,12 +500,20 @@ async function getDatabaseHostsSummary(
                         usageEstimationData
                     ] = await Promise.all(
                         [
-                            getServerState(resourceId), // Fetch server status
-                            getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
+                            ...(!skipDueToSSMConnectionError ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                            ...(!skipDueToSSMConnectionError
+                                ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
+                                : [Promise.resolve()]),
                             getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                            ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                            ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                            ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]), // Fetch protection status
+                            ...(!skipDueToSSMConnectionError && getPerformance
+                                ? [getServerIOLatency(resourceId)]
+                                : [Promise.resolve()]), // Fetch io latency data
+                            ...(!skipDueToSSMConnectionError && getStorageSavings
+                                ? [getStorageData(resourceDetail)]
+                                : [Promise.resolve()]), // Fetch storage savings data
+                            ...(!skipDueToSSMConnectionError && getProtection
+                                ? [getProtectionStatus(resourceDetail)]
+                                : [Promise.resolve()]), // Fetch protection status
                             ...(getUsageEstimation
                                 ? [getBillingOrPriceEstimation(resourceDetail)]
                                 : [Promise.resolve()]) // Fetch billing or pricing estimate data
