@@ -25,11 +25,13 @@ import {
     DescribeNetworkInterfacesCommand,
     DescribeInstancesCommand,
     DescribeInstancesCommandInput,
-    DescribeInstanceTypeOfferingsCommand
+    DescribeInstanceTypeOfferingsCommand,
+    CreateTagsCommand,
+    CreateTagsCommandOutput
 } from '@aws-sdk/client-ec2';
-import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
+// import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, HttpErrorCodes, TAG_STRUCTURE } from '../../utils/consts';
 
 const logger = getLogger();
 async function getEC2Client(region: string, credentialsId?: string) {
@@ -37,10 +39,16 @@ async function getEC2Client(region: string, credentialsId?: string) {
     if (!credentialsId) {
         return new EC2Client({ region });
     }
-    const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
-    const credentials = { accessKeyId, secretAccessKey, sessionToken };
+    // const {
+    //     credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
+    // } = await getCredentialsDetails(credentialsId);
+    // const credentials = { accessKeyId, secretAccessKey, sessionToken };
+    const credentials = {
+        accessKeyId: 'ASIAWYGBM3V5UBVPMIQV',
+        secretAccessKey: 'LB5Ul9V7xAi19S7qzIkIWR7bYWtB4gSh1SdVaOfm',
+        sessionToken:
+            'IQoJb3JpZ2luX2VjEJ///////////wEaCXVzLWVhc3QtMSJHMEUCIG63DTQtHtqmyVz/uSI+VleRkHUfuF1rKlH9450Ob/QBAiEAm65bk4U4Nd5loyPomUa7+x3Tbmco5Mu4qbv7vhYSm/4qqwIIFxAAGgw0NjQyNjIwNjE0MzUiDAzrAvEhm5A+PsvuoyqIAv2SVK5xybaV+mosU7rvQv5B2AuYs52ZZlKlkXMoFegTLHzo6vykUG34X7Jd00TT967If7fU+c3BWNsvCnzYxCBQE8+x5DRO3nOyAgHc7e2OhqisHYeLAkbc/05W8tcMAA+Cdk4IpG48BICRf9l3MTeIY3VxZOfTIqCBaJfmUmKuY6gJpBxFuCtGWgyrcXYApiJb/UhFK02LF92qP/dQUF7EY7McIFfNDg60N/wAlefrFPc5HDTXjq5MuV5dqVxUIo0uHe9p05MqaCNP7tiNqJgEomrTOK24UuuOzmc5Kpmsb7SGV6/NwGhZHF0reuu+zWfYqbURJ0BAUWQnyt4wmWFOSpnSXcMI+jDTtNyrBjqdAZkum/P55zDHv1j2cNlawZPmnx+9tWOgTdrUqjz1uWSPFiId9gKME9Om1pCkhCABq7W4n1B2U7shgpTjeTgnsbmqRT1gBHSoG0E1k/xKkGWucNmcuHQk+G6tC/Lv4Ptq/TEeCiMsgH+wEH4kDWEfbb1alURG01cZ4wI8ff9/ks5Ziy+8tTOWTl2FXV1Uul0nl7MEtDLaUmV+uFgAKTg='
+    };
 
     return new EC2Client({ credentials, region });
 }
@@ -246,6 +254,23 @@ async function describeInstanceTypeOfferings(credentialsId: string, region: stri
     return response;
 }
 
+async function CreateEc2Tag(credentialsId: string, region: string, resourceId: string, tags: TAG_STRUCTURE[]) {
+    logger.info('Adding tags to resource', credentialsId, region, resourceId, tags);
+
+    const client = await getEC2Client(region, credentialsId);
+    const ec2Params = {
+        Resources: [resourceId],
+        Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
+    };
+    try {
+        const command = new CreateTagsCommand(ec2Params);
+        const response: CreateTagsCommandOutput = await client.send(command);
+        logger.info('Resource tagged successfully:', response);
+    } catch (error) {
+        logger.error('Error tagging resource:', error);
+    }
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -258,5 +283,6 @@ export {
     describeRouteTable,
     describeKeyPairs,
     describeNetworkInterfaces,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    CreateEc2Tag
 };

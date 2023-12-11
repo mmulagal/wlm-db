@@ -904,6 +904,11 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
+type TAG_STRUCTURE = {
+    Key: string;
+    Value: string;
+};
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1103,5 +1108,6 @@ export {
     WLMDB_RESOURCE_TAG_VALUE,
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
-    PRICING
+    PRICING,
+    TAG_STRUCTURE
 };

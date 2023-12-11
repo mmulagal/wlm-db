@@ -38,7 +38,6 @@
         "@aws-sdk/client-iam": "^3.427.0",
         "@aws-sdk/client-kms": "^3.427.0",
         "@aws-sdk/client-pricing": "^3.427.0",
-        "@aws-sdk/client-resource-groups-tagging-api": "^3.458.0",
         "@aws-sdk/client-s3": "^3.427.0",
         "@aws-sdk/client-secrets-manager": "^3.427.0",
         "@aws-sdk/client-service-quotas": "^3.427.0",
