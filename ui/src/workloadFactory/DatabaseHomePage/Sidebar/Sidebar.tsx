@@ -873,7 +873,10 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                             {/* Cloud formation button */}
                             {dropDownValue === CODE_VIEWER.CLOUDFORMATION && (
-                                <div className={styles.cloudFormationButtonContainer}>
+                                <div
+                                    className={styles.cloudFormationButtonContainer}
+                                    onClick={() => handleViewInAwsCloudFormation()}
+                                >
                                     <Button variant="secondary">Redirect to CloudFormation</Button>
                                 </div>
                             )}
