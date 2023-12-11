@@ -111,7 +111,7 @@
             }
 
             [class*='design-system-select__single-value'] {
-                color: var(--white);
+                color: var(--white) !important;
             }
             [class*='design-system-select__menu'] {
                 box-shadow: none;
@@ -120,32 +120,32 @@
             }
 
             [class*='design-system-select__option'] {
-                background-color: var(--grey-70);
-                color: var(--white);
+                background-color: var(--grey-70) !important;
+                color: var(--white) !important;
             }
 
             [class*='Select-module_multiselect-menu'] {
-                background-color: var(--grey-70);
+                background-color: var(--grey-70) !important;
             }
             [class*='design-system-select__option--is-focused'] {
-                color: var(--blue-40);
+                color: var(--blue-40) !important;
                 background-color: var(--grey-60);
             }
             [class*='design-system-select__control']:hover {
                 box-shadow: 0 1px 0 var(--header-netapp-text-hover);
-                border-bottom: 1px solid var(--blue-40);
+                border-bottom: 1px solid var(--blue-40) !important;
 
                 div {
                     color: var(--header-netapp-text-hover);
                 }
 
                 svg {
-                    --icon-primary-color: var(--header-netapp-text-hover);
+                    --icon-primary-color: var(--header-netapp-text-hover) !important;
                 }
             }
 
             [class*='design-system-select__control'] {
-                border-bottom: 2px solid var(--content-background);
+                border-bottom: 2px solid var(--content-background) !important;
                 svg {
                     --icon-primary-color: var(--white) !important;
                 }
