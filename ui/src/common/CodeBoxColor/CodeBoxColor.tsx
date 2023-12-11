@@ -98,8 +98,12 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
     return (
         actualData && (
             <div className={styles.codeBox}>
-                <div>
-                    {`curl --location --request POST ${baseUrl}/credentials/${credID}/regions/${region}/cloudformation/stack' \\`}
+                <div style={{ width: 'max-content' }}>
+                    {`curl --location --request POST ${baseUrl}/credentials/`}
+                    <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
+                    <span>{`/regions/`}</span>
+                    <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>
+                    <span>/cloudformation/stack' \\</span>
                 </div>
                 <div>
                     <span>--header 'Authorization: Bearer </span>
