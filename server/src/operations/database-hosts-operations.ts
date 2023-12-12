@@ -688,14 +688,16 @@ async function getDatabaseHostSummary(
         databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
         databaseHostDetails.databaseServer = serverMetadata;
         databaseHostDetails.topology = topologyData!;
-        databaseHostDetails.rwPerformance = performanceData!;
+        databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
         databaseHostDetails.storage = storageData!;
         databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-        databaseHostDetails.resourceUtilization = {
-            cpu: cpuUtilizationData!,
-            memory: memoryUtilizationData!,
-            disk: diskUtilizationData!
-        };
+        if (getResourceutilization) {
+            databaseHostDetails.resourceUtilization = {
+                cpu: cpuUtilizationData!,
+                memory: memoryUtilizationData!,
+                disk: diskUtilizationData!
+            };
+        }
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
         throw createError(

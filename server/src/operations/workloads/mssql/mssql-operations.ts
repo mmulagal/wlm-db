@@ -325,14 +325,7 @@ async function getTablesSummary(resourceId: string, databaseName: string) {
 async function getServerSummary(resourceId: string) {
     logger.info('Get details of SQL Server database:', { resourceId });
 
-    const [
-        credentialsId,
-        region,
-        activeNodeInstanceId,
-        activeNodeInstanceName,
-        standbyNodeInstanceId,
-        standbyNodeInstanceName
-    ] = await getResourceDetails(resourceId);
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
 
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
@@ -404,9 +397,7 @@ async function getServerSummary(resourceId: string) {
             ...(isClustered ? { standbyNode, clusterName } : {}),
             operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
             creationDate,
-            nodeNames: standbyNodeInstanceName
-                ? [activeNodeInstanceName!, standbyNodeInstanceName!]
-                : [activeNodeInstanceName!]
+            nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!]
         };
     }
 }

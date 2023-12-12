@@ -57,12 +57,6 @@ const ProtectionResponse = Type.Object({
 });
 type ProtectionResponseType = Static<typeof ProtectionResponse>;
 
-const PerformanceResponse = Type.Object({
-    latency: Type.Number({ description: 'Database server I/O latency in milliseconds' }),
-    assessment: Type.String({ enum: ['High', 'Medium', 'Low'] })
-});
-type PerformanceResponseType = Static<typeof PerformanceResponse>;
-
 const RWPerformanceResponse = Type.Object({
     read: Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
     write: Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
@@ -75,6 +69,13 @@ const DetailedPerformanceResponse = Type.Object({
     throughput: RWPerformanceResponse
 });
 type DetailedPerformanceResponseType = Static<typeof DetailedPerformanceResponse>;
+
+const PerformanceResponse = Type.Object({
+    latency: Type.Optional(Type.Number({ description: 'Database server I/O latency in milliseconds' })),
+    assessment: Type.Optional(Type.String({ enum: ['High', 'Medium', 'Low'] })),
+    rwMetrics: Type.Optional(DetailedPerformanceResponse)
+});
+type PerformanceResponseType = Static<typeof PerformanceResponse>;
 
 const StorageResponse = Type.Object({
     size: Type.Number({ description: 'Provisioned size, in bytes' }),
@@ -133,8 +134,7 @@ const DatabaseHostSummaryResponse = Type.Object({
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StorageResponse),
     estimatedUsageCost: Type.Optional(UsageCostResponse),
-    resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
-    rwPerformance: Type.Optional(DetailedPerformanceResponse)
+    resourceUtilization: Type.Optional(ResourcesUtilizationResponse)
 });
 const DatabaseHostSummaryListResponse = Type.Object({
     count: Type.Number(),
