@@ -3,6 +3,7 @@ import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type accordionType = {
     handleToggle: any;
@@ -16,14 +17,14 @@ const ISConnectivity = ({ handleToggle, openKey }: accordionType) => {
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Key pair name:
+                        {GENERAL.KEY_PAIR_NAME_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.keyPairName}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        VPC:
+                        {GENERAL.VPC_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.vpcId}</Typography>
                 </div>
