@@ -12,12 +12,12 @@ import {
     ListTagsForResourceCommand,
     ListTagsForResourceCommandOutput,
     TagResourceCommand,
-    TagResourceCommandOutput
+    TagResourceCommandOutput,
+    Tag
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { TagStructure } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -130,7 +130,7 @@ async function listResourceTags(
     return response;
 }
 
-async function createTag(credentialsId: string, region: string, fsxArn: string, tags: TagStructure[]) {
+async function createTag(credentialsId: string, region: string, fsxArn: string, tags: Tag[]) {
     logger.info('Adding tags to resource', credentialsId, region, fsxArn, tags);
 
     const client = await getFSxClient(credentialsId, region);

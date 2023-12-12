@@ -21,7 +21,6 @@ import {
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
-import { TagStructure } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -418,7 +417,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
     return filteredInstances.ImageId;
 }
 
-async function tagEc2Resource(credentialsId: string, region: string, ec2Id: string[], tags: TagStructure[]) {
+async function tagEc2Resource(credentialsId: string, region: string, ec2Id: string[], tags: Tag[]) {
     logger.info('Adding tag to EC2 resource', credentialsId, region, ec2Id);
     createTag(credentialsId, region, ec2Id, tags);
 }

@@ -35,9 +35,5 @@ interface DeploymentDetails {
     end_time: string;
     data: unknown;
 }
-interface TagStructure {
-    Key: string;
-    Value: string;
-}
 
-export { Metadata, ResourceDetails, DeploymentDetails, TagStructure };
+export { Metadata, ResourceDetails, DeploymentDetails };
