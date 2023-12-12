@@ -37,14 +37,14 @@ const DatabaseListTable = () => {
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: GENERAL.DATABASE_NAME,
             accessor: 'name',
             isSortable: true,
             id: '1',
             width: '19.3%'
         },
         {
-            Header: 'Status',
+            Header: GENERAL.STATUS,
             accessor: 'status',
             filterOptions: 'auto',
             id: '2',
@@ -61,7 +61,7 @@ const DatabaseListTable = () => {
             }
         },
         {
-            Header: 'Size',
+            Header: GENERAL.SIZE,
             accessor: 'size',
             isSortable: true,
             id: '3',
@@ -71,7 +71,7 @@ const DatabaseListTable = () => {
             }
         },
         {
-            Header: 'Protection',
+            Header: GENERAL.DB_HOST_PROTECTION,
             accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
@@ -134,7 +134,7 @@ const DatabaseListTable = () => {
             }
         },
         {
-            Header: 'Type',
+            Header: GENERAL.DB_HOST_TYPE,
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',

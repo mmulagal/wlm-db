@@ -5,27 +5,28 @@ import { ReactComponent as Throughput } from '../../../assets/Throughput.svg';
 
 import styles from './StoragePerformance.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
 
 const StoragePerformance = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
     const dataValue = [
         {
             image: <Latency />,
-            text: 'Latency',
+            text: GENERAL.LATENCY,
             read: `${resourceDetails?.performance?.latency?.read} ms`,
             write: `${resourceDetails?.performance?.latency?.write} ms`,
             separator: true
         },
         {
             image: <IOPS />,
-            text: 'IOPS',
+            text: GENERAL.IOPS,
             read: `${resourceDetails?.performance?.iops?.read} ms`,
             write: `${resourceDetails?.performance?.iops?.write} ms`,
             separator: true
         },
         {
             image: <Throughput />,
-            text: 'Throughput',
+            text: GENERAL.THROUGHPUT,
             read: `${resourceDetails?.performance?.throughput?.read} MBPS`,
             write: `${resourceDetails?.performance?.throughput?.write} MBPS`,
             separator: false
@@ -35,7 +36,7 @@ const StoragePerformance = () => {
         <div className={styles.storagePerformance}>
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
-                    Storage performance
+                    {GENERAL.STORAGE_PERFORMANCE}
                 </Typography>
             </div>
 
@@ -51,9 +52,13 @@ const StoragePerformance = () => {
                                             <FlashingDotsLoader className={styles.loaderHeight} />
                                         ) : (
                                             <div className={styles.valueText}>
-                                                <Typography variant="Semibold_14">Read {item.read} </Typography>
+                                                <Typography variant="Semibold_14">
+                                                    {GENERAL.READ} {item.read}{' '}
+                                                </Typography>
                                                 <div className={styles.smallSeparator} />
-                                                <Typography variant="Semibold_14">Write {item.write}</Typography>
+                                                <Typography variant="Semibold_14">
+                                                    {GENERAL.WRITE} {item.write}
+                                                </Typography>
                                             </div>
                                         )}
                                     </div>

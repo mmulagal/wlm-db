@@ -3,6 +3,7 @@ import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type accordionType = {
     handleToggle: any;
@@ -16,7 +17,7 @@ const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Domain name:
+                        {GENERAL.DOMAIN_NAME_INFO}
                     </Typography>
                     <Typography variant="Regular_14">
                         {resourceDetails?.topology?.activeDirectoryDetails?.name}
@@ -25,7 +26,7 @@ const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        DNS address:
+                        {GENERAL.DNS_ADDRESS_INFO}
                     </Typography>
                     <Typography variant="Regular_14">
                         {resourceDetails?.topology?.activeDirectoryDetails?.address}
