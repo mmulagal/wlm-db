@@ -17,9 +17,9 @@ import {
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
     STANDALONE,
-    STANDALONE_NETWORK_EMPTY_VIOLATION_REASON,
-    FCI_NETWORK_EMPTY_VIOLATION_REASON,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -138,7 +138,7 @@ function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigura
         if (!networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id) {
             return {
                 isViolated: true,
-                violationReason: STANDALONE_NETWORK_EMPTY_VIOLATION_REASON
+                violationMessage: STANDALONE_NETWORK_VIOLATION_MESSAGE
             };
         }
         return noViolation;
@@ -151,7 +151,7 @@ function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigura
     ) {
         return {
             isViolated: true,
-            violationReason: FCI_NETWORK_EMPTY_VIOLATION_REASON
+            violationMessage: FCI_NETWORK_EMPTY_VIOLATION_MESSAGE
         };
     }
 
@@ -162,7 +162,7 @@ function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigura
     if (networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
         return {
             isViolated: true,
-            violationReason: FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON
+            violationMessage: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
         };
     }
     return noViolation;

@@ -38,6 +38,6 @@ interface DeploymentDetails {
 
 interface NetworkVioation {
     isViolated: boolean;
-    violationReason?: string;
+    violationMessage?: string;
 }
 export { Metadata, ResourceDetails, DeploymentDetails, NetworkVioation };

@@ -56,20 +56,13 @@ import {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
-    STANDALONE,
-    STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
-    FCI_NETWORK_EMPTY_VIOLATION_REASON,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON,
     FileSystemTypes,
     DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
     LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE,
-    STANDALONE_NETWORK_EMPTY_VIOLATION_REASON
+    WLMDB_RESOURCE_TAG_VALUE
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -331,17 +324,9 @@ async function createCloudFormationTemplateForUserDeployment(
         sqlConfiguration.sqlDeploymentMode
     );
 
-    const violationReasonMessages = {
-        [STANDALONE_NETWORK_EMPTY_VIOLATION_REASON]: STANDALONE_NETWORK_VIOLATION_MESSAGE,
-        [FCI_NETWORK_EMPTY_VIOLATION_REASON]: FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-        [FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON]: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
-    } as { [key: string]: string };
-
-    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationReason !== undefined) {
-        const errorMessage = violationReasonMessages[vpcValidationCheck.violationReason];
-        if (errorMessage) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-        }
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+        const errorMessage = vpcValidationCheck!.violationMessage;
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
@@ -444,18 +429,14 @@ async function deployCloudFormationTemplate(
         tags
     });
 
-    const vpcValidationCheck: any = isNetworkConfigurationViolated(
+    const vpcValidationCheck: NetworkVioation = isNetworkConfigurationViolated(
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode
     );
-    if (vpcValidationCheck.isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
-        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_EMPTY_VIOLATION_REASON) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_EMPTY_VIOLATION_MESSAGE);
-        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE);
-        }
+
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+        const errorMessage = vpcValidationCheck.violationMessage;
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
