@@ -117,6 +117,15 @@ const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     AND backupset.database_name NOT IN ('msdb','tempdb','model','master') ${FOR_JSON_PATH}
 `;
 
+const SQL_BACKUPS = `${SET_NOCOUNT} SELECT
+    DISTINCT backupset.database_name as backedupDatabases
+    FROM msdb.dbo.backupset AS backupset
+    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
+    ON backupset.media_set_id = backupmedia.media_set_id
+    WHERE backupmedia.device_type = 2
+    AND backupset.type = 'D' ${FOR_JSON_PATH}
+`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -135,5 +144,6 @@ export {
     CLUSTER_NODES,
     DB_SIZE,
     SERVER_IO_LATENCY,
-    NATIVE_SQL_BACKUPS
+    NATIVE_SQL_BACKUPS,
+    SQL_BACKUPS
 };

@@ -3,6 +3,7 @@ import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type accordionType = {
     handleToggle: any;
@@ -16,14 +17,14 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        AWS account:
+                        {GENERAL.AWS_ACC_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.awsAccount}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Region:
+                        {GENERAL.REGION_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.region}</Typography>
                 </div>
@@ -32,7 +33,7 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                     <>
                         <div className={commonStyles.row}>
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
-                                Availability Zone 1:
+                                {GENERAL.AZ_INFO_1}
                             </Typography>
                             <Typography variant="Regular_14">
                                 {resourceDetails.topology.ec2Details[0].availabilityZone}
@@ -41,7 +42,7 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
 
                         <div className={commonStyles.row}>
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
-                                Subnet 1:
+                                {GENERAL.SUBNET_INFO_1}
                             </Typography>
                             <Typography variant="Regular_14">
                                 {resourceDetails.topology.ec2Details[0].subnetId}
@@ -54,7 +55,7 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                     <>
                         <div className={commonStyles.row}>
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
-                                Availability Zone 2:
+                                {GENERAL.AZ_INFO_2}
                             </Typography>
                             <Typography variant="Regular_14">
                                 {resourceDetails.topology.ec2Details[1].availabilityZone}
@@ -63,7 +64,7 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
 
                         <div className={commonStyles.row}>
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
-                                Subnet 2:
+                                {GENERAL.SUBNET_INFO_2}
                             </Typography>
                             <Typography variant="Regular_14">
                                 {resourceDetails.topology.ec2Details[1].subnetId}

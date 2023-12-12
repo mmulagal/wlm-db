@@ -3,6 +3,7 @@ import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type accordionType = {
     handleToggle: any;
@@ -16,7 +17,7 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        DB Instance type:
+                        {GENERAL.DB_INSTANCE_TYPE}
                     </Typography>
                     <Typography variant="Regular_14">
                         {resourceDetails?.topology?.ec2Details[0].instanceType}
@@ -25,49 +26,49 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        File system name:
+                        {GENERAL.FILE_SYS_NAME}
                     </Typography>
                     <Typography variant="Regular_14">wlmdb-fsx-1</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        File system ID:
+                        {GENERAL.FILE_SYS_ID}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.fsxFilesystemId}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        File system type:
+                        {GENERAL.FILE_SYS_TYPE}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemType}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        File system status:
+                        {GENERAL.FILE_SYS_STATUS}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStatus}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Storage capacity:
+                        {GENERAL.STORAGE_CAPACITY_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStorageCapacity}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        File system deployment type:
+                        {GENERAL.FILE_SYS_DP_TYPE}
                     </Typography>
                     <Typography variant="Regular_14">Multi-AZ</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        FSx Throughput capacity:
+                        {GENERAL.FSX_THROUGHPUT_TYPE}
                     </Typography>
                     <Typography variant="Regular_14">
                         {resourceDetails?.topology?.fileSystemThroughputCapacity}
