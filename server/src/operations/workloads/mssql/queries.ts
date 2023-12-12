@@ -119,6 +119,7 @@ const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     AND backupset.database_name NOT IN ('msdb','tempdb','model','master') ${FOR_JSON_PATH}
 `;
 
+// Since TempDB is recreated every time, we can use that to calculate the our start up time hence database_id=2
 const PERFORMANCE_METRICS = `${SET_NOCOUNT} DECLARE @SQLRestartDateTime Datetime
     DECLARE @TimeInSeconds Float
     SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2
