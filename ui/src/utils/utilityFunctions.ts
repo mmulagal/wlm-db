@@ -4,11 +4,14 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
+    CREDENTIAL_PROD_LINK,
+    CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
     PENDING_DELETION,
+    PRODUCTION,
     RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
     SQL_DATABASE,
@@ -848,4 +851,16 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     }
     params.enableCloudWatch = payload.cloudWatch || false;
     return params;
+};
+
+export const openCredentialTab = () => {
+    const state = store.getState();
+    const isWorkloadFactoryStatus = state.auth.isWorkloadFactory;
+    let url;
+    if (isWorkloadFactoryStatus) {
+        url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+    } else {
+        url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+    }
+    window.open(url, '_blank', 'noopener');
 };

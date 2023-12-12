@@ -8,7 +8,13 @@ import { GENERAL } from '../../../../utils/appConstants';
 const Diagram = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
     return (
-        <div className={resourceLoading ? `${styles.diagram} ${styles.hideDiagram}` : `${styles.diagram}`}>
+        <div
+            className={
+                resourceLoading || resourceDetails?.topology?.serverInstallationMode === ''
+                    ? `${styles.diagram} ${styles.hideDiagram}`
+                    : `${styles.diagram}`
+            }
+        >
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
                     {GENERAL.TOPOLOGY}

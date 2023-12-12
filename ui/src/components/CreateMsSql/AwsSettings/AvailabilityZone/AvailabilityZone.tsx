@@ -120,7 +120,8 @@ const AvailabilityZone = () => {
         subnetsList?.map((val: Subnets, idx: number) => {
             const label2 = val?.id;
             const value = val?.cidrBlock;
-            const option = generateOptionType(value, value, label2, false, '', val);
+            const label = (val?.name ? val.name + ' | ' : '') + val?.cidrBlock;
+            const option = generateOptionType(value, label, label2, false, '', val);
             options.push(option);
         });
         return options;
@@ -175,7 +176,8 @@ const AvailabilityZone = () => {
         subnetsList?.map((val: Subnets, idx: number) => {
             const label2 = val?.id;
             const value = val?.cidrBlock;
-            const option = generateOptionType(value, value, label2, false, '', val);
+            const label = (val?.name ? val.name + ' | ' : '') + val?.cidrBlock;
+            const option = generateOptionType(value, label, label2, false, '', val);
             options.push(option);
         });
         return options;
@@ -202,17 +204,17 @@ const AvailabilityZone = () => {
         }
 
         if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-            if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.label || !selectedSubnet2?.label) {
+            if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.value || !selectedSubnet2?.value) {
                 return <ActionRequired error={!isAZNotFilled ? true : false} />;
             } else {
                 return (
                     <div className={CommonStyles.setHeaderStyle}>
                         <div className={CommonStyles.regular}>
-                            Node 1:{selectedZone1?.label} ({selectedSubnet1?.label})
+                            Node 1:{selectedZone1?.label} ({selectedSubnet1?.value})
                         </div>
                         <div className={CommonStyles.separator} />
                         <div className={CommonStyles.regular}>
-                            Node 2:{selectedZone2?.label} ({selectedSubnet2?.label})
+                            Node 2:{selectedZone2?.label} ({selectedSubnet2?.value})
                         </div>
                     </div>
                 );
