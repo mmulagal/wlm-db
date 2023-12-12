@@ -578,6 +578,7 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
     `Required permissions are not available to deploy cloud formation template. Missing permissions: ${permissions}.`;
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
+const STANDALONE_NETWORK_EMPTY_VIOLATION_REASON = 'standalone empty ids';
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
     'For standalone deployment, privateSubnet1Id and routeTable1Id cannot be empty.';
 
@@ -587,7 +588,7 @@ const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
 const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
     'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
 
-const FCI_NETWORK_EMPTY_VIOLATION_REASON = 'empty ids';
+const FCI_NETWORK_EMPTY_VIOLATION_REASON = 'fci empty ids';
 
 const FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON = 'same route table';
 
@@ -1109,6 +1110,7 @@ export {
     DEPLOYMENT_JOBS_STATUS_FILTER,
     NOT_AVAILABLE,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
+    STANDALONE_NETWORK_EMPTY_VIOLATION_REASON,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,

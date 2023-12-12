@@ -68,7 +68,8 @@ import {
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
     LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE
+    WLMDB_RESOURCE_TAG_VALUE,
+    STANDALONE_NETWORK_EMPTY_VIOLATION_REASON
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -85,6 +86,7 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
+import { NetworkVioation } from '../utils/common-types';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -324,17 +326,21 @@ async function createCloudFormationTemplateForUserDeployment(
         tags
     });
 
-    const vpcValidationCheck: any = isNetworkConfigurationViolated(
+    const vpcValidationCheck: NetworkVioation = isNetworkConfigurationViolated(
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode
     );
-    if (vpcValidationCheck.isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
-        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_EMPTY_VIOLATION_REASON) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_EMPTY_VIOLATION_MESSAGE);
-        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE);
+
+    const violationReasonMessages = {
+        [STANDALONE_NETWORK_EMPTY_VIOLATION_REASON]: STANDALONE_NETWORK_VIOLATION_MESSAGE,
+        [FCI_NETWORK_EMPTY_VIOLATION_REASON]: FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+        [FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON]: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
+    } as { [key: string]: string };
+
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationReason !== undefined) {
+        const errorMessage = violationReasonMessages[vpcValidationCheck.violationReason];
+        if (errorMessage) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
         }
     }
 
