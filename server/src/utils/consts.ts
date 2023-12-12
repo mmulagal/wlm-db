@@ -911,6 +911,25 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
+const MSSQL_SYSTEM_DATABASES = [
+    'master',
+    'mastlog',
+    'tempdb',
+    'tempdev',
+    'templog',
+    'modeldev',
+    'model',
+    'modellog',
+    'msdbdata',
+    'msdblog',
+    'msdb'
+];
+
+const MSSQL_DATABASE_TYPES = {
+    SYSTEM: 'System Database',
+    USER: 'User Database'
+};
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1111,6 +1130,8 @@ export {
     INVALID_PARAMETER_VALUE,
     LOG_GROUP_ARN,
     WLMDB_RESOURCE_TAG_VALUE,
+    MSSQL_SYSTEM_DATABASES,
+    MSSQL_DATABASE_TYPES,
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
     PRICING

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This workload template deploys a SqlFSx instance in an existing VPC.
+Description: This workload template deploys a SQL Standalone instance using FSxN in an existing VPC.
     **WARNING** This template creates EC2 instances and related resources. You will
     be billed for the AWS resources used if you create a stack from this template.
 Metadata:
@@ -734,7 +734,7 @@ Resources:
                 - DeviceName: /dev/sda1
                   Ebs:
                       VolumeSize: '100'
-                      VolumeType: gp2
+                      VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
                 Fn::Join:
