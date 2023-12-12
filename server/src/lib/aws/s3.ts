@@ -69,7 +69,7 @@ async function putBucketLifecycleConfiguration(region: string, config: any) {
         logger.debug('Put Bucket Lifecycle Configuration response:', response);
         return response;
     } catch (error) {
-        logger.error('Error configuring lifecycle:', error);
+        logger.debug('Error configuring lifecycle:', error);
     }
 }
 
@@ -82,7 +82,7 @@ async function getBucketLifecycleConfiguration(region: string, bucketName: strin
         logger.debug('Get Bucket Lifecycle Configuration response:', response);
         return response;
     } catch (error) {
-        logger.error(error);
+        logger.debug(error);
     }
 }
 
