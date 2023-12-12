@@ -61,7 +61,7 @@ async function getObjectBucket(region: string, bucketName: string, objectName: s
 }
 
 async function putBucketLifecycleConfiguration(region: string, config: any) {
-    logger.debug('Creating bucket lifcycle configuration', { region, config });
+    logger.info('Creating bucket lifcycle configuration', { region, config });
     const s3 = new S3Client({ region });
     const command = new PutBucketLifecycleConfigurationCommand(config);
     try {
@@ -74,7 +74,7 @@ async function putBucketLifecycleConfiguration(region: string, config: any) {
 }
 
 async function getBucketLifecycleConfiguration(region: string, bucketName: string) {
-    logger.debug('Fetching bucket lifcycle configuration', { region, bucketName });
+    logger.info('Fetching bucket lifcycle configuration', { region, bucketName });
     const s3 = new S3Client({ region });
     try {
         const command = new GetBucketLifecycleConfigurationCommand({ Bucket: bucketName });
