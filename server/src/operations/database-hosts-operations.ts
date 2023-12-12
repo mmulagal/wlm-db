@@ -524,8 +524,8 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { credentialsId } = metadata as unknown as Metadata;
-    const [databases, backedupDatabases, awsBackup, ontapBackup] = await Promise.all([
-        (await getDataBasesSummary(databaseHostId)).databases,
+    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all([
+        await getDataBasesSummary(databaseHostId),
         getNativeSQLBackedupDatabases(databaseHostId),
         isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
         getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
@@ -542,10 +542,11 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             protection: {
                 isAWSBackupEnabled: Boolean(awsBackup),
                 isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
-                isSqlNativeEnabled:
-                    backedupDatabases.filter(
+                isSqlNativeEnabled: Boolean(
+                    backedupDatabases.find(
                         (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                    ).length > 0
+                    )
+                )
             }
         })
     );
