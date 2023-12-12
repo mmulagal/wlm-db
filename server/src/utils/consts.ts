@@ -581,8 +581,15 @@ const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to rea
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
     'For standalone deployment, privateSubnet1Id and routeTable1Id cannot be empty.';
 
-const FCI_NETWORK_VIOLATION_MESSAGE =
-    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
+const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
+    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.';
+
+const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
+    'AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
+
+const FCI_NETWORK_EMPTY_VIOLATION_REASON = 'empty ids';
+
+const FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON = 'same route table';
 
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
@@ -1084,7 +1091,10 @@ export {
     NOT_AVAILABLE,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_REASON,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
     DATABASE_TYPE,

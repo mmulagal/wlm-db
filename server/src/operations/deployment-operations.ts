@@ -58,7 +58,10 @@ import {
     RESOURCESTYPE,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_REASON,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON,
     FileSystemTypes,
     DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
@@ -321,12 +324,18 @@ async function createCloudFormationTemplateForUserDeployment(
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
+    const vpcValidationCheck: any = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+    if (vpcValidationCheck.isViolated) {
         if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
             throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
+        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_EMPTY_VIOLATION_REASON) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_EMPTY_VIOLATION_MESSAGE);
+        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE);
         }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
     }
 
     // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
@@ -429,12 +438,18 @@ async function deployCloudFormationTemplate(
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
+    const vpcValidationCheck: any = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+    if (vpcValidationCheck.isViolated) {
         if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
             throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
+        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_EMPTY_VIOLATION_REASON) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_EMPTY_VIOLATION_MESSAGE);
+        } else if (vpcValidationCheck.violationReason === FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE);
         }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
     }
 
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(

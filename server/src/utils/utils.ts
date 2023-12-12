@@ -16,7 +16,9 @@ import {
     FSX_SSD_MAX_SIZE,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
-    STANDALONE
+    STANDALONE,
+    FCI_NETWORK_EMPTY_VIOLATION_REASON,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -129,19 +131,32 @@ function getSubjectFromBearerToken() {
 }
 
 function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigurationType, deploymentMode: string) {
+    const isViolated = false;
     if (deploymentMode === STANDALONE) {
-        return !networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id;
+        return { isViolated: !networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id };
     }
-    const isViolated =
+    if (
         !networkConfiguration.privateSubnet1Id ||
         !networkConfiguration.privateSubnet2Id ||
         !networkConfiguration.routeTable1Id ||
-        !networkConfiguration.routeTable2Id;
+        !networkConfiguration.routeTable2Id
+    ) {
+        return {
+            isViolated: true,
+            violationReason: FCI_NETWORK_EMPTY_VIOLATION_REASON
+        };
+    }
     // In simulator route table 1 and route table 2 id will be always same, so we cant check that condition
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return isViolated;
+        return false;
     }
-    return isViolated || networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id;
+    if (networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
+        return {
+            isViolated: true,
+            violationReason: FCI_NETWORK_ROUTE_TABLE_VIOLATION_REASON
+        };
+    }
+    return isViolated;
 }
 
 function checkAndRetrieveJsonObject(str: string | undefined) {
