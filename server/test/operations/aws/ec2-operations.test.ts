@@ -50,7 +50,7 @@ describe('EC2 Operations', () => {
 
     it('Tag Ec2 instance', async () => {
         await expect(
-            tagEc2Resource(credentialsId, DEFAULT_AWS_REGION, ec2Id, [{ Key: 'key', Value: 'value' }])
+            tagEc2Resource(credentialsId, DEFAULT_AWS_REGION, [ec2Id], [{ Key: 'key', Value: 'value' }])
         ).resolves.not.toThrow();
     });
 });

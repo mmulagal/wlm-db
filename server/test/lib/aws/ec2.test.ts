@@ -36,7 +36,7 @@ import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
 
-const ec2Arn = `arn:aws:res:${DEFAULT_AWS_REGION}:${faker.number.int(8)}:res/${faker.string.alphanumeric(8)}`;
+const ec2Id = faker.string.alphanumeric(8);
 const tag = [{ Key: 'key', Value: 'value' }];
 
 describe('EC2 Lib', () => {
@@ -146,6 +146,6 @@ describe('EC2 Lib', () => {
 
     it('Create tag for given resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        await expect(createTag(credentialsId, REGION, ec2Arn, tag)).resolves.not.toThrow();
+        await expect(createTag(credentialsId, REGION, [ec2Id], tag)).resolves.not.toThrow();
     });
 });
