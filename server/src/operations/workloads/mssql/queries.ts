@@ -131,6 +131,15 @@ const PERFORMANCE_METRICS = `${SET_NOCOUNT} DECLARE @SQLRestartDateTime Datetime
         , CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY
     FROM sys.dm_io_virtual_file_stats(null,null)  ${FOR_JSON_PATH}`;
 
+const SQL_BACKUPS = `${SET_NOCOUNT} SELECT
+    DISTINCT backupset.database_name as backedupDatabases
+    FROM msdb.dbo.backupset AS backupset
+    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
+    ON backupset.media_set_id = backupmedia.media_set_id
+    WHERE backupmedia.device_type = 2
+    AND backupset.type = 'D' ${FOR_JSON_PATH}
+`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -151,5 +160,6 @@ export {
     SERVER_IO_LATENCY,
     NATIVE_SQL_BACKUPS,
     SERVER_INSTALL_DATE,
-    PERFORMANCE_METRICS
+    PERFORMANCE_METRICS,
+    SQL_BACKUPS
 };

@@ -150,7 +150,7 @@ const DatabasesResponse = Type.Object({
     status: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
-    isProtected: Type.Optional(Type.Boolean())
+    protection: ProtectionResponse
 });
 type DatabasesResponseType = Static<typeof DatabasesResponse>;
 

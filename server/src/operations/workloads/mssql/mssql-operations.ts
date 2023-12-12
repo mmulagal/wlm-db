@@ -23,7 +23,8 @@ import {
     SERVER_IO_LATENCY,
     NATIVE_SQL_BACKUPS,
     SERVER_INSTALL_DATE,
-    PERFORMANCE_METRICS
+    PERFORMANCE_METRICS,
+    SQL_BACKUPS
 } from './queries';
 import { executeSSMDocument } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -653,6 +654,36 @@ async function getPerformanceMetrics(resourceId: string) {
     }
 }
 
+async function getNativeSQLBackedupDatabases(resourceId: string) {
+    logger.info('Fetch SQL native protection status', { resourceId });
+
+    try {
+        const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
+            resourceId
+        );
+
+        if (!credentialsId || !region || !activeNodeInstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+        }
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${SQL_BACKUPS}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId!
+        );
+
+        const cleanedResponse = response?.replaceAll('\r\n', '');
+        const parsedResponse = attempt(JSON.parse, cleanedResponse);
+
+        logger.debug('SQL native protection status', parsedResponse);
+        return parsedResponse instanceof Error ? undefined : parsedResponse;
+    } catch (err) {
+        logger.error('Error getting SQL native protection status', { err });
+    }
+}
+
 export {
     getSqlServerDetails,
     getResourceUtilisation,
@@ -669,5 +700,6 @@ export {
     getServerIOLatency,
     getServerState,
     getNativeSQLProtection,
-    getPerformanceMetrics
+    getPerformanceMetrics,
+    getNativeSQLBackedupDatabases
 };

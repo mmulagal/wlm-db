@@ -2,7 +2,6 @@ import { resource } from '@prisma/client';
 import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { GetTagsCommandOutput } from '@aws-sdk/client-cost-explorer';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -14,7 +13,8 @@ import {
     UsageCostResponseType,
     DatabaseServerMetadataResponseType,
     UtilizationResponseType,
-    DetailedPerformanceResponseType
+    DetailedPerformanceResponseType,
+    DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, getAmis } from '../lib/aws/ec2';
 import { describeFSxN } from '../lib/aws/fsx';
@@ -33,6 +33,8 @@ import {
     SQL_STD,
     SQL_ENT,
     DATABASE_METRIC_TYPE,
+    MSSQL_DATABASE_TYPES,
+    MSSQL_SYSTEM_DATABASES,
     PRICING,
     WLMDB_COST_ALLOCATION_TAG
 } from '../utils/consts';
@@ -44,12 +46,14 @@ import {
     getDatabasesCount,
     getServerSummary,
     getResourceUtilisation,
-    getPerformanceMetrics
+    getPerformanceMetrics,
+    getDataBasesSummary,
+    getNativeSQLBackedupDatabases
 } from './workloads/mssql/mssql-operations';
 import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
-import { calculateBilling, getCostExplorerTimeRange } from './aws/cost-explorer-operations';
-import { getTagsfromCostExplorer } from '../lib/aws/cost-explorer';
+import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
+import { getCostAllocationTagResources } from './aws/tags-operations';
 
 const logger = getLogger();
 
@@ -332,11 +336,10 @@ async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails) {
 
     const [billingResponse, pricingResponse] = await Promise.all([
         getBilling(resourceDetail).catch(error => {
-            logger.error('Failed to get billing data for resource: :', JSON.stringify(error)); // Do not throw error here as we need to call getUsageEstimationData
+            logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
         }),
         getUsageEstimationData(resourceDetail).catch(error => {
             logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
-            throw error;
         })
     ]);
 
@@ -352,45 +355,47 @@ async function getBilling(resourceDetail: ResourceDetails) {
             activeNodeInstanceId: string;
             standbyNodeInstanceId: string;
         };
-        // We need to check here if wlmdb-cost-resource cost allocation tag is activated at account level or not
-        let tagsResponse: GetTagsCommandOutput;
-        try {
-            const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
-            tagsResponse = await getTagsfromCostExplorer(region!, {
-                TimePeriod: {
-                    Start: startTimeFormat,
-                    End: currenTimeFormat
-                }
-            });
-            logger.debug('Cost allocation tag response', tagsResponse);
-        } catch (error) {
-            logger.error('Error while reteriving cost allocation tag');
-            throw error;
-        }
-
-        if (tagsResponse.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
-            const billingResponse: UsageCostResponseType = await calculateBilling(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                activeNodeInstanceId,
-                standbyNodeInstanceId
-            );
-
-            return {
-                compute: billingResponse?.compute,
-                storage: billingResponse?.storage,
-                connectivity: billingResponse?.connectivity || 0,
-                others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
-                estimationType: billingResponse?.estimationType
-            };
-        }
-        throw new Error(
-            `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated`
+        // Need to validate before proceeding for billing
+        await validationForCostExplorer(resourceDetail);
+        const billingResponse: UsageCostResponseType = await calculateBilling(
+            credentialsId,
+            region!,
+            fileSystemId!,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
         );
+
+        return {
+            compute: billingResponse?.compute,
+            storage: billingResponse?.storage,
+            connectivity: billingResponse?.connectivity || 0,
+            others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
+            estimationType: billingResponse?.estimationType
+        };
     } catch (error) {
-        logger.error('Failed to get billing data for resource:', resourceDetail, JSON.stringify(error));
+        logger.error('Failed to get billing data for resource:', resourceDetail.resource_id, error);
         throw error;
+    }
+}
+
+async function validationForCostExplorer(resourceDetail: ResourceDetails) {
+    logger.info('Validating prerequiste for Cost explorer for billing of resources');
+
+    // 1.  We need to check if wlmdb-cost-resource cost allocation tag is activated at account level or not
+    const tagsResponse = await getCostAllocationTags(resourceDetail);
+    if (!tagsResponse.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
+        throw new Error(
+            `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated at account level`
+        );
+    }
+
+    // 2. Validate cost allocation tag is at resource level or not
+    const resources = await getCostAllocationTagResources(resourceDetail);
+    logger.debug('Resources with cost allocation tag ', resources);
+    if (!resources.ResourceTagMappingList!.length) {
+        throw new Error(
+            `Calcaulation of Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not attached to resource ${resourceDetail.resource_id}`
+        );
     }
 }
 
@@ -704,4 +709,49 @@ async function getDatabaseHostSummary(
     return databaseHostDetails;
 }
 
-export { getDatabaseHostsSummary, getDatabaseHostSummary };
+async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
+
+    const [resourceDetail] = await listResources(accountId);
+
+    if (isEmpty(resourceDetail)) {
+        logger.error(`No deployed host with id ${databaseHostId} in ${accountId} is found.`);
+        return { count: 0, items: [], nextToken: '' };
+    }
+
+    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+    const { credentialsId } = metadata as unknown as Metadata;
+    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all([
+        await getDataBasesSummary(databaseHostId),
+        getNativeSQLBackedupDatabases(databaseHostId),
+        isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
+        getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
+    ]);
+
+    const response = databases.map(
+        (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
+            name: database.databaseName,
+            size: database.databaseSize,
+            status: database.databaseStatus,
+            type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                ? MSSQL_DATABASE_TYPES.SYSTEM
+                : MSSQL_DATABASE_TYPES.USER,
+            protection: {
+                isAWSBackupEnabled: Boolean(awsBackup),
+                isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                isSqlNativeEnabled: Boolean(
+                    backedupDatabases.find(
+                        (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                    )
+                )
+            }
+        })
+    );
+    return {
+        count: response.length,
+        nextToken: '',
+        items: response
+    };
+}
+
+export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases };

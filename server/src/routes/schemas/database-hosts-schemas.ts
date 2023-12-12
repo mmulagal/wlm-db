@@ -45,7 +45,7 @@ const DatabasesListSchema = {
     ...baseRequest,
     summary: 'Fetch details about databases in a server ',
     description:
-        'Fetch details about databases in a server - name, creation date, protection status, availability status, size and type of database',
+        'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
     params: DatabaseHostSummaryParams,
     response: {
         200: DatabasesListResponse

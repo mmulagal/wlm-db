@@ -24,6 +24,8 @@ type messageType = {
     active?: boolean;
     errors?: any;
     confirmData?: any;
+    default?: string;
+    disable?: boolean;
 };
 
 type MessagePropType = {
@@ -120,6 +122,8 @@ const Message = ({
                                                             }}
                                                             selectKey={item.key}
                                                             fieldType={item.type}
+                                                            defaultValue={item.default}
+                                                            isDisabled={item.disable}
                                                             errorFields={errorFields}
                                                             setErrorFields={setErrorFields}
                                                             activeField={activeField}
