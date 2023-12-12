@@ -140,16 +140,22 @@ async function tagResources(
         { Key: WLMDB_COST_ALLOCATION_TAG, Value: fsxId }
     ]);
 
-    const tagEc2Promise = tagEc2Resource(credentialsId, region, activeNodeInstanceId, [
-        { Key: WLMDB_COST_ALLOCATION_TAG, Value: activeNodeInstanceId }
-    ]);
+    const tagEc2Promise = tagEc2Resource(
+        credentialsId,
+        region,
+        [activeNodeInstanceId],
+        [{ Key: WLMDB_COST_ALLOCATION_TAG, Value: activeNodeInstanceId }]
+    );
 
     const promises = [tagFsxPromise, tagEc2Promise];
 
     if (standbyNodeInstanceId) {
-        const tagStandbyPromise = tagEc2Resource(credentialsId, region, standbyNodeInstanceId, [
-            { Key: WLMDB_COST_ALLOCATION_TAG, Value: standbyNodeInstanceId }
-        ]);
+        const tagStandbyPromise = tagEc2Resource(
+            credentialsId,
+            region,
+            [standbyNodeInstanceId],
+            [{ Key: WLMDB_COST_ALLOCATION_TAG, Value: standbyNodeInstanceId }]
+        );
         promises.push(tagStandbyPromise);
     }
 
@@ -329,16 +335,18 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
-
-                                                    await tagResources(
-                                                        credentialsId,
-                                                        region,
-                                                        cloudProviderAccountId,
-                                                        fsxId,
-                                                        activeNodeInstanceId,
-                                                        standbyNodeInstanceId
-                                                    );
-
+                                                    try {
+                                                        await tagResources(
+                                                            credentialsId,
+                                                            region,
+                                                            cloudProviderAccountId,
+                                                            fsxId,
+                                                            activeNodeInstanceId,
+                                                            standbyNodeInstanceId
+                                                        );
+                                                    } catch (error) {
+                                                        logger.error('Error while tagging resource', error);
+                                                    }
                                                     const notificationData = {
                                                         notificationAction: STANDARD_DEPLOYMENT_ACTION,
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,

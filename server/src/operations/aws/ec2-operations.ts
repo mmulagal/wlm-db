@@ -6,7 +6,7 @@ import {
     DescribeNetworkInterfacesCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields, TAG_STRUCTURE } from '../../utils/consts';
+import { AWSQueryFields } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -16,11 +16,12 @@ import {
     describeKeyPairs,
     describeInstanceTypes,
     describeNetworkInterfaces,
-    CreateEc2Tag
+    createTag
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
+import { TagStructure } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -417,9 +418,9 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
     return filteredInstances.ImageId;
 }
 
-async function tagEc2Resource(credentialsId: string, region: string, ec2Id: string, tags: TAG_STRUCTURE[]) {
+async function tagEc2Resource(credentialsId: string, region: string, ec2Id: string[], tags: TagStructure[]) {
     logger.info('Adding tag to EC2 resource', credentialsId, region, ec2Id);
-    CreateEc2Tag(credentialsId, region, ec2Id, tags);
+    createTag(credentialsId, region, ec2Id, tags);
 }
 
 export {

@@ -31,7 +31,8 @@ import {
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION, HttpErrorCodes, TAG_STRUCTURE } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
+import { TagStructure } from '../../utils/common-types';
 
 const logger = getLogger();
 async function getEC2Client(region: string, credentialsId?: string) {
@@ -247,12 +248,12 @@ async function describeInstanceTypeOfferings(credentialsId: string, region: stri
     return response;
 }
 
-async function CreateEc2Tag(credentialsId: string, region: string, resourceId: string, tags: TAG_STRUCTURE[]) {
+async function createTag(credentialsId: string, region: string, resourceId: string[], tags: TagStructure[]) {
     logger.info('Adding tags to resource', credentialsId, region, resourceId, tags);
 
     const client = await getEC2Client(region, credentialsId);
     const ec2Params = {
-        Resources: [resourceId],
+        Resources: resourceId,
         Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
     };
     try {
@@ -277,5 +278,5 @@ export {
     describeKeyPairs,
     describeNetworkInterfaces,
     describeInstanceTypeOfferings,
-    CreateEc2Tag
+    createTag
 };

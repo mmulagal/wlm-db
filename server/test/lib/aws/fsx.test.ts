@@ -18,7 +18,7 @@ import {
     describeFSxBackups,
     describeFSxN,
     listResourceTags,
-    CreateFsxTag
+    createTag
 } from '../../../src/lib/aws/fsx';
 import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
 
@@ -68,6 +68,6 @@ describe('Testcases for Amazon FSx resources', () => {
 
     it('Create tag for given fsx resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        await expect(CreateFsxTag(credentialsId, DEFAULT_AWS_REGION, fsxArn, tag)).resolves.not.toThrow();
+        await expect(createTag(credentialsId, DEFAULT_AWS_REGION, fsxArn, tag)).resolves.not.toThrow();
     });
 });

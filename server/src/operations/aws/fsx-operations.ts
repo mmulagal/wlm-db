@@ -9,7 +9,7 @@ import {
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
     listResourceTags,
-    CreateFsxTag
+    createTag
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -18,12 +18,11 @@ import {
     FSX_STORAGE_TYPE,
     AWS_RESOURCE_NAME_TAG,
     FSX_BATCH_CONCURRENCY_VALUE,
-    SSM_COMMAND_CACHE_TYPE,
-    TAG_STRUCTURE
+    SSM_COMMAND_CACHE_TYPE
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
-import { Metadata } from '../../utils/common-types';
+import { Metadata, TagStructure } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getFsxArn } from '../../utils/utils';
 
@@ -396,11 +395,11 @@ async function tagFsxResource(
     region: string,
     awsAccountId: string,
     fsxId: string,
-    tags: TAG_STRUCTURE[]
+    tags: TagStructure[]
 ) {
     logger.info('Adding tag to Fsx resource', credentialsId, region, awsAccountId, fsxId);
     const fsxArn = getFsxArn(awsAccountId, region, fsxId);
-    CreateFsxTag(credentialsId, region, fsxArn, tags);
+    createTag(credentialsId, region, fsxArn, tags);
 }
 
 export {

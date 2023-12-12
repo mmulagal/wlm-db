@@ -17,7 +17,7 @@ import {
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { TAG_STRUCTURE } from '../../utils/consts';
+import { TagStructure } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -130,7 +130,7 @@ async function listResourceTags(
     return response;
 }
 
-async function CreateFsxTag(credentialsId: string, region: string, fsxArn: string, tags: TAG_STRUCTURE[]) {
+async function createTag(credentialsId: string, region: string, fsxArn: string, tags: TagStructure[]) {
     logger.info('Adding tags to resource', credentialsId, region, fsxArn, tags);
 
     const client = await getFSxClient(credentialsId, region);
@@ -155,5 +155,5 @@ export {
     describeFSxBackups,
     describeFSxN,
     listResourceTags,
-    CreateFsxTag
+    createTag
 };

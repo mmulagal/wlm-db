@@ -10,7 +10,7 @@ import {
     describeRouteTable,
     describeInstance,
     describeInstanceTypeOfferings,
-    CreateEc2Tag
+    createTag
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -146,6 +146,6 @@ describe('EC2 Lib', () => {
 
     it('Create tag for given resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        await expect(CreateEc2Tag(credentialsId, REGION, ec2Arn, tag)).resolves.not.toThrow();
+        await expect(createTag(credentialsId, REGION, ec2Arn, tag)).resolves.not.toThrow();
     });
 });
