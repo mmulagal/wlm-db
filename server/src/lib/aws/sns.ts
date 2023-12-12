@@ -26,10 +26,14 @@ async function getSNS(region: string, credentialsId: string) {
     return new SNSClient({ credentials, region });
 }
 
-async function listTopics(credentialsId: string, region: string) {
+async function listTopics(region: string, credentialsId?: string) {
     logger.info('List SNS topics', { region });
-
-    const sns = await getSNS(region, credentialsId);
+    let sns;
+    if (credentialsId) {
+        sns = await getSNS(region, credentialsId);
+    } else {
+        sns = new SNSClient({ region });
+    }
     const resp = await sns.send(new ListTopicsCommand({}));
     logger.debug('ListTopicsCommand response', resp);
 

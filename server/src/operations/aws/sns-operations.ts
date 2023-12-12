@@ -21,10 +21,10 @@ function transformStackEventMessage(message: string) {
     return Object.fromEntries(messageObject);
 }
 
-async function getSnsTopics(credentialsId: string, region: string) {
+async function getSnsTopics(region: string, credentialsId?: string) {
     logger.info('List SNS topics in a region', { credentialsId, region });
 
-    const { Topics } = await listTopics(credentialsId, region);
+    const { Topics } = await listTopics(region, credentialsId);
 
     if (!Topics) {
         return { topics: [] };
@@ -103,20 +103,36 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                                     }
                                 ]
                             };
-                            const { TopicArn } = await createTopic(code, {
-                                Name: queueName,
-                                Attributes: {
-                                    Policy: JSON.stringify(policyStatement)
-                                },
-                                Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
+
+                            const existsngTopics = await getSnsTopics(code);
+                            let wlmdbTopicArn: string | undefined;
+
+                            existsngTopics.topics.some(topic => {
+                                if (topic.topicName === WLMDB) {
+                                    wlmdbTopicArn = topic.topicArn;
+                                    return true;
+                                }
+                                return false;
                             });
+                            if (wlmdbTopicArn) {
+                                logger.debug('Topic already exists at region', code);
+                            } else {
+                                const { TopicArn } = await createTopic(code, {
+                                    Name: queueName,
+                                    Attributes: {
+                                        Policy: JSON.stringify(policyStatement)
+                                    },
+                                    Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
+                                });
+                                wlmdbTopicArn = TopicArn;
+                            }
 
                             const accountId = QueueUrl?.split('/')[3];
                             const queueArn = getQueueArn(accountId, queueName);
 
                             await subscribeTopic(code, {
                                 Protocol: 'sqs',
-                                TopicArn,
+                                TopicArn: wlmdbTopicArn,
                                 Endpoint: queueArn
                             });
                         }
