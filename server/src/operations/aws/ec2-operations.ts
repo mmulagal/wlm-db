@@ -415,6 +415,7 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
 
     return filteredInstances.ImageId;
 }
+
 export {
     getVpcsList,
     getAmiList,
