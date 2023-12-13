@@ -747,7 +747,7 @@ async function getDatabaseHostSummary(
 async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
     logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
 
-    const [resourceDetail] = await listResources(accountId);
+    const [resourceDetail] = await listResources(accountId, databaseHostId);
 
     if (isEmpty(resourceDetail)) {
         logger.error(`No deployed host with id ${databaseHostId} in ${accountId} is found.`);
