@@ -125,20 +125,29 @@ async function isSSMConnectionSuccessful(
 
     let skipDueToSSMConnectionError = false;
     let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
-    if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
-        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+
+    // Connection to activenode is successful
+    if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+        return skipDueToSSMConnectionError;
+    }
+
+    let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+    logger.error(errorMessage);
+    skipDueToSSMConnectionError = true;
+
+    // Check for connection to standby node
+    if (standbyNodeInstanceId) {
+        skipDueToSSMConnectionError = false;
+        connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+            return skipDueToSSMConnectionError;
+        }
+
+        errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
         logger.error(errorMessage);
         skipDueToSSMConnectionError = true;
-        if (standbyNodeInstanceId) {
-            skipDueToSSMConnectionError = false;
-            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
-            if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
-                errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
-                logger.error(errorMessage);
-                skipDueToSSMConnectionError = true;
-            }
-        }
     }
+
     return skipDueToSSMConnectionError;
 }
 
