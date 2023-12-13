@@ -102,14 +102,14 @@ async function callSsmExecution(
     );
 
     // Check SSM Connection status
-    const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+    const isSSMConnected = await isSSMConnectionSuccessful(
         credentialsId,
         region!,
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
 
-    if (skipDueToSSMConnectionError) {
+    if (isSSMConnected) {
         let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
         if (standbyNodeInstanceId) {
             errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
