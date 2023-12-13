@@ -8,6 +8,8 @@ import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
+import { GENERAL } from '../../../../utils/appConstants';
+import { openCredentialTab } from '../../../../utils/utilityFunctions';
 
 type optionsType = {
     value?: string | number;
@@ -26,6 +28,7 @@ type messageType = {
     confirmData?: any;
     default?: string;
     disable?: boolean;
+    link?: any;
 };
 
 type MessagePropType = {
@@ -140,6 +143,22 @@ const Message = ({
                                                         });
                                                     }}
                                                 />
+                                            )}
+                                            {item.link && (
+                                                <Typography className={styles.link} variant="Regular_14">
+                                                    {item.link.description}{' '}
+                                                    <Button
+                                                        Component="button"
+                                                        onClick={() => {
+                                                            if (item.link.path === '/credentials') {
+                                                                openCredentialTab();
+                                                            }
+                                                        }}
+                                                        variant="text"
+                                                    >
+                                                        {GENERAL.CREDENTIAL}
+                                                    </Button>
+                                                </Typography>
                                             )}
                                         </>
                                     );

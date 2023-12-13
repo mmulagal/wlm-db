@@ -71,7 +71,10 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
         }
     } catch (e: any) {
         logger.error('Failed to get the query response', e?.message, e);
-        return { message: 'Sorry, I could not find anything related to your query, please try again', status: 'error' };
+        return {
+            message: e?.message || 'Sorry, I could not find anything related to your query, please try again',
+            status: 'error'
+        };
     }
 }
 

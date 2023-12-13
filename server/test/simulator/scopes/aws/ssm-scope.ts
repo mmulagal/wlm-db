@@ -114,6 +114,12 @@ const nativeSqlBackupParams = {
     ]
 };
 
+const nativeSqlBackupDatabasesParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    DISTINCT backupset.database_name as backedupDatabases\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n"'
+    ]
+};
+
 const getOntapSnapshotCountParams = {
     commands: [
         "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
@@ -172,6 +178,8 @@ ssmMock
     .resolves(listSendCommandCommandResponse.serverIoLatencyCommandResponse)
     .on(SendCommandCommand, { Parameters: nativeSqlBackupParams })
     .resolves(listSendCommandCommandResponse.nativeSqlBackupCommandResponse)
+    .on(SendCommandCommand, { Parameters: nativeSqlBackupDatabasesParams })
+    .resolves(listSendCommandCommandResponse.nativeSqlBackupDatabasesCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
@@ -216,6 +224,8 @@ ssmMock
     .resolves(getCommandInvocationResponse.serverIoLatencyInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-nativeSqlBackup' })
     .resolves(getCommandInvocationResponse.nativeSqlBackupInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-nativeSqlBackupDatabases' })
+    .resolves(getCommandInvocationResponse.nativeSqlBackupDatabasesInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
     .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapMappedVolumes' })
