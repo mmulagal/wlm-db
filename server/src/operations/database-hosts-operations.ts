@@ -3,7 +3,6 @@ import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { GetTagsCommandOutput } from '@aws-sdk/client-cost-explorer';
-import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -44,7 +43,7 @@ import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCoun
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostExplorerTimeRange } from './aws/cost-explorer-operations';
 import { getTagsfromCostExplorer } from '../lib/aws/cost-explorer';
-import { getSSMConnectionStatus } from './aws/ssm-operations';
+import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 
 const logger = getLogger();
 
@@ -450,35 +449,16 @@ async function getDatabaseHostsSummary(
                 .map(async resourceDetail => {
                     const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
 
-                    let { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
+                    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
                         metadata as unknown as Metadata;
 
                     // Check SSM Connection status
-                    let skipDueToSSMConnectionError = false;
-                    let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
-                    if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
-                        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
-                        if (standbyNodeInstanceId) {
-                            connectionStatus = await getSSMConnectionStatus(
-                                credentialsId,
-                                region!,
-                                standbyNodeInstanceId
-                            );
-                            if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
-                                errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
-                                logger.error(errorMessage);
-                                skipDueToSSMConnectionError = true;
-                            } else {
-                                // Swap active with standby if connection to active is not successful and standby is successful
-                                [activeNodeInstanceId, standbyNodeInstanceId] = [
-                                    standbyNodeInstanceId,
-                                    activeNodeInstanceId
-                                ];
-                            }
-                        }
-                        logger.error(errorMessage);
-                        skipDueToSSMConnectionError = true;
-                    }
+                    const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+                        credentialsId,
+                        region!,
+                        activeNodeInstanceId,
+                        standbyNodeInstanceId
+                    );
 
                     let serverStatus: string = ServerState.DOWN;
                     let dbCount;

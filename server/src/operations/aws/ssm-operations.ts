@@ -2,6 +2,7 @@ import config from 'config';
 import ms from 'ms';
 import {
     CommandInvocationStatus,
+    ConnectionStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
@@ -108,4 +109,36 @@ async function getSSMConnectionStatus(credentialId: string, region: string, inst
     });
 }
 
-export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus };
+async function isSSMConnectionSuccessful(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    logger.info(
+        'Check if SSM connection is a success',
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    let skipDueToSSMConnectionError = false;
+    let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
+    if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+        if (standbyNodeInstanceId) {
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+            if (connectionStatus.Status === ConnectionStatus.NOT_CONNECTED) {
+                errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+                logger.error(errorMessage);
+                skipDueToSSMConnectionError = true;
+            }
+        }
+        logger.error(errorMessage);
+        skipDueToSSMConnectionError = true;
+    }
+    return skipDueToSSMConnectionError;
+}
+
+export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };
