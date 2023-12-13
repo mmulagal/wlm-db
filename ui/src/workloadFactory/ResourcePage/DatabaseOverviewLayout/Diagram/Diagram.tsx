@@ -20,6 +20,11 @@ const Diagram = () => {
                     {GENERAL.TOPOLOGY}
                 </Typography>
                 {resourceLoading && <FlashingDotsLoader />}
+                {!resourceLoading && resourceDetails?.topology?.serverInstallationMode === '' && (
+                    <Typography variant="Regular_16" className={styles.disabledColor}>
+                        {GENERAL.NOT_AVAILABLE}
+                    </Typography>
+                )}
             </div>
 
             {!resourceLoading && (
