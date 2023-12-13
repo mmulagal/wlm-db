@@ -154,7 +154,7 @@ const DatabaseTable = () => {
                                         dispatch(selectedTabSelection('Overview'));
                                         dispatch(updateResourceId(rowData.id));
                                         navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
+                                            '../database-overview'
                                         );
                                     }
 
@@ -162,7 +162,7 @@ const DatabaseTable = () => {
                                         dispatch(selectedTabSelection('Database list'));
                                         dispatch(updateResourceId(rowData.id));
                                         navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
+                                            '../database-overview'
                                         );
                                     }
 
