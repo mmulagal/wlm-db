@@ -57,7 +57,7 @@ const DatabaseHostOverview = () => {
                         {
                             title: GENERAL.DATABASES,
                             onClick: () => {
-                                navigate('databases');
+                                navigate('../databases');
                             }
                         },
                         {
