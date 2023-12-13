@@ -5,7 +5,7 @@ import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';

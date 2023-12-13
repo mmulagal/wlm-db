@@ -139,7 +139,8 @@
 
         .terraformContainer {
             display: flex;
-            gap: 40px;
+            gap: 32px;
+            align-items: center;
         }
 
         .inputBox {
@@ -176,21 +177,21 @@
             }
             [class*='design-system-select__control']:hover {
                 box-shadow: 0 1px 0 var(--header-netapp-text-hover);
-                border-bottom: 1px solid var(--blue-40) !important;
+                border-bottom: 2px solid var(--field-border-selected) !important;
 
                 div {
                     color: var(--header-netapp-text-hover);
                 }
 
                 svg {
-                    --icon-primary-color: var(--header-netapp-text-hover);
+                    --icon-primary-color: var(--field-border-selected) !important;
                 }
             }
 
             [class*='design-system-select__control'] {
-                border-bottom: 2px solid var(--content-background) !important;
+                border-bottom: 2px solid var(--field-border) !important;
                 svg {
-                    --icon-primary-color: var(--white) !important;
+                    --icon-primary-color: var(--field-icon) !important;
                 }
             }
         }
@@ -309,6 +310,8 @@
 
             button:hover {
                 color: var(--blue-30) !important;
+                border: 1px solid var(--blue-30) !important;
+                background-color: var(--grey-60) !important;
             }
         }
 
