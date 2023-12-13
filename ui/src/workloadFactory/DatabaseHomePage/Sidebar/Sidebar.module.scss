@@ -306,6 +306,10 @@
                     text-transform: none !important;
                 }
             }
+
+            button:hover {
+                color: var(--blue-30) !important;
+            }
         }
 
         .thirdBar {

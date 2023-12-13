@@ -420,7 +420,7 @@ const CodeBox = () => {
                 </div>
 
                 {/* Cloud formation button */}
-                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && (
+                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && rightPanelTemplateResponse?.template && (
                     <div className={styles.cloudFormationButtonContainer}>
                         <Button variant="secondary" onClick={() => handleRedirectToCF()}>
                             Redirect to CloudFormation
