@@ -542,7 +542,7 @@ async function getDatabaseHostsSummary(
                         metadata as unknown as Metadata;
 
                     // Check SSM Connection status
-                    const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+                    const isSSMConnected = await isSSMConnectionSuccessful(
                         credentialsId,
                         region!,
                         activeNodeInstanceId,
@@ -569,18 +569,18 @@ async function getDatabaseHostsSummary(
                         usageEstimationData
                     ] = await Promise.all(
                         [
-                            ...(!skipDueToSSMConnectionError ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
-                            ...(!skipDueToSSMConnectionError
+                            ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                            ...(isSSMConnected
                                 ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
                                 : [Promise.resolve()]),
                             getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                            ...(!skipDueToSSMConnectionError && getPerformance
+                            ...(isSSMConnected && getPerformance
                                 ? [getServerIOLatency(resourceId)]
                                 : [Promise.resolve()]), // Fetch io latency data
-                            ...(!skipDueToSSMConnectionError && getStorageSavings
+                            ...(isSSMConnected && getStorageSavings
                                 ? [getStorageData(resourceDetail)]
                                 : [Promise.resolve()]), // Fetch storage savings data
-                            ...(!skipDueToSSMConnectionError && getProtection
+                            ...(isSSMConnected && getProtection
                                 ? [getProtectionStatus(resourceDetail)]
                                 : [Promise.resolve()]), // Fetch protection status
                             ...(getUsageEstimation
@@ -659,7 +659,7 @@ async function getDatabaseHostSummary(
         const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 
         // Check SSM Connection status
-        const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+        const isSSMConnected = await isSSMConnectionSuccessful(
             credentialsId,
             region!,
             activeNodeInstanceId,
@@ -690,26 +690,22 @@ async function getDatabaseHostSummary(
             cpuUtilizationData
         ] = await Promise.all(
             [
-                ...(!skipDueToSSMConnectionError ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
-                ...(!skipDueToSSMConnectionError
+                ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                ...(isSSMConnected
                     ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId)]
                     : [Promise.resolve()]),
-                ...(!skipDueToSSMConnectionError ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
+                ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
                 getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                ...(!skipDueToSSMConnectionError && getPerformance
-                    ? [getPerformanceMetrics(resourceId)]
-                    : [Promise.resolve()]), // Fetch io latency data
-                ...(!skipDueToSSMConnectionError && getStorageSavings
-                    ? [getStorageData(resourceDetail)]
-                    : [Promise.resolve()]), // Fetch storage savings data
+                ...(isSSMConnected && getPerformance ? [getPerformanceMetrics(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                 ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
-                ...(!skipDueToSSMConnectionError && getResourceutilization
+                ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY)]
                     : [Promise.resolve()]),
-                ...(!skipDueToSSMConnectionError && getResourceutilization
+                ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK)]
                     : [Promise.resolve()]),
-                ...(!skipDueToSSMConnectionError && getResourceutilization
+                ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU)]
                     : [Promise.resolve()])
             ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
@@ -758,14 +754,14 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 
     // Check SSM Connection status
-    const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+    const isSSMConnected = await isSSMConnectionSuccessful(
         credentialsId,
         region!,
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
 
-    if (skipDueToSSMConnectionError) {
+    if (!isSSMConnected) {
         const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }

@@ -123,32 +123,28 @@ async function isSSMConnectionSuccessful(
         standbyNodeInstanceId
     );
 
-    let skipDueToSSMConnectionError = false;
     let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
 
     // Connection to activenode is successful
     if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-        return skipDueToSSMConnectionError;
+        return true;
     }
 
     let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
     logger.error(errorMessage);
-    skipDueToSSMConnectionError = true;
 
     // Check for connection to standby node
     if (standbyNodeInstanceId) {
-        skipDueToSSMConnectionError = false;
         connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-            return skipDueToSSMConnectionError;
+            return true;
         }
 
         errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
         logger.error(errorMessage);
-        skipDueToSSMConnectionError = true;
     }
 
-    return skipDueToSSMConnectionError;
+    return false;
 }
 
 export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };
