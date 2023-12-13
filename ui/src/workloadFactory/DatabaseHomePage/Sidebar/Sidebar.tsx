@@ -105,7 +105,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 {
                     id: 'viewAwsCloudFormation',
                     displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-                    disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
+                    disabled: !getRightPanelTemplateResponse(openKey)?.template || isRightPanelTemplateLoading ? true : false
                 },
                 {
                     id: 'downloadYaml',
@@ -373,7 +373,11 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                     const actualData = data?.data?.data;
                     setCredDetailsData(actualData);
                     loadRestApi(actualData, id, true);
-                });
+                }).catch((error: any) => {
+                    setCredDetailsData({});
+                    setIsRightPanelDataLoading(false);
+                    setIsRightPanelTemplateLoading(false);
+                })
             }
         }
     };
@@ -475,12 +479,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             return isRightPanelDataLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <CodeBoxColor
-                        credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
-                        region={credDetails.region || CRED_PLACEHOLDERS.REGION}
-                        actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
-                    />
+                <HighlighterWord highlight={searchInput} count={countDetails}> 
+                    {
+                        getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA) ? 
+                        <CodeBoxColor
+                            credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
+                            region={credDetails.region || CRED_PLACEHOLDERS.REGION}
+                            actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
+                        /> : <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                    }
+                    
                 </HighlighterWord>
             );
         }
@@ -875,12 +883,12 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             {/* Search bar input code ends here */}
 
                             {/* Cloud formation button */}
-                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && (
-                                <div
-                                    className={styles.cloudFormationButtonContainer}
-                                    onClick={() => handleViewInAwsCloudFormation()}
-                                >
-                                    <Button variant="secondary">Redirect to CloudFormation</Button>
+                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && 
+                            getRightPanelTemplateResponse(openKey)?.template && (
+                                <div className={styles.cloudFormationButtonContainer}>
+                                    <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()}>
+                                        Redirect to CloudFormation
+                                    </Button>
                                 </div>
                             )}
 
