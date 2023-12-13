@@ -693,9 +693,9 @@ async function getDatabaseHostSummary(
         databaseHostDetails.estimatedUsageCost = usageEstimationData!;
         if (getResourceutilization) {
             databaseHostDetails.resourceUtilization = {
-                cpu: cpuUtilizationData!,
-                memory: memoryUtilizationData!,
-                disk: diskUtilizationData!
+                cpu: cpuUtilizationData! || {},
+                memory: memoryUtilizationData! || {},
+                disk: diskUtilizationData! || {}
             };
         }
     } catch (error) {
@@ -731,32 +731,37 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
             getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
         ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
     );
-
-    const response = databases.map(
-        (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
-            name: database.databaseName,
-            size: database.databaseSize,
-            status: database.databaseStatus,
-            type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
-                ? MSSQL_DATABASE_TYPES.SYSTEM
-                : MSSQL_DATABASE_TYPES.USER,
-            protection: {
-                isAWSBackupEnabled: Boolean(awsBackup),
-                isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
-                isSqlNativeEnabled: Boolean(
-                    backedupDatabases &&
-                        backedupDatabases.find(
-                            (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                        )
-                )
-            }
-        })
-    );
-    return {
-        count: response.length,
-        nextToken: '',
-        items: response
-    };
+    try {
+        const response = databases.map(
+            (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
+                name: database.databaseName,
+                size: database.databaseSize,
+                status: database.databaseStatus,
+                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                    ? MSSQL_DATABASE_TYPES.SYSTEM
+                    : MSSQL_DATABASE_TYPES.USER,
+                protection: {
+                    isAWSBackupEnabled: Boolean(awsBackup),
+                    isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                    isSqlNativeEnabled: Boolean(
+                        backedupDatabases &&
+                            backedupDatabases.find(
+                                (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                            )
+                    )
+                }
+            })
+        );
+        return {
+            count: response.length,
+            nextToken: '',
+            items: response
+        };
+    } catch (error) {
+        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
 }
 
 export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases };
