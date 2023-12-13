@@ -1,5 +1,5 @@
 import styles from './EstimatedCost.module.scss';
-import { FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, TooltipInfo, Typography } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
@@ -14,9 +14,16 @@ const EstimatedCost = ({ hostData, hostsLoading, jobsLoading }: EstimatedCostPro
     return (
         <div className={styles.estimatedCost}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16" className={styles.title}>
-                    {GENERAL.ESTIMATED_MONTHLY_COST}
-                </Typography>
+                <div className={styles.tooltipSection}>
+                    <Typography variant="Regular_16" className={styles.title}>
+                        {GENERAL.ESTIMATED_MONTHLY_COST}
+                    </Typography>
+                    {/* <TooltipInfo>
+                        <Typography variant="Regular_13" className={styles.textWidth}>
+                            Some Text
+                        </Typography>
+                    </TooltipInfo> */}
+                </div>
 
                 {hostsLoading || jobsLoading ? (
                     <FlashingDotsLoader />
