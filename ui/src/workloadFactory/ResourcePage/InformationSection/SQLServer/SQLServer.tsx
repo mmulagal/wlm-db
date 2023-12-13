@@ -76,7 +76,9 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.DATE_CREATED}
                     </Typography>
-                    <Typography variant="Regular_14">{formatDateWithTime(resourceDetails.creationDate)}</Typography>
+                    <Typography variant="Regular_14">
+                        {formatDateWithTime(resourceDetails.creationDate || '')}
+                    </Typography>
                 </div>
             </>
         );
