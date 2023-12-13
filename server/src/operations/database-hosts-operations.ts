@@ -723,12 +723,14 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { credentialsId } = metadata as unknown as Metadata;
-    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all([
-        await getDataBasesSummary(databaseHostId),
-        getNativeSQLBackedupDatabases(databaseHostId),
-        isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
-        getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
-    ]);
+    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
+        [
+            getDataBasesSummary(databaseHostId),
+            getNativeSQLBackedupDatabases(databaseHostId),
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
+            getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
+        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+    );
 
     const response = databases.map(
         (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
@@ -742,9 +744,10 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
                 isAWSBackupEnabled: Boolean(awsBackup),
                 isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
                 isSqlNativeEnabled: Boolean(
-                    backedupDatabases.find(
-                        (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                    )
+                    backedupDatabases &&
+                        backedupDatabases.find(
+                            (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                        )
                 )
             }
         })
