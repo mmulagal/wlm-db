@@ -28,7 +28,7 @@
         { 
             "id": "resource-id-failed1",
             "name": "Database hostname Failed1",
-            "status": "Failed",
+            "status": "Initializing",
             "metadata": 
             {
                 "region": "US East (N.Virginia)",

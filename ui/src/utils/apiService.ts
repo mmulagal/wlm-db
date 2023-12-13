@@ -328,9 +328,9 @@ export const databaseHomeApi = createApi({
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => {
                     if (nextToken) {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`;
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
                     } else {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED`;
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
                     }
                 }
             }),

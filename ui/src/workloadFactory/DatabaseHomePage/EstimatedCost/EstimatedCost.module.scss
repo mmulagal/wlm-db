@@ -7,6 +7,11 @@
         justify-content: space-between;
         flex-shrink: 0;
         border-bottom: 1px solid var(--border);
+
+        .tooltipSection {
+            display: flex;
+            gap: 8px;
+        }
     }
 
     .title {
