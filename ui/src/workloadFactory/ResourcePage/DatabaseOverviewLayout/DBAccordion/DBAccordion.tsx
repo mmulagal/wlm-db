@@ -2,6 +2,7 @@ import { ReactComponent as Add } from '../../../../assets/ic_add.svg';
 import { ReactComponent as Remove } from '../../../../assets/ic_remove.svg';
 import { Typography } from '@netapp/design-system';
 import styles from './DBAccordion.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type AccordionContent = {
     heading: string;
@@ -11,9 +12,9 @@ type AccordionContent = {
 };
 
 const DbAccordion = ({ heading, toggle, open, content }: AccordionContent) => {
-    const disabled: boolean = false;
+    const { resourceLoading } = useAppSelector(state => state.workloadFactoryResource);
     return (
-        <div className={disabled ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
+        <div className={resourceLoading ? `${styles.dbAccordion} ${styles.disabledApplied}` : `${styles.dbAccordion}`}>
             <div
                 className={!open ? `${styles.accordionContainer} ${styles.addBorder}` : `${styles.accordionContainer}`}
             >

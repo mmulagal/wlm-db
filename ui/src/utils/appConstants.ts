@@ -452,7 +452,7 @@ export const CODE_VIEWER = {
     DOWNLOAD_YAML: 'Download YAML file ',
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
-    NO_DATA_MSG: 'No data found',
+    NO_DATA_MSG: 'No data',
     LOADING_CLOUD_FORMATION: 'Loading CloudFormation code',
     LOADING_REST_API: 'Loading REST API code',
     LOADING_AWS_CLI: 'Loading AWS CLI code',
