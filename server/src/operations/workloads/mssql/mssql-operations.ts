@@ -109,7 +109,7 @@ async function callSsmExecution(
         standbyNodeInstanceId
     );
 
-    if (isSSMConnected) {
+    if (!isSSMConnected) {
         let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
         if (standbyNodeInstanceId) {
             errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
