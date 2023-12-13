@@ -190,11 +190,10 @@
                     "fsx:DescribeStorageVirtualMachines",
                     "fsx:DescribeFileSystems",
                     "servicequotas:ListServiceQuotas",
-                    "ssm:Describe*",
-                    "ssm:Get*",
-                    "ssm:List*",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetCommandInvocation",
+                    "ssm:SendCommand",
                     "fsx:ListTagsForResource",
-                    "pricing:GetProducts",
                     "iam:SimulatePrincipalPolicy"
                 ],
                 "Resource": ["*"]
