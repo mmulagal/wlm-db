@@ -362,10 +362,14 @@ export const workloadFactoryResourceApi = createApi({
     endpoints: builder => {
         return {
             getResourceDetails: builder.query({
-                query: id => ({ url: `database-hosts/${id}` })
+                query: id => ({
+                    url: `database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
+                })
             }),
             getDatabaseList: builder.query({
-                query: id => ({ url: `database-hosts/${id}/databases` })
+                query: id => ({
+                    url: `database-hosts/${id}/databases`
+                })
             })
         };
     }
