@@ -10,6 +10,33 @@ type codeBoxTypes = {
 
 const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
     const baseUrl = getBaseUrl();
+
+    const valueCheckColor = (value: string | any) => {
+        const isNum = /^\d+$/.test(value);
+        const isBool = value === true || value === false;
+        if (isNum) {
+            return (
+                <div className={styles.infoColor}>
+                    {`${value}`}
+                    <span className={styles.commaColor}>,</span>
+                </div>
+            );
+        }
+        if (isBool) {
+            return (
+                <div className={styles.boolColor}>
+                    {`${value}`}
+                    <span className={styles.commaColor}>,</span>
+                </div>
+            );
+        }
+        return (
+            <div className={styles.green40Color}>
+                {`"${value}"`}
+                <span className={styles.commaColor}>,</span>
+            </div>
+        );
+    };
     const renderProperties = (obj: any) => {
         return Object.entries(obj).map(([key, value]) => {
             if (Array.isArray(value)) {
@@ -54,9 +81,12 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                             <div className={styles.blue50Color}>{`"${key}": `}</div>&nbsp;
                             {/* @ts-ignore */}
                             {!value && typeof value !== 'boolean' ? (
-                                <div className={styles.red20Color}>{`"${value || ''}",`}</div>
+                                <div className={styles.red20Color}>
+                                    {`"${value || ''}"`}
+                                    <span className={styles.commaColor}>,</span>
+                                </div>
                             ) : (
-                                <div className={styles.green40Color}>{`"${value}",`}</div>
+                                valueCheckColor(value)
                             )}
                         </div>
                     )
@@ -68,12 +98,16 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
     return (
         actualData && (
             <div className={styles.codeBox}>
-                <div>
-                    {`curl --location --request POST ${baseUrl}/credentials/${credID}/regions/${region}/cloudformation/stack' \\`}
+                <div style={{ width: 'max-content' }}>
+                    {`curl --location --request POST ${baseUrl}/credentials/`}
+                    <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
+                    <span>{`/regions/`}</span>
+                    <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>
+                    <span>/cloudformation/stack' \\</span>
                 </div>
                 <div>
                     <span>--header 'Authorization: Bearer </span>
-                    <span className={styles.tokenStyle}>{CRED_PLACEHOLDERS.TOKEN}</span>
+                    <span className={styles.highlightWord}>{CRED_PLACEHOLDERS.TOKEN}</span>
                     <span> \</span>
                 </div>
                 <div>{`--header 'Content-Type: application/json' \\`}</div>

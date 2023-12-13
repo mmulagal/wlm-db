@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useDispatch } from 'react-redux';
 
-import { dbPassVal, fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, generateOptionType, openCredentialTab } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -125,17 +125,6 @@ const AwsAccount = () => {
         } else {
             return <Typography variant="Regular_14">{selectedCredential?.value}</Typography>;
         }
-    };
-
-    // To open new tab with credential page on click of credential link
-    const openCredentialTab = () => {
-        let url;
-        if (isWorkloadFactoryStatus) {
-            url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
-        } else {
-            url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
-        }
-        window.open(url, '_blank', 'noopener');
     };
 
     return (

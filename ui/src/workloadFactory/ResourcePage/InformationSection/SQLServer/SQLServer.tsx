@@ -4,6 +4,7 @@ import styles from './SQLServer.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { formatDateWithTime } from '../../../../utils/utilityFunctions';
+import { GENERAL } from '../../../../utils/appConstants';
 
 type sqlServer = {
     handleToggle: any;
@@ -17,65 +18,67 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Deployment model:
+                        {GENERAL.DEPLOYMENT_MODEL_INFO}
                     </Typography>
                     <Typography variant="Regular_14">Always On Failover</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Operating system:
+                        {GENERAL.OS_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails.operatingSystem}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Edition:
+                        {GENERAL.EDITION_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails.serverEdition}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Version:
+                        {GENERAL.VERSION_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails.serverVersion}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Cluster name:
+                        {GENERAL.CLUSTER_NAME_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails.clusterName}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Node names:
+                        {GENERAL.NODE_NAMES}
                     </Typography>
                     <Typography variant="Regular_14">sqlnode1, sqlnode2</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Status:
+                        {GENERAL.STATUS_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails.status}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Connections:
+                        {GENERAL.CONNECTIONS_INFO}
                     </Typography>
                     <Typography variant="Regular_14">{resourceDetails.activeConnections}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Date Created:
+                        {GENERAL.DATE_CREATED}
                     </Typography>
-                    <Typography variant="Regular_14">{formatDateWithTime(resourceDetails.creationDate)}</Typography>
+                    <Typography variant="Regular_14">
+                        {formatDateWithTime(resourceDetails.creationDate || '')}
+                    </Typography>
                 </div>
             </>
         );

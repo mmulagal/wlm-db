@@ -37,18 +37,18 @@ const DatabaseListTable = () => {
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
+            Header: GENERAL.DATABASE_NAME,
             accessor: 'name',
             isSortable: true,
             id: '1',
-            width: '311px'
+            width: '19.3%'
         },
         {
-            Header: 'Status',
+            Header: GENERAL.STATUS,
             accessor: 'status',
             filterOptions: 'auto',
             id: '2',
-            width: '180px',
+            width: '11.2%',
             renderCell: (cellData: any) => {
                 return (
                     <div className={styles.statusCell}>
@@ -61,21 +61,21 @@ const DatabaseListTable = () => {
             }
         },
         {
-            Header: 'Size',
+            Header: GENERAL.SIZE,
             accessor: 'size',
             isSortable: true,
             id: '3',
-            width: '240px',
+            width: '15%',
             renderCell: (cellData: any) => {
                 return formatSize(cellData);
             }
         },
         {
-            Header: 'Protection',
+            Header: GENERAL.DB_HOST_PROTECTION,
             accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
-            width: '240px',
+            width: '15%',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
                 let protectedChk = false;
@@ -134,17 +134,17 @@ const DatabaseListTable = () => {
             }
         },
         {
-            Header: 'Type',
+            Header: GENERAL.DB_HOST_TYPE,
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',
-            width: '240px'
+            width: '15%'
         },
         {
             Header: '',
             accessor: '',
             id: '6',
-            width: '398px'
+            width: '24.6%'
         }
     ];
 

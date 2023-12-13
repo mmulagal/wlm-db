@@ -942,7 +942,7 @@ Resources:
                 - DeviceName: /dev/sda1
                   Ebs:
                       VolumeSize: '100'
-                      VolumeType: gp2
+                      VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
                 Fn::Join:
@@ -1388,7 +1388,7 @@ Resources:
                 - DeviceName: /dev/sda1
                   Ebs:
                       VolumeSize: '100'
-                      VolumeType: gp2
+                      VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
                 Fn::Join:

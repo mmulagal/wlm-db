@@ -15,6 +15,7 @@ import {
     setResourceDetails,
     setResourceLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -54,13 +55,13 @@ const DatabaseHostOverview = () => {
                 <BreadCrumbs
                     items={[
                         {
-                            title: 'Databases',
+                            title: GENERAL.DATABASES,
                             onClick: () => {
-                                navigate('databases');
+                                navigate('../databases');
                             }
                         },
                         {
-                            title: 'Database host name'
+                            title: GENERAL.DATABASE_HOST_NAME
                         }
                     ]}
                 />

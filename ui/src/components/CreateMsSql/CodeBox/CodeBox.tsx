@@ -30,6 +30,7 @@ import {
     maskAwsCli
 } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
+import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -123,7 +124,7 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.template || CODE_VIEWER.NO_DATA_MSG}
+                        {rightPanelTemplateResponse?.template || <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />}
                     </pre>
                 </HighlighterWord>
             );
@@ -158,7 +159,7 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || CODE_VIEWER.NO_DATA_MSG}
+                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />}
                     </Typography>
                 </HighlighterWord>
             );
@@ -419,7 +420,7 @@ const CodeBox = () => {
                 </div>
 
                 {/* Cloud formation button */}
-                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && (
+                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && rightPanelTemplateResponse?.template && (
                     <div className={styles.cloudFormationButtonContainer}>
                         <Button variant="secondary" onClick={() => handleRedirectToCF()}>
                             Redirect to CloudFormation

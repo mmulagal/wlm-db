@@ -169,7 +169,7 @@
         align-items: center;
         background-color: var(--grey-65);
         button {
-            height: 32px;
+            --button-height: 32px !important;
             background: none !important;
             --button-min-width: 480px;
             color: var(--blue-40);

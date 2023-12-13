@@ -54,6 +54,8 @@ const SERVER_GUID = `${SET_NOCOUNT} SELECT service_broker_guid AS serverGuid FRO
 
 const SERVER_NAME = `${SET_NOCOUNT} SELECT @@SERVERNAME as serverName ${FOR_JSON_PATH}`;
 
+const SERVER_INSTALL_DATE = `${SET_NOCOUNT} SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' ${FOR_JSON_PATH}`;
+
 const SERVER_VERSION_DETAILS = `${SET_NOCOUNT} SELECT @@version AS serverDetails`;
 const SERVER_STATE = `${SET_NOCOUNT} EXEC master.dbo.xp_servicecontrol 'QUERYSTATE','MSSQLServer'`;
 const IS_SERVER_CLUSTERED = `${SET_NOCOUNT} SELECT SERVERPROPERTY('IsClustered') as isClustered ${FOR_JSON_PATH}`;
@@ -117,6 +119,28 @@ const NATIVE_SQL_BACKUPS = `${SET_NOCOUNT} SELECT
     AND backupset.database_name NOT IN ('msdb','tempdb','model','master') ${FOR_JSON_PATH}
 `;
 
+// Since TempDB is recreated every time, we can use that to calculate the our start up time hence database_id=2
+const PERFORMANCE_METRICS = `${SET_NOCOUNT} DECLARE @SQLRestartDateTime Datetime
+    DECLARE @TimeInSeconds Float
+    SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2
+    SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())
+    SELECT   ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS
+        , ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS
+        , ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds,2) AS READ_THROUGHPUT
+        , ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds,2) AS WRITE_THROUGHPUT
+        , CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY
+        , CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY
+    FROM sys.dm_io_virtual_file_stats(null,null)  ${FOR_JSON_PATH}`;
+
+const SQL_BACKUPS = `${SET_NOCOUNT} SELECT
+    DISTINCT backupset.database_name as backedupDatabases
+    FROM msdb.dbo.backupset AS backupset
+    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia
+    ON backupset.media_set_id = backupmedia.media_set_id
+    WHERE backupmedia.device_type = 2
+    AND backupset.type = 'D' ${FOR_JSON_PATH}
+`;
+
 export {
     DATABASES,
     DATABASES_COUNT,
@@ -135,5 +159,8 @@ export {
     CLUSTER_NODES,
     DB_SIZE,
     SERVER_IO_LATENCY,
-    NATIVE_SQL_BACKUPS
+    NATIVE_SQL_BACKUPS,
+    SERVER_INSTALL_DATE,
+    PERFORMANCE_METRICS,
+    SQL_BACKUPS
 };

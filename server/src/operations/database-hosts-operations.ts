@@ -2,7 +2,6 @@ import { resource } from '@prisma/client';
 import { DescribeInstancesCommandOutput } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { GetTagsCommandOutput } from '@aws-sdk/client-cost-explorer';
 import { listResources } from '../lib/database/db';
 import {
     DatabaseHostSummaryResponseType,
@@ -11,7 +10,11 @@ import {
     TopologyResponseType,
     ProtectionResponseType,
     StorageResponseType,
-    UsageCostResponseType
+    UsageCostResponseType,
+    DatabaseServerMetadataResponseType,
+    UtilizationResponseType,
+    DetailedPerformanceResponseType,
+    DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, getAmis } from '../lib/aws/ec2';
 import { describeFSxN } from '../lib/aws/fsx';
@@ -29,6 +32,9 @@ import {
     AWS_REGIONS,
     SQL_STD,
     SQL_ENT,
+    DATABASE_METRIC_TYPE,
+    MSSQL_DATABASE_TYPES,
+    MSSQL_SYSTEM_DATABASES,
     PRICING,
     WLMDB_COST_ALLOCATION_TAG
 } from '../utils/consts';
@@ -37,13 +43,18 @@ import {
     getServerIOLatency,
     getServerState,
     getNativeSQLProtection,
-    getDatabasesCount
+    getDatabasesCount,
+    getServerSummary,
+    getResourceUtilisation,
+    getPerformanceMetrics,
+    getDataBasesSummary,
+    getNativeSQLBackedupDatabases
 } from './workloads/mssql/mssql-operations';
 import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
-import { calculateBilling, getCostExplorerTimeRange } from './aws/cost-explorer-operations';
-import { getTagsfromCostExplorer } from '../lib/aws/cost-explorer';
+import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
+import { getCostAllocationTagResources } from './aws/tags-operations';
 
 const logger = getLogger();
 
@@ -99,10 +110,20 @@ async function getTopology(
         );
     }
 
-    const { resource_type: resourceType, co_relation_id: fileSystemId, metadata } = resourceData;
-    const { credentialsId } = metadata as { credentialsId: string };
+    const {
+        resource_type: resourceType,
+        co_relation_id: fileSystemId,
+        cloud_provider_account_id: awsAccountId,
+        metadata
+    } = resourceData;
+    const { credentialsId, activeDirectoryName, activeDirectoryAddress } = metadata as {
+        credentialsId: string;
+        activeDirectoryName: string;
+        activeDirectoryAddress: string;
+    };
 
     let topologyData: TopologyResponseType = {
+        awsAccount: '',
         region,
         serverType: resourceType,
         serverInstallationMode: '',
@@ -129,30 +150,97 @@ async function getTopology(
         } = metadata as unknown as Topology);
 
         let vpcId;
-        if (additionalFields?.vpc) {
+        let fileSystemStatus;
+        let fileSystemStorageCapacity;
+        let fileSystemThroughputCapacity;
+        if (additionalFields?.allTopology || additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
                 vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+                fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
+                fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
+                fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
             } catch (error) {
-                logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
+                logger.error(`Error while fetching details for fsx. Error: ${error}`);
             }
+        }
+
+        const instanceIds = standbyNodeInstanceId
+            ? [activeNodeInstanceId, standbyNodeInstanceId]
+            : [activeNodeInstanceId];
+
+        // Todo: These details can be saved in database as part of metadata and AWS calls can be made incase of not found
+        let ec2InstanceDetails;
+        let keyPairName;
+        let activeInstanceType;
+        let activeAvailabilityZone;
+        let activeSubnetId;
+        let activeVolumeId;
+        let standbyInstanceType;
+        let standbyAvailabilityZone;
+        let standbySubnetId;
+        let standbyVolumeId;
+        let activeDirectoryDetails;
+        if (additionalFields?.allTopology) {
+            try {
+                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+                keyPairName = ec2InstanceDetails.Reservations?.[0].Instances?.[0].KeyName;
+                activeInstanceType = ec2InstanceDetails.Reservations?.[0].Instances?.[0].InstanceType;
+                activeAvailabilityZone =
+                    ec2InstanceDetails.Reservations?.[0].Instances?.[0].Placement?.AvailabilityZone;
+                activeSubnetId = ec2InstanceDetails.Reservations?.[0].Instances?.[0].SubnetId;
+                activeVolumeId =
+                    ec2InstanceDetails.Reservations?.[0].Instances?.[0].BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                if (standbyNodeInstanceId) {
+                    standbyInstanceType = ec2InstanceDetails.Reservations?.[1].Instances?.[0].InstanceType;
+                    standbyAvailabilityZone =
+                        ec2InstanceDetails.Reservations?.[1].Instances?.[0].Placement?.AvailabilityZone;
+                    standbySubnetId = ec2InstanceDetails.Reservations?.[1].Instances?.[0].SubnetId;
+                    standbyVolumeId =
+                        ec2InstanceDetails.Reservations?.[1].Instances?.[0].BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                }
+            } catch (error) {
+                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
+            }
+            activeDirectoryDetails = {
+                name: activeDirectoryName || '',
+                address: activeDirectoryAddress || ''
+            };
         }
 
         // Fetch topology data
         topologyData = {
+            awsAccount: awsAccountId || '',
             region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
+            ...(fileSystemStatus && { fileSystemStatus }),
+            ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
+            ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(vpcId && { vpcId }),
-            ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
+            ...(keyPairName && { keyPairName }),
+            ec2Details: [
+                {
+                    id: activeNodeInstanceId!,
+                    name: activeNodeInstanceName!,
+                    ebsVolumeId: activeVolumeId || '',
+                    ...(activeInstanceType && { instanceType: activeInstanceType }),
+                    ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
+                    ...(activeSubnetId && { subnetId: activeSubnetId })
+                }
+            ],
+            ...(activeDirectoryDetails && { activeDirectoryDetails })
         };
         if (standbyNodeInstanceId) {
             topologyData.ec2Details.push({
                 id: standbyNodeInstanceId!,
                 name: standbyNodeInstanceName!,
-                ebsVolumeId: ''
+                ebsVolumeId: standbyVolumeId || '',
+                ...(standbyInstanceType && { instanceType: standbyInstanceType }),
+                ...(standbyAvailabilityZone && { availabilityZone: standbyAvailabilityZone }),
+                ...(standbySubnetId && { subnetId: standbySubnetId })
             });
         }
     }
@@ -249,11 +337,10 @@ async function getBillingOrPriceEstimation(resourceDetail: ResourceDetails) {
 
     const [billingResponse, pricingResponse] = await Promise.all([
         getBilling(resourceDetail).catch(error => {
-            logger.error('Failed to get billing data for resource: :', JSON.stringify(error)); // Do not throw error here as we need to call getUsageEstimationData
+            logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
         }),
         getUsageEstimationData(resourceDetail).catch(error => {
             logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
-            throw error;
         })
     ]);
 
@@ -269,45 +356,47 @@ async function getBilling(resourceDetail: ResourceDetails) {
             activeNodeInstanceId: string;
             standbyNodeInstanceId: string;
         };
-        // We need to check here if wlmdb-cost-resource cost allocation tag is activated at account level or not
-        let tagsResponse: GetTagsCommandOutput;
-        try {
-            const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
-            tagsResponse = await getTagsfromCostExplorer(region!, {
-                TimePeriod: {
-                    Start: startTimeFormat,
-                    End: currenTimeFormat
-                }
-            });
-            logger.debug('Cost allocation tag response', tagsResponse);
-        } catch (error) {
-            logger.error('Error while reteriving cost allocation tag');
-            throw error;
-        }
-
-        if (tagsResponse.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
-            const billingResponse: UsageCostResponseType = await calculateBilling(
-                credentialsId,
-                region!,
-                fileSystemId!,
-                activeNodeInstanceId,
-                standbyNodeInstanceId
-            );
-
-            return {
-                compute: billingResponse?.compute,
-                storage: billingResponse?.storage,
-                connectivity: billingResponse?.connectivity || 0,
-                others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
-                estimationType: billingResponse?.estimationType
-            };
-        }
-        throw new Error(
-            `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated`
+        // Need to validate before proceeding for billing
+        await validationForCostExplorer(resourceDetail);
+        const billingResponse: UsageCostResponseType = await calculateBilling(
+            credentialsId,
+            region!,
+            fileSystemId!,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
         );
+
+        return {
+            compute: billingResponse?.compute,
+            storage: billingResponse?.storage,
+            connectivity: billingResponse?.connectivity || 0,
+            others: 0, // TODO: to be calculated for other resources such as ActiveDiretory, Secrets etc.
+            estimationType: billingResponse?.estimationType
+        };
     } catch (error) {
-        logger.error('Failed to get billing data for resource:', resourceDetail, JSON.stringify(error));
+        logger.error('Failed to get billing data for resource:', resourceDetail.resource_id, error);
         throw error;
+    }
+}
+
+async function validationForCostExplorer(resourceDetail: ResourceDetails) {
+    logger.info('Validating prerequiste for Cost explorer for billing of resources');
+
+    // 1.  We need to check if wlmdb-cost-resource cost allocation tag is activated at account level or not
+    const tagsResponse = await getCostAllocationTags(resourceDetail);
+    if (!tagsResponse.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
+        throw new Error(
+            `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated at account level`
+        );
+    }
+
+    // 2. Validate cost allocation tag is at resource level or not
+    const resources = await getCostAllocationTagResources(resourceDetail);
+    logger.debug('Resources with cost allocation tag ', resources);
+    if (!resources.ResourceTagMappingList!.length) {
+        throw new Error(
+            `Calcaulation of Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not attached to resource ${resourceDetail.resource_id}`
+        );
     }
 }
 
@@ -526,4 +615,200 @@ async function getDatabaseHostsSummary(
     return { count: databaseHosts.length, items: databaseHosts, nextToken: '' };
 }
 
-export default getDatabaseHostsSummary;
+async function getDatabaseHostSummary(
+    accountId: string,
+    databaseHostId: string,
+    fields?: string
+): Promise<DatabaseHostSummaryResponseType> {
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields);
+
+    const [resourceDetail] = await listResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const databaseHostDetails: DatabaseHostSummaryResponseType = {
+        id: '',
+        name: '',
+        status: '',
+        databaseCount: 0
+    };
+
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
+    const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
+    const getResourceutilization = fieldsValues?.includes(
+        DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
+    );
+    const additionalFields = {
+        allTopology: true
+    };
+
+    const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
+    try {
+        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+        // Check SSM Connection status
+        const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+            credentialsId,
+            region!,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
+
+        let serverStatus: string = ServerState.DOWN;
+        let dbCount;
+        let serverMetadata: DatabaseServerMetadataResponseType;
+        let topologyData: TopologyResponseType;
+        let performanceData: DetailedPerformanceResponseType | undefined;
+        let storageData: StorageResponseType | undefined;
+        let usageEstimationData: UsageCostResponseType | undefined;
+        let memoryUtilizationData: UtilizationResponseType | undefined;
+        let diskUtilizationData: UtilizationResponseType | undefined;
+        let cpuUtilizationData: UtilizationResponseType | undefined;
+
+        [
+            serverStatus,
+            dbCount,
+            serverMetadata,
+            topologyData,
+            performanceData,
+            storageData,
+            usageEstimationData,
+            memoryUtilizationData,
+            diskUtilizationData,
+            cpuUtilizationData
+        ] = await Promise.all(
+            [
+                ...(!skipDueToSSMConnectionError ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                ...(!skipDueToSSMConnectionError
+                    ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId)]
+                    : [Promise.resolve()]),
+                ...(!skipDueToSSMConnectionError ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
+                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                ...(!skipDueToSSMConnectionError && getPerformance
+                    ? [getPerformanceMetrics(resourceId)]
+                    : [Promise.resolve()]), // Fetch io latency data
+                ...(!skipDueToSSMConnectionError && getStorageSavings
+                    ? [getStorageData(resourceDetail)]
+                    : [Promise.resolve()]), // Fetch storage savings data
+                ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
+                ...(!skipDueToSSMConnectionError && getResourceutilization
+                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY)]
+                    : [Promise.resolve()]),
+                ...(!skipDueToSSMConnectionError && getResourceutilization
+                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK)]
+                    : [Promise.resolve()]),
+                ...(!skipDueToSSMConnectionError && getResourceutilization
+                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU)]
+                    : [Promise.resolve()])
+            ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+        );
+
+        databaseHostDetails.id = resourceId;
+        databaseHostDetails.name = resourceName || '';
+        databaseHostDetails.status = serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
+        databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
+        databaseHostDetails.databaseServer = serverMetadata;
+        databaseHostDetails.topology = topologyData!;
+        databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
+        databaseHostDetails.storage = storageData!;
+        databaseHostDetails.estimatedUsageCost = usageEstimationData!;
+        if (getResourceutilization) {
+            databaseHostDetails.resourceUtilization = {
+                cpu: cpuUtilizationData! || {},
+                memory: memoryUtilizationData! || {},
+                disk: diskUtilizationData! || {}
+            };
+        }
+    } catch (error) {
+        logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching database hosts details ${accountId}, ${error}`
+        );
+    }
+
+    logger.debug('Database host details', databaseHostDetails);
+
+    return databaseHostDetails;
+}
+
+async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
+
+    const [resourceDetail] = await listResources(accountId);
+
+    if (isEmpty(resourceDetail)) {
+        logger.error(`No deployed host with id ${databaseHostId} in ${accountId} is found.`);
+        return { count: 0, items: [], nextToken: '' };
+    }
+
+    const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+    // Check SSM Connection status
+    const skipDueToSSMConnectionError = await isSSMConnectionSuccessful(
+        credentialsId,
+        region!,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    if (skipDueToSSMConnectionError) {
+        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
+    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
+        [
+            getDataBasesSummary(databaseHostId),
+            getNativeSQLBackedupDatabases(databaseHostId),
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
+            getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
+        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+    );
+    try {
+        const response = databases.map(
+            (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
+                name: database.databaseName,
+                size: database.databaseSize,
+                status: database.databaseStatus,
+                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                    ? MSSQL_DATABASE_TYPES.SYSTEM
+                    : MSSQL_DATABASE_TYPES.USER,
+                protection: {
+                    isAWSBackupEnabled: Boolean(awsBackup),
+                    isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                    isSqlNativeEnabled: Boolean(
+                        backedupDatabases &&
+                            backedupDatabases.find(
+                                (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                            )
+                    )
+                }
+            })
+        );
+        return {
+            count: response.length,
+            nextToken: '',
+            items: response
+        };
+    } catch (error) {
+        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+}
+
+export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases };
