@@ -183,6 +183,9 @@ const app = fastify({
         },
         { prefix: `${API_PREFIX_PATH}` }
     )
+    .setNotFoundHandler((_request: FastifyRequest, reply: FastifyReply) => {
+        reply.notFound();
+    })
     .addHook(
         'preHandler',
         (
