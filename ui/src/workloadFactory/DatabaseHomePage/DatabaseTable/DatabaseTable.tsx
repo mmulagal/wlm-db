@@ -22,6 +22,7 @@ import {
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
 import { updateResourceId } from '../../../store/authSlice';
+import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -144,17 +145,15 @@ const DatabaseTable = () => {
                                     if (menuId === 'viewOverview') {
                                         dispatch(selectedTabSelection('Overview'));
                                         dispatch(updateResourceId(rowData.id));
-                                        navigate(
-                                            '../database-overview'
-                                        );
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'viewDatabaseList') {
                                         dispatch(selectedTabSelection('Database list'));
                                         dispatch(updateResourceId(rowData.id));
-                                        navigate(
-                                            '../database-overview'
-                                        );
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'remove') {
