@@ -159,9 +159,11 @@ async function getTopology(
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
                 vpcId = fsxInfo?.FileSystems?.[0].VpcId;
-                [fileSystemName] = fsxInfo?.FileSystems?.[0].Tags?.filter(tag => tag.Key === 'Name').map(
-                    tag => tag.Value
-                ) || [''];
+                fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
+                    (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
+                    ''
+                );
+
                 fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
                 fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
                 fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
@@ -728,7 +730,7 @@ async function getDatabaseHostSummary(
         databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
         databaseHostDetails.storage = storageData!;
         databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-        if (getResourceutilization) {
+        if (getResourceutilization && cpuUtilizationData && memoryUtilizationData && diskUtilizationData) {
             databaseHostDetails.resourceUtilization = {
                 cpu: cpuUtilizationData! || {},
                 memory: memoryUtilizationData! || {},
