@@ -1,13 +1,20 @@
 {
     "count": 16,
     "items": [
-        { 
+        {
             "id": "resource-id-1",
             "name": "Database hostname 1",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "databaseServer": {
+                "operatingSystem": "Windows Server 2019",
+                "serverEdition": "Microsoft SQL Server 2022 (RTM-CU6) (KB5027505)",
+                "serverVersion": "16.0.4055.4",
+                "nodeNames": ["SQLDBAPQHU"],
+                "activeConnections": 6,
+                "creationDate": "2022-11-21T02:47:42"
+            },
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -22,25 +29,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 0,
                 "used": 0,
                 "spaceSavings": 0
-            },    
-            "estimatedUsageCost":
-            {
+            },
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -48,13 +51,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-2",
             "name": "Database hostname 2",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -69,25 +71,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -95,13 +93,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-3",
             "name": "Database hostname 3",
             "status": "Down",
             "databaseCount": 0,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -116,25 +113,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -142,13 +135,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-4",
             "name": "Database hostname 4",
             "status": "Down",
             "databaseCount": 0,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -163,25 +155,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 100,
                 "assessment": "Low"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -189,13 +177,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-5",
             "name": "Database hostname 5",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -209,25 +196,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 20,
                 "assessment": "Medium"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -235,13 +218,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-6",
             "name": "Database hostname 6",
             "status": "Down",
             "databaseCount": 0,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -255,25 +237,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 20,
                 "assessment": "Medium"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -281,13 +259,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-7",
             "name": "Database hostname 7",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -301,25 +278,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -327,13 +300,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-8",
             "name": "Database hostname 8",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -347,25 +319,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -373,13 +341,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-9",
             "name": "Database hostname 9",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -393,25 +360,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -419,13 +382,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-10",
             "name": "Database hostname 10",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -439,25 +401,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 100,
                 "assessment": "Low"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -465,13 +423,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-11",
             "name": "Database hostname 11",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -485,25 +442,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 100,
                 "assessment": "Low"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -511,13 +464,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-12",
             "name": "Database hostname 12",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -531,25 +483,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 20,
                 "assessment": "Medium"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -557,13 +505,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-13",
             "name": "Database hostname 13",
             "status": "Down",
             "databaseCount": 0,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -577,25 +524,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 20,
                 "assessment": "Medium"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -603,13 +546,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-14",
             "name": "Database hostname 14",
             "status": "Down",
             "databaseCount": 0,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -623,25 +565,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -649,13 +587,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-15",
             "name": "Database hostname 15",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
@@ -669,25 +606,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": true,
                 "isFsxOntapSnapshotsEnabled": false,
                 "isSqlNativeEnabled": true
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -695,13 +628,12 @@
                 "estimationType": "pricing"
             }
         },
-        { 
+        {
             "id": "resource-id-16",
             "name": "Database hostname 16",
             "status": "Up",
             "databaseCount": 2,
-            "topology": 
-            {
+            "topology": {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
@@ -715,25 +647,21 @@
                     }
                 ]
             },
-            "protection":
-            {
+            "protection": {
                 "isAwsBackUpEnabled": false,
                 "isFsxOntapSnapshotsEnabled": true,
                 "isSqlNativeEnabled": false
             },
-            "performance": 
-            { 
+            "performance": {
                 "latency": 10,
                 "assessment": "High"
             },
-            "storage":
-            {
+            "storage": {
                 "size": 3932364972032,
                 "used": 181537648640,
                 "spaceSavings": 10737418240
             },
-            "estimatedUsageCost":
-            {
+            "estimatedUsageCost": {
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
@@ -741,6 +669,6 @@
                 "estimationType": "pricing"
             }
         }
-    ], 
+    ],
     "nextToken": null
 }

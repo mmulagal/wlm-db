@@ -31,7 +31,7 @@ const DatabaseHostTile = () => {
                     <FlashingDotsLoader className={styles.loaderHeight} />
                 ) : (
                     <div className={styles.firstSection}>
-                        {resourceDetails.status === 'UP' ? <Success /> : <Failure />}
+                        {resourceDetails.status === 'Up' ? <Success /> : <Failure />}
                         <Typography variant="Semibold_14">{resourceDetails.status}</Typography>
                     </div>
                 )}

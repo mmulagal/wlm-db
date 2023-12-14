@@ -10,19 +10,24 @@ export interface WorkloadFactoryResourceDetails {
     name: string;
     status: string;
     databaseCount: number;
-    operatingSystem: string;
-    serverEdition: string;
-    serverVersion: string;
-    clusterName: string;
-    activeConnections: number;
-    creationDate: number;
+    databaseServer: {
+        operatingSystem: string;
+        serverEdition: string;
+        serverVersion: string;
+        nodeNames: Array<string>;
+        activeConnections: number;
+        creationDate: string;
+        clusterName: string;
+    };
     topology: {
         awsAccount: string;
         region: string;
         serverType: string;
         serverInstallationMode: string;
+        fileSystemName: string;
+        fileSystemDeploymentMode: string;
         fileSystemType: string;
-        fsxFilesystemId: string;
+        fileSystemId: string;
         fileSystemStatus: string;
         fileSystemStorageCapacity: string;
         fileSystemThroughputCapacity: string;
@@ -50,21 +55,23 @@ export interface WorkloadFactoryResourceDetails {
     };
 
     performance: {
-        latency: {
-            current: number;
-            assessment: string;
-            read: number;
-            write: number;
-        };
-        iops: {
-            current: number;
-            read: number;
-            write: number;
-        };
-        throughput: {
-            current: number;
-            read: number;
-            write: number;
+        rwMetrics: {
+            latency: {
+                current: number;
+                assessment: string;
+                read: number;
+                write: number;
+            };
+            iops: {
+                current: number;
+                read: number;
+                write: number;
+            };
+            throughput: {
+                current: number;
+                read: number;
+                write: number;
+            };
         };
     };
 
