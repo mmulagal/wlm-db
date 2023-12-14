@@ -579,7 +579,13 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
-    'For standalone deployment, privateSubnet1Id and routeTable1Id cannot be empty.';
+    'For standalone deployment, private subnet 1 Id and route table 1 Id cannot be empty.';
+
+const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
+    'For FCI deployment, private subnet 1 Id, route table 1 Id, private subnet 2 Id and route table 2 Id cannot be empty.';
+
+const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
+    'AWS FSx requires route tables to be different for subnets in multiple Availability Zone deployment.';
 
 const FCI_NETWORK_VIOLATION_MESSAGE =
     'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
@@ -844,6 +850,7 @@ const BXP_USER_CRED_TYPE = 'BXP_USER_CRED';
 const WF_SVC_TOKEN_TYPE = 'WF_SVC_TOKEN';
 const BXP_SVC_TOKEN_TYPE = 'BXP_SVC_TOKEN';
 const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
+const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -851,7 +858,8 @@ enum DatabaseHostsQueryFields {
     PERFORMANCE = 'performance',
     PROTECTION = 'protection',
     STORAGE = 'storage',
-    USAGE_ESTIMATION = 'usageEstimation'
+    USAGE_ESTIMATION = 'usageEstimation',
+    RESOURCE_UTILIZATION = 'resourceUtilization'
 }
 
 enum ServerState {
@@ -903,6 +911,28 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
     ['web', SQL_WEB]
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
+
+const MSSQL_SYSTEM_DATABASES = [
+    'master',
+    'mastlog',
+    'tempdb',
+    'tempdev',
+    'templog',
+    'modeldev',
+    'model',
+    'modellog',
+    'msdbdata',
+    'msdblog',
+    'msdb'
+];
+
+const MSSQL_DATABASE_TYPES = {
+    SYSTEM: 'System Database',
+    USER: 'User Database'
+};
+
+const WF_TOKEN = 'WF_TOKEN';
+const BXP_TOKEN = 'BXP_TOKEN';
 
 export {
     WLMDB,
@@ -1084,11 +1114,14 @@ export {
     NOT_AVAILABLE,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
     DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
+    REQUEST_IN_PROGRESS_TYPE,
     CONFIG_NOT_FOUND,
     DOMAIN_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
@@ -1101,7 +1134,11 @@ export {
     INVALID_PARAMETER_VALUE,
     LOG_GROUP_ARN,
     WLMDB_RESOURCE_TAG_VALUE,
+    MSSQL_SYSTEM_DATABASES,
+    MSSQL_DATABASE_TYPES,
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
-    PRICING
+    PRICING,
+    WF_TOKEN,
+    BXP_TOKEN
 };

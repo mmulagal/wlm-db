@@ -6,7 +6,8 @@ import {
     SSM_COMMAND_CACHE_TYPE,
     WF_USER_CRED_TYPE,
     WF_SVC_TOKEN_TYPE,
-    BXP_SVC_TOKEN_TYPE
+    BXP_SVC_TOKEN_TYPE,
+    REQUEST_IN_PROGRESS_TYPE
 } from './consts.js';
 import getLogger from './logger.js';
 
@@ -40,6 +41,11 @@ const SSM_COMMAND_CACHE = new LRUCache({
     ttl: ms('60m')
 });
 
+const REQUEST_IN_PROGRESS_CACHE = new LRUCache({
+    max: 100,
+    ttl: ms('30s')
+});
+
 function getCacheByType(type: string) {
     logger.debug('Getting cache by type:', type);
 
@@ -56,6 +62,8 @@ function getCacheByType(type: string) {
             return BXP_SVC_TOKEN_CACHE;
         case SSM_COMMAND_CACHE_TYPE:
             return SSM_COMMAND_CACHE;
+        case REQUEST_IN_PROGRESS_TYPE:
+            return REQUEST_IN_PROGRESS_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }
@@ -92,4 +100,12 @@ function hasCache(type: string, key: string) {
     return response;
 }
 
-export { writeToCache, readFromCacheByKey, hasCache };
+function deleteFromCache(type: string, key: string) {
+    logger.debug('Delete cache', { key });
+
+    const cache = getCacheByType(type);
+
+    cache?.delete(key);
+}
+
+export { writeToCache, readFromCacheByKey, hasCache, deleteFromCache };

@@ -2,12 +2,13 @@ import config from 'config';
 import ms from 'ms';
 import {
     CommandInvocationStatus,
+    ConnectionStatus,
     GetCommandInvocationCommandInput,
     GetCommandInvocationCommandOutput,
     InvocationDoesNotExist,
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
-import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions } from '../../lib/aws/ssm';
+import { sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus } from '../../lib/aws/ssm';
 import { sleep } from '../../utils/utils';
 import { AWS_REGIONS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
@@ -100,4 +101,56 @@ async function getFSxOntapRegionsList(credentialsId: string): Promise<{ regions:
 
     return { regions: fsxRegionsList };
 }
-export { executeSSMDocument, getFSxOntapRegionsList };
+
+async function getSSMConnectionStatus(credentialId: string, region: string, instanceId: string) {
+    logger.info('Check for successful SSM connection', credentialId, region, instanceId);
+    return getConnectionStatus(credentialId, region, {
+        Target: instanceId
+    });
+}
+
+async function isSSMConnectionSuccessful(
+    credentialsId: string,
+    region: string,
+    activeNodeInstanceId: string,
+    standbyNodeInstanceId?: string
+) {
+    logger.info(
+        'Check if SSM connection is a success',
+        credentialsId,
+        region,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+    try {
+        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
+
+        // Connection to activenode is successful
+        if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+            return true;
+        }
+
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+        logger.error(errorMessage);
+
+        // Check for connection to standby node
+        if (standbyNodeInstanceId) {
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                return true;
+            }
+
+            errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+            logger.error(errorMessage);
+        }
+    } catch (error) {
+        logger.error(
+            `Error while checking SSM connection ${credentialsId}, ${region}, ${activeNodeInstanceId}, ${standbyNodeInstanceId}`
+        );
+        return false;
+    }
+
+    return false;
+}
+
+export { executeSSMDocument, getFSxOntapRegionsList, getSSMConnectionStatus, isSSMConnectionSuccessful };

@@ -8,7 +8,8 @@ import {
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
-    listResourceTags
+    listResourceTags,
+    createTag
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -23,6 +24,7 @@ import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
 import { Metadata } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { getFsxArn } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -388,10 +390,17 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
     }
 }
 
+async function tagFsxResource(credentialsId: string, region: string, awsAccountId: string, fsxId: string, tags: Tag[]) {
+    logger.info('Adding tag to Fsx resource', credentialsId, region, awsAccountId, fsxId);
+    const fsxArn = getFsxArn(awsAccountId, region, fsxId);
+    createTag(credentialsId, region, fsxArn, tags);
+}
+
 export {
     getFSxFileSystemsList,
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
     getStorageDataUsingSSM,
-    getMappedOntapVolumes
+    getMappedOntapVolumes,
+    tagFsxResource
 };

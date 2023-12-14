@@ -4,11 +4,14 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
+    CREDENTIAL_PROD_LINK,
+    CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
     PENDING_DELETION,
+    PRODUCTION,
     RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
     SQL_DATABASE,
@@ -18,6 +21,7 @@ import {
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -440,14 +444,14 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrProtection = (data: DatabaseHostItem[]) => {
+export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryDatabaseItem[]) => {
     let protectedDb = 0;
     let unprotectedDb = 0;
     let awsBackupDb = 0;
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (
             val?.protection?.isAwsBackUpEnabled ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
@@ -455,7 +459,10 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         ) {
             protectedDb += 1;
         } else if (
-            (val?.status === STATUS_CONST.DOWN || val?.status === STATUS_CONST.UP) &&
+            (val?.status === STATUS_CONST.DOWN ||
+                val?.status === STATUS_CONST.UP ||
+                val?.status === 'ONLINE' ||
+                val?.status === 'OFFLINE') &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
@@ -486,7 +493,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrStorageSavings = (data: any) => {
+export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let totalConsume = 0;
     let storageSavings = 0;
 
@@ -508,7 +515,7 @@ export const getAggrStorageSavings = (data: any) => {
     };
 };
 
-export const getAggrCost = (data: any) => {
+export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let storageCost = 0;
     let computeCost = 0;
     let connectivityCost = 0;
@@ -848,4 +855,16 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     }
     params.enableCloudWatch = payload.cloudWatch || false;
     return params;
+};
+
+export const openCredentialTab = () => {
+    const state = store.getState();
+    const isWorkloadFactoryStatus = state.auth.isWorkloadFactory;
+    let url;
+    if (isWorkloadFactoryStatus) {
+        url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+    } else {
+        url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+    }
+    window.open(url, '_blank', 'noopener');
 };

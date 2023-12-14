@@ -56,16 +56,16 @@ import {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
-    STANDALONE,
-    STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     FileSystemTypes,
     DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
     LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE
+    WLMDB_RESOURCE_TAG_VALUE,
+    STANDALONE,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_VIOLATION_MESSAGE
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -82,6 +82,7 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
+import { NetworkViolation } from '../utils/common-types';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -321,12 +322,22 @@ async function createCloudFormationTemplateForUserDeployment(
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+
+    if (vpcValidationCheck.isViolated) {
+        let errorMessage;
+        if (vpcValidationCheck.violationMessage !== undefined) {
+            errorMessage = vpcValidationCheck.violationMessage;
+        } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
+        } else {
+            errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
         }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
+        logger.error('VPC validation error:', errorMessage);
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
@@ -429,12 +440,14 @@ async function deployCloudFormationTemplate(
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
-        }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+        const errorMessage = vpcValidationCheck.violationMessage;
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(

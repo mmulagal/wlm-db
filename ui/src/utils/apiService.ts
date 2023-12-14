@@ -328,9 +328,9 @@ export const databaseHomeApi = createApi({
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => {
                     if (nextToken) {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`;
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
                     } else {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED`;
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
                     }
                 }
             }),
@@ -362,10 +362,14 @@ export const workloadFactoryResourceApi = createApi({
     endpoints: builder => {
         return {
             getResourceDetails: builder.query({
-                query: id => ({ url: `database-hosts/${id}` })
+                query: id => ({
+                    url: `database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
+                })
             }),
             getDatabaseList: builder.query({
-                query: id => ({ url: `database-hosts/${id}/databases` })
+                query: id => ({
+                    url: `database-hosts/${id}/databases`
+                })
             })
         };
     }

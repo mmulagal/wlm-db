@@ -25,7 +25,11 @@ import {
     DescribeNetworkInterfacesCommand,
     DescribeInstancesCommand,
     DescribeInstancesCommandInput,
-    DescribeInstanceTypeOfferingsCommand
+    DescribeInstanceTypeOfferingsCommand,
+    CreateTagsCommand,
+    CreateTagsCommandOutput,
+    Tag,
+    DescribeInstancesCommandOutput
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -41,7 +45,6 @@ async function getEC2Client(region: string, credentialsId?: string) {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialsDetails(credentialsId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
-
     return new EC2Client({ credentials, region });
 }
 
@@ -97,7 +100,7 @@ async function describeInstance(
     credentialsId: string,
     region: string,
     params: DescribeInstancesCommandInput
-): Promise<DescribeImagesCommandOutput> {
+): Promise<DescribeInstancesCommandOutput> {
     logger.info('Describe EC2 instance', { credentialsId, region, params });
 
     const client = await getEC2Client(region, credentialsId);
@@ -246,6 +249,23 @@ async function describeInstanceTypeOfferings(credentialsId: string, region: stri
     return response;
 }
 
+async function createTag(credentialsId: string, region: string, resourceId: string[], tags: Tag[]) {
+    logger.info('Adding tags to resource', credentialsId, region, resourceId, tags);
+
+    const client = await getEC2Client(region, credentialsId);
+    const ec2Params = {
+        Resources: resourceId,
+        Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
+    };
+    try {
+        const command = new CreateTagsCommand(ec2Params);
+        const response: CreateTagsCommandOutput = await client.send(command);
+        logger.info('Resource tagged successfully:', response);
+    } catch (error) {
+        logger.error('Error tagging resource:', error);
+    }
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -258,5 +278,6 @@ export {
     describeRouteTable,
     describeKeyPairs,
     describeNetworkInterfaces,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    createTag
 };

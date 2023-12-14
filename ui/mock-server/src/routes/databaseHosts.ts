@@ -1,6 +1,7 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 
 import ResourceDetails from '../data/resourceDetails.json';
+import DatabaseList from '../data/databaseList.json';
 import DatabaseHosts from '../data/databaseHosts.json';
 import DatabaseJobs from '../data/databaseJobs.json';
 import JobsSummary from '../data/jobsSummary.json';
@@ -15,6 +16,11 @@ router.get(`${BASE_URL}/v1/database-hosts`, async (req: {}, res: any) => {
 router.get(`${BASE_URL}/v1/database-hosts/:id`, async (req: {}, res: any) => {
     await delay(3000);
     generateResponse(res, 200, ResourceDetails);
+});
+
+router.get(`${BASE_URL}/v1/database-hosts/:id/databases`, async (req: {}, res: any) => {
+    await delay(3000);
+    generateResponse(res, 200, DatabaseList);
 });
 
 router.get(`${BASE_URL}/v1/jobs`, async (req: {}, res: any) => {

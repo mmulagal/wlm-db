@@ -22,6 +22,7 @@ import {
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
 import { updateResourceId } from '../../../store/authSlice';
+import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -30,6 +31,7 @@ const DatabaseTable = () => {
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -41,35 +43,25 @@ const DatabaseTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
-    const menuItems = [
-        {
-            id: 'viewOverview',
-            displayName: 'View host overview'
-        },
-        {
-            id: 'viewDatabaseList',
-            displayName: 'View database list'
-        },
-        // {
-        //     id: 'clone',
-        //     displayName: 'Clone',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'migrate',
-        //     displayName: 'Migrate',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'protect',
-        //     displayName: 'Protect',
-        //     disabled: true
-        // },
-        {
-            id: 'remove',
-            displayName: 'Remove'
-        }
-    ];
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'viewOverview',
+                displayName: 'View host overview',
+                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+            },
+            {
+                id: 'viewDatabaseList',
+                displayName: 'View database list',
+                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+            },
+            {
+                id: 'remove',
+                displayName: 'Remove',
+                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+            }
+        ];
+    };
 
     const protectionTooltipText = (data: any) => {
         return (
@@ -137,7 +129,7 @@ const DatabaseTable = () => {
                     <div className={styles.jobMenuPopover}>
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems}
+                            menuItems={menuItems(rowData)}
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -153,17 +145,15 @@ const DatabaseTable = () => {
                                     if (menuId === 'viewOverview') {
                                         dispatch(selectedTabSelection('Overview'));
                                         dispatch(updateResourceId(rowData.id));
-                                        navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
-                                        );
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'viewDatabaseList') {
                                         dispatch(selectedTabSelection('Database list'));
                                         dispatch(updateResourceId(rowData.id));
-                                        navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
-                                        );
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'remove') {
