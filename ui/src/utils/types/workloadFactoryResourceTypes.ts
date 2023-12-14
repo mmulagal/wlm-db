@@ -118,4 +118,9 @@ export interface WorkloadFactoryDatabaseItem {
     size: number;
     type: string;
     isProtected: boolean;
+    protection?: {
+        isAwsBackUpEnabled: boolean;
+        isFsxOntapSnapshotsEnabled: boolean;
+        isSqlNativeEnabled: boolean;
+    };
 }

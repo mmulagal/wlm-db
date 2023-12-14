@@ -21,6 +21,7 @@ import {
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -443,7 +444,7 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrProtection = (data: any) => {
+export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryDatabaseItem[]) => {
     let protectedDb = 0;
     let unprotectedDb = 0;
     let awsBackupDb = 0;
@@ -492,7 +493,7 @@ export const getAggrProtection = (data: any) => {
     };
 };
 
-export const getAggrStorageSavings = (data: any) => {
+export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let totalConsume = 0;
     let storageSavings = 0;
 
@@ -514,7 +515,7 @@ export const getAggrStorageSavings = (data: any) => {
     };
 };
 
-export const getAggrCost = (data: any) => {
+export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let storageCost = 0;
     let computeCost = 0;
     let connectivityCost = 0;
