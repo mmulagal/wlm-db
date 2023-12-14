@@ -33,7 +33,7 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
     logger.info('Getting workload factory service token:');
 
     try {
-        if (hasCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN)) {
+        if (!process.env.TEST && hasCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN)) {
             await waitForResolution(() => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN), 2000, 10 * 1000);
         }
 
@@ -78,7 +78,7 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
     logger.info('Getting BlueXP service token:');
 
     try {
-        if (hasCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN)) {
+        if (!process.env.TEST && hasCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN)) {
             await waitForResolution(() => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN), 2000, 10 * 1000);
         }
 
