@@ -4,6 +4,9 @@ import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
+import { ReactComponent as Success } from '../../../../assets/success.svg';
+import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
+import styles from './StorageCompute.module.scss';
 
 type accordionType = {
     handleToggle: any;
@@ -49,7 +52,15 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_STATUS}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStatus}</Typography>
+                    <div className={styles.statusIconClass}>
+                        {resourceDetails?.topology?.fileSystemStatus &&
+                        resourceDetails?.topology?.fileSystemStatus.toLowerCase() === 'available' ? (
+                            <Success />
+                        ) : (
+                            <Failure />
+                        )}
+                        <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStatus}</Typography>
+                    </div>
                 </div>
 
                 <div className={commonStyles.row}>
