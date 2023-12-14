@@ -458,7 +458,10 @@ export const getAggrProtection = (data: any) => {
         ) {
             protectedDb += 1;
         } else if (
-            (val?.status === STATUS_CONST.DOWN || val?.status === STATUS_CONST.UP) &&
+            (val?.status === STATUS_CONST.DOWN ||
+                val?.status === STATUS_CONST.UP ||
+                val?.status === 'ONLINE' ||
+                val?.status === 'OFFLINE') &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled

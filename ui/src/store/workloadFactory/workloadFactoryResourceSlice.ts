@@ -8,19 +8,24 @@ const initialState: WorkloadFactoryResourceEntities = {
         name: '',
         status: '',
         databaseCount: 0,
-        operatingSystem: '',
-        serverEdition: '',
-        serverVersion: '',
-        clusterName: '',
-        activeConnections: 0,
-        creationDate: 0,
+        databaseServer: {
+            operatingSystem: '',
+            serverEdition: '',
+            serverVersion: '',
+            nodeNames: [],
+            activeConnections: 0,
+            creationDate: '',
+            clusterName: ''
+        },
         topology: {
             awsAccount: '',
             region: '',
             serverType: '',
             serverInstallationMode: '',
+            fileSystemDeploymentMode: '',
+            fileSystemName: '',
             fileSystemType: '',
-            fsxFilesystemId: '',
+            fileSystemId: '',
             fileSystemStatus: '',
             fileSystemStorageCapacity: '',
             fileSystemThroughputCapacity: '',
@@ -50,21 +55,23 @@ const initialState: WorkloadFactoryResourceEntities = {
         },
 
         performance: {
-            latency: {
-                current: 0,
-                assessment: '',
-                read: 0,
-                write: 0
-            },
-            iops: {
-                current: 0,
-                read: 0,
-                write: 0
-            },
-            throughput: {
-                current: 0,
-                read: 0,
-                write: 0
+            rwMetrics: {
+                latency: {
+                    current: 0,
+                    assessment: '',
+                    read: 0,
+                    write: 0
+                },
+                iops: {
+                    current: 0,
+                    read: 0,
+                    write: 0
+                },
+                throughput: {
+                    current: 0,
+                    read: 0,
+                    write: 0
+                }
             }
         },
 
