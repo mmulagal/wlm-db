@@ -27,7 +27,7 @@ import {
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
+import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
