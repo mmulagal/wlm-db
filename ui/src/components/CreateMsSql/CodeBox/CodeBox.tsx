@@ -9,7 +9,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
 import { generateOptionType, getCredDetails } from '../../../utils/utilityFunctions';
-import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 
@@ -159,7 +159,9 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />}
+                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || (
+                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                        )}
                     </Typography>
                 </HighlighterWord>
             );
@@ -420,13 +422,15 @@ const CodeBox = () => {
                 </div>
 
                 {/* Cloud formation button */}
-                {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && rightPanelTemplateResponse?.template && (
-                    <div className={styles.cloudFormationButtonContainer}>
-                        <Button variant="secondary" onClick={() => handleRedirectToCF()}>
-                            Redirect to CloudFormation
-                        </Button>
-                    </div>
-                )}
+                {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                    !isRightPanelTemplateLoading &&
+                    rightPanelTemplateResponse?.template && (
+                        <div className={styles.cloudFormationButtonContainer}>
+                            <Button variant="secondary" onClick={() => handleRedirectToCF()}>
+                                Redirect to CloudFormation
+                            </Button>
+                        </div>
+                    )}
 
                 <div
                     className={
