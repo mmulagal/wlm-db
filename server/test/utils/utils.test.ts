@@ -1,12 +1,28 @@
 import { faker } from '@faker-js/faker';
 import { createSecrets } from '../../src/operations/aws/secrets-manager-operations';
-import { DEFAULT_AWS_REGION } from '../../src/utils/consts';
+import { DEFAULT_AWS_REGION, FCI } from '../../src/utils/consts';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import secretManagerResponse from '../simulator/responses/aws/secrets-manager-create.json';
-import { checkAndRetrieveJsonObject, generateHash, getFsxArn } from '../../src/utils/utils';
+import {
+    checkAndRetrieveJsonObject,
+    generateHash,
+    getFsxArn,
+    isNetworkConfigurationViolated
+} from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 
-const CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
+const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
+const networkConfiguration = {
+    vpcId: `vpc-${faker.string.alpha(6)}`,
+    vpcCidr: '172.31.0.0/16',
+    availabilityZone1: 'ap-southeast-1c',
+    privateSubnet1Id: `subnet-${faker.string.alpha(6)}`,
+    routeTable1Id: `rtb-${faker.string.alpha(6)}`,
+    availabilityZone2: 'ap-southeast-1a',
+    privateSubnet2Id: `subnet-${faker.string.alpha(6)}`,
+    routeTable2Id: `rtb-${faker.string.alpha(6)}`
+};
+
 vi.mock('../../src/lib/aws/secrets-manager', () => ({
     createSecret: vi.fn().mockImplementation(async () => secretManagerResponse)
 }));
@@ -45,5 +61,9 @@ describe(' Secrets Manager string', () => {
     it('Generate Fsx ARN', async () => {
         const response = getFsxArn(awsAccountId, DEFAULT_AWS_REGION, fsxId);
         expect(response).toBe(fsxArn);
+    });
+    it('Generate Fsx ARN', async () => {
+        const response = await isNetworkConfigurationViolated(networkConfiguration, FCI);
+        expect(response.isViolated).toBe(false);
     });
 });
