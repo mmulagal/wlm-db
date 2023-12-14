@@ -26,7 +26,7 @@ import {
     PERFORMANCE_METRICS,
     SQL_BACKUPS
 } from './queries';
-import { executeSSMDocument } from '../../aws/ssm-operations';
+import { executeSSMDocument, isSSMConnectionSuccessful } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
@@ -100,6 +100,22 @@ async function callSsmExecution(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
+
+    // Check SSM Connection status
+    const isSSMConnected = await isSSMConnectionSuccessful(
+        credentialsId,
+        region!,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    if (!isSSMConnected) {
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
+        if (standbyNodeInstanceId) {
+            errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
+        }
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
 
     let response;
     const defaultParams = {

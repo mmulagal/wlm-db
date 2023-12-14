@@ -53,6 +53,7 @@ import {
 import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
+import { isSSMConnectionSuccessful } from './aws/ssm-operations';
 import { getCostAllocationTagResources } from './aws/tags-operations';
 
 const logger = getLogger();
@@ -540,6 +541,14 @@ async function getDatabaseHostsSummary(
                     const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
                         metadata as unknown as Metadata;
 
+                    // Check SSM Connection status
+                    const isSSMConnected = await isSSMConnectionSuccessful(
+                        credentialsId,
+                        region!,
+                        activeNodeInstanceId,
+                        standbyNodeInstanceId
+                    );
+
                     let serverStatus: string = ServerState.DOWN;
                     let dbCount;
                     let topologyData: TopologyResponseType;
@@ -547,6 +556,8 @@ async function getDatabaseHostsSummary(
                     let storageData: StorageResponseType | undefined;
                     let protectionData: ProtectionResponseType | undefined;
                     let usageEstimationData: UsageCostResponseType | undefined;
+                    const activeNodeId = activeNodeInstanceId;
+                    const standbyNodeId = standbyNodeInstanceId;
 
                     [
                         serverStatus,
@@ -558,12 +569,20 @@ async function getDatabaseHostsSummary(
                         usageEstimationData
                     ] = await Promise.all(
                         [
-                            getServerState(resourceId), // Fetch server status
-                            getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
+                            ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                            ...(isSSMConnected
+                                ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
+                                : [Promise.resolve()]),
                             getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                            ...(getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                            ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                            ...(getProtection ? [getProtectionStatus(resourceDetail)] : [Promise.resolve()]), // Fetch protection status
+                            ...(isSSMConnected && getPerformance
+                                ? [getServerIOLatency(resourceId)]
+                                : [Promise.resolve()]), // Fetch io latency data
+                            ...(isSSMConnected && getStorageSavings
+                                ? [getStorageData(resourceDetail)]
+                                : [Promise.resolve()]), // Fetch storage savings data
+                            ...(isSSMConnected && getProtection
+                                ? [getProtectionStatus(resourceDetail)]
+                                : [Promise.resolve()]), // Fetch protection status
                             ...(getUsageEstimation
                                 ? [getBillingOrPriceEstimation(resourceDetail)]
                                 : [Promise.resolve()]) // Fetch billing or pricing estimate data
@@ -639,6 +658,14 @@ async function getDatabaseHostSummary(
     try {
         const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 
+        // Check SSM Connection status
+        const isSSMConnected = await isSSMConnectionSuccessful(
+            credentialsId,
+            region!,
+            activeNodeInstanceId,
+            standbyNodeInstanceId
+        );
+
         let serverStatus: string = ServerState.DOWN;
         let dbCount;
         let serverMetadata: DatabaseServerMetadataResponseType;
@@ -663,20 +690,22 @@ async function getDatabaseHostSummary(
             cpuUtilizationData
         ] = await Promise.all(
             [
-                getServerState(resourceId), // Fetch server status
-                getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
-                getServerSummary(resourceId), // Fetch server metadata
+                ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                ...(isSSMConnected
+                    ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId)]
+                    : [Promise.resolve()]),
+                ...(isSSMConnected ? [getServerSummary(resourceId)] : [Promise.resolve()]), // Fetch server metadata
                 getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                ...(getPerformance ? [getPerformanceMetrics(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                ...(isSSMConnected && getPerformance ? [getPerformanceMetrics(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
                 ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
-                ...(getResourceutilization
+                ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY)]
                     : [Promise.resolve()]),
-                ...(getResourceutilization
+                ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK)]
                     : [Promise.resolve()]),
-                ...(getResourceutilization
+                ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU)]
                     : [Promise.resolve()])
             ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
@@ -714,7 +743,7 @@ async function getDatabaseHostSummary(
 async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
     logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
 
-    const [resourceDetail] = await listResources(accountId);
+    const [resourceDetail] = await listResources(accountId, databaseHostId);
 
     if (isEmpty(resourceDetail)) {
         logger.error(`No deployed host with id ${databaseHostId} in ${accountId} is found.`);
@@ -722,7 +751,21 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     }
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
-    const { credentialsId } = metadata as unknown as Metadata;
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+    // Check SSM Connection status
+    const isSSMConnected = await isSSMConnectionSuccessful(
+        credentialsId,
+        region!,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    if (!isSSMConnected) {
+        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
     const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
         [
             getDataBasesSummary(databaseHostId),
