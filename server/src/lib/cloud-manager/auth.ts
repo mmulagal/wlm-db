@@ -48,7 +48,7 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
             expires_in: expiresIn,
             token_type: tokenType
         } = await gotInstanceForInternalRequest
-            .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token1`, {
+            .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token`, {
                 json: {
                     client_id: SECRETS.AUTH_CLIENT_ID,
                     client_secret: SECRETS.AUTH_CLIENT_SECRET,
