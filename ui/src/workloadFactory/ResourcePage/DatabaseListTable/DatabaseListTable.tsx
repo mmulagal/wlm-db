@@ -53,9 +53,11 @@ const DatabaseListTable = () => {
                 return (
                     <div className={styles.statusCell}>
                         <div
-                            className={`${styles.statusIcon} ${cellData === 'Up' ? styles.onIcon : styles.offIcon}`}
+                            className={`${styles.statusIcon} ${
+                                cellData === 'ONLINE' ? styles.onIcon : cellData === 'OFFLINE' ? styles.offIcon : ''
+                            }`}
                         ></div>
-                        <Typography variant="Regular_14">{cellData === 'Up' ? 'On' : 'Off'}</Typography>
+                        <Typography variant="Regular_14">{cellData}</Typography>
                     </div>
                 );
             }

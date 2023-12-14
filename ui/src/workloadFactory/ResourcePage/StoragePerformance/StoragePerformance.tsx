@@ -1,5 +1,5 @@
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
-import { ReactComponent as Latency } from '../../../assets/Latency.svg';
+import { ReactComponent as Latency } from '../../../assets/Latency2.svg';
 import { ReactComponent as IOPS } from '../../../assets/IOPS.svg';
 import { ReactComponent as Throughput } from '../../../assets/Throughput.svg';
 
@@ -13,22 +13,22 @@ const StoragePerformance = () => {
         {
             image: <Latency />,
             text: GENERAL.LATENCY,
-            read: `${resourceDetails?.performance?.latency?.read} ms`,
-            write: `${resourceDetails?.performance?.latency?.write} ms`,
+            read: `${resourceDetails?.performance?.rwMetrics?.latency?.read} ms`,
+            write: `${resourceDetails?.performance?.rwMetrics?.latency?.write} ms`,
             separator: true
         },
         {
             image: <IOPS />,
             text: GENERAL.IOPS,
-            read: `${resourceDetails?.performance?.iops?.read} ms`,
-            write: `${resourceDetails?.performance?.iops?.write} ms`,
+            read: `${resourceDetails?.performance?.rwMetrics?.iops?.read} ms`,
+            write: `${resourceDetails?.performance?.rwMetrics?.iops?.write} ms`,
             separator: true
         },
         {
             image: <Throughput />,
             text: GENERAL.THROUGHPUT,
-            read: `${resourceDetails?.performance?.throughput?.read} MBPS`,
-            write: `${resourceDetails?.performance?.throughput?.write} MBPS`,
+            read: `${resourceDetails?.performance?.rwMetrics?.throughput?.read} MBPS`,
+            write: `${resourceDetails?.performance?.rwMetrics?.throughput?.write} MBPS`,
             separator: false
         }
     ];

@@ -10,7 +10,10 @@ import {
     DescribeFileSystemsCommandInput,
     DescribeFileSystemsCommandOutput,
     ListTagsForResourceCommand,
-    ListTagsForResourceCommandOutput
+    ListTagsForResourceCommandOutput,
+    TagResourceCommand,
+    TagResourceCommandOutput,
+    Tag
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -127,11 +130,30 @@ async function listResourceTags(
     return response;
 }
 
+async function createTag(credentialsId: string, region: string, fsxArn: string, tags: Tag[]) {
+    logger.info('Adding tags to resource', credentialsId, region, fsxArn, tags);
+
+    const client = await getFSxClient(credentialsId, region);
+
+    const params = {
+        ResourceARN: fsxArn,
+        Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
+    };
+    try {
+        const command = new TagResourceCommand(params);
+        const response: TagResourceCommandOutput = await client.send(command);
+        logger.info('Resource tagged successfully:', response);
+    } catch (error) {
+        logger.error('Error tagging resource:', error);
+    }
+}
+
 export {
     describeFSxFileSystems,
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
     describeFSxN,
-    listResourceTags
+    listResourceTags,
+    createTag
 };

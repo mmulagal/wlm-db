@@ -15,7 +15,8 @@ import {
     describeRouteTable,
     describeKeyPairs,
     describeInstanceTypes,
-    describeNetworkInterfaces
+    describeNetworkInterfaces,
+    createTag
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -415,6 +416,12 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
 
     return filteredInstances.ImageId;
 }
+
+async function tagEc2Resource(credentialsId: string, region: string, ec2Id: string[], tags: Tag[]) {
+    logger.info('Adding tag to EC2 resource', credentialsId, region, ec2Id);
+    createTag(credentialsId, region, ec2Id, tags);
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -422,5 +429,6 @@ export {
     getInstanceTypes,
     getWindowsServerBaseAmi,
     getSecurityGroupsList,
-    getNetworkInterfacesList
+    getNetworkInterfacesList,
+    tagEc2Resource
 };

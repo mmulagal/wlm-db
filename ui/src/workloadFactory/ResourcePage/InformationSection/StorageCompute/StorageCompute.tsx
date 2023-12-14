@@ -28,14 +28,14 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_NAME}
                     </Typography>
-                    <Typography variant="Regular_14">wlmdb-fsx-1</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemName}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_ID}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.fsxFilesystemId}</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemId}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
@@ -56,14 +56,18 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.STORAGE_CAPACITY_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStorageCapacity}</Typography>
+                    <Typography variant="Regular_14">
+                        {resourceDetails?.topology?.fileSystemStorageCapacity
+                            ? `${resourceDetails.topology.fileSystemStorageCapacity} GiB`
+                            : ''}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_DP_TYPE}
                     </Typography>
-                    <Typography variant="Regular_14">Multi-AZ</Typography>
+                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemDeploymentMode}</Typography>
                 </div>
 
                 <div className={commonStyles.row}>
@@ -71,7 +75,9 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                         {GENERAL.FSX_THROUGHPUT_TYPE}
                     </Typography>
                     <Typography variant="Regular_14">
-                        {resourceDetails?.topology?.fileSystemThroughputCapacity}
+                        {resourceDetails?.topology?.fileSystemThroughputCapacity
+                            ? `${resourceDetails.topology.fileSystemThroughputCapacity} MB/s`
+                            : ''}
                     </Typography>
                 </div>
             </>

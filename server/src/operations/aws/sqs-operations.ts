@@ -44,7 +44,8 @@ import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments, getResources } from '../database/database-operations';
-import { tagEc2Resource, tagFsxResource } from './tags-operations';
+import { tagEc2Resource } from './ec2-operations';
+import { tagFsxResource } from './fsx-operations';
 
 const logger = getLogger();
 
@@ -135,20 +136,26 @@ async function tagResources(
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
-    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, {
-        [WLMDB_COST_ALLOCATION_TAG]: fsxId
-    });
+    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, [
+        { Key: WLMDB_COST_ALLOCATION_TAG, Value: fsxId }
+    ]);
 
-    const tagEc2Promise = tagEc2Resource(credentialsId, region, awsAccountId, activeNodeInstanceId, {
-        [WLMDB_COST_ALLOCATION_TAG]: activeNodeInstanceId
-    });
+    const tagEc2Promise = tagEc2Resource(
+        credentialsId,
+        region,
+        [activeNodeInstanceId],
+        [{ Key: WLMDB_COST_ALLOCATION_TAG, Value: activeNodeInstanceId }]
+    );
 
     const promises = [tagFsxPromise, tagEc2Promise];
 
     if (standbyNodeInstanceId) {
-        const tagStandbyPromise = tagEc2Resource(credentialsId, region, awsAccountId, standbyNodeInstanceId, {
-            [WLMDB_COST_ALLOCATION_TAG]: standbyNodeInstanceId
-        });
+        const tagStandbyPromise = tagEc2Resource(
+            credentialsId,
+            region,
+            [standbyNodeInstanceId],
+            [{ Key: WLMDB_COST_ALLOCATION_TAG, Value: standbyNodeInstanceId }]
+        );
         promises.push(tagStandbyPromise);
     }
 
@@ -274,7 +281,9 @@ async function processCloudFormationMessages() {
                                                         FileSystemType: fileSystemType,
                                                         FSxNSecret: fsxSecret,
                                                         DomainAdminSecretName: domainAdminSecret,
-                                                        SQLServiceAccountSecret: sqlServiceAccountSecret
+                                                        SQLServiceAccountSecret: sqlServiceAccountSecret,
+                                                        ActiveDirectoryName: activeDirectoryName,
+                                                        ActiveDirectoryAddress: activeDirectoryAddress
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -316,7 +325,9 @@ async function processCloudFormationMessages() {
                                                             fileSystemType,
                                                             fsxSecret,
                                                             domainAdminSecret,
-                                                            sqlServiceAccountSecret
+                                                            sqlServiceAccountSecret,
+                                                            activeDirectoryName,
+                                                            activeDirectoryAddress
                                                         }
                                                     });
 
@@ -328,16 +339,18 @@ async function processCloudFormationMessages() {
                                                         fsxId,
                                                         fsxName
                                                     );
-
-                                                    await tagResources(
-                                                        credentialsId,
-                                                        region,
-                                                        cloudProviderAccountId,
-                                                        fsxId,
-                                                        activeNodeInstanceId,
-                                                        standbyNodeInstanceId
-                                                    );
-
+                                                    try {
+                                                        await tagResources(
+                                                            credentialsId,
+                                                            region,
+                                                            cloudProviderAccountId,
+                                                            fsxId,
+                                                            activeNodeInstanceId,
+                                                            standbyNodeInstanceId
+                                                        );
+                                                    } catch (error) {
+                                                        logger.error('Error while tagging resource', error);
+                                                    }
                                                     const notificationData = {
                                                         notificationAction: STANDARD_DEPLOYMENT_ACTION,
                                                         subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,

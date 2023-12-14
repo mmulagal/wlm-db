@@ -22,9 +22,11 @@ import {
     TABLES_QUERY,
     SERVER_IO_LATENCY,
     NATIVE_SQL_BACKUPS,
+    SERVER_INSTALL_DATE,
+    PERFORMANCE_METRICS,
     SQL_BACKUPS
 } from './queries';
-import { executeSSMDocument } from '../../aws/ssm-operations';
+import { executeSSMDocument, isSSMConnectionSuccessful } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
@@ -98,6 +100,23 @@ async function callSsmExecution(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
+
+    // Check SSM Connection status
+    const isSSMConnected = await isSSMConnectionSuccessful(
+        credentialsId,
+        region!,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    if (!isSSMConnected) {
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
+        if (standbyNodeInstanceId) {
+            errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
+        }
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
     let response;
     const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
@@ -328,26 +347,35 @@ async function getServerSummary(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo, serverNameInfo] =
-        await Promise.all(
-            [
-                SERVER_VERSION_DETAILS,
-                NUMBER_OF_CONNECTIONS,
-                SERVER_STATE,
-                IS_SERVER_CLUSTERED,
-                SERVER_NODE,
-                CLUSTER_NODES,
-                SERVER_NAME
-            ].map(query =>
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${query}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId!
-                )
+    const [
+        serverDetailsInfo,
+        connectionsInfo,
+        stateInfo,
+        isClusteredInfo,
+        nodeInfo,
+        clusterNodesInfo,
+        serverNameInfo,
+        serverInstallDate
+    ] = await Promise.all(
+        [
+            SERVER_VERSION_DETAILS,
+            NUMBER_OF_CONNECTIONS,
+            SERVER_STATE,
+            IS_SERVER_CLUSTERED,
+            SERVER_NODE,
+            CLUSTER_NODES,
+            SERVER_NAME,
+            SERVER_INSTALL_DATE
+        ].map(query =>
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${query}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId!
             )
-        );
+        )
+    );
 
     if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
         const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
@@ -358,6 +386,7 @@ async function getServerSummary(resourceId: string) {
         let [{ activeNode }] = sqlResponseParsing(nodeInfo);
         const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
         const [{ serverName: clusterName }] = sqlResponseParsing(serverNameInfo!);
+        const [{ creationDate }] = sqlResponseParsing(serverInstallDate!);
 
         let standbyNode: string = '';
         if (isClustered && clusterNodesInfo) {
@@ -381,7 +410,10 @@ async function getServerSummary(resourceId: string) {
             activeConnections,
             deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
             activeNode,
-            ...(isClustered ? { standbyNode, clusterName } : {})
+            ...(isClustered ? { standbyNode, clusterName } : {}),
+            operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
+            creationDate,
+            nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!]
         };
     }
 }
@@ -580,7 +612,6 @@ async function getNativeSQLProtection(resourceId: string) {
         if (!credentialsId || !region || !activeNodeInstanceId) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
-
         const response = await callSsmExecution(
             credentialsId,
             region,
@@ -596,6 +627,37 @@ async function getNativeSQLProtection(resourceId: string) {
         return parsedResponse instanceof Error ? undefined : parsedResponse[0].backupCount;
     } catch (err) {
         logger.error('Error getting SQL native protection status', { err });
+    }
+}
+
+async function getPerformanceMetrics(resourceId: string) {
+    logger.info('Fetch SQL server performance metrics (latency, IOPS, throughput) for resource', resourceId);
+
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+    }
+
+    const commands = [`${PSSCRIPT} -Query "${PERFORMANCE_METRICS}"`];
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!
+    );
+
+    logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
+
+    if (response) {
+        const parsedResponse = sqlResponseParsing(response)[0];
+        logger.info(parsedResponse);
+        return {
+            latency: { read: parsedResponse.READ_LATENCY, write: parsedResponse.WRITE_LATENCY },
+            iops: { read: parsedResponse.READ_IOPS, write: parsedResponse.WRITE_IOPS },
+            throughput: { read: parsedResponse.READ_THROUGHPUT, write: parsedResponse.WRITE_THROUGHPUT }
+        };
     }
 }
 
@@ -645,5 +707,6 @@ export {
     getServerIOLatency,
     getServerState,
     getNativeSQLProtection,
+    getPerformanceMetrics,
     getNativeSQLBackedupDatabases
 };

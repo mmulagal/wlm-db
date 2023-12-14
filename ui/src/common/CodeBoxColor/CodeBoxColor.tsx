@@ -107,7 +107,7 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                 </div>
                 <div>
                     <span>--header 'Authorization: Bearer </span>
-                    <span className={styles.tokenStyle}>{CRED_PLACEHOLDERS.TOKEN}</span>
+                    <span className={styles.highlightWord}>{CRED_PLACEHOLDERS.TOKEN}</span>
                     <span> \</span>
                 </div>
                 <div>{`--header 'Content-Type: application/json' \\`}</div>

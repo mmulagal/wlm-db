@@ -62,7 +62,10 @@ import {
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
     LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE
+    WLMDB_RESOURCE_TAG_VALUE,
+    STANDALONE,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_VIOLATION_MESSAGE
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -79,7 +82,7 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
-import { NetworkVioation } from '../utils/common-types';
+import { NetworkViolation } from '../utils/common-types';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -319,13 +322,20 @@ async function createCloudFormationTemplateForUserDeployment(
         tags
     });
 
-    const vpcValidationCheck: NetworkVioation = isNetworkConfigurationViolated(
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode
     );
 
-    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
-        const errorMessage = vpcValidationCheck!.violationMessage;
+    if (vpcValidationCheck.isViolated) {
+        let errorMessage;
+        if (vpcValidationCheck.violationMessage !== undefined) {
+            errorMessage = vpcValidationCheck.violationMessage;
+        } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
+        } else {
+            errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
+        }
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
@@ -429,7 +439,7 @@ async function deployCloudFormationTemplate(
         tags
     });
 
-    const vpcValidationCheck: NetworkVioation = isNetworkConfigurationViolated(
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
         networkConfiguration,
         sqlConfiguration.sqlDeploymentMode
     );

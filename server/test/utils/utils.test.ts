@@ -6,7 +6,6 @@ import secretManagerResponse from '../simulator/responses/aws/secrets-manager-cr
 import {
     checkAndRetrieveJsonObject,
     generateHash,
-    getEc2Arn,
     getFsxArn,
     isNetworkConfigurationViolated
 } from '../../src/utils/utils';
@@ -29,9 +28,7 @@ vi.mock('../../src/lib/aws/secrets-manager', () => ({
 }));
 
 const awsAccountId = `${faker.datatype.number({ min: 100000000 })}`;
-const ec2Id = `i-${faker.string.alpha(8)}`;
 const fsxId = `fs-${faker.string.alpha(8)}`;
-const ec2Arn = `arn:aws:ec2:${DEFAULT_AWS_REGION}:${awsAccountId}:instance/${ec2Id}`;
 const fsxArn = `arn:aws:fsx:${DEFAULT_AWS_REGION}:${awsAccountId}:file-system/${fsxId}`;
 
 describe(' Secrets Manager string', () => {
@@ -59,11 +56,6 @@ describe(' Secrets Manager string', () => {
     it('Generate hash', async () => {
         const response = generateHash(ACTIVE_INSTANCE_ID + STANDBY_INSTANCE_ID);
         expect(response).toBeDefined();
-    });
-
-    it('Generate Ec2 ARN', async () => {
-        const response = getEc2Arn(awsAccountId, DEFAULT_AWS_REGION, ec2Id);
-        expect(response).toBe(ec2Arn);
     });
 
     it('Generate Fsx ARN', async () => {

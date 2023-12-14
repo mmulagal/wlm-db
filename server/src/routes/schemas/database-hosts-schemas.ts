@@ -4,6 +4,7 @@ import {
     DatabaseHostQueryString,
     DatabaseHostSummaryListResponse,
     DatabaseHostSummaryParams,
+    DatabaseHostSummaryResponse,
     DatabasesListResponse
 } from '../types/database-hosts.types';
 import { AccountIdParams } from '../types/generic.types';
@@ -26,6 +27,19 @@ const DatabaseHostsSummarySchema = {
     }
 };
 
+// Get Database host summary details
+const DatabaseHostDetailsSchema = {
+    ...baseRequest,
+    summary: 'Fetch database server details ',
+    description:
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
+    params: DatabaseHostSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostSummaryResponse
+    }
+};
+
 // Get databases in a database server
 const DatabasesListSchema = {
     ...baseRequest,
@@ -38,4 +52,4 @@ const DatabasesListSchema = {
     }
 };
 
-export { DatabaseHostsSummarySchema, DatabasesListSchema };
+export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema };
