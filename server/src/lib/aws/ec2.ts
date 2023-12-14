@@ -28,7 +28,8 @@ import {
     DescribeInstanceTypeOfferingsCommand,
     CreateTagsCommand,
     CreateTagsCommandOutput,
-    Tag
+    Tag,
+    DescribeInstancesCommandOutput
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -99,7 +100,7 @@ async function describeInstance(
     credentialsId: string,
     region: string,
     params: DescribeInstancesCommandInput
-): Promise<DescribeImagesCommandOutput> {
+): Promise<DescribeInstancesCommandOutput> {
     logger.info('Describe EC2 instance', { credentialsId, region, params });
 
     const client = await getEC2Client(region, credentialsId);

@@ -44,7 +44,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -90,7 +91,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -136,7 +138,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -182,7 +185,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -227,7 +231,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -272,7 +277,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -317,7 +323,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -362,7 +369,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -407,7 +415,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -452,7 +461,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -497,7 +507,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -542,7 +553,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -587,7 +599,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -632,7 +645,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -677,7 +691,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         },
         { 
@@ -722,7 +737,8 @@
                 "compute": 700,
                 "storage": 200,
                 "connectivity": 100,
-                "others": 24
+                "others": 24,
+                "estimationType": "pricing"
             }
         }
     ], 

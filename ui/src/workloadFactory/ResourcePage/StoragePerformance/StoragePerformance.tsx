@@ -1,5 +1,5 @@
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
-import { ReactComponent as Latency } from '../../../assets/Latency.svg';
+import { ReactComponent as Latency } from '../../../assets/Latency2.svg';
 import { ReactComponent as IOPS } from '../../../assets/IOPS.svg';
 import { ReactComponent as Throughput } from '../../../assets/Throughput.svg';
 

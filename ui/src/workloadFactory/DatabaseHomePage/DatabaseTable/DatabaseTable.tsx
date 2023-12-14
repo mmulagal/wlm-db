@@ -41,35 +41,25 @@ const DatabaseTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
-    const menuItems = [
-        {
-            id: 'viewOverview',
-            displayName: 'View host overview'
-        },
-        {
-            id: 'viewDatabaseList',
-            displayName: 'View database list'
-        },
-        // {
-        //     id: 'clone',
-        //     displayName: 'Clone',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'migrate',
-        //     displayName: 'Migrate',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'protect',
-        //     displayName: 'Protect',
-        //     disabled: true
-        // },
-        {
-            id: 'remove',
-            displayName: 'Remove'
-        }
-    ];
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'viewOverview',
+                displayName: 'View host overview',
+                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+            },
+            {
+                id: 'viewDatabaseList',
+                displayName: 'View database list',
+                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+            },
+            {
+                id: 'remove',
+                displayName: 'Remove',
+                disabled: row?.status === STATUS_CONST.DOWN ? false : true
+            }
+        ];
+    };
 
     const protectionTooltipText = (data: any) => {
         return (
@@ -137,7 +127,7 @@ const DatabaseTable = () => {
                     <div className={styles.jobMenuPopover}>
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems}
+                            menuItems={menuItems(rowData)}
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -154,7 +144,7 @@ const DatabaseTable = () => {
                                         dispatch(selectedTabSelection('Overview'));
                                         dispatch(updateResourceId(rowData.id));
                                         navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
+                                            '../database-overview'
                                         );
                                     }
 
@@ -162,7 +152,7 @@ const DatabaseTable = () => {
                                         dispatch(selectedTabSelection('Database list'));
                                         dispatch(updateResourceId(rowData.id));
                                         navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
+                                            '../database-overview'
                                         );
                                     }
 

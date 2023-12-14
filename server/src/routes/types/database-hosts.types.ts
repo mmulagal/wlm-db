@@ -20,18 +20,33 @@ const DatabaseHostQueryString = Type.Object({
 const EC2InstanceDetailsResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    ebsVolumeId: Type.String()
+    ebsVolumeId: Type.String(),
+    instanceType: Type.Optional(Type.String()),
+    availabilityZone: Type.Optional(Type.String()),
+    subnetId: Type.Optional(Type.String())
 });
 type EC2InstanceDetailsResponseType = Static<typeof EC2InstanceDetailsResponse>;
 
+const ActiveDirectoryDetailsResponse = Type.Object({
+    name: Type.String({ minLength: 1 }),
+    address: Type.String({ minLength: 1 })
+});
+type ActiveDirectoryDetailsResponseType = Static<typeof ActiveDirectoryDetailsResponse>;
+
 const TopologyResponse = Type.Object({
+    awsAccount: Type.String({ minLength: 1 }),
     region: Type.String(),
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
+    fileSystemStatus: Type.Optional(Type.String()),
+    fileSystemStorageCapacity: Type.Optional(Type.Number()),
+    fileSystemThroughputCapacity: Type.Optional(Type.Number()),
     vpcId: Type.Optional(Type.String()),
-    ec2Details: Type.Array(EC2InstanceDetailsResponse)
+    keyPairName: Type.Optional(Type.String()),
+    ec2Details: Type.Array(EC2InstanceDetailsResponse),
+    activeDirectoryDetails: Type.Optional(ActiveDirectoryDetailsResponse)
 });
 type TopologyResponseType = Static<typeof TopologyResponse>;
 
@@ -42,9 +57,23 @@ const ProtectionResponse = Type.Object({
 });
 type ProtectionResponseType = Static<typeof ProtectionResponse>;
 
+const RWPerformanceResponse = Type.Object({
+    read: Type.Number({ description: 'Database server read performance for latency, IOPS or throughput' }),
+    write: Type.Number({ description: 'Database server write performance for latency, IOPS or throughput' })
+});
+type RWPerformanceResponseType = Static<typeof RWPerformanceResponse>;
+
+const DetailedPerformanceResponse = Type.Object({
+    latency: RWPerformanceResponse,
+    iops: RWPerformanceResponse,
+    throughput: RWPerformanceResponse
+});
+type DetailedPerformanceResponseType = Static<typeof DetailedPerformanceResponse>;
+
 const PerformanceResponse = Type.Object({
-    latency: Type.Number({ description: 'Database server I/O latency in milliseconds' }),
-    assessment: Type.String({ enum: ['High', 'Medium', 'Low'] })
+    latency: Type.Optional(Type.Number({ description: 'Database server I/O latency in milliseconds' })),
+    assessment: Type.Optional(Type.String({ enum: ['High', 'Medium', 'Low'] })),
+    rwMetrics: Type.Optional(DetailedPerformanceResponse)
 });
 type PerformanceResponseType = Static<typeof PerformanceResponse>;
 
@@ -68,16 +97,44 @@ const UsageCostResponse = Type.Object({
 });
 type UsageCostResponseType = Static<typeof UsageCostResponse>;
 
+const DatabaseServerMetadataResponse = Type.Object({
+    operatingSystem: Type.String({ minLength: 1 }),
+    serverEdition: Type.String({ minLength: 1 }),
+    serverVersion: Type.String({ minLength: 1 }),
+    clusterName: Type.Optional(Type.String({ minLength: 1 })),
+    nodeNames: Type.Array(Type.String()),
+    activeConnections: Type.Number(),
+    creationDate: Type.String({ minLength: 1 })
+});
+type DatabaseServerMetadataResponseType = Static<typeof DatabaseServerMetadataResponse>;
+
+const UtilizationResponse = Type.Object({
+    percentUsed: Type.String({ minLength: 1 }),
+    used: Type.String({ minLength: 1 }),
+    total: Type.String({ minLength: 1 }),
+    remaining: Type.String({ minLength: 1 })
+});
+type UtilizationResponseType = Static<typeof UtilizationResponse>;
+
+const ResourcesUtilizationResponse = Type.Object({
+    cpu: UtilizationResponse,
+    memory: UtilizationResponse,
+    disk: UtilizationResponse
+});
+type ResourcesUtilizationResponseType = Static<typeof ResourcesUtilizationResponse>;
+
 const DatabaseHostSummaryResponse = Type.Object({
     id: Type.String(),
     name: Type.String(),
     status: Type.String({ enum: ['Up', 'Down', 'N/A'] }),
     databaseCount: Type.Number(),
+    databaseServer: Type.Optional(DatabaseServerMetadataResponse),
     topology: Type.Optional(TopologyResponse),
     protection: Type.Optional(ProtectionResponse),
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StorageResponse),
-    estimatedUsageCost: Type.Optional(UsageCostResponse)
+    estimatedUsageCost: Type.Optional(UsageCostResponse),
+    resourceUtilization: Type.Optional(ResourcesUtilizationResponse)
 });
 const DatabaseHostSummaryListResponse = Type.Object({
     count: Type.Number(),
@@ -129,5 +186,14 @@ export {
     DatabasesResponse,
     DatabasesResponseType,
     DatabasesListResponse,
-    DatabasesListResponseType
+    DatabasesListResponseType,
+    DatabaseServerMetadataResponseType,
+    ActiveDirectoryDetailsResponse,
+    ActiveDirectoryDetailsResponseType,
+    UtilizationResponseType,
+    ResourcesUtilizationResponseType,
+    DetailedPerformanceResponse,
+    DetailedPerformanceResponseType,
+    RWPerformanceResponse,
+    RWPerformanceResponseType
 };

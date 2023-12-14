@@ -11,6 +11,9 @@ import {
     ProtectionResponseType,
     StorageResponseType,
     UsageCostResponseType,
+    DatabaseServerMetadataResponseType,
+    UtilizationResponseType,
+    DetailedPerformanceResponseType,
     DatabasesListResponseType
 } from '../routes/types/database-hosts.types';
 import { describeInstance, getAmis } from '../lib/aws/ec2';
@@ -29,6 +32,7 @@ import {
     AWS_REGIONS,
     SQL_STD,
     SQL_ENT,
+    DATABASE_METRIC_TYPE,
     MSSQL_DATABASE_TYPES,
     MSSQL_SYSTEM_DATABASES,
     PRICING,
@@ -40,6 +44,9 @@ import {
     getServerState,
     getNativeSQLProtection,
     getDatabasesCount,
+    getServerSummary,
+    getResourceUtilisation,
+    getPerformanceMetrics,
     getDataBasesSummary,
     getNativeSQLBackedupDatabases
 } from './workloads/mssql/mssql-operations';
@@ -102,10 +109,20 @@ async function getTopology(
         );
     }
 
-    const { resource_type: resourceType, co_relation_id: fileSystemId, metadata } = resourceData;
-    const { credentialsId } = metadata as { credentialsId: string };
+    const {
+        resource_type: resourceType,
+        co_relation_id: fileSystemId,
+        cloud_provider_account_id: awsAccountId,
+        metadata
+    } = resourceData;
+    const { credentialsId, activeDirectoryName, activeDirectoryAddress } = metadata as {
+        credentialsId: string;
+        activeDirectoryName: string;
+        activeDirectoryAddress: string;
+    };
 
     let topologyData: TopologyResponseType = {
+        awsAccount: '',
         region,
         serverType: resourceType,
         serverInstallationMode: '',
@@ -132,30 +149,97 @@ async function getTopology(
         } = metadata as unknown as Topology);
 
         let vpcId;
-        if (additionalFields?.vpc) {
+        let fileSystemStatus;
+        let fileSystemStorageCapacity;
+        let fileSystemThroughputCapacity;
+        if (additionalFields?.allTopology || additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
                 vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+                fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
+                fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
+                fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
             } catch (error) {
-                logger.error(`Error while fetching vpc details for fsx. Error: ${error}`);
+                logger.error(`Error while fetching details for fsx. Error: ${error}`);
             }
+        }
+
+        const instanceIds = standbyNodeInstanceId
+            ? [activeNodeInstanceId, standbyNodeInstanceId]
+            : [activeNodeInstanceId];
+
+        // Todo: These details can be saved in database as part of metadata and AWS calls can be made incase of not found
+        let ec2InstanceDetails;
+        let keyPairName;
+        let activeInstanceType;
+        let activeAvailabilityZone;
+        let activeSubnetId;
+        let activeVolumeId;
+        let standbyInstanceType;
+        let standbyAvailabilityZone;
+        let standbySubnetId;
+        let standbyVolumeId;
+        let activeDirectoryDetails;
+        if (additionalFields?.allTopology) {
+            try {
+                ec2InstanceDetails = await describeInstance(credentialsId, region, { InstanceIds: instanceIds });
+                keyPairName = ec2InstanceDetails.Reservations?.[0].Instances?.[0].KeyName;
+                activeInstanceType = ec2InstanceDetails.Reservations?.[0].Instances?.[0].InstanceType;
+                activeAvailabilityZone =
+                    ec2InstanceDetails.Reservations?.[0].Instances?.[0].Placement?.AvailabilityZone;
+                activeSubnetId = ec2InstanceDetails.Reservations?.[0].Instances?.[0].SubnetId;
+                activeVolumeId =
+                    ec2InstanceDetails.Reservations?.[0].Instances?.[0].BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                if (standbyNodeInstanceId) {
+                    standbyInstanceType = ec2InstanceDetails.Reservations?.[1].Instances?.[0].InstanceType;
+                    standbyAvailabilityZone =
+                        ec2InstanceDetails.Reservations?.[1].Instances?.[0].Placement?.AvailabilityZone;
+                    standbySubnetId = ec2InstanceDetails.Reservations?.[1].Instances?.[0].SubnetId;
+                    standbyVolumeId =
+                        ec2InstanceDetails.Reservations?.[1].Instances?.[0].BlockDeviceMappings?.[0].Ebs?.VolumeId;
+                }
+            } catch (error) {
+                logger.error(`Error while fetching details for ec2 instances. Error: ${error}`);
+            }
+            activeDirectoryDetails = {
+                name: activeDirectoryName || '',
+                address: activeDirectoryAddress || ''
+            };
         }
 
         // Fetch topology data
         topologyData = {
+            awsAccount: awsAccountId || '',
             region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
+            ...(fileSystemStatus && { fileSystemStatus }),
+            ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
+            ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
             ...(vpcId && { vpcId }),
-            ec2Details: [{ id: activeNodeInstanceId!, name: activeNodeInstanceName!, ebsVolumeId: '' }]
+            ...(keyPairName && { keyPairName }),
+            ec2Details: [
+                {
+                    id: activeNodeInstanceId!,
+                    name: activeNodeInstanceName!,
+                    ebsVolumeId: activeVolumeId || '',
+                    ...(activeInstanceType && { instanceType: activeInstanceType }),
+                    ...(activeAvailabilityZone && { availabilityZone: activeAvailabilityZone }),
+                    ...(activeSubnetId && { subnetId: activeSubnetId })
+                }
+            ],
+            ...(activeDirectoryDetails && { activeDirectoryDetails })
         };
         if (standbyNodeInstanceId) {
             topologyData.ec2Details.push({
                 id: standbyNodeInstanceId!,
                 name: standbyNodeInstanceName!,
-                ebsVolumeId: ''
+                ebsVolumeId: standbyVolumeId || '',
+                ...(standbyInstanceType && { instanceType: standbyInstanceType }),
+                ...(standbyAvailabilityZone && { availabilityZone: standbyAvailabilityZone }),
+                ...(standbySubnetId && { subnetId: standbySubnetId })
             });
         }
     }
@@ -512,6 +596,121 @@ async function getDatabaseHostsSummary(
     return { count: databaseHosts.length, items: databaseHosts, nextToken: '' };
 }
 
+async function getDatabaseHostSummary(
+    accountId: string,
+    databaseHostId: string,
+    fields?: string
+): Promise<DatabaseHostSummaryResponseType> {
+    logger.info('Fetching details about a database installtion ', accountId, databaseHostId, fields);
+
+    const [resourceDetail] = await listResources(accountId, databaseHostId);
+
+    if (isEmpty(resourceDetail)) {
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
+    }
+
+    const databaseHostDetails: DatabaseHostSummaryResponseType = {
+        id: '',
+        name: '',
+        status: '',
+        databaseCount: 0
+    };
+
+    let fieldsValues: Array<string> = [];
+
+    if (fields) {
+        // remove the empty spaces in the string & split the fields by comma separated array values
+        fieldsValues = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
+    }
+
+    const getPerformance = fieldsValues?.includes(DatabaseHostsQueryFields.PERFORMANCE);
+    const getStorageSavings = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE);
+    const getUsageEstimation = fieldsValues?.includes(DatabaseHostsQueryFields.USAGE_ESTIMATION.toLocaleLowerCase());
+    const getResourceutilization = fieldsValues?.includes(
+        DatabaseHostsQueryFields.RESOURCE_UTILIZATION.toLocaleLowerCase()
+    );
+    const additionalFields = {
+        allTopology: true
+    };
+
+    const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
+    try {
+        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+
+        let serverStatus: string = ServerState.DOWN;
+        let dbCount;
+        let serverMetadata: DatabaseServerMetadataResponseType;
+        let topologyData: TopologyResponseType;
+        let performanceData: DetailedPerformanceResponseType | undefined;
+        let storageData: StorageResponseType | undefined;
+        let usageEstimationData: UsageCostResponseType | undefined;
+        let memoryUtilizationData: UtilizationResponseType | undefined;
+        let diskUtilizationData: UtilizationResponseType | undefined;
+        let cpuUtilizationData: UtilizationResponseType | undefined;
+
+        [
+            serverStatus,
+            dbCount,
+            serverMetadata,
+            topologyData,
+            performanceData,
+            storageData,
+            usageEstimationData,
+            memoryUtilizationData,
+            diskUtilizationData,
+            cpuUtilizationData
+        ] = await Promise.all(
+            [
+                getServerState(resourceId), // Fetch server status
+                getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId),
+                getServerSummary(resourceId), // Fetch server metadata
+                getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                ...(getPerformance ? [getPerformanceMetrics(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                ...(getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
+                ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
+                ...(getResourceutilization
+                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY)]
+                    : [Promise.resolve()]),
+                ...(getResourceutilization
+                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK)]
+                    : [Promise.resolve()]),
+                ...(getResourceutilization
+                    ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU)]
+                    : [Promise.resolve()])
+            ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+        );
+
+        databaseHostDetails.id = resourceId;
+        databaseHostDetails.name = resourceName || '';
+        databaseHostDetails.status = serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
+        databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
+        databaseHostDetails.databaseServer = serverMetadata;
+        databaseHostDetails.topology = topologyData!;
+        databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
+        databaseHostDetails.storage = storageData!;
+        databaseHostDetails.estimatedUsageCost = usageEstimationData!;
+        if (getResourceutilization) {
+            databaseHostDetails.resourceUtilization = {
+                cpu: cpuUtilizationData! || {},
+                memory: memoryUtilizationData! || {},
+                disk: diskUtilizationData! || {}
+            };
+        }
+    } catch (error) {
+        logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching database hosts details ${accountId}, ${error}`
+        );
+    }
+
+    logger.debug('Database host details', databaseHostDetails);
+
+    return databaseHostDetails;
+}
+
 async function getDatabases(accountId: string, databaseHostId: string): Promise<DatabasesListResponseType> {
     logger.info('Fetching details about a database installtion ', accountId, databaseHostId);
 
@@ -524,37 +723,45 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;
     const { credentialsId } = metadata as unknown as Metadata;
-    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all([
-        await getDataBasesSummary(databaseHostId),
-        getNativeSQLBackedupDatabases(databaseHostId),
-        isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
-        getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
-    ]);
-
-    const response = databases.map(
-        (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
-            name: database.databaseName,
-            size: database.databaseSize,
-            status: database.databaseStatus,
-            type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
-                ? MSSQL_DATABASE_TYPES.SYSTEM
-                : MSSQL_DATABASE_TYPES.USER,
-            protection: {
-                isAWSBackupEnabled: Boolean(awsBackup),
-                isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
-                isSqlNativeEnabled: Boolean(
-                    backedupDatabases.find(
-                        (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
-                    )
-                )
-            }
-        })
+    const [{ databases }, backedupDatabases, awsBackup, ontapBackup] = await Promise.all(
+        [
+            getDataBasesSummary(databaseHostId),
+            getNativeSQLBackedupDatabases(databaseHostId),
+            isAWSBackupEnabled(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata),
+            getOntapVolumesSnapshotCount(credentialsId, region!, fileSystemId!, metadata as unknown as Metadata)
+        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
     );
-    return {
-        count: response.length,
-        nextToken: '',
-        items: response
-    };
+    try {
+        const response = databases.map(
+            (database: { databaseName: string; databaseSize: number; databaseStatus: string }) => ({
+                name: database.databaseName,
+                size: database.databaseSize,
+                status: database.databaseStatus,
+                type: MSSQL_SYSTEM_DATABASES.includes(database.databaseName.toLowerCase())
+                    ? MSSQL_DATABASE_TYPES.SYSTEM
+                    : MSSQL_DATABASE_TYPES.USER,
+                protection: {
+                    isAWSBackupEnabled: Boolean(awsBackup),
+                    isFsxOntapSnapshotsEnabled: Boolean(ontapBackup),
+                    isSqlNativeEnabled: Boolean(
+                        backedupDatabases &&
+                            backedupDatabases.find(
+                                (e: { backedupDatabases: string }) => e.backedupDatabases === database.databaseName
+                            )
+                    )
+                }
+            })
+        );
+        return {
+            count: response.length,
+            nextToken: '',
+            items: response
+        };
+    } catch (error) {
+        const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId}, ${error}`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
 }
 
-export { getDatabaseHostsSummary, getDatabases };
+export { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases };

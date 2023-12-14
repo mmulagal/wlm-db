@@ -5,7 +5,7 @@ import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as ComingSoon } from '../../../assets/TagComingSoon.svg';
+import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
 import HighlighterWord from '../Highlighter/Highlighter';
@@ -48,6 +48,7 @@ import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import { addEscapeInCli, maskAwsCli, setMaskedPassword } from './CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
+import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
 
 type ConfigType = {
     id?: string;
@@ -104,7 +105,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 {
                     id: 'viewAwsCloudFormation',
                     displayName: CODE_VIEWER.VIEW_IN_AWS_CLOUD_FORMATION,
-                    disabled: !getRightPanelTemplateResponse(openKey) || isRightPanelTemplateLoading ? true : false
+                    disabled:
+                        !getRightPanelTemplateResponse(openKey)?.template || isRightPanelTemplateLoading ? true : false
                 },
                 {
                     id: 'downloadYaml',
@@ -368,11 +370,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 loadRestApi(data, id, false);
             } else {
                 // Getting saved config data using API
-                loadConfigDataExe({ configId: id }).then(data => {
-                    const actualData = data?.data?.data;
-                    setCredDetailsData(actualData);
-                    loadRestApi(actualData, id, true);
-                });
+                loadConfigDataExe({ configId: id })
+                    .then(data => {
+                        const actualData = data?.data?.data;
+                        setCredDetailsData(actualData);
+                        loadRestApi(actualData, id, true);
+                    })
+                    .catch((error: any) => {
+                        setCredDetailsData({});
+                        setIsRightPanelDataLoading(false);
+                        setIsRightPanelTemplateLoading(false);
+                    });
             }
         }
     };
@@ -464,7 +472,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
                     <pre className={styles.colorAutomation}>
-                        {getRightPanelTemplateResponse(openKey)?.template || CODE_VIEWER.NO_DATA_MSG}
+                        {getRightPanelTemplateResponse(openKey)?.template || (
+                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                        )}
                     </pre>
                 </HighlighterWord>
             );
@@ -475,11 +485,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_REST_API} />
             ) : (
                 <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <CodeBoxColor
-                        credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
-                        region={credDetails.region || CRED_PLACEHOLDERS.REGION}
-                        actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
-                    />
+                    {getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA) ? (
+                        <CodeBoxColor
+                            credID={credDetails.credId || CRED_PLACEHOLDERS.CRED_ID}
+                            region={credDetails.region || CRED_PLACEHOLDERS.REGION}
+                            actualData={getRightPanelRestResponse(openKey, CODEBOX_REST_RES.ORIGINAL_DATA)}
+                        />
+                    ) : (
+                        <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                    )}
                 </HighlighterWord>
             );
         }
@@ -489,7 +503,9 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={styles.colorAutomation}>
-                        {maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand) || CODE_VIEWER.NO_DATA_MSG}
+                        {maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand) || (
+                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                        )}
                     </Typography>
                 </HighlighterWord>
             );
@@ -786,7 +802,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         <div className={styles.rightSideView}>
                             {/* Code for top bar here */}
                             <div className={styles.rightSideTopBar}>
-                                <Typography variant="Semibold_14" className={styles.rightSideHeading}>
+                                <Typography variant="Regular_16" className={styles.rightSideHeading}>
                                     {openedItem?.name}
                                 </Typography>
 
@@ -874,14 +890,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                             {/* Search bar input code ends here */}
 
                             {/* Cloud formation button */}
-                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && !isRightPanelTemplateLoading && (
-                                <div
-                                    className={styles.cloudFormationButtonContainer}
-                                    onClick={() => handleViewInAwsCloudFormation()}
-                                >
-                                    <Button variant="secondary">Redirect to CloudFormation</Button>
-                                </div>
-                            )}
+                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                                !isRightPanelTemplateLoading &&
+                                getRightPanelTemplateResponse(openKey)?.template && (
+                                    <div className={styles.cloudFormationButtonContainer}>
+                                        <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()}>
+                                            Redirect to CloudFormation
+                                        </Button>
+                                    </div>
+                                )}
 
                             {/* Last section starts here */}
                             <div
