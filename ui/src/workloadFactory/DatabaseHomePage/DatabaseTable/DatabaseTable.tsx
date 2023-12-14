@@ -30,6 +30,7 @@ const DatabaseTable = () => {
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -56,7 +57,7 @@ const DatabaseTable = () => {
             {
                 id: 'remove',
                 displayName: 'Remove',
-                disabled: row?.status === STATUS_CONST.DOWN ? false : true
+                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
             }
         ];
     };
