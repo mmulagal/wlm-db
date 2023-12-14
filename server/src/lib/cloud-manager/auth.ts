@@ -1,5 +1,7 @@
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
+import config from 'config';
+import ms from 'ms';
 import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache.js';
 import {
     BXP_SVC_TOKEN_TYPE,
@@ -34,7 +36,11 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
 
     try {
         if (!process.env.TEST && hasCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN)) {
-            await waitForResolution(() => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN), 2000, 10 * 1000);
+            await waitForResolution(
+                () => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN),
+                ms(config.get<string>('auth.wlmdb.interval')),
+                ms(config.get<string>('auth.wlmdb.timeout'))
+            );
         }
 
         if (!process.env.TEST && hasCache(WF_SVC_TOKEN_TYPE, WLMDB)) {
@@ -79,7 +85,11 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
 
     try {
         if (!process.env.TEST && hasCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN)) {
-            await waitForResolution(() => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN), 2000, 10 * 1000);
+            await waitForResolution(
+                () => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN),
+                ms(config.get<string>('auth.bluexp.interval')),
+                ms(config.get<string>('auth.bluexp.timeout'))
+            );
         }
 
         if (!process.env.TEST && hasCache(BXP_SVC_TOKEN_TYPE, WLMDB)) {
