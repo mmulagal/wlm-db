@@ -175,7 +175,7 @@ async function checkAndCreateTopic(region: string, queueName: string, policyStat
     try {
         const existingTopics = await getSnsTopics(region);
 
-        const matchingTopic = existingTopics.topics.find(topic => topic.topicName === WLMDB);
+        const matchingTopic = existingTopics.topics.find(topic => topic.topicName === queueName);
 
         if (matchingTopic) {
             wlmdbTopicArn = matchingTopic.topicArn;
