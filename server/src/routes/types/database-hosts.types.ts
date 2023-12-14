@@ -40,6 +40,8 @@ const TopologyResponse = Type.Object({
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
+    fileSystemName: Type.Optional(Type.String()),
+    fileSystemDeploymentMode: Type.Optional(Type.String()),
     fileSystemStatus: Type.Optional(Type.String()),
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
