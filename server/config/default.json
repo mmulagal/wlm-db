@@ -55,5 +55,15 @@
     },
     "ssm": {
         "poll-interval": "1s"
+    },
+    "auth": {
+        "wlmdb": {
+            "timeout": "10s",
+            "interval": "500ms"
+        },
+        "bluexp": {
+            "timeout": "10s",
+            "interval": "500ms"
+        }
     }
 }

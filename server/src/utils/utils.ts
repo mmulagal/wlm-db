@@ -244,6 +244,29 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     }
 }
 
+/**
+ *
+ * @param fn - function that returns a boolean when the response is correct
+ * @param delay - interval after which the function should be invoked
+ * @param maxDelay - total delay or timeout, if the function is not resolved within this time, we consider it a failure
+ * @returns Promise that can be awaited
+ */
+
+function waitForResolution(fn: () => boolean, delay: number, maxDelay: number) {
+    return Promise.race([
+        sleep(maxDelay),
+        new Promise(res => {
+            const interval = setInterval(async () => {
+                const result = fn();
+                if (result) {
+                    clearInterval(interval);
+                    return res(true);
+                }
+            }, delay);
+        })
+    ]);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -259,5 +282,6 @@ export {
     getFsxArn,
     generateHash,
     calculateFsxStorageCapacity,
-    sizeInGigaBytes
+    sizeInGigaBytes,
+    waitForResolution
 };
