@@ -103,29 +103,7 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                                     }
                                 ]
                             };
-
-                            const existsngTopics = await getSnsTopics(code);
-                            let wlmdbTopicArn: string | undefined;
-
-                            existsngTopics.topics.some(topic => {
-                                if (topic.topicName === WLMDB) {
-                                    wlmdbTopicArn = topic.topicArn;
-                                    return true;
-                                }
-                                return false;
-                            });
-                            if (wlmdbTopicArn) {
-                                logger.debug('Topic already exists at region', code);
-                            } else {
-                                const { TopicArn } = await createTopic(code, {
-                                    Name: queueName,
-                                    Attributes: {
-                                        Policy: JSON.stringify(policyStatement)
-                                    },
-                                    Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
-                                });
-                                wlmdbTopicArn = TopicArn;
-                            }
+                            const wlmdbTopicArn = await checkAndCreateTopic(code, queueName, policyStatement);
 
                             const accountId = QueueUrl?.split('/')[3];
                             const queueArn = getQueueArn(accountId, queueName);
@@ -191,6 +169,35 @@ async function updateSnsTopicAttributeInAllRegions() {
     }
 }
 
+async function checkAndCreateTopic(region: string, queueName: string, policyStatement: any) {
+    let wlmdbTopicArn;
+
+    try {
+        const existingTopics = await getSnsTopics(region);
+
+        const matchingTopic = existingTopics.topics.find(topic => topic.topicName === WLMDB);
+
+        if (matchingTopic) {
+            wlmdbTopicArn = matchingTopic.topicArn;
+            logger.debug('Topic already exists at region', region);
+        }
+    } catch (error) {
+        logger.error('Error occurred while calling getSnsTopics:', error);
+    }
+
+    if (!wlmdbTopicArn) {
+        const { TopicArn } = await createTopic(region, {
+            Name: queueName,
+            Attributes: {
+                Policy: JSON.stringify(policyStatement)
+            },
+            Tags: [{ Key: AWS_RESOURCE_NAME_TAG, Value: WLMDB }]
+        });
+        wlmdbTopicArn = TopicArn;
+    }
+
+    return wlmdbTopicArn;
+}
 export {
     getSnsTopics,
     createAndSubscribeToSnsTopicInAllRegions,
