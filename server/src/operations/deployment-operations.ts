@@ -336,6 +336,7 @@ async function createCloudFormationTemplateForUserDeployment(
         } else {
             errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
         }
+        logger.error('VPC validation error:', errorMessage);
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
