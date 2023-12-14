@@ -20,28 +20,36 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.DEPLOYMENT_MODEL_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.serverInstallationMode}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.topology?.serverInstallationMode}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.OS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.databaseServer?.operatingSystem}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.operatingSystem}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.EDITION_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.databaseServer?.serverEdition}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.serverEdition}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.VERSION_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.databaseServer?.serverVersion}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.serverVersion}
+                    </Typography>
                 </div>
 
                 {resourceDetails?.databaseServer?.clusterName && (
@@ -49,7 +57,9 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                         <Typography variant="Semibold_14" className={commonStyles.heading}>
                             {GENERAL.CLUSTER_NAME_INFO}
                         </Typography>
-                        <Typography variant="Regular_14">{resourceDetails?.databaseServer?.clusterName}</Typography>
+                        <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                            {resourceDetails?.databaseServer?.clusterName}
+                        </Typography>
                     </div>
                 )}
 
@@ -57,7 +67,7 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.NODE_NAMES}
                     </Typography>
-                    <Typography variant="Regular_14">
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
                         {resourceDetails?.databaseServer?.nodeNames.join(', ')}
                     </Typography>
                 </div>
@@ -66,21 +76,27 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.STATUS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails.status}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails.status}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.CONNECTIONS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.databaseServer?.activeConnections}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.activeConnections}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.DATE_CREATED}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.databaseServer?.creationDate}</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.creationDate}
+                    </Typography>
                 </div>
             </>
         );

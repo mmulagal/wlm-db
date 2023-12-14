@@ -15,21 +15,24 @@ const StoragePerformance = () => {
             text: GENERAL.LATENCY,
             read: `${resourceDetails?.performance?.rwMetrics?.latency?.read} ms`,
             write: `${resourceDetails?.performance?.rwMetrics?.latency?.write} ms`,
-            separator: true
+            separator: true,
+            width: '340px'
         },
         {
             image: <IOPS />,
             text: GENERAL.IOPS,
             read: `${resourceDetails?.performance?.rwMetrics?.iops?.read} ms`,
             write: `${resourceDetails?.performance?.rwMetrics?.iops?.write} ms`,
-            separator: true
+            separator: true,
+            width: '340px'
         },
         {
             image: <Throughput />,
             text: GENERAL.THROUGHPUT,
             read: `${resourceDetails?.performance?.rwMetrics?.throughput?.read} MBPS`,
             write: `${resourceDetails?.performance?.rwMetrics?.throughput?.write} MBPS`,
-            separator: false
+            separator: false,
+            width: '390px'
         }
     ];
     return (
@@ -44,7 +47,7 @@ const StoragePerformance = () => {
                 {dataValue.length &&
                     dataValue.map((item, index) => (
                         <>
-                            <div key={index} className={styles.tileSection}>
+                            <div key={index} className={styles.tileSection} style={{ width: item.width }}>
                                 {item.image}
                                 <div className={styles.textContent}>
                                     <div className={styles.commonContainer}>
