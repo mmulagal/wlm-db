@@ -7,23 +7,16 @@ import {
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
 
 import getLogger from '../../utils/logger';
-import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 
 const logger = getLogger();
 
-async function getProducts(
-    credentialsId: string,
-    productFilters: GetProductsCommandInput
-): Promise<GetProductsCommandOutput> {
+async function getProducts(productFilters: GetProductsCommandInput): Promise<GetProductsCommandOutput> {
     logger.info('Getting pricing information to calculate estimates', {
         productFilters
     });
 
-    const {
-        credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
-    const credentials = { accessKeyId, secretAccessKey, sessionToken };
-    const pricingClient = new PricingClient({ credentials, region: DEFAULT_AWS_REGION });
+    // We don't need credentials as our SaaS account is already having pricing:getProducts permission
+    const pricingClient = new PricingClient({ region: DEFAULT_AWS_REGION });
     const command = new GetProductsCommand(productFilters);
 
     return pricingClient.send(command);
