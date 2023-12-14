@@ -372,18 +372,18 @@ Resources:
             GroupSet: !If
                 - ADSGNotSelected
                 - !Split
+                  - ','
+                  - !Join
                     - ','
-                    - !Join
-                        - ','
-                        - - !Ref 'WorkloadSecurityGroup'
-                          - !Ref 'ONTAPSecurityGroupID'
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
                 - !Split
+                  - ','
+                  - !Join
                     - ','
-                    - !Join
-                        - ','
-                        - - !Ref 'WorkloadSecurityGroup'
-                          - !Ref 'ONTAPSecurityGroupID'
-                          - !Ref 'DomainMemberSGID'
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
+                      - !Ref 'DomainMemberSGID'
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName1'
@@ -395,18 +395,18 @@ Resources:
             GroupSet: !If
                 - ADSGNotSelected
                 - !Split
+                  - ','
+                  - !Join
                     - ','
-                    - !Join
-                        - ','
-                        - - !Ref 'WorkloadSecurityGroup'
-                          - !Ref 'ONTAPSecurityGroupID'
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
                 - !Split
+                  - ','
+                  - !Join
                     - ','
-                    - !Join
-                        - ','
-                        - - !Ref 'WorkloadSecurityGroup'
-                          - !Ref 'ONTAPSecurityGroupID'
-                          - !Ref 'DomainMemberSGID'
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
+                      - !Ref 'DomainMemberSGID'
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName2'
@@ -454,9 +454,10 @@ Resources:
                                     - '      "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",'
                                     - '      "Parameters": {'
                                     - '        "LogDirectoryPath": "C:\\cfn\\log",'
+                                    - '        "LogName" : "CfnInit",'
+                                    - '        "Levels" : "7",'
                                     - '        "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",'
                                     - '        "Encoding": "ASCII",'
-                                    - '        "Filter": "cfn-init.log",'
                                     - '        "CultureName": "en-US",'
                                     - '        "TimeZoneKind": "Local"'
                                     - '      }'
@@ -501,27 +502,27 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: {{ ScriptVerifySignature }}
+                            source: { { ScriptVerifySignature } }
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: { { ScriptUnzipArchive } }
                         C:\cfn\scripts\common.zip:
-                            source: {{ ScriptCommon }}
+                            source: { { ScriptCommon } }
                         C:\cfn\scripts\sqlfci.zip:
-                            source: {{ ScriptSQLFCI }}
+                            source: { { ScriptSQLFCI } }
                         C:\cfn\scripts\sqlontap.zip:
-                            source: {{ ScriptSQLONTAP }}
+                            source: { { ScriptSQLONTAP } }
                         C:\cfn\DSC.zip:
-                            source: {{ DSC }}
+                            source: { { DSC } }
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: { { PowerShell } }
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: { { AmazonLaunchWizardForCFN } }
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: {{ AmazonLaunchWizardForSSM }}
+                            source: { { AmazonLaunchWizardForSSM } }
                         C:\cfn\modules\AmznFailoverCluster.zip:
-                            source: {{ AmazonFailoverCluster }}
+                            source: { { AmazonFailoverCluster } }
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: {{ Sqlspcu }}
+                            source: { { Sqlspcu } }
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -633,7 +634,7 @@ Resources:
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
-                                  - !Ref 'AWS::StackName'                                  
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         f-init-iscsi-disk:
@@ -822,7 +823,7 @@ Resources:
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD1 -Stackname '"
-                                  - !Ref 'AWS::StackName'                                 
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:
@@ -1046,27 +1047,27 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: {{ ScriptVerifySignature }}
+                            source: { { ScriptVerifySignature } }
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: { { ScriptUnzipArchive } }
                         C:\cfn\scripts\common.zip:
-                            source: {{ ScriptCommon }}
+                            source: { { ScriptCommon } }
                         C:\cfn\scripts\sqlfci.zip:
-                            source: {{ ScriptSQLFCI }}
+                            source: { { ScriptSQLFCI } }
                         C:\cfn\scripts\sqlontap.zip:
-                            source: {{ ScriptSQLONTAP }}
+                            source: { { ScriptSQLONTAP } }
                         C:\cfn\DSC.zip:
-                            source: {{ DSC }}
+                            source: { { DSC } }
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: { { PowerShell } }
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: { { AmazonLaunchWizardForCFN } }
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: {{ AmazonLaunchWizardForSSM }}
+                            source: { { AmazonLaunchWizardForSSM } }
                         C:\cfn\modules\AmznFailoverCluster.zip:
-                            source: {{ AmazonFailoverCluster }}
+                            source: { { AmazonFailoverCluster } }
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: {{ Sqlspcu }}
+                            source: { { Sqlspcu } }
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -1117,7 +1118,7 @@ Resources:
                             command: powershell.exe -Command "C:\cfn\scripts\common\InitializeDisks.ps1"
                             waitAfterCompletion: 0
                         e-install-dsc-modules:
-                                command: !Join
+                            command: !Join
                                 - ''
                                 - - powershell.exe -Command "C:\cfn\scripts\sqlfci\install-dsc-modules.ps1 -ResourceID SqlFSxInstanceMAD2 -Stackname '"
                                   - !Ref 'AWS::StackName'
@@ -1159,7 +1160,7 @@ Resources:
                                   - "' -FileSystemId '"
                                   - !Ref 'FSxFileSystemId'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
-                                  - !Ref 'AWS::StackName'                                  
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                         e-connect-ontap-instance:
                             command: !Join
@@ -1168,7 +1169,7 @@ Resources:
                                     -FileSystemId '
                                   - !Ref 'FSxFileSystemId'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
-                                  - !Ref 'AWS::StackName'                                  
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                 InstancePrep:
@@ -1214,7 +1215,7 @@ Resources:
                                 - - powershell.exe -Command "C:\cfn\scripts\common\Update-SecurityGroup.ps1
                                     -SGID '
                                   - !Ref 'WorkloadSecurityGroup'
-                                  - '''"'   
+                                  - '''"'
                             waitAfterCompletion: '0'
                         g-add-domadmin-user-to-group:
                             command: !Join
@@ -1330,7 +1331,7 @@ Resources:
                                   - "' -DomainAdminUser '"
                                   - !Ref 'DomainAdminUser'
                                   - "' -ResourceID SqlFSxInstanceMAD2 -Stackname '"
-                                  - !Ref 'AWS::StackName'                                 
+                                  - !Ref 'AWS::StackName'
                                   - '''"'
                             waitAfterCompletion: 0
                         d-restart-computer:
