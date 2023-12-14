@@ -129,10 +129,19 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setDatabaseList: (state, action: PayloadAction<any>) => {
             state.databaseList = action.payload;
+        },
+        resetWorkloadFactoryResourceData: state => {
+            state.resourceDetails = initialState.resourceDetails;
+            state.databaseList = initialState.databaseList;
         }
     }
 });
 
-export const { setResourceLoading, setResourceDetails, setDatabaseListLoading, setDatabaseList } =
-    workloadFactoryResourceSlice.actions;
+export const {
+    setResourceLoading,
+    setResourceDetails,
+    setDatabaseListLoading,
+    setDatabaseList,
+    resetWorkloadFactoryResourceData
+} = workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

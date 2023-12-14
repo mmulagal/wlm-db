@@ -11,6 +11,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseListTable = () => {
     const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
+    const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
 
     const protectionTooltipText = (data: any) => {
         return (
@@ -158,7 +159,8 @@ const DatabaseListTable = () => {
         isSorting: false,
         columns: EncryptionColDefs,
         rows: data,
-        pageSize: 10
+        pageSize: 10,
+        isLazyLoading: databaseListLoading
     });
     return (
         <div className={styles.databaseListTable}>
