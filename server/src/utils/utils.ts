@@ -224,6 +224,21 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     }
 }
 
+function waitForResolution(fn: () => boolean, delay: number, maxDelay: number) {
+    return Promise.race([
+        sleep(maxDelay),
+        new Promise(res => {
+            const interval = setInterval(async () => {
+                const result = fn();
+                if (result) {
+                    clearInterval(interval);
+                    return res(true);
+                }
+            }, delay);
+        })
+    ]);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -240,5 +255,6 @@ export {
     getEc2Arn,
     generateHash,
     calculateFsxStorageCapacity,
-    sizeInGigaBytes
+    sizeInGigaBytes,
+    waitForResolution
 };

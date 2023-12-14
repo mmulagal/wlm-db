@@ -1,16 +1,20 @@
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
-import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache.js';
+import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache.js';
 import {
     BXP_SVC_TOKEN_TYPE,
+    BXP_TOKEN,
     HEADERS,
+    REQUEST_IN_PROGRESS_TYPE,
     SECRETS,
     WF_SVC_TOKEN_TYPE,
+    WF_TOKEN,
     WLMDB,
     WORKLOAD_FACTORY_ENDPOINT
 } from '../../utils/consts.js';
 import { gotInstanceForInternalRequest } from '../../utils/got.js';
 import getLogger from '../../utils/logger.js';
+import { waitForResolution } from '../../utils/utils.js';
 
 const logger = getLogger();
 
@@ -29,16 +33,22 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
     logger.info('Getting workload factory service token:');
 
     try {
+        if (hasCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN)) {
+            await waitForResolution(() => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN), 2000, 10 * 1000);
+        }
+
         if (!process.env.TEST && hasCache(WF_SVC_TOKEN_TYPE, WLMDB)) {
             return readFromCacheByKey(WF_SVC_TOKEN_TYPE, WLMDB) as tokenResponse;
         }
+
+        writeToCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN, true);
 
         const {
             access_token: accessToken,
             expires_in: expiresIn,
             token_type: tokenType
         } = await gotInstanceForInternalRequest
-            .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token`, {
+            .post(`${WORKLOAD_FACTORY_ENDPOINT}/auth/v1/auth/token1`, {
                 json: {
                     client_id: SECRETS.AUTH_CLIENT_ID,
                     client_secret: SECRETS.AUTH_CLIENT_SECRET,
@@ -59,6 +69,8 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
         return response;
     } catch (err) {
         throw createError(500, `Error occured while getting WF service token, ${err}`);
+    } finally {
+        deleteFromCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN);
     }
 }
 
@@ -66,9 +78,15 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
     logger.info('Getting BlueXP service token:');
 
     try {
+        if (hasCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN)) {
+            await waitForResolution(() => !readFromCacheByKey(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN), 2000, 10 * 1000);
+        }
+
         if (!process.env.TEST && hasCache(BXP_SVC_TOKEN_TYPE, WLMDB)) {
             return readFromCacheByKey(BXP_SVC_TOKEN_TYPE, WLMDB) as tokenResponse;
         }
+
+        writeToCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN, true);
 
         const { token } = await getWfServiceToken();
         const {
@@ -95,6 +113,8 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
         return response;
     } catch (err) {
         throw createError(500, `Error occured while getting BXP service token, ${err}`);
+    } finally {
+        deleteFromCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN);
     }
 }
 
