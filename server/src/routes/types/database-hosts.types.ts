@@ -104,6 +104,7 @@ const DatabaseServerMetadataResponse = Type.Object({
     serverEdition: Type.String({ minLength: 1 }),
     serverVersion: Type.String({ minLength: 1 }),
     clusterName: Type.Optional(Type.String({ minLength: 1 })),
+    activeNode: Type.String(),
     nodeNames: Type.Array(Type.String()),
     activeConnections: Type.Number(),
     creationDate: Type.String({ minLength: 1 })
