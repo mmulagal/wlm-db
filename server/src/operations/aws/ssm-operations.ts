@@ -122,26 +122,32 @@ async function isSSMConnectionSuccessful(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
+    try {
+        let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
 
-    let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
-
-    // Connection to activenode is successful
-    if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
-        return true;
-    }
-
-    let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
-    logger.error(errorMessage);
-
-    // Check for connection to standby node
-    if (standbyNodeInstanceId) {
-        connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+        // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
             return true;
         }
 
-        errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
         logger.error(errorMessage);
+
+        // Check for connection to standby node
+        if (standbyNodeInstanceId) {
+            connectionStatus = await getSSMConnectionStatus(credentialsId, region!, standbyNodeInstanceId);
+            if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
+                return true;
+            }
+
+            errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+            logger.error(errorMessage);
+        }
+    } catch (error) {
+        logger.error(
+            `Error while checking SSM connection ${credentialsId}, ${region}, ${activeNodeInstanceId}, ${standbyNodeInstanceId}`
+        );
+        return false;
     }
 
     return false;
