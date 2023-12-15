@@ -16,7 +16,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
-import { setCreatePressed } from '../../../../store/mssql/msSqlActionSlice';
+import { setCreatePressed, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PERMISSIONS, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
@@ -30,16 +30,17 @@ const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const dispatch = useDispatch();
 
-    const accountRef = useRef(null);
-
     //Getting the Data from state
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+    const permissionWarning = useAppSelector(state => state.msSqlAction.permissionWarning);
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
+
+    // const [perWarning, setPerWarning] = useState(false);
 
     // To set noAccount flag is present or not
     useEffect(() => {
@@ -52,14 +53,8 @@ const AwsAccount = () => {
             accordionContext({
                 1: true
             });
-        } else if (isCreateHit) {
-            setTimeout(() => {
-                accordionContext({
-                    1: true
-                });
-            }, 110);
-        }
-    }, [credentialData, isCreateHit]);
+        } 
+    }, [credentialData]);
 
     //Code to open the Accordion
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
@@ -73,12 +68,16 @@ const AwsAccount = () => {
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
     const licenseIdSelectedCheck = useAppSelector(state => state.msSqlAction.licenseIdSelected);
 
+    // useEffect(() => {
+    //     setPerWarning(permissionWarning);
+    // }, [permissionWarning]);
+
     useEffect(() => {
         const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
         const fsxPasswordValPass = !fsxPassVal(fsxCredPassword) ? true : false;
         if (
             isCreatePresed &&
-            (!isVPCNotFilled ||
+            (noAccount || permissionWarning || !isVPCNotFilled ||
                 !isAZNotFilled ||
                 !isDBCredPassword ||
                 !dbPasswordValPass ||
@@ -89,6 +88,7 @@ const AwsAccount = () => {
                 !isProperDBName)
         ) {
             accordionContext({
+                1: noAccount || permissionWarning ? true : false,
                 2: !isVPCNotFilled ? true : false,
                 3: !isAZNotFilled ? true : false,
                 11: !isDBCredPassword || !dbPasswordValPass ? true : false,
@@ -111,17 +111,9 @@ const AwsAccount = () => {
         isProperDBName,
         dbCredPassword,
         fsxCredPassword,
-        licenseIdSelectedCheck
+        licenseIdSelectedCheck,
+        permissionWarning
     ]);
-
-    // useEffect(() => {
-    //     if (noAccount && isCreateHit) {
-    //         setTimeout(() => {
-    //             //@ts-ignore
-    //             accountRef?.current?.focus();
-    //         }, 110);
-    //     }
-    // }, [noAccount, isCreateHit]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
@@ -136,6 +128,7 @@ const AwsAccount = () => {
 
     // Update selected region in form data store
     useEffect(() => {
+        dispatch(setPermissionWarning(false));
         if (!selectedCredential) {
             dispatch(setSelectedCredentials(generateAWSAccounts[0]));
         }
@@ -280,7 +273,7 @@ const AwsAccount = () => {
                                         {GENERAL.CREDENTIAL}
                                     </Button>
                                 </div>
-                                {isCreateHit !== 0 && 
+                                {permissionWarning && isCreateHit !== 0 && 
                                     <div className={styles.options}>
                                         <ErrorIcon />
                                         <div className={styles.noaccount_options}>
