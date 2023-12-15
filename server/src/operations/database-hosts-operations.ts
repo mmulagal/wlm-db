@@ -36,7 +36,8 @@ import {
     MSSQL_DATABASE_TYPES,
     MSSQL_SYSTEM_DATABASES,
     PRICING,
-    WLMDB_COST_ALLOCATION_TAG
+    WLMDB_COST_ALLOCATION_TAG,
+    API_PAGE_SIZE
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -514,11 +515,12 @@ async function getFsxResourceInfo(
 
 async function getDatabaseHostsSummary(
     accountId: string,
-    fields?: string
+    fields?: string,
+    nextToken?: string
 ): Promise<DatabaseHostSummaryListResponseType> {
-    logger.info('Fetching all database hosts deployed in account ', accountId, fields);
+    logger.info('Fetching all database hosts deployed in account ', accountId, fields, nextToken);
 
-    const resourceDetails = await listResources(accountId);
+    const resourceDetails = await listResources(accountId, undefined, RESOURCESTYPE.MSSQL, API_PAGE_SIZE, nextToken);
 
     if (isEmpty(resourceDetails)) {
         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
@@ -543,74 +545,67 @@ async function getDatabaseHostsSummary(
     const databaseHosts: DatabaseHostSummaryResponseType[] = [];
     try {
         await Promise.all(
-            resourceDetails
-                .filter(resourceDetail => resourceDetail.resource_type !== RESOURCESTYPE.FSX)
-                .map(async resourceDetail => {
-                    const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
+            resourceDetails.map(async resourceDetail => {
+                const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
 
-                    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } =
-                        metadata as unknown as Metadata;
+                const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 
-                    // Check SSM Connection status
-                    const isSSMConnected = await isSSMConnectionSuccessful(
-                        credentialsId,
-                        region!,
-                        activeNodeInstanceId,
-                        standbyNodeInstanceId
-                    );
+                // Check SSM Connection status
+                const isSSMConnected = await isSSMConnectionSuccessful(
+                    credentialsId,
+                    region!,
+                    activeNodeInstanceId,
+                    standbyNodeInstanceId
+                );
 
-                    let serverStatus: string = ServerState.DOWN;
-                    let dbCount;
-                    let topologyData: TopologyResponseType;
-                    let performanceData: PerformanceResponseType | undefined;
-                    let storageData: StorageResponseType | undefined;
-                    let protectionData: ProtectionResponseType | undefined;
-                    let usageEstimationData: UsageCostResponseType | undefined;
-                    const activeNodeId = activeNodeInstanceId;
-                    const standbyNodeId = standbyNodeInstanceId;
+                let serverStatus: string = ServerState.DOWN;
+                let dbCount;
+                let topologyData: TopologyResponseType;
+                let performanceData: PerformanceResponseType | undefined;
+                let storageData: StorageResponseType | undefined;
+                let protectionData: ProtectionResponseType | undefined;
+                let usageEstimationData: UsageCostResponseType | undefined;
+                const activeNodeId = activeNodeInstanceId;
+                const standbyNodeId = standbyNodeInstanceId;
 
+                [
+                    serverStatus,
+                    dbCount,
+                    topologyData,
+                    performanceData,
+                    storageData,
+                    protectionData,
+                    usageEstimationData
+                ] = await Promise.all(
                     [
-                        serverStatus,
-                        dbCount,
-                        topologyData,
-                        performanceData,
-                        storageData,
-                        protectionData,
-                        usageEstimationData
-                    ] = await Promise.all(
-                        [
-                            ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
-                            ...(isSSMConnected
-                                ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
-                                : [Promise.resolve()]),
-                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                            ...(isSSMConnected && getPerformance
-                                ? [getServerIOLatency(resourceId)]
-                                : [Promise.resolve()]), // Fetch io latency data
-                            ...(isSSMConnected && getStorageSavings
-                                ? [getStorageData(resourceDetail)]
-                                : [Promise.resolve()]), // Fetch storage savings data
-                            ...(isSSMConnected && getProtection
-                                ? [getProtectionStatus(resourceDetail)]
-                                : [Promise.resolve()]), // Fetch protection status
-                            ...(getUsageEstimation
-                                ? [getBillingOrPriceEstimation(resourceDetail)]
-                                : [Promise.resolve()]) // Fetch billing or pricing estimate data
-                        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
-                    );
+                        ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
+                        ...(isSSMConnected
+                            ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
+                            : [Promise.resolve()]),
+                        getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                        ...(isSSMConnected && getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
+                        ...(isSSMConnected && getStorageSavings
+                            ? [getStorageData(resourceDetail)]
+                            : [Promise.resolve()]), // Fetch storage savings data
+                        ...(isSSMConnected && getProtection
+                            ? [getProtectionStatus(resourceDetail)]
+                            : [Promise.resolve()]), // Fetch protection status
+                        ...(getUsageEstimation ? [getBillingOrPriceEstimation(resourceDetail)] : [Promise.resolve()]) // Fetch billing or pricing estimate data
+                    ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+                );
 
-                    databaseHosts.push({
-                        id: resourceId,
-                        name: resourceName || '',
-                        status: serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
-                        databaseCount: dbCount?.totalCount || 0,
-                        topology: topologyData!,
-                        ...(performanceData && { performance: performanceData }),
-                        ...(storageData && { storage: storageData }),
-                        ...(protectionData && { protection: protectionData }),
-                        ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
-                    });
-                })
+                databaseHosts.push({
+                    id: resourceId,
+                    name: resourceName || '',
+                    status: serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
+                    databaseCount: dbCount?.totalCount || 0,
+                    topology: topologyData!,
+                    ...(performanceData && { performance: performanceData }),
+                    ...(storageData && { storage: storageData }),
+                    ...(protectionData && { protection: protectionData }),
+                    ...(usageEstimationData && { estimatedUsageCost: usageEstimationData })
+                });
+            })
         );
     } catch (error) {
         logger.error(`Error while fetching database hosts details ${accountId}, ${error}`);
@@ -622,7 +617,12 @@ async function getDatabaseHostsSummary(
 
     logger.debug('Database hosts details', databaseHosts);
 
-    return { count: databaseHosts.length, items: databaseHosts, nextToken: '' };
+    return {
+        count: databaseHosts.length,
+        items: databaseHosts,
+        nextToken:
+            resourceDetails?.length === API_PAGE_SIZE ? resourceDetails[resourceDetails.length - 1].id : undefined
+    };
 }
 
 async function getDatabaseHostSummary(

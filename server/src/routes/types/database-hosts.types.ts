@@ -14,7 +14,8 @@ type DatabaseHostSummaryParamsType = Static<typeof DatabaseHostSummaryParams>;
 
 // Query parameter to fetch protection, performance, storage and cost details
 const DatabaseHostQueryString = Type.Object({
-    fields: Type.Optional(Type.String())
+    fields: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String())
 });
 
 const EC2InstanceDetailsResponse = Type.Object({
@@ -141,8 +142,8 @@ const DatabaseHostSummaryResponse = Type.Object({
 });
 const DatabaseHostSummaryListResponse = Type.Object({
     count: Type.Number(),
-    nextToken: Type.String(),
-    items: Type.Array(DatabaseHostSummaryResponse)
+    items: Type.Array(DatabaseHostSummaryResponse),
+    nextToken: Type.Optional(Type.String())
 });
 
 type DatabaseHostSummaryResponseType = Static<typeof DatabaseHostSummaryResponse>;
@@ -159,7 +160,7 @@ type DatabasesResponseType = Static<typeof DatabasesResponse>;
 
 const DatabasesListResponse = Type.Object({
     count: Type.Number(),
-    nextToken: Type.String(),
+    nextToken: Type.Optional(Type.String()),
     items: Type.Array(DatabasesResponse)
 });
 type DatabasesListResponseType = Static<typeof DatabasesListResponse>;
