@@ -335,7 +335,8 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
         return {
             isAwsBackUpEnabled: Boolean(awsBackup),
             isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
-            isSqlNativeEnabled: Boolean(nativeSqlProtection)
+            isSqlNativeEnabled: Boolean(nativeSqlProtection),
+            protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
         logger.error('Error while getting protection status', resourceDetail, error);
