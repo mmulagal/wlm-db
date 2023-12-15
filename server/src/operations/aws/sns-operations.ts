@@ -170,6 +170,7 @@ async function updateSnsTopicAttributeInAllRegions() {
 }
 
 async function checkAndCreateTopic(region: string, queueName: string, policyStatement: any) {
+    logger.info('Check and create sns topic', region, queueName, policyStatement);
     let wlmdbTopicArn;
 
     try {
