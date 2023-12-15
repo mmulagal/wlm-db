@@ -203,14 +203,14 @@ export const awsApi = createApi({
             }),
             createSqlTemplate: builder.mutation({
                 query: ({ credentialId, region, payload }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/cloudformation/url`,
+                    url: `credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
                     method: 'POST',
                     body: payload
                 })
             }),
             deploySqlTemplate: builder.mutation({
                 query: ({ credentialId, region, payload }) => ({
-                    url: `credentials/${credentialId}/regions/${region}/cloudformation/stack`,
+                    url: `credentials/${credentialId}/regions/${region}/cloudformation/deploy`,
                     method: 'POST',
                     body: payload
                 })
