@@ -40,10 +40,6 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
     TEMPLATE_ACCOUNT_ID,
-    SUCCESS,
-    ACTION_BUTTON_DASHBOARD,
-    STANDARD_DEPLOYMENT_ACTION,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT,
     AWS_RESOURCES_ACTION_MAP,
     AWS_RESOURCES_STRICT_ACTION_MAP,
     SECRET_MANAGER_ARN,
@@ -80,7 +76,7 @@ import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
-import { handleNotification } from './cloud-manager/notification-operations';
+// import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
 import { NetworkViolation } from '../utils/common-types';
 
@@ -551,16 +547,17 @@ async function deployCloudFormationTemplate(
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
-    const notificationData = {
-        notificationAction: STANDARD_DEPLOYMENT_ACTION,
-        subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
-        uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
-        actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
-        redirectURL: '/',
-        label: ACTION_BUTTON_DASHBOARD,
-        priority: SUCCESS
-    };
-    await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
+    // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
+    // const notificationData = {
+    //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
+    //     subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
+    //     actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    //     redirectURL: '/',
+    //     label: ACTION_BUTTON_DASHBOARD,
+    //     priority: SUCCESS
+    // };
+    // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
