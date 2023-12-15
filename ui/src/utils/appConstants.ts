@@ -85,35 +85,42 @@ export const GENERAL = {
     REQUIRED_OPERATE_PERMISSIONS: 'Required Operate Permissions',
     CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
-    STEP_ONE: 'Step 1:',
-    STEP_TWO: 'Step 2:',
-    NAVIGATE_TO: 'Go to the',
-    STEP_TWO_TEXT: 'Add the credentials required for deployment:',
+    STEP_ONE: 'Option 1:',
+    STEP_TWO: 'Option 2:',
+    ERROR: 'Error :',
+    NO_CRED: 'No Credentials.',
+    CREATE_PERMISSION_ERROR: 'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the codebox on the right to complete this task. Ensure that you have the CloudFormation ',
+    NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
+    STEP_TWO_TEXT: [
+        'Continue without credentials and create using the codebox on the right.', 
+        'Ensure that you have the required permissions to complete this task within AWS CloudFormation.',
+        'View the required permissions.'],
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
     OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
+    HOW_TO_ADD_AWS_CRED: 'how to add AWS credentials.',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
         'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
-    AWS_ACCOUNT_SUB_TEXT1:
-        'Use Automate mode by selecting credentials that grant BlueXP the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
-    AWS_ACCOUNT_SUB_TEXT2:
-        'Use Read mode by selecting credentials that grant BlueXP the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
-    AWS_ACCOUNT_SUB_TEXT_WF1:
-        'Use Automate mode by selecting credentials that grant Workload Factory the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
-    AWS_ACCOUNT_SUB_TEXT_WF2:
-        'Use Read mode by selecting credentials that grant Workload Factory the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+    AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
+        'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT_READ:
+        'Use BlueXP read mode by selecting credentials that grant BlueXP the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+    AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE:
+        'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT_WF_READ:
+        'Use Workload Factory read mode by selecting credentials that grant Workload Factory the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
         "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
     GO_TO_THE: 'Go to the',
     REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
-    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'required permissions',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'View required permissions.',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
-    CREDENTIALS: 'Credentials page.',
+    CREDENTIALS: 'Credentials page',
     CREDENTIAL: 'Credentials.',
     CREDENTIAL_WITHOUT_DOT: 'Credentials',
     ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
