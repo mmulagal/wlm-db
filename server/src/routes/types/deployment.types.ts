@@ -85,9 +85,9 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     region: Type.Optional(Type.String())
 });
 
-const CloudFormationTemplateResponse = Type.Object({
-    cloudFormationUrl: Type.String(),
-    warningMessage: Type.Optional(Type.String())
+const CloudFormationDeploymentResponse = Type.Object({
+    cloudFormationUrl: Type.Optional(Type.String()),
+    cloudFormationStackId: Type.Optional(Type.String())
 });
 
 const CloudFormationStaticTemplateResponse = Type.Object({
@@ -124,19 +124,18 @@ type EC2ConfigurationType = Static<typeof EC2Configuration>;
 type ADConfigurationType = Static<typeof ADConfiguration>;
 type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
-type CloudFormationTemplateResponseType = Static<typeof CloudFormationTemplateResponse>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
+type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
-    CloudFormationTemplateResponse,
     CFNetworkConfigurationType,
     EC2ConfigurationType,
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
     DeployTemplateResponse,
-    CloudFormationTemplateResponseType,
+    CloudFormationDeploymentResponseType,
     DeploymentStatusResponse,
     DeploymentStatusListResponse,
     DeploymentStatusListResponseType,
@@ -145,5 +144,6 @@ export {
     DeploymentStatusObjectParamsType,
     CloudFormationStaticTemplateResponse,
     CloudFormationStaticTemplateResponseType,
-    CloudFormationStaticTemplateRequestBody
+    CloudFormationStaticTemplateRequestBody,
+    CloudFormationDeploymentResponse
 };

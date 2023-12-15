@@ -2,7 +2,8 @@ import { faker } from '@faker-js/faker';
 import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
-    getCloudformationTemplate
+    getCloudformationTemplate,
+    deployStackOrCreateTemplateURL
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/ec2-scope';
@@ -34,6 +35,18 @@ SECRETS.SIGNURL_SECRET_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 describe('Cloud formation operations', () => {
     it('Create the cloud formation template url for user deployment', async () => {
         const resp = await createCloudFormationTemplateForUserDeployment(
+            credentialsid,
+            DEFAULT_AWS_REGION,
+            NETWORKING_CONFIGURATION,
+            EC2_CONFIGURATION,
+            AD_CONFIGURATION,
+            FSX_CONFIGURATION,
+            SQL_CONFIGURATION
+        );
+        expect(resp).toBeDefined();
+    });
+    it('Create the cloud formation template url or deploy stack', async () => {
+        const resp = await deployStackOrCreateTemplateURL(
             credentialsid,
             DEFAULT_AWS_REGION,
             NETWORKING_CONFIGURATION,

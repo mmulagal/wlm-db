@@ -16,7 +16,7 @@ import {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    CloudFormationTemplateResponseType,
+    CloudFormationDeploymentResponseType,
     CloudFormationStaticTemplateResponseType
 } from '../routes/types/deployment.types';
 import {
@@ -299,6 +299,72 @@ async function getCloudformationTemplate(
     };
 }
 
+async function deployStackOrCreateTemplateURL(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    tags?: Array<{ key: string; value: string }>
+) {
+    logger.info('Deploy Stack or Create Template URL For user deployment', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        tags
+    });
+
+    try {
+        const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+            credentialsId,
+            region
+        );
+        // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
+        if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+        }
+        return await deployCloudFormationTemplate(
+            credentialsId,
+            region,
+            networkConfiguration,
+            ec2Configuration,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            enableCloudWatch,
+            tags
+        );
+    } catch (err: any) {
+        logger.debug('missing permisson error', err.message);
+        // assume the user has read only permission if the simulatePrincipalPolicy is missing from the credential attached.
+        // Go ahead and create the template url
+        if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
+            return createCloudFormationTemplateForUserDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                tags
+            );
+        }
+        throw createError(500, 'Error occurred while checking the missing permissions');
+    }
+}
+
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
     region: string,
@@ -310,7 +376,7 @@ async function createCloudFormationTemplateForUserDeployment(
     topicArn: string = '',
     enableCloudWatch: boolean = false,
     tags?: Array<{ key: string; value: string }>
-): Promise<CloudFormationTemplateResponseType> {
+): Promise<CloudFormationDeploymentResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
         region,
@@ -340,17 +406,6 @@ async function createCloudFormationTemplateForUserDeployment(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
-    // const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-    //     credentialsId,
-    //     region
-    // );
-
-    const errMsg = '';
-    // if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-    //     errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
-    //     logger.error(errMsg);
-    // }
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
@@ -414,7 +469,7 @@ async function createCloudFormationTemplateForUserDeployment(
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
-    return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
+    return { cloudFormationUrl: signedTemplateURL };
 }
 
 async function deployCloudFormationTemplate(
@@ -448,15 +503,6 @@ async function deployCloudFormationTemplate(
     if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
         const errorMessage = vpcValidationCheck.violationMessage;
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
-    }
-
-    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-        credentialsId,
-        region
-    );
-
-    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
@@ -643,5 +689,6 @@ export {
     deployCloudFormationTemplate,
     deploymentStatus,
     deploymentStatusByName,
-    getCloudformationTemplate
+    getCloudformationTemplate,
+    deployStackOrCreateTemplateURL
 };
