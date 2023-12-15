@@ -242,9 +242,7 @@ export const PERMISSIONS = {
             {
                 "Sid": "FSxNGroup",
                 "Effect": "Allow",
-                "Action": [
-                    "fsx:TagResource"
-                ],
+                "Action": ["fsx:TagResource"],
                 "Resource": "*",
                 "Condition": {
                     "StringLike": {
@@ -353,27 +351,11 @@ export const PERMISSIONS = {
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "SecretManagerListStatement",
+                "Sid": "CommonGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "secretsmanager:GetSecretValue"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "SNSListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "sns:ListTopics"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "EC2BackendListStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "secretsmanager:GetSecretValue",
+                    "sns:ListTopics",
                     "ec2:DescribeVpcs",
                     "ec2:DescribeSubnets",
                     "ec2:DescribeSecurityGroups",
@@ -382,96 +364,26 @@ export const PERMISSIONS = {
                     "ec2:DescribeRouteTables",
                     "ec2:DescribeKeyPairs",
                     "ec2:DescribeNetworkInterfaces",
-                    "ec2:DescribeInstanceTypes"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "KMSListStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "ec2:DescribeInstanceTypes",
+                    "ec2:DescribeInstanceTypeOfferings",
                     "kms:ListAliases",
                     "kms:ListKeys",
-                    "kms:DescribeKey"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudFormationListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "cloudformation:ListStacks"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "DirectoryServiceStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ds:DescribeDirectories"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "FSXListStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "kms:DescribeKey",
+                    "cloudformation:ListStacks",
+                    "ds:DescribeDirectories",
                     "fsx:DescribeVolumes",
                     "fsx:DescribeBackups",
                     "fsx:DescribeStorageVirtualMachines",
-                    "fsx:DescribeFileSystems"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "QuotaStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "servicequotas:ListServiceQuotas"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "PricingStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "pricing:GetProducts"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "IAMStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "fsx:DescribeFileSystems",
+                    "servicequotas:ListServiceQuotas",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetCommandInvocation",
+                    "ssm:SendCommand",
+                    "ssm:GetConnectionStatus",
+                    "fsx:ListTagsForResource",
                     "iam:SimulatePrincipalPolicy"
                 ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "SSMStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParametersByPath"
-                ],
-                "Resource": [
-                    "*"
-                ]
+                "Resource": ["*"]
             }
         ]
     }
