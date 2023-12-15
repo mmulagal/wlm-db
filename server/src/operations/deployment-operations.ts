@@ -299,7 +299,7 @@ async function getCloudformationTemplate(
     };
 }
 
-async function deployOrCreateURL(
+async function deployStackOrCreateTemplateURL(
     credentialsId: string,
     region: string,
     networkConfiguration: CFNetworkConfigurationType,
@@ -311,7 +311,7 @@ async function deployOrCreateURL(
     enableCloudWatch: boolean = false,
     tags?: Array<{ key: string; value: string }>
 ) {
-    logger.info('Create cloud formation template for user deployment', {
+    logger.info('Deploy Stack or Create Template URL For user deployment', {
         credentialsId,
         region,
         networkConfiguration,
@@ -344,7 +344,7 @@ async function deployOrCreateURL(
             tags
         );
     } catch (err: any) {
-        logger.error('missing perm error', err.message);
+        logger.debug('missing permisson error', err.message);
         // assume the user has read only permission if the simulatePrincipalPolicy is missing from the credential attached.
         // Go ahead and create the template url
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
@@ -690,5 +690,5 @@ export {
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate,
-    deployOrCreateURL
+    deployStackOrCreateTemplateURL
 };

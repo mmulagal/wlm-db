@@ -3,7 +3,7 @@ import {
     createCloudFormationTemplateForUserDeployment,
     deployCloudFormationTemplate,
     getCloudformationTemplate,
-    deployOrCreateURL
+    deployStackOrCreateTemplateURL
 } from '../../src/operations/deployment-operations';
 import '../simulator/scopes/aws/s3-scope';
 import '../simulator/scopes/aws/ec2-scope';
@@ -46,7 +46,7 @@ describe('Cloud formation operations', () => {
         expect(resp).toBeDefined();
     });
     it('Create the cloud formation template url or deploy stack', async () => {
-        const resp = await deployOrCreateURL(
+        const resp = await deployStackOrCreateTemplateURL(
             credentialsid,
             DEFAULT_AWS_REGION,
             NETWORKING_CONFIGURATION,

@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    deployOrCreateURL,
+    deployStackOrCreateTemplateURL,
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate
@@ -67,7 +67,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     tags
                 }
             } = request;
-            const response = await deployOrCreateURL(
+            const response = await deployStackOrCreateTemplateURL(
                 credentialsId,
                 region,
                 networkConfiguration,
