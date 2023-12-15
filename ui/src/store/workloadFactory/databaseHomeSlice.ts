@@ -1,7 +1,8 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { DatabaseHostsEntities } from "../../utils/types/databaseHomeTypes";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { DatabaseHostsEntities } from '../../utils/types/databaseHomeTypes';
 
 export const initialDBHomepageState: DatabaseHostsEntities = {
+    selectedTab: 'Overview',
     getDatabaseHosts: {
         databaseHostsData: null,
         databaseHostsLoading: false,
@@ -29,7 +30,7 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         totalUpHosts: 0,
         totalInitializingHosts: 0,
         totalDownHosts: 0,
-        totalFailedHosts: 0,
+        totalFailedHosts: 0
     },
     aggregatedProtectionDbCount: {
         protectedDb: 0,
@@ -38,12 +39,12 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         unprotectedPercent: 0,
         awsBackupDb: 0,
         fsxOntapSnapshotsDb: 0,
-        sqlServerBackupDb: 0,
+        sqlServerBackupDb: 0
     },
     aggregatedStorageSavings: {
         storageConsumes: '0',
         storageSavings: '0',
-        storageSavingsPercent: 0,
+        storageSavingsPercent: 0
     },
     aggregatedCosts: {
         storageCost: 0,
@@ -54,7 +55,7 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         storageCostPercent: 0,
         computeCostPercent: 0,
         connectivityCostPercent: 0,
-        otherCostPercent: 0,
+        otherCostPercent: 0
     }
 };
 
@@ -62,6 +63,9 @@ const databaseHomeSlice = createSlice({
     name: 'databaseHome',
     initialState: initialDBHomepageState,
     reducers: {
+        selectedTabSelection: (state, action: PayloadAction<any>) => {
+            state.selectedTab = action.payload;
+        },
         addDatabaseHosts: (state, action: PayloadAction<any>) => {
             state.getDatabaseHosts = action.payload;
         },
@@ -98,13 +102,14 @@ const databaseHomeSlice = createSlice({
 export const {
     addDatabaseHosts,
     addDatabaseJobs,
+    selectedTabSelection,
     addJobsSummary,
     addStatus,
     addDatabaseHostsList,
     addAggregateHostsCountData,
     addAggregatedProtectionDbCount,
     addAggregatedStorageSavings,
-    addAggregatedCosts, 
+    addAggregatedCosts,
     addInitialData
 } = databaseHomeSlice.actions;
 

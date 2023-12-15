@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This workload template deploys a SqlFSx instance in an existing VPC.
+Description: This workload template deploys a SQL Standalone instance using FSxN in an existing VPC.
     **WARNING** This template creates EC2 instances and related resources. You will
     be billed for the AWS resources used if you create a stack from this template.
 Metadata:
@@ -392,9 +392,10 @@ Resources:
                                     - '      "FullName": "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch",'
                                     - '      "Parameters": {'
                                     - '        "LogDirectoryPath": "C:\\cfn\\log",'
+                                    - '        "LogName" : "CfnInit",'
+                                    - '        "Levels" : "7",'
                                     - '        "TimestampFormat": "yyyy-MM-dd HH:mm:ss,fff",'
                                     - '        "Encoding": "ASCII",'
-                                    - '        "Filter": "cfn-init.log",'
                                     - '        "CultureName": "en-US",'
                                     - '        "TimeZoneKind": "Local"'
                                     - '      }'
@@ -439,25 +440,25 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: {{ ScriptVerifySignature }}
+                            source: { { ScriptVerifySignature } }
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: {{ ScriptUnzipArchive }}
+                            source: { { ScriptUnzipArchive } }
                         C:\cfn\scripts\common.zip:
-                            source: {{ ScriptCommon }}
+                            source: { { ScriptCommon } }
                         C:\cfn\scripts\sqlfci.zip:
-                            source: {{ ScriptSQLFCI }}
+                            source: { { ScriptSQLFCI } }
                         C:\cfn\scripts\sqlontap.zip:
-                            source: {{ ScriptSQLONTAP }}
+                            source: { { ScriptSQLONTAP } }
                         C:\cfn\DSC.zip:
-                            source: {{ DSC }}
+                            source: { { DSC } }
                         C:\cfn\Installer\powershell.zip:
-                            source: {{ PowerShell }}
+                            source: { { PowerShell } }
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: {{ AmazonLaunchWizardForCFN }}
+                            source: { { AmazonLaunchWizardForCFN } }
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: {{ AmazonLaunchWizardForSSM }}
+                            source: { { AmazonLaunchWizardForSSM } }
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: {{ Sqlspcu }}
+                            source: { { Sqlspcu } }
                 ScriptSignatureVerificationandExtract:
                     commands:
                         a-unpack-common-scripts:
@@ -734,7 +735,7 @@ Resources:
                 - DeviceName: /dev/sda1
                   Ebs:
                       VolumeSize: '100'
-                      VolumeType: gp2
+                      VolumeType: gp3
             KeyName: !Ref 'KeyPairName'
             UserData: !Base64
                 Fn::Join:

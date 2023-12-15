@@ -23,13 +23,13 @@ export default async function sendAudit(auditData: {
     try {
         const { token } = await getBxpServiceToken();
         const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
-        return gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/audit/${accountId}`, {
+        return await gotInstanceForInternalRequest.post(`${CLOUD_MANAGER_ENDPOINT}/audit/${accountId}`, {
             headers: {
                 [HEADERS.AUTHORIZATION]: token
             },
             ...auditData
         });
     } catch (error) {
-        logger.error('Failed to send audit to audit service', error);
+        logger.error('Failed to send audit to audit service', { error, auditData });
     }
 }

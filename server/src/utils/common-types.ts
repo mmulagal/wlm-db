@@ -1,8 +1,12 @@
 interface Metadata {
     credentialsId: string;
     activeNodeInstanceId: string;
-    standbyNodeInstanceId: string;
-    fsxSecret: string;
+    activeNodeInstanceName?: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeInstanceName?: string;
+    fsxSecret?: string;
+    activeDirectoryName?: string;
+    activeDirectoryAddress?: string;
 }
 
 interface ResourceDetails {
@@ -36,4 +40,8 @@ interface DeploymentDetails {
     data: unknown;
 }
 
-export { Metadata, ResourceDetails, DeploymentDetails };
+interface NetworkViolation {
+    isViolated: boolean;
+    violationMessage?: string;
+}
+export { Metadata, ResourceDetails, DeploymentDetails, NetworkViolation };

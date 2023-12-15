@@ -183,6 +183,9 @@ const app = fastify({
         },
         { prefix: `${API_PREFIX_PATH}` }
     )
+    .setNotFoundHandler((_request: FastifyRequest, reply: FastifyReply) => {
+        reply.notFound();
+    })
     .addHook(
         'preHandler',
         (
@@ -195,6 +198,7 @@ const app = fastify({
         ) => {
             getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                 const {
+                    method,
                     url,
                     headers: {
                         authorization,
@@ -210,6 +214,11 @@ const app = fastify({
                 setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
                 setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
                 setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
+
+                if (!request.url.includes(API_PATH_HEALTH)) {
+                    accessLogger.info(`[${method}] [${url}]`);
+                }
+
                 const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
                 if (!requestUrl) {
                     createAuditGroup(request, reply);
@@ -256,7 +265,7 @@ try {
 try {
     await checkAndCreateBucketLifecycleConfiguration();
 } catch (error) {
-    logger.error('Failed to check and create S3 bucket lifecycle');
+    logger.debug('Failed to check and create S3 bucket lifecycle');
 }
 
 app.listen({ port, host }, err => {

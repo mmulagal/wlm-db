@@ -328,9 +328,9 @@ export const databaseHomeApi = createApi({
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => {
                     if (nextToken) {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED&nextToken=${nextToken}`;
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
                     } else {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS,CREATE_FAILED,UPDATE_FAILED`;
+                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
                     }
                 }
             }),
@@ -351,6 +351,25 @@ export const databaseHomeApi = createApi({
                 async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
                     return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
                 }
+            })
+        };
+    }
+});
+
+export const workloadFactoryResourceApi = createApi({
+    reducerPath: 'workloadFactoryResourceApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getResourceDetails: builder.query({
+                query: id => ({
+                    url: `database-hosts/${id}?fields=storage,performance,usageEstimation,resourceUtilization`
+                })
+            }),
+            getDatabaseList: builder.query({
+                query: id => ({
+                    url: `database-hosts/${id}/databases`
+                })
             })
         };
     }
@@ -414,5 +433,7 @@ export const {
     useGetStatusQuery,
     useRemoveDatabaseJobsMutation
 } = databaseHomeApi;
+
+export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
 export const { useSendMsgMutation } = chatbotApi;

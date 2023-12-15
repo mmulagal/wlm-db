@@ -1,0 +1,50 @@
+.dbHostTile {
+    width: 1064px;
+    height: 100px;
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px var(--grey-15);
+    display: flex;
+
+    .loaderHeight {
+        height: 24px;
+    }
+
+    .dbHostSection {
+        display: flex;
+        gap: 16px;
+        padding: 24px 0 24px 40px;
+        width: 26.6%;
+    }
+
+    .dbHostSeparator {
+        background: var(--border);
+        width: 1px;
+        height: 56px;
+        margin-top: 20px;
+    }
+
+    .statusSection {
+        display: flex;
+        flex-direction: column;
+        padding: 24px 0 24px 40px;
+        width: 14.09%;
+
+        .firstSection {
+            display: flex;
+
+            gap: 8px;
+        }
+    }
+
+    .commonSection {
+        display: flex;
+        flex-direction: column;
+        padding: 24px 0 24px 40px;
+        width: 19.7%;
+
+        .commonSectionLevel {
+            display: flex;
+            gap: 8px;
+        }
+    }
+}

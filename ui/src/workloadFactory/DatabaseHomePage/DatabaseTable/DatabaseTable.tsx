@@ -14,15 +14,24 @@ import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRemoveDatabaseJobsMutation, useRemoveMSSQLMutation } from '../../../utils/apiService';
 import { setRefetchJobSummaryApi } from '../../../store/mssql/msSqlActionSlice';
 import { useDispatch } from 'react-redux';
-import { addDatabaseHosts, addDatabaseJobs } from '../../../store/workloadFactory/databaseHomeSlice';
+import {
+    addDatabaseHosts,
+    addDatabaseJobs,
+    selectedTabSelection
+} from '../../../store/workloadFactory/databaseHomeSlice';
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
+import { useNavigate } from 'react-router-dom';
+import { updateResourceId } from '../../../store/authSlice';
+import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -34,31 +43,25 @@ const DatabaseTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
-    const menuItems = [
-        // {
-        //     id: 'resourceView',
-        //     displayName: 'View resource details'
-        // },
-        // {
-        //     id: 'clone',
-        //     displayName: 'Clone',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'migrate',
-        //     displayName: 'Migrate',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'protect',
-        //     displayName: 'Protect',
-        //     disabled: true
-        // },
-        {
-            id: 'remove',
-            displayName: 'Remove'
-        }
-    ];
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'viewOverview',
+                displayName: 'View host overview',
+                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+            },
+            {
+                id: 'viewDatabaseList',
+                displayName: 'View database list',
+                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+            },
+            {
+                id: 'remove',
+                displayName: 'Remove',
+                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+            }
+        ];
+    };
 
     const protectionTooltipText = (data: any) => {
         return (
@@ -126,7 +129,7 @@ const DatabaseTable = () => {
                     <div className={styles.jobMenuPopover}>
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems}
+                            menuItems={menuItems(rowData)}
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -138,6 +141,20 @@ const DatabaseTable = () => {
                                 } else if (toggleType === 'selectedOption') {
                                     menuOpenedRowDetail.current = null;
                                     setOpenedRow(null);
+
+                                    if (menuId === 'viewOverview') {
+                                        dispatch(selectedTabSelection('Overview'));
+                                        dispatch(updateResourceId(rowData.id));
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
+                                    }
+
+                                    if (menuId === 'viewDatabaseList') {
+                                        dispatch(selectedTabSelection('Database list'));
+                                        dispatch(updateResourceId(rowData.id));
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
+                                    }
 
                                     if (menuId === 'remove') {
                                         handleRemoveDialog(rowData);

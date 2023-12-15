@@ -179,7 +179,8 @@ export const DB_HOME_DATA_TYPE = {
 export const CODEBOX_REST_RES = {
     API: 'api',
     VIEW: 'view',
-    COPY: 'copy'
+    COPY: 'copy',
+    ORIGINAL_DATA: 'Original Data'
 };
 
 // This Permissions should be in sync with workload-policies.json file

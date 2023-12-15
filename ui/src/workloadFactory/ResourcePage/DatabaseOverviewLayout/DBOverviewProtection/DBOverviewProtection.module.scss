@@ -1,0 +1,47 @@
+.dbOverviewProtection {
+    box-shadow: 2px 2px 6px var(--grey-15);
+    height: 444px;
+    width: 384px;
+    background-color: var(--content-background);
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .title {
+        display: flex;
+    }
+
+    .mainContainer {
+        margin-top: 40px;
+
+        .chartContainer {
+            margin-left: 100px;
+        }
+
+        .protectionSeparator {
+            margin-top: 40px;
+            margin-left: 40px;
+            width: 304px;
+            border-top: 1px solid var(--border);
+        }
+
+        .textSection {
+            margin-left: 40px;
+            margin-top: 16px;
+            display: flex;
+
+            .dbHostSeparator {
+                background: var(--border);
+                width: 1px;
+                height: 56px;
+                margin: 0 70px;
+            }
+        }
+    }
+}

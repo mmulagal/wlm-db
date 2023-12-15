@@ -19,6 +19,10 @@ const DatabaseHomePage = () => {
     const [statusChk, setStatusChk] = useState(false);
 
     const { statusData, statusLoading } = useAppSelector(state => state.databaseHome.getStatus);
+    const hostStorageSavingsData: any = useAppSelector(state => state.databaseHome.aggregatedStorageSavings);
+    const hostCostData: any = useAppSelector(state => state.databaseHome.aggregatedCosts);
+    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
     useEffect(() => {
         if (statusData && statusData?.isActive) {
@@ -28,6 +32,8 @@ const DatabaseHomePage = () => {
                 { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
                 '*'
             );
+        } else {
+            setStatusChk(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [statusData]);
@@ -74,11 +80,19 @@ const DatabaseHomePage = () => {
                         {/* Bar lines */}
                         <div className={styles.barContainer}>
                             <div className={styles.commonContainer}>
-                                <StorageSavings />
+                                <StorageSavings
+                                    hostData={hostStorageSavingsData}
+                                    jobsLoading={databaseJobsLoading}
+                                    hostsLoading={databaseHostsLoading}
+                                />
                             </div>
 
                             <div className={styles.commonContainer}>
-                                <EstimatedCost />
+                                <EstimatedCost
+                                    hostData={hostCostData}
+                                    jobsLoading={databaseJobsLoading}
+                                    hostsLoading={databaseHostsLoading}
+                                />
                             </div>
                         </div>
                     </div>

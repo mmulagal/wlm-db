@@ -8,13 +8,13 @@ import getLogger from '../utils/logger';
 const logger = getLogger();
 
 async function queryBot(query: string, oldParams?: { [x: string]: any }) {
-    logger.info('Querying Bot', { query, oldParams });
+    logger.debug('Querying Bot', { query, oldParams });
     try {
         let intent;
         const chatbot = new Chatbot();
 
         const response = await chatbot.query(query);
-        logger.info('CHATBOT RESP>>>', JSON.stringify(response));
+        logger.info('CHATBOT RESP>>>', response);
         if (response.success) {
             ({ intent } = response.data);
         }
@@ -71,7 +71,10 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
         }
     } catch (e: any) {
         logger.error('Failed to get the query response', e?.message, e);
-        return { message: 'Sorry, I could not find anything related to your query, please try again', status: 'error' };
+        return {
+            message: e?.message || 'Sorry, I could not find anything related to your query, please try again',
+            status: 'error'
+        };
     }
 }
 

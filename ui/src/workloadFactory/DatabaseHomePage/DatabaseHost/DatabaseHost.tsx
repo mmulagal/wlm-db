@@ -93,7 +93,7 @@ const DatabaseHost = () => {
                                 }
                             </div>
                         </div>
-                        <div className={styles.layout}>
+                        {/* <div className={styles.layout}>
                             <div className={styles.firstRow}>
                                 <ErrorIcon />
                                 <Typography variant="Semibold_14">{hostData?.totalFailedHosts}</Typography>
@@ -106,7 +106,7 @@ const DatabaseHost = () => {
                                     <FlashingDotsLoader />
                                 }
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

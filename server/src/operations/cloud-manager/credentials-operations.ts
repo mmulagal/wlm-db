@@ -1,4 +1,5 @@
 import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
 import {
     bxpCredentials,
     getAllBxpCredentials,
@@ -115,7 +116,9 @@ async function lookupCredentials(credentialsId: string) {
 
 async function getCredentialsDetails(credentialsId: string, accountId?: string) {
     logger.info('Getting credentials details:', { credentialsId, accountId });
-
+    if (isEmpty(credentialsId)) {
+        throw new Error('Credentials id is invalid');
+    }
     return lookupCredentials(credentialsId);
 
     /* the below logic tries to look up credentials based on the referer header, keeping it until a decision is made if new credentials service can handle both blue xp and new creds */

@@ -59,26 +59,29 @@ const ChatBox = ({
 
     return (
         <div className={styles['chat-container']}>
-            <div className={styles['chat-window']} id="chat_id">
-                {!messagesToShow.length && (
-                    <div className={styles['bedrock-powered-container']}>
-                        <BedrockPoweredIcon />
-                        <Typography variant="Semibold_16">BedRock powered chat</Typography>
-                    </div>
-                )}
-                {messagesToShow.map((msgObj: any, idx: number) => (
-                    <Message
-                        idx={idx}
-                        msgObj={msgObj}
-                        handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
-                        handleSendMsg={handleSendMsg}
-                        messages={messages}
-                        isBotReplying={isBotReplying}
-                        activeField={activeField}
-                    />
-                ))}
-                <ChatBotResponseLoader isBotReplying={isBotReplying} />
+            <div className={styles['chat-window-container']}>
+                <div className={styles['chat-window']} id="chat_id">
+                    {!messagesToShow.length && (
+                        <div className={styles['bedrock-powered-container']}>
+                            <BedrockPoweredIcon />
+                            <Typography variant="Semibold_16">BedRock powered chat</Typography>
+                        </div>
+                    )}
+                    {messagesToShow.map((msgObj: any, idx: number) => (
+                        <Message
+                            idx={idx}
+                            msgObj={msgObj}
+                            handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
+                            handleSendMsg={handleSendMsg}
+                            messages={messages}
+                            isBotReplying={isBotReplying}
+                            activeField={activeField}
+                        />
+                    ))}
+                    <ChatBotResponseLoader isBotReplying={isBotReplying} />
+                </div>
             </div>
+
             <div className={styles['current-msg-container']}>
                 <div className={`${styles['current-msg']} ${isBotReplying ? styles['chat-disabled'] : ''}`}>
                     <input

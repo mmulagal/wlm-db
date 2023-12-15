@@ -4,17 +4,25 @@ import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import styles from './MultiRingDoughnut.module.scss';
 import { Typography } from '@netapp/design-system';
-import { useAppSelector } from '../../../store/storeHooks';
 import { formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 
 Chart.register(...registerables);
 
-const MultiRingDoughnut = () => {
-    const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
+type MultiRingDoughnutPropType = {
+    unProtectColor?: string;
+    hostData?: any;
+    databaseHostLoading?: boolean;
+    databaseJobsLoading?: boolean;
+};
 
-    const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
-    const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+const MultiRingDoughnut = ({
+    unProtectColor,
+    hostData,
+    databaseHostLoading,
+    databaseJobsLoading
+}: MultiRingDoughnutPropType) => {
+    const unProtectedColor = unProtectColor ? '#E0E0E0' : '#FDC300';
 
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();
@@ -33,7 +41,7 @@ const MultiRingDoughnut = () => {
             datasets: [
                 {
                     data: [hostData?.protectedPercent, hostData?.unprotectedPercent],
-                    backgroundColor: ['#68C6B3', '#FDC300']
+                    backgroundColor: ['#68C6B3', unProtectedColor]
                 }
             ]
             //   labels: label,
@@ -61,7 +69,7 @@ const MultiRingDoughnut = () => {
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            {(databaseHostsLoading ||
+            {((databaseHostLoading && !hostData) ||
                 databaseJobsLoading ||
                 !hostData ||
                 (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (

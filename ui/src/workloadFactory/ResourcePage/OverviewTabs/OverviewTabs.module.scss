@@ -1,0 +1,33 @@
+.overviewTabs {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    margin-left: 120px;
+    width: 1605px;
+    height: 34px;
+    border-bottom: 1px solid #a7a7a7;
+    display: flex;
+
+    .headerPart1 {
+        color: var(--text-primary);
+        width: 160px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .headerPart2 {
+        color: var(--text-primary);
+        width: 191px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .active {
+        border-bottom: 1px solid var(--blue-70);
+        color: var(--blue-70);
+    }
+}
+
+.overviewTabDynamicWidth {
+    width: 84%;
+}

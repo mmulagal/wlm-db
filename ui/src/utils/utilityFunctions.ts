@@ -4,11 +4,14 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
+    CREDENTIAL_PROD_LINK,
+    CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
     PENDING_DELETION,
+    PRODUCTION,
     RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
     SQL_DATABASE,
@@ -18,6 +21,7 @@ import {
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -440,14 +444,14 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrProtection = (data: DatabaseHostItem[]) => {
+export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryDatabaseItem[]) => {
     let protectedDb = 0;
     let unprotectedDb = 0;
     let awsBackupDb = 0;
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (
             val?.protection?.isAwsBackUpEnabled ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
@@ -455,7 +459,10 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         ) {
             protectedDb += 1;
         } else if (
-            (val?.status === STATUS_CONST.DOWN || val?.status === STATUS_CONST.UP) &&
+            (val?.status === STATUS_CONST.DOWN ||
+                val?.status === STATUS_CONST.UP ||
+                val?.status === 'ONLINE' ||
+                val?.status === 'OFFLINE') &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
@@ -486,11 +493,11 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
+export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let totalConsume = 0;
     let storageSavings = 0;
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (val?.storage?.used) {
             totalConsume += val.storage.used;
         }
@@ -508,7 +515,7 @@ export const getAggrStorageSavings = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrCost = (data: DatabaseHostItem[]) => {
+export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let storageCost = 0;
     let computeCost = 0;
     let connectivityCost = 0;
@@ -517,7 +524,7 @@ export const getAggrCost = (data: DatabaseHostItem[]) => {
     let storageList: (string | undefined)[] = [];
     let vpcList: (string | undefined)[] = [];
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (val?.estimatedUsageCost?.compute) {
             computeCost += val.estimatedUsageCost.compute;
         }
@@ -719,6 +726,11 @@ export const validateChatbotField = (fieldName: string, val: any) => {
             return !isNaN(numValue) && numValue >= 120 && numValue <= 13320
                 ? ''
                 : `Supported capacity should be between 120 GiB to 13320 GiB`;
+        case 'sqlServerName':
+            return val &&
+                (val.length > 15 || !/^[a-zA-Z0-9]/.test(val.charAt(0) || '') || !/^[a-zA-Z0-9/-]+$/.test(val))
+                ? GENERAL.DB_NAME_TOOLTIP
+                : '';
         case 'domainPassword':
             return adPassVal(val) || '';
     }
@@ -771,14 +783,14 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.availabilityZones?.selectedAzNode1?.data?.availabilityZone) {
         params.availabilityZone1 = payload.availabilityZones.selectedAzNode1.data.availabilityZone;
     }
-    if (payload?.availabilityZones?.selectedSubnetNode1?.value) {
-        params.privateSubnet1Id = payload.availabilityZones.selectedSubnetNode1.value;
+    if (payload?.availabilityZones?.selectedSubnetNode1?.data?.id) {
+        params.privateSubnet1Id = payload.availabilityZones.selectedSubnetNode1.data.id;
     }
     if (payload?.availabilityZones?.selectedAzNode2?.data?.availabilityZone) {
         params.availabilityZone2 = payload.availabilityZones.selectedAzNode2.data.availabilityZone;
     }
-    if (payload?.availabilityZones?.selectedSubnetNode2?.value) {
-        params.privateSubnet2Id = payload.availabilityZones.selectedSubnetNode2.value;
+    if (payload?.availabilityZones?.selectedSubnetNode2?.data?.id) {
+        params.privateSubnet2Id = payload.availabilityZones.selectedSubnetNode2.data.id;
     }
     if (payload?.keyPair?.selectedKeyPair?.data?.name) {
         params.keyPairName = payload.keyPair.selectedKeyPair.data.name;
@@ -807,8 +819,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.license?.selectedLicenseId?.value) {
         params.sqlAmiId = payload.license.selectedLicenseId.value;
     }
-    if (payload?.fsxN?.fsxNExistingName?.fileSystemId) {
-        params.fsxFileSystemId = payload.fsxN.fsxNExistingName.fileSystemId;
+    if (payload?.fsxN?.fsxNExistingName?.data?.fileSystemId) {
+        params.fsxFileSystemId = payload.fsxN.fsxNExistingName.data.fileSystemId;
     }
     if (payload?.fsxN?.fsxNNewUserName) {
         params.fsxUsername = payload.fsxN.fsxNNewUserName;
@@ -843,4 +855,16 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     }
     params.enableCloudWatch = payload.cloudWatch || false;
     return params;
+};
+
+export const openCredentialTab = () => {
+    const state = store.getState();
+    const isWorkloadFactoryStatus = state.auth.isWorkloadFactory;
+    let url;
+    if (isWorkloadFactoryStatus) {
+        url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+    } else {
+        url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+    }
+    window.open(url, '_blank', 'noopener');
 };

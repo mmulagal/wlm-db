@@ -14,8 +14,9 @@ import ChatBox from './ChatBox/Chatbox';
 import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useSendMsgMutation } from '../../../utils/apiService';
-import { setCurrentIntent, setLoadConfigClicked, setMessages } from '../../../store/chatbot/chatbotSlice';
+import { setCurrentIntent, setLoadConfigClicked, setMessages, setShowRetry } from '../../../store/chatbot/chatbotSlice';
 import {
+    initialMssqlState,
     setCloudWatch,
     setDBCredentialsName,
     setDBCredentialsPassword,
@@ -25,6 +26,7 @@ import {
     setFsxNPassword,
     setFsxNType,
     setInstanceType,
+    setMssqlForm,
     setSelectedADDomainAddress,
     setSelectedADDomainName,
     setSelectedADPassword,
@@ -69,7 +71,9 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const { messages, currentIntent, isReceivingMsg, loadConfigClicked } = useAppSelector(state => state.chatbot);
+    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry } = useAppSelector(
+        state => state.chatbot
+    );
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
     //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
@@ -643,7 +647,45 @@ const Chatbot = () => {
     };
 
     useEffect(() => {
-        setContext();
+        setIsBotReplying(true);
+        setTimeout(() => {
+            dispatch(
+                setMessages([
+                    ...messages,
+                    {
+                        sender: 'bot',
+                        type: 'confirm',
+                        active: true,
+                        msg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
+                        confirmData: {
+                            confirmMsg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
+                            confirmBtnTxt: 'Continue',
+                            cancelBtnTxt: 'Discard',
+                            onConfirm: async () => {
+                                dispatch(
+                                    setMessages([
+                                        {
+                                            sender: 'bot',
+                                            msg: 'Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?'
+                                        },
+                                        {
+                                            sender: 'user',
+                                            msg: 'Continue'
+                                        }
+                                    ])
+                                );
+                                setContext();
+                            },
+                            onCancel: () => {
+                                dispatch(setMessages([]));
+                                dispatch(setMssqlForm(initialMssqlState));
+                            }
+                        }
+                    }
+                ])
+            );
+            setIsBotReplying(false);
+        }, 5000);
     }, []);
 
     useEffect(() => {
@@ -683,7 +725,7 @@ const Chatbot = () => {
                             key.toLowerCase().includes('password') ? '********' : paramObj[key].label
                         }`
                 )
-                .join(', ')
+                .join('\n')
         });
         dispatch(setMessages(updatedMessages));
         const msgToBot = Object.keys(paramObj)
@@ -715,8 +757,11 @@ const Chatbot = () => {
                   return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
               })
             : null;
-        if (lastMsg && lastMsg.status === 'error') {
+        if ((lastMsg && lastMsg.status === 'error') || showRetry) {
             const existingMessages = updatedMsgs ? updatedMsgs : [];
+            if (showRetry) {
+                setIsBotReplying(false);
+            }
             return [
                 ...existingMessages,
                 {
@@ -729,7 +774,21 @@ const Chatbot = () => {
                         confirmBtnTxt: 'Yes',
                         cancelBtnTxt: 'No',
                         onConfirm: async (messages: messageType[]) => {
+                            dispatch(setShowRetry(false));
                             const lastUserMsg = messages.filter(item => item.sender === 'user').reverse()?.[0];
+                            dispatch(
+                                setMessages([
+                                    ...messages,
+                                    {
+                                        sender: 'bot',
+                                        msg: 'Error getting response. Do you want to retry?'
+                                    },
+                                    {
+                                        sender: 'user',
+                                        msg: 'Yes'
+                                    }
+                                ])
+                            );
                             if (lastUserMsg) {
                                 await sendMsg(lastUserMsg.msg, existingMessages);
                             } else {
@@ -737,15 +796,19 @@ const Chatbot = () => {
                             }
                         },
                         onCancel: () => {
+                            dispatch(setShowRetry(false));
                             dispatch(
-                                setMessages(
-                                    existingMessages.map((msg: any) => {
-                                        return {
-                                            ...msg,
-                                            status: null
-                                        };
-                                    })
-                                )
+                                setMessages([
+                                    ...messages,
+                                    {
+                                        sender: 'bot',
+                                        msg: 'Error getting response. Do you want to retry?'
+                                    },
+                                    {
+                                        sender: 'user',
+                                        msg: 'Yes'
+                                    }
+                                ])
                             );
                             dispatch(setCurrentIntent(''));
                         }
@@ -757,7 +820,8 @@ const Chatbot = () => {
             lastMsg.sender === 'bot' &&
             !lastMsg.intent &&
             currentIntent &&
-            currentIntent.type === 'DeployMsSql'
+            currentIntent.type === 'DeployMsSql' &&
+            lastMsg.type !== 'confirm'
         ) {
             const existingMessages = updatedMsgs ? updatedMsgs : [];
             return [
@@ -786,7 +850,7 @@ const Chatbot = () => {
         } else {
             return updatedMsgs;
         }
-    }, [messages, currentIntent]);
+    }, [messages, currentIntent, showRetry]);
 
     return (
         <div className={styles['chatbot']}>

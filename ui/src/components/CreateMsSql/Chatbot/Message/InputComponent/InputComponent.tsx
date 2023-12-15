@@ -13,6 +13,8 @@ type inputComponentPropType = {
     errorFields: string[];
     setErrorFields: (errorFields: string[]) => void;
     activeField: any;
+    defaultValue?: string;
+    isDisabled?: boolean;
 };
 
 const InputComponent = ({
@@ -22,9 +24,18 @@ const InputComponent = ({
     onChange,
     errorFields,
     setErrorFields,
-    activeField
+    activeField,
+    defaultValue,
+    isDisabled
 }: inputComponentPropType) => {
     const [value, setValue] = useState<any>('');
+
+    useEffect(() => {
+        if (defaultValue) {
+            setValue(defaultValue);
+            onChange(selectKey, defaultValue);
+        }
+    }, [defaultValue, onChange, selectKey]);
 
     const handleErrorFields = () => {
         const isError = validateChatbotField(selectKey, value);
@@ -136,14 +147,15 @@ const InputComponent = ({
                         if (fieldType === 'number') {
                             const re = /^[0-9\b]+$/;
                             if (e.target.value === '' || re.test(e.target.value)) {
-                                onChange(selectKey, parseInt(e.target.value));
-                                setValue(parseInt(e.target.value));
+                                onChange(selectKey, parseInt(e.target.value || '0'));
+                                setValue(parseInt(e.target.value || '0'));
                             }
                         } else {
                             onChange(selectKey, e.target.value);
                             setValue(e.target.value);
                         }
                     }}
+                    isDisabled={isDisabled}
                     info={tooltipText()}
                     value={value}
                     className={`${styles.fieldComponent} ${activeField === selectKey ? styles['highlight-input'] : ''}`}

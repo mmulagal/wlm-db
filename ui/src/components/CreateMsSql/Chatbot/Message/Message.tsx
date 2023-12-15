@@ -4,10 +4,12 @@ import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.s
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
 import { useMemo, useState } from 'react';
-import { Button } from '@netapp/design-system';
+import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
+import { GENERAL } from '../../../../utils/appConstants';
+import { openCredentialTab } from '../../../../utils/utilityFunctions';
 
 type optionsType = {
     value?: string | number;
@@ -24,6 +26,9 @@ type messageType = {
     active?: boolean;
     errors?: any;
     confirmData?: any;
+    default?: string;
+    disable?: boolean;
+    link?: any;
 };
 
 type MessagePropType = {
@@ -120,6 +125,8 @@ const Message = ({
                                                             }}
                                                             selectKey={item.key}
                                                             fieldType={item.type}
+                                                            defaultValue={item.default}
+                                                            isDisabled={item.disable}
                                                             errorFields={errorFields}
                                                             setErrorFields={setErrorFields}
                                                             activeField={activeField}
@@ -127,15 +134,32 @@ const Message = ({
                                                     </div>
                                                 )
                                             )}
-                                            {msgObj.active && item.type === 'tags' &&
-                                                <TagsComponent 
+                                            {msgObj.active && item.type === 'tags' && (
+                                                <TagsComponent
                                                     onChange={(key: string, val: string) => {
                                                         setParamObj({
                                                             ...paramObj,
-                                                            [key]: {label: val, value: val}
+                                                            [key]: { label: val, value: val }
                                                         });
                                                     }}
-                                            />}
+                                                />
+                                            )}
+                                            {item.link && (
+                                                <Typography className={styles.link} variant="Regular_14">
+                                                    {item.link.description}{' '}
+                                                    <Button
+                                                        Component="button"
+                                                        onClick={() => {
+                                                            if (item.link.path === '/credentials') {
+                                                                openCredentialTab();
+                                                            }
+                                                        }}
+                                                        variant="text"
+                                                    >
+                                                        {GENERAL.CREDENTIAL}
+                                                    </Button>
+                                                </Typography>
+                                            )}
                                         </>
                                     );
                                 })}
@@ -158,13 +182,14 @@ const Message = ({
                                 </div>
                             </div>
                         ) : (
-                            <div
+                            <Typography
+                                variant="Regular_16"
                                 className={`${styles['message-text']} ${
                                     msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                 }`}
                             >
                                 {`${fieldsArr[0].message}`}
-                            </div>
+                            </Typography>
                         )
                     ) : msgObj.active && msgObj.type === 'confirm' ? (
                         <div className={styles['select-container']}>
@@ -177,13 +202,14 @@ const Message = ({
                             />
                         </div>
                     ) : (
-                        <div
+                        <Typography
+                            variant="Regular_16"
                             className={`${styles['message-text']} ${
                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                             }`}
                         >
                             {`${msgObj.msg}`}
-                        </div>
+                        </Typography>
                     )}
                 </div>
             )}

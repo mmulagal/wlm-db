@@ -21,7 +21,7 @@ import {
 } from '../routes/types/deployment.types';
 import {
     CLOUD_FORMATION_STACK_URL,
-    // MISSING_PERMISSIONS,
+    MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
@@ -38,8 +38,7 @@ import {
     TEMPLATE_CLOUD_PROVIDER_ID,
     MASTER_TEMPLATE_PATH,
     TEMPLATE_OPTIONAL_PARAMETERS,
-    WLMDB,
-    TEMPLATE_SNS_SERVICE_TOKEN,
+    TEMPLATE_WLMDB_AWS_ACCOUT_ID,
     TEMPLATE_ACCOUNT_ID,
     SUCCESS,
     ACTION_BUTTON_DASHBOARD,
@@ -49,31 +48,28 @@ import {
     AWS_RESOURCES_STRICT_ACTION_MAP,
     SECRET_MANAGER_ARN,
     CLOUD_FORMATION_ARN,
-    RESOURCE_GROUP_ARN,
     EC2_TAG_CONDITION,
-    WLMDB_RESOURCE_CLASS,
     FSX_TAG_CONDITION,
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-    SNS_ARN,
     BUCKET_NAME,
     CLOUD_FORMATION_CLI_COMMAND,
-    DEFAULT_AWS_REGION,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
-    STANDALONE,
-    STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     FileSystemTypes,
     DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
-    DOMAIN_ADMIN_PASSWORD
+    DOMAIN_ADMIN_PASSWORD,
+    LOG_GROUP_ARN,
+    WLMDB_RESOURCE_TAG_VALUE,
+    STANDALONE,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_VIOLATION_MESSAGE
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
     generateDeploymentParams,
-    getSnsArn,
     isNetworkConfigurationViolated,
     sleep
 } from '../utils/utils';
@@ -86,6 +82,7 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
+import { NetworkViolation } from '../utils/common-types';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -116,7 +113,6 @@ async function formatTemplateParameters(
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
 
     const templateParams: Array<Parameter> = [
         { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
@@ -124,7 +120,7 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
-        { ParameterKey: TEMPLATE_SNS_SERVICE_TOKEN, ParameterValue: snsServiceToken },
+        { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
 
@@ -283,9 +279,9 @@ async function getCloudformationTemplate(
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --region ${
-        region || DEFAULT_AWS_REGION
-    } --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
+        region ? `--region ${region}` : ''
+    }`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
@@ -326,25 +322,35 @@ async function createCloudFormationTemplateForUserDeployment(
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
-        }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
-    }
-
-    // commented to test the iam permissions with strict policy.. It will be added once we finalise the permissions
-    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-        credentialsId,
-        region
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
     );
 
-    const errMsg = '';
-    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        // errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
-        // logger.error(errMsg);
+    if (vpcValidationCheck.isViolated) {
+        let errorMessage;
+        if (vpcValidationCheck.violationMessage !== undefined) {
+            errorMessage = vpcValidationCheck.violationMessage;
+        } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
+        } else {
+            errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
+        }
+        logger.error('VPC validation error:', errorMessage);
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
+
+    // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
+    // const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+    //     credentialsId,
+    //     region
+    // );
+
+    const errMsg = '';
+    // if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
+    //     errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
+    //     logger.error(errMsg);
+    // }
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
@@ -373,9 +379,8 @@ async function createCloudFormationTemplateForUserDeployment(
     const { token } = generateAuthToken({ email: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const snsServiceToken = awsAccountId ? getSnsArn(awsAccountId, region!, WLMDB) : '';
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_SNS_SERVICE_TOKEN}=${snsServiceToken}`;
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
@@ -435,12 +440,14 @@ async function deployCloudFormationTemplate(
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
-        }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+        const errorMessage = vpcValidationCheck.violationMessage;
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
@@ -449,7 +456,7 @@ async function deployCloudFormationTemplate(
     );
 
     if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        // throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
@@ -544,7 +551,7 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
         credentialsId,
         region,
         AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, RESOURCE_GROUP_ARN, SNS_ARN]
+        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
     );
     const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
         credentialsId,
@@ -557,13 +564,13 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
                 ContextKeyName: EC2_TAG_CONDITION,
                 ContextKeyValues: [
                     // ContextKeyValueListType
-                    WLMDB_RESOURCE_CLASS
+                    WLMDB_RESOURCE_TAG_VALUE
                 ],
                 ContextKeyType: 'string'
             },
             {
                 ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: ['WLMDB*'],
+                ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
                 ContextKeyType: 'string'
             }
         ]

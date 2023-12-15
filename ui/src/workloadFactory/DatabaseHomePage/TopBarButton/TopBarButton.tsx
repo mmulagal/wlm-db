@@ -15,7 +15,6 @@ import { databaseHomeApi } from '../../../utils/apiService';
 import { addInitialData, initialDBHomepageState } from '../../../store/workloadFactory/databaseHomeSlice';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 
-
 const TopBarButton = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -24,7 +23,7 @@ const TopBarButton = () => {
     //     dispatch(databaseHomeApi.util.resetApiState());
     //     dispatch(addInitialData(initialDBHomepageState));
     // }
-    
+
     return (
         <div className={styles.topBarButtons}>
             {/* <div className={styles.refreshIcon} onClick={() => {refreshPage()}}>
@@ -42,7 +41,7 @@ const TopBarButton = () => {
                 </div>
             </Button>
 
-            <Button variant="secondary" onClick={() => {}}>
+            {/* <Button variant="secondary" onClick={() => {}}>
                 <div className={styles.buttonStyle}>
                     <Search />
                     {GENERAL.DISCOVER}
@@ -61,14 +60,14 @@ const TopBarButton = () => {
                     <Clone />
                     {GENERAL.CLONE_DB}
                 </div>
-            </Button>
+            </Button> */}
 
-            <Button variant="secondary" onClick={() => {}}>
+            {/* <Button variant="secondary" onClick={() => {}}>
                 <div className={styles.buttonStyle}>
                     <Protect />
                     {GENERAL.PROTECT_DB}
                 </div>
-            </Button>
+            </Button> */}
         </div>
     );
 };

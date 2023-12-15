@@ -1,0 +1,29 @@
+.diagram {
+    width: 1060px;
+    height: 702px;
+    background-color: var(--content-background);
+    box-shadow: 0px -1px 0px 0px var(--border) inset;
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        justify-content: space-between;
+    }
+
+    .centerContainer {
+        display: flex;
+        justify-content: center;
+        margin-top: 40px;
+    }
+
+    .disabledColor {
+        color: var(--text-disabled);
+    }
+}
+
+.hideDiagram {
+    height: 72px;
+}

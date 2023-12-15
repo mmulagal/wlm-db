@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useDispatch } from 'react-redux';
 
-import { dbPassVal, fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, generateOptionType, openCredentialTab } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -195,19 +195,27 @@ const AwsAccount = () => {
                                     </div>
                                 </Typography>
 
-                                <Typography variant="Regular_14" className={styles.info}>
+                                {/* <Typography variant="Regular_14" className={styles.info}>
                                     {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
                                         <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
                                             {GENERAL.REQUIRED_PERMISSION_LINK}
                                         </Button>
                                     </span>
-                                </Typography>
+                                </Typography> */}
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
                                 <Typography variant="Regular_14" className={styles.buttonStyle}>
-                                    {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF1 : GENERAL.AWS_ACCOUNT_SUB_TEXT1}{GENERAL.FOR_MORE_INFO}{' '}
+                                    {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF1 : GENERAL.AWS_ACCOUNT_SUB_TEXT1}{GENERAL.FOR_MORE_INFO}{' '}</Typography>
+                                {/* {isWorkloadFactoryStatus && (
+                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT_WF}</div>
+                                )}
+                                {!isWorkloadFactoryStatus && (
+                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
+                                )} */}
+                                {/* <Typography variant="Regular_14" className={styles.buttonStyle}>
+                                    {GENERAL.FOR_MORE_INFO}{' '}
                                     <span>
                                         <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
                                             {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}.
@@ -222,7 +230,7 @@ const AwsAccount = () => {
                                         </Button>
                                     </span>
                                 </Typography>
-                                
+                                </Typography> */}
                                 <div className={styles.selectField}>
                                     <SelectField
                                         label={GENERAL.CREDENTIAL_WITHOUT_DOT}
