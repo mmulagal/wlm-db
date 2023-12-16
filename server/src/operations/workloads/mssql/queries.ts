@@ -126,8 +126,8 @@ const PERFORMANCE_METRICS = `${SET_NOCOUNT} DECLARE @SQLRestartDateTime Datetime
     SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())
     SELECT   ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS
         , ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS
-        , ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds,2) AS READ_THROUGHPUT
-        , ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds,2) AS WRITE_THROUGHPUT
+        , ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds,2)/1000000 AS READ_THROUGHPUT
+        , ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds,2)/1000000 AS WRITE_THROUGHPUT
         , CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY
         , CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY
     FROM sys.dm_io_virtual_file_stats(null,null)  ${FOR_JSON_PATH}`;
