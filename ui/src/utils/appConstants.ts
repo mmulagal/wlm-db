@@ -81,8 +81,8 @@ export const GENERAL = {
     DELETE: 'Delete',
     API_REQUEST: 'API request',
     REQUIRED_PERMISSIONS: 'required permissions.',
-    REQUIRED_VIEW_PERMISSIONS: 'Required View Permissions',
-    REQUIRED_OPERATE_PERMISSIONS: 'Required Operate Permissions',
+    REQUIRED_VIEW_PERMISSIONS: 'Required permissions',
+    REQUIRED_OPERATE_PERMISSIONS: 'Required permissions',
     CANCEL: 'Cancel',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Option 1:',
@@ -107,11 +107,11 @@ export const GENERAL = {
     AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
         'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_READ:
-        'Use BlueXP read mode by selecting credentials that grant BlueXP the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+        'Use BlueXP in read mode by selecting credentials that grant BlueXP the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
     AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE:
         'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF_READ:
-        'Use Workload Factory read mode by selecting credentials that grant Workload Factory the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+        'Use Workload Factory in read mode by selecting credentials that grant Workload Factory the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
