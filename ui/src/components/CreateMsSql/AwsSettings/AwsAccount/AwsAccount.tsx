@@ -193,14 +193,9 @@ const AwsAccount = () => {
                                             </span>
                                             {' '}{GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
-                                        <Typography variant="Regular_14">
-                                            {GENERAL.FOR_MORE_INFO}{' '}
-                                            <span>
-                                                <Button Component="button" onClick={openCredentialTab} variant="text" className={CommonStyles.buttonClass}>
-                                                    {GENERAL.HOW_TO_ADD_AWS_CRED}
-                                                </Button>
-                                            </span>
-                                        </Typography>
+                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
+                                            {GENERAL.HOW_TO_ADD_AWS_CRED}
+                                        </Button>
                                     </div>  
                                 </div>
                                 <div className={styles.noaccount_options}>
@@ -222,10 +217,14 @@ const AwsAccount = () => {
                                 {noAccount && isCreateHit !== 0 && 
                                     <div className={styles.options}>
                                         <ErrorIcon />
-                                        <Typography variant="Regular_14">
-                                            <span className={styles.bold}>{GENERAL.ERROR}</span>
-                                            {GENERAL.NO_CRED}
-                                        </Typography>
+                                        <div className={styles.noaccount_options}>
+                                            <Typography variant="Semibold_14">
+                                                {GENERAL.ERROR}
+                                            </Typography>
+                                            <Typography variant="Regular_14" className={styles.noteText}>
+                                                {GENERAL.NO_CRED}
+                                            </Typography>
+                                        </div>
                                     </div>
                                 }
                             </div>
@@ -236,7 +235,7 @@ const AwsAccount = () => {
                                     <Typography variant="Regular_14" className={styles.buttonStyle}>
                                         {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_READ : GENERAL.AWS_ACCOUNT_SUB_TEXT_READ}{' '}
                                         <span>
-                                            <Button Component="button" variant="text" onClick={() => openDialog('view')}>
+                                            <Button Component="button" variant="text" onClick={() => openDialog('view')} className={CommonStyles.buttonClass}>
                                                 {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
                                             </Button>
                                         </span>
@@ -270,11 +269,11 @@ const AwsAccount = () => {
                                 <div className={styles.bottomText}>
                                     {GENERAL.ADD_NEW_CREDENTIALS}{' '}
                                     <Button Component="button" onClick={openCredentialTab} variant="text">
-                                        {GENERAL.CREDENTIAL}
+                                        {GENERAL.CREDENTIALS}.
                                     </Button>
                                 </div>
                                 {permissionWarning && isCreateHit !== 0 && 
-                                    <div className={styles.options}>
+                                    <div className={styles.permissionError}>
                                         <ErrorIcon />
                                         <div className={styles.noaccount_options}>
                                             <Typography variant="Semibold_14">

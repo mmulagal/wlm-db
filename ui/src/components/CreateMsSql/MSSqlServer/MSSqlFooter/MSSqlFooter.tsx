@@ -9,7 +9,6 @@ import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
-import RedirectToCF from '../../RedirectToCF/RedirectToCF';
 
 const MSSqlFooter = () => {
     const { setDialog } = useDialog();
@@ -37,8 +36,8 @@ const MSSqlFooter = () => {
                         if (stackName && !warning) {
                             // If stackname is present than goes to fullPermissionFlow
                             fullPermissionFlow(stackName);
-                        } else if (warning) {
-                            // If warning comes it means it has view permissions so it will open AWS account accordion
+                        } else if (url) {
+                            // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setPermissionWarning(true));
                         }
                     }

@@ -103,13 +103,23 @@
         display: flex;
         gap: 8px;
     }
+
+    .permissionError {
+        display: flex;
+        gap: 4px;
+        margin-top: 24px;
+
+        .svg {
+            margin-top: 4px;
+        }
+    }
     
     .buttonStyle {
         width: 800px;
         margin-bottom: 16px;
         button {
             span:first-letter {
-                text-transform: lowercase;
+                text-transform: none;
             }
         }
     }

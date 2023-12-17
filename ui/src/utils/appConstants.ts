@@ -80,7 +80,7 @@ export const GENERAL = {
     RENAME: 'Rename',
     DELETE: 'Delete',
     API_REQUEST: 'API request',
-    REQUIRED_PERMISSIONS: 'Required Permissions',
+    REQUIRED_PERMISSIONS: 'required permissions.',
     REQUIRED_VIEW_PERMISSIONS: 'Required View Permissions',
     REQUIRED_OPERATE_PERMISSIONS: 'Required Operate Permissions',
     CANCEL: 'Cancel',
@@ -99,7 +99,7 @@ export const GENERAL = {
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
     OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
-    HOW_TO_ADD_AWS_CRED: 'how to add AWS credentials.',
+    HOW_TO_ADD_AWS_CRED: 'Learn how to add AWS credentials.',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
@@ -123,7 +123,7 @@ export const GENERAL = {
     CREDENTIALS: 'Credentials page',
     CREDENTIAL: 'Credentials.',
     CREDENTIAL_WITHOUT_DOT: 'Credentials',
-    ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
+    ADD_NEW_CREDENTIALS: 'To add a new credentials, go to the ',
     MULTI_AZ_CHECK_MESSAGE:
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
