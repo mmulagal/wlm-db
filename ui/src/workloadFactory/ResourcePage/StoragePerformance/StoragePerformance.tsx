@@ -21,8 +21,8 @@ const StoragePerformance = () => {
         {
             image: <IOPS />,
             text: GENERAL.IOPS,
-            read: `${resourceDetails?.performance?.rwMetrics?.iops?.read} ms`,
-            write: `${resourceDetails?.performance?.rwMetrics?.iops?.write} ms`,
+            read: `${resourceDetails?.performance?.rwMetrics?.iops?.read}`,
+            write: `${resourceDetails?.performance?.rwMetrics?.iops?.write}`,
             separator: true,
             width: '340px'
         },

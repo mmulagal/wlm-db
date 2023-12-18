@@ -234,7 +234,7 @@
                 overflow-y: auto;
                 height: calc(100% - 72px);
                 width: calc(100% - 16px);
-                padding: 0 40px 0 30px;
+                padding: 0 0 0 30px;
                 white-space: nowrap;
 
                 // Disable copy from code box
@@ -243,6 +243,42 @@
                 -ms-user-select: none;
                 -o-user-select: none;
                 user-select: none;
+
+                .scrollLeft {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+
+                    .setHorizontalScroll {
+                        display: flex;
+                        height: calc(100% - 16px);
+                    }
+
+                    .setVerticalScroll {
+                        height: 16px;
+                        background: var(--grey-65);
+                        margin-bottom: 0;
+                    }
+
+                    .firstBlock {
+                        width: calc(100% - 16px);
+                        margin-right: 0;
+                    }
+
+                    .addMargin {
+                        position: relative;
+                        margin-right: 16px;
+                    }
+
+                    .addVerticalMargin {
+                        margin-bottom: 16px;
+                    }
+
+                    .empty {
+                        width: 16px;
+                        background: var(--grey-65);
+                    }
+                }
             }
         }
 

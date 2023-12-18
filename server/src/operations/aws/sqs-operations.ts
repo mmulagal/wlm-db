@@ -8,20 +8,13 @@ import { inspect } from 'util';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
 import {
-    ACTION_BUTTON_DASHBOARD,
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
-    CRITICAL,
     CloudProviders,
     DEFAULT_AWS_REGION,
     ERROR_CODE_SQS_INVALID_TOKEN,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
-    REDIRECT_URL,
     RESOURCESTYPE,
-    SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-    SQL_DEPLOYMENT_FAILED_SUBJECT,
-    STANDARD_DEPLOYMENT_ACTION,
-    SUCCESS,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
     WF,
@@ -40,7 +33,7 @@ import {
 } from '../../lib/database/db';
 import { verifyAuthToken } from '../../lib/cloud-manager/tenancy';
 import { getMsSqlResourceId } from '../workloads/mssql/mssql-operations';
-import { handleNotification } from '../cloud-manager/notification-operations';
+// import { handleNotification } from '../cloud-manager/notification-operations';
 import { lookupCredentials } from '../cloud-manager/credentials-operations';
 import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments, getResources } from '../database/database-operations';
@@ -351,20 +344,21 @@ async function processCloudFormationMessages() {
                                                     } catch (error) {
                                                         logger.error('Error while tagging resource', error);
                                                     }
-                                                    const notificationData = {
-                                                        notificationAction: STANDARD_DEPLOYMENT_ACTION,
-                                                        subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-                                                        uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been deployed successfully`,
-                                                        actionLabel: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
-                                                        redirectURL: `${REDIRECT_URL}/${resourceId}`,
-                                                        label: ACTION_BUTTON_DASHBOARD,
-                                                        priority: SUCCESS,
-                                                        accountId
-                                                    };
-                                                    await handleNotification(notificationData, {
-                                                        uiNotification: true,
-                                                        emailNotification: true
-                                                    });
+                                                    // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
+                                                    // const notificationData = {
+                                                    //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
+                                                    //     subject: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+                                                    //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been deployed successfully`,
+                                                    //     actionLabel: SQL_DEPLOYMENT_COMPLETED_SUBJECT,
+                                                    //     redirectURL: `${REDIRECT_URL}/${resourceId}`,
+                                                    //     label: ACTION_BUTTON_DASHBOARD,
+                                                    //     priority: SUCCESS,
+                                                    //     accountId
+                                                    // };
+                                                    // await handleNotification(notificationData, {
+                                                    //     uiNotification: true,
+                                                    //     emailNotification: true
+                                                    // });
                                                 }
                                             }
                                         } else {
@@ -382,21 +376,21 @@ async function processCloudFormationMessages() {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                     endTime: Date.now()
                                                 });
-
-                                                const notificationData = {
-                                                    notificationAction: STANDARD_DEPLOYMENT_ACTION,
-                                                    subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                    uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
-                                                    actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                    redirectURL: '/',
-                                                    label: ACTION_BUTTON_DASHBOARD,
-                                                    priority: CRITICAL,
-                                                    accountId
-                                                };
-                                                await handleNotification(notificationData, {
-                                                    uiNotification: true,
-                                                    emailNotification: true
-                                                });
+                                                // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
+                                                // const notificationData = {
+                                                //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
+                                                //     subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                                //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
+                                                //     actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                                //     redirectURL: '/',
+                                                //     label: ACTION_BUTTON_DASHBOARD,
+                                                //     priority: CRITICAL,
+                                                //     accountId
+                                                // };
+                                                // await handleNotification(notificationData, {
+                                                //     uiNotification: true,
+                                                //     emailNotification: true
+                                                // });
                                             }
                                         }
                                     } catch (error) {
@@ -410,20 +404,21 @@ async function processCloudFormationMessages() {
                                                 deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
                                                 endTime: Date.now()
                                             });
-                                            const notificationData = {
-                                                notificationAction: STANDARD_DEPLOYMENT_ACTION,
-                                                subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
-                                                actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
-                                                redirectURL: '/',
-                                                label: ACTION_BUTTON_DASHBOARD,
-                                                priority: CRITICAL,
-                                                accountId
-                                            };
-                                            await handleNotification(notificationData, {
-                                                uiNotification: true,
-                                                emailNotification: true
-                                            });
+                                            // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
+                                            // const notificationData = {
+                                            //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
+                                            //     subject: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                            //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been failed to deploy`,
+                                            //     actionLabel: SQL_DEPLOYMENT_FAILED_SUBJECT,
+                                            //     redirectURL: '/',
+                                            //     label: ACTION_BUTTON_DASHBOARD,
+                                            //     priority: CRITICAL,
+                                            //     accountId
+                                            // };
+                                            // await handleNotification(notificationData, {
+                                            //     uiNotification: true,
+                                            //     emailNotification: true
+                                            // });
                                         }
                                     }
                                 }

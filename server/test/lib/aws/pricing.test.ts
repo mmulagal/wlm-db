@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { GetProductsCommandInput } from '@aws-sdk/client-pricing';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -9,7 +8,6 @@ import '../../simulator/scopes/opentelemetry-scope';
 import getProducts from '../../../src/lib/aws/pricing';
 
 describe('Pricing Lib', () => {
-    const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
     it('Get Products', async () => {
         const productFilters: GetProductsCommandInput = {
             Filters: [
@@ -42,7 +40,7 @@ describe('Pricing Lib', () => {
             ServiceCode: 'AmazonFSx',
             FormatVersion: 'aws_v1'
         };
-        const resp = await getProducts(CREDENTIALS_ID, productFilters);
+        const resp = await getProducts(productFilters);
         expect(resp).toEqual(mockGetProductsResponse);
     });
 });

@@ -4,9 +4,10 @@ import {
     Typography,
     Button,
     SelectField,
-    useAccordionContext
+    useAccordionContext,
+    useDialog
 } from '@netapp/design-system';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useDispatch } from 'react-redux';
 
@@ -15,12 +16,17 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
-import { setCreatePressed } from '../../../../store/mssql/msSqlActionSlice';
+import { setCreatePressed, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
+import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PERMISSIONS, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import DialogComponent from '../../../../common/Dialog/DialogComponent';
+import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
+import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
 
 const AwsAccount = () => {
+    const { setDialog } = useDialog();
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const dispatch = useDispatch();
 
@@ -28,9 +34,13 @@ const AwsAccount = () => {
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
+    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
+    const permissionWarning = useAppSelector(state => state.msSqlAction.permissionWarning);
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
+
+    // const [perWarning, setPerWarning] = useState(false);
 
     // To set noAccount flag is present or not
     useEffect(() => {
@@ -43,7 +53,7 @@ const AwsAccount = () => {
             accordionContext({
                 1: true
             });
-        }
+        } 
     }, [credentialData]);
 
     //Code to open the Accordion
@@ -58,12 +68,16 @@ const AwsAccount = () => {
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
     const licenseIdSelectedCheck = useAppSelector(state => state.msSqlAction.licenseIdSelected);
 
+    // useEffect(() => {
+    //     setPerWarning(permissionWarning);
+    // }, [permissionWarning]);
+
     useEffect(() => {
         const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
         const fsxPasswordValPass = !fsxPassVal(fsxCredPassword) ? true : false;
         if (
             isCreatePresed &&
-            (!isVPCNotFilled ||
+            (noAccount || permissionWarning || !isVPCNotFilled ||
                 !isAZNotFilled ||
                 !isDBCredPassword ||
                 !dbPasswordValPass ||
@@ -74,6 +88,7 @@ const AwsAccount = () => {
                 !isProperDBName)
         ) {
             accordionContext({
+                1: noAccount || permissionWarning ? true : false,
                 2: !isVPCNotFilled ? true : false,
                 3: !isAZNotFilled ? true : false,
                 11: !isDBCredPassword || !dbPasswordValPass ? true : false,
@@ -96,7 +111,8 @@ const AwsAccount = () => {
         isProperDBName,
         dbCredPassword,
         fsxCredPassword,
-        licenseIdSelectedCheck
+        licenseIdSelectedCheck,
+        permissionWarning
     ]);
 
     //Function to generate the options for Select Field
@@ -112,6 +128,7 @@ const AwsAccount = () => {
 
     // Update selected region in form data store
     useEffect(() => {
+        dispatch(setPermissionWarning(false));
         if (!selectedCredential) {
             dispatch(setSelectedCredentials(generateAWSAccounts[0]));
         }
@@ -126,6 +143,29 @@ const AwsAccount = () => {
         }
     };
 
+    // To open new tab with credential page on click of credential link
+    const openCredentialTab = () => {
+        let url;
+        if (isWorkloadFactoryStatus) {
+            url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+        } else {
+            url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+        }
+        window.open(url, '_blank', 'noopener');
+    };
+
+    const openDialog = (type: string) => {
+        const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
+        setDialog(
+            <DialogComponent
+                header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS: GENERAL.REQUIRED_OPERATE_PERMISSIONS}
+                content={<ViewDialog data={data} />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    }
+
     return (
         <div className={styles['aws-account']}>
             <AccordionCard
@@ -137,62 +177,81 @@ const AwsAccount = () => {
                 <AccordionCardContent>
                     <Typography>
                         {noAccount ? (
-                            <div className={styles['aws-account-content']}>
+                            <div className={styles['noaccount']}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
-
-                                <Typography variant="Regular_14" className={styles.steps}>
-                                    <span className={styles.bold}>{GENERAL.STEP_ONE}</span> {GENERAL.NAVIGATE_TO}{' '}
-                                    <span>
-                                        <Button Component="button" onClick={openCredentialTab} variant="text">
-                                            {GENERAL.CREDENTIALS}
-                                        </Button>
-                                    </span>
-                                </Typography>
-                                <Typography variant="Regular_14" className={styles.steps}>
-                                    <span className={styles.bold}>{GENERAL.STEP_TWO}</span> {GENERAL.STEP_TWO_TEXT}
-                                </Typography>
-
-                                <Typography variant="Regular_14" className={styles.list}>
-                                    <div className={styles.listItem}>
-                                        <Bullet />
-                                        <Typography variant="Regular_14" className={styles.textWidth}>
-                                            {GENERAL.OPTION_ONE}
+                                <div className={styles.noaccount_options}>
+                                    <Typography variant="Semibold_14">
+                                        {GENERAL.STEP_ONE}
+                                    </Typography>
+                                    <div>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.NAVIGATE_TO[0]}{' '}
+                                            <span>
+                                                <Button Component="button" onClick={openCredentialTab} variant="text">
+                                                    {GENERAL.CREDENTIALS}
+                                                </Button>
+                                            </span>
+                                            {' '}{GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
-                                    </div>
-                                    <div className={styles.listItem}>
-                                        <Bullet />
-                                        <Typography variant="Regular_14" className={styles.textWidth}>
-                                            {isWorkloadFactoryStatus ? GENERAL.OPTION_TWO_WF : GENERAL.OPTION_TWO}
-                                        </Typography>
-                                    </div>
-                                </Typography>
-
-                                {/* <Typography variant="Regular_14" className={styles.info}>
-                                    {GENERAL.FOR_MORE_INFO}{' '}
-                                    <span>
                                         <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
-                                            {GENERAL.REQUIRED_PERMISSION_LINK}
+                                            {GENERAL.HOW_TO_ADD_AWS_CRED}
                                         </Button>
-                                    </span>
-                                </Typography> */}
+                                    </div>  
+                                </div>
+                                <div className={styles.noaccount_options}>
+                                    <Typography variant="Semibold_14">
+                                        {GENERAL.STEP_TWO}
+                                    </Typography>
+                                    <div>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.STEP_TWO_TEXT[0]}
+                                        </Typography>
+                                        <Typography variant="Regular_14">
+                                            {GENERAL.STEP_TWO_TEXT[1]}
+                                        </Typography>
+                                        <Button Component="button" onClick={() => openDialog('operate')} variant="text" className={CommonStyles.buttonClass}>
+                                            {GENERAL.STEP_TWO_TEXT[2]}
+                                        </Button>
+                                    </div>
+                                </div>
+                                {noAccount && isCreateHit !== 0 && 
+                                    <div className={styles.options}>
+                                        <ErrorIcon />
+                                        <div className={styles.noaccount_options}>
+                                            <Typography variant="Semibold_14">
+                                                {GENERAL.ERROR}
+                                            </Typography>
+                                            <Typography variant="Regular_14" className={styles.noteText}>
+                                                {GENERAL.NO_CRED}
+                                            </Typography>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
-                                {isWorkloadFactoryStatus && (
-                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT_WF}</div>
-                                )}
-                                {!isWorkloadFactoryStatus && (
-                                    <div className={styles['sub-text']}>{GENERAL.AWS_ACCOUNT_SUB_TEXT}</div>
-                                )}
-                                {/* <Typography variant="Regular_14" className={styles.buttonStyle}>
-                                    {GENERAL.FOR_MORE_INFO}{' '}
-                                    <span>
-                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
-                                            {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
-                                        </Button>
-                                    </span>
-                                </Typography> */}
-
+                                <div className={styles.listItem}>
+                                    <Bullet />
+                                    <Typography variant="Regular_14" className={styles.buttonStyle}>
+                                        {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_READ : GENERAL.AWS_ACCOUNT_SUB_TEXT_READ}{' '}
+                                        <span>
+                                            <Button Component="button" variant="text" onClick={() => openDialog('view')} className={CommonStyles.buttonClass}>
+                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                            </Button>
+                                        </span>
+                                    </Typography>
+                                </div>
+                                <div className={styles.listItem}>
+                                    <Bullet />
+                                    <Typography variant="Regular_14" className={styles.buttonStyle}>
+                                        {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE : GENERAL.AWS_ACCOUNT_SUB_TEXT_AUTOMATE}{' '}
+                                        <span>
+                                            <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
+                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                            </Button>
+                                        </span>
+                                    </Typography>
+                                </div>         
                                 <div className={styles.selectField}>
                                     <SelectField
                                         label={GENERAL.CREDENTIAL_WITHOUT_DOT}
@@ -210,9 +269,26 @@ const AwsAccount = () => {
                                 <div className={styles.bottomText}>
                                     {GENERAL.ADD_NEW_CREDENTIALS}{' '}
                                     <Button Component="button" onClick={openCredentialTab} variant="text">
-                                        {GENERAL.CREDENTIAL}
+                                        {GENERAL.CREDENTIALS}.
                                     </Button>
                                 </div>
+                                {permissionWarning && isCreateHit !== 0 && 
+                                    <div className={styles.permissionError}>
+                                        <ErrorIcon />
+                                        <div className={styles.noaccount_options}>
+                                            <Typography variant="Semibold_14">
+                                                {GENERAL.ERROR}
+                                            </Typography>
+                                            <Typography variant="Regular_14" className={styles.noteText}>
+                                                {GENERAL.CREATE_PERMISSION_ERROR}
+                                                <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
+                                                    {GENERAL.REQUIRED_PERMISSIONS}
+                                                </Button>
+                                            </Typography>
+                                        </div>
+                                    </div>
+                                }
+                                
                             </div>
                         )}
                     </Typography>

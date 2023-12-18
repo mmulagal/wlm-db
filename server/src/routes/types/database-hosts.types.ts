@@ -40,6 +40,8 @@ const TopologyResponse = Type.Object({
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
     fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
     fileSystemId: Type.String(),
+    fileSystemName: Type.Optional(Type.String()),
+    fileSystemDeploymentMode: Type.Optional(Type.String()),
     fileSystemStatus: Type.Optional(Type.String()),
     fileSystemStorageCapacity: Type.Optional(Type.Number()),
     fileSystemThroughputCapacity: Type.Optional(Type.Number()),
@@ -53,7 +55,8 @@ type TopologyResponseType = Static<typeof TopologyResponse>;
 const ProtectionResponse = Type.Object({
     isAwsBackUpEnabled: Type.Boolean({ default: false }),
     isFsxOntapSnapshotsEnabled: Type.Boolean({ default: false }),
-    isSqlNativeEnabled: Type.Boolean({ default: false })
+    isSqlNativeEnabled: Type.Boolean({ default: false }),
+    protectedDatabases: Type.Number({ description: 'Number of protected databases' })
 });
 type ProtectionResponseType = Static<typeof ProtectionResponse>;
 
@@ -102,6 +105,7 @@ const DatabaseServerMetadataResponse = Type.Object({
     serverEdition: Type.String({ minLength: 1 }),
     serverVersion: Type.String({ minLength: 1 }),
     clusterName: Type.Optional(Type.String({ minLength: 1 })),
+    activeNode: Type.String(),
     nodeNames: Type.Array(Type.String()),
     activeConnections: Type.Number(),
     creationDate: Type.String({ minLength: 1 })

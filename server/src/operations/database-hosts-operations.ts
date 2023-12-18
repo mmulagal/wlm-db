@@ -151,12 +151,20 @@ async function getTopology(
 
         let vpcId;
         let fileSystemStatus;
+        let fileSystemName;
+        let fileSystemDeploymentMode;
         let fileSystemStorageCapacity;
         let fileSystemThroughputCapacity;
         if (additionalFields?.allTopology || additionalFields?.vpc) {
             try {
                 const fsxInfo = await describeFSxN(credentialsId, region, { FileSystemIds: [fileSystemId!] });
                 vpcId = fsxInfo?.FileSystems?.[0].VpcId;
+                fileSystemName = fsxInfo?.FileSystems?.[0].Tags?.reduce(
+                    (a = '', tag) => (tag.Key === 'Name' ? tag.Value : a),
+                    ''
+                );
+
+                fileSystemDeploymentMode = fsxInfo?.FileSystems?.[0].OntapConfiguration?.DeploymentType;
                 fileSystemStatus = fsxInfo?.FileSystems?.[0].Lifecycle;
                 fileSystemStorageCapacity = fsxInfo?.FileSystems?.[0].StorageCapacity;
                 fileSystemThroughputCapacity = fsxInfo?.FileSystems?.[0].OntapConfiguration?.ThroughputCapacity;
@@ -216,6 +224,8 @@ async function getTopology(
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
             fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
             fileSystemId: fileSystemId!,
+            ...(fileSystemName && { fileSystemName }),
+            ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
             ...(fileSystemStatus && { fileSystemStatus }),
             ...(fileSystemStorageCapacity && { fileSystemStorageCapacity }),
             ...(fileSystemThroughputCapacity && { fileSystemThroughputCapacity }),
@@ -325,7 +335,8 @@ async function getProtectionStatus(resourceDetail: ResourceDetails): Promise<Pro
         return {
             isAwsBackUpEnabled: Boolean(awsBackup),
             isFsxOntapSnapshotsEnabled: Boolean(ontapProtection),
-            isSqlNativeEnabled: Boolean(nativeSqlProtection)
+            isSqlNativeEnabled: Boolean(nativeSqlProtection),
+            protectedDatabases: Number.isNaN(Number(nativeSqlProtection)) ? 0 : Number(nativeSqlProtection)
         };
     } catch (error) {
         logger.error('Error while getting protection status', resourceDetail, error);
@@ -720,7 +731,7 @@ async function getDatabaseHostSummary(
         databaseHostDetails.performance = getPerformance ? { rwMetrics: performanceData! } : {};
         databaseHostDetails.storage = storageData!;
         databaseHostDetails.estimatedUsageCost = usageEstimationData!;
-        if (getResourceutilization) {
+        if (getResourceutilization && cpuUtilizationData && memoryUtilizationData && diskUtilizationData) {
             databaseHostDetails.resourceUtilization = {
                 cpu: cpuUtilizationData! || {},
                 memory: memoryUtilizationData! || {},

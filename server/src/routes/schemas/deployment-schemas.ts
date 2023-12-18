@@ -2,8 +2,7 @@ import { RouteTags } from '../../utils/consts';
 import { AwsParamsWithRegion } from '../types/aws.types';
 import {
     CloudFormationTemplateRequestBody,
-    CloudFormationTemplateResponse,
-    DeployTemplateResponse,
+    CloudFormationDeploymentResponse,
     DeploymentStatusListResponse,
     DeploymentStatusResponse,
     DeploymentStatusObjectParams,
@@ -18,17 +17,6 @@ const baseRequest = {
     params: AwsParamsWithRegion
 };
 
-// Create CloudFormation template for user deployment Schema
-const CreateCloudFormationTemplateSchema = {
-    ...baseRequest,
-    summary: 'Create CloudFormation template URL',
-    description: 'Create CloudFormation template in a region for existing VPC',
-    body: CloudFormationTemplateRequestBody,
-    response: {
-        200: CloudFormationTemplateResponse
-    }
-};
-
 // CloudFormation template
 const CloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
@@ -41,14 +29,14 @@ const CloudFormationTemplateSchema = {
     }
 };
 
-// Create CloudFormation template for user deployment Schema
+// Create CloudFormation template or Deploy Schema
 const DeployTemplateSchema = {
     ...baseRequest,
     summary: 'Deploy CloudFormation template',
     description: 'Deploy CloudFormation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
     response: {
-        200: DeployTemplateResponse
+        200: CloudFormationDeploymentResponse
     }
 };
 
@@ -73,10 +61,4 @@ const DeploymentStatusSchema = {
     }
 };
 
-export {
-    CreateCloudFormationTemplateSchema,
-    DeployTemplateSchema,
-    DeploymentStatusListSchema,
-    DeploymentStatusSchema,
-    CloudFormationTemplateSchema
-};
+export { DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema, CloudFormationTemplateSchema };

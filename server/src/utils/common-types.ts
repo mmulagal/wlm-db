@@ -40,4 +40,8 @@ interface DeploymentDetails {
     data: unknown;
 }
 
-export { Metadata, ResourceDetails, DeploymentDetails };
+interface NetworkViolation {
+    isViolated: boolean;
+    violationMessage?: string;
+}
+export { Metadata, ResourceDetails, DeploymentDetails, NetworkViolation };

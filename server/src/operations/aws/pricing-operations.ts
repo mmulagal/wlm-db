@@ -552,7 +552,7 @@ async function calculatePrice(
         inputList.map(
             async ({ name, input }): Promise<ProductOutput> => ({
                 name,
-                output: await getProducts(credentialsId, input)
+                output: await getProducts(input)
             })
         )
     );
