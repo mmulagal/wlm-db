@@ -227,9 +227,11 @@ const app = fastify({
                     if (!requestUrl) {
                         createAuditGroup(request, reply);
                     }
+                    done();
                 });
+            } else {
+                done();
             }
-            done();
         }
     )
     .addHook('onResponse', (request, reply, done) => {
