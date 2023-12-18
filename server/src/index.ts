@@ -148,10 +148,14 @@ const app = fastify({
             instance.addHook(
                 'onRequest',
                 async (request: FastifyRequest<{ Headers: Headers; Params: Params }>, reply: FastifyReply) => {
+                    if (request.is404) {
+                        reply.notFound();
+                    }
                     const {
                         headers: { authorization },
                         params: { accountId }
                     } = request;
+
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
@@ -183,9 +187,6 @@ const app = fastify({
         },
         { prefix: `${API_PREFIX_PATH}` }
     )
-    .setNotFoundHandler((_request: FastifyRequest, reply: FastifyReply) => {
-        reply.notFound();
-    })
     .addHook(
         'preHandler',
         (
@@ -196,29 +197,37 @@ const app = fastify({
             reply: FastifyReply,
             done
         ) => {
-            getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
-                const {
-                    url,
-                    headers: {
-                        authorization,
-                        [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
-                        [HEADERS.X_NETAPP_REFERER]: xNetappReferer
-                    },
-                    params: { accountId },
-                    id: requestId
-                } = request;
-                logger.debug(url, reply);
-                setAsyncLocalStorageResource(REQUEST_ID, requestId);
-                setAsyncLocalStorageResource(USER_TOKEN, authorization);
-                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
-                setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
-                setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
-                const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-                if (!requestUrl) {
-                    createAuditGroup(request, reply);
-                }
-                done();
-            });
+            if (!request.is404) {
+                getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+                    const {
+                        method,
+                        url,
+                        headers: {
+                            authorization,
+                            [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
+                            [HEADERS.X_NETAPP_REFERER]: xNetappReferer
+                        },
+                        params: { accountId },
+                        id: requestId
+                    } = request;
+                    logger.debug(url, reply);
+                    setAsyncLocalStorageResource(REQUEST_ID, requestId);
+                    setAsyncLocalStorageResource(USER_TOKEN, authorization);
+                    setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                    setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
+                    setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
+
+                    if (!url.includes(API_PATH_HEALTH)) {
+                        accessLogger.info(`[${method}] [${url}]`);
+                    }
+
+                    const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+                    if (!requestUrl) {
+                        createAuditGroup(request, reply);
+                    }
+                });
+            }
+            done();
         }
     )
     .addHook('onResponse', (request, reply, done) => {
@@ -231,10 +240,12 @@ const app = fastify({
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
         const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-        if (!requestUrl && reply.statusCode !== 202) {
-            updateAuditGroup(request, reply, payload);
-        } else if (request.url.includes('cloudformation/stack')) {
-            updateAuditGroupResponse(request, payload);
+        if (!request.is404) {
+            if (!requestUrl && reply.statusCode !== 202) {
+                updateAuditGroup(request, reply, payload);
+            } else if (request.url.includes('cloudformation/stack')) {
+                updateAuditGroupResponse(request, payload);
+            }
         }
         return payload;
     });
