@@ -3,10 +3,11 @@ import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
     Tag,
-    DescribeNetworkInterfacesCommandInput
+    DescribeNetworkInterfacesCommandInput,
+    DescribeTagsCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields } from '../../utils/consts';
+import { AWSQueryFields, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -16,11 +17,13 @@ import {
     describeKeyPairs,
     describeInstanceTypes,
     describeNetworkInterfaces,
-    createTag
+    createTag,
+    describeTags
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
+import { ResourceDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -422,6 +425,46 @@ async function tagEc2Resource(credentialsId: string, region: string, accountId: 
     createTag(credentialsId, region, accountId, ec2Id, tags);
 }
 
+async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {
+    logger.info('Get EC2 Resources which has cost allocation tag attached');
+    const { region, metadata } = resourceDetail;
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+        credentialsId: string;
+        activeNodeInstanceId: string;
+        standbyNodeInstanceId: string;
+    };
+    const resourceIds = [activeNodeInstanceId];
+    if (standbyNodeInstanceId) {
+        resourceIds.push(standbyNodeInstanceId);
+    }
+    const input: DescribeTagsCommandInput = {
+        Filters: [
+            {
+                Name: 'resource-id',
+                Values: resourceIds
+            },
+            {
+                Name: 'resource-type',
+                Values: ['instance']
+            },
+            {
+                Name: 'key',
+                Values: [WLMDB_COST_ALLOCATION_TAG]
+            },
+            {
+                Name: 'value',
+                Values: resourceIds
+            }
+        ]
+    };
+    try {
+        const ec2Resources = await describeTags(credentialsId, region!, input);
+        logger.debug('EC2 Resources with cost allocation tag are ', ec2Resources);
+        return ec2Resources;
+    } catch (error) {
+        logger.error(`Get EC2 resources ${resourceIds} has failed with the error`, error);
+    }
+}
 export {
     getVpcsList,
     getAmiList,
@@ -430,5 +473,6 @@ export {
     getWindowsServerBaseAmi,
     getSecurityGroupsList,
     getNetworkInterfacesList,
-    tagEc2Resource
+    tagEc2Resource,
+    getCostAllocationTagEC2Resource
 };

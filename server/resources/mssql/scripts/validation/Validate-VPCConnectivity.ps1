@@ -7,7 +7,16 @@ param(
 
     [Parameter(Mandatory=$true)]
     [string]
-    $region
+    $region,
+
+    [Parameter(Mandatory=$true)]
+    [string]$Stackname,
+
+    [Parameter(Mandatory=$true)]
+    [string]$ResourceID,
+
+    [Parameter(Mandatory=$true)]
+    [string]$WaitHandler 
 )
 
 # Tries to enable TLS12
@@ -53,8 +62,14 @@ foreach ($service in $serviceURLHashTable.keys) {
 }
 
 if ($failed -eq $true) {
-    Write-Output @{status= "Failed"; reason= "Failed to connect to services $($failedServices -join ', ')"} | ConvertTo-Json -Compress
+    $FailureReason = "Failed to connect to services $($failedServices -join ', ')"
+    Write-Output @{status= "Failed"; reason= $FailureReason} | ConvertTo-Json -Compress
+    Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
+    Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
+
+    exit(1)
 } else
 {
     Write-Output @{ status = "Completed"; reason = "Done." } | ConvertTo-Json -Compress
+    Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
 }

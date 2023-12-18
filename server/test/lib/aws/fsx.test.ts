@@ -5,6 +5,7 @@ import '../../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { faker } from '@faker-js/faker';
+import { ListTagsForResourceCommandInput } from '@aws-sdk/client-fsx';
 import fsxFilesystems from '../../simulator/responses/aws/list-fsx-filesystems.json';
 import fsxVolumes from '../../simulator/responses/aws/list-fsx-volumes.json';
 import fsxSvms from '../../simulator/responses/aws/list-fsx-svms.json';
@@ -61,8 +62,10 @@ describe('Testcases for Amazon FSx resources', () => {
     });
 
     it('List Fsx resource tags', async () => {
-        const response = await listResourceTags(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, 'Resource ARN');
-
+        const input: ListTagsForResourceCommandInput = {
+            ResourceARN: 'Resouce_ARN'
+        };
+        const response = await listResourceTags(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION, input);
         expect(response).toEqual(fsxResourceTagsResponse);
     });
 

@@ -167,6 +167,16 @@ Resources:
                 MetadataOptions:
                     HttpEndpoint: enabled
                     HttpTokens: required
+    ValidationNode1WaitHandler:
+        Type: AWS::CloudFormation::WaitConditionHandle
+        Condition: ADCheckEnabled
+    ValidationNode1WaitCondition:
+        Type: AWS::CloudFormation::WaitCondition
+        Condition: ADCheckEnabled
+        Properties:
+            Handle: !Ref ValidationNode1WaitHandler
+            Timeout: '2700'
+            Count: 2
     ValidationNode1:
         Type: AWS::EC2::Instance
         Condition: ADCheckEnabled
@@ -296,6 +306,13 @@ Resources:
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
+                                  - ' -Stackname '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -ResourceID ValidationNode1'
+                                  - ' -WaitHandler '
+                                  - '"'
+                                  - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                  - '"'
                                   - '"'
                             waitAfterCompletion: '0'
                         b-validate-ad:
@@ -311,6 +328,10 @@ Resources:
                                   - ' -Stackname '
                                   - !Ref 'AWS::StackName'
                                   - ' -ResourceID ValidationNode1'
+                                  - ' -WaitHandler '
+                                  - '"'
+                                  - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                  - '"'
                                   - '"'
                             waitAfterCompletion: '0'
                         c-signal-resource:
@@ -331,6 +352,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -340,8 +362,19 @@ Resources:
                       - ' -r ValidationNode1'
                       - ' --region '
                       - !Ref 'AWS::Region'
+                      - "\n"
+                      - 'shutdown /s'
                       - ''
                       - </script>
+    ValidationNode2WaitHandler:
+        Type: AWS::CloudFormation::WaitConditionHandle
+        Condition: ADCheckNotEnabled
+    ValidationNode2WaitCondition:
+        Type: AWS::CloudFormation::WaitCondition
+        Condition: ADCheckNotEnabled
+        Properties:
+            Handle: !Ref ValidationNode2WaitHandler
+            Timeout: '900'
     ValidationNode2:
         Type: AWS::EC2::Instance
         Condition: ADCheckNotEnabled
@@ -451,6 +484,13 @@ Resources:
                                   - !Ref 'SubnetID'
                                   - ' -region '
                                   - !Ref 'AWS::Region'
+                                  - ' -Stackname '
+                                  - !Ref 'AWS::StackName'
+                                  - ' -ResourceID ValidationNode2'
+                                  - ' -WaitHandler '
+                                  - '"'
+                                  - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
+                                  - '"'
                                   - '"'
                             waitAfterCompletion: '0'
                         b-signal-resource:
@@ -471,6 +511,7 @@ Resources:
                   GroupSet:
                       - !Ref 'DomainMemberSG'
             KeyName: !Ref 'KeyPairName'
+            InstanceInitiatedShutdownBehavior: terminate
             UserData: !Base64
                 Fn::Join:
                     - ''
@@ -480,5 +521,7 @@ Resources:
                       - ' -r ValidationNode2'
                       - ' --region '
                       - !Ref 'AWS::Region'
+                      - "\n"
+                      - 'shutdown /s'
                       - ''
                       - </script>

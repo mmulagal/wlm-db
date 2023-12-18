@@ -50,11 +50,16 @@ import {
     getDataBasesSummary,
     getNativeSQLBackedupDatabases
 } from './workloads/mssql/mssql-operations';
-import { getStorageDataUsingSSM, isAWSBackupEnabled, getOntapVolumesSnapshotCount } from './aws/fsx-operations';
+import {
+    getStorageDataUsingSSM,
+    isAWSBackupEnabled,
+    getOntapVolumesSnapshotCount,
+    getCostAllocationTagFsxResource
+} from './aws/fsx-operations';
 import { Metadata, ResourceDetails } from '../utils/common-types';
 import { calculateBilling, getCostAllocationTags } from './aws/cost-explorer-operations';
 import { isSSMConnectionSuccessful } from './aws/ssm-operations';
-import { getCostAllocationTagResources } from './aws/tags-operations';
+import { getCostAllocationTagEC2Resource } from './aws/ec2-operations';
 
 const logger = getLogger();
 
@@ -402,9 +407,12 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
     }
 
     // 2. Validate cost allocation tag is at resource level or not
-    const resources = await getCostAllocationTagResources(resourceDetail);
-    logger.debug('Resources with cost allocation tag ', resources);
-    if (!resources.ResourceTagMappingList!.length) {
+    const [ec2Resources, fsxResources] = await Promise.all([
+        getCostAllocationTagEC2Resource(resourceDetail),
+        getCostAllocationTagFsxResource(resourceDetail)
+    ]);
+    // fsxResources has all tag attached to the that filesystem, so we need to find if cost allocation tag is attached or not
+    if (!ec2Resources?.Tags?.length && !fsxResources?.Tags?.find(tag => tag?.Key === WLMDB_COST_ALLOCATION_TAG)) {
         throw new Error(
             `Calcaulation of Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not attached to resource ${resourceDetail.resource_id}`
         );
