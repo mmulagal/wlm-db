@@ -309,7 +309,7 @@ const LOGS_ACTION_NAMES = [
 ].map(action => `${LOGS}:${action}`);
 
 const PRICING = 'pricing';
-const PRICING_ACTION_NAMES = ['GetProducts'].map(action => `${PRICING}:${action}`);
+// const PRICING_ACTION_NAMES = ['GetProducts'].map(action => `${PRICING}:${action}`);
 const BILLING = 'billing';
 
 const EC2 = 'ec2';
@@ -421,8 +421,7 @@ const EC2_STRICT_CONDITION_ACTION_NAMES = [
     'RevokeSecurityGroupEgress',
     'RevokeSecurityGroupIngress',
     'StartInstances',
-    'StopInstances',
-    'TerminateInstances'
+    'StopInstances'
 ].map(action => `${EC2}:${action}`);
 
 const FSX_STRICT_CONDITION_ACTION_NAMES = ['TagResource'].map(action => `${FSX}:${action}`);
@@ -431,7 +430,7 @@ const AWS_RESOURCES_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
     [SSM]: SSM_ACTION_NAMES,
     [LOGS]: LOGS_ACTION_NAMES,
-    [PRICING]: PRICING_ACTION_NAMES,
+    // [PRICING]: PRICING_ACTION_NAMES,
     [KMS]: KMS_ACTION_NAMES,
     [DS]: DS_ACTION_NAMES,
     [EC2_MESSAGES]: EC2_MESSAGES_ACTION_NAMES,
