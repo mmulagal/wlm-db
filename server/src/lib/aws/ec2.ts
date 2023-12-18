@@ -29,13 +29,16 @@ import {
     CreateTagsCommand,
     CreateTagsCommandOutput,
     Tag,
-    DescribeInstancesCommandOutput
+    DescribeInstancesCommandOutput,
+    DescribeTagsCommandInput,
+    DescribeTagsCommand
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
+
 async function getEC2Client(region: string, credentialsId?: string) {
     logger.debug('Getting EC2 client:', region, credentialsId);
     if (!credentialsId) {
@@ -266,6 +269,19 @@ async function createTag(credentialsId: string, region: string, resourceId: stri
     }
 }
 
+async function describeTags(credentialsId: string, region: string, input: DescribeTagsCommandInput) {
+    logger.info('Describe Tags command ', credentialsId, region, input);
+
+    try {
+        const client = await getEC2Client(region, credentialsId);
+        const command = new DescribeTagsCommand(input);
+        const response = await client.send(command);
+        return response;
+    } catch (error) {
+        logger.error('Describe Tags command failed with the error', error);
+    }
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -279,5 +295,6 @@ export {
     describeKeyPairs,
     describeNetworkInterfaces,
     describeInstanceTypeOfferings,
-    createTag
+    createTag,
+    describeTags
 };

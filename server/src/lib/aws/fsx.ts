@@ -13,7 +13,8 @@ import {
     ListTagsForResourceCommandOutput,
     TagResourceCommand,
     TagResourceCommandOutput,
-    Tag
+    Tag,
+    ListTagsForResourceCommandInput
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -115,19 +116,23 @@ async function describeFSxBackups(
 async function listResourceTags(
     credentialsId: string,
     region: string,
-    resourceArn: string
-): Promise<ListTagsForResourceCommandOutput> {
-    logger.info('List all the resource tags by arn:', { credentialsId, region, resourceArn });
+    input: ListTagsForResourceCommandInput
+): Promise<ListTagsForResourceCommandOutput | undefined> {
+    logger.info('List all the resource tags by arn:', { credentialsId, region, input });
 
-    const client = await getFSxClient(credentialsId, region);
+    try {
+        const client = await getFSxClient(credentialsId, region);
 
-    const command = new ListTagsForResourceCommand({ ResourceARN: resourceArn });
+        const command = new ListTagsForResourceCommand(input);
 
-    const response = await client.send(command);
+        const response = await client.send(command);
 
-    logger.debug('List Amazon FSx resource tags:', response);
+        logger.debug('List Amazon FSx resource tags:', response);
 
-    return response;
+        return response;
+    } catch (error) {
+        logger.error('Error getting fsx tags', error);
+    }
 }
 
 async function createTag(credentialsId: string, region: string, fsxArn: string, tags: Tag[]) {
