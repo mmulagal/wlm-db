@@ -148,6 +148,7 @@ const app = fastify({
             instance.addHook(
                 'onRequest',
                 async (request: FastifyRequest<{ Headers: Headers; Params: Params }>, reply: FastifyReply) => {
+                    // Return not found if the route is invalid
                     if (request.is404) {
                         reply.notFound();
                     }
@@ -197,6 +198,7 @@ const app = fastify({
             reply: FastifyReply,
             done
         ) => {
+            // If the route is invalid, don't call the below functions
             if (!request.is404) {
                 getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
                     const {
@@ -240,6 +242,7 @@ const app = fastify({
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
         const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+        // Don't update audit record on invalid route
         if (!request.is404) {
             if (!requestUrl && reply.statusCode !== 202) {
                 updateAuditGroup(request, reply, payload);
