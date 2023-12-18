@@ -32,7 +32,7 @@ import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.j
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
 import instanceTypeOfferings from '../../simulator/responses/aws/describe-instance-type-offerings.json';
 import describeInstanceTypeOfferingsInvalidParameters from '../../simulator/responses/aws/describe-instance-type-offerings-invalid-parameters.json';
-import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
 
@@ -146,6 +146,6 @@ describe('EC2 Lib', () => {
 
     it('Create tag for given resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        await expect(createTag(credentialsId, REGION, [ec2Id], tag)).resolves.not.toThrow();
+        await expect(createTag(credentialsId, REGION, ACCOUNT_ID, [ec2Id], tag)).resolves.not.toThrow();
     });
 });

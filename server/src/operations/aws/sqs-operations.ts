@@ -125,17 +125,19 @@ async function tagResources(
     credentialsId: string,
     region: string,
     awsAccountId: string,
+    accountId: string,
     fsxId: string,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string
 ) {
-    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, fsxId, [
+    const tagFsxPromise = tagFsxResource(credentialsId, region, awsAccountId, accountId, fsxId, [
         { Key: WLMDB_COST_ALLOCATION_TAG, Value: fsxId }
     ]);
 
     const tagEc2Promise = tagEc2Resource(
         credentialsId,
         region,
+        accountId,
         [activeNodeInstanceId],
         [{ Key: WLMDB_COST_ALLOCATION_TAG, Value: activeNodeInstanceId }]
     );
@@ -146,6 +148,7 @@ async function tagResources(
         const tagStandbyPromise = tagEc2Resource(
             credentialsId,
             region,
+            accountId,
             [standbyNodeInstanceId],
             [{ Key: WLMDB_COST_ALLOCATION_TAG, Value: standbyNodeInstanceId }]
         );
@@ -337,6 +340,7 @@ async function processCloudFormationMessages() {
                                                             credentialsId,
                                                             region,
                                                             cloudProviderAccountId,
+                                                            accountId,
                                                             fsxId,
                                                             activeNodeInstanceId,
                                                             standbyNodeInstanceId

@@ -36,14 +36,14 @@ import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
-async function getEC2Client(region: string, credentialsId?: string) {
+async function getEC2Client(region: string, credentialsId?: string, accountId?: string) {
     logger.debug('Getting EC2 client:', region, credentialsId);
     if (!credentialsId) {
         return new EC2Client({ region });
     }
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
     return new EC2Client({ credentials, region });
 }
@@ -249,15 +249,15 @@ async function describeInstanceTypeOfferings(credentialsId: string, region: stri
     return response;
 }
 
-async function createTag(credentialsId: string, region: string, resourceId: string[], tags: Tag[]) {
-    logger.info('Adding tags to resource', credentialsId, region, resourceId, tags);
-
-    const client = await getEC2Client(region, credentialsId);
-    const ec2Params = {
-        Resources: resourceId,
-        Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
-    };
+async function createTag(credentialsId: string, region: string, accountId: string, resourceId: string[], tags: Tag[]) {
+    logger.info('Adding tags to resource', credentialsId, region, accountId, resourceId, tags);
     try {
+        const client = await getEC2Client(region, credentialsId, accountId);
+        const ec2Params = {
+            Resources: resourceId,
+            Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
+        };
+
         const command = new CreateTagsCommand(ec2Params);
         const response: CreateTagsCommandOutput = await client.send(command);
         logger.info('Resource tagged successfully:', response);

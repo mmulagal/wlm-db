@@ -390,10 +390,17 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
     }
 }
 
-async function tagFsxResource(credentialsId: string, region: string, awsAccountId: string, fsxId: string, tags: Tag[]) {
-    logger.info('Adding tag to Fsx resource', credentialsId, region, awsAccountId, fsxId);
+async function tagFsxResource(
+    credentialsId: string,
+    region: string,
+    awsAccountId: string,
+    accountId: string,
+    fsxId: string,
+    tags: Tag[]
+) {
+    logger.info('Adding tag to Fsx resource', credentialsId, region, awsAccountId, accountId, fsxId);
     const fsxArn = getFsxArn(awsAccountId, region, fsxId);
-    createTag(credentialsId, region, fsxArn, tags);
+    createTag(credentialsId, region, accountId, fsxArn, tags);
 }
 
 export {
