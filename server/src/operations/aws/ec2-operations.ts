@@ -420,9 +420,9 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
     return filteredInstances.ImageId;
 }
 
-async function tagEc2Resource(credentialsId: string, region: string, ec2Id: string[], tags: Tag[]) {
-    logger.info('Adding tag to EC2 resource', credentialsId, region, ec2Id);
-    createTag(credentialsId, region, ec2Id, tags);
+async function tagEc2Resource(credentialsId: string, region: string, accountId: string, ec2Id: string[], tags: Tag[]) {
+    logger.info('Adding tag to EC2 resource', credentialsId, region, accountId, ec2Id);
+    createTag(credentialsId, region, accountId, ec2Id, tags);
 }
 
 async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {

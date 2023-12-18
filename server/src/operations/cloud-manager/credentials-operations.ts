@@ -80,14 +80,14 @@ async function getRoleDetails(credentialsId: string) {
     };
 }
 
-async function lookupCredentials(credentialsId: string) {
-    logger.debug('Looking up credentials:', credentialsId);
+async function lookupCredentials(credentialsId: string, accountId?: string) {
+    logger.debug('Looking up credentials:', credentialsId, accountId);
 
     try {
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken },
             metadata
-        } = (await getWfCredentialDetails(credentialsId)) as wfCredentials;
+        } = (await getWfCredentialDetails(credentialsId, accountId)) as wfCredentials;
 
         return {
             source: WF,
@@ -100,7 +100,7 @@ async function lookupCredentials(credentialsId: string) {
         };
     } catch (error) {
         try {
-            const { credentials, extra } = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
+            const { credentials, extra } = (await getBxpCredentialDetails(credentialsId, accountId)) as bxpCredentials;
             return {
                 source: BXP,
                 credentials,
@@ -119,7 +119,7 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
     if (isEmpty(credentialsId)) {
         throw new Error('Credentials id is invalid');
     }
-    return lookupCredentials(credentialsId);
+    return lookupCredentials(credentialsId, accountId);
 
     /* the below logic tries to look up credentials based on the referer header, keeping it until a decision is made if new credentials service can handle both blue xp and new creds */
     // if (isEmpty(getAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER)) && !process.env.TEST) {

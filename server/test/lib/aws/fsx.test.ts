@@ -21,7 +21,7 @@ import {
     listResourceTags,
     createTag
 } from '../../../src/lib/aws/fsx';
-import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
 const VOLUME_ID = 'fsvol-06184c131ec936380';
@@ -71,6 +71,6 @@ describe('Testcases for Amazon FSx resources', () => {
 
     it('Create tag for given fsx resource', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        await expect(createTag(credentialsId, DEFAULT_AWS_REGION, fsxArn, tag)).resolves.not.toThrow();
+        await expect(createTag(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, fsxArn, tag)).resolves.not.toThrow();
     });
 });

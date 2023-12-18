@@ -22,12 +22,12 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getFSxClient(credentialsId: string, region: string) {
+async function getFSxClient(credentialsId: string, region: string, accountId?: string) {
     logger.debug('Getting FSx client:', { credentialsId, region });
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new FSxClient({ credentials, region });
@@ -135,16 +135,16 @@ async function listResourceTags(
     }
 }
 
-async function createTag(credentialsId: string, region: string, fsxArn: string, tags: Tag[]) {
-    logger.info('Adding tags to resource', credentialsId, region, fsxArn, tags);
+async function createTag(credentialsId: string, region: string, accountId: string, fsxArn: string, tags: Tag[]) {
+    logger.info('Adding tags to resource', credentialsId, region, accountId, fsxArn, tags);
 
-    const client = await getFSxClient(credentialsId, region);
-
-    const params = {
-        ResourceARN: fsxArn,
-        Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
-    };
     try {
+        const client = await getFSxClient(credentialsId, region, accountId);
+
+        const params = {
+            ResourceARN: fsxArn,
+            Tags: tags
+        };
         const command = new TagResourceCommand(params);
         const response: TagResourceCommandOutput = await client.send(command);
         logger.info('Resource tagged successfully:', response);
