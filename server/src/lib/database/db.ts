@@ -251,7 +251,13 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
     });
 }
 
-async function listResources(accountId: string, resourceId?: string, resourceType?: string) {
+async function listResources(
+    accountId: string,
+    resourceId?: string,
+    resourceType?: string,
+    pageSize?: number,
+    nextToken?: string
+) {
     logger.info('Listing resources', { accountId, resourceId, resourceType });
     accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
@@ -260,7 +266,14 @@ async function listResources(accountId: string, resourceId?: string, resourceTyp
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType })
         },
-        take: 100
+        orderBy: {
+            id: 'asc'
+        },
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
