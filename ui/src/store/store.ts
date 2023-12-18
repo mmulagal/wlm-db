@@ -39,7 +39,7 @@ const rootReducer = combineReducers({
     [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer
 });
 
-const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
+const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
