@@ -103,7 +103,6 @@
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
-                    "pricing:GetProducts",
                     "secretsmanager:CreateSecret",
                     "secretsmanager:GetSecretValue",
                     "secretsmanager:ListSecrets",
