@@ -1,5 +1,8 @@
-import { AccordionController, Typography, AccordionCard, AccordionCardContent, Button } from '@netapp/design-system';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { AccordionController, Typography, AccordionCard, AccordionCardContent } from '@netapp/design-system';
+import { Popover } from '@netapp/design-system/dist/components/Popover';
+//@ts-ignore
+import CopyToClipboard from 'react-copy-to-clipboard';
+import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import styles from './EstimatedCostDialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 
@@ -22,40 +25,32 @@ const EstimatedCostDialogContent = () => {
                                 <Typography variant="Regular_14">
                                     <div className={styles.allContent}>
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>1 |</div>
+                                            <div className={styles.numberDigit}>1 &nbsp;|</div>
                                             <div className={styles.content}>{GENERAL.STEP1POINT1}</div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>2 |</div>
+                                            <div className={styles.numberDigit}>2 &nbsp;|</div>
                                             <div className={styles.content}>
                                                 <div>{GENERAL.STEP1POINT2}</div>
-                                                <Button variant="link">{GENERAL.STEP1POINT2BUTTON}</Button>
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>3 |</div>
-                                            <div className={styles.content}>
-                                                {GENERAL.STEP1POINT3}
-                                                <div className={styles.bulletItems}>
-                                                    <div className={styles.singleItem}>
-                                                        <Bullet />
-                                                        <Typography variant="Regular_14">
-                                                            "ce:GetCostAndUsage",
-                                                        </Typography>
-                                                    </div>
-                                                    <div className={styles.singleItem}>
-                                                        <Bullet />
-                                                        <Typography variant="Regular_14">
-                                                            "ce:GetCostAndUsage",
-                                                        </Typography>
-                                                    </div>
-                                                    <div className={styles.singleItem}>
-                                                        <Bullet />
-                                                        <Typography variant="Regular_14">
-                                                            "ce:GetCostAndUsage",
-                                                        </Typography>
+                                                <div className={styles['dialog-body']}>
+                                                    <div className={styles['code-box']}>
+                                                        <div className={styles['code']}>
+                                                            <pre>
+                                                                <Typography variant="Regular_14">{''}</Typography>
+                                                            </pre>
+                                                        </div>
+                                                        <div className={styles['copy']}>
+                                                            <Popover
+                                                                popoverClass={styles['copy-popover']}
+                                                                children={'Permissions copied'}
+                                                                container={
+                                                                    <CopyToClipboard text={''}>
+                                                                        <CopyIcon fill={'#A7A7A7'}></CopyIcon>
+                                                                    </CopyToClipboard>
+                                                                }
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -79,22 +74,25 @@ const EstimatedCostDialogContent = () => {
                                 <Typography variant="Regular_14">
                                     <div className={styles.allContent}>
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>1 |</div>
+                                            <div className={styles.numberDigit}>1 &nbsp;|</div>
                                             <div className={styles.content}>{GENERAL.STEP2POINT1}</div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>2 |</div>
-                                            <div className={styles.content}>{GENERAL.STEP2POINT2}</div>
+                                            <div className={styles.numberDigit}>2 &nbsp;|</div>
+                                            <div className={styles.content}>
+                                                {GENERAL.STEP2POINT2}{' '}
+                                                <span style={{ fontWeight: '590' }}>{GENERAL.STEP2POINT2CONTINUE}</span>
+                                            </div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>3 |</div>
+                                            <div className={styles.numberDigit}>3 &nbsp;|</div>
                                             <div className={styles.content}>Select the "wlmdb-cost-resource" key.</div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>4 |</div>
+                                            <div className={styles.numberDigit}>4 &nbsp;|</div>
                                             <div className={styles.content}>{GENERAL.STEP2POINT4}</div>
                                         </div>
                                     </div>

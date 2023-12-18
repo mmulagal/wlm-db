@@ -469,13 +469,14 @@ export const GENERAL = {
     STEP1: 'Step 1:',
     STEP1TEXT: 'Grant AWS billing and cost management data permissions',
     STEP1POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
-    STEP1POINT2: 'Edit the policy for role role name and add',
+    STEP1POINT2: 'Edit the policy for role <role name> and add AWS billing and cost management data permissions',
     STEP1POINT2BUTTON: 'AWS billing and cost management data permissions',
     STEP1POINT3: 'User should quickly get the minimal needed billing permissions with an option to Copy.',
     STEP2: 'Step 2:',
     STEP2TEXT: 'Ensure the payer account activates the cost allocation tag',
     STEP2POINT1: 'Open the AWS Billing and Cost Management console.',
-    STEP2POINT2: 'In the navigation pane, choose Cost allocation tags.',
+    STEP2POINT2: 'In the navigation pane, choose ',
+    STEP2POINT2CONTINUE: 'Cost allocation tags',
     STEP2POINT4: 'Choose Activate.'
 };
 
