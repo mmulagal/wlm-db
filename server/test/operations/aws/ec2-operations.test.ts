@@ -14,7 +14,7 @@ import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
@@ -50,7 +50,7 @@ describe('EC2 Operations', () => {
 
     it('Tag Ec2 instance', async () => {
         await expect(
-            tagEc2Resource(credentialsId, DEFAULT_AWS_REGION, [ec2Id], [{ Key: 'key', Value: 'value' }])
+            tagEc2Resource(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, [ec2Id], [{ Key: 'key', Value: 'value' }])
         ).resolves.not.toThrow();
     });
 });
