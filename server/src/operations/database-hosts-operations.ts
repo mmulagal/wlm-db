@@ -717,7 +717,7 @@ async function getDatabaseHostSummary(
                 getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
                 ...(isSSMConnected && getPerformance ? [getPerformanceMetrics(resourceId)] : [Promise.resolve()]), // Fetch io latency data
                 ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
+                ...(getUsageEstimation ? [getBillingOrPriceEstimation(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
                 ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY)]
                     : [Promise.resolve()]),
