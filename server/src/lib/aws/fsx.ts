@@ -143,7 +143,7 @@ async function createTag(credentialsId: string, region: string, accountId: strin
 
         const params = {
             ResourceARN: fsxArn,
-            Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
+            Tags: tags
         };
         const command = new TagResourceCommand(params);
         const response: TagResourceCommandOutput = await client.send(command);

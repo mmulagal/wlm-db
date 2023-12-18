@@ -258,7 +258,7 @@ async function createTag(credentialsId: string, region: string, accountId: strin
         const client = await getEC2Client(region, credentialsId, accountId);
         const ec2Params = {
             Resources: resourceId,
-            Tags: tags.map(tag => ({ Key: tag.Key, Value: tag.Value }))
+            Tags: tags
         };
 
         const command = new CreateTagsCommand(ec2Params);

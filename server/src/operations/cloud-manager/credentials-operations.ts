@@ -100,7 +100,7 @@ async function lookupCredentials(credentialsId: string, accountId?: string) {
         };
     } catch (error) {
         try {
-            const { credentials, extra } = (await getBxpCredentialDetails(credentialsId)) as bxpCredentials;
+            const { credentials, extra } = (await getBxpCredentialDetails(credentialsId, accountId)) as bxpCredentials;
             return {
                 source: BXP,
                 credentials,
