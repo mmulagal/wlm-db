@@ -1,5 +1,6 @@
-{
-    "_comment": "If any change in operate and view permission than that has to be updated in src/utils/permissions.ts file also.",
+// This Permissions should be in sync with workload-policies.json file. Copy workload-policies.json data and replace in PERMISSIONS below.
+
+export const PERMISSIONS = {
     "operate": {
         "Version": "2012-10-17",
         "Statement": [
@@ -201,3 +202,10 @@
         ]
     }
 }
+
+export const COST_PERMISSION = [
+    "ce:GetCostAndUsage",
+    "ce:GetTags",
+    "ce:GetCostAndUsageWithResources",
+    "ce:GetDimensionValues"
+]

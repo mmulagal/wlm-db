@@ -17,13 +17,14 @@ import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
 import { setCreatePressed, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
-import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PERMISSIONS, PRODUCTION } from '../../../../utils/consts';
+import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
+import { PERMISSIONS } from '../../../../utils/permissions';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();

@@ -416,7 +416,7 @@ export const GENERAL = {
     DB_HOST_UNPROTECTED: 'Unprotected',
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    PROTECTION_DATABASES: 'DB',
+    PROTECTION_DATABASES: 'Hosts',
     PROTECTION: 'Protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
@@ -477,7 +477,8 @@ export const GENERAL = {
     STEP2POINT1: 'Open the AWS Billing and Cost Management console.',
     STEP2POINT2: 'In the navigation pane, choose ',
     STEP2POINT2CONTINUE: 'Cost allocation tags',
-    STEP2POINT4: 'Choose Activate.'
+    STEP2POINT4: 'Choose',
+    STEP2POINT4ACTIVATE: 'Activate.'
 };
 
 export const CODE_VIEWER = {
