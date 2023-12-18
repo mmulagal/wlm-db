@@ -103,7 +103,6 @@
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
-                    "pricing:GetProducts",
                     "secretsmanager:CreateSecret",
                     "secretsmanager:GetSecretValue",
                     "secretsmanager:ListSecrets",
@@ -194,8 +193,7 @@
                     "ssm:GetCommandInvocation",
                     "ssm:SendCommand",
                     "ssm:GetConnectionStatus",
-                    "fsx:ListTagsForResource",
-                    "iam:SimulatePrincipalPolicy"
+                    "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]
             }
