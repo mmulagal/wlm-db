@@ -89,12 +89,14 @@ export const GENERAL = {
     STEP_TWO: 'Option 2:',
     ERROR: 'Error :',
     NO_CRED: 'No Credentials.',
-    CREATE_PERMISSION_ERROR: 'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the codebox on the right to complete this task. Ensure that you have the CloudFormation ',
+    CREATE_PERMISSION_ERROR:
+        'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [
-        'Continue without credentials and create using the codebox on the right.', 
+        'Continue without credentials and create using the codebox on the right.',
         'Ensure that you have the required permissions to complete this task within AWS CloudFormation.',
-        'View the required permissions.'],
+        'View the required permissions.'
+    ],
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
     OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
@@ -459,7 +461,22 @@ export const GENERAL = {
     HOST_NAME: 'Host name',
     NO_OF_DBS: 'Number of databases',
     TOTAL_USED_CAPACITY: 'Total used capacity',
-    TOTAL_ALLOCATED_CAPACITY: 'Total allocated capacity'
+    TOTAL_ALLOCATED_CAPACITY: 'Total allocated capacity',
+    ESTIMATED_COST_TOOLTIP:
+        "Cost estimation provides an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",
+    LEARN_HOW_ESTIMATED_COST: 'Learn how to improve cost accuracy',
+    EC_HEADER: 'For more accurate results based on AWS billing and cost management, follow these steps:',
+    STEP1: 'Step 1:',
+    STEP1TEXT: 'Grant AWS billing and cost management data permissions',
+    STEP1POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
+    STEP1POINT2: 'Edit the policy for role role name and add',
+    STEP1POINT2BUTTON: 'AWS billing and cost management data permissions',
+    STEP1POINT3: 'User should quickly get the minimal needed billing permissions with an option to Copy.',
+    STEP2: 'Step 2:',
+    STEP2TEXT: 'Ensure the payer account activates the cost allocation tag',
+    STEP2POINT1: 'Open the AWS Billing and Cost Management console.',
+    STEP2POINT2: 'In the navigation pane, choose Cost allocation tags.',
+    STEP2POINT4: 'Choose Activate.'
 };
 
 export const CODE_VIEWER = {
