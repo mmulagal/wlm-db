@@ -15,9 +15,11 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getSNS(region: string, credentialsId: string) {
+async function getSNS(region: string, credentialsId?: string) {
     logger.debug('Getting SNS client:', region, credentialsId);
-
+    if (!credentialsId) {
+        return new SNSClient({ region });
+    }
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialsDetails(credentialsId);
@@ -26,7 +28,7 @@ async function getSNS(region: string, credentialsId: string) {
     return new SNSClient({ credentials, region });
 }
 
-async function listTopics(credentialsId: string, region: string) {
+async function listTopics(region: string, credentialsId?: string) {
     logger.info('List SNS topics', { region });
 
     const sns = await getSNS(region, credentialsId);

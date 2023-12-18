@@ -11,7 +11,7 @@ import '../../simulator/scopes/opentelemetry-scope';
 describe('List SNS topics', () => {
     it('should return a list of SNS topics', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        const resp = await listTopics(credentialsId, 'us-east-1');
+        const resp = await listTopics('us-east-1', credentialsId);
         expect(resp.Topics?.length).toEqual(2);
     });
 

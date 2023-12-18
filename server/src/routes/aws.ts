@@ -56,7 +56,7 @@ export default function awsRoutes(fastify: FastifyInstance) {
         const {
             params: { credentialsId, region }
         } = request;
-        const response = await getSnsTopics(credentialsId, region);
+        const response = await getSnsTopics(region, credentialsId);
         return reply.send(response);
     });
 
