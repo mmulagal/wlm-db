@@ -28,23 +28,26 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import MssqlApis from './MssqlApis';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
-import ViewAPIRequest from './ViewAPIRequest/ViewAPIRequest';
 import EstimatedCost from '../Cost/EstimatedCost';
 import { useAppSelector } from '../../../store/storeHooks';
 import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
+import { createMssqlPayload } from './MSSqlFooter/createSqlServer';
+import ViewDialog from '../../../common/ViewDialog/ViewDialog';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const state = useAppSelector(state => state);
 
     MssqlApis();
 
     const handleViewAPIRequest = () => {
+        const data = JSON.stringify(createMssqlPayload(state), null, 2);
         setDialog(
             <DialogComponent
                 header={GENERAL.API_REQUEST}
-                content={<ViewAPIRequest />}
+                content={<ViewDialog data={data}/>}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />

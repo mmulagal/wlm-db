@@ -36,7 +36,7 @@
     }
 
     .noteText {
-        width: 709px;
+        width: 773px;
     }
 
     .sub-text {
@@ -45,7 +45,7 @@
         font-size: 14px;
         font-style: normal;
         font-weight: 400;
-        width: 518px;
+        width: 918px;
         line-height: 24px; /* 171.429% */
     }
 
@@ -79,10 +79,47 @@
         line-height: 24px;
     }
 
+    .listItem {
+        display: flex;
+        gap: 16px;
+    }
+
+    .options {
+        display: flex;
+        gap: 4px;
+        margin-top: 12px;
+
+        .svg {
+            margin-top: 4px;
+        }
+    }
+
+    .noaccount {
+        display: grid;
+        gap: 24px;
+    }
+
+    .noaccount_options {
+        display: flex;
+        gap: 8px;
+    }
+
+    .permissionError {
+        display: flex;
+        gap: 4px;
+        margin-top: 24px;
+
+        .svg {
+            margin-top: 4px;
+        }
+    }
+    
     .buttonStyle {
+        width: 800px;
+        margin-bottom: 16px;
         button {
             span:first-letter {
-                text-transform: lowercase;
+                text-transform: none;
             }
         }
     }

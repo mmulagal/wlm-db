@@ -1,8 +1,8 @@
-import { Button } from '@netapp/design-system';
+import { Button, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { FORM_TO_WLF_NAVIGATE, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
-import { setIsLoading } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsLoading, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
 
 const MSSqlFooter = () => {
+    const { setDialog } = useDialog();
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -30,46 +31,59 @@ const MSSqlFooter = () => {
                     dispatch(setIsLoading(false));
                     if (!data?.error) {
                         let stackName = data?.data?.cloudFormationStackId;
-                        if(stackName && stackName.includes('/')){
-                            stackName = stackName.split('/')[1];
+                        const url = data?.data?.cloudFormationUrl;
+                        const warning = data?.data?.warningMessage;
+                        if (stackName && !warning) {
+                            // If stackname is present than goes to fullPermissionFlow
+                            fullPermissionFlow(stackName);
+                        } else if (url) {
+                            // If url comes it means it has view permissions so it will open AWS account accordion
+                            dispatch(setPermissionWarning(true));
                         }
-                        let message;
-                        if (isWorkloadFactoryStatus) {
-                            message = (
-                                <>
-                                    {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                                    {stackName ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName: ''}
-                                    {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
-                                </>
-                            );
-                        } else {
-                            const timelineUrl = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
-                            message = (
-                                <>
-                                    {GENERAL.CREATE_INFO_MESSAGE[0]}
-                                    {stackName ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
-                                    {GENERAL.CREATE_INFO_MESSAGE[2]}
-                                    <Button
-                                        Component="button"
-                                        variant="text"
-                                        onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
-                                    >
-                                        {GENERAL.CREATE_INFO_MESSAGE[3]}
-                                    </Button>
-                                    {GENERAL.CREATE_INFO_MESSAGE[4]}
-                                </>
-                            );
-                        }
-                        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
-                        setTimeout(() => {
-                            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
-                        }, 3000);
                     }
                 })
                 .catch((error: any) => {
                     dispatch(setIsLoading(false));
                 });
         }
+    };
+
+    const fullPermissionFlow = (stackName: string) => {
+        // Just show notification in case of full permission and redirect to Homepage after 3 sec
+        if(stackName && stackName.includes('/')){
+            stackName = stackName.split('/')[1];
+        }
+        let message;
+        if (isWorkloadFactoryStatus) {
+            message = (
+                <>
+                    {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
+                    {stackName ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName: ''}
+                    {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
+                </>
+            );
+        } else {
+            const timelineUrl = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
+            message = (
+                <>
+                    {GENERAL.CREATE_INFO_MESSAGE[0]}
+                    {stackName ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
+                    {GENERAL.CREATE_INFO_MESSAGE[2]}
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
+                    >
+                        {GENERAL.CREATE_INFO_MESSAGE[3]}
+                    </Button>
+                    {GENERAL.CREATE_INFO_MESSAGE[4]}
+                </>
+            );
+        }
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
+        setTimeout(() => {
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
+        }, 3000);
     };
 
     return (
