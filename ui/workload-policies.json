@@ -194,8 +194,7 @@
                     "ssm:GetCommandInvocation",
                     "ssm:SendCommand",
                     "ssm:GetConnectionStatus",
-                    "fsx:ListTagsForResource",
-                    "iam:SimulatePrincipalPolicy"
+                    "fsx:ListTagsForResource"
                 ],
                 "Resource": ["*"]
             }
