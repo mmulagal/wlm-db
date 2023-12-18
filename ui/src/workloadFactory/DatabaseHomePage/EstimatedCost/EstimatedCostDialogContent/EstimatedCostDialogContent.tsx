@@ -5,8 +5,10 @@ import CopyToClipboard from 'react-copy-to-clipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
 import styles from './EstimatedCostDialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
+import { COST_PERMISSION } from '../../../../utils/permissions';
 
 const EstimatedCostDialogContent = () => {
+    const data = JSON.stringify(COST_PERMISSION, null, 1);
     return (
         <div className={styles.estimatedCostDialog}>
             <Typography variant="Regular_14">{GENERAL.EC_HEADER} </Typography>
@@ -37,7 +39,7 @@ const EstimatedCostDialogContent = () => {
                                                     <div className={styles['code-box']}>
                                                         <div className={styles['code']}>
                                                             <pre>
-                                                                <Typography variant="Regular_14">{''}</Typography>
+                                                                <Typography variant="Regular_14">{data}</Typography>
                                                             </pre>
                                                         </div>
                                                         <div className={styles['copy']}>
@@ -45,7 +47,7 @@ const EstimatedCostDialogContent = () => {
                                                                 popoverClass={styles['copy-popover']}
                                                                 children={'Permissions copied'}
                                                                 container={
-                                                                    <CopyToClipboard text={''}>
+                                                                    <CopyToClipboard text={data}>
                                                                         <CopyIcon fill={'#A7A7A7'}></CopyIcon>
                                                                     </CopyToClipboard>
                                                                 }
@@ -93,7 +95,10 @@ const EstimatedCostDialogContent = () => {
 
                                         <div className={styles.listItems}>
                                             <div className={styles.numberDigit}>4 &nbsp;|</div>
-                                            <div className={styles.content}>{GENERAL.STEP2POINT4}</div>
+                                            <div className={styles.content}>
+                                                {GENERAL.STEP2POINT4}{' '}
+                                                <span style={{ fontWeight: '590' }}>{GENERAL.STEP2POINT4ACTIVATE}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </Typography>
