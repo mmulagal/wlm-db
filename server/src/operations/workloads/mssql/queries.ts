@@ -39,7 +39,7 @@ const DISK_UTILISATION = `${SET_NOCOUNT} WITH presel AS (SELECT database_id, FIL
                                 ,roundtwo AS (SELECT DISTINCT pr.database_id, pr.FILE_ID
                                 FROM presel pr
                                 WHERE pr.RowNum = 1)
-                                SELECT ovs.total_bytes AS total, ovs.available_bytes AS remaining
+                                SELECT SUM(ovs.total_bytes) AS total, SUM(ovs.available_bytes) AS remaining
                                 FROM roundtwo mf
                                 CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.FILE_ID) ovs ${FOR_JSON_PATH}`;
 
