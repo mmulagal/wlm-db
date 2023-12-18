@@ -170,6 +170,7 @@ export const PERMISSIONS = {
                 Action: [
                     'secretsmanager:GetSecretValue',
                     'sns:ListTopics',
+                    'ec2:DescribeInstances',
                     'ec2:DescribeVpcs',
                     'ec2:DescribeSubnets',
                     'ec2:DescribeSecurityGroups',
