@@ -5,6 +5,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import EstimatedCostDialogContent from './EstimatedCostDialogContent/EstimatedCostDialogContent';
+import { useEffect, useState } from 'react';
 
 type EstimatedCostProps = {
     hostData: any;
@@ -14,13 +15,24 @@ type EstimatedCostProps = {
 
 const EstimatedCost = ({ hostData, hostsLoading, jobsLoading }: EstimatedCostProps) => {
     const { setDialog } = useDialog();
+
+    const [linkChk, setLinkChk] = useState(true);
+
+    useEffect(() => {
+        if(hostData) {
+            setLinkChk(hostData?.requireBillingPerm || false);
+        }
+    }, [hostData]);
+    
     const ToolTipContainer = () => {
         return (
             <div className={styles.tooltipContainerClass}>
                 <Typography variant="Regular_13">{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
-                <Button variant="text" onClick={() => costDialog()}>
-                    {GENERAL.LEARN_HOW_ESTIMATED_COST}
-                </Button>
+                {linkChk && 
+                    <Button variant="text" onClick={() => costDialog()}>
+                        {GENERAL.LEARN_HOW_ESTIMATED_COST}
+                    </Button>
+                }
             </div>
         );
     };

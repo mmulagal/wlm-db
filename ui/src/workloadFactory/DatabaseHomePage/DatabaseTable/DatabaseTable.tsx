@@ -241,7 +241,7 @@ const DatabaseTable = () => {
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
                                     <Typography variant="Regular_14">
-                                        {protectedChk ? protectionPercent + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
+                                        {protectedChk ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
                                     </Typography>
                                 </div>
                                 {protectedChk && (
