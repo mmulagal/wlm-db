@@ -220,6 +220,70 @@ const DatabaseTable = () => {
                 );
             }
         },
+        // {
+        //     id: '2',
+        //     Header: GENERAL.DB_HOST_PROTECTION,
+        //     accessor: 'protectionText',
+        //     isSortable: true,
+        //     width: '184px',
+        //     filterOptions: 'auto',
+        //     renderCell: (cellData: any, rowData: any) => {
+        //         const protectionData = rowData?.protection;
+        //         let protectedChk = false;
+        //         if (
+        //             protectionData?.isAwsBackUpEnabled ||
+        //             protectionData?.isFsxOntapSnapshotsEnabled ||
+        //             protectionData?.isSqlNativeEnabled
+        //         ) {
+        //             protectedChk = true;
+        //         }
+        //         let protectedByList = [];
+        //         if (protectionData?.isFsxOntapSnapshotsEnabled) {
+        //             protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+        //         }
+        //         if (protectionData?.isAwsBackUpEnabled) {
+        //             protectedByList.push(GENERAL.AWS_BACKUP);
+        //         }
+        //         if (protectionData?.isSqlNativeEnabled) {
+        //             protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
+        //         }
+        //         return (
+        //             <>
+        //                 {protectionData && (
+        //                     <div className={styles.colText}>
+        //                         <div className={styles.protection}>
+        //                             {protectedChk && (
+        //                                 <ProtectedIcon
+        //                                     style={{
+        //                                         //@ts-ignore
+        //                                         '--icon-primary-color': 'var(--green-60)'
+        //                                     }}
+        //                                 />
+        //                             )}
+        //                             {!protectedChk && (
+        //                                 <NotProtectedIcon
+        //                                     style={{
+        //                                         //@ts-ignore
+        //                                         '--icon-primary-color': 'var(--grey-45)'
+        //                                     }}
+        //                                 />
+        //                             )}
+        //                             <Typography variant="Regular_14">
+        //                                 {protectedChk ? GENERAL.PROTECTED : GENERAL.NOT_PROTECTED}
+        //                             </Typography>
+        //                         </div>
+        //                         {protectedChk && (
+        //                             <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+        //                                 {protectionTooltipText(protectedByList)}
+        //                             </TooltipInfo>
+        //                         )}
+        //                     </div>
+        //                 )}
+        //                 {!protectionData && notAvailable()}
+        //             </>
+        //         );
+        //     }
+        // },
         {
             id: '2',
             Header: GENERAL.DB_HOST_PROTECTION,
@@ -229,6 +293,7 @@ const DatabaseTable = () => {
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
+                const totalDbCount = rowData?.databaseCount || 0;
                 let protectedChk = false;
                 if (
                     protectionData?.isAwsBackUpEnabled ||
@@ -237,44 +302,32 @@ const DatabaseTable = () => {
                 ) {
                     protectedChk = true;
                 }
-                let protectedByList = [];
-                if (protectionData?.isFsxOntapSnapshotsEnabled) {
-                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+
+                let protectionDbCount = 0
+                let protectionPercent = 0;
+                if (
+                    protectionData?.isAwsBackUpEnabled ||
+                    protectionData?.isFsxOntapSnapshotsEnabled
+                ) {
+                    protectionDbCount = totalDbCount;
+                    protectionPercent = 100;
+                } else if (protectionData?.isSqlNativeEnabled) {
+                    protectionDbCount = protectionData?.protectedDatabases || 0;
+                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 100;
                 }
-                if (protectionData?.isAwsBackUpEnabled) {
-                    protectedByList.push(GENERAL.AWS_BACKUP);
-                }
-                if (protectionData?.isSqlNativeEnabled) {
-                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
-                }
+
                 return (
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
-                                    {protectedChk && (
-                                        <ProtectedIcon
-                                            style={{
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--green-60)'
-                                            }}
-                                        />
-                                    )}
-                                    {!protectedChk && (
-                                        <NotProtectedIcon
-                                            style={{
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--grey-45)'
-                                            }}
-                                        />
-                                    )}
                                     <Typography variant="Regular_14">
-                                        {protectedChk ? GENERAL.PROTECTED : GENERAL.NOT_PROTECTED}
+                                        {protectedChk ? protectionPercent + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
                                     </Typography>
                                 </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionTooltipText(protectedByList)}
+                                        {protectionDbCount + GENERAL.PROTECTION_TOOLTIP[0] + totalDbCount + GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
                             </div>

@@ -373,6 +373,7 @@ export const GENERAL = {
     HOSTS: 'Hosts',
     PROTECTED: 'Protected',
     NOT_PROTECTED: 'Not protected',
+    PROTECTION_TOOLTIP: [' out of ', ' databases are protected'],
     AWS_BACKUP: 'AWS backup',
     FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
