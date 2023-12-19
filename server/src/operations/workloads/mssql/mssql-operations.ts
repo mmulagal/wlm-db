@@ -380,7 +380,6 @@ async function getServerSummary(resourceId: string) {
     if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
         const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
         const serverInfo = serverDetails?.split('\t');
-        const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
         const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
         const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
         let [{ activeNode }] = sqlResponseParsing(nodeInfo);
@@ -403,9 +402,8 @@ async function getServerSummary(resourceId: string) {
 
         return {
             serverId: resourceId,
-            serverVersion,
-            serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
-            serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
+            serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+            serverEdition: `SQL server ${serverInfo[3].substring(0, serverInfo[3].indexOf('Edition') + 7)}`,
             serverStatus,
             activeConnections,
             deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,

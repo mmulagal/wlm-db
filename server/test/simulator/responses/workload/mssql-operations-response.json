@@ -1840,9 +1840,8 @@
     },
     "serverSummaryResponse": {
         "serverId": "36E53042-04E8-40C9-AE69-26E56CB0D216",
-        "serverVersion": "13.0.6404.1",
-        "serverEdition": "Microsoft SQL Server 2016 (SP3-OD) (KB5006943)",
-        "serverEngine": "Standard Edition (64-bit)",
+        "serverVersion": "Microsoft SQL Server 2016",
+        "serverEdition": "SQL server Standard Edition",
         "serverStatus": "Running",
         "activeConnections": 8,
         "deploymentModel": "Always On Failover Cluster Instance",
