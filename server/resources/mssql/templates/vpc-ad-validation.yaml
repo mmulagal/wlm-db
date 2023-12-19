@@ -176,7 +176,7 @@ Resources:
         Properties:
             Handle: !Ref ValidationNode1WaitHandler
             Timeout: '2700'
-            Count: 2
+            Count: 1
     ValidationNode1:
         Type: AWS::EC2::Instance
         Condition: ADCheckEnabled
@@ -375,6 +375,7 @@ Resources:
         Properties:
             Handle: !Ref ValidationNode2WaitHandler
             Timeout: '900'
+            Count: 1
     ValidationNode2:
         Type: AWS::EC2::Instance
         Condition: ADCheckNotEnabled
