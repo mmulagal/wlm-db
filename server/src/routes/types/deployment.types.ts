@@ -87,7 +87,8 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
 
 const CloudFormationDeploymentResponse = Type.Object({
     cloudFormationUrl: Type.Optional(Type.String()),
-    cloudFormationStackId: Type.Optional(Type.String())
+    cloudFormationStackId: Type.Optional(Type.String()),
+    missingPermissions: Type.Optional(Type.String())
 });
 
 const CloudFormationStaticTemplateResponse = Type.Object({

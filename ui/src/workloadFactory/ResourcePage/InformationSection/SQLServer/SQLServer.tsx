@@ -74,6 +74,15 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
+                        {GENERAL.ACTIVE_NODE}
+                    </Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.activeNode || ''}
+                    </Typography>
+                </div>
+
+                <div className={commonStyles.row}>
+                    <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.STATUS_INFO}
                     </Typography>
                     <Typography variant="Regular_14" className={commonStyles.valueCSS}>
