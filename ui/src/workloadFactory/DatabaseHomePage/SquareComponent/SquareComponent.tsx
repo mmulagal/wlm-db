@@ -6,12 +6,14 @@ type SC = {
     value: string;
     color: string;
     text: string;
+    boldValue?: boolean;
 };
 
-const SquareComponent = ({ value, color, text }: SC) => {
+const SquareComponent = ({ value, color, text, boldValue }: SC) => {
     return (
         <div className={styles.container}>
-            <Typography variant="Regular_14">{value}</Typography>
+            {!boldValue && <Typography variant="Regular_14">{value}</Typography>}
+            {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
             <div className={styles.bottomRow}>
                 <div className={styles.square} style={{ backgroundColor: color }} />
                 <Typography variant="Regular_14" style={{ lineHeight: 'unset' }}>

@@ -40,6 +40,7 @@ const DBOverviewProtection = () => {
                         value={`${protectionData.protectedDb} Databases`}
                         color="var(--chart-4)"
                         text={'Protected'}
+                        boldValue={true}
                     />
 
                     <div className={styles.dbHostSeparator} />
@@ -48,6 +49,7 @@ const DBOverviewProtection = () => {
                         value={`${protectionData.unprotectedDb} Databases`}
                         color="var(--chart-disabled)"
                         text={'Unprotected'}
+                        boldValue={true}
                     />
                 </div>
             </div>
