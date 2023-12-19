@@ -35,7 +35,7 @@ const MSSqlFooter = () => {
                         const warning = data?.data?.warningMessage;
                         if (stackName && !warning) {
                             // If stackname is present than goes to fullPermissionFlow
-                            fullPermissionFlow(stackName);
+                            fullPermissionFlow(stackName, url);
                         } else if (url) {
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setPermissionWarning(true));
@@ -48,7 +48,7 @@ const MSSqlFooter = () => {
         }
     };
 
-    const fullPermissionFlow = (stackName: string) => {
+    const fullPermissionFlow = (stackName: string, stackUrl: string) => {
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
         if(stackName && stackName.includes('/')){
             stackName = stackName.split('/')[1];
@@ -58,7 +58,19 @@ const MSSqlFooter = () => {
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {stackName ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName: ''}
+                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName: ''}
+                    {stackName && stackUrl && 
+                        <>
+                            {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
+                            <Button
+                                Component="button"
+                                variant="link"
+                                onClick={() => window.open(stackUrl, '_blank', 'noopener')}
+                            >
+                                {stackName}
+                            </Button>
+                        </>
+                    }
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
                 </>
             );
@@ -67,7 +79,19 @@ const MSSqlFooter = () => {
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE[0]}
-                    {stackName ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
+                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
+                    {stackName && stackUrl && 
+                        <>
+                            {GENERAL.CREATE_INFO_MESSAGE[1]}
+                            <Button
+                                Component="button"
+                                variant="link"
+                                onClick={() => window.open(stackUrl, '_blank', 'noopener')}
+                            >
+                                {stackName}
+                            </Button>
+                        </>
+                    }
                     {GENERAL.CREATE_INFO_MESSAGE[2]}
                     <Button
                         Component="button"
@@ -81,9 +105,9 @@ const MSSqlFooter = () => {
             );
         }
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
-        setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
-        }, 3000);
+        // setTimeout(() => {
+        //     isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
+        // }, 3000);
     };
 
     return (
