@@ -105,9 +105,9 @@ const MSSqlFooter = () => {
             );
         }
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
-        setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
-        }, 3000);
+        // setTimeout(() => {
+        //     isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
+        // }, 3000);
     };
 
     return (
