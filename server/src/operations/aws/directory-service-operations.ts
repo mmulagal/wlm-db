@@ -1,5 +1,5 @@
+import { DirectoryType } from '@aws-sdk/client-directory-service';
 import { describeDirectories } from '../../lib/aws/directory-service';
-import { AD_SIMPLE } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -30,7 +30,7 @@ async function getAdsList(credentialsId: string, region: string) {
 
     if (directoryDesc?.length) {
         directories = directoryDesc
-            .filter(perDs => perDs.Type?.toLowerCase() !== AD_SIMPLE)
+            .filter(perDs => perDs.Type !== DirectoryType.SIMPLE_AD)
             .map(perDs => ({
                 id: perDs.DirectoryId,
                 dnsIpAddress: perDs.DnsIpAddrs,
