@@ -310,6 +310,7 @@ async function processCloudFormationMessages() {
                                                         coRelationId: fsxId,
                                                         region,
                                                         metadata: {
+                                                            creationDate: Date.now(),
                                                             credentialsId,
                                                             activeNodeInstanceId,
                                                             standbyNodeInstanceId,

@@ -353,6 +353,23 @@ async function deployStackOrCreateTemplateURL(
             tags
         );
     } catch (err: any) {
+        // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
+        if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
+            const response = await createCloudFormationTemplateForUserDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                tags
+            );
+            response.missingPermissions = MISSING_PERMISSIONS(err?.message);
+            return response;
+        }
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while deploying stack ${err}.`);
     }
 }
