@@ -471,7 +471,7 @@ export const GENERAL = {
     STEP1: 'Step 1:',
     STEP1TEXT: 'Grant AWS billing and cost management data permissions',
     STEP1POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
-    STEP1POINT2: 'Edit the policy for role <role name> and add AWS billing and cost management data permissions',
+    STEP1POINT2: 'Edit the policy for role and add AWS billing and cost management data permissions',
     STEP1POINT2BUTTON: 'AWS billing and cost management data permissions',
     STEP1POINT3: 'User should quickly get the minimal needed billing permissions with an option to Copy.',
     STEP2: 'Step 2:',
