@@ -932,6 +932,7 @@ const MSSQL_DATABASE_TYPES = {
 
 const WF_TOKEN = 'WF_TOKEN';
 const BXP_TOKEN = 'BXP_TOKEN';
+const AD_SIMPLE = 'simplead';
 
 export {
     WLMDB,
@@ -1139,5 +1140,6 @@ export {
     BILLING,
     PRICING,
     WF_TOKEN,
-    BXP_TOKEN
+    BXP_TOKEN,
+    AD_SIMPLE
 };
