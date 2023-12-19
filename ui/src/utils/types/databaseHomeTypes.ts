@@ -36,6 +36,7 @@ export interface DatabaseHostItem {
         storage: number;
         connectivity: number;
         others: number;
+        estimationType: string;
     };
     totalCost?: string;
 }
@@ -118,6 +119,7 @@ export interface AggregatedCostsRes {
     computeCostPercent: number;
     connectivityCostPercent: number;
     otherCostPercent: number;
+    requireBillingPerm: boolean;
 }
 
 export interface DatabaseHostsEntities {
