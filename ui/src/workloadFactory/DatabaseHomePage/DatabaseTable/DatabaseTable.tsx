@@ -46,12 +46,12 @@ const DatabaseTable = () => {
             {
                 id: 'viewOverview',
                 displayName: 'View host overview',
-                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+                disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'viewDatabaseList',
                 displayName: 'View database list',
-                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+                disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'remove',

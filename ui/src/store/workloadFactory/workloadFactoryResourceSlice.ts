@@ -15,7 +15,8 @@ const initialState: WorkloadFactoryResourceEntities = {
             nodeNames: [],
             activeConnections: 0,
             creationDate: '',
-            clusterName: ''
+            clusterName: '',
+            activeNode: ''
         },
         topology: {
             awsAccount: '',

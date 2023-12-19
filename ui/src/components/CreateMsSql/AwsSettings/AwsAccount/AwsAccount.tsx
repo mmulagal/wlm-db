@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { useDispatch } from 'react-redux';
 
-import { dbPassVal, fsxPassVal, generateOptionType, openCredentialTab } from '../../../../utils/utilityFunctions';
+import { dbPassVal, fsxPassVal, generateOptionType } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -31,6 +31,9 @@ const AwsAccount = () => {
     const accordionContext = useAccordionContext()?.setOpenChildren!;
     const dispatch = useDispatch();
 
+    const noCredRef = useRef(null);
+    const perWarningRef = useRef(null);
+
     //Getting the Data from state
     const { credentialData, credentialLoading } = useAppSelector(state => state.mssql.getCredentials);
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
@@ -40,8 +43,6 @@ const AwsAccount = () => {
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
-
-    // const [perWarning, setPerWarning] = useState(false);
 
     // To set noAccount flag is present or not
     useEffect(() => {
@@ -57,6 +58,23 @@ const AwsAccount = () => {
         } 
     }, [credentialData]);
 
+    useEffect(() => {
+        if (isCreateHit) {
+            if (permissionWarning) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    perWarningRef?.current?.focus();
+                }, 120);
+            }
+            if (noAccount) {
+                setTimeout(() => {
+                    //@ts-ignore
+                    noCredRef?.current?.focus();
+                }, 120);
+            }
+        }
+    }, [permissionWarning, isCreateHit, noAccount]);
+
     //Code to open the Accordion
     const isVPCNotFilled = useAppSelector(state => state.msSqlAction.vpcSelected);
     const isAZNotFilled = useAppSelector(state => state.msSqlAction.availabilityZoneSelected);
@@ -68,10 +86,6 @@ const AwsAccount = () => {
     const dbCredPassword = useAppSelector(state => state.mssqlForm.dbCredentials?.password);
     const fsxCredPassword = useAppSelector(state => state.mssqlForm.fsxN?.fsxNPassword);
     const licenseIdSelectedCheck = useAppSelector(state => state.msSqlAction.licenseIdSelected);
-
-    // useEffect(() => {
-    //     setPerWarning(permissionWarning);
-    // }, [permissionWarning]);
 
     useEffect(() => {
         const dbPasswordValPass = !dbPassVal(dbCredPassword) ? true : false;
@@ -188,7 +202,7 @@ const AwsAccount = () => {
                                         <Typography variant="Regular_14">
                                             {GENERAL.NAVIGATE_TO[0]}{' '}
                                             <span>
-                                                <Button Component="button" onClick={openCredentialTab} variant="text">
+                                                <Button Component="button" onClick={openCredentialTab} variant="text" ref={noCredRef}>
                                                     {GENERAL.CREDENTIALS}
                                                 </Button>
                                             </span>
@@ -217,7 +231,7 @@ const AwsAccount = () => {
                                 </div>
                                 {noAccount && isCreateHit !== 0 && 
                                     <div className={styles.options}>
-                                        <ErrorIcon />
+                                        <ErrorIcon className={styles.icon}/>
                                         <div className={styles.noaccount_options}>
                                             <Typography variant="Semibold_14">
                                                 {GENERAL.ERROR}
@@ -255,6 +269,7 @@ const AwsAccount = () => {
                                 </div>         
                                 <div className={styles.selectField}>
                                     <SelectField
+                                        ref={perWarningRef}
                                         label={GENERAL.CREDENTIAL_WITHOUT_DOT}
                                         isClearable={false}
                                         defaultValue={
@@ -275,14 +290,14 @@ const AwsAccount = () => {
                                 </div>
                                 {permissionWarning && isCreateHit !== 0 && 
                                     <div className={styles.permissionError}>
-                                        <ErrorIcon />
+                                        <ErrorIcon className={styles.icon}/>
                                         <div className={styles.noaccount_options}>
                                             <Typography variant="Semibold_14">
                                                 {GENERAL.ERROR}
                                             </Typography>
                                             <Typography variant="Regular_14" className={styles.noteText}>
                                                 {GENERAL.CREATE_PERMISSION_ERROR}
-                                                <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
+                                                <Button Component="button" variant="text" onClick={() => openDialog('operate')}>
                                                     {GENERAL.REQUIRED_PERMISSIONS}
                                                 </Button>
                                             </Typography>

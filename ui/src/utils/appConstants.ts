@@ -26,6 +26,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
+    ACTIVE_NODE: 'Active node',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
     COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
@@ -87,10 +88,10 @@ export const GENERAL = {
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Option 1:',
     STEP_TWO: 'Option 2:',
-    ERROR: 'Error :',
+    ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
     CREATE_PERMISSION_ERROR:
-        'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the codebox on the right to complete this task. Ensure that you have the CloudFormation ',
+        'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [
         'Continue without credentials and create using the codebox on the right.',
