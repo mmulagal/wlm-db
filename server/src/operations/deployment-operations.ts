@@ -61,7 +61,8 @@ import {
     WLMDB_RESOURCE_TAG_VALUE,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE
+    FCI_NETWORK_VIOLATION_MESSAGE,
+    DEPLOYED_STACK_URL
 } from '../utils/consts';
 import {
     derivePropertiesFromARN,
@@ -479,7 +480,7 @@ async function deployCloudFormationTemplate(
     topicArn: string = '',
     enableCloudWatch: boolean = false,
     tags?: Array<{ key: string; value: string }>
-): Promise<{ cloudFormationStackId: string }> {
+): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
         region,
@@ -559,6 +560,7 @@ async function deployCloudFormationTemplate(
     // };
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
+    const cfUrl = DEPLOYED_STACK_URL(region, deployStackResponse.StackId!);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
@@ -571,7 +573,7 @@ async function deployCloudFormationTemplate(
             sqlConfiguration?.sqlDeploymentMode
         );
     }
-    return { cloudFormationStackId: deployStackResponse.StackId! };
+    return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
 }
 
 async function deploymentStatus(accountId: string) {

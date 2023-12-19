@@ -512,6 +512,8 @@ const ASSETS_REGION_CODE = `s3.${ASSETS_BUCKET_REGION}`;
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const CLOUD_FORMATION_STACK_URL = `https://${ASSETS_BUCKET_REGION}.console.aws.amazon.com/cloudformation/home`;
 const MASTER_TEMPLATE_URL = `https://${BUCKET_NAME}.${ASSETS_REGION_CODE}.amazonaws.com/${MASTER_TEMPLATE_PATH}`;
+const DEPLOYED_STACK_URL = (region: string, stackId: string) =>
+    `https://console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/stackinfo?stackId=${stackId}`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
 const MASTER_STACK_TIMEOUT_MINUTES = 180;
@@ -1001,6 +1003,7 @@ export {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
+    DEPLOYED_STACK_URL,
     EC2_ROLE_NAME,
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
