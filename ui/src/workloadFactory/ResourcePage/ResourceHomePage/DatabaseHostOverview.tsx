@@ -61,7 +61,7 @@ const DatabaseHostOverview = () => {
                             }
                         },
                         {
-                            title: GENERAL.DATABASE_HOST_NAME
+                            title: resourceDetails?.name
                         }
                     ]}
                 />

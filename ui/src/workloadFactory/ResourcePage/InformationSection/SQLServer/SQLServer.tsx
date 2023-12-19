@@ -3,8 +3,8 @@ import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 import styles from './SQLServer.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { formatDateWithTime } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
+import moment from 'moment';
 
 type sqlServer = {
     handleToggle: any;
@@ -21,7 +21,9 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                         {GENERAL.DEPLOYMENT_MODEL_INFO}
                     </Typography>
                     <Typography variant="Regular_14" className={commonStyles.valueCSS}>
-                        {resourceDetails?.topology?.serverInstallationMode}
+                        {resourceDetails?.topology?.serverInstallationMode === 'Standalone'
+                            ? 'Standalone Instance'
+                            : 'Always On Failover Cluster Instance'}
                     </Typography>
                 </div>
 
@@ -104,7 +106,9 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                         {GENERAL.DATE_CREATED}
                     </Typography>
                     <Typography variant="Regular_14" className={commonStyles.valueCSS}>
-                        {resourceDetails?.databaseServer?.creationDate}
+                        {resourceDetails?.databaseServer?.creationDate
+                            ? moment(resourceDetails?.databaseServer?.creationDate).format('MMMM DD, YYYY, HH:mm:ss')
+                            : ''}
                     </Typography>
                 </div>
             </>
