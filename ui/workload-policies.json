@@ -44,8 +44,7 @@
                     "ec2:RevokeSecurityGroupEgress",
                     "ec2:RevokeSecurityGroupIngress",
                     "ec2:StartInstances",
-                    "ec2:StopInstances",
-                    "ec2:TerminateInstances"
+                    "ec2:StopInstances"
                 ],
                 "Resource": "*",
                 "Condition": {
@@ -170,6 +169,7 @@
                 "Action": [
                     "secretsmanager:GetSecretValue",
                     "sns:ListTopics",
+                    "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",
                     "ec2:DescribeSubnets",
                     "ec2:DescribeSecurityGroups",
