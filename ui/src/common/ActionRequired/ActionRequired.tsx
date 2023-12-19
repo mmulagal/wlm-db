@@ -1,4 +1,4 @@
-import { Popover } from '@netapp/design-system';
+import { Popover, Typography } from '@netapp/design-system';
 import { ReactComponent as ActionRequiredIcon } from '../../assets/action-required.svg';
 import { ReactComponent as ActionRequiredErrorIcon } from '../../assets/Action_required_error.svg';
 import { GENERAL } from '../../utils/appConstants';
@@ -28,7 +28,9 @@ const ActionRequired = ({ error = false, disabled = false }: AR) => {
         <div className={styles['action-required']}>
             {error && <ActionRequiredErrorIcon />}
             {!error && <ActionRequiredIcon />}
-            <div className={styles.text}>{GENERAL.ACTION_REQUIRED}</div>
+            <Typography variant="Regular_14" className={styles.text}>
+                {GENERAL.ACTION_REQUIRED}
+            </Typography>
         </div>
     );
 };

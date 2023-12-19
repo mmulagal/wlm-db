@@ -18,6 +18,7 @@ export interface WorkloadFactoryResourceDetails {
         activeConnections: number;
         creationDate: string;
         clusterName: string;
+        activeNode: string;
     };
     topology: {
         awsAccount: string;
