@@ -232,7 +232,7 @@ const DatabaseTable = () => {
                     protectionPercent = 100;
                 } else if (protectionData?.isSqlNativeEnabled) {
                     protectionDbCount = protectionData?.protectedDatabases || 0;
-                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 100;
+                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 0;
                 }
 
                 return (
