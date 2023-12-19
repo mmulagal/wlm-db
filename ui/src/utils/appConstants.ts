@@ -26,6 +26,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
+    ACTIVE_NODE: 'Active node',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
     COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
