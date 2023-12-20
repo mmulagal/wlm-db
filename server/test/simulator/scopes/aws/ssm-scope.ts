@@ -151,6 +151,12 @@ const getServerInstallDate = {
         "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' FOR JSON PATH\""
     ]
 };
+const getServerEdition = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query " SET NOCOUNT ON; SELECT SERVERPROPERTY(\'Edition\') AS ServerEdition FOR JSON PATH"'
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -203,7 +209,9 @@ ssmMock
     .on(SendCommandCommand, { Parameters: getPerformanceMetrics })
     .resolves(listSendCommandCommandResponse.getPerformancemetricsCommandResponse)
     .on(SendCommandCommand, { Parameters: getServerInstallDate })
-    .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse);
+    .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
+    .on(SendCommandCommand, { Parameters: getServerEdition })
+    .resolves(listSendCommandCommandResponse.getServerEdition);
 
 ssmMock
     .on(GetCommandInvocationCommand)
@@ -253,7 +261,9 @@ ssmMock
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-performanceMetrics' })
     .resolves(getCommandInvocationResponse.performanceInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-installDate' })
-    .resolves(getCommandInvocationResponse.serverInstallDateInvocationResponse);
+    .resolves(getCommandInvocationResponse.serverInstallDateInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ServerEdition' })
+    .resolves(getCommandInvocationResponse.serverEditionResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

@@ -24,7 +24,8 @@ import {
     NATIVE_SQL_BACKUPS,
     SERVER_INSTALL_DATE,
     PERFORMANCE_METRICS,
-    SQL_BACKUPS
+    SQL_BACKUPS,
+    SERVER_EDITION
 } from './queries';
 import { executeSSMDocument, isSSMConnectionSuccessful } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
@@ -349,6 +350,7 @@ async function getServerSummary(resourceId: string) {
 
     const [
         serverDetailsInfo,
+        severEditionInfo,
         connectionsInfo,
         stateInfo,
         isClusteredInfo,
@@ -359,6 +361,7 @@ async function getServerSummary(resourceId: string) {
     ] = await Promise.all(
         [
             SERVER_VERSION_DETAILS,
+            SERVER_EDITION,
             NUMBER_OF_CONNECTIONS,
             SERVER_STATE,
             IS_SERVER_CLUSTERED,
@@ -377,8 +380,9 @@ async function getServerSummary(resourceId: string) {
         )
     );
 
-    if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
+    if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo && severEditionInfo) {
         const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
+        const [{ ServerEdition }] = sqlResponseParsing(severEditionInfo);
         const serverInfo = serverDetails?.split('\t');
         const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
         const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
@@ -403,7 +407,7 @@ async function getServerSummary(resourceId: string) {
         return {
             serverId: resourceId,
             serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
-            serverEdition: `SQL server ${serverInfo[3].substring(0, serverInfo[3].indexOf('Edition') + 7)}`,
+            serverEdition: `SQL Server ${ServerEdition.substring(0, ServerEdition.indexOf(':')).trim()}`,
             serverStatus,
             activeConnections,
             deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
