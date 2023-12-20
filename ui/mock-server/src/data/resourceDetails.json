@@ -8,7 +8,7 @@
     "serverVersion": "SQL2022",
     "clusterName": "cluster-name-1",
     "activeConnections": 2,
-    "creationDate": 1693284194,
+    "creationDate": "1703055345698",
     "topology": {
         "awsAccount": "aws-acc-1",
         "region": "ap-southeast-1",
