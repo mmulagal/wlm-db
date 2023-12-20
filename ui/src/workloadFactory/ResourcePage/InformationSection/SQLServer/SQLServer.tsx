@@ -107,7 +107,7 @@ const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
                     </Typography>
                     <Typography variant="Regular_14" className={commonStyles.valueCSS}>
                         {resourceDetails?.databaseServer?.creationDate
-                            ? moment(resourceDetails?.databaseServer?.creationDate).format('MMMM DD, YYYY, HH:mm:ss')
+                            ? moment(Number(resourceDetails?.databaseServer?.creationDate)).format('MMMM DD, YYYY, HH:mm:ss')
                             : ''}
                     </Typography>
                 </div>
