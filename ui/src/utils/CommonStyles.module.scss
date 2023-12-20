@@ -56,6 +56,9 @@
 }
 .valueCSS {
     max-width: 210px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 @media screen and (max-width: 1350px) {
