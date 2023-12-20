@@ -26,6 +26,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
+    ACTIVE_NODE: 'Active node',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
     COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
@@ -87,10 +88,10 @@ export const GENERAL = {
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Option 1:',
     STEP_TWO: 'Option 2:',
-    ERROR: 'Error :',
+    ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
     CREATE_PERMISSION_ERROR:
-        'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the codebox on the right to complete this task. Ensure that you have the CloudFormation ',
+        'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [
         'Continue without credentials and create using the codebox on the right.',
@@ -373,6 +374,7 @@ export const GENERAL = {
     HOSTS: 'Hosts',
     PROTECTED: 'Protected',
     NOT_PROTECTED: 'Not protected',
+    PROTECTION_TOOLTIP: [' out of ', ' databases are protected'],
     AWS_BACKUP: 'AWS backup',
     FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
@@ -416,7 +418,7 @@ export const GENERAL = {
     DB_HOST_UNPROTECTED: 'Unprotected',
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    PROTECTION_DATABASES: 'DB',
+    PROTECTION_DATABASES: 'Hosts',
     PROTECTION: 'Protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
     TERRAFORM: 'Terraform',
@@ -469,14 +471,16 @@ export const GENERAL = {
     STEP1: 'Step 1:',
     STEP1TEXT: 'Grant AWS billing and cost management data permissions',
     STEP1POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
-    STEP1POINT2: 'Edit the policy for role role name and add',
+    STEP1POINT2: 'Edit the policy for role and add AWS billing and cost management data permissions',
     STEP1POINT2BUTTON: 'AWS billing and cost management data permissions',
     STEP1POINT3: 'User should quickly get the minimal needed billing permissions with an option to Copy.',
     STEP2: 'Step 2:',
     STEP2TEXT: 'Ensure the payer account activates the cost allocation tag',
     STEP2POINT1: 'Open the AWS Billing and Cost Management console.',
-    STEP2POINT2: 'In the navigation pane, choose Cost allocation tags.',
-    STEP2POINT4: 'Choose Activate.'
+    STEP2POINT2: 'In the navigation pane, choose ',
+    STEP2POINT2CONTINUE: 'Cost allocation tags',
+    STEP2POINT4: 'Choose',
+    STEP2POINT4ACTIVATE: 'Activate.'
 };
 
 export const CODE_VIEWER = {

@@ -55,7 +55,8 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
         storageCostPercent: 0,
         computeCostPercent: 0,
         connectivityCostPercent: 0,
-        otherCostPercent: 0
+        otherCostPercent: 0,
+        requireBillingPerm: false
     }
 };
 

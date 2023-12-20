@@ -22,7 +22,11 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.DB_INSTANCE_TYPE}
                     </Typography>
-                    <Typography variant="Regular_14">
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.ec2Details[0].instanceType || ''}
+                    >
                         {resourceDetails?.topology?.ec2Details[0].instanceType}
                     </Typography>
                 </div>
@@ -31,21 +35,39 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_NAME}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemName}</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.fileSystemName || ''}
+                    >
+                        {resourceDetails?.topology?.fileSystemName}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_ID}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemId}</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.fileSystemId || ''}
+                    >
+                        {resourceDetails?.topology?.fileSystemId}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.FILE_SYS_TYPE}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemType}</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.fileSystemType || ''}
+                    >
+                        {resourceDetails?.topology?.fileSystemType}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
@@ -59,7 +81,13 @@ const StorageCompute = ({ handleToggle, openKey }: accordionType) => {
                         ) : (
                             <Failure />
                         )}
-                        <Typography variant="Regular_14">{resourceDetails?.topology?.fileSystemStatus}</Typography>
+                        <Typography
+                            variant="Regular_14"
+                            className={commonStyles.valueCSS}
+                            title={resourceDetails?.topology?.fileSystemStatus || ''}
+                        >
+                            {resourceDetails?.topology?.fileSystemStatus}
+                        </Typography>
                     </div>
                 </div>
 

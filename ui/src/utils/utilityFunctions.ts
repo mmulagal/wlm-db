@@ -523,6 +523,7 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
 
     let storageList: (string | undefined)[] = [];
     let vpcList: (string | undefined)[] = [];
+    let requireBillingPerm = false;
 
     data?.map((val: any) => {
         if (val?.estimatedUsageCost?.compute) {
@@ -556,6 +557,10 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
         if (val?.estimatedUsageCost?.others) {
             otherCost += val.estimatedUsageCost.others;
         }
+
+        if (val?.estimatedUsageCost?.estimationType === 'pricing') {
+            requireBillingPerm = true;
+        }
     });
 
     const totalCost = storageCost + computeCost + connectivityCost + otherCost;
@@ -569,7 +574,8 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
         storageCostPercent: formatFractionalNumber((storageCost / totalCost) * 100),
         computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
         connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),
-        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100)
+        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100),
+        requireBillingPerm: requireBillingPerm
     };
 };
 

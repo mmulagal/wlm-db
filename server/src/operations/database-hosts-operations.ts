@@ -675,7 +675,8 @@ async function getDatabaseHostSummary(
 
     const { resource_id: resourceId, resource_name: resourceName, region, metadata } = resourceDetail;
     try {
-        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
+        const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId, creationDate } =
+            metadata as unknown as Metadata;
 
         // Check SSM Connection status
         const isSSMConnected = await isSSMConnectionSuccessful(
@@ -717,7 +718,7 @@ async function getDatabaseHostSummary(
                 getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
                 ...(isSSMConnected && getPerformance ? [getPerformanceMetrics(resourceId)] : [Promise.resolve()]), // Fetch io latency data
                 ...(isSSMConnected && getStorageSavings ? [getStorageData(resourceDetail)] : [Promise.resolve()]), // Fetch storage savings data
-                ...(getUsageEstimation ? [getUsageEstimationData(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
+                ...(getUsageEstimation ? [getBillingOrPriceEstimation(resourceDetail)] : [Promise.resolve()]), // Fetch pricing estimate data
                 ...(isSSMConnected && getResourceutilization
                     ? [getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY)]
                     : [Promise.resolve()]),
@@ -729,7 +730,8 @@ async function getDatabaseHostSummary(
                     : [Promise.resolve()])
             ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
         );
-
+        // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
+        serverMetadata.creationDate = creationDate || '';
         databaseHostDetails.id = resourceId;
         databaseHostDetails.name = resourceName || '';
         databaseHostDetails.status = serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;

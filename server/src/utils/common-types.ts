@@ -7,6 +7,7 @@ interface Metadata {
     fsxSecret?: string;
     activeDirectoryName?: string;
     activeDirectoryAddress?: string;
+    creationDate?: string;
 }
 
 interface ResourceDetails {

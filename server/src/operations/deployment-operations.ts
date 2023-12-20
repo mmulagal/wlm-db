@@ -326,7 +326,20 @@ async function deployStackOrCreateTemplateURL(
         );
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+            const response = await createCloudFormationTemplateForUserDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                tags
+            );
+            response.missingPermissions = MISSING_PERMISSIONS(permissions);
+            return response;
         }
         return await deployCloudFormationTemplate(
             credentialsId,
@@ -341,11 +354,9 @@ async function deployStackOrCreateTemplateURL(
             tags
         );
     } catch (err: any) {
-        logger.debug('missing permisson error', err.message);
-        // assume the user has read only permission if the simulatePrincipalPolicy is missing from the credential attached.
-        // Go ahead and create the template url
+        // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
-            return createCloudFormationTemplateForUserDeployment(
+            const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
                 networkConfiguration,
@@ -357,8 +368,10 @@ async function deployStackOrCreateTemplateURL(
                 enableCloudWatch,
                 tags
             );
+            response.missingPermissions = MISSING_PERMISSIONS(err?.message);
+            return response;
         }
-        throw createError(500, 'Error occurred while checking the missing permissions');
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while deploying stack ${err}.`);
     }
 }
 

@@ -1,4 +1,5 @@
 {
+    "_comment": "If any change in operate and view permission than that has to be updated in src/utils/permissions.ts file also.",
     "operate": {
         "Version": "2012-10-17",
         "Statement": [
@@ -43,8 +44,7 @@
                     "ec2:RevokeSecurityGroupEgress",
                     "ec2:RevokeSecurityGroupIngress",
                     "ec2:StartInstances",
-                    "ec2:StopInstances",
-                    "ec2:TerminateInstances"
+                    "ec2:StopInstances"
                 ],
                 "Resource": "*",
                 "Condition": {
@@ -169,6 +169,7 @@
                 "Action": [
                     "secretsmanager:GetSecretValue",
                     "sns:ListTopics",
+                    "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",
                     "ec2:DescribeSubnets",
                     "ec2:DescribeSecurityGroups",

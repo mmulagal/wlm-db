@@ -39,7 +39,8 @@ const DBOverviewProtection = () => {
                     <SquareComponent
                         value={`${protectionData.protectedDb} Databases`}
                         color="var(--chart-4)"
-                        text={'Storage'}
+                        text={'Protected'}
+                        boldValue={true}
                     />
 
                     <div className={styles.dbHostSeparator} />
@@ -47,7 +48,8 @@ const DBOverviewProtection = () => {
                     <SquareComponent
                         value={`${protectionData.unprotectedDb} Databases`}
                         color="var(--chart-disabled)"
-                        text={'Storage'}
+                        text={'Unprotected'}
+                        boldValue={true}
                     />
                 </div>
             </div>

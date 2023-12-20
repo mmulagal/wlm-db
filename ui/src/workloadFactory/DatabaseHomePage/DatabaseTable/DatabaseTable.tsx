@@ -2,8 +2,6 @@ import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DatabaseTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
@@ -48,12 +46,12 @@ const DatabaseTable = () => {
             {
                 id: 'viewOverview',
                 displayName: 'View host overview',
-                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+                disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'viewDatabaseList',
                 displayName: 'View database list',
-                disabled: row?.status === STATUS_CONST.UP || row?.status === STATUS_CONST.DOWN ? false : true
+                disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'remove',
@@ -61,21 +59,6 @@ const DatabaseTable = () => {
                 disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
             }
         ];
-    };
-
-    const protectionTooltipText = (data: any) => {
-        return (
-            <div className={styles.protectionTooltip}>
-                <Typography variant="Semibold_13" className={styles.textHeight}>
-                    {GENERAL.PROTECTED_BY}:
-                </Typography>
-                {data.map((val: any, index: number) => (
-                    <Typography key={index} variant="Regular_13" className={styles.textHeight}>
-                        {val}
-                    </Typography>
-                ))}
-            </div>
-        );
     };
 
     // To delete MSSQL Resources
@@ -229,6 +212,7 @@ const DatabaseTable = () => {
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
+                const totalDbCount = rowData?.databaseCount || 0;
                 let protectedChk = false;
                 if (
                     protectionData?.isAwsBackUpEnabled ||
@@ -237,44 +221,32 @@ const DatabaseTable = () => {
                 ) {
                     protectedChk = true;
                 }
-                let protectedByList = [];
-                if (protectionData?.isFsxOntapSnapshotsEnabled) {
-                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+
+                let protectionDbCount = 0
+                let protectionPercent = 0;
+                if (
+                    protectionData?.isAwsBackUpEnabled ||
+                    protectionData?.isFsxOntapSnapshotsEnabled
+                ) {
+                    protectionDbCount = totalDbCount;
+                    protectionPercent = 100;
+                } else if (protectionData?.isSqlNativeEnabled) {
+                    protectionDbCount = protectionData?.protectedDatabases || 0;
+                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 0;
                 }
-                if (protectionData?.isAwsBackUpEnabled) {
-                    protectedByList.push(GENERAL.AWS_BACKUP);
-                }
-                if (protectionData?.isSqlNativeEnabled) {
-                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
-                }
+
                 return (
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
-                                    {protectedChk && (
-                                        <ProtectedIcon
-                                            style={{
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--green-60)'
-                                            }}
-                                        />
-                                    )}
-                                    {!protectedChk && (
-                                        <NotProtectedIcon
-                                            style={{
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--grey-45)'
-                                            }}
-                                        />
-                                    )}
                                     <Typography variant="Regular_14">
-                                        {protectedChk ? GENERAL.PROTECTED : GENERAL.NOT_PROTECTED}
+                                        {protectedChk ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
                                     </Typography>
                                 </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionTooltipText(protectedByList)}
+                                        {protectionDbCount + GENERAL.PROTECTION_TOOLTIP[0] + totalDbCount + GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
                             </div>

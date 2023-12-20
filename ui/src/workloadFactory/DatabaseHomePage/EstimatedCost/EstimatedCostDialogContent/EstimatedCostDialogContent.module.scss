@@ -68,18 +68,56 @@
                 .numberDigit {
                     font-size: 14px;
                     font-weight: 590;
-                    width: 18px;
+                    width: 24px;
                 }
 
-                .bulletItems {
-                    margin-top: 16px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
+                .separator {
+                    height: 13px;
+                    width: 1px;
+                    color: var(--text-primary);
+                }
 
-                    .singleItem {
+                .dialog-body {
+                    margin-top: 16px;
+                    margin-bottom: -16px;
+                    .code-box {
+                        width: 518px;
+                        background-color: var(--main-background);
+                        padding: 24px 16px 8px 32px;
                         display: flex;
-                        gap: 16px;
+                        position: relative;
+
+                        min-height: 184px;
+                        overflow-y: auto;
+
+                        .code {
+                            width: 100%;
+                            font-weight: 400;
+                            font-size: 14px;
+                            line-height: 24px;
+                            color: var(--text-primary);
+                        }
+
+                        .copy {
+                            width: 100px;
+                            display: flex;
+                            justify-content: flex-end;
+                            height: 20px;
+                            .copy-popover {
+                                width: 140px;
+                                font-size: 13px;
+                                line-height: 20px;
+                                text-align: center;
+                                padding: 2px 2px;
+                            }
+
+                            svg {
+                                cursor: pointer;
+                                &:hover {
+                                    fill: var(--icon-primary);
+                                }
+                            }
+                        }
                     }
                 }
             }

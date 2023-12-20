@@ -101,13 +101,13 @@ const DBDistributionSection = () => {
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">{`Used ${formatSize(
+                            <Typography variant="Semibold_14">{`${formatSize(
                                 parseInt(disk?.used) || 0
-                            )}`}</Typography>
+                            )} used`}</Typography>
                             <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">{`Allocated ${formatSize(
+                            <Typography variant="Regular_14">{`${formatSize(
                                 parseInt(disk?.total) || 0
-                            )}`}</Typography>
+                            )} allocated`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
@@ -119,13 +119,13 @@ const DBDistributionSection = () => {
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">{`Used ${formatSize(
+                            <Typography variant="Semibold_14">{`${formatSize(
                                 parseInt(memory?.used) || 0
-                            )}`}</Typography>
+                            )} used`}</Typography>
                             <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">{`Allocated ${formatSize(
+                            <Typography variant="Regular_14">{`${formatSize(
                                 parseInt(memory?.total) || 0
-                            )}`}</Typography>
+                            )} allocated`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
