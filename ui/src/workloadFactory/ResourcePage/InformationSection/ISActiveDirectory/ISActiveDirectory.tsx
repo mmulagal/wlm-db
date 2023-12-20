@@ -19,7 +19,11 @@ const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.DOMAIN_NAME_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.activeDirectoryDetails?.name || ''}
+                    >
                         {resourceDetails?.topology?.activeDirectoryDetails?.name}
                     </Typography>
                 </div>
@@ -28,7 +32,11 @@ const ISActiveDirectory = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.DNS_ADDRESS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.activeDirectoryDetails?.address || ''}
+                    >
                         {resourceDetails?.topology?.activeDirectoryDetails?.address}
                     </Typography>
                 </div>
