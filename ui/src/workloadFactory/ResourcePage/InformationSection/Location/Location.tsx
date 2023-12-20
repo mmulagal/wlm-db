@@ -19,14 +19,26 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.AWS_ACC_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.awsAccount}</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.awsAccount || ''}
+                    >
+                        {resourceDetails?.topology?.awsAccount}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
                         {GENERAL.REGION_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">{resourceDetails?.topology?.region}</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.topology?.region || ''}
+                    >
+                        {resourceDetails?.topology?.region}
+                    </Typography>
                 </div>
 
                 {resourceDetails?.topology?.ec2Details.length && (
@@ -35,7 +47,11 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
                                 {GENERAL.AZ_INFO_1}
                             </Typography>
-                            <Typography variant="Regular_14">
+                            <Typography
+                                variant="Regular_14"
+                                className={commonStyles.valueCSS}
+                                title={resourceDetails.topology.ec2Details[0].availabilityZone || ''}
+                            >
                                 {resourceDetails.topology.ec2Details[0].availabilityZone}
                             </Typography>
                         </div>
@@ -44,7 +60,11 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
                                 {GENERAL.SUBNET_INFO_1}
                             </Typography>
-                            <Typography variant="Regular_14">
+                            <Typography
+                                variant="Regular_14"
+                                className={commonStyles.valueCSS}
+                                title={resourceDetails.topology.ec2Details[0].subnetId || ''}
+                            >
                                 {resourceDetails.topology.ec2Details[0].subnetId}
                             </Typography>
                         </div>
@@ -57,7 +77,11 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
                                 {GENERAL.AZ_INFO_2}
                             </Typography>
-                            <Typography variant="Regular_14">
+                            <Typography
+                                variant="Regular_14"
+                                className={commonStyles.valueCSS}
+                                title={resourceDetails.topology.ec2Details[1].availabilityZone || ''}
+                            >
                                 {resourceDetails.topology.ec2Details[1].availabilityZone}
                             </Typography>
                         </div>
@@ -66,7 +90,11 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography variant="Semibold_14" className={commonStyles.heading}>
                                 {GENERAL.SUBNET_INFO_2}
                             </Typography>
-                            <Typography variant="Regular_14">
+                            <Typography
+                                variant="Regular_14"
+                                className={commonStyles.valueCSS}
+                                title={resourceDetails.topology.ec2Details[1].subnetId || ''}
+                            >
                                 {resourceDetails.topology.ec2Details[1].subnetId}
                             </Typography>
                         </div>
