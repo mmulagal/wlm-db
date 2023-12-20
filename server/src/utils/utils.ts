@@ -267,6 +267,9 @@ function waitForResolution(fn: () => boolean, delay: number, maxDelay: number) {
     ]);
 }
 
+const deployedStackUrl = (region: string, stackId: string) =>
+    `https://console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/stackinfo?stackId=${stackId}`;
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -283,5 +286,6 @@ export {
     generateHash,
     calculateFsxStorageCapacity,
     sizeInGigaBytes,
-    waitForResolution
+    waitForResolution,
+    deployedStackUrl
 };

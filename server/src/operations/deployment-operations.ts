@@ -61,10 +61,10 @@ import {
     WLMDB_RESOURCE_TAG_VALUE,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
-    DEPLOYED_STACK_URL
+    FCI_NETWORK_VIOLATION_MESSAGE
 } from '../utils/consts';
 import {
+    deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
     isNetworkConfigurationViolated,
@@ -573,7 +573,7 @@ async function deployCloudFormationTemplate(
     // };
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
-    const cfUrl = DEPLOYED_STACK_URL(region, deployStackResponse.StackId!);
+    const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
