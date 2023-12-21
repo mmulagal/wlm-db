@@ -338,7 +338,7 @@ async function deployStackOrCreateTemplateURL(
                 tags
             );
             response.missingPermissions = MISSING_PERMISSIONS(permissions);
-            return response;
+            // return response;
         }
         return await deployCloudFormationTemplate(
             credentialsId,
