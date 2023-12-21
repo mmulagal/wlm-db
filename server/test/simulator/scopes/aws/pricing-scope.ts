@@ -1,4 +1,4 @@
-import { PricingClient, GetProductsCommand } from '@aws-sdk/client-pricing';
+import { PricingClient, GetProductsCommand, GetProductsCommandInput, FilterType } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { mockClient } from 'aws-sdk-client-mock';
 
@@ -130,30 +130,30 @@ const mockVPCPriceGetProductsResponse = {
     PriceList: [ec2StoragePrice]
 };
 
-const FSXREADREQUESTSRATEFILTER = {
+const FSXREADREQUESTSRATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'us-east-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'deploymentOption',
             Value: 'Multi-AZ'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Request'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'fileSystemType',
             Value: 'ONTAP'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'requestType',
             Value: 'Read'
         }
@@ -162,25 +162,25 @@ const FSXREADREQUESTSRATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
-const EC2STORAGERATEFILTER = {
+const EC2STORAGERATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Storage'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'volumeType',
             Value: 'General Purpose'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'volumeApiName',
             Value: 'gp2'
         }
@@ -189,25 +189,25 @@ const EC2STORAGERATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
-const FSXTHROUGHPUTRATEFILTER = {
+const FSXTHROUGHPUTRATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'deploymentOption',
             Value: 'Multi-AZ'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Provisioned Throughput'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'fileSystemType',
             Value: 'ONTAP'
         }
@@ -216,25 +216,25 @@ const FSXTHROUGHPUTRATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
-const FSXIOPSRATEFILTER = {
+const FSXIOPSRATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'deploymentOption',
             Value: 'Multi-AZ'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Provisioned IOPS'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'fileSystemType',
             Value: 'ONTAP'
         }
@@ -243,30 +243,30 @@ const FSXIOPSRATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
-const FSXSTORAGERATEFILTER = {
+const FSXSTORAGERATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'deploymentOption',
             Value: 'Multi-AZ'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Storage'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'fileSystemType',
             Value: 'ONTAP'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'StorageType',
             Value: 'SSD'
         }
@@ -275,40 +275,40 @@ const FSXSTORAGERATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
-const EC2INSTANCERATEFILTER = {
+const EC2INSTANCERATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'preInstalledSw',
             Value: 'SQL std'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Compute Instance'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'instanceType',
             Value: 'm5.xlarge'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'operatingSystem',
             Value: 'windows'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'tenancy',
             Value: 'Shared'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'CapacityStatus',
             Value: 'Used'
         }
@@ -317,30 +317,30 @@ const EC2INSTANCERATEFILTER = {
     FormatVersion: 'aws_v1'
 };
 
-const FSXWRITEREQUESTSRATEFILTER = {
+const FSXWRITEREQUESTSRATEFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'deploymentOption',
             Value: 'Multi-AZ'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'productFamily',
             Value: 'Request'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'fileSystemType',
             Value: 'ONTAP'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'requestType',
             Value: 'Write'
         }
@@ -365,20 +365,20 @@ const mockGetProductsResponse = {
     FormatVersion: 'aws_v1',
     PriceList: [price]
 };
-const VPCFILTER = {
+const VPCFILTER: GetProductsCommandInput = {
     Filters: [
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'regionCode',
             Value: 'ap-southeast-1'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'group',
             Value: 'AWSClientVPN'
         },
         {
-            Type: 'TERM_MATCH',
+            Type: FilterType.TERM_MATCH,
             Field: 'operation',
             Value: 'ClientVPNConnections'
         }
