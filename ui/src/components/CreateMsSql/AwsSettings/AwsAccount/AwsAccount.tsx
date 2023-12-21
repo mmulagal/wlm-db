@@ -208,7 +208,7 @@ const AwsAccount = () => {
                                             </span>
                                             {' '}{GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
-                                        <Button Component="button" variant="link" className={CommonStyles.buttonClass}>
+                                        <Button Component="button" variant="link" onClick={openCredentialTab} className={CommonStyles.buttonClass}>
                                             {GENERAL.HOW_TO_ADD_AWS_CRED}
                                         </Button>
                                     </div>  
