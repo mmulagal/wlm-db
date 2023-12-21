@@ -401,7 +401,7 @@ async function validationForCostExplorer(resourceDetail: ResourceDetails) {
 
     // 1.  We need to check if wlmdb-cost-resource cost allocation tag is activated at account level or not
     const tagsResponse = await getCostAllocationTags(resourceDetail);
-    if (!tagsResponse.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
+    if (!tagsResponse?.Tags?.includes(WLMDB_COST_ALLOCATION_TAG)) {
         throw new Error(
             `Calcaulation of  Billing data has failed as cost allocation tag ${WLMDB_COST_ALLOCATION_TAG} is not activated at account level`
         );

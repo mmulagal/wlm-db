@@ -55,7 +55,6 @@ const ServerSummaryResponse = Type.Object({
     serverId: Type.String(),
     serverVersion: Type.String(),
     serverEdition: Type.String(),
-    serverEngine: Type.String(),
     serverStatus: Type.String(),
     activeConnections: Type.Integer(),
     deploymentModel: Type.String(),

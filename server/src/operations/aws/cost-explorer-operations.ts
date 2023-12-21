@@ -178,7 +178,7 @@ async function getCostAllocationTags(resourceDetail: ResourceDetails) {
         logger.info('Cost allocation tag response', tagsResponse);
         return tagsResponse;
     } catch (error) {
-        logger.error('Error while reteriving cost allocation tag');
+        logger.error('Error while retrieving cost allocation tag');
         throw error;
     }
 }

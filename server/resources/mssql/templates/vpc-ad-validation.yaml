@@ -346,7 +346,7 @@ Resources:
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
             InstanceType: t2.micro
             NetworkInterfaces:
-                - AssociatePublicIpAddress: 'true'
+                - AssociatePublicIpAddress: 'false'
                   DeviceIndex: '0'
                   SubnetId: !Ref 'SubnetID'
                   GroupSet:
@@ -506,7 +506,7 @@ Resources:
                 Version: !GetAtt 'DisableIMDSv1.DefaultVersionNumber'
             InstanceType: t2.micro
             NetworkInterfaces:
-                - AssociatePublicIpAddress: 'true'
+                - AssociatePublicIpAddress: 'false'
                   DeviceIndex: '0'
                   SubnetId: !Ref 'SubnetID'
                   GroupSet:
