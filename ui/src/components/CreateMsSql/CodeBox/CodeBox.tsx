@@ -54,8 +54,6 @@ const CodeBox = () => {
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
-    const permissionWarning = useAppSelector(state => state.msSqlAction.permissionWarning);
-    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -69,13 +67,6 @@ const CodeBox = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoadConfig, refetchApiCount]);
-
-    // In case of missing permission codebox will show CF tab
-    useEffect(() => {
-        if(permissionWarning && isCreateHit !== 0) {
-            setDropdownValue(CODE_VIEWER.CLOUDFORMATION);
-        }
-    }, [permissionWarning, isCreateHit]);
 
     const MenuOptions = [
         {
@@ -464,15 +455,11 @@ const CodeBox = () => {
                 </div>
 
                 {/* Cloud formation button */}
-                {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
-                    !isRightPanelTemplateLoading &&
-                    rightPanelTemplateResponse?.template && (
-                        <div className={styles.cloudFormationButtonContainer}>
-                            <Button variant="secondary" onClick={() => handleRedirectToCF()}>
-                                Redirect to CloudFormation
-                            </Button>
-                        </div>
-                    )}
+                <div className={styles.cloudFormationButtonContainer}>
+                    <Button variant="secondary" onClick={() => handleRedirectToCF()}>
+                        {GENERAL.SAVE_FORM_AS_CLOUD}
+                    </Button>
+                </div>
 
                 <div
                     className={
