@@ -159,7 +159,7 @@ const DatabaseListTable = () => {
         isSorting: false,
         columns: EncryptionColDefs,
         rows: data,
-        pageSize: 10,
+        pageSize: 50,
         isLazyLoading: databaseListLoading
     });
     return (
