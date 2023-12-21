@@ -424,7 +424,7 @@ const Chatbot = () => {
                     }
                     break;
                 case 'fsxUsername':
-                    if (mssqlFormData?.fsxN?.fsxNNewUserName !== value) {
+                    if (mssqlFormData?.fsxN?.fsxNNewUserName) {
                         dispatch(setFsxNExistingUserName(value || null));
                     }
                     break;
