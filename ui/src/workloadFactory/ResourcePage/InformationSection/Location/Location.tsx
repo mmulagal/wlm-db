@@ -50,9 +50,9 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography
                                 variant="Regular_14"
                                 className={commonStyles.valueCSS}
-                                title={resourceDetails.topology.ec2Details[0].availabilityZone || ''}
+                                title={resourceDetails?.topology?.ec2Details[0]?.availabilityZone || ''}
                             >
-                                {resourceDetails.topology.ec2Details[0].availabilityZone}
+                                {resourceDetails?.topology?.ec2Details[0]?.availabilityZone}
                             </Typography>
                         </div>
 
@@ -63,9 +63,9 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography
                                 variant="Regular_14"
                                 className={commonStyles.valueCSS}
-                                title={resourceDetails.topology.ec2Details[0].subnetId || ''}
+                                title={resourceDetails?.topology?.ec2Details[0]?.subnetId || ''}
                             >
-                                {resourceDetails.topology.ec2Details[0].subnetId}
+                                {resourceDetails?.topology?.ec2Details[0]?.subnetId}
                             </Typography>
                         </div>
                     </>
@@ -80,9 +80,9 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography
                                 variant="Regular_14"
                                 className={commonStyles.valueCSS}
-                                title={resourceDetails.topology.ec2Details[1].availabilityZone || ''}
+                                title={resourceDetails?.topology?.ec2Details[1]?.availabilityZone || ''}
                             >
-                                {resourceDetails.topology.ec2Details[1].availabilityZone}
+                                {resourceDetails?.topology?.ec2Details[1]?.availabilityZone}
                             </Typography>
                         </div>
 
@@ -93,9 +93,9 @@ const Location = ({ handleToggle, openKey }: accordionType) => {
                             <Typography
                                 variant="Regular_14"
                                 className={commonStyles.valueCSS}
-                                title={resourceDetails.topology.ec2Details[1].subnetId || ''}
+                                title={resourceDetails?.topology?.ec2Details[1]?.subnetId || ''}
                             >
-                                {resourceDetails.topology.ec2Details[1].subnetId}
+                                {resourceDetails?.topology?.ec2Details[1]?.subnetId}
                             </Typography>
                         </div>
                     </>
