@@ -31,7 +31,9 @@ import {
     Tag,
     DescribeInstancesCommandOutput,
     DescribeTagsCommandInput,
-    DescribeTagsCommand
+    DescribeTagsCommand,
+    DescribeInstanceTypeOfferingsCommandInput,
+    LocationType
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -219,9 +221,9 @@ async function describeNetworkInterfaces(
 async function describeInstanceTypeOfferings(credentialsId: string, region: string, instanceType: string) {
     logger.info('Describe EC2 instance offerings:', { region, instanceType });
 
-    const input = {
+    const input: DescribeInstanceTypeOfferingsCommandInput = {
         DryRun: false,
-        LocationType: 'region',
+        LocationType: LocationType.region,
         Filters: [
             {
                 Name: 'location',

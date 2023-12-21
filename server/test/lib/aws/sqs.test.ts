@@ -1,3 +1,4 @@
+import { QueueAttributeName } from '@aws-sdk/client-sqs';
 import { createQueue, listQueues, receiveMessage } from '../../../src/lib/aws/sqs';
 
 import '../../simulator/scopes/aws/sqs-scope';
@@ -17,7 +18,7 @@ describe('List SNS topics', () => {
 
     it('should receive a SQS queue messages', async () => {
         const resp = await receiveMessage('us-east-1', {
-            AttributeNames: ['SentTimestamp'],
+            AttributeNames: ['SentTimestamp' as QueueAttributeName],
             MaxNumberOfMessages: 1,
             MessageAttributeNames: ['All'],
             QueueUrl: 'https://sqs.us-east-1.amazonaws.com/464262061435/SGTESTQ',
