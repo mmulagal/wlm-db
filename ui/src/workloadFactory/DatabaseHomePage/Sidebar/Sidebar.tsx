@@ -895,7 +895,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 getRightPanelTemplateResponse(openKey)?.template && (
                                     <div className={styles.cloudFormationButtonContainer}>
                                         <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()}>
-                                            Redirect to CloudFormation
+                                            {GENERAL.SAVE_FORM_AS_CLOUD}
                                         </Button>
                                     </div>
                                 )}
