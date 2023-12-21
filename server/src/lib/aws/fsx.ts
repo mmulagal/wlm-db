@@ -14,7 +14,10 @@ import {
     TagResourceCommand,
     TagResourceCommandOutput,
     Tag,
-    ListTagsForResourceCommandInput
+    ListTagsForResourceCommandInput,
+    DescribeVolumesCommandInput,
+    DescribeStorageVirtualMachinesCommandInput,
+    DescribeBackupsCommandInput
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -72,7 +75,7 @@ async function describeFSxVolumes(
     fsxFsId: string
 ): Promise<DescribeVolumesCommandOutput> {
     logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
-    const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+    const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
 
@@ -84,7 +87,7 @@ async function describeFSxVolumes(
 
 async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId: string) {
     logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
-    const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+    const input: DescribeStorageVirtualMachinesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeStorageVirtualMachinesCommand(input));
@@ -100,7 +103,7 @@ async function describeFSxBackups(
 ): Promise<DescribeBackupsCommandOutput> {
     logger.info('Describe Amazon FSx backups:', { credentialsId, region, volumeIds });
 
-    const input = {
+    const input:DescribeBackupsCommandInput  = {
         Filters: [{ Name: 'volume-id', Values: volumeIds }]
     };
 

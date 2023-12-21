@@ -64,6 +64,7 @@ import {
     FCI_NETWORK_VIOLATION_MESSAGE
 } from '../utils/consts';
 import {
+    deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
     isNetworkConfigurationViolated,
@@ -370,7 +371,10 @@ async function deployStackOrCreateTemplateURL(
             response.missingPermissions = MISSING_PERMISSIONS(err?.message);
             return response;
         }
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while deploying stack ${err}.`);
+        throw createError(
+            err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while deploying stack ${err}.`
+        );
     }
 }
 
@@ -492,7 +496,7 @@ async function deployCloudFormationTemplate(
     topicArn: string = '',
     enableCloudWatch: boolean = false,
     tags?: Array<{ key: string; value: string }>
-): Promise<{ cloudFormationStackId: string }> {
+): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
         region,
@@ -572,6 +576,7 @@ async function deployCloudFormationTemplate(
     // };
     // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
+    const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
@@ -584,7 +589,7 @@ async function deployCloudFormationTemplate(
             sqlConfiguration?.sqlDeploymentMode
         );
     }
-    return { cloudFormationStackId: deployStackResponse.StackId! };
+    return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
 }
 
 async function deploymentStatus(accountId: string) {
