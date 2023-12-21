@@ -370,8 +370,10 @@ async function deployStackOrCreateTemplateURL(
             response.missingPermissions = MISSING_PERMISSIONS(err?.message);
             return response;
         }
-        const statusCode = err.statusCode ? err.statusCode : HttpErrorCodes.INTERNAL_SERVER_ERROR;
-        throw createError(statusCode, `Error while deploying stack ${err}.`);
+        throw createError(
+            err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while deploying stack ${err}.`
+        );
     }
 }
 
