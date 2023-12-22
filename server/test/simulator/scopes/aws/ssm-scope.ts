@@ -33,11 +33,30 @@ const dbCountParams = {
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH"'
     ]
 };
-const dbSummaryParams = {
+const dbSummaryParams1 = {
     commands: [
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH"'
     ]
 };
+
+const dbSummaryParams2 = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 75 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+
+const dbSummaryParams3 = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 150 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+
+const dbSummaryParams4 = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 225 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+
 const noOfConnParams = {
     commands: [
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL FOR JSON PATH"'
@@ -166,8 +185,14 @@ ssmMock
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
     .on(SendCommandCommand, { Parameters: dbCountParams })
     .resolves(listSendCommandCommandResponse.dbCountCommandResponse)
-    .on(SendCommandCommand, { Parameters: dbSummaryParams })
-    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams1 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse1)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams2 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse2)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams3 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse3)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams4 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse4)
     .on(SendCommandCommand, { Parameters: noOfConnParams })
     .resolves(listSendCommandCommandResponse.noOfConnCommandResponse)
     .on(SendCommandCommand, { Parameters: serClusterParams })
@@ -216,8 +241,14 @@ ssmMock
 ssmMock
     .on(GetCommandInvocationCommand)
     .resolves(getCommandInvocationResponse.resourceInvocationResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary' })
-    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary1' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse1)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary2' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse2)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary3' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse3)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary4' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse4)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbCount' })
     .resolves(getCommandInvocationResponse.dbCountInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-tablesCount' })

@@ -4,6 +4,8 @@ interface Metadata {
     activeNodeInstanceName?: string;
     standbyNodeInstanceId?: string;
     standbyNodeInstanceName?: string;
+    sqlDeploymentType?: string;
+    fileSystemType?: string;
     fsxSecret?: string;
     activeDirectoryName?: string;
     activeDirectoryAddress?: string;

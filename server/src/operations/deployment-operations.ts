@@ -67,6 +67,7 @@ import {
     deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
+    generateRandomIP,
     isNetworkConfigurationViolated,
     sleep
 } from '../utils/utils';
@@ -79,7 +80,7 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
-import { NetworkViolation } from '../utils/common-types';
+import { Metadata, NetworkViolation } from '../utils/common-types';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -339,7 +340,7 @@ async function deployStackOrCreateTemplateURL(
                 tags
             );
             response.missingPermissions = MISSING_PERMISSIONS(permissions);
-            // return response;
+            return response;
         }
         return await deployCloudFormationTemplate(
             credentialsId,
@@ -680,7 +681,22 @@ async function createDeploymentMockDataInDB(
             fileSystemType: FileSystemTypes.FSXONTAP
         }
     });
+    const metadata: Metadata = {
+        credentialsId: credentialId,
+        sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        fileSystemType: FileSystemTypes.FSXONTAP,
+        activeNodeInstanceId: `i-${randomize('A0', 17)}`,
+        activeNodeInstanceName: `sqlnode1-${randomize('0', 5)}`,
+        creationDate: new Date().getTime().toString(),
+        activeDirectoryName: 'wlm.com',
+        activeDirectoryAddress: generateRandomIP()
+    };
 
+    if (sqlDeploymentMode === 'FCI') {
+        metadata.standbyNodeInstanceId = `i-${randomize('A0', 17)}`;
+        metadata.standbyNodeInstanceName = `sqlnode2-${randomize('0', 5)}`;
+        metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
+    }
     await createResource(accountId, {
         resourceId: randomUUID(),
         resourceName,
@@ -689,13 +705,7 @@ async function createDeploymentMockDataInDB(
         resourceType: RESOURCESTYPE.MSSQL,
         coRelationId: `fs-${randomize('A0', 17)}`,
         region,
-        metadata: {
-            credentialsId: credentialId,
-            sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-            fileSystemType: FileSystemTypes.FSXONTAP,
-            activeNodeInstanceId: `i-${randomize('A0', 17)}`,
-            activeNodeInstanceName: `sqlnode-${randomize('0', 5)}`
-        }
+        metadata
     });
 }
 

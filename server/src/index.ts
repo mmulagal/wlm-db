@@ -43,7 +43,6 @@ import {
     updateAuditGroup,
     updateAuditGroupResponse
 } from './operations/cloud-manager/audit-operations';
-import { checkAndCreateBucketLifecycleConfiguration } from './operations/aws/s3-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
@@ -270,12 +269,6 @@ try {
     await execute('node_modules/prisma/build/index.js migrate deploy');
 } catch (error) {
     logger.error('Failed to initialize database', error);
-}
-
-try {
-    await checkAndCreateBucketLifecycleConfiguration();
-} catch (error) {
-    logger.debug('Failed to check and create S3 bucket lifecycle');
 }
 
 app.listen({ port, host }, err => {
