@@ -681,7 +681,7 @@ async function createDeploymentMockDataInDB(
             fileSystemType: FileSystemTypes.FSXONTAP
         }
     });
-    const mdata: Metadata = {
+    const metadata: Metadata = {
         credentialsId: credentialId,
         sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
         fileSystemType: FileSystemTypes.FSXONTAP,
@@ -693,9 +693,9 @@ async function createDeploymentMockDataInDB(
     };
 
     if (sqlDeploymentMode === 'FCI') {
-        mdata.standbyNodeInstanceId = `i-${randomize('A0', 17)}`;
-        mdata.standbyNodeInstanceName = `sqlnode2-${randomize('0', 5)}`;
-        mdata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
+        metadata.standbyNodeInstanceId = `i-${randomize('A0', 17)}`;
+        metadata.standbyNodeInstanceName = `sqlnode2-${randomize('0', 5)}`;
+        metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
     }
     await createResource(accountId, {
         resourceId: randomUUID(),
@@ -705,7 +705,7 @@ async function createDeploymentMockDataInDB(
         resourceType: RESOURCESTYPE.MSSQL,
         coRelationId: `fs-${randomize('A0', 17)}`,
         region,
-        metadata: mdata
+        metadata
     });
 }
 
