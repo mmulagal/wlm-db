@@ -38,7 +38,8 @@ import {
     CloudProviders,
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
-    WF
+    WF,
+    SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
@@ -46,6 +47,7 @@ import { generateHash } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
+import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
 
@@ -110,12 +112,21 @@ async function callSsmExecution(
         standbyNodeInstanceId
     );
 
+    const cacheHashKey = standbyNodeInstanceId
+        ? generateHash(activeNodeInstanceId + standbyNodeInstanceId + commands)
+        : generateHash(activeNodeInstanceId + commands);
+
     if (!isSSMConnected) {
         let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
         if (standbyNodeInstanceId) {
             errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
         }
+        deleteFromCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
+    if (!process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
     }
 
     let response;
@@ -165,7 +176,9 @@ async function callSsmExecution(
             `Query Execution failed on both nodes. Error:${response?.StandardErrorContent}`
         );
     }
-    return response?.StandardOutputContent;
+    const output = response?.StandardOutputContent;
+    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+    return output;
 }
 
 async function getDatabasesCount(
