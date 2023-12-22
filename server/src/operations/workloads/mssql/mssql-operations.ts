@@ -38,7 +38,8 @@ import {
     CloudProviders,
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
-    WF
+    WF,
+    SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
@@ -46,6 +47,7 @@ import { generateHash } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
+import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
 
@@ -91,7 +93,8 @@ async function callSsmExecution(
     commands: Array<string>,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string,
-    accountId?: string
+    accountId?: string,
+    cacheData: boolean = true
 ) {
     logger.info(
         'Calling SSM command execution',
@@ -110,12 +113,23 @@ async function callSsmExecution(
         standbyNodeInstanceId
     );
 
+    const cacheHashKey = standbyNodeInstanceId
+        ? generateHash(activeNodeInstanceId + standbyNodeInstanceId + commands)
+        : generateHash(activeNodeInstanceId + commands);
+
     if (!isSSMConnected) {
         let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
         if (standbyNodeInstanceId) {
             errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
         }
+        if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+            deleteFromCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey);
+        }
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
+    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
     }
 
     let response;
@@ -165,7 +179,11 @@ async function callSsmExecution(
             `Query Execution failed on both nodes. Error:${response?.StandardErrorContent}`
         );
     }
-    return response?.StandardOutputContent;
+    const output = response?.StandardOutputContent;
+    if (cacheData) {
+        writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+    }
+    return output;
 }
 
 async function getDatabasesCount(
@@ -255,9 +273,19 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
                 region,
                 diskUtilizationCommand,
                 activeNodeInstanceId,
-                standbyNodeInstanceId!
+                standbyNodeInstanceId!,
+                undefined,
+                false
             ),
-            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, standbyNodeInstanceId!)
+            callSsmExecution(
+                credentialsId,
+                region,
+                dbSizecommand,
+                activeNodeInstanceId,
+                standbyNodeInstanceId!,
+                undefined,
+                false
+            )
         ]);
 
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
@@ -275,7 +303,9 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
     logger.debug('Fetching  utilization', response);
     if (response) {
@@ -571,7 +601,9 @@ async function getServerIOLatency(resourceId: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
 
     logger.debug('SQL server IO latency response', response);
@@ -648,7 +680,9 @@ async function getPerformanceMetrics(resourceId: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
