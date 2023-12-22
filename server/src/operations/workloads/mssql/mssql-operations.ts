@@ -122,11 +122,13 @@ async function callSsmExecution(
         if (standbyNodeInstanceId) {
             errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
         }
-        deleteFromCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey);
+        if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+            deleteFromCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey);
+        }
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
 
-    if (!process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
         return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
     }
 
