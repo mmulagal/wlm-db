@@ -270,6 +270,12 @@ function waitForResolution(fn: () => boolean, delay: number, maxDelay: number) {
 const deployedStackUrl = (region: string, stackId: string) =>
     `https://console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/stackinfo?stackId=${stackId}`;
 
+function generateRandomIP(): string {
+    const randomOctet = () => Math.floor(Math.random() * 256);
+    const ip = `${randomOctet()}.${randomOctet()}.${randomOctet()}.${randomOctet()}`;
+    return ip;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -287,5 +293,6 @@ export {
     calculateFsxStorageCapacity,
     sizeInGigaBytes,
     waitForResolution,
-    deployedStackUrl
+    deployedStackUrl,
+    generateRandomIP
 };

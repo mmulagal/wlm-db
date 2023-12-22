@@ -756,6 +756,10 @@ async function getDatabaseHostSummary(
         );
     }
 
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        databaseHostDetails.databaseServer.clusterName = databaseHostDetails.name;
+    }
+
     logger.debug('Database host details', databaseHostDetails);
 
     return databaseHostDetails;

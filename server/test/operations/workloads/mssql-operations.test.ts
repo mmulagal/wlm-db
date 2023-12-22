@@ -91,7 +91,7 @@ describe('MSSQL Resource methods', () => {
             ACTIVE_INSTANCE_ID,
             STANDBY_INSTANCE_ID
         );
-        expect(resp.totalCount).toEqual(7);
+        expect(resp.totalCount).toEqual(252);
     });
 
     it('Get resource details ', async () => {

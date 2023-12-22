@@ -1,10 +1,10 @@
 {
     "DirectoryDescriptions": [
         {
-            "DirectoryId": "d-927example",
+            "DirectoryId": "d-927",
             "DnsIpAddrs": ["172.30.21.228", "172.30.9.82"],
-            "Name": "wlmdb1.example.com",
-            "ShortName": "example",
+            "Name": "wlmdb1.com",
+            "ShortName": "wlmdb1",
             "SsoEnabled": true,
             "Stage": "Active",
             "Type": "MicrosoftAD",
@@ -15,10 +15,10 @@
             }
         },
         {
-            "DirectoryId": "d-926example",
+            "DirectoryId": "d-926",
             "DnsIpAddrs": ["172.30.21.228", "172.30.9.82"],
-            "Name": "wlmdb2.example.com",
-            "ShortName": "example",
+            "Name": "wlmdb2.com",
+            "ShortName": "wlmdb2",
             "SsoEnabled": true,
             "Stage": "Active",
             "Type": "MicrosoftAD",
@@ -29,10 +29,10 @@
             }
         },
         {
-            "DirectoryId": "d-928example",
+            "DirectoryId": "d-928",
             "DnsIpAddrs": ["172.30.21.228", "172.30.9.82"],
-            "Name": "wlmdb3.example.com",
-            "ShortName": "example",
+            "Name": "wlmdb3.com",
+            "ShortName": "wlmdb3",
             "SsoEnabled": true,
             "Stage": "Active",
             "Type": "MicrosoftAD",
@@ -43,10 +43,10 @@
             }
         },
         {
-            "DirectoryId": "d-929example",
+            "DirectoryId": "d-929",
             "DnsIpAddrs": ["172.30.21.228", "172.30.9.82"],
-            "Name": "wlmdb4.example.com",
-            "ShortName": "example",
+            "Name": "wlmdb4.com",
+            "ShortName": "wlmdb4",
             "SsoEnabled": true,
             "Stage": "Active",
             "Type": "MicrosoftAD",

@@ -408,6 +408,7 @@ async function getServerSummary(resourceId: string) {
             serverId: resourceId,
             serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
             serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
+            serverEngine: '',
             serverStatus,
             activeConnections,
             deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
