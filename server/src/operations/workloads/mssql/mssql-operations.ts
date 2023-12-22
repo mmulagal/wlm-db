@@ -93,7 +93,8 @@ async function callSsmExecution(
     commands: Array<string>,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string,
-    accountId?: string
+    accountId?: string,
+    cacheData: boolean = true
 ) {
     logger.info(
         'Calling SSM command execution',
@@ -177,7 +178,9 @@ async function callSsmExecution(
         );
     }
     const output = response?.StandardOutputContent;
-    writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+    if (cacheData) {
+        writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+    }
     return output;
 }
 
@@ -268,9 +271,19 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
                 region,
                 diskUtilizationCommand,
                 activeNodeInstanceId,
-                standbyNodeInstanceId!
+                standbyNodeInstanceId!,
+                undefined,
+                false
             ),
-            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, standbyNodeInstanceId!)
+            callSsmExecution(
+                credentialsId,
+                region,
+                dbSizecommand,
+                activeNodeInstanceId,
+                standbyNodeInstanceId!,
+                undefined,
+                false
+            )
         ]);
 
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
@@ -288,7 +301,9 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
     logger.debug('Fetching  utilization', response);
     if (response) {
@@ -583,7 +598,9 @@ async function getServerIOLatency(resourceId: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
 
     logger.debug('SQL server IO latency response', response);
@@ -660,7 +677,9 @@ async function getPerformanceMetrics(resourceId: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
 
     logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
