@@ -731,7 +731,9 @@ async function getDatabaseHostSummary(
             ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
         );
         // CreationDate needs to be picked up from resource table: https://jira.ngage.netapp.com/browse/DBS-1586
-        serverMetadata.creationDate = creationDate || '';
+        if (serverMetadata) {
+            serverMetadata.creationDate = creationDate || '';
+        }
         databaseHostDetails.id = resourceId;
         databaseHostDetails.name = resourceName || '';
         databaseHostDetails.status = serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
