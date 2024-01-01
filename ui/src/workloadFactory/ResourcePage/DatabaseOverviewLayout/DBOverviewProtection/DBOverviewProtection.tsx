@@ -27,8 +27,6 @@ const DBOverviewProtection = () => {
                 <div className={styles.chartContainer}>
                     <MultiRingDoughnut
                         unProtectColor={'var(--chart-disabled)'}
-                        databaseJobsLoading={false}
-                        databaseHostLoading={databaseListLoading}
                         hostData={protectionData}
                     />
                 </div>
