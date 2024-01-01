@@ -533,7 +533,10 @@ async function getDatabaseHostsSummary(
 
     if (isEmpty(resourceDetails)) {
         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
-        return { count: 0, items: [], nextToken: '' };
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No successfully deployed database hosts found for account ${accountId}`
+        );
     }
 
     let fieldsValues: Array<string> = [];
