@@ -41,6 +41,18 @@ const TopBarButton = () => {
                 </div>
             </Button>
 
+            <Button
+                variant="secondary"
+                onClick={() => {
+                    navigate('../job-monitor');
+                }}
+            >
+                <div className={styles.buttonStyle}>
+                    <Search />
+                    Job Monitor
+                </div>
+            </Button>
+
             {/* <Button variant="secondary" onClick={() => {}}>
                 <div className={styles.buttonStyle}>
                     <Search />

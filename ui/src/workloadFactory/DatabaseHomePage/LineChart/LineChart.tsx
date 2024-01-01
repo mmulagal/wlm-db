@@ -18,21 +18,29 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
         const ctx = chartRef?.current?.getContext('2d');
 
         var gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
-        gradientStroke.addColorStop(0, startColor);
+        gradientStroke.addColorStop(0, '#ACDA6F');
         gradientStroke.addColorStop(1, endColor);
 
         var gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
-        gradientFill.addColorStop(0, startColor);
+        gradientFill.addColorStop(0, '#ACDA6F');
         gradientFill.addColorStop(1, endColor);
+
+        var gradientStroke2 = ctx.createLinearGradient(0, 50, 0, 400);
+        gradientStroke2.addColorStop(0, '#DA1E21');
+        gradientStroke2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
+
+        var gradientFill2 = ctx.createLinearGradient(0, 0, 0, 150);
+        gradientFill2.addColorStop(0, '#DA1E21');
+        gradientFill2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['January', 'February', 'March', 'April', 'May', 'june', 'july', 'gust', 'sep', 'oct'],
+                labels: ['January', 'February', 'March', 'April', 'May', 'june'],
                 datasets: [
                     {
-                        label: 'CPU Data',
-                        data: [25, 20, 15, 20, 18, 25, 20, 15, 20, 18],
+                        label: 'first data set',
+                        data: [310, 270, 290, 300, 315, 210],
                         borderColor: gradientStroke,
 
                         pointBackgroundColor: gradientStroke,
@@ -45,6 +53,21 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                         pointRadius: 4,
                         fill: true,
                         backgroundColor: gradientFill,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Second data set',
+                        data: [100, 90, 110, 70, 85, 99],
+                        borderColor: gradientStroke2,
+
+                        pointBackgroundColor: gradientStroke2,
+                        pointHoverBackgroundColor: gradientStroke2,
+                        pointHoverBorderColor: gradientStroke2,
+                        pointBorderWidth: 1,
+                        pointBorderColor: 'white',
+                        pointRadius: 4,
+                        fill: true,
+                        backgroundColor: gradientFill2,
                         borderWidth: 1
                     }
                 ]
@@ -66,7 +89,7 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                         }
                     },
                     y: {
-                        display: false,
+                        //display: false,
                         beginAtZero: true
                     }
                 }
@@ -82,9 +105,9 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
         <div className={styles.lineChart}>
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
-            <Typography variant="Semibold_14" className={styles.text}>
+            {/* <Typography variant="Semibold_14" className={styles.text}>
                 24 hours trend
-            </Typography>
+            </Typography> */}
         </div>
     );
 };
