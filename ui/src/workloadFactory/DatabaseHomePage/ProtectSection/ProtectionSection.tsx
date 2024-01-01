@@ -24,8 +24,6 @@ const ProtectionSection = () => {
             <div className={styles.secondContainer}>
                 <MultiRingDoughnut
                     hostData={hostData}
-                    databaseHostLoading={databaseHostsLoading}
-                    databaseJobsLoading={databaseJobsLoading}
                 />
 
                 <div className={styles.secondLevel}>

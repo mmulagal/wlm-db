@@ -12,15 +12,11 @@ Chart.register(...registerables);
 type MultiRingDoughnutPropType = {
     unProtectColor?: string;
     hostData?: any;
-    databaseHostLoading?: boolean;
-    databaseJobsLoading?: boolean;
 };
 
 const MultiRingDoughnut = ({
     unProtectColor,
-    hostData,
-    databaseHostLoading,
-    databaseJobsLoading
+    hostData
 }: MultiRingDoughnutPropType) => {
     const unProtectedColor = unProtectColor ? '#E0E0E0' : '#FDC300';
 
@@ -69,10 +65,7 @@ const MultiRingDoughnut = ({
                 </Typography>
                 <Typography variant="Regular_14">{GENERAL.PROTECTION}</Typography>
             </div>
-            {((databaseHostLoading && !hostData) ||
-                databaseJobsLoading ||
-                !hostData ||
-                (hostData?.protectedPercent == 0 && hostData?.unprotectedPercent == 0)) && (
+            {(!hostData || (hostData?.protectedPercent === 0 && hostData?.unprotectedPercent === 0)) && (
                 <div className={styles.emptyCircle}></div>
             )}
             {(hostData?.protectedPercent !== 0 || hostData?.unprotectedPercent !== 0) && (
