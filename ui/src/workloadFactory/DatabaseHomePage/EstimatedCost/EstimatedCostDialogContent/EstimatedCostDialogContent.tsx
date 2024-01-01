@@ -27,12 +27,12 @@ const EstimatedCostDialogContent = () => {
                                 <Typography variant="Regular_14">
                                     <div className={styles.allContent}>
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>1 &nbsp;|</div>
+                                            <div className={styles.numberDigit}>a &nbsp;|</div>
                                             <div className={styles.content}>{GENERAL.STEP1POINT1}</div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>2 &nbsp;|</div>
+                                            <div className={styles.numberDigit}>b &nbsp;|</div>
                                             <div className={styles.content}>
                                                 <div>{GENERAL.STEP1POINT2}</div>
                                                 <div className={styles['dialog-body']}>
@@ -76,12 +76,12 @@ const EstimatedCostDialogContent = () => {
                                 <Typography variant="Regular_14">
                                     <div className={styles.allContent}>
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>1 &nbsp;|</div>
+                                            <div className={styles.numberDigit}>a &nbsp;|</div>
                                             <div className={styles.content}>{GENERAL.STEP2POINT1}</div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>2 &nbsp;|</div>
+                                            <div className={styles.numberDigit}>b &nbsp;|</div>
                                             <div className={styles.content}>
                                                 {GENERAL.STEP2POINT2}{' '}
                                                 <span style={{ fontWeight: '590' }}>{GENERAL.STEP2POINT2CONTINUE}</span>
@@ -89,12 +89,12 @@ const EstimatedCostDialogContent = () => {
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>3 &nbsp;|</div>
+                                            <div className={styles.numberDigit}>c &nbsp;|</div>
                                             <div className={styles.content}>Select the "wlmdb-cost-resource" key.</div>
                                         </div>
 
                                         <div className={styles.listItems}>
-                                            <div className={styles.numberDigit}>4 &nbsp;|</div>
+                                            <div className={styles.numberDigit}>d &nbsp;|</div>
                                             <div className={styles.content}>
                                                 {GENERAL.STEP2POINT4}{' '}
                                                 <span style={{ fontWeight: '590' }}>{GENERAL.STEP2POINT4ACTIVATE}</span>
