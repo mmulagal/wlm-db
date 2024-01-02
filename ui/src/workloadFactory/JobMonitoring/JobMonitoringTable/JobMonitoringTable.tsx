@@ -8,7 +8,6 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 
 const JobMonitoringTable = () => {
-
     // This will move out as new component once second level UX is available
     const ExpandedRow = ({ rowData, rowsState }: any) => {
         const currentRowState = rowsState[rowData.id];
