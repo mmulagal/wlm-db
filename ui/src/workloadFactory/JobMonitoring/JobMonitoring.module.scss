@@ -3,6 +3,22 @@
     width: 100vw;
     background-color: var(--main-background);
     overflow-y: auto;
+    .breadCrumb {
+        margin-top: 16px;
+        margin-left: 40px;
+    }
+
+    .headingContainer {
+        display: flex;
+        width: 1066px;
+        justify-content: space-between;
+        margin-top: 38px;
+        margin-left: 120px;
+        margin-right: 40px;
+        .heading {
+            line-height: unset;
+        }
+    }
 
     .overtimeJobs {
         width: 520px;
@@ -11,7 +27,6 @@
         box-shadow: 2px 2px 6px var(--grey-15);
         margin-left: 120px;
         margin-top: 40px;
-    
         .headSection {
             display: flex;
             height: 72px;
@@ -21,14 +36,8 @@
             flex-shrink: 0;
             border-bottom: 1px solid #e0e0e0;
         }
-    
-        .mainSection {
-            margin-top: 20px;
-            margin-left: 40px;
-        }
-    
     }
-    
+
     .tableSection {
         margin-top: 40px;
         margin-left: 120px;
