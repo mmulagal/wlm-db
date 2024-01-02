@@ -584,10 +584,10 @@ const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
     'For FCI deployment, private subnet 1 Id, route table 1 Id, private subnet 2 Id and route table 2 Id cannot be empty.';
 
 const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
-    'AWS FSx requires route tables to be different for subnets in multiple Availability Zone deployment.';
+    'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
 
 const FCI_NETWORK_VIOLATION_MESSAGE =
-    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
+    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
 
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;

@@ -311,7 +311,7 @@ async function validateVpcId(
                     key: PRIVATE_SUBNET_2,
                     status: 'error',
                     message:
-                        'AWS FSx requires route tables to be different for subnets in multi-zone deployment. Select a different subnet for secondary node ',
+                        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
                     allowedValues: uniqBy(
                         isValidVpc.subnets
                             ?.filter(({ availabilityZone }) => availabilityZone === az2)
