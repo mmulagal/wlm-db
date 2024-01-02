@@ -28,6 +28,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
                     selectedTab === 'chatbot' ? styles['selected-tab'] : styles['non-selected-tab']
                 }`}
                 onClick={() => onTabChange('chatbot')}
+                id="chatbot-tab"
             >
                 <ChatbotIcon />
                 <Typography variant="Semibold_16" color={selectedTab === 'chatbot' ? '#0067c5' : '#404040'}>
