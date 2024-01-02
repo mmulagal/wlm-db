@@ -4,6 +4,7 @@ import LineChart from '../DatabaseHomePage/LineChart/LineChart';
 import styles from './JobMonitoring.module.scss';
 import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { GENERAL } from '../../utils/appConstants';
+import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 function JobMonitoring() {
     const navigate = useNavigate();
     return (
@@ -39,6 +40,9 @@ function JobMonitoring() {
                 <div className={styles.mainSection}>
                     <LineChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
                 </div>
+            </div>
+            <div className={styles.tableSection}>
+                <JobMonitoringTable />
             </div>
         </div>
     );
