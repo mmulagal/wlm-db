@@ -51,11 +51,8 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                         // pointHoverRadius: 10,
                         // pointHoverBorderWidth: 1,
                         pointRadius: 4,
-                        fill: {
-                            target: 'origin', // Set the fill options
-                            above: 'rgb(60, 179, 113, 0.1)'
-                        },
-                        backgroundColor: 'rgb(60, 179, 113, 0.1)',
+                        fill: true,
+                        backgroundColor: gradientFill,
                         borderWidth: 1
                     },
                     {
@@ -70,7 +67,7 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                         pointBorderColor: 'white',
                         pointRadius: 4,
                         fill: true,
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        backgroundColor: gradientFill2,
                         borderWidth: 1
                     }
                 ]
@@ -81,15 +78,12 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                 plugins: {
                     legend: {
                         display: false
-                    },
-                    filler: {
-                        propagate: false
                     }
                 },
 
                 scales: {
                     x: {
-                        //display: false, // Hide X axis labels
+                        display: false, // Hide X axis labels
                         grid: {
                             display: false
                         }
@@ -97,12 +91,7 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                     y: {
                         //display: false,
                         beginAtZero: true
-                        // stacked: true
                     }
-                },
-
-                interaction: {
-                    intersect: false
                 }
             }
         });
