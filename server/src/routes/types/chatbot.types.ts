@@ -32,7 +32,8 @@ const queryBotResponse = Type.Object({
                             value: Type.String()
                         })
                     )
-                )
+                ),
+                data: Type.Optional(Type.Any())
             })
         )
     ),
