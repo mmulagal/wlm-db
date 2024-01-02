@@ -39,10 +39,7 @@ const Home = () => {
                         path={`add-working-environment/database-services/:storage/discover`}
                         element={<DiscoverPage />}
                     />
-                    <Route
-                        path={`database-overview`}
-                        element={<DatabaseHostOverview />}
-                    />
+                    <Route path={`database-overview`} element={<DatabaseHostOverview />} />
                     <Route path={`mssql/:resourceId/:resourceName/`} element={<ResourcePage />}>
                         <Route path={'overview'} element={<MsSqlOverview />} />
                         <Route path={'databases'} element={<Databases />} />
