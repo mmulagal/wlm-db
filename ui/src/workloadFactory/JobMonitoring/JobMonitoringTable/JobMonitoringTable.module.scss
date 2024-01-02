@@ -4,9 +4,29 @@
     }
 
     .secondLevel {
-        height: 60px;
-        text-align: center;
-        margin-top: 40px;
+        display: flex;
+        height: 100px;
+
+        .secondLevelStatusbar {
+            width: 3px;
+            height: inherit;
+    
+            &.completed {
+                background-color: var(--success);
+            }
+            &.failed {
+                background-color: var(--error);
+            }
+            &.running {
+                background-color: var(--cyan-60);
+            }
+        }
+
+        .secondLevelText {
+            text-align: center;
+            margin-top: 40px;
+            margin-left: 40%;
+        }
     }
 
     .statusbar {

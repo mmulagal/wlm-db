@@ -8,12 +8,16 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 
 const JobMonitoringTable = () => {
-
-    const ExpandedRow = ({ rowData, columns, rowsState }: any) => {
+    // This will move out as new component once second level UX is available
+    const ExpandedRow = ({ rowData, rowsState }: any) => {
         const currentRowState = rowsState[rowData.id];
+        const statusType = rowData?.status.toLowerCase();
         return (
           <div className={styles.secondLevel}>
-            Second level job monitoring data
+            <div className={`${styles.secondLevelStatusbar} ${styles[statusType]}`}>&nbsp;</div>
+            <div className={styles.secondLevelText}>
+                Second level job monitoring data
+            </div>
           </div>
         );
       };
@@ -93,7 +97,7 @@ const JobMonitoringTable = () => {
               { updateRowState, rowsState }: any
             ) => {
               const currentRowState = rowsState[rowData.id];
-              const statusType = rowData.status.toLowerCase();
+              const statusType = rowData?.status.toLowerCase();
               return (
                 <>
                     <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
