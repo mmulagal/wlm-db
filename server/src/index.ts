@@ -255,7 +255,7 @@ const app = fastify({
     });
 
 // Blocking for simulator
-if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && (!process.env.hasOwnProperty('isActive') || process.env.isActive)) {
     try {
         await createAndSubscribeToSnsTopicInAllRegions();
         processCloudFormationMessages();
@@ -266,7 +266,9 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
 
 try {
     initializeDatabase();
-    await execute('node_modules/prisma/build/index.js migrate deploy');
+    if (!process.env.hasOwnProperty('isActive') || process.env.isActive) {
+        await execute('node_modules/prisma/build/index.js migrate deploy');
+    }
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
