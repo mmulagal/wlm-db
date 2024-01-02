@@ -1,8 +1,22 @@
 import { Table, TableTopBar, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { ReactComponent as ChevronIconCollapse } from '@netapp/icons/ic_card_arrow_collapse.svg';
+import { ReactComponent as ChevronIconExpand } from '@netapp/icons/ic_card_arrow_expand.svg';
+import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
+import { ReactComponent as Success } from '../../../assets/success.svg';
+import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 
 const JobMonitoringTable = () => {
+
+    const ExpandedRow = ({ rowData, columns, rowsState }: any) => {
+        const currentRowState = rowsState[rowData.id];
+        return (
+          <div className={styles.secondLevel}>
+            Second level job monitoring data
+          </div>
+        );
+      };
 
     const jobsList: any[] = [
         {
@@ -61,20 +75,53 @@ const JobMonitoringTable = () => {
         }
     ];
 
+    const expandRow = (updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean; }): void; new(): any; }, rowData: { id: any; }, currentRowState: { isExpanded: any; }) => {
+        updateRowState(rowData.id)({
+            isExpanded: !currentRowState?.isExpanded,
+        });
+    };
+
     const JobsColDefs: ColumnProps[] = [
+        {
+            id: '0',
+            Header: '',
+            accessor: 'name',
+            width: '49px',
+            renderCell: (
+              value: any,
+              rowData: any,
+              { updateRowState, rowsState }: any
+            ) => {
+              const currentRowState = rowsState[rowData.id];
+              const statusType = rowData.status.toLowerCase();
+              return (
+                <>
+                    <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
+                    <div className={styles.arrow}>
+                        {!currentRowState?.isExpanded && 
+                            <ChevronIconExpand onClick={() => expandRow(updateRowState, rowData, currentRowState)} />
+                        }
+                        {currentRowState?.isExpanded && 
+                            <ChevronIconCollapse onClick={() => expandRow(updateRowState, rowData, currentRowState)} />
+                        }
+                    </div>
+                </>
+              );
+            },
+        },
         {
             id: '1',
             Header: 'Job ID',
             accessor: 'jobId',
             isSortable: true,
-            width: '304px',
+            width: '234px',
         },
         {
             id: '2',
             Header: 'Type',
             accessor: 'type',
             isSortable: true,
-            width: '174px',
+            width: '164px',
             filterOptions: 'auto',
         },
         {
@@ -82,8 +129,20 @@ const JobMonitoringTable = () => {
             Header: 'Status',
             accessor: 'status',
             isSortable: true,
-            width: '174px',
+            width: '164px',
             filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.statusCol}>
+                        <div>
+                            {cellData === 'Completed' && <Success />}
+                            {cellData === 'Failed' && <ErrorIcon />}
+                            {cellData === 'Running' && <InProgress />}
+                        </div>
+                        <div>{cellData}</div>
+                    </div>
+                )
+            }
         },
         {
             id: '4',
@@ -98,20 +157,27 @@ const JobMonitoringTable = () => {
             accessor: 'jobName',
             isSortable: true,
             width: '374px',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.jobname}>
+                        {cellData}
+                    </div>
+                )
+            }
         },
         {
             id: '6',
             Header: 'Start Time',
             accessor: 'startTime',
             isSortable: true,
-            width: '224px',
+            width: '234px',
         },
         {
             id: '7',
             Header: 'End Time',
             accessor: 'endTime',
             isSortable: true,
-            width: '224px',
+            width: '234px',
         }
     ];
 
@@ -125,6 +191,7 @@ const JobMonitoringTable = () => {
     });
 
     const tableComponentProps = {
+        ExpandedRow,
         lazyLoadingText: 'Loading'
     };
 
@@ -142,7 +209,7 @@ const JobMonitoringTable = () => {
                         singularTitle='Job'
                     />
                     <Table
-                        // {...tableComponentProps}
+                        {...tableComponentProps}
                         //@ts-ignore
                         tableProps={tableProps}
                         isDoubleRow={true}
