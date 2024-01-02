@@ -1,5 +1,41 @@
 .jobMonitoringTable {
     .table {
-        width: 1653px;
+        width: 1668px;
+        overflow: visible;
+    }
+
+    .secondLevel {
+        height: 60px;
+        text-align: center;
+        margin-top: 40px;
+    }
+
+    .statusbar {
+        width: 3px;
+        margin-left: -24px;
+        height: inherit;
+
+        &.completed {
+            background-color: var(--success);
+        }
+        &.failed {
+            background-color: var(--error);
+        }
+        &.running {
+            background-color: var(--cyan-60);
+        }
+    }
+
+    .arrow {
+        margin-left: 20px;
+    }
+
+    .statusCol {
+        display: flex;
+        gap: 10px;
+    }
+
+    .jobname {
+        text-wrap: pretty;
     }
 }
