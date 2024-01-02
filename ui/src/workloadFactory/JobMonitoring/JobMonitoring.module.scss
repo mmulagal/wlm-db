@@ -27,7 +27,6 @@
         box-shadow: 2px 2px 6px var(--grey-15);
         margin-left: 120px;
         margin-top: 40px;
-
         .headSection {
             display: flex;
             height: 72px;
@@ -39,8 +38,10 @@
         }
     }
 
-    .mainSection {
-        margin-top: 20px;
-        margin-left: 40px;
+    .tableSection {
+        margin-top: 40px;
+        margin-left: 120px;
+        display: flex;
+        width: 1063px;
     }
 }
