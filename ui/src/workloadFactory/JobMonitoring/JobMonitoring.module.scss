@@ -10,7 +10,7 @@
 
     .headingContainer {
         display: flex;
-        width: 1066px;
+        width: 1627px;
         justify-content: space-between;
         margin-top: 38px;
         margin-left: 120px;
@@ -18,15 +18,24 @@
         .heading {
             line-height: unset;
         }
+
+        .selectContainer {
+            width: 250px;
+        }
+    }
+
+    .chartContainer {
+        margin-left: 120px;
+        display: flex;
+        gap: 24px;
     }
 
     .overtimeJobs {
-        width: 520px;
+        width: 800px;
         height: 260px;
         background-color: var(--content-background);
         box-shadow: 2px 2px 6px var(--grey-15);
-        margin-left: 120px;
-        margin-top: 40px;
+
         .headSection {
             display: flex;
             height: 72px;
