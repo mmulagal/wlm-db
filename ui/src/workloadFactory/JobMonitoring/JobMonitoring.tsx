@@ -1,12 +1,31 @@
-import { Typography } from '@netapp/design-system';
+import { useMemo, useState } from 'react';
+import { FlexLayout, Typography } from '@netapp/design-system';
+import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { useNavigate } from 'react-router-dom';
 import LineChart from '../DatabaseHomePage/LineChart/LineChart';
 import styles from './JobMonitoring.module.scss';
 import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { GENERAL } from '../../utils/appConstants';
 import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
-function JobMonitoring() {
+import JobDistribution from './JobDistribution/JobDistribution';
+import { generateOptionType } from '../../utils/utilityFunctions';
+
+const JobMonitoring = () => {
     const navigate = useNavigate();
+
+    const [dropDownValue, setDropdownValue] = useState('Last 24 hours');
+
+    //Function to generate the options for Select Field for License
+    const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
+        const arr = ['Last 24 hours', 'Last 7 days', 'Last month'];
+        const options: optionType[] = [];
+        arr?.map((val, idx: number) => {
+            const option = generateOptionType(val, val, '', false, '');
+            options.push(option);
+        });
+        return options;
+    }, []);
+
     return (
         <div className={styles.jobMonitoring}>
             <div className={styles.breadCrumb}>
@@ -29,23 +48,42 @@ function JobMonitoring() {
                 <Typography variant="Regular_24" className={styles.heading}>
                     Job monitoring
                 </Typography>
+
+                <div className={styles.selectContainer}>
+                    <SelectField
+                        isClearable={false}
+                        onChange={(selectedOptions: any): void => {
+                            setDropdownValue(selectedOptions?.value);
+                        }}
+                        isSearchable={false}
+                        variant="inline"
+                        options={generateSelectFieldOptions}
+                        defaultValue={[generateSelectFieldOptions[0]]}
+                    />
+                </div>
             </div>
 
-            <div className={styles.overtimeJobs}>
-                <div className={styles.headSection}>
-                    <Typography variant="Regular_16" className={styles.title}>
-                        Overtime jobs
-                    </Typography>
+            <div className={styles.chartContainer}>
+                <div>
+                    <JobDistribution />
                 </div>
-                <div className={styles.mainSection}>
-                    <LineChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
+                <div className={styles.overtimeJobs}>
+                    <div className={styles.headSection}>
+                        <Typography variant="Regular_16" className={styles.title}>
+                            Overtime jobs
+                        </Typography>
+                    </div>
+                    <div className={styles.mainSection}>
+                        <LineChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
+                    </div>
                 </div>
             </div>
+
             <div className={styles.tableSection}>
                 <JobMonitoringTable />
             </div>
         </div>
     );
-}
+};
 
 export default JobMonitoring;
