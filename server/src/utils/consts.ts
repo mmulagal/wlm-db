@@ -424,7 +424,7 @@ const EC2_STRICT_CONDITION_ACTION_NAMES = [
 
 const FSX_STRICT_CONDITION_ACTION_NAMES = ['TagResource'].map(action => `${FSX}:${action}`);
 
-const IAM_STRICT_CONDITION_ACTION_NAMES = ['CreateServiceLinkedRole', 'PassRole'].map(action => `${FSX}:${action}`);
+const IAM_STRICT_CONDITION_ACTION_NAMES = ['CreateServiceLinkedRole', 'PassRole'].map(action => `${IAM}:${action}`);
 
 const AWS_RESOURCES_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
