@@ -48,6 +48,7 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
+import config from 'config';
 
 const logger = getLogger();
 
@@ -137,6 +138,8 @@ async function callSsmExecution(
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
         Parameters: {
+            // DBS-1449 - Adding execution timeout in sec
+            executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
         }
     };
