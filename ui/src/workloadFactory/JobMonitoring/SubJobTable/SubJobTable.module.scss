@@ -1,0 +1,41 @@
+.subJobTable {
+    display: flex;
+    
+    .table {
+        display: flex;
+        padding: 40px 56px;
+        flex-direction: column;
+        align-items: flex-start;
+        align-self: stretch;
+        z-index: 1 !important;
+    }
+
+    .statusbar {
+        width: 3px;
+        margin-left: 0px;
+        height: inherit;
+
+        &.completed {
+            background-color: var(--success);
+        }
+        &.failed {
+            background-color: var(--error);
+        }
+        &.running {
+            background-color: var(--cyan-60);
+        }
+    }
+
+    .arrow {
+        align-items: center;
+    }
+
+    .statusCol {
+        display: flex;
+        gap: 10px;
+    }
+
+    [class*='Table-module_cell'] {
+        background-color: var(--main-background) !important;
+    }
+}
