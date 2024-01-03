@@ -103,7 +103,7 @@ const CodeBoxColor = ({ credID, region, actualData }: codeBoxTypes) => {
                     <span className={credID === '<CredentialId>' ? `${styles.highlightWord}` : ''}>{`${credID}`}</span>
                     <span>{`/regions/`}</span>
                     <span className={region === '<Region>' ? `${styles.highlightWord}` : ''}>{`${region}`}</span>
-                    <span>/cloudformation/stack' \\</span>
+                    <span>/cloudformation/deploy' \\</span>
                 </div>
                 <div>
                     <span>--header 'Authorization: Bearer </span>
