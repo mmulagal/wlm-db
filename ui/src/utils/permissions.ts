@@ -145,19 +145,29 @@ export const PERMISSIONS = {
                     'iam:AddRoleToInstanceProfile',
                     'iam:CreateInstanceProfile',
                     'iam:CreateRole',
-                    'iam:CreateServiceLinkedRole',
                     'iam:DeleteInstanceProfile',
                     'iam:GetPolicy',
                     'iam:GetPolicyVersion',
                     'iam:GetRole',
                     'iam:GetRolePolicy',
                     'iam:GetUser',
-                    'iam:PassRole',
                     'iam:PutRolePolicy',
                     'iam:RemoveRoleFromInstanceProfile',
                     'iam:SimulatePrincipalPolicy'
                 ],
                 Resource: '*'
+            },
+            {
+                Sid: 'IAMConditionalGroup',
+                Effect: 'Allow',
+                Action: ['iam:CreateServiceLinkedRole', 'iam:PassRole'],
+                Resource: '*',
+                Condition: {
+                    StringLike: {
+                        'iam:AWSServiceName': 'ec2.amazonaws.com',
+                        'iam:PassedToService': 'ec2.amazonaws.com'
+                    }
+                }
             }
         ]
     },
