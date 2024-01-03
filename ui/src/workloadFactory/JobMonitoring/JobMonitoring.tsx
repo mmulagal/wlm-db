@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FlexLayout, Typography } from '@netapp/design-system';
+import { Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { useNavigate } from 'react-router-dom';
 import LineChart from '../DatabaseHomePage/LineChart/LineChart';
