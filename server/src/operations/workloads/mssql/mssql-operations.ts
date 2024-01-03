@@ -138,7 +138,8 @@ async function callSsmExecution(
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
         Parameters: {
-            executionTimeout: [config.get<string>('ssm.execution-timeout')], // Execution timeout in sec
+            // DBS-1449 - Adding execution timeout in sec
+            executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
         }
     };
