@@ -1,6 +1,10 @@
 .jobMonitoringTable {
     .table {
-        width: 1627px;
+        width: 1512px;
+    }
+
+    .firstCol {
+        box-shadow: 2px 0px #BBB;
     }
 
     .secondLevel {
@@ -54,7 +58,11 @@
         gap: 10px;
     }
 
-    .jobname {
+    .wrapText {
         text-wrap: pretty;
     }
+}
+
+.wrapText {
+    text-wrap: pretty;
 }

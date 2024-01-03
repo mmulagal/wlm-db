@@ -1,74 +1,61 @@
-import { Table, TableTopBar, useTable } from '@netapp/design-system';
-import styles from './JobMonitoringTable.module.scss';
+import { Table, useTable } from '@netapp/design-system';
+import styles from './SubJobTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ChevronIconCollapse } from '@netapp/icons/ic_card_arrow_collapse.svg';
 import { ReactComponent as ChevronIconExpand } from '@netapp/icons/ic_card_arrow_expand.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
-import SubJobTable from '../SubJobTable/SubJobTable';
+import TaskTable from '../TaskTable/TaskTable';
 
-const JobMonitoringTable = () => {
-    
-    const ExpandedRow = ({ rowData }: any) => {
-        const statusType = rowData?.status.toLowerCase();
+const SubJobTable = ({statusType}: any) => {
+
+    const ExpandedRow = () => {
         return (
-            <SubJobTable statusType={statusType}/>
+            <TaskTable/>
         )
       };
 
     const jobsList: any[] = [
         {
-            jobId: '9876543219236789',
-            type: 'Deployment',
+            name: '9876543219236789',
+            description: 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
             status: 'Completed',
-            resourceName: 'SQL',
-            jobName: 'Microsoft SQL server deployed with stack <stack-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '2876543219236789',
-            type: 'Deployment',
+            name: '2876543219236789',
+            description: 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
             status: 'Completed',
-            resourceName: 'SQL',
-            jobName: 'Microsoft SQL server deployed with stack <stack-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '4876543219006789',
-            type: 'Backup',
+            name: '4876543219006789',
+            description: 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
             status: 'Failed',
-            resourceName: 'SQL',
-            jobName: 'Backup of <host-name>/<job-name> with policy <policy-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '3876543219006789',
-            type: 'Backup',
+            name: '3876543219006789',
+            description: 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
             status: 'Running',
-            resourceName: 'SQL',
-            jobName: 'Backup of <host-name>/<job-name> with policy <policy-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '7876543219036789',
-            type: 'Clone',
+            name: '7876543219036789',
+            description: 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
             status: 'Running',
-            resourceName: 'SQL',
-            jobName: 'Clone of <host-name>/<job-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '8876543219036789',
-            type: 'Clone',
+            name: '8876543219036789',
+            description: 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
             status: 'Completed',
-            resourceName: 'SQL',
-            jobName: 'Clone of <host-name>/<job-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         }
@@ -87,6 +74,7 @@ const JobMonitoringTable = () => {
             accessor: 'name',
             width: '56px',
             isSticky: true,
+            className: styles.firstCol,
             renderCell: (
               value: any,
               rowData: any,
@@ -96,13 +84,12 @@ const JobMonitoringTable = () => {
               const statusType = rowData?.status.toLowerCase();
               return (
                 <>
-                    <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
                     <div className={styles.arrow}>
                         {!currentRowState?.isExpanded && 
-                            <ChevronIconExpand onClick={() => expandRow(updateRowState, rowData, currentRowState)} />
+                            <ChevronIconExpand onClick={() => expandRow(updateRowState, rowData, currentRowState)}/>
                         }
                         {currentRowState?.isExpanded && 
-                            <ChevronIconCollapse onClick={() => expandRow(updateRowState, rowData, currentRowState)} />
+                            <ChevronIconCollapse onClick={() => expandRow(updateRowState, rowData, currentRowState)}/>
                         }
                     </div>
                 </>
@@ -111,19 +98,19 @@ const JobMonitoringTable = () => {
         },
         {
             id: '1',
-            Header: 'Job ID',
-            accessor: 'jobId',
-            className: styles.firstCol,
+            Header: 'Name',
+            accessor: 'name',
             isSortable: true,
-            width: '286px',
+            width: '230px',
+            filterOptions: 'auto',
             isSticky: true,
         },
         {
             id: '2',
-            Header: 'Type',
-            accessor: 'type',
+            Header: 'Description',
+            accessor: 'description',
             isSortable: true,
-            width: '160px',
+            width: '498px',
             filterOptions: 'auto',
         },
         {
@@ -131,7 +118,7 @@ const JobMonitoringTable = () => {
             Header: 'Status',
             accessor: 'status',
             isSortable: true,
-            width: '160px',
+            width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 return (
@@ -148,37 +135,23 @@ const JobMonitoringTable = () => {
         },
         {
             id: '4',
-            Header: 'Resource Name',
-            accessor: 'resourceName',
-            isSortable: true,
-            width: '168px',
-        },
-        {
-            id: '5',
-            Header: 'Job Name',
-            accessor: 'jobName',
-            isSortable: true,
-            width: '340px',
-        },
-        {
-            id: '6',
             Header: 'Start Time',
             accessor: 'startTime',
             isSortable: true,
-            width: '200px',
+            width: '240px',
         },
         {
-            id: '7',
+            id: '5',
             Header: 'End Time',
             accessor: 'endTime',
             isSortable: true,
-            width: '200px',
+            width: '240px',
         },
         {
-            id: '8',
+            id: '6',
             Header: '',
             accessor: '',
-            width: '40px',
+            width: '56px',
         }
     ];
 
@@ -198,22 +171,18 @@ const JobMonitoringTable = () => {
 
     return (
         <>
-            <div className={styles.jobMonitoringTable}>
+            <div className={styles.subJobTable}>
+                <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
                 <div
                     //  @ts-ignore
                     className={`${styles.table}`}
-                >
-                    <TableTopBar
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        pluralTitle='Jobs'
-                        singularTitle='Job'
-                    />
+                >   
                     <Table
                         {...tableComponentProps}
                         //@ts-ignore
                         tableProps={tableProps}
                         isDoubleRow={true}
+                        variant='innerTable'
                     />
                 </div>
             </div>
@@ -221,4 +190,4 @@ const JobMonitoringTable = () => {
     );
 };
 
-export default JobMonitoringTable;
+export default SubJobTable;
