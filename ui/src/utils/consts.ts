@@ -182,3 +182,8 @@ export const CODEBOX_REST_RES = {
     COPY: 'copy',
     ORIGINAL_DATA: 'Original Data'
 };
+
+export const COSTING_TYPES = {
+    BILLING: 'billing',
+    PRICING: 'pricing'
+};
