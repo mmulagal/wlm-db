@@ -1,4 +1,48 @@
 .taskTable {
-    text-align: center;
-    padding: 40px 40px;
+    display: flex;
+
+    .firstItem {
+        height: 72px;
+        width: 286px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--blue-10);
+    }
+
+    .secondItem {
+        height: 72px;
+        width: 498px;
+        display: flex;
+        align-items: center;
+        padding-left: 24px;
+        background-color: var(--blue-10);
+    }
+
+    .thirdItem {
+        height: 72px;
+        width: 180px;
+        display: flex;
+        align-items: center;
+        padding-left: 24px;
+        background-color: var(--blue-10);
+    }
+
+    .fourthItem {
+        height: 72px;
+        width: 240px;
+        display: flex;
+        align-items: center;
+        padding-left: 24px;
+        background-color: var(--blue-10);
+    }
+
+    .fifthItem {
+        height: 72px;
+        width: 240px;
+        display: flex;
+        align-items: center;
+        padding-left: 24px;
+        background-color: var(--blue-10);
+    }
 }
