@@ -227,13 +227,13 @@ async function isAWSBackupEnabled(credentialsId: string, region: string, fileSys
         fileSystemId,
         metadata
     });
-
+    const startTime = Date.now();
     const volumeUuids = await getDataVolumes(credentialsId, region, fileSystemId, metadata);
 
     if (!isEmpty(volumeUuids)) {
         const volumeIds = await getVolumeIdsFromUuids(credentialsId, region, fileSystemId, volumeUuids);
         const backups = await describeFSxBackups(credentialsId, region, volumeIds as string[]);
-
+        logger.info('isAWSBackupEnabled completion', Date.now() - startTime);
         return backups.Backups?.length !== 0;
     }
 }
@@ -250,7 +250,7 @@ async function getOntapVolumesSnapshotCount(
         fileSystemId,
         metadata
     });
-
+    const startTime = Date.now();
     const { activeNodeInstanceId, standbyNodeInstanceId, fsxSecret } = metadata as unknown as Metadata;
 
     const cacheKey = `${activeNodeInstanceId || standbyNodeInstanceId}-snapshot-count`;
@@ -292,6 +292,7 @@ async function getOntapVolumesSnapshotCount(
 
                 if (atleastOneVolumeHasSnapshots) {
                     writeToCache(SSM_COMMAND_CACHE_TYPE, cacheKey, parsedResponse, SIX_HOURS);
+                    logger.info('getOntapVolumesSnapshotCount', Date.now() - startTime);
                     return parsedResponse;
                 }
             }

@@ -214,8 +214,8 @@ async function getDatabasesCount(
 
 async function getDataBasesSummary(resourceId: string) {
     logger.info('Get databases summary for resource:', resourceId);
+    const startTime = Date.now();
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
-
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');
     }
@@ -239,6 +239,7 @@ async function getDataBasesSummary(resourceId: string) {
     // this type of formatting is done because the responses are in array of strings I am concatinating into 1 string by removing '[' and ']' and appending them again to start and end for proper json formatting
     const cleanDBSummanry = sqlResponseParsing(dbSummary);
 
+    logger.info('Databases summary completion', Date.now() - startTime);
     return { databases: cleanDBSummanry };
 }
 
@@ -706,7 +707,7 @@ async function getPerformanceMetrics(resourceId: string) {
 
 async function getNativeSQLBackedupDatabases(resourceId: string) {
     logger.info('Fetch SQL native protection status', { resourceId });
-
+    const startTime = Date.now();
     try {
         const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
             resourceId
@@ -728,6 +729,7 @@ async function getNativeSQLBackedupDatabases(resourceId: string) {
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
 
         logger.debug('SQL native protection status', parsedResponse);
+        logger.info('Databases summary completion', Date.now() - startTime);
         return parsedResponse instanceof Error ? undefined : parsedResponse;
     } catch (err) {
         logger.error('Error getting SQL native protection status', { err });
