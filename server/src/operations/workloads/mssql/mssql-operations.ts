@@ -2,6 +2,7 @@ import Promise from 'bluebird';
 import createError from 'http-errors';
 import { attempt, isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
+import config from 'config';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
@@ -48,7 +49,6 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
 import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
-import config from 'config';
 
 const logger = getLogger();
 
@@ -124,12 +124,14 @@ async function callSsmExecution(
             errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
         }
         if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+            logger.info('Deleting from cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
             deleteFromCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey);
         }
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
     }
 
     if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        logger.info('Reading from cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
         return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
     }
 
@@ -184,6 +186,7 @@ async function callSsmExecution(
     }
     const output = response?.StandardOutputContent;
     if (cacheData) {
+        logger.info('Writing to cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
         writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
     }
     return output;
