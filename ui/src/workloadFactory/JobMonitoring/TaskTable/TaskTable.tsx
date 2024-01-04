@@ -1,4 +1,7 @@
 import styles from './TaskTable.module.scss';
+import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
+import { ReactComponent as Success } from '../../../assets/success.svg';
+import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 
 const TaskTable = () => {
 
@@ -54,7 +57,14 @@ const TaskTable = () => {
                     <div className={styles.taskRow}>
                         <div className={styles.firstItem}>{task.name}</div>
                         <div className={styles.secondItem}>{task.description}</div>
-                        <div className={styles.thirdItem}>{task.status}</div>
+                        <div className={styles.thirdItem}>
+                            <div>
+                                {task.status === 'Completed' && <Success />}
+                                {task.status === 'Failed' && <ErrorIcon />}
+                                {task.status === 'Running' && <InProgress />}
+                            </div>
+                            <div>{task.status}</div>
+                        </div>
                         <div className={styles.fourthItem}>{task.startTime}</div>
                         <div className={styles.fifthItem}>{task.endTime}</div>
                     </div>

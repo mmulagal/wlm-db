@@ -98,7 +98,6 @@ const SubJobTable = ({statusType}: any) => {
             accessor: 'name',
             isSortable: true,
             width: '230px',
-            filterOptions: 'auto',
             isSticky: true,
         },
         {
@@ -107,13 +106,11 @@ const SubJobTable = ({statusType}: any) => {
             accessor: 'description',
             isSortable: true,
             width: '498px',
-            filterOptions: 'auto',
         },
         {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            isSortable: true,
             width: '180px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
