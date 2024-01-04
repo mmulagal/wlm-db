@@ -8,13 +8,10 @@ import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import SubJobTable from '../SubJobTable/SubJobTable';
 
 const JobMonitoringTable = () => {
-    
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
-        return (
-            <SubJobTable statusType={statusType}/>
-        )
-      };
+        return <SubJobTable statusType={statusType} />;
+    };
 
     const jobsList: any[] = [
         {
@@ -73,9 +70,13 @@ const JobMonitoringTable = () => {
         }
     ];
 
-    const expandRow = (updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean; }): void; new(): any; }, rowData: { id: any; }, currentRowState: { isExpanded: any; }) => {
+    const expandRow = (
+        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+        rowData: { id: any },
+        currentRowState: { isExpanded: any }
+    ) => {
         updateRowState(rowData.id)({
-            isExpanded: !currentRowState?.isExpanded,
+            isExpanded: !currentRowState?.isExpanded
         });
     };
 
@@ -86,24 +87,21 @@ const JobMonitoringTable = () => {
             accessor: 'name',
             width: '56px',
             isSticky: true,
-            renderCell: (
-              value: any,
-              rowData: any,
-              { updateRowState, rowsState }: any
-            ) => {
-              const currentRowState = rowsState[rowData.id];
-              const statusType = rowData?.status.toLowerCase();
-              return (
-                <>
-                    <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
-                    <div className={styles.arrow}>
-                        <ArrowIcon 
-                            className={currentRowState?.isExpanded ? styles['arrow-down'] : ''} 
-                            onClick={() => expandRow(updateRowState, rowData, currentRowState)}  />
-                    </div>
-                </>
-              );
-            },
+            renderCell: (value: any, rowData: any, { updateRowState, rowsState }: any) => {
+                const currentRowState = rowsState[rowData.id];
+                const statusType = rowData?.status.toLowerCase();
+                return (
+                    <>
+                        <div className={`${styles.statusbar} ${styles[statusType]}`}>&nbsp;</div>
+                        <div className={styles.arrow}>
+                            <ArrowIcon
+                                className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
+                                onClick={() => expandRow(updateRowState, rowData, currentRowState)}
+                            />
+                        </div>
+                    </>
+                );
+            }
         },
         {
             id: '1',
@@ -112,14 +110,14 @@ const JobMonitoringTable = () => {
             className: styles.firstCol,
             isSortable: true,
             width: '286px',
-            isSticky: true,
+            isSticky: true
         },
         {
             id: '2',
             Header: 'Type',
             accessor: 'type',
             width: '160px',
-            filterOptions: 'auto',
+            filterOptions: 'auto'
         },
         {
             id: '3',
@@ -137,7 +135,7 @@ const JobMonitoringTable = () => {
                         </div>
                         <div>{cellData}</div>
                     </div>
-                )
+                );
             }
         },
         {
@@ -145,34 +143,34 @@ const JobMonitoringTable = () => {
             Header: 'Resource Name',
             accessor: 'resourceName',
             isSortable: true,
-            width: '168px',
+            width: '168px'
         },
         {
             id: '5',
             Header: 'Job Name',
             accessor: 'jobName',
             isSortable: true,
-            width: '340px',
+            width: '340px'
         },
         {
             id: '6',
             Header: 'Start Time',
             accessor: 'startTime',
             isSortable: true,
-            width: '200px',
+            width: '200px'
         },
         {
             id: '7',
             Header: 'End Time',
             accessor: 'endTime',
             isSortable: true,
-            width: '200px',
+            width: '200px'
         },
         {
             id: '8',
             Header: '',
             accessor: '',
-            width: '40px',
+            width: '40px'
         }
     ];
 
@@ -182,7 +180,7 @@ const JobMonitoringTable = () => {
         rows: jobsList,
         pageSize: 50,
         selectionType: 'none',
-        isHorizontalScroll: true,
+        isHorizontalScroll: true
     });
 
     const tableComponentProps = {
@@ -200,8 +198,9 @@ const JobMonitoringTable = () => {
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}
-                        pluralTitle='Jobs'
-                        singularTitle='Job'
+                        pluralTitle="Jobs"
+                        singularTitle="Job"
+                        className={styles.topBarStyle}
                     />
                     <Table
                         {...tableComponentProps}

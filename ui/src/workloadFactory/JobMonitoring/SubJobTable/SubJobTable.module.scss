@@ -1,9 +1,24 @@
 .subJobTable {
     display: flex;
-    
+
+    .extraDiv {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+    }
+
+    .extraDiv2 {
+        width: 56px;
+        position: sticky;
+        left: 4px;
+        z-index: 2;
+        background-color: var(--white);
+        border-bottom: 1px solid var(--border);
+    }
+
     .table {
         display: flex;
-        padding: 40px 56px;
+        padding: 40px 56px 40px 0;
         flex-direction: column;
         align-items: flex-start;
         align-self: stretch;
@@ -11,12 +26,13 @@
     }
 
     .statusbar {
-        width: 3px;
-        margin-left: 0px;
+        // width: 3px;
+        // margin-left: 0px;
         height: inherit;
 
         &.completed {
-            background-color: var(--success);
+            border-left: 4px solid var(--success);
+            // background-color: var(--success);
         }
         &.failed {
             background-color: var(--error);

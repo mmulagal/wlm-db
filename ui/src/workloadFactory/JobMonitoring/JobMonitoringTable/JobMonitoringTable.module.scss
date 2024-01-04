@@ -1,10 +1,18 @@
 .jobMonitoringTable {
     .table {
         width: 1612px;
+
+        .topBarStyle {
+            z-index: 3 !important;
+        }
+
+        [class*='Table-module_header-row'] {
+            z-index: 3 !important;
+        }
     }
 
     .firstCol {
-        box-shadow: 4px 0px 2px #E0E0E0
+        box-shadow: 4px 0px 2px #e0e0e0;
     }
 
     .secondLevel {
