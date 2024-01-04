@@ -32,13 +32,12 @@
 
         &.completed {
             border-left: 4px solid var(--success);
-            // background-color: var(--success);
         }
         &.failed {
-            background-color: var(--error);
+            border-left: 4px solid var(--error);
         }
         &.running {
-            background-color: var(--cyan-60);
+            border-left: 4px solid var(--cyan-60);
         }
     }
 
