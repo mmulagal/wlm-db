@@ -118,7 +118,6 @@ const JobMonitoringTable = () => {
             id: '2',
             Header: 'Type',
             accessor: 'type',
-            isSortable: true,
             width: '160px',
             filterOptions: 'auto',
         },
@@ -126,7 +125,6 @@ const JobMonitoringTable = () => {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            isSortable: true,
             width: '160px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
