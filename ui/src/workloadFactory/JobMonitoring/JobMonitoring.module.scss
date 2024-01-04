@@ -20,7 +20,7 @@
         }
 
         .selectContainer {
-            width: 250px;
+            width: 168px;
         }
     }
 
@@ -32,7 +32,7 @@
 
     .overtimeJobs {
         width: 790px;
-        height: 260px;
+        height: 312px;
         background-color: var(--content-background);
         box-shadow: 2px 2px 6px var(--grey-15);
 
@@ -47,7 +47,7 @@
         }
 
         .mainSection {
-            margin-top: 20px;
+            margin-top: 32px;
             margin-left: 40px;
         }
     }
@@ -57,5 +57,20 @@
         margin-left: 120px;
         display: flex;
         width: 1063px;
+    }
+}
+
+@media screen and (min-width: 1351px) and (max-width: 1520px) {
+    .jobMonitoring {
+        .headingContainer {
+            width: 1124px;
+        }
+        .overtimeJobs {
+            width: 550px;
+
+            [class*='lineChart'] {
+                width: 470px;
+            }
+        }
     }
 }

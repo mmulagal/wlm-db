@@ -18,30 +18,31 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
         const ctx = chartRef?.current?.getContext('2d');
 
         var gradientStroke = ctx.createLinearGradient(0, 50, 0, 400);
-        gradientStroke.addColorStop(0, '#ACDA6F');
+        gradientStroke.addColorStop(0, '#68C6B3');
         gradientStroke.addColorStop(1, endColor);
 
         var gradientFill = ctx.createLinearGradient(0, 0, 0, 150);
-        gradientFill.addColorStop(0, '#ACDA6F');
+        gradientFill.addColorStop(0, '#68C6B3');
         gradientFill.addColorStop(1, endColor);
 
         var gradientStroke2 = ctx.createLinearGradient(0, 50, 0, 400);
         gradientStroke2.addColorStop(0, '#DA1E21');
         gradientStroke2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
 
-        var gradientFill2 = ctx.createLinearGradient(0, 0, 0, 150);
+        var gradientFill2 = ctx.createLinearGradient(0, 0, 0, 165);
+
         gradientFill2.addColorStop(0, '#DA1E21');
-        gradientFill2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
+        gradientFill2.addColorStop(1, 'rgba(255, 0, 0, 0.00)');
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['January', 'February', 'March', 'April', 'May', 'june'],
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
                 datasets: [
                     {
-                        label: 'first data set',
+                        label: 'Success',
                         data: [310, 270, 290, 300, 315, 210],
-                        borderColor: gradientStroke,
+                        borderColor: '#68C6B3',
 
                         pointBackgroundColor: gradientStroke,
                         pointHoverBackgroundColor: gradientStroke,
@@ -53,13 +54,13 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                         pointRadius: 4,
                         fill: {
                             target: 'origin', // Set the fill options
-                            above: 'rgb(60, 179, 113, 0.1)'
+                            above: 'rgba(104, 198, 179, 0.10)'
                         },
-                        backgroundColor: 'rgb(60, 179, 113, 0.1)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(104, 198, 179, 0.10)',
+                        borderWidth: 3
                     },
                     {
-                        label: 'Second data set',
+                        label: 'Failed',
                         data: [100, 90, 110, 70, 85, 99],
                         borderColor: gradientStroke2,
 
@@ -70,8 +71,8 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                         pointBorderColor: 'white',
                         pointRadius: 4,
                         fill: true,
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                        borderWidth: 1
+                        backgroundColor: gradientFill2,
+                        borderWidth: 3
                     }
                 ]
             },
@@ -96,7 +97,8 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                     },
                     y: {
                         //display: false,
-                        beginAtZero: true
+                        beginAtZero: true,
+                        grace: 100
                         // stacked: true
                     }
                 },
