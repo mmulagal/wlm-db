@@ -84,6 +84,31 @@ model config {
 
 }
 
+model job {
+  id                        String    @id @default(uuid())
+  account_id                String    @db.VarChar(80)
+  type                      String    @db.VarChar(80)
+  status                    JOBSTATUS
+  resource_name             String    @db.VarChar(255)
+  name                      String    @db.VarChar(255)
+  description               String?   @db.VarChar(255)
+  error                     String?   @db.Text
+  start_time                DateTime  @db.DateTime(0)
+  end_time                  DateTime? @db.DateTime(0)
+  parent_job_id             String?   @db.VarChar(80)
+  initiator                 String?    @db.VarChar(80)@default("SYSTEM")
+
+  @@index([account_id], map: "k_wlmdb_job_account_id")
+  @@index([parent_job_id], map: "k_wlmdb_job_parent_job_id")
+  @@index([start_time], map: "k_wlmdb_job_start_time")
+}
+
+enum JOBSTATUS {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
 enum DEPLOYMENT_STATUS {
   CREATE_COMPLETE
   CREATE_IN_PROGRESS
