@@ -66,6 +66,40 @@ const JobDistribution = () => {
                         <div className={styles.jobSeparator} />
                     </div>
                 )}
+
+                {window.innerWidth >= 1500 && (
+                    <div className={styles.flexRightSection}>
+                        <div className={styles.valueContainer} style={{ width: '143px' }}>
+                            <Typography variant="Regular_24" className={styles.setLineHeight}>
+                                180
+                            </Typography>
+                            <div className={styles.firstPart}>
+                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
+                                <Typography variant="Regular_14">Completed</Typography>
+                            </div>
+                        </div>
+                        <div className={styles.jobDistributionSeparator} />
+                        <div className={styles.valueContainer} style={{ width: '124px' }}>
+                            <Typography variant="Regular_24" className={styles.setLineHeight}>
+                                48
+                            </Typography>
+                            <div className={styles.firstPart}>
+                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                                <Typography variant="Regular_14">Running</Typography>
+                            </div>
+                        </div>
+                        <div className={styles.jobDistributionSeparator} />
+                        <div className={styles.valueContainer}>
+                            <Typography variant="Regular_24" className={styles.setLineHeight}>
+                                48
+                            </Typography>
+                            <div className={styles.firstPart}>
+                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
+                                <Typography variant="Regular_14">Failed</Typography>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

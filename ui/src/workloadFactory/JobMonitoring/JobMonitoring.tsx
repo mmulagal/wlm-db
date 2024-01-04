@@ -56,7 +56,7 @@ const JobMonitoring = () => {
                             setDropdownValue(selectedOptions?.value);
                         }}
                         isSearchable={false}
-                        variant="inline"
+                        variant="underline"
                         options={generateSelectFieldOptions}
                         defaultValue={[generateSelectFieldOptions[0]]}
                     />
@@ -67,6 +67,8 @@ const JobMonitoring = () => {
                 <div>
                     <JobDistribution />
                 </div>
+
+                {/* Line chart section */}
                 <div className={styles.overtimeJobs}>
                     <div className={styles.headSection}>
                         <Typography variant="Regular_16" className={styles.title}>

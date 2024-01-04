@@ -20,7 +20,7 @@
         }
 
         .selectContainer {
-            width: 250px;
+            width: 168px;
         }
     }
 
@@ -57,5 +57,20 @@
         margin-left: 120px;
         display: flex;
         width: 1063px;
+    }
+}
+
+@media screen and (min-width: 1351px) and (max-width: 1520px) {
+    .jobMonitoring {
+        .headingContainer {
+            width: 1124px;
+        }
+        .overtimeJobs {
+            width: 550px;
+
+            [class*='lineChart'] {
+                width: 470px;
+            }
+        }
     }
 }
