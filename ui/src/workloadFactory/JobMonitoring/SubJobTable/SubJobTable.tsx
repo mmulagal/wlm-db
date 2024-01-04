@@ -1,8 +1,7 @@
 import { Table, useTable } from '@netapp/design-system';
 import styles from './SubJobTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
-import { ReactComponent as ChevronIconCollapse } from '@netapp/icons/ic_card_arrow_collapse.svg';
-import { ReactComponent as ChevronIconExpand } from '@netapp/icons/ic_card_arrow_expand.svg';
+import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
@@ -85,12 +84,9 @@ const SubJobTable = ({statusType}: any) => {
               return (
                 <>
                     <div className={styles.arrow}>
-                        {!currentRowState?.isExpanded && 
-                            <ChevronIconExpand onClick={() => expandRow(updateRowState, rowData, currentRowState)}/>
-                        }
-                        {currentRowState?.isExpanded && 
-                            <ChevronIconCollapse onClick={() => expandRow(updateRowState, rowData, currentRowState)}/>
-                        }
+                        <ArrowIcon 
+                            className={currentRowState?.isExpanded ? styles['arrow-down'] : ''} 
+                            onClick={() => expandRow(updateRowState, rowData, currentRowState)}  />
                     </div>
                 </>
               );
