@@ -1,5 +1,9 @@
 .taskTable {
-    display: flex;
+
+    .taskRow {
+        display: flex;
+        margin-bottom: 1px;
+    }
 
     .firstItem {
         height: 72px;
@@ -8,6 +12,7 @@
         align-items: center;
         justify-content: center;
         background-color: var(--blue-10);
+        
     }
 
     .secondItem {
