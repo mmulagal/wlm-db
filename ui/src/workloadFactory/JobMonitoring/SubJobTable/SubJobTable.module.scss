@@ -28,6 +28,12 @@
 
     .arrow {
         align-items: center;
+        svg {
+            &.arrow-down {
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+            }
+        }
     }
 
     .statusCol {

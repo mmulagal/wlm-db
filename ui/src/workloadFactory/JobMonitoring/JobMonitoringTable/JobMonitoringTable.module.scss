@@ -51,6 +51,12 @@
 
     .arrow {
         margin-left: 20px;
+        svg {
+            &.arrow-down {
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+            }
+        }
     }
 
     .statusCol {
