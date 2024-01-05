@@ -37,7 +37,8 @@ import {
     MSSQL_SYSTEM_DATABASES,
     PRICING,
     WLMDB_COST_ALLOCATION_TAG,
-    API_PAGE_SIZE
+    API_PAGE_SIZE,
+    SqlServerDeploymentModel
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -533,7 +534,10 @@ async function getDatabaseHostsSummary(
 
     if (isEmpty(resourceDetails)) {
         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
-        return { count: 0, items: [], nextToken: '' };
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No successfully deployed database hosts found for account ${accountId}`
+        );
     }
 
     let fieldsValues: Array<string> = [];
@@ -734,6 +738,15 @@ async function getDatabaseHostSummary(
         if (serverMetadata) {
             serverMetadata.creationDate = creationDate || '';
         }
+        if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+            if (topologyData.serverInstallationMode === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                delete serverMetadata.clusterName;
+                serverMetadata.activeNode = resourceName || '';
+                serverMetadata.nodeNames = [resourceName || ''];
+            } else {
+                serverMetadata.clusterName = resourceName || '';
+            }
+        }
         databaseHostDetails.id = resourceId;
         databaseHostDetails.name = resourceName || '';
         databaseHostDetails.status = serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
@@ -756,10 +769,6 @@ async function getDatabaseHostSummary(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Error while fetching database hosts details ${accountId}, ${error}`
         );
-    }
-
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        databaseHostDetails.databaseServer.clusterName = databaseHostDetails.name;
     }
 
     logger.debug('Database host details', databaseHostDetails);

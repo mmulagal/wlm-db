@@ -132,7 +132,8 @@ export const GENERAL = {
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
-    SAME_ROUTE_SUBNET_ERROR: 'AWS FSx requires route tables to be different for subnets in multi-zone deployment.',
+    SAME_ROUTE_SUBNET_ERROR:
+        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Create a new security group',

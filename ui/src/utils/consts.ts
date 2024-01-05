@@ -156,7 +156,7 @@ export const CURL_REQ_TEMPLATE = (
     token: string,
     payload: any
 ) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
@@ -181,4 +181,9 @@ export const CODEBOX_REST_RES = {
     VIEW: 'view',
     COPY: 'copy',
     ORIGINAL_DATA: 'Original Data'
+};
+
+export const COSTING_TYPES = {
+    BILLING: 'billing',
+    PRICING: 'pricing'
 };

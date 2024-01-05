@@ -61,7 +61,10 @@ import {
     WLMDB_RESOURCE_TAG_VALUE,
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE
+    FCI_NETWORK_VIOLATION_MESSAGE,
+    IAM_LINKEDROLE_CONDITION,
+    IAM_EC2_SERVICE,
+    IAM_PASSROLE_CONDITION
 } from '../utils/consts';
 import {
     deployedStackUrl,
@@ -633,6 +636,16 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
             {
                 ContextKeyName: FSX_TAG_CONDITION,
                 ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: IAM_LINKEDROLE_CONDITION,
+                ContextKeyValues: [IAM_EC2_SERVICE],
+                ContextKeyType: 'string'
+            },
+            {
+                ContextKeyName: IAM_PASSROLE_CONDITION,
+                ContextKeyValues: [IAM_EC2_SERVICE],
                 ContextKeyType: 'string'
             }
         ]

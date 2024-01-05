@@ -4,6 +4,7 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
+    COSTING_TYPES,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
@@ -524,6 +525,7 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
     let storageList: (string | undefined)[] = [];
     let vpcList: (string | undefined)[] = [];
     let requireBillingPerm = false;
+    let noDeploymentChk = true;
 
     data?.map((val: any) => {
         if (val?.estimatedUsageCost?.compute) {
@@ -558,8 +560,13 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
             otherCost += val.estimatedUsageCost.others;
         }
 
-        if (val?.estimatedUsageCost?.estimationType === 'pricing') {
+        if (val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING) {
             requireBillingPerm = true;
+        }
+
+        if (val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING || 
+            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.BILLING) {
+            noDeploymentChk = false;
         }
     });
 
@@ -575,7 +582,7 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
         computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
         connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),
         otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100),
-        requireBillingPerm: requireBillingPerm
+        requireBillingPerm: requireBillingPerm || noDeploymentChk
     };
 };
 

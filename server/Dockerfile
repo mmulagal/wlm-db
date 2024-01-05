@@ -34,6 +34,9 @@ COPY patches ./patches/
 
 RUN npm ci --omit=dev
 
+# prisma generate command after every change to Prisma schema to update the generated Prisma Client code.
+RUN npx prisma generate
+
 # build mode - development or production
 ARG ARG_WLMDB_BUILD_MODE
 
