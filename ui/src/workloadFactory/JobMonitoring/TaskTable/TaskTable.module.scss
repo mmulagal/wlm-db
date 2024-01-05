@@ -31,7 +31,11 @@
         align-items: center;
         padding-left: 24px;
         background-color: var(--blue-10);
-        gap: 10px;
+        gap: 16px;
+        .statusIcon {
+            width: 20px;
+            height: 20px;
+        }
     }
 
     .fourthItem {

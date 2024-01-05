@@ -1,4 +1,4 @@
-import { Table, TableTopBar, useTable } from '@netapp/design-system';
+import { Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -6,6 +6,7 @@ import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import SubJobTable from '../SubJobTable/SubJobTable';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const JobMonitoringTable = () => {
     const ExpandedRow = ({ rowData }: any) => {
@@ -39,7 +40,8 @@ const JobMonitoringTable = () => {
             resourceName: 'SQL',
             jobName: 'Backup of <host-name>/<job-name> with policy <policy-name>',
             startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
+            endTime: 'December 20, 2023, 12:25:45',
+            errorMsg: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
         },
         {
             jobId: '3876543219006789',
@@ -125,12 +127,21 @@ const JobMonitoringTable = () => {
             accessor: 'status',
             width: '160px',
             filterOptions: 'auto',
-            renderCell: (cellData: any) => {
+            renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
                             {cellData === 'Completed' && <Success />}
-                            {cellData === 'Failed' && <ErrorIcon />}
+                            {cellData === 'Failed' && 
+                                <Popover
+                                    popoverClass={CommonStyles['popover']}
+                                    children={<Typography variant="Regular_14">{rowData?.errorMsg}</Typography>}
+                                    trigger="hover"
+                                    container={
+                                        <ErrorIcon className={styles.statusIcon}/>
+                                    }
+                                />
+                            }
                             {cellData === 'Running' && <InProgress />}
                         </div>
                         <div>{cellData}</div>
