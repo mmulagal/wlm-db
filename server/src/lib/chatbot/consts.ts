@@ -35,6 +35,7 @@ const FSX_FILE_SYSTEM_ID = 'fsxFileSystemId';
 const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
 const SQL_SERVER_NAME = 'sqlServerName';
 const TAGS = 'tags';
+const DEPLOYMENT_ENVIRONMENT = 'deploymentEnvironment';
 
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
@@ -49,11 +50,27 @@ const FCI = 'fci';
 const NEW = 'NEW';
 const EXISTING = 'EXISTING';
 
+const PROD = 'PRODUCTION';
+const DEV = 'DEVELOPMENT';
+const CUSTOM = 'CUSTOM';
+
+const M5_2XL = 'm5.2xlarge';
+const M5_XL = 'm5.xlarge';
+
 const CHATBOT_UI_PARAMS_FSX = [
     {
         credentialsConfig: [
             {
                 [CREDENTIALS_ID]: {
+                    required: true
+                }
+            }
+        ]
+    },
+    {
+        environmentConfig: [
+            {
+                [DEPLOYMENT_ENVIRONMENT]: {
                     required: true
                 }
             }
@@ -286,6 +303,22 @@ const CHATBOT_UI_PARAMS_FSX = [
     }
 ];
 
+const MSSQL_ENV_PRE_CONFIG = {
+    [PROD]: {
+        [WL_INSTANCE_TYPE]: M5_2XL,
+        [FSX_DEPLOYMENT_MODE]: MULTI_AZ,
+        [DB_SIZE]: 500,
+        [SQL_DEPLOYMENT_MODE]: FCI
+    },
+    [DEV]: {
+        [WL_INSTANCE_TYPE]: M5_XL,
+        [FSX_DEPLOYMENT_MODE]: SINGLE_AZ,
+        [DB_SIZE]: 100,
+        [SQL_DEPLOYMENT_MODE]: STANDALONE
+    },
+    [CUSTOM]: {}
+};
+
 const KEY_LABEL_MAP = {
     [CREDENTIALS_ID]: 'credential id',
     [REGION]: 'region',
@@ -367,5 +400,10 @@ export {
     ROUTE_TABLE_1,
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
-    TAGS
+    TAGS,
+    DEPLOYMENT_ENVIRONMENT,
+    PROD,
+    DEV,
+    CUSTOM,
+    MSSQL_ENV_PRE_CONFIG
 };
