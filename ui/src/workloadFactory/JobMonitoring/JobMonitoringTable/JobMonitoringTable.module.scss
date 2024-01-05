@@ -69,7 +69,21 @@
 
     .statusCol {
         display: flex;
-        gap: 10px;
+        gap: 16px;
+        .popover {
+            display: flex;
+            max-width: 400px;
+            padding: 8px 12px;
+            align-items: flex-start;
+            gap: 10px;
+            border-radius: 4px;
+            background: var(--Light-Tooltip-tooltip-info-bg, #FFF);
+            box-shadow: 4px 4px 12px 0px var(--grey-15);
+        }
+        .statusIcon {
+            width: 20px;
+            height: 20px;
+        }
     }
 
     .wrapText {
@@ -78,6 +92,7 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 24px;
     }
 }
 
