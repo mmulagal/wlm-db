@@ -3,6 +3,7 @@ import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
 import styles from './LineChart.module.scss';
 import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
+import { useAppSelector } from '../../../store/storeHooks';
 
 Chart.register(...registerables);
 
@@ -14,6 +15,7 @@ type colorCodes = {
 
 const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
     const chartRef = useRef(null);
+    const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     // Formatting the dates as "Month Day"
     const formattedLast7DaysDates = lastSevenDays.map(date => {
@@ -155,9 +157,6 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                                 let label =
                                     context.dataset.label === 'Success' ? 'Completed jobs' : 'Failed jobs' || '';
 
-                                if (label) {
-                                    label += ': ';
-                                }
                                 if (context.parsed.y !== null) {
                                     label = `${context.label} | ${context.parsed.y} ${label}`;
                                 }
@@ -176,12 +175,19 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                         display: selectedTimeFrame === 'Last 30 days' ? false : true, // Hide X axis labels
                         grid: {
                             display: false
+                        },
+                        ticks: {
+                            color: isDarkTheme ? '#fff' : '#404040'
                         }
                     },
+
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 100
+                        grace: 100,
+                        ticks: {
+                            color: isDarkTheme ? '#fff' : '#404040'
+                        }
                         // stacked: true
                     }
                 },
