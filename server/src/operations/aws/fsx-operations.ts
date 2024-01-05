@@ -126,7 +126,7 @@ async function getFSXDetails(credentialsId: string, region: string, fileSys: any
  * and also available from the given VPC.
  */
 async function getFSxFileSystemsList(credentialsId: string, region: string, vpcId: string) {
-    logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
+    logger.info('List FSx for ONTAP of type SSD', { credentialsId, region, vpcId });
 
     let allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
 
