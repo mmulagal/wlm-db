@@ -881,3 +881,43 @@ export const openCredentialTab = () => {
     }
     window.open(url, '_blank', 'noopener');
 };
+
+function getLastSevenDays() {
+    let dates = [];
+    for (let i = 0; i < 7; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+    }
+    return dates;
+}
+
+// Getting the last 7 days
+export const lastSevenDays = getLastSevenDays().reverse();
+
+function getLast14Days() {
+    let dates = [];
+    for (let i = 0; i < 14; i++) {
+        let date = new Date();
+        if (i % 2 === 0) {
+            date.setDate(date.getDate() - i);
+            dates.push(date);
+        }
+    }
+    return dates;
+}
+
+// Getting the last 7 days
+export const last14Days = getLast14Days().reverse();
+
+function get30Days() {
+    let dates = [];
+    for (let i = 0; i < 30; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+    }
+    return dates;
+}
+
+export const last30Days = get30Days().reverse();
