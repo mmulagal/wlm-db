@@ -16,6 +16,7 @@ import {
     setResourceLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../../utils/appConstants';
+import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -72,6 +73,7 @@ const DatabaseHostOverview = () => {
                         {
                             title: GENERAL.DATABASES,
                             onClick: () => {
+                                resetDBHomePageState(dispatch);
                                 navigate('../databases');
                             }
                         },
