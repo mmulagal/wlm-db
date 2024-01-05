@@ -23,6 +23,8 @@ import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
+import { databaseHomeApi } from './apiService';
+import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -921,3 +923,8 @@ function get30Days() {
 }
 
 export const last30Days = get30Days().reverse();
+
+export const resetDBHomePageState = (dispatch: any) => {
+    dispatch(databaseHomeApi.util.resetApiState());
+    dispatch(addInitialData(initialDBHomepageState));
+}
