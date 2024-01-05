@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
 import { ReactComponent as SpaceShip } from '../../../assets/ic_spaceship.svg';
 import { ReactComponent as Monitoring } from '../../../assets/ic_monitoring.svg';
+import { ReactComponent as Policy } from '../../../assets/ic_policy.svg';
 
 import styles from './TopBarButtons.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
@@ -36,12 +37,12 @@ const TopBarButton = () => {
                             navigate('../job-monitor');
                         }}
                     >
-                        Job monitoring
+                        {GENERAL.JOB_MONITORING}
                     </Button>
                 </div>
 
                 <div className={styles.firstButton}>
-                    <Monitoring />
+                    <Policy />
                     <Button
                         variant="text"
                         isDisabled
@@ -50,7 +51,7 @@ const TopBarButton = () => {
                             navigate('../job-monitor');
                         }}
                     >
-                        Policy management
+                        {GENERAL.POLICY_MANAGEMENT}
                     </Button>
                 </div>
             </div>

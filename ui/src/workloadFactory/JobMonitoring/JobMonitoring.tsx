@@ -38,7 +38,7 @@ const JobMonitoring = () => {
                             }
                         },
                         {
-                            title: 'Job monitoring'
+                            title: GENERAL.JOB_MONITORING
                         }
                     ]}
                 />
@@ -46,7 +46,7 @@ const JobMonitoring = () => {
 
             <div className={styles.headingContainer}>
                 <Typography variant="Regular_24" className={styles.heading}>
-                    Job monitoring
+                    {GENERAL.JOB_MONITORING}
                 </Typography>
 
                 <div className={styles.selectContainer}>
@@ -72,7 +72,7 @@ const JobMonitoring = () => {
                 <div className={styles.overtimeJobs}>
                     <div className={styles.headSection}>
                         <Typography variant="Regular_16" className={styles.title}>
-                            Overtime jobs
+                            {GENERAL.JOBS_STATUS_OVER_TIME}
                         </Typography>
                     </div>
                     <div className={styles.mainSection}>

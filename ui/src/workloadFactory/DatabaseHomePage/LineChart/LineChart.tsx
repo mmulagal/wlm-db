@@ -14,7 +14,6 @@ type colorCodes = {
 
 const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
     const chartRef = useRef(null);
-    console.log(selectedTimeFrame);
 
     // Formatting the dates as "Month Day"
     const formattedLast7DaysDates = lastSevenDays.map(date => {
