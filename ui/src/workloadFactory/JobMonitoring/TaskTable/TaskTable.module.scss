@@ -36,16 +36,6 @@
             width: 20px;
             height: 20px;
         }
-        .popover {
-            display: flex;
-            max-width: 400px;
-            padding: 8px 12px;
-            align-items: flex-start;
-            gap: 10px;
-            border-radius: 4px;
-            background: var(--Light-Tooltip-tooltip-info-bg, #FFF);
-            box-shadow: 4px 4px 12px 0px var(--grey-15);
-        }
     }
 
     .fourthItem {

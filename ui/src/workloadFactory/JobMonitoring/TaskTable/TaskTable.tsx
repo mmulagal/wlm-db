@@ -3,6 +3,7 @@ import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { Popover, Typography } from '@netapp/design-system';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const TaskTable = () => {
     const taskList: any[] = [
@@ -73,7 +74,7 @@ const TaskTable = () => {
                                 {task.status === 'Completed' && <Success />}
                                 {task.status === 'Failed' && 
                                     <Popover
-                                        popoverClass={styles['popover']}
+                                        popoverClass={CommonStyles['popover']}
                                         children={<Typography variant="Regular_14">{task?.errorMsg}</Typography>}
                                         trigger="hover"
                                         container={
