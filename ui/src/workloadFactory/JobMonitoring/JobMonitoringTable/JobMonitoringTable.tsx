@@ -150,21 +150,43 @@ const JobMonitoringTable = () => {
             Header: 'Job Name',
             accessor: 'jobName',
             isSortable: true,
-            width: '340px'
+            className: styles.wrapText,
+            width: '340px',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.wrapText}>
+                        {cellData}
+                    </div>
+                );
+            }
         },
         {
             id: '6',
             Header: 'Start Time',
             accessor: 'startTime',
             isSortable: true,
-            width: '200px'
+            width: '200px',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.wrapText}>
+                        {cellData}
+                    </div>
+                );
+            }
         },
         {
             id: '7',
             Header: 'End Time',
             accessor: 'endTime',
             isSortable: true,
-            width: '200px'
+            width: '200px',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.wrapText}>
+                        {cellData}
+                    </div>
+                );
+            }
         },
         {
             id: '8',
@@ -188,6 +210,11 @@ const JobMonitoringTable = () => {
         lazyLoadingText: 'Loading'
     };
 
+    const exportToCsv = {
+        options: {},
+        fileName: 'Test'
+    };
+
     return (
         <>
             <div className={styles.jobMonitoringTable}>
@@ -201,6 +228,7 @@ const JobMonitoringTable = () => {
                         pluralTitle="Jobs"
                         singularTitle="Job"
                         className={styles.topBarStyle}
+                        exportToCsvOptions={exportToCsv}
                     />
                     <Table
                         {...tableComponentProps}

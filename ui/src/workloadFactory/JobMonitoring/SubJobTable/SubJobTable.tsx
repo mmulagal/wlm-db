@@ -109,7 +109,14 @@ const SubJobTable = ({ statusType }: any) => {
             Header: 'Description',
             accessor: 'description',
             isSortable: true,
-            width: '498px'
+            width: '498px',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.wrapText}>
+                        {cellData}
+                    </div>
+                );
+            }
         },
         {
             id: '3',
