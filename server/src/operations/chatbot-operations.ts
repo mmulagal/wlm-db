@@ -2,7 +2,7 @@ import { omit } from 'lodash-es';
 import Chatbot from '../lib/chatbot/chatbot';
 import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib/chatbot/helpers';
 import { queryBotResponseType } from '../routes/types/chatbot.types';
-import { CHATBOT_UI_PARAMS_FSX } from '../lib/chatbot/consts';
+import { CHATBOT_UI_PARAMS_FSX, DEPLOYMENT_ENVIRONMENT, MSSQL_ENV_PRE_CONFIG } from '../lib/chatbot/consts';
 import getLogger from '../utils/logger';
 
 const logger = getLogger();
@@ -27,7 +27,11 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                 return value;
             }
             case 'DeployMsSql': {
-                const params = { ...intent.params };
+                const params = {
+                    ...intent.params,
+                    ...MSSQL_ENV_PRE_CONFIG[intent.params[DEPLOYMENT_ENVIRONMENT] as keyof typeof MSSQL_ENV_PRE_CONFIG]
+                };
+
                 // let params: DeployMsSqlParamsType = {};
                 // delete params.complete;
                 if (oldParams) {

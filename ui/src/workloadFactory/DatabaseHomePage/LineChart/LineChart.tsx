@@ -66,6 +66,36 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                 return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
             }
         };
+
+        const constructDataSuccess = () => {
+            if (selectedTimeFrame === 'Last 7 days') {
+                return [310, 270, 290, 300, 315, 210, 250];
+            } else if (selectedTimeFrame === 'Last 14 days') {
+                return [310, 270, 290, 300, 315, 210, 250];
+            } else if (selectedTimeFrame === 'Last 30 days') {
+                return [
+                    310, 270, 290, 300, 315, 210, 250, 310, 270, 290, 300, 315, 210, 250, 310, 270, 290, 300, 315, 210,
+                    250, 310, 270, 290, 300, 315, 210, 250, 220, 320
+                ];
+            } else {
+                return [310, 270, 290, 300, 315, 210];
+            }
+        };
+
+        const constructDataFailed = () => {
+            if (selectedTimeFrame === 'Last 7 days') {
+                return [100, 90, 110, 70, 85, 99, 105];
+            } else if (selectedTimeFrame === 'Last 14 days') {
+                return [100, 90, 110, 70, 85, 99, 105];
+            } else if (selectedTimeFrame === 'Last 30 days') {
+                return [
+                    100, 90, 110, 70, 85, 99, 105, 100, 90, 110, 70, 85, 99, 105, 100, 90, 110, 70, 85, 99, 105, 100,
+                    90, 110, 70, 85, 99, 105, 88, 97
+                ];
+            } else {
+                return [100, 90, 110, 70, 85, 99];
+            }
+        };
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
             type: 'line',
@@ -74,7 +104,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                 datasets: [
                     {
                         label: 'Success',
-                        data: [310, 270, 290, 300, 315, 210],
+                        data: constructDataSuccess(),
                         borderColor: '#68C6B3',
 
                         pointBackgroundColor: gradientStroke,
@@ -94,7 +124,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                     },
                     {
                         label: 'Failed',
-                        data: [100, 90, 110, 70, 85, 99],
+                        data: constructDataFailed(),
                         borderColor: gradientStroke2,
 
                         pointBackgroundColor: gradientStroke2,
