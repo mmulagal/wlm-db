@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@netapp/design-system';
+import { Button, ButtonWithDropdown } from '@netapp/design-system';
 
 import { useNavigate } from 'react-router-dom';
 import { WLF_TO_FORM_NAVIGATE } from '../../../utils/consts';
@@ -55,17 +55,35 @@ const TopBarButton = () => {
                     </Button>
                 </div>
             </div>
-            <Button
-                variant="primary"
-                onClick={() => {
-                    navigate(WLF_TO_FORM_NAVIGATE);
-                }}
-            >
-                <div className={styles.buttonStyle}>
-                    <SpaceShip />
-                    {GENERAL.DEPLOY_NEW_DATABASE}
-                </div>
-            </Button>
+            <div className={styles.secondColumn}>
+                <Button
+                    variant="primary"
+                    onClick={() => {
+                        navigate(WLF_TO_FORM_NAVIGATE);
+                    }}
+                >
+                    <div className={styles.buttonStyle}>
+                        <SpaceShip />
+                        {GENERAL.DEPLOY_NEW_DATABASE}
+                    </div>
+                </Button>
+                <ButtonWithDropdown
+                    variant="secondary"
+                    items={[
+                        {
+                            children: GENERAL.MIGRATE
+                        },
+                        {
+                            children: GENERAL.CLONE
+                        },
+                        {
+                            children: GENERAL.PROTECT
+                        }
+                    ]}
+                >
+                    Actions
+                </ButtonWithDropdown>
+            </div>
         </div>
     );
 };

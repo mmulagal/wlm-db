@@ -12,6 +12,11 @@
             align-items: center;
         }
     }
+
+    .secondColumn {
+        display: flex;
+        gap: 24px;
+    }
     button {
         --button-min-width: 160px;
         --button-height: 32px;
