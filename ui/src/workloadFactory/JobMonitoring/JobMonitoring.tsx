@@ -17,7 +17,7 @@ const JobMonitoring = () => {
 
     //Function to generate the options for Select Field for License
     const generateSelectFieldOptions = useMemo<optionType[]>((): optionType[] => {
-        const arr = ['Last 24 hours', 'Last 7 days', 'Last month'];
+        const arr = ['Last 24 hours', 'Last 7 days', 'Last 14 days', 'Last 30 days'];
         const options: optionType[] = [];
         arr?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '');
@@ -76,7 +76,11 @@ const JobMonitoring = () => {
                         </Typography>
                     </div>
                     <div className={styles.mainSection}>
-                        <LineChart startColor="#A815F3" endColor="rgba(168, 21, 243, 0.00)" />
+                        <LineChart
+                            startColor="#A815F3"
+                            endColor="rgba(168, 21, 243, 0.00)"
+                            selectedTimeFrame={dropDownValue}
+                        />
                     </div>
                 </div>
             </div>

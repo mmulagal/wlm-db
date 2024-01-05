@@ -2,16 +2,38 @@ import React, { useEffect, useRef } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
 import styles from './LineChart.module.scss';
+import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 
 Chart.register(...registerables);
 
 type colorCodes = {
     startColor: string;
     endColor: string;
+    selectedTimeFrame: string;
 };
 
-const LineChart = ({ startColor, endColor }: colorCodes) => {
+const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
     const chartRef = useRef(null);
+    console.log(selectedTimeFrame);
+
+    // Formatting the dates as "Month Day"
+    const formattedLast7DaysDates = lastSevenDays.map(date => {
+        const month = date.toLocaleString('default', { month: 'short' });
+        const day = date.getDate();
+        return `${month}. ${day}`;
+    });
+
+    const formattedLast14DaysDates = last14Days.map(date => {
+        const month = date.toLocaleString('default', { month: 'short' });
+        const day = date.getDate();
+        return `${month}. ${day}`;
+    });
+
+    const formattedLast30DaysDates = last30Days.map(date => {
+        const month = date.toLocaleString('default', { month: 'long' });
+        const day = date.getDate();
+        return `${month} ${day}`;
+    });
 
     useEffect(() => {
         //@ts-ignore
@@ -33,11 +55,23 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
 
         gradientFill2.addColorStop(0, '#DA1E21');
         gradientFill2.addColorStop(1, 'rgba(255, 0, 0, 0.00)');
+
+        const constructLabel = () => {
+            if (selectedTimeFrame === 'Last 7 days') {
+                return formattedLast7DaysDates;
+            } else if (selectedTimeFrame === 'Last 14 days') {
+                return formattedLast14DaysDates;
+            } else if (selectedTimeFrame === 'Last 30 days') {
+                return formattedLast30DaysDates;
+            } else {
+                return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+            }
+        };
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                labels: constructLabel(),
                 datasets: [
                     {
                         label: 'Success',
@@ -85,12 +119,32 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
                     },
                     filler: {
                         propagate: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label =
+                                    context.dataset.label === 'Success' ? 'Completed jobs' : 'Failed jobs' || '';
+
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label = `${context.label} | ${context.parsed.y} ${label}`;
+                                }
+                                if (selectedTimeFrame === 'Last 30 days') {
+                                    return label;
+                                } else {
+                                    return `${context.dataset.label}: ${context.parsed.y}`;
+                                }
+                            }
+                        }
                     }
                 },
 
                 scales: {
                     x: {
-                        //display: false, // Hide X axis labels
+                        display: selectedTimeFrame === 'Last 30 days' ? false : true, // Hide X axis labels
                         grid: {
                             display: false
                         }
@@ -112,7 +166,7 @@ const LineChart = ({ startColor, endColor }: colorCodes) => {
         return () => {
             mayBarChart.destroy();
         };
-    }, []);
+    }, [selectedTimeFrame]);
 
     return (
         <div className={styles.lineChart}>
