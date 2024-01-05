@@ -6,6 +6,7 @@ import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import SubJobTable from '../SubJobTable/SubJobTable';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
 const JobMonitoringTable = () => {
     const ExpandedRow = ({ rowData }: any) => {
@@ -133,7 +134,7 @@ const JobMonitoringTable = () => {
                             {cellData === 'Completed' && <Success />}
                             {cellData === 'Failed' && 
                                 <Popover
-                                    popoverClass={styles['popover']}
+                                    popoverClass={CommonStyles['popover']}
                                     children={<Typography variant="Regular_14">{rowData?.errorMsg}</Typography>}
                                     trigger="hover"
                                     container={
