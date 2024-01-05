@@ -480,7 +480,10 @@ export const GENERAL = {
     STEP2POINT2: 'In the navigation pane, choose ',
     STEP2POINT2CONTINUE: 'Cost allocation tags',
     STEP2POINT4: 'Select',
-    STEP2POINT4ACTIVATE: 'Activate.'
+    STEP2POINT4ACTIVATE: 'Activate.',
+    JOBS_STATUS_OVER_TIME: 'Jobs status over time',
+    JOB_MONITORING: 'Job monitoring',
+    POLICY_MANAGEMENT: 'Policy management'
 };
 
 export const CODE_VIEWER = {
