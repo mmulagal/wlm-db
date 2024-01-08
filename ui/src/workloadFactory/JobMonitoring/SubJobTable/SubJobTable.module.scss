@@ -40,7 +40,8 @@
         &.failed {
             border-left: 4px solid var(--error);
         }
-        &.running {
+        &.running,
+        &.in_progress {
             border-left: 4px solid var(--cyan-60);
         }
     }

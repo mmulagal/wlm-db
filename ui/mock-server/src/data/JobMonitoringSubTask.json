@@ -1,0 +1,236 @@
+{
+    "jobs": [
+      {
+        "id": "9876543219236734",
+        "accountId": "account123",
+        "name": "Microsoft SQL server deployed with stack <stack-name>",
+        "description": "Microsoft SQL server deployed with stack <stack-name>",
+        "type": "Deployment",
+        "status": "COMPLETED",
+        "startTime": "December 20, 2023, 10:25:45",
+        "endTime": "December 20, 2023, 12:25:45",
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "initiator": "",
+        "subJobs": [
+          {
+            "id": "9876543219236789",
+            "accountId": "account123",
+            "name": "9876543219236789",
+            "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+            "type": "",
+            "status": "COMPLETED",
+            "startTime": "December 20, 2023, 10:25:45",
+            "endTime": "December 20, 2023, 12:25:45",
+            "resourceName": "",
+            "parentJobId": "9876543219236734",
+            "initiator": "",
+            "subJobs": [
+              {
+                "id": "Task1",
+                "accountId": "account123",
+                "name": "Task 1",
+                "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                "type": "",
+                "status": "COMPLETED",
+                "startTime": "December 20, 2023, 10:25:45",
+                "endTime": "December 20, 2023, 12:25:45",
+                "resourceName": "",
+                "parentJobId": "9876543219236789",
+                "initiator": ""
+              },
+              {
+                "id": "Task2",
+                "accountId": "account123",
+                "name": "Task 2",
+                "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                "type": "",
+                "status": "FAILED",
+                "startTime": "December 20, 2023, 10:25:45",
+                "endTime": "December 20, 2023, 12:25:45",
+                "resourceName": "",
+                "parentJobId": "9876543219236789",
+                "initiator": ""
+              },
+              {
+                "id": "Task3",
+                "accountId": "account123",
+                "name": "Task 3",
+                "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                "type": "",
+                "status": "IN_PROGRESS",
+                "startTime": "December 20, 2023, 10:25:45",
+                "endTime": "December 20, 2023, 12:25:45",
+                "resourceName": "",
+                "parentJobId": "9876543219236789",
+                "initiator": ""
+              }
+            ]
+          },
+          {
+            "id": "2876543219236789",
+            "accountId": "account123",
+            "name": "2876543219236789",
+            "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+            "type": "",
+            "status": "FAILED",
+            "startTime": "December 20, 2023, 10:25:45",
+            "endTime": "December 20, 2023, 12:25:45",
+            "resourceName": "",
+            "parentJobId": "9876543219236734",
+            "initiator": "",
+            "subJobs": [
+                {
+                    "id": "Task1",
+                    "accountId": "account123",
+                    "name": "Task 1",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "COMPLETED",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "2876543219236789",
+                    "initiator": ""
+                },
+                {
+                    "id": "Task2",
+                    "accountId": "account123",
+                    "name": "Task 2",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "FAILED",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "2876543219236789",
+                    "initiator": ""
+                },
+                {
+                    "id": "Task3",
+                    "accountId": "account123",
+                    "name": "Task 3",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "IN_PROGRESS",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "2876543219236789",
+                    "initiator": ""
+                }
+            ]
+          },
+          {
+            "id": "4876543219006789",
+            "accountId": "account123",
+            "name": "4876543219006789",
+            "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+            "type": "",
+            "status": "IN_PROGRESS",
+            "startTime": "December 20, 2023, 10:25:45",
+            "endTime": "December 20, 2023, 12:25:45",
+            "resourceName": "",
+            "parentJobId": "9876543219236734",
+            "initiator": "",
+            "subJobs": [
+                {
+                    "id": "Task1",
+                    "accountId": "account123",
+                    "name": "Task 1",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "COMPLETED",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "4876543219006789",
+                    "initiator": ""
+                },
+                {
+                    "id": "Task2",
+                    "accountId": "account123",
+                    "name": "Task 2",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "FAILED",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "4876543219006789",
+                    "initiator": ""
+                },
+                {
+                    "id": "Task3",
+                    "accountId": "account123",
+                    "name": "Task 3",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "IN_PROGRESS",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "4876543219006789",
+                    "initiator": ""
+                }
+            ]
+          },
+          {
+            "id": "3876543219006789",
+            "accountId": "account123",
+            "name": "3876543219006789",
+            "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+            "type": "",
+            "status": "COMPLETED",
+            "startTime": "December 20, 2023, 10:25:45",
+            "endTime": "December 20, 2023, 12:25:45",
+            "resourceName": "",
+            "parentJobId": "9876543219236734",
+            "initiator": "",
+            "subJobs": [
+                {
+                    "id": "Task1",
+                    "accountId": "account123",
+                    "name": "Task 1",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "COMPLETED",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "3876543219006789",
+                    "initiator": ""
+                },
+                {
+                    "id": "Task2",
+                    "accountId": "account123",
+                    "name": "Task 2",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "FAILED",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "3876543219006789",
+                    "initiator": ""
+                },
+                {
+                    "id": "Task3",
+                    "accountId": "account123",
+                    "name": "Task 3",
+                    "description": "Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>",
+                    "type": "",
+                    "status": "IN_PROGRESS",
+                    "startTime": "December 20, 2023, 10:25:45",
+                    "endTime": "December 20, 2023, 12:25:45",
+                    "resourceName": "",
+                    "parentJobId": "3876543219006789",
+                    "initiator": ""
+                }
+            ]
+          }
+        ]
+      }
+    ],
+    "nextToken": null
+  }

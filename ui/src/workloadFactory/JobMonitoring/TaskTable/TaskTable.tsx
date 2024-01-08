@@ -4,6 +4,8 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { Popover, Typography } from '@netapp/design-system';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 
 const TaskTable = () => {
     const taskList: any[] = [
@@ -11,7 +13,7 @@ const TaskTable = () => {
             name: 'Task 1',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Completed',
+            status: 'COMPLETED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -19,7 +21,7 @@ const TaskTable = () => {
             name: 'Task 2',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Completed',
+            status: 'COMPLETED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -27,7 +29,7 @@ const TaskTable = () => {
             name: 'Task 3',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Failed',
+            status: 'FAILED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45',
             errorMsg: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
@@ -36,7 +38,7 @@ const TaskTable = () => {
             name: 'Task 4',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Running',
+            status: 'IN_PROGRESS',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -44,7 +46,7 @@ const TaskTable = () => {
             name: 'Task 5',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Running',
+            status: 'IN_PROGRESS',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -52,7 +54,7 @@ const TaskTable = () => {
             name: 'Task 6',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Completed',
+            status: 'COMPLETED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         }
@@ -71,8 +73,8 @@ const TaskTable = () => {
                         </Typography>
                         <div className={styles.thirdItem}>
                             <div>
-                                {task.status === 'Completed' && <Success />}
-                                {task.status === 'Failed' && 
+                                {task.status === JOB_MONITORING_STATUS.COMPLETED && <Success />}
+                                {task.status === JOB_MONITORING_STATUS.FAILED && 
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
                                         children={<Typography variant="Regular_14">{task?.errorMsg}</Typography>}
@@ -82,9 +84,9 @@ const TaskTable = () => {
                                         }
                                     />
                                 }
-                                {task.status === 'Running' && <InProgress />}
+                                {task.status === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                             </div>
-                            <Typography variant="Regular_14">{task.status}</Typography>
+                            <Typography variant="Regular_14">{jobMonitoringStatusMapping(task?.status)}</Typography>
                         </div>
                         <Typography variant="Regular_14" className={styles.fourthItem}>
                             {task.startTime}

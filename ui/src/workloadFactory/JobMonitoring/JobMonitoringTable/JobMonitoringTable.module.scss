@@ -21,10 +21,6 @@
         }
     }
 
-    .firstCol {
-        box-shadow: 4px 0px 2px #e0e0e0;
-    }
-
     .secondLevel {
         display: flex;
         height: 100px;
@@ -39,7 +35,8 @@
             &.failed {
                 background-color: var(--error);
             }
-            &.running {
+            &.running,
+            &.in_progress {
                 background-color: var(--cyan-60);
             }
         }
@@ -62,7 +59,8 @@
         &.failed {
             background-color: var(--error);
         }
-        &.running {
+        &.running,
+        &.in_progress {
             background-color: var(--cyan-60);
         }
     }
@@ -100,6 +98,9 @@
     .jobMonitoringTable {
         .table {
             width: 1127px;
+        }
+        .firstCol {
+            box-shadow: 4px 0px 2px var(--grey-15);
         }
     }
 }

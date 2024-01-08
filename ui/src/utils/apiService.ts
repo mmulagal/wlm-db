@@ -375,6 +375,29 @@ export const workloadFactoryResourceApi = createApi({
     }
 });
 
+export const jobMonitoringApi = createApi({
+    reducerPath: 'jobMonitoringApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getJobsList: builder.query({
+                query: ({ nextToken = null }) => {
+                    if (nextToken) {
+                        return `../v2/jobs?nextToken=${nextToken}`;
+                    } else {
+                        return `../v2/jobs`;
+                    }
+                }
+            }),
+            getSubTaskList: builder.query({
+                query: id => ({
+                    url: `../v2/jobs/${id}`
+                })
+            })
+        };
+    }
+});
+
 export const chatbotApi = createApi({
     reducerPath: 'chatbotApi',
     baseQuery: dynamicBaseQuery,
@@ -435,5 +458,7 @@ export const {
 } = databaseHomeApi;
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
+
+export const { useGetJobsListQuery, useLazyGetSubTaskListQuery } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;
