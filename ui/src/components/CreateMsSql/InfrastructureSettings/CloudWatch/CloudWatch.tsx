@@ -5,6 +5,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setCloudWatch } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const CloudWatch = () => {
     const dispatch = useDispatch();
@@ -17,6 +18,7 @@ const CloudWatch = () => {
 
     const handleChange = () => {
         dispatch(setCloudWatch(!toggle));
+        dispatch(setIsWizardTouched(true));
     };
 
     return (

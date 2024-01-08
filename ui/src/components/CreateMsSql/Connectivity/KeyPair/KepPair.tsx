@@ -8,6 +8,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedKeyPair } from '../../../../store/mssql/mssqlFormSlice';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const KeyPair = () => {
     const dispatch = useDispatch();
@@ -33,7 +34,7 @@ const KeyPair = () => {
     }, [keyPairData]);
 
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig) {
             dispatch(setSelectedKeyPair(generateKey[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,6 +71,7 @@ const KeyPair = () => {
                                 defaultValue={selectedKey ? [selectedKey] : [generateKey[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedKeyPair(selectedOptions));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateKey.length > 5}
                                 options={generateKey}

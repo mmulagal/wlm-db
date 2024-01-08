@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import { setSelectedDBDeploymentModel } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseDeploymentModel = () => {
     const dispatch = useDispatch();
@@ -34,6 +35,7 @@ const DatabaseDeploymentModel = () => {
                                             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
                                         })
                                     );
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.FAILOVER_CLUSTER}
                                 className={styles.radio}
@@ -51,7 +53,8 @@ const DatabaseDeploymentModel = () => {
                                             label: GENERAL.SINGLE_INSTANCE,
                                             value: SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
                                         })
-                                    ); 
+                                    );
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.SINGLE_INSTANCE}
                                 className={styles.radio}

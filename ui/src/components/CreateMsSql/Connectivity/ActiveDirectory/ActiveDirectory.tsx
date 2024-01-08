@@ -17,6 +17,7 @@ import {
     setSelectedADUserName
 } from '../../../../store/mssql/mssqlFormSlice';
 import { AWS_MANAGED_AD, USER_MANAGED_AD } from '../../../../utils/consts';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const delay = () => {
     return new Promise(resolve => {
@@ -70,6 +71,7 @@ const ActiveDirectory = () => {
         await delay();
         dispatch(setSelectedADDomainAddress(''));
         dispatch(setSelectedADScenarioType(USER_MANAGED_AD));
+        dispatch(setIsWizardTouched(true));
         setIsCreating(false);
 
         return generateOptionType(option, option, '', false, '');
@@ -212,6 +214,7 @@ const ActiveDirectory = () => {
                                             selectedOptions?.data?.adScenarioType || USER_MANAGED_AD
                                         )
                                     );
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 placeholder="example.com"
                                 isSearchable={true}
@@ -251,6 +254,7 @@ const ActiveDirectory = () => {
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADDomainAddress(e.target.value));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 value={selectedADDomainAddress ? selectedADDomainAddress : ''}
                                 className={styles.textField}
@@ -275,6 +279,7 @@ const ActiveDirectory = () => {
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADUserName(e.target.value));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 value={userName}
                                 className={styles.textField}
@@ -284,6 +289,7 @@ const ActiveDirectory = () => {
                                 ref={passwordRefAD}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setSelectedADPassword(e.target.value));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : adPassVal(password)}
                                 //@ts-ignore

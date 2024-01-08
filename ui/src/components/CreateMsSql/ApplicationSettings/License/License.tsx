@@ -14,6 +14,7 @@ import {
     setSelectedLicenseType
 } from '../../../../store/mssql/mssqlFormSlice';
 import { LICENSE_URL } from '../../../../utils/consts';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const License = () => {
     //Store related Data
@@ -120,6 +121,7 @@ const License = () => {
                                     setLicenseSelect(GENERAL.LICENSE_INCLUDED_AMI);
                                     dispatch(setSelectedLicenseType(GENERAL.LICENSE_INCLUDED_AMI));
                                     dispatch(setSelectedCustomAMI(null));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.LICENSE_INCLUDED_AMI}
                                 className=""
@@ -130,6 +132,7 @@ const License = () => {
                                     setLicenseSelect(GENERAL.USE_CUSTOM_AMI);
                                     dispatch(setSelectedLicenseType(GENERAL.USE_CUSTOM_AMI));
                                     dispatch(setSelectedLicenseId(null));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.USE_CUSTOM_AMI}
                                 className=""
@@ -159,6 +162,7 @@ const License = () => {
                                     defaultValue={selectedLicenseId}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedLicenseId(selectedOptions));
+                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     isSearchable={generateAMIIdForLicense.length > 5}
                                     variant="two-lines"
@@ -175,6 +179,7 @@ const License = () => {
                                     defaultValue={selectedCustomAMI}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedCustomAMI(selectedOptions));
+                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     isSearchable={generateAMIId.length > 5}
                                     options={generateAMIId}

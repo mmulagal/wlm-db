@@ -5,6 +5,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedOperatingSystem } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const OperatingSystem = () => {
     const dispatch = useDispatch();
@@ -30,6 +31,7 @@ const OperatingSystem = () => {
                             <RadioButton
                                 isChecked={osVersion?.label === GENERAL.WIN_SERVER_2016}
                                 onChange={() => {
+                                    dispatch(setIsWizardTouched(true));
                                     dispatch(
                                         setSelectedOperatingSystem({
                                             label: GENERAL.WIN_SERVER_2016,

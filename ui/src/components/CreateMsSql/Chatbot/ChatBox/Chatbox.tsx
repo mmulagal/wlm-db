@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { ReactComponent as SendButton } from '../../../../assets/send-button.svg';
-import { ReactComponent as BedrockPoweredIcon } from '../../../../assets/bedrock-powered-icon.svg';
 import Message from '../Message/Message';
 
 import styles from './Chatbox.module.scss';
 import ChatBotResponseLoader from '../ChatBotResponseLoader/ChatBotResponseLoader';
-import { Typography } from '@netapp/design-system';
+import WelcomePage from '../WelcomePage/WelcomePage';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type optionsType = {
     value?: string | number;
@@ -40,6 +40,7 @@ const ChatBox = ({
     messagesToShow,
     activeField
 }: ChatBoxPropTypes) => {
+    const { isWizardTouched } = useAppSelector(state => state.chatbot);
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef(null);
 
@@ -61,12 +62,7 @@ const ChatBox = ({
         <div className={styles['chat-container']}>
             <div className={styles['chat-window-container']}>
                 <div className={styles['chat-window']} id="chat_id">
-                    {!messagesToShow.length && (
-                        <div className={styles['bedrock-powered-container']}>
-                            <BedrockPoweredIcon />
-                            <Typography variant="Semibold_16">BedRock powered chat</Typography>
-                        </div>
-                    )}
+                    {!messagesToShow.length && !isWizardTouched && <WelcomePage />}
                     {messagesToShow.map((msgObj: any, idx: number) => (
                         <Message
                             idx={idx}

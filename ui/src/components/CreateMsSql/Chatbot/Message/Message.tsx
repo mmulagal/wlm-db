@@ -41,15 +41,7 @@ type MessagePropType = {
     activeField: any;
 };
 
-const Message = ({
-    idx,
-    msgObj,
-    handleSelectButtonClicked,
-    handleSendMsg,
-    messages,
-    isBotReplying,
-    activeField
-}: MessagePropType) => {
+const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplying, activeField }: MessagePropType) => {
     const key = 'errors';
     const isUserInputRequired = msgObj[key];
     const fieldsArr = msgObj[key] || [];

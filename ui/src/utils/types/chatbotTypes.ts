@@ -5,4 +5,5 @@ export interface ChatbotEntities {
     isReceivingMsg: boolean;
     loadConfigClicked: boolean;
     showRetry: boolean;
+    isWizardTouched: boolean;
 }

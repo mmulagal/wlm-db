@@ -7,6 +7,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as CloseIcon } from '../../../../assets/close-icon.svg';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import styles from './Tags.module.scss';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 type Tag = {
     key: string;
@@ -43,6 +44,7 @@ const Tags = () => {
 
     const handleAddNewTag = () => {
         dispatch(setTags([{ key: '', value: '' }, ...tags]));
+        dispatch(setIsWizardTouched(true));
     };
 
     const handleChange = (idx: number, prop: string, value: string) => {
@@ -55,6 +57,7 @@ const Tags = () => {
             ];
             updatedTags[idx][prop] = value;
             dispatch(setTags(updatedTags));
+            dispatch(setIsWizardTouched(true));
         }
     };
 
@@ -62,6 +65,7 @@ const Tags = () => {
         const updatedTags = [...tags];
         updatedTags.splice(idx, 1);
         dispatch(setTags(updatedTags));
+        dispatch(setIsWizardTouched(true));
     };
 
     return (
