@@ -106,6 +106,7 @@
         gap: 40px;
         height: calc(100vh - 63px);
         overflow-x: auto;
+        overflow-y: hidden;
 
         .leftSideView {
             min-width: 638px;
