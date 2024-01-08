@@ -1,3 +1,4 @@
+import React, { useRef, useEffect, useState } from 'react';
 import { Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -5,6 +6,7 @@ import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+
 import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -15,6 +17,35 @@ import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 const JobMonitoringTable = () => {
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     // const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
+
+    const [scrollPos, setScrollPos] = useState(0);
+
+    useEffect(() => {
+        const handleOuterScroll = () => {
+            setScrollPos(currentTable[0].scrollLeft);
+        };
+
+        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+
+        console.log(currentTable);
+
+        if (currentTable[0]) {
+            //@ts-ignore
+            currentTable[0].addEventListener('scroll', handleOuterScroll);
+        }
+
+        return () => {
+            if (currentTable[0]) {
+                //@ts-ignore
+                currentTable[0].removeEventListener('scroll', handleOuterScroll);
+            }
+        };
+    }, []);
+
+    const ExpandedRow = ({ rowData }: any) => {
+        const statusType = rowData?.status.toLowerCase();
+        return <SubJobTable statusType={statusType} scrollPosition={scrollPos} />;
+    };
 
     const jobsList: any[] = [
         {
@@ -73,11 +104,6 @@ const JobMonitoringTable = () => {
             endTime: 'December 20, 2023, 12:25:45'
         }
     ];
-
-    const ExpandedRow = ({ rowData }: any) => {
-        const statusType = rowData?.status.toLowerCase();
-        return <SubJobTable statusType={statusType} />;
-    };
 
     const expandRow = (
         updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
@@ -144,9 +170,7 @@ const JobMonitoringTable = () => {
                                     popoverClass={CommonStyles['popover']}
                                     children={<Typography variant="Regular_14">{rowData?.error}</Typography>}
                                     trigger="hover"
-                                    container={
-                                        <ErrorIcon className={styles.statusIcon}/>
-                                    }
+                                    container={<ErrorIcon className={styles.statusIcon} />}
                                 />
                             }
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
@@ -171,11 +195,7 @@ const JobMonitoringTable = () => {
             className: styles.wrapText,
             width: '340px',
             renderCell: (cellData: any) => {
-                return (
-                    <div className={styles.wrapText}>
-                        {cellData}
-                    </div>
-                );
+                return <div className={styles.wrapText}>{cellData}</div>;
             }
         },
         {
@@ -185,11 +205,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return (
-                    <div className={styles.wrapText}>
-                        {cellData}
-                    </div>
-                );
+                return <div className={styles.wrapText}>{cellData}</div>;
             }
         },
         {
@@ -199,11 +215,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return (
-                    <div className={styles.wrapText}>
-                        {cellData}
-                    </div>
-                );
+                return <div className={styles.wrapText}>{cellData}</div>;
             }
         },
         {
@@ -249,6 +261,7 @@ const JobMonitoringTable = () => {
                         className={styles.topBarStyle}
                         exportToCsvOptions={exportToCsv}
                     />
+
                     <Table
                         {...tableComponentProps}
                         //@ts-ignore

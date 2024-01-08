@@ -1,4 +1,5 @@
 import { Popover, Table, Typography, useTable } from '@netapp/design-system';
+
 import styles from './SubJobTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -9,11 +10,27 @@ import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { useEffect, useState } from 'react';
 
 const SubJobTable = ({ statusType }: any) => {
+    const [leftPos, setLeftPos] = useState(0);
     const ExpandedRow = () => {
         return <TaskTable />;
     };
+
+    useEffect(() => {
+        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+        if (currentTable[0]) {
+            setTimeout(() => {
+                currentTable[0].scrollLeft = currentTable[1].scrollLeft;
+                if (currentTable[1].scrollLeft > 56) {
+                    setLeftPos(currentTable[1].scrollLeft - 3);
+                } else {
+                    setLeftPos(0);
+                }
+            }, 0);
+        }
+    }, []);
 
     const jobsList: any[] = [
         {
@@ -39,7 +56,8 @@ const SubJobTable = ({ statusType }: any) => {
             status: 'FAILED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45',
-            errorMsg: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
+            errorMsg:
+                'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
         },
         {
             name: '3876543219006789',
@@ -93,7 +111,10 @@ const SubJobTable = ({ statusType }: any) => {
                         <div className={styles.arrow}>
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={() => expandRow(updateRowState, rowData, currentRowState)}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandRow(updateRowState, rowData, currentRowState);
+                                }}
                             />
                         </div>
                     </>
@@ -115,11 +136,7 @@ const SubJobTable = ({ statusType }: any) => {
             isSortable: true,
             width: '498px',
             renderCell: (cellData: any) => {
-                return (
-                    <div className={styles.wrapText}>
-                        {cellData}
-                    </div>
-                );
+                return <div className={styles.wrapText}>{cellData}</div>;
             }
         },
         {
@@ -138,9 +155,7 @@ const SubJobTable = ({ statusType }: any) => {
                                     popoverClass={CommonStyles['popover']}
                                     children={<Typography variant="Regular_14">{rowData?.errorMsg}</Typography>}
                                     trigger="hover"
-                                    container={
-                                        <ErrorIcon className={styles.statusIcon}/>
-                                    }
+                                    container={<ErrorIcon className={styles.statusIcon} />}
                                 />
                             }
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
@@ -195,6 +210,7 @@ const SubJobTable = ({ statusType }: any) => {
                 <div
                     //  @ts-ignore
                     className={`${styles.table}`}
+                    style={{ position: 'relative', left: `${leftPos}px` }}
                 >
                     <Table
                         {...tableComponentProps}

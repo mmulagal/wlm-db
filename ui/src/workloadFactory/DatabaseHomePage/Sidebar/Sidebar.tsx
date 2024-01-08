@@ -798,7 +798,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         )}
                     </div>
                     {/* Right side panel in expanded code box */}
-                    <div style={{ width: '67%' }}>
+                    <div style={{ width: '1170px' }}>
                         <div className={styles.rightSideView}>
                             {/* Code for top bar here */}
                             <div className={styles.rightSideTopBar}>
