@@ -9,18 +9,17 @@ import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 
 import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const JobMonitoringTable = () => {
     const [scrollPos, setScrollPos] = useState(0);
 
-    useEffect(() => {
+    useRunOnce(() => {
         const handleOuterScroll = () => {
             setScrollPos(currentTable[0].scrollLeft);
         };
 
         const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-
-        console.log(currentTable);
 
         if (currentTable[0]) {
             //@ts-ignore
@@ -33,7 +32,7 @@ const JobMonitoringTable = () => {
                 currentTable[0].removeEventListener('scroll', handleOuterScroll);
             }
         };
-    }, []);
+    });
 
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();

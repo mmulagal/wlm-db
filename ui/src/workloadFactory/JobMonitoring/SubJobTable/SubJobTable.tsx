@@ -1,4 +1,5 @@
 import { Popover, Table, Typography, useTable } from '@netapp/design-system';
+import { useState } from 'react';
 
 import styles from './SubJobTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -8,27 +9,29 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { useEffect, useState } from 'react';
+
+import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const SubJobTable = ({ statusType }: any) => {
     const [leftPos, setLeftPos] = useState(0);
+
     const ExpandedRow = () => {
         return <TaskTable />;
     };
 
-    useEffect(() => {
+    useRunOnce(() => {
         const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
         if (currentTable[0]) {
             setTimeout(() => {
                 currentTable[0].scrollLeft = currentTable[1].scrollLeft;
                 if (currentTable[1].scrollLeft > 56) {
-                    setLeftPos(currentTable[1].scrollLeft - 3);
+                    setLeftPos(currentTable[1].scrollLeft - 2);
                 } else {
-                    setLeftPos(0);
+                    setLeftPos(currentTable[1].scrollLeft - 4);
                 }
-            }, 0);
+            });
         }
-    }, []);
+    });
 
     const jobsList: any[] = [
         {
