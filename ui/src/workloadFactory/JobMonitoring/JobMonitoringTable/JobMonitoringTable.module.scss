@@ -9,6 +9,16 @@
         [class*='Table-module_header-row'] {
             z-index: 3 !important;
         }
+
+        [class*='Table-module_header-row'] {
+            [class*='Table-module_header-cell'] {
+                &:nth-child(2) {
+                    [class*='Table-module_right-border'] {
+                        pointer-events: none;
+                    }
+                }
+            }
+        }
     }
 
     .firstCol {

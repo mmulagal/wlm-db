@@ -1,5 +1,4 @@
 .taskTable {
-
     .taskRow {
         display: flex;
         margin-bottom: 1px;
@@ -12,7 +11,8 @@
         align-items: center;
         justify-content: center;
         background-color: var(--blue-10);
-        
+        position: sticky;
+        left: 0px;
     }
 
     .secondItem {
