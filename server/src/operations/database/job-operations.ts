@@ -4,10 +4,10 @@ import { createJobs, deleteJobs, listJobs, listUniqueJob, modifyJob } from "../.
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from "./database-operations";
 import { isEmpty } from 'lodash-es';
+import moment from 'moment';
 const logger = getLogger();
 
 interface Job {
-    subJobs: Job[] | undefined;
     id: string,
     accountId: string,
     name: string,
@@ -21,7 +21,6 @@ interface Job {
     type: string,
     status: JOBSTATUS
 }
-
 interface JobRecord {
     accountId: string,
     name: string,
@@ -36,16 +35,22 @@ interface JobRecord {
     status: JOBSTATUS
 }
 
-interface SubJobs {
-    subJobs?: Job[]
-}
-
-type JobDetails = Job & SubJobs
 
 function formatJob(job: job) {
     const { id, account_id, type, status, resource_name, name, description, error, start_time, initiator, end_time, parent_job_id } = job;
     return {
-        id, accountId: account_id, type, status, resourceName: resource_name, name, description, error, startTime: start_time, endTime: end_time, initiator, parentJobId: parent_job_id
+        id,
+        accountId: account_id,
+        type,
+        status,
+        resourceName: resource_name,
+        name,
+        ...description && { description },
+        ...error && { error },
+        startTime: moment(start_time).unix() * 1000,
+        ...end_time && { endTime: moment(end_time).unix() * 1000 },
+        initiator,
+        ...parent_job_id && { parentJobId: parent_job_id }
     }
 }
 
@@ -77,8 +82,8 @@ async function getJobs(
     sort?: string,
     sortOrder?: string,
     initiator?: string,
-    type?: [string],
-    status?: [JOBSTATUS],
+    type?: string,
+    status?: string,
     startTime?: number,
     endTime?: number,
     pageSize: number = 50,
@@ -86,7 +91,17 @@ async function getJobs(
 ) {
     logger.info(' Get jobs', { accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken });
 
-    const records = await listJobs(accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken);
+    let typeFilter;
+    if (type) {
+        typeFilter = type.split(',');
+    }
+
+    let statusFilter;
+    if (status) {
+        statusFilter = status.split(',') as JOBSTATUS[];
+    }
+
+    const records = await listJobs(accountId, parentJobId, sort, sortOrder, initiator, typeFilter, statusFilter, startTime, endTime, pageSize, nextToken);
 
     const jobs = trimAccountIdForDemo(records);
     const items = isEmpty(jobs) ? [] : jobs.map(formatJob);
@@ -101,7 +116,7 @@ async function getJobs(
 async function getJobDetails(
     accountId: string,
     jobId: string,
-): Promise<JobDetails> {
+) {
     logger.info(' Get job details', { accountId, jobId });
 
     const record = await listUniqueJob(accountId, jobId)
@@ -122,7 +137,12 @@ async function modifyJobDetails(
     accountId: string, jobId: string, description?: string, status?: JOBSTATUS, endTime?: number, error?: string
 ) {
     logger.info(' Modifying job details', { accountId, jobId, description, status, endTime, error });
-    return modifyJob(accountId, jobId, description, status, endTime, error)
+    const response = await modifyJob(accountId, jobId, description, status, endTime, error);
+    if (response) {
+        return formatJob(response);
+    }
+    throw createError(`Failed to modify job with ID ${jobId} in ${accountId}. Please ensure the Job ID is correct.`)
+
 }
 
 async function deleteJobsWithAllSubJobs(
@@ -133,7 +153,7 @@ async function deleteJobsWithAllSubJobs(
     let jobIdsToDelete = [jobId];
 
     if (allLevelJobs?.subJobs) {
-        const level2Jobs = allLevelJobs?.subJobs;
+        const level2Jobs = allLevelJobs?.subJobs as Job[];
         const level3JobIds = level2Jobs.map(({ id }) => id);
         jobIdsToDelete = jobIdsToDelete.concat(level3JobIds);
     }
@@ -156,6 +176,7 @@ async function getAllDependantJobs(accountId: string, jobId: string) {
 }
 
 export {
+    Job,
     registerJobs,
     getJobs,
     getJobDetails,

@@ -1,44 +1,66 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    DeploymentJobsCountSchema,
-    DeploymentJobsSummaryListSchema,
-    DeleteDeploymentJobsSchema
+    ListJobsSchema,
+    JobDetailsSchema,
+    DeleteJobSchema,
+    ModifyJobSchema
 } from './schemas/jobs-schemas';
-import { getDeploymentJobsCount, getDeploymentJobsSummary, deleteDeploymentJob } from '../operations/jobs-operations';
+import { deleteJobsWithAllSubJobs, getJobDetails, getJobs, modifyJobDetails } from '../operations/database/job-operations';
 
-const DEPLOYMENT_JOBS_API_PATH: string = '/v1/jobs';
+const JOBS_API_PATH: string = '/v1/jobs';
 
-export default function deploymentJobsRoutes(fastify: FastifyInstance) {
+export default function jobsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-    server.get(`${DEPLOYMENT_JOBS_API_PATH}/summary`, { schema: DeploymentJobsCountSchema }, async (request, reply) => {
+    server.get(`${JOBS_API_PATH}`, { schema: ListJobsSchema }, async (request, reply) => {
         const {
             params: { accountId },
-            query: { duration }
+            query: { parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken }
         } = request;
-        const response = await getDeploymentJobsCount(accountId, duration);
+        const response = await getJobs(
+            accountId,
+            parentJobId,
+            sort,
+            sortOrder,
+            initiator,
+            type,
+            status,
+            startTime,
+            endTime,
+            pageSize,
+            nextToken
+        ) 
         return reply.send(response);
     });
 
-    server.get(`${DEPLOYMENT_JOBS_API_PATH}`, { schema: DeploymentJobsSummaryListSchema }, async (request, reply) => {
+    server.get(`${JOBS_API_PATH}/:jobId`, { schema: JobDetailsSchema }, async (request, reply) => {
         const {
-            params: { accountId },
-            query: { statuses, nextToken }
+            params: { accountId, jobId },
         } = request;
-        const response = await getDeploymentJobsSummary(accountId, statuses, nextToken);
-        return reply.send(response!);
+        const response = await getJobDetails(
+            accountId,jobId
+        ) 
+        return reply.send(response);
     });
 
-    server.delete(
-        `${DEPLOYMENT_JOBS_API_PATH}/jobId/:jobId`,
-        { schema: DeleteDeploymentJobsSchema },
-        async (request, reply) => {
-            const {
-                params: { accountId, jobId }
-            } = request;
-            const response = await deleteDeploymentJob(accountId, jobId);
-            return reply.send(response);
-        }
-    );
+    server.delete(`${JOBS_API_PATH}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
+        const {
+            params: { accountId, jobId },
+        } = request;
+        const response = await deleteJobsWithAllSubJobs(
+            accountId,jobId
+        ) 
+        return reply.send(response);
+    });
+
+    server.patch(`${JOBS_API_PATH}/:jobId`, { schema: ModifyJobSchema }, async (request, reply) => {
+        const {
+            params: { accountId, jobId },
+        } = request;
+        const response = await modifyJobDetails(
+            accountId,jobId
+        ) 
+        return reply.send(response);
+    });
 }

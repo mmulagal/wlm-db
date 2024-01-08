@@ -7,7 +7,9 @@ import {
     DeploymentStatusResponse,
     DeploymentStatusObjectParams,
     CloudFormationStaticTemplateRequestBody,
-    CloudFormationStaticTemplateResponse
+    CloudFormationStaticTemplateResponse,
+    DeploymentSummaryQueryString,
+    DeploymentSummaryListResponse
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -26,6 +28,17 @@ const CloudFormationTemplateSchema = {
     body: CloudFormationStaticTemplateRequestBody,
     response: {
         200: CloudFormationStaticTemplateResponse
+    }
+};
+
+
+const DeploymentSummaryListSchema = {
+    ...baseRequest,
+    summary: 'Get deployment jobs summary',
+    description: 'API to get deployment jobs summary for given deployment status types',
+    querystring: DeploymentSummaryQueryString,
+    response: {
+        200: DeploymentSummaryListResponse
     }
 };
 
@@ -61,4 +74,4 @@ const DeploymentStatusSchema = {
     }
 };
 
-export { DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema, CloudFormationTemplateSchema };
+export { DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema, CloudFormationTemplateSchema, DeploymentSummaryListSchema };

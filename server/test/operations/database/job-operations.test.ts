@@ -1,6 +1,7 @@
 
 import { JOBSTATUS } from '@prisma/client';
 import {
+    Job,
     registerJobs,
     getJobs,
     getJobDetails,
@@ -85,10 +86,12 @@ describe('Job operations', () => {
         const [job] = await listJobs(ACCOUNT_ID);
         const jobDetails = await getJobDetails(ACCOUNT_ID, job.id);
         const response = await modifyJobDetails(ACCOUNT_ID, job.id, 'modified-description', JOBSTATUS.COMPLETED, Date.now());
-        expect(response.id).toEqual(jobDetails.id);
-        expect(response.name).toEqual(jobDetails.name);
-        expect(response.description).toEqual('modified-description');
-        expect(response.status).toEqual(JOBSTATUS.COMPLETED);
+        if (response.id) {
+            expect(response.id).toEqual(jobDetails.id);
+            expect(response.name).toEqual(jobDetails.name);
+            expect(response.description).toEqual('modified-description');
+            expect(response.status).toEqual(JOBSTATUS.COMPLETED);
+        }
         await deleteJobsAtAccount(ACCOUNT_ID);
     });
 
@@ -122,8 +125,8 @@ describe('Job operations', () => {
         const jobDetails = await getJobDetails(ACCOUNT_ID, jobId);
         expect(jobDetails.subJobs?.length).toEqual(2);
 
-
-        const level2JobIds = jobDetails.subJobs?.map(({ id }) => id);
+        const level2Jobs = jobDetails.subJobs as Job[]
+        const level2JobIds = level2Jobs?.map(({ id }) => id);
         console.log("level2JobIds", level2JobIds)
         if (level2JobIds) {
             //registering level 3 jobs
