@@ -61,6 +61,7 @@ const TopBarButton = () => {
                     onClick={() => {
                         navigate(WLF_TO_FORM_NAVIGATE);
                     }}
+                    id={'deploy-button'}
                 >
                     <div className={styles.buttonStyle}>
                         <SpaceShip />
