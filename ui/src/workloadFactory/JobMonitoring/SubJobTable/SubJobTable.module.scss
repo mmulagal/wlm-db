@@ -23,6 +23,10 @@
         align-items: flex-start;
         align-self: stretch;
         z-index: 1 !important;
+
+        [class*='Table-module_horizontal-scroll'] {
+            visibility: hidden;
+        }
     }
 
     .statusbar {
@@ -36,7 +40,8 @@
         &.failed {
             border-left: 4px solid var(--error);
         }
-        &.running {
+        &.running,
+        &.in_progress {
             border-left: 4px solid var(--cyan-60);
         }
     }
@@ -71,5 +76,13 @@
 
     [class*='Table-module_cell'] {
         background-color: var(--main-background) !important;
+    }
+}
+
+@media screen and (min-width: 1351px) and (max-width: 1520px) {
+    .subJobTable {
+        .table {
+            width: 1121px;
+        }
     }
 }
