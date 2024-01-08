@@ -17,8 +17,6 @@ const JobMonitoring = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    // JobMonitoringApi();
-
     const [dropDownValue, setDropdownValue] = useState('Last 24 hours');
 
     //Function to generate the options for Select Field for License
@@ -43,6 +41,8 @@ const JobMonitoring = () => {
         }
         dispatch(setTimeInterval(days));
     };
+
+    // JobMonitoringApi();
 
     return (
         <div className={styles.jobMonitoring}>

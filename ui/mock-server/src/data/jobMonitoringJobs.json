@@ -79,5 +79,6 @@
         "parentJobId": "",
         "initiator": ""
       }
-    ]
+    ],
+    "nextToken": null
 }
