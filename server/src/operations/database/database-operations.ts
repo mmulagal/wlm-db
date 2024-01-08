@@ -229,6 +229,7 @@ function trimAccountIdForDemo(records: any) {
             });
             return modifiedData;
         }
+        return records; //in case of empty records array , return the array as obtained otherwise the function returns undefined
     }
     return records;
 }
@@ -242,5 +243,6 @@ export {
     getAllDeploymentStatus,
     getDeploymentStatusByName,
     getDeployments,
-    getResources
+    getResources,
+    trimAccountIdForDemo
 };

@@ -96,11 +96,13 @@ model job {
   start_time                DateTime  @db.DateTime(0)
   end_time                  DateTime? @db.DateTime(0)
   parent_job_id             String?   @db.VarChar(80)
-  initiator                 String?    @db.VarChar(80)@default("SYSTEM")
+  initiator                 String    @db.VarChar(80)@default("SYSTEM")
 
   @@index([account_id], map: "k_wlmdb_job_account_id")
   @@index([parent_job_id], map: "k_wlmdb_job_parent_job_id")
   @@index([start_time], map: "k_wlmdb_job_start_time")
+  @@unique([account_id, name, resource_name, initiator, start_time], name: "uk_wlmdb_config_uniqueJob")
+
 }
 
 enum JOBSTATUS {

@@ -1,9 +1,23 @@
-import { JOBSTATUS, job } from '@prisma/client';
+import { JOBSTATUS } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
 
 const logger = getLogger();
+
+interface readOnlyJob {
+    account_id: string
+    type: string
+    status: JOBSTATUS
+    resource_name: string
+    name: string
+    description?: string
+    error?: string
+    start_time: Date
+    end_time?: Date
+    parent_job_id?: string
+    initiator?: string
+}
 
 async function listJobs(
     accountId: string,
@@ -15,7 +29,7 @@ async function listJobs(
     status?: [JOBSTATUS],
     startTime?: number,
     endTime?: number,
-    pageSize?: number,
+    pageSize: number = 50,
     nextToken?: string
 ) {
     logger.info('Listing jobs', { accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken });
@@ -41,7 +55,8 @@ async function listJobs(
                     lte: new Date(endTime)
                 }
             }
-        },
+        }
+        ,
         orderBy: {
             [sort]: `${sortOrder}`
         },
@@ -52,16 +67,32 @@ async function listJobs(
                 id: nextToken
             }
         }
-    })
+    }
+    )
 }
 
-async function createJobs(accountId: string, jobs: [job]) {
+async function listUniqueJob(
+    accountId: string,
+    jobId: string
+) {
+    logger.info('List unique job', { accountId, jobId });
+    accountId = checkAccount(accountId);
+
+    return prisma.client.job.findUniqueOrThrow({
+        where: {
+            id: jobId
+        }
+    }
+    )
+}
+async function createJobs(accountId: string, jobs: readOnlyJob[]) {
     logger.info('Creating jobs', { accountId, jobs: jobs?.length });
 
-    logger.debug('Bulk creating jobs', { jobs });
+    logger.info('Bulk creating jobs', { jobs });
 
     accountId = checkAccount(accountId);
 
+    // createMany doesnt return the records created, but only the count, it suits our current requirement, in future if ther is an ask to return the created record Ids, refer to comments in https://github.com/prisma/prisma/issues/8131
     return prisma.client.job.createMany({
         data: jobs,
         skipDuplicates: true
@@ -87,13 +118,10 @@ async function modifyJob(accountId: string, jobId: string, description?: string,
     })
 }
 
-async function deleteJobs(accountId: string, jobId: [string]) {
+async function deleteJobs(accountId: string, jobId: string[]) {
     logger.info('Deleting jobs and its first level sub jobs', { accountId, jobId });
-
-
     accountId = checkAccount(accountId);
-
-    return prisma.client.job.deleteMany({
+    const response = await prisma.client.job.deleteMany({
         where: {
             OR: [{
                 id: { in: jobId }
@@ -104,10 +132,24 @@ async function deleteJobs(accountId: string, jobId: [string]) {
             }]
         }
     })
+    return response;
 }
+
+async function deleteJobsAtAccount(accountId: string) {
+    logger.info('Deleting all jobs in an account',accountId);
+    accountId = checkAccount(accountId);
+    return prisma.client.job.deleteMany({
+        where: {
+           account_id: accountId
+        }
+    })
+}
+
 export {
     listJobs,
+    listUniqueJob,
     createJobs,
     modifyJob,
-    deleteJobs
+    deleteJobs,
+    deleteJobsAtAccount
 };
