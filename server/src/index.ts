@@ -255,7 +255,7 @@ const app = fastify({
     });
 
 // Blocking for simulator
-if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && (!process.env.hasOwnProperty('isActive') || process.env.isActive)) {
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && (!process.env.hasOwnProperty('isActive') || process.env.isActive === 'true')) {
     try {
         await createAndSubscribeToSnsTopicInAllRegions();
         processCloudFormationMessages();
