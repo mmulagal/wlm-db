@@ -8,7 +8,6 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setSNSARN, setSNSState } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const SimpleNotificationService = () => {
     const dispatch = useDispatch();
@@ -38,7 +37,6 @@ const SimpleNotificationService = () => {
 
     const handleChange = () => {
         dispatch(setSNSState(!selectedState));
-        dispatch(setIsWizardTouched(true));
     };
 
     //Function to generate the options for Select Field
@@ -54,7 +52,7 @@ const SimpleNotificationService = () => {
 
     //Update selected SNS Topic in form data store
     useEffect(() => {
-        if (!isLoadConfig) {
+        if(!isLoadConfig){
             dispatch(setSNSARN(null));
         }
     }, [dispatch, generateArn]);
@@ -83,7 +81,6 @@ const SimpleNotificationService = () => {
                                 placeholder="Select an ARN"
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSNSARN(selectedOptions));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateArn.length > 5}
                                 options={generateArn}

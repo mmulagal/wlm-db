@@ -1,10 +1,10 @@
-# #!/usr/bin/env sh
-# . "$(dirname -- "$0")/_/husky.sh"
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-# echo "Running pre-push hooks"
+echo "Running pre-push hooks"
 
-# set -x
+set -x
 
-# cd server
-# npm run build
-# npm run test:nowatch
+cd server
+npm run build
+npm run test:nowatch

@@ -1,11 +1,4 @@
-import {
-    AccordionCard,
-    AccordionCardContent,
-    Popover,
-    RadioButton,
-    TextField,
-    Typography
-} from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, Popover, RadioButton, TextField, Typography } from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './ProvisionedIOPS.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -16,7 +9,6 @@ import { setProvisionedIOPSValue, setProvisionedType } from '../../../../store/m
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useEffect, useState } from 'react';
 import { selectFsxIops } from '../../MSSqlServer/MSSqlUtils';
-import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const ProvisionedIOPS = () => {
     const dispatch = useDispatch();
@@ -29,13 +21,13 @@ const ProvisionedIOPS = () => {
     const [isDisable, setIsDisable] = useState(false);
 
     useEffect(() => {
-        if (selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName) {
+        if(selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedExistingFsxnName){
             setIsDisable(true);
         } else {
             setIsDisable(false);
         }
         selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
     //Set the Header text here
@@ -43,7 +35,7 @@ const ProvisionedIOPS = () => {
         if (checkError()) {
             return <AccordionError />;
         }
-        if (isDisable) {
+        if(isDisable){
             return (
                 <Popover
                     popoverClass={styles['popover']}
@@ -56,6 +48,7 @@ const ProvisionedIOPS = () => {
                     }
                 />
             );
+
         } else {
             return (
                 <Typography variant="Regular_14">
@@ -90,7 +83,6 @@ const ProvisionedIOPS = () => {
                                 isChecked={provisionValue === GENERAL.AUTOMATIC}
                                 onChange={() => {
                                     dispatch(setProvisionedType(GENERAL.AUTOMATIC));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.AUTOMATIC}
                                 className=""
@@ -99,7 +91,6 @@ const ProvisionedIOPS = () => {
                                 isChecked={provisionValue === GENERAL.USER_PROVISIONED}
                                 onChange={() => {
                                     dispatch(setProvisionedType(GENERAL.USER_PROVISIONED));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.USER_PROVISIONED}
                                 className=""
@@ -116,7 +107,6 @@ const ProvisionedIOPS = () => {
                                     label={GENERAL.IOPS_VALUE}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         dispatch(setProvisionedIOPSValue(e.target.value));
-                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     value={iopsValue}
                                     className={styles.textfield}

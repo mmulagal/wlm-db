@@ -17,7 +17,6 @@ import {
 } from '../../../../store/mssql/mssqlFormSlice';
 import { Subnets } from '../../../../utils/types/mssqlTypes';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
-import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const AvailabilityZone = () => {
     const dispatch = useDispatch();
@@ -34,7 +33,7 @@ const AvailabilityZone = () => {
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
-
+    
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
 
@@ -45,7 +44,7 @@ const AvailabilityZone = () => {
     const sub2Ref = useRef(null);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if(!isLoadConfig){
             dispatch(setSelectedAzNode1(null));
             dispatch(setSelectedAzNode2(null));
             dispatch(setSelectedSubnetNode1(null));
@@ -53,17 +52,17 @@ const AvailabilityZone = () => {
             setRouteTable1(undefined);
             setRouteTable2(undefined);
         }
-
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData]);
 
     useEffect(() => {
-        if (deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+        if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
             dispatch(setSelectedAzNode2(null));
             dispatch(setSelectedSubnetNode2(null));
             setRouteTable2(undefined);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [deploymentMode]);
 
     //Function to generate the options for Select Field for Zone 1
@@ -84,7 +83,7 @@ const AvailabilityZone = () => {
                 options.push(option);
             });
         return options;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone2]);
 
     //Function to generate the options for Select Field for Zone 2
@@ -105,7 +104,7 @@ const AvailabilityZone = () => {
                 options.push(option);
             });
         return options;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone1]);
 
     //Subnet related code
@@ -126,11 +125,11 @@ const AvailabilityZone = () => {
             options.push(option);
         });
         return options;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone1]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if(!isLoadConfig){
             dispatch(setSelectedSubnetNode1(generateSubnet1Options[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -182,11 +181,11 @@ const AvailabilityZone = () => {
             options.push(option);
         });
         return options;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedVPCData, selectedZone2]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if(!isLoadConfig){
             dispatch(setSelectedSubnetNode2(generateSubnet2Options[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,7 +203,7 @@ const AvailabilityZone = () => {
             return <ActionRequired disabled />;
         }
 
-        if (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
+        if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
             if (!selectedZone1?.label || !selectedZone2?.label || !selectedSubnet1?.value || !selectedSubnet2?.value) {
                 return <ActionRequired error={!isAZNotFilled ? true : false} />;
             } else {
@@ -233,6 +232,7 @@ const AvailabilityZone = () => {
                 );
             }
         }
+        
     };
 
     useEffect(() => {
@@ -244,7 +244,7 @@ const AvailabilityZone = () => {
                 })
             );
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [routeTable1, routeTable2]);
 
     return (
@@ -272,7 +272,6 @@ const AvailabilityZone = () => {
                                 value={selectedZone1 ? selectedZone1 : undefined}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedAzNode1(selectedOptions));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 error={!isAZNotFilled && !selectedZone1 ? GENERAL.ACTION_REQUIRED : ''}
                                 //@ts-ignore
@@ -314,7 +313,6 @@ const AvailabilityZone = () => {
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setSelectedSubnetNode1(selectedOptions));
                                     setRouteTable1(selectedOptions?.data?.routeTableId);
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateSubnet1Options.length > 5}
                                 options={generateSubnet1Options}
@@ -323,7 +321,8 @@ const AvailabilityZone = () => {
                             />
                         </div>
 
-                        {deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (
+                        {
+                            deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && 
                             <div className={styles.firstContainer}>
                                 <Typography variant="Regular_14">{GENERAL.CLUSTER_CONFIG_NODE_2}</Typography>
                                 <SelectField
@@ -347,7 +346,6 @@ const AvailabilityZone = () => {
                                     }
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedAzNode2(selectedOptions));
-                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     isSearchable={generateZones2.length > 5}
                                     options={generateZones2}
@@ -376,7 +374,6 @@ const AvailabilityZone = () => {
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedSubnetNode2(selectedOptions));
                                         setRouteTable2(selectedOptions?.data?.routeTableId);
-                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     isSearchable={generateSubnet2Options.length > 5}
                                     options={generateSubnet2Options}
@@ -384,7 +381,8 @@ const AvailabilityZone = () => {
                                     variant="two-lines"
                                 />
                             </div>
-                        )}
+                        }
+                        
                     </Typography>
                 </AccordionCardContent>
             </AccordionCard>

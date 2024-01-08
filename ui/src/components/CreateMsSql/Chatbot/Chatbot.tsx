@@ -71,13 +71,14 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry, isWizardTouched } = useAppSelector(
+    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry } = useAppSelector(
         state => state.chatbot
     );
-    console.log(isWizardTouched);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
+    //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
     const [isBotReplying, setIsBotReplying] = useState(false);
+    //const [currentIntent, setCurrentIntent] = useState<any>('');
     const [isPayloadReady, setIsPayloadReady] = useState(false);
     const [payloadContent, setPayloadContent] = useState<any>('');
     const [activeField, setActiveField] = useState<any>('');
@@ -645,47 +646,47 @@ const Chatbot = () => {
         };
     };
 
-    // useEffect(() => {
-    //     setIsBotReplying(true);
-    //     setTimeout(() => {
-    //         dispatch(
-    //             setMessages([
-    //                 ...messages,
-    //                 {
-    //                     sender: 'bot',
-    //                     type: 'confirm',
-    //                     active: true,
-    //                     msg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
-    //                     confirmData: {
-    //                         confirmMsg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
-    //                         confirmBtnTxt: 'Continue',
-    //                         cancelBtnTxt: 'Discard',
-    //                         onConfirm: async () => {
-    //                             dispatch(
-    //                                 setMessages([
-    //                                     {
-    //                                         sender: 'bot',
-    //                                         msg: 'Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?'
-    //                                     },
-    //                                     {
-    //                                         sender: 'user',
-    //                                         msg: 'Continue'
-    //                                     }
-    //                                 ])
-    //                             );
-    //                             setContext();
-    //                         },
-    //                         onCancel: () => {
-    //                             dispatch(setMessages([]));
-    //                             dispatch(setMssqlForm(initialMssqlState));
-    //                         }
-    //                     }
-    //                 }
-    //             ])
-    //         );
-    //         setIsBotReplying(false);
-    //     }, 5000);
-    // }, []);
+    useEffect(() => {
+        setIsBotReplying(true);
+        setTimeout(() => {
+            dispatch(
+                setMessages([
+                    ...messages,
+                    {
+                        sender: 'bot',
+                        type: 'confirm',
+                        active: true,
+                        msg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
+                        confirmData: {
+                            confirmMsg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
+                            confirmBtnTxt: 'Continue',
+                            cancelBtnTxt: 'Discard',
+                            onConfirm: async () => {
+                                dispatch(
+                                    setMessages([
+                                        {
+                                            sender: 'bot',
+                                            msg: 'Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?'
+                                        },
+                                        {
+                                            sender: 'user',
+                                            msg: 'Continue'
+                                        }
+                                    ])
+                                );
+                                setContext();
+                            },
+                            onCancel: () => {
+                                dispatch(setMessages([]));
+                                dispatch(setMssqlForm(initialMssqlState));
+                            }
+                        }
+                    }
+                ])
+            );
+            setIsBotReplying(false);
+        }, 5000);
+    }, []);
 
     useEffect(() => {
         dispatch(

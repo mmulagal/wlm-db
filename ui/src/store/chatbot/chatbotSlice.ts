@@ -7,8 +7,7 @@ const initialState: ChatbotEntities = {
     isShow: false,
     isReceivingMsg: false,
     loadConfigClicked: false,
-    showRetry: false,
-    isWizardTouched: false
+    showRetry: false
 };
 
 const chatbotSlice = createSlice({
@@ -32,20 +31,10 @@ const chatbotSlice = createSlice({
         },
         setShowRetry: (state, action: PayloadAction<any>) => {
             state.showRetry = action.payload;
-        },
-        setIsWizardTouched: (state, action: PayloadAction<any>) => {
-            state.isWizardTouched = action.payload;
         }
     }
 });
 
-export const {
-    setMessages,
-    setCurrentIntent,
-    setIsShow,
-    setIsReceivingMsg,
-    setLoadConfigClicked,
-    setShowRetry,
-    setIsWizardTouched
-} = chatbotSlice.actions;
+export const { setMessages, setCurrentIntent, setIsShow, setIsReceivingMsg, setLoadConfigClicked, setShowRetry } =
+    chatbotSlice.actions;
 export default chatbotSlice;

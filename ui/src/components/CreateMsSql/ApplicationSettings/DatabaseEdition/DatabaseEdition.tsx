@@ -5,7 +5,6 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSelectedDBEdition } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseEdition = () => {
     // To get selected DB edition
@@ -35,7 +34,6 @@ const DatabaseEdition = () => {
                                             value: GENERAL.SQL_SERVER_STANDARD
                                         })
                                     );
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.SQL_SERVER_STANDARD_EDITION}
                                 className={styles.radio}
@@ -54,7 +52,6 @@ const DatabaseEdition = () => {
                                             value: GENERAL.SQL_SERVER_ENTERPRISE
                                         })
                                     );
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.SQL_SERVER_ENTERPRiSE_EDITION}
                                 className={styles.radio}

@@ -27,7 +27,6 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
-import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const FSxNSystem = () => {
     const dispatch = useDispatch();
@@ -64,39 +63,29 @@ const FSxNSystem = () => {
         const node2SubnetsList = selectedZone2?.data?.subnets || [];
         const primarySubnet = val?.ontapConfiguration?.preferredSubnetId;
         let svmCheck = false;
-        if (throughputCapacity === 128 || throughputCapacity === 256) {
+        if(throughputCapacity === 128 || throughputCapacity === 256) {
             svmCheck = svmCount < 6 ? true : false;
-        } else if (throughputCapacity === 512 || throughputCapacity === 1024) {
+        } else if(throughputCapacity === 512 || throughputCapacity === 1024) {
             svmCheck = svmCount < 14 ? true : false;
-        } else if (throughputCapacity === 2048 || throughputCapacity === 4096) {
+        } else if(throughputCapacity === 2048 || throughputCapacity === 4096) {
             svmCheck = svmCount < 24 ? true : false;
         } else {
             svmCheck = true;
         }
-        if (lifecycle && lifecycle === 'AVAILABLE') {
-            if (
-                deploymentMode?.label === GENERAL.FAILOVER_CLUSTER &&
-                fsxType &&
-                fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1
-            ) {
-                return (
-                    svmCheck &&
-                    node1SubnetsList.includes(primarySubnet) &&
-                    fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val))
-                );
-            } else if (deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
-                return (
-                    svmCheck &&
-                    node1SubnetsList.includes(primarySubnet) &&
-                    fsxSubnets.some((val: string) => node1SubnetsList.includes(val))
-                );
+        if(lifecycle && lifecycle === 'AVAILABLE') {
+            if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && fsxType && fsxType === FSX_DEPLOYMENT_MODE.MULTI_AZ_1) {
+                return svmCheck && node1SubnetsList.includes(primarySubnet) && 
+                    fsxSubnets.every((val: string) => node1SubnetsList.includes(val) || node2SubnetsList.includes(val));
+            } else if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+                return svmCheck && node1SubnetsList.includes(primarySubnet) &&
+                    fsxSubnets.some((val: string) => node1SubnetsList.includes(val));
             } else {
                 return false;
             }
         } else {
             return false;
         }
-    };
+    }
 
     //Function to generate the options for Select Field
     const generateExistingFsx = useMemo<optionType[]>((): optionType[] => {
@@ -119,14 +108,14 @@ const FSxNSystem = () => {
         });
 
         return options;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fsxnData, selectedZone1, selectedZone2, deploymentMode]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if(!isLoadConfig){
             dispatch(setExistingFsxnName(generateExistingFsx[0]));
             dispatch(setFsxNExistingUserName(FSXADMIN));
-        }
+        } 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingFsx]);
 
@@ -150,16 +139,14 @@ const FSxNSystem = () => {
             );
         } else if (!selectedVPCData) {
             return <ActionRequired disabled />;
-        } else if (
-            (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (!selectedZone1 || !selectedZone2)) ||
-            (deploymentMode?.label === GENERAL.SINGLE_INSTANCE && !selectedZone1)
-        ) {
+        } else if ((deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && (!selectedZone1 || !selectedZone2)) || 
+            (deploymentMode?.label === GENERAL.SINGLE_INSTANCE && !selectedZone1)) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_AZ}
                 </Typography>
             );
-        }
+        } 
 
         //Checking for the create new option
         if (selectedFsxnType === GENERAL.CREATE_NEW_FSXN) {
@@ -183,17 +170,14 @@ const FSxNSystem = () => {
     };
 
     const disableCheck = (() => {
-        if (deploymentMode?.label === GENERAL.FAILOVER_CLUSTER) {
-            return (
-                !credentialData ||
-                (credentialData && !credentialData.length) ||
-                !selectedVPCData ||
-                !selectedZone1 ||
-                !selectedZone2
-            );
+        if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER){
+            return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+            || !selectedZone1 || !selectedZone2;
         } else {
-            return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData || !selectedZone1;
+            return !credentialData || (credentialData && !credentialData.length) || !selectedVPCData 
+            || !selectedZone1;
         }
+        
     })();
 
     return (
@@ -213,7 +197,6 @@ const FSxNSystem = () => {
                                 isChecked={selectedFsxnType === GENERAL.CREATE_NEW_FSXN}
                                 onChange={() => {
                                     dispatch(setFsxNType(GENERAL.CREATE_NEW_FSXN));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.CREATE_NEW_FSXN}
                                 className=""
@@ -222,7 +205,6 @@ const FSxNSystem = () => {
                                 isChecked={selectedFsxnType === GENERAL.SELECT_EXISTING_FSX}
                                 onChange={() => {
                                     dispatch(setFsxNType(GENERAL.SELECT_EXISTING_FSX));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.SELECT_EXISTING_FSX}
                                 className=""
@@ -233,12 +215,9 @@ const FSxNSystem = () => {
                                 <SelectField
                                     label={GENERAL.FSXN_NAME}
                                     isClearable={false}
-                                    defaultValue={
-                                        selectedExistingFsxnName ? [selectedExistingFsxnName] : [generateExistingFsx[0]]
-                                    }
+                                    defaultValue={selectedExistingFsxnName ? [selectedExistingFsxnName] : [generateExistingFsx[0]]}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setExistingFsxnName(selectedOptions));
-                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     isSearchable={generateExistingFsx.length > 5}
                                     options={generateExistingFsx}
@@ -258,7 +237,6 @@ const FSxNSystem = () => {
                                 label={GENERAL.USER_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setFsxNExistingUserName(e.target.value));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 value={
                                     selectedFsxnType === GENERAL.SELECT_EXISTING_FSX && selectedFsxnExistingUserName
@@ -306,7 +284,6 @@ const FSxNSystem = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setPassword(e.target.value);
                                     dispatch(setFsxNPassword(e.target.value));
-                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 value={selectedFsxnPassword}
                                 className={styles.textFieldPassword}

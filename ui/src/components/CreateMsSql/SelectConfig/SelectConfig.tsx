@@ -10,7 +10,6 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { Typography } from '@netapp/design-system';
-import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 const SelectConfig = () => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
@@ -25,10 +24,7 @@ const SelectConfig = () => {
                         ? `${styles['easy-create']} ${styles['add-border']}`
                         : styles['easy-create']
                 }
-                onClick={() => {
-                    dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
-                    dispatch(setIsWizardTouched(true));
-                }}
+                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE))}
             >
                 <div className={styles.level}>
                     <EasyCreate />
@@ -56,10 +52,7 @@ const SelectConfig = () => {
                         ? `${styles['standard-create']} ${styles['add-border']}`
                         : styles['standard-create']
                 }
-                onClick={() => {
-                    dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
-                    dispatch(setIsWizardTouched(true));
-                }}
+                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE))}
             >
                 <div className={styles.level}>
                     <StandardCreate />
