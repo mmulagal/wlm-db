@@ -7,6 +7,8 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 
 const SubJobTable = ({ statusType }: any) => {
     const ExpandedRow = () => {
@@ -18,7 +20,7 @@ const SubJobTable = ({ statusType }: any) => {
             name: '9876543219236789',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Completed',
+            status: 'COMPLETED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -26,7 +28,7 @@ const SubJobTable = ({ statusType }: any) => {
             name: '2876543219236789',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Completed',
+            status: 'COMPLETED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -34,7 +36,7 @@ const SubJobTable = ({ statusType }: any) => {
             name: '4876543219006789',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Failed',
+            status: 'FAILED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45',
             errorMsg: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
@@ -43,7 +45,7 @@ const SubJobTable = ({ statusType }: any) => {
             name: '3876543219006789',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Running',
+            status: 'IN_PROGRESS',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -51,7 +53,7 @@ const SubJobTable = ({ statusType }: any) => {
             name: '7876543219036789',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Running',
+            status: 'IN_PROGRESS',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
@@ -59,7 +61,7 @@ const SubJobTable = ({ statusType }: any) => {
             name: '8876543219036789',
             description:
                 'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'Completed',
+            status: 'COMPLETED',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         }
@@ -130,8 +132,8 @@ const SubJobTable = ({ statusType }: any) => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
-                            {cellData === 'Completed' && <Success />}
-                            {cellData === 'Failed' &&
+                            {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
+                            {cellData === JOB_MONITORING_STATUS.FAILED &&
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
                                     children={<Typography variant="Regular_14">{rowData?.errorMsg}</Typography>}
@@ -141,9 +143,9 @@ const SubJobTable = ({ statusType }: any) => {
                                     }
                                 />
                             }
-                            {cellData === 'Running' && <InProgress />}
+                            {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                         </div>
-                        <div>{cellData}</div>
+                        <div>{jobMonitoringStatusMapping(cellData)}</div>
                     </div>
                 );
             }
@@ -176,12 +178,13 @@ const SubJobTable = ({ statusType }: any) => {
         rows: jobsList,
         pageSize: 50,
         selectionType: 'none',
-        isHorizontalScroll: true
+        isHorizontalScroll: true,
+        // isLazyLoading: subJobsLoading
     });
 
     const tableComponentProps = {
         ExpandedRow,
-        lazyLoadingText: 'Loading'
+        lazyLoadingText: 'Loading...'
     };
 
     return (

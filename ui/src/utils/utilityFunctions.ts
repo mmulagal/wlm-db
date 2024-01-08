@@ -11,6 +11,7 @@ import {
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
+    JOB_MONITORING_STATUS,
     PENDING_DELETION,
     PRODUCTION,
     RECOMMENDED_TEMPLATES,
@@ -927,4 +928,16 @@ export const last30Days = get30Days().reverse();
 export const resetDBHomePageState = (dispatch: any) => {
     dispatch(databaseHomeApi.util.resetApiState());
     dispatch(addInitialData(initialDBHomepageState));
+}
+
+export const jobMonitoringStatusMapping = (val : string) => {
+    let statusValue = val;
+    if (val === JOB_MONITORING_STATUS.COMPLETED) {
+        statusValue = GENERAL.JM_COMPLETED;
+    } else if (val === JOB_MONITORING_STATUS.FAILED) {
+        statusValue = GENERAL.JM_FAILED;
+    } else if (val === JOB_MONITORING_STATUS.IN_PROGRESS) {
+        statusValue = GENERAL.JM_IN_PROGRESS;
+    }
+    return statusValue;
 }

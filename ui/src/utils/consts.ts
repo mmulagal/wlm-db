@@ -133,7 +133,15 @@ export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
     INITIALIZING: 'Initializing',
-    FAILED: 'Failed'
+    FAILED: 'Failed',
+    IN_PROGRESS: 'In Progress',
+    COMPLETED: 'Completed'
+};
+
+export const JOB_MONITORING_STATUS = {
+    FAILED: 'FAILED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED'
 };
 
 export const MAX_SAVED_CONFIG = 100;

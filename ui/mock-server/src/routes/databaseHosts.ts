@@ -6,6 +6,8 @@ import DatabaseHosts from '../data/databaseHosts.json';
 import DatabaseJobs from '../data/databaseJobs.json';
 import JobsSummary from '../data/jobsSummary.json';
 import Templates from '../data/template.json';
+import JobMonitoringJobs from '../data/jobMonitoringJobs.json';
+import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 
 const router = require('express').Router();
 
@@ -43,6 +45,14 @@ router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
 
 router.delete(`${BASE_URL}/v1/jobs/jobId/:id`, async (req: {}, res: any) => {
     generateResponse(res, 200, { success: 'ok' });
+});
+
+router.get(`${BASE_URL}/v2/jobs`, async (req: {}, res: any) => {
+    generateResponse(res, 200, JobMonitoringJobs);
+});
+
+router.get(`${BASE_URL}/v2/jobs/:jobId`, async (req: {}, res: any) => {
+    generateResponse(res, 200, JobMonitoringSubTask);
 });
 
 export default router;

@@ -7,70 +7,77 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
+import { JOB_MONITORING_STATUS, STATUS_CONST } from '../../../utils/consts';
+import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 
 const JobMonitoringTable = () => {
-    const ExpandedRow = ({ rowData }: any) => {
-        const statusType = rowData?.status.toLowerCase();
-        return <SubJobTable statusType={statusType} />;
-    };
+    const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
+    // const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
 
     const jobsList: any[] = [
         {
-            jobId: '9876543219236789',
+            id: '9876543219236789',
             type: 'Deployment',
-            status: 'Completed',
+            status: 'COMPLETED',
             resourceName: 'SQL',
-            jobName: 'Microsoft SQL server deployed with stack <stack-name>',
+            name: 'Microsoft SQL server deployed with stack <stack-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '2876543219236789',
+            id: '2876543219236789',
             type: 'Deployment',
-            status: 'Completed',
+            status: 'COMPLETED',
             resourceName: 'SQL',
-            jobName: 'Microsoft SQL server deployed with stack <stack-name>',
+            name: 'Microsoft SQL server deployed with stack <stack-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '4876543219006789',
+            id: '4876543219006789',
             type: 'Backup',
-            status: 'Failed',
+            status: 'FAILED',
             resourceName: 'SQL',
-            jobName: 'Backup of <host-name>/<job-name> with policy <policy-name>',
+            name: 'Backup of <host-name>/<job-name> with policy <policy-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45',
-            errorMsg: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
+            error: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
         },
         {
-            jobId: '3876543219006789',
+            id: '3876543219006789',
             type: 'Backup',
-            status: 'Running',
+            status: 'IN_PROGRESS',
             resourceName: 'SQL',
-            jobName: 'Backup of <host-name>/<job-name> with policy <policy-name>',
+            name: 'Backup of <host-name>/<job-name> with policy <policy-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '7876543219036789',
+            id: '7876543219036789',
             type: 'Clone',
-            status: 'Running',
+            status: 'IN_PROGRESS',
             resourceName: 'SQL',
-            jobName: 'Clone of <host-name>/<job-name>',
+            name: 'Clone of <host-name>/<job-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         },
         {
-            jobId: '8876543219036789',
+            id: '8876543219036789',
             type: 'Clone',
-            status: 'Completed',
+            status: 'COMPLETED',
             resourceName: 'SQL',
-            jobName: 'Clone of <host-name>/<job-name>',
+            name: 'Clone of <host-name>/<job-name>',
             startTime: 'December 20, 2023, 10:25:45',
             endTime: 'December 20, 2023, 12:25:45'
         }
     ];
+
+    const ExpandedRow = ({ rowData }: any) => {
+        const statusType = rowData?.status.toLowerCase();
+        return <SubJobTable statusType={statusType} />;
+    };
 
     const expandRow = (
         updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
@@ -108,7 +115,7 @@ const JobMonitoringTable = () => {
         {
             id: '1',
             Header: 'Job ID',
-            accessor: 'jobId',
+            accessor: 'id',
             className: styles.firstCol,
             isSortable: true,
             width: '286px',
@@ -131,20 +138,20 @@ const JobMonitoringTable = () => {
                 return (
                     <div className={styles.statusCol}>
                         <div>
-                            {cellData === 'Completed' && <Success />}
-                            {cellData === 'Failed' && 
+                            {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
+                            {cellData === JOB_MONITORING_STATUS.FAILED && 
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
-                                    children={<Typography variant="Regular_14">{rowData?.errorMsg}</Typography>}
+                                    children={<Typography variant="Regular_14">{rowData?.error}</Typography>}
                                     trigger="hover"
                                     container={
                                         <ErrorIcon className={styles.statusIcon}/>
                                     }
                                 />
                             }
-                            {cellData === 'Running' && <InProgress />}
+                            {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                         </div>
-                        <div>{cellData}</div>
+                        <div>{jobMonitoringStatusMapping(cellData)}</div>
                     </div>
                 );
             }
@@ -159,7 +166,7 @@ const JobMonitoringTable = () => {
         {
             id: '5',
             Header: 'Job Name',
-            accessor: 'jobName',
+            accessor: 'name',
             isSortable: true,
             className: styles.wrapText,
             width: '340px',
@@ -213,7 +220,8 @@ const JobMonitoringTable = () => {
         rows: jobsList,
         pageSize: 50,
         selectionType: 'none',
-        isHorizontalScroll: true
+        isHorizontalScroll: true,
+        isLazyLoading: jobsListLoading
     });
 
     const tableComponentProps = {

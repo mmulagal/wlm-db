@@ -483,7 +483,11 @@ export const GENERAL = {
     STEP2POINT4ACTIVATE: 'Activate.',
     JOBS_STATUS_OVER_TIME: 'Jobs status over time',
     JOB_MONITORING: 'Job monitoring',
-    POLICY_MANAGEMENT: 'Policy management'
+    POLICY_MANAGEMENT: 'Policy management',
+    //Job Monitoring constants
+    JM_COMPLETED: 'Completed',
+    JM_IN_PROGRESS: 'In Progress',
+    JM_FAILED: 'Failed'
 };
 
 export const CODE_VIEWER = {
