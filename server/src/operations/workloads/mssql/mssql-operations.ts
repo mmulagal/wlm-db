@@ -215,6 +215,7 @@ async function getDatabasesCount(
 async function getDataBasesSummary(resourceId: string) {
     logger.info('Get databases summary for resource:', resourceId);
     const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
     if (!credentialsId || !region || !activeNodeInstanceId) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get database summary');
     }
@@ -705,6 +706,7 @@ async function getPerformanceMetrics(resourceId: string) {
 
 async function getNativeSQLBackedupDatabases(resourceId: string) {
     logger.info('Fetch SQL native protection status', { resourceId });
+
     try {
         const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
             resourceId

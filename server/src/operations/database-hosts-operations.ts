@@ -796,6 +796,7 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
+
     if (!isSSMConnected) {
         const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
