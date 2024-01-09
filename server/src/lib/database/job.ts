@@ -89,7 +89,7 @@ async function listUniqueJob(
 async function createJobs(accountId: string, jobs: readOnlyJob[]) {
     logger.info('Creating jobs', { accountId, jobs: jobs?.length });
 
-    logger.info('Bulk creating jobs', { jobs });
+    logger.debug('Bulk creating jobs', { jobs });
 
     accountId = checkAccount(accountId);
 
