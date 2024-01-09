@@ -264,7 +264,7 @@ async function getOntapVolumesSnapshotCount(
             const apiQuery = 'fields=snapshot_count';
 
             const commands = [
-                `C:\\SSM\\OntapRestGetModified.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
+                `C:\\SSM\\OntapRestGet.ps1 -FSxSecretName ${fsxSecret} -FSxID ${fileSystemId} -FSxRegion ${region} -OntapResourceEndpoint '${apiEndpoint}' -OntapResourceFilter '${apiFilter}' -OntapResourceQuery '${apiQuery}'`
             ];
 
             const response = await callSsmExecution(
