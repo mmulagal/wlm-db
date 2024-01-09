@@ -44,6 +44,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
+    // TODO: restrict the next 2 APIs to staging only
     server.delete(`${JOBS_API_PATH}/:jobId`, { schema: DeleteJobSchema }, async (request, reply) => {
         const {
             params: { accountId, jobId },
