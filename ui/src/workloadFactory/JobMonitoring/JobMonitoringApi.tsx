@@ -20,7 +20,7 @@ const JobMonitoringApi = () => {
         let newList = jmJobsList?.jobs || [];
         let mergedList = [...oldList, ...newList]
         dispatch(setJobsList(mergedList));
-        setJobsCursor(jmJobsList?.nextToken);
+        setJobsCursor(jmJobsList?.nextToken || null);
     }, [jmJobsList]);
 
     useEffect(() => {

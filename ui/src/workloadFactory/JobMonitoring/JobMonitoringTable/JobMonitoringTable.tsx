@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -16,7 +16,7 @@ import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const JobMonitoringTable = () => {
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
-    // const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
+    const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
 
     const [scrollPos, setScrollPos] = useState(0);
 
@@ -42,66 +42,8 @@ const JobMonitoringTable = () => {
 
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
-        return <SubJobTable statusType={statusType} scrollPosition={scrollPos} />;
+        return <SubJobTable jobId={rowData?.id} statusType={statusType} scrollPosition={scrollPos} />;
     };
-
-    const jobsList: any[] = [
-        {
-            id: '9876543219236789',
-            type: 'Deployment',
-            status: 'COMPLETED',
-            resourceName: 'SQL',
-            name: 'Microsoft SQL server deployed with stack <stack-name>',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            id: '2876543219236789',
-            type: 'Deployment',
-            status: 'COMPLETED',
-            resourceName: 'SQL',
-            name: 'Microsoft SQL server deployed with stack <stack-name>',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            id: '4876543219006789',
-            type: 'Backup',
-            status: 'FAILED',
-            resourceName: 'SQL',
-            name: 'Backup of <host-name>/<job-name> with policy <policy-name>',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45',
-            error: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
-        },
-        {
-            id: '3876543219006789',
-            type: 'Backup',
-            status: 'IN_PROGRESS',
-            resourceName: 'SQL',
-            name: 'Backup of <host-name>/<job-name> with policy <policy-name>',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            id: '7876543219036789',
-            type: 'Clone',
-            status: 'IN_PROGRESS',
-            resourceName: 'SQL',
-            name: 'Clone of <host-name>/<job-name>',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            id: '8876543219036789',
-            type: 'Clone',
-            status: 'COMPLETED',
-            resourceName: 'SQL',
-            name: 'Clone of <host-name>/<job-name>',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        }
-    ];
 
     const expandRow = (
         updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
