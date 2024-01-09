@@ -119,17 +119,21 @@ async function getJobDetails(
 ) {
     logger.info(' Get job details', { accountId, jobId });
 
-    const record = await listUniqueJob(accountId, jobId)
+    const record = await listUniqueJob(accountId, jobId);
     const [job] = trimAccountIdForDemo([record]);
     job.subJobs = [];
 
-    let subJobs = await listJobs(accountId, jobId);
-    if (isEmpty(subJobs)) {
-        return job;
+    let formattedJob = formatJob(job);
+    const subJobsDbSchema = await listJobs(accountId, jobId);
+    let subJobs = trimAccountIdForDemo(subJobsDbSchema);
+    subJobs = isEmpty(subJobsDbSchema) ? [] : subJobsDbSchema.map(formatJob);
+
+    const response = {
+        ...formattedJob,
+        subJobs
     }
-    subJobs = trimAccountIdForDemo(subJobs);
-    job.subJobs = subJobs
-    return job;
+   
+    return response;
 }
 
 

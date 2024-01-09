@@ -19,7 +19,7 @@ const ListJobsResponseObject = Type.Object({
     name: Type.String(),
     status: Type.String(),
     description: Type.Optional(Type.String()),
-    parentJobId: Type.String(),
+    parentJobId: Type.Optional(Type.String()),
     resourceName: Type.String(),
     type: Type.String(),
     startTime: Type.Number(),
@@ -43,8 +43,7 @@ const JobObject = Type.Object({
     type: Type.String(),
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
-    error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Any())
+    error: Type.Optional(Type.String())
 });
 
 const JobDetailsResponse = Type.Object({
@@ -52,7 +51,7 @@ const JobDetailsResponse = Type.Object({
     name: Type.String(),
     status: Type.String(),
     description: Type.Optional(Type.String()),
-    parentJobId: Type.String(),
+    parentJobId: Type.Optional(Type.String()),
     resourceName: Type.String(),
     type: Type.String(),
     startTime: Type.Number(),

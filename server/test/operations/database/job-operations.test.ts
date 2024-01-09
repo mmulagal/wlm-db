@@ -37,7 +37,7 @@ afterAll(async () => {
     await deleteJobsAtAccount(ACCOUNT_ID)
 })
 describe('Job operations', () => {
-    it.skip('Register Jobs', async () => {
+    it('Register Jobs', async () => {
         const response = await registerJobs(ACCOUNT_ID, [{
             accountId: ACCOUNT_ID,
             name: 'test-job-ops-register-1',
@@ -61,12 +61,12 @@ describe('Job operations', () => {
         expect(response.count).toEqual(2);
     });
 
-    it.skip('Get Jobs', async () => {
+    it('Get Jobs', async () => {
         const response = await getJobs(ACCOUNT_ID);
         expect(response.count).toBeGreaterThanOrEqual(2);
     });
 
-    it.skip('Get Job Details', async () => {
+    it('Get Job Details', async () => {
         await registerJobs(ACCOUNT_ID, [{
             accountId: ACCOUNT_ID,
             name: 'test-job-ops-1',
@@ -82,7 +82,7 @@ describe('Job operations', () => {
         expect(response.description).toEqual('test-filtered-job-description');
     });
 
-    it.skip('Modify Job Details', async () => {
+    it('Modify Job Details', async () => {
         const [job] = await listJobs(ACCOUNT_ID);
         const jobDetails = await getJobDetails(ACCOUNT_ID, job.id);
         const response = await modifyJobDetails(ACCOUNT_ID, job.id, 'modified-description', JOBSTATUS.COMPLETED, Date.now());

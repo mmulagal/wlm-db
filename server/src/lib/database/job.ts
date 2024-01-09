@@ -34,14 +34,15 @@ async function listJobs(
 ) {
     logger.info('Listing jobs', { accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken });
 
-    accountId = checkAccount(accountId);
+   accountId = checkAccount(accountId);
 
     sort = sort || 'start_time';
     sortOrder = sortOrder || 'desc';
+    const parentJobIdFilter = parentJobId ? parentJobId : null
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
-            ...parentJobId && { parent_job_id: parentJobId },
+            parent_job_id: parentJobIdFilter,
             ...type && { type: { in: type } },
             ...status && { status: { in: status } },
             ...initiator && { initiator },
