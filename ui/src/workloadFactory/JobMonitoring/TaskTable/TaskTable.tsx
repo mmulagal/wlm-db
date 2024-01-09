@@ -7,62 +7,11 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 
-const TaskTable = () => {
-    const taskList: any[] = [
-        {
-            name: 'Task 1',
-            description:
-                'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'COMPLETED',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            name: 'Task 2',
-            description:
-                'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'COMPLETED',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            name: 'Task 3',
-            description:
-                'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'FAILED',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45',
-            errorMsg: 'Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1].'
-        },
-        {
-            name: 'Task 4',
-            description:
-                'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'IN_PROGRESS',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            name: 'Task 5',
-            description:
-                'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'IN_PROGRESS',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        },
-        {
-            name: 'Task 6',
-            description:
-                'Microsoft SQL server deployed with stack <stack-name>. Microsoft SQL server deployed with stack <stack-name>',
-            status: 'COMPLETED',
-            startTime: 'December 20, 2023, 10:25:45',
-            endTime: 'December 20, 2023, 12:25:45'
-        }
-    ];
-
+const TaskTable = ({ taskList }: any) => {
+    
     return (
         <div className={styles.taskTable}>
-            {taskList.map(task => {
+            {taskList.map((task: any) => {
                 return (
                     <div className={styles.taskRow}>
                         <Typography variant="Regular_14" className={styles.firstItem}>

@@ -42,7 +42,7 @@ const JobMonitoring = () => {
         dispatch(setTimeInterval(days));
     };
 
-    // JobMonitoringApi();
+    JobMonitoringApi();
 
     return (
         <div className={styles.jobMonitoring}>
