@@ -790,14 +790,12 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as unknown as Metadata;
 
     // Check SSM Connection status
-    const startTime = Date.now();
     const isSSMConnected = await isSSMConnectionSuccessful(
         credentialsId,
         region!,
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
-    logger.info('SSM connection completion', Date.now() - startTime);
     if (!isSSMConnected) {
         const errorMessage = `Error while fetching database details for ${accountId} ${databaseHostId} due to SSM connection issues.`;
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
