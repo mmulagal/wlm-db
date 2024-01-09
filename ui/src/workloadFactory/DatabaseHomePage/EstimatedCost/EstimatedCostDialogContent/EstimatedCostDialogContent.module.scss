@@ -16,14 +16,13 @@
             margin-left: 12px;
         }
         [class*='AccordionCard-module_base'] {
-            width: 630px !important;
             background-color: var(--hover-background) !important;
             box-shadow: none !important;
         }
 
         [class*='AccordionCard-module_header'] {
             height: 56px !important;
-            width: 630px !important;
+
             grid-template-columns: max-content 1fr max-content max-content max-content !important;
         }
 

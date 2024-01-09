@@ -158,13 +158,23 @@ export const PERMISSIONS = {
                 Resource: '*'
             },
             {
-                Sid: 'IAMConditionalGroup',
+                Sid: 'IAMGroup1',
                 Effect: 'Allow',
-                Action: ['iam:CreateServiceLinkedRole', 'iam:PassRole'],
+                Action: 'iam:CreateServiceLinkedRole',
                 Resource: '*',
                 Condition: {
                     StringLike: {
-                        'iam:AWSServiceName': 'ec2.amazonaws.com',
+                        'iam:AWSServiceName': 'ec2.amazonaws.com'
+                    }
+                }
+            },
+            {
+                Sid: 'IAMGroup2',
+                Effect: 'Allow',
+                Action: 'iam:PassRole',
+                Resource: '*',
+                Condition: {
+                    StringEquals: {
                         'iam:PassedToService': 'ec2.amazonaws.com'
                     }
                 }

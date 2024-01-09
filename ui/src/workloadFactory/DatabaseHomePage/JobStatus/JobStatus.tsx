@@ -1,4 +1,5 @@
-import { FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { Button, FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { useNavigate } from 'react-router-dom';
 import styles from './JobStatus.module.scss';
 import JobDoughnutChart from './JobDoughnut/JobDoughnutChart';
 import { GENERAL } from '../../../utils/appConstants';
@@ -6,6 +7,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 
 const JobStatus = () => {
     const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
+    const navigate = useNavigate();
 
     return (
         <div className={styles.jobStatus}>
@@ -18,7 +20,14 @@ const JobStatus = () => {
                     <FlashingDotsLoader />
                 ) : (
                     <Typography variant="Regular_13" style={{ lineHeight: 'unset' }}>
-                        {GENERAL.JOB_STATUS_DAYS}
+                        <Button
+                            variant="text"
+                            onClick={() => {
+                                navigate('../job-monitor');
+                            }}
+                        >
+                            {GENERAL.JOB_STATUS_DAYS}
+                        </Button>
                     </Typography>
                 )}
             </div>
