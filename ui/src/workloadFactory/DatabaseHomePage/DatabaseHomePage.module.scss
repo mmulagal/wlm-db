@@ -82,12 +82,12 @@
 
 @media screen and (min-width: 1351px) and (max-width: 1576px) {
     .leftSide {
-        width: 53vw;
+        width: 53vw !important;
     }
 }
 @media screen and (min-width: 1576px) and (max-width: 1720px) {
     .leftSide {
-        width: 61vw;
+        width: 61vw !important;
     }
 }
 
