@@ -10,7 +10,7 @@ import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const JobMonitoringTable = () => {
@@ -144,7 +144,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
             }
         },
         {
@@ -154,7 +154,7 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
             }
         },
         {

@@ -383,11 +383,11 @@ export const jobMonitoringApi = createApi({
     endpoints: builder => {
         return {
             // getJobsList: builder.query({
-            //     query: ({ nextToken = null }) => {
+            //     query: ({ nextToken = null, startTime, endTime }) => {
             //         if (nextToken) {
-            //             return `../v2/jobs?nextToken=${nextToken}`;
+            //             return `../v2/jobs?nextToken=${nextToken}&startTime=${startTime}&endTime=${endTime}`;
             //         } else {
-            //             return `../v2/jobs`;
+            //             return `../v2/jobs?startTime=${startTime}&endTime=${endTime}`;
             //         }
             //     }
             // }),

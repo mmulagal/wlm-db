@@ -51,7 +51,7 @@
     .statusbar {
         width: 3px;
         margin-left: -24px;
-        height: inherit;
+        height: 64px;
 
         &.completed {
             background-color: var(--success);
