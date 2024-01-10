@@ -29,7 +29,7 @@ export default function jobsRoutes(fastify: FastifyInstance) {
 
     server.get(`${JOBS_API_PATH}/:jobId`, { schema: JobDetailsSchema }, async (request, reply) => {
         const {
-            params: { accountId, jobId },
+            params: { accountId, jobId }
         } = request;
         const response = await getJobDetails(
             accountId, jobId

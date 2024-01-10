@@ -127,7 +127,6 @@ describe('Job operations', () => {
 
         const level2Jobs = jobDetails.subJobs as Job[]
         const level2JobIds = level2Jobs?.map(({ id }) => id);
-        console.log("level2JobIds", level2JobIds)
         if (level2JobIds) {
             //registering level 3 jobs
             await registerJobs(ACCOUNT_ID, [{

@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { JOBSTATUS, JOBTYPE, job } from "@prisma/client";
+import { JOBSTATUS, JOBTYPE, job as jobDbSchema } from "@prisma/client";
 import { createJobs, deleteJobs, listJobs, listUniqueJob, updateJob } from "../../lib/database/job";
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from "./database-operations";
@@ -16,8 +16,10 @@ interface JobWithSubJobs extends Job {
     subJobs?: Job[]
 }
 
-function formatJob(job: job) {
-    const { id, account_id, type, status, resource_name, name, description, error, start_time, initiator, end_time, parent_job_id } = job;
+type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
+
+function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
+    const { id, account_id, type, status, resource_name, name, description, error, start_time, initiator, end_time, parent_job_id, subJobs } = job;
     return {
         id,
         accountId: account_id,
@@ -30,7 +32,8 @@ function formatJob(job: job) {
         startTime: moment(start_time).unix() * 1000,
         ...end_time && { endTime: moment(end_time).unix() * 1000 },
         initiator,
-        ...parent_job_id && { parentJobId: parent_job_id }
+        ...parent_job_id && { parentJobId: parent_job_id },
+        ...subJobs && subJobs.length && { subJobs: subJobs.map(formatJob) }
     }
 }
 
@@ -96,7 +99,7 @@ async function getJobDetails(
     job.subJobs = [];
 
     let formattedJob = formatJob(job);
-    const subJobsDbSchema = await listJobs(accountId, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
+    const subJobsDbSchema = await getSubJobs(accountId, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
     let subJobs = trimAccountIdForDemo(subJobsDbSchema);
     subJobs = isEmpty(subJobsDbSchema) ? [] : subJobsDbSchema.map(formatJob);
 
@@ -108,6 +111,16 @@ async function getJobDetails(
     return response;
 }
 
+async function getSubJobs(accountId: string, jobId: string) {
+    logger.info('Get subjobs', { accountId, jobId });
+
+    const subJobs = await listJobs(accountId, jobId);
+    await Promise.all((subJobs || []).map(async (subJob: JobWithSubJobsDbSchema) => {
+        const { id } = subJob;
+        subJob.subJobs = await getSubJobs(accountId, id);
+    }));
+    return subJobs;
+}
 
 async function updateJobDetails(
     accountId: string, jobId: string, params: UpdateJobRecordType
@@ -126,11 +139,10 @@ async function deleteJobsWithAllSubJobs(
     accountId: string, jobId: string
 ) {
     logger.info(' Deleting jobs with all its subjobs', { accountId, jobId });
-    const allLevelJobs = await getAllDependantJobs(accountId, jobId);
+    const level2Jobs = await getSubJobs(accountId, jobId);
     let jobIdsToDelete = [jobId];
-    const level2Jobs = allLevelJobs?.subJobs;
     if (level2Jobs.length > 0) {
-        level2Jobs.map((level2Job: JobWithSubJobs) => {
+        level2Jobs.map((level2Job: JobWithSubJobsDbSchema) => {
             const level3JobIds = level2Job?.subJobs?.map(({ id }) => id);
             if (level3JobIds && level3JobIds?.length > 0) {
                 jobIdsToDelete = jobIdsToDelete.concat(level3JobIds);
@@ -141,17 +153,6 @@ async function deleteJobsWithAllSubJobs(
     return deleteJobs(accountId, jobIdsToDelete);
 }
 
-
-async function getAllDependantJobs(accountId: string, jobId: string) {
-    const parentJobDetails = await getJobDetails(accountId, jobId);
-    if (parentJobDetails?.subJobs?.length) {
-        await Promise.all(parentJobDetails?.subJobs.map(async (subJob: JobWithSubJobs) => {
-            const { subJobs: level3Jobs } = await getJobDetails(accountId, subJob.id);
-            subJob.subJobs = level3Jobs
-        }));
-    }
-    return parentJobDetails;
-}
 
 export {
     Job,

@@ -3,12 +3,12 @@ import {
     JobsParams,
     ListJobsQueryString,
     ListJobsResponse,
-    JobDetailsResponse,
     DeleteJobResponse,
     UpdateJobResponse,
     CreateJobResponse,
     CreateJobRequestBody,
-    UpdateJobRequestBody
+    UpdateJobRequestBody,
+    JobDetailsResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
