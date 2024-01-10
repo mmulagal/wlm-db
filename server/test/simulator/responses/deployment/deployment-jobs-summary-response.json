@@ -11,7 +11,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -24,7 +24,7 @@
                 "region": "US East (N. Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -37,7 +37,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -50,7 +50,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -63,7 +63,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -76,7 +76,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -89,7 +89,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -102,7 +102,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -115,7 +115,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -128,7 +128,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -141,7 +141,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -154,7 +154,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -167,7 +167,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -180,7 +180,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -193,7 +193,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -206,7 +206,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -219,7 +219,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -232,7 +232,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -245,7 +245,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -258,7 +258,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -271,7 +271,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -284,7 +284,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -297,7 +297,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -310,7 +310,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -323,7 +323,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -336,7 +336,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -349,7 +349,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -362,7 +362,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -375,7 +375,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -388,7 +388,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -401,7 +401,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -414,7 +414,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -427,7 +427,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -440,7 +440,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         {
@@ -453,7 +453,7 @@
                 "region": "Asia Pacific (Singapore)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         }
     ]

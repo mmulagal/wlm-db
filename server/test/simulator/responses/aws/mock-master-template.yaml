@@ -482,7 +482,7 @@ Resources:
         - IsFailoverCluster
         - FCI
         - Standalone
-      FileSystemType: FSx ONTAP
+      FileSystemType: FSx for ONTAP
       DatabaseType: Microsoft SQL server
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
@@ -956,4 +956,4 @@ Resources:
         - IsFailoverCluster
         - FCI
         - Standalone
-      FileSystemType: FSx ONTAP
+      FileSystemType: FSx for ONTAP

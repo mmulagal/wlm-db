@@ -72,7 +72,7 @@ describe('Database operations', () => {
             data: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
-                fileSystemType: 'FSx ONTAP'
+                fileSystemType: 'FSx for ONTAP'
             }
         });
         await createDeployment(ACCOUNT_ID, {
@@ -87,7 +87,7 @@ describe('Database operations', () => {
             data: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
-                fileSystemType: 'FSx ONTAP'
+                fileSystemType: 'FSx for ONTAP'
             }
         });
         const resp = await getAllDeploymentStatus(ACCOUNT_ID);
@@ -108,7 +108,7 @@ describe('Database operations', () => {
             data: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
-                fileSystemType: 'FSx ONTAP'
+                fileSystemType: 'FSx for ONTAP'
             }
         });
         const response1 = await createDeployment(ACCOUNT_ID, {
@@ -122,7 +122,7 @@ describe('Database operations', () => {
             data: {
                 resourceName: 'dummy-resourec-name',
                 databaseType: 'Microsoft SQL server',
-                fileSystemType: 'FSx ONTAP'
+                fileSystemType: 'FSx for ONTAP'
             }
         });
         let resp = await getDeploymentStatusByName(ACCOUNT_ID, 'wlmdb-2345');

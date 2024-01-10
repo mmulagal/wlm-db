@@ -229,7 +229,8 @@ async function getTopology(
             region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
-            fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
+            fileSystemType:
+                fileSystemType !== undefined ? (fileSystemType === 'FSx ONTAP' ? 'FSx for ONTAP' : fileSystemType) : '',
             fileSystemId: fileSystemId!,
             ...(fileSystemName && { fileSystemName }),
             ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),

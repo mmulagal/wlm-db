@@ -250,7 +250,8 @@ const ActiveDirectory = () => {
                                     />
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    dispatch(setSelectedADDomainAddress(e.target.value));
+                                    const inputVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    dispatch(setSelectedADDomainAddress(inputVal));
                                 }}
                                 value={selectedADDomainAddress ? selectedADDomainAddress : ''}
                                 className={styles.textField}
