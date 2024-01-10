@@ -54,7 +54,8 @@
         "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
     },
     "ssm": {
-        "poll-interval": "1s"
+        "poll-interval": "1s",
+        "execution-timeout": "30"
     },
     "auth": {
         "wlmdb": {

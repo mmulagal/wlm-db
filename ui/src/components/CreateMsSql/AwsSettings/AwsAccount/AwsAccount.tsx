@@ -208,9 +208,6 @@ const AwsAccount = () => {
                                             </span>
                                             {' '}{GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
-                                        <Button Component="button" variant="link" onClick={openCredentialTab} className={CommonStyles.buttonClass}>
-                                            {GENERAL.HOW_TO_ADD_AWS_CRED}
-                                        </Button>
                                     </div>  
                                 </div>
                                 <div className={styles.noaccount_options}>
@@ -262,7 +259,7 @@ const AwsAccount = () => {
                                         {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE : GENERAL.AWS_ACCOUNT_SUB_TEXT_AUTOMATE}{' '}
                                         <span>
                                             <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
-                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS2}
                                             </Button>
                                         </span>
                                     </Typography>

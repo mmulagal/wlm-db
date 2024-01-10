@@ -133,7 +133,15 @@ export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
     INITIALIZING: 'Initializing',
-    FAILED: 'Failed'
+    FAILED: 'Failed',
+    IN_PROGRESS: 'In Progress',
+    COMPLETED: 'Completed'
+};
+
+export const JOB_MONITORING_STATUS = {
+    FAILED: 'FAILED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED'
 };
 
 export const MAX_SAVED_CONFIG = 100;
@@ -156,7 +164,7 @@ export const CURL_REQ_TEMPLATE = (
     token: string,
     payload: any
 ) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'

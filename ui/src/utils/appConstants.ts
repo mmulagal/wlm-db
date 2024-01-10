@@ -94,7 +94,7 @@ export const GENERAL = {
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [
-        'Continue without credentials and create using the codebox on the right.',
+        'Continue without credentials and create AWS resources using the Codebox on the right.',
         'Ensure that you have the required permissions to complete this task within AWS CloudFormation.',
         'View the required permissions.'
     ],
@@ -108,13 +108,13 @@ export const GENERAL = {
     AWS_ACCOUNT_SUB_TEXT_WF:
         'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
-        'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+        'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_SUB_TEXT_READ:
-        'Use BlueXP in read mode by selecting credentials that grant BlueXP the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+        'Use BlueXP in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
     AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE:
-        'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+        'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions required to deploy and manage resources in your AWS account.',
     AWS_ACCOUNT_SUB_TEXT_WF_READ:
-        'Use Workload Factory in read mode by selecting credentials that grant Workload Factory the minimum read permissions to generate a CloudFormation stack, and then execute via the AWS console.',
+        'Use Workload Factory in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
@@ -122,6 +122,7 @@ export const GENERAL = {
     GO_TO_THE: 'Go to the',
     REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
     REQUIRED_PERMISSION_LINK_ACCOUNTS: 'View required permissions.',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS2: 'View the required permissions.',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
     CREDENTIALS: 'Credentials page',
     CREDENTIAL: 'Credentials.',
@@ -398,10 +399,10 @@ export const GENERAL = {
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
-    DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
+    DB_HOST_FILE_SYSTEM_TYPE: 'Storage type',
     // Job Status constants
     JOB_STATUS: 'Job status',
-    JOB_STATUS_DAYS: 'Last 90 days',
+    JOB_STATUS_DAYS: 'Last 30 days',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',
     JOB_STATUS_INITIALIZING: 'In Progress',
@@ -480,7 +481,14 @@ export const GENERAL = {
     STEP2POINT2: 'In the navigation pane, choose ',
     STEP2POINT2CONTINUE: 'Cost allocation tags',
     STEP2POINT4: 'Select',
-    STEP2POINT4ACTIVATE: 'Activate.'
+    STEP2POINT4ACTIVATE: 'Activate.',
+    JOBS_STATUS_OVER_TIME: 'Jobs status over time',
+    JOB_MONITORING: 'Job monitoring',
+    POLICY_MANAGEMENT: 'Policy management',
+    //Job Monitoring constants
+    JM_COMPLETED: 'Completed',
+    JM_IN_PROGRESS: 'In Progress',
+    JM_FAILED: 'Failed'
 };
 
 export const CODE_VIEWER = {

@@ -72,3 +72,14 @@
         width: 1128px;
     }
 }
+
+.popover {
+    display: flex;
+    max-width: 400px;
+    padding: 8px 12px;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 4px;
+    background-color: var(--content-background);
+    box-shadow: 4px 4px 12px 0px var(--grey-15);
+}

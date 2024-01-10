@@ -14,7 +14,8 @@ import {
     checkFsxType,
     validateFsx,
     validateCloudWatch,
-    validateTags
+    validateTags,
+    validateDeploymentEnv
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -53,7 +54,8 @@ import {
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
     MULTI_AZ,
-    TAGS
+    TAGS,
+    DEPLOYMENT_ENVIRONMENT
 } from './consts';
 
 const logger = getLogger();
@@ -263,6 +265,10 @@ async function validate(
             }
             case TAGS: {
                 response = await validateTags(key, params[key]);
+                break;
+            }
+            case DEPLOYMENT_ENVIRONMENT: {
+                response = validateDeploymentEnv(key, params[key]);
                 break;
             }
             default:

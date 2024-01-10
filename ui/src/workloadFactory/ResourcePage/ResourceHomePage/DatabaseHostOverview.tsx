@@ -16,23 +16,27 @@ import {
     setResourceLoading
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../../utils/appConstants';
+import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
     const resourceId = useAppSelector(state => state.auth.resourceId);
+    const stateResourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const {
         data: resourceDetails,
         isLoading: resourceLoading,
-        refetch: resourceRefetch
+        refetch: resourceRefetch,
+        isFetching: resourceFetching
     } = useGetResourceDetailsQuery(resourceId);
 
     const {
         data: databaseList,
         isLoading: databaseListLoading,
-        refetch: databaseListRefetch
+        refetch: databaseListRefetch,
+        isFetching: databaseListFetching
     } = useGetDatabaseListQuery(resourceId);
 
     useEffect(() => {
@@ -49,6 +53,18 @@ const DatabaseHostOverview = () => {
         }
     }, [databaseListLoading, databaseList, dispatch]);
 
+    useEffect(() => {
+        if (!stateResourceDetails?.id) {
+            resourceRefetch();
+            databaseListRefetch();
+        }
+    }, [stateResourceDetails, resourceRefetch, databaseListRefetch]);
+
+    useEffect(() => {
+        dispatch(setResourceLoading(resourceFetching));
+        dispatch(setDatabaseListLoading(databaseListFetching));
+    }, [resourceFetching, databaseListFetching, dispatch]);
+
     return (
         <div className={styles.resourcePage}>
             <div className={styles.breadCrumb}>
@@ -57,6 +73,7 @@ const DatabaseHostOverview = () => {
                         {
                             title: GENERAL.DATABASES,
                             onClick: () => {
+                                resetDBHomePageState(dispatch);
                                 navigate('../databases');
                             }
                         },

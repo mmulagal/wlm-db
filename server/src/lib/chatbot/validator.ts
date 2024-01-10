@@ -22,7 +22,10 @@ import {
     ROUTE_TABLE_2,
     STANDALONE,
     FCI,
-    FSX_USERNAME
+    FSX_USERNAME,
+    PROD,
+    DEV,
+    CUSTOM
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -701,6 +704,25 @@ function checkFsxType(type: string, key: string) {
     };
 }
 
+function validateDeploymentEnv(key: string, value: string) {
+    if ([PROD, DEV, CUSTOM].includes(value)) {
+        return {
+            value
+        };
+    }
+
+    return {
+        key,
+        status: 'error',
+        message: 'Select a deployment environment',
+        allowedValues: [
+            { label: 'Production', value: PROD },
+            { label: 'Develpoment', value: DEV },
+            { label: 'Custom', value: CUSTOM }
+        ]
+    };
+}
+
 export {
     validateRegion,
     validateVpcId,
@@ -718,5 +740,6 @@ export {
     checkFsxType,
     validateFsx,
     validateCloudWatch,
-    validateTags
+    validateTags,
+    validateDeploymentEnv
 };

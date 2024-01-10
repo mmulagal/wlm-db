@@ -68,7 +68,7 @@ const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
 const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt'];
-const DEFAULT_AWS_REGION = 'us-east-1';
+const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 
@@ -344,14 +344,12 @@ const IAM_ACTION_NAMES = [
     'AddRoleToInstanceProfile',
     'CreateInstanceProfile',
     'CreateRole',
-    'CreateServiceLinkedRole',
     'DeleteInstanceProfile',
     'GetPolicy',
     'GetPolicyVersion',
     'GetRole',
     'GetRolePolicy',
     'GetUser',
-    'PassRole',
     'PutRolePolicy',
     'RemoveRoleFromInstanceProfile',
     'SimulatePrincipalPolicy'
@@ -427,6 +425,8 @@ const EC2_STRICT_CONDITION_ACTION_NAMES = [
 
 const FSX_STRICT_CONDITION_ACTION_NAMES = ['TagResource'].map(action => `${FSX}:${action}`);
 
+const IAM_STRICT_CONDITION_ACTION_NAMES = ['CreateServiceLinkedRole', 'PassRole'].map(action => `${IAM}:${action}`);
+
 const AWS_RESOURCES_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
     [SSM]: SSM_ACTION_NAMES,
@@ -451,7 +451,8 @@ const AWS_RESOURCES_STRICT_ACTION_MAP = {
 
 const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
     [EC2]: EC2_STRICT_CONDITION_ACTION_NAMES,
-    [FSX]: FSX_STRICT_CONDITION_ACTION_NAMES
+    [FSX]: FSX_STRICT_CONDITION_ACTION_NAMES,
+    [IAM]: IAM_STRICT_CONDITION_ACTION_NAMES
 };
 
 const SECRET_MANAGER_ARN = 'arn:aws:secretsmanager:*:*:secret:wlmdb*';
@@ -460,6 +461,9 @@ const LOG_GROUP_ARN = 'arn:aws:logs:*:*:log-group:WLMDB*';
 const EC2_TAG_CONDITION = 'ec2:ResourceTag/aws:cloudformation:stack-name';
 const FSX_TAG_CONDITION = 'aws:ResourceTag/aws:cloudformation:stack-name';
 const WLMDB_RESOURCE_TAG_VALUE = 'WLMDB*';
+const IAM_LINKEDROLE_CONDITION = 'iam:AWSServiceName';
+const IAM_PASSROLE_CONDITION = 'iam:PassedToService';
+const IAM_EC2_SERVICE = 'ec2.amazonaws.com';
 
 // List of AWS regions - taken from https://www.aws-services.info/regions.html
 const AWS_REGIONS = new Map<string, string>([
@@ -1140,5 +1144,8 @@ export {
     BILLING,
     PRICING,
     WF_TOKEN,
-    BXP_TOKEN
+    BXP_TOKEN,
+    IAM_LINKEDROLE_CONDITION,
+    IAM_PASSROLE_CONDITION,
+    IAM_EC2_SERVICE
 };

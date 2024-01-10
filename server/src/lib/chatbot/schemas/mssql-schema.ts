@@ -15,6 +15,7 @@ type DeployMsSqlParams = {
     credentialsId?: string;
     fsxType?: string;
     region?: string; // region name or code as provided by the user
+    deploymentEnvironment?: string;
     sqlDeploymentMode?: string;
     vpcId?: string; // VPC id for the instance
     vpcCidr?: string; // VPC CIDR block

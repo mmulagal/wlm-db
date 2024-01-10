@@ -11,6 +11,7 @@ import {
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
+    JOB_MONITORING_STATUS,
     PENDING_DELETION,
     PRODUCTION,
     RECOMMENDED_TEMPLATES,
@@ -23,6 +24,8 @@ import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
 import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
+import { databaseHomeApi } from './apiService';
+import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -881,3 +884,60 @@ export const openCredentialTab = () => {
     }
     window.open(url, '_blank', 'noopener');
 };
+
+function getLastSevenDays() {
+    let dates = [];
+    for (let i = 0; i < 7; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+    }
+    return dates;
+}
+
+// Getting the last 7 days
+export const lastSevenDays = getLastSevenDays().reverse();
+
+function getLast14Days() {
+    let dates = [];
+    for (let i = 0; i < 14; i++) {
+        let date = new Date();
+        if (i % 2 === 0) {
+            date.setDate(date.getDate() - i);
+            dates.push(date);
+        }
+    }
+    return dates;
+}
+
+// Getting the last 7 days
+export const last14Days = getLast14Days().reverse();
+
+function get30Days() {
+    let dates = [];
+    for (let i = 0; i < 30; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+    }
+    return dates;
+}
+
+export const last30Days = get30Days().reverse();
+
+export const resetDBHomePageState = (dispatch: any) => {
+    dispatch(databaseHomeApi.util.resetApiState());
+    dispatch(addInitialData(initialDBHomepageState));
+}
+
+export const jobMonitoringStatusMapping = (val : string) => {
+    let statusValue = val;
+    if (val === JOB_MONITORING_STATUS.COMPLETED) {
+        statusValue = GENERAL.JM_COMPLETED;
+    } else if (val === JOB_MONITORING_STATUS.FAILED) {
+        statusValue = GENERAL.JM_FAILED;
+    } else if (val === JOB_MONITORING_STATUS.IN_PROGRESS) {
+        statusValue = GENERAL.JM_IN_PROGRESS;
+    }
+    return statusValue;
+}
