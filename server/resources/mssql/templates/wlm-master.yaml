@@ -24,7 +24,7 @@ Metadata:
           - NodeNetBIOSNames
           - KeyPairName
           - ValidationAmi
-          - Ec2RoleName
+          - CfDeployRoleName
       - Label:
           default: Microsoft Active Directory Configuration
         Parameters:
@@ -93,8 +93,8 @@ Metadata:
         default: File system deployment mode
       ApplicationName:
         default: Application Name
-      Ec2RoleName:
-        default: ""
+      CfDeployRoleName:
+        default: Cloud formation deployment role name
       UniqueID:
         default: Unique ID for BlueXP WLM SQL resource group
       ADScenarioType:
@@ -168,7 +168,7 @@ Parameters:
   
   {{SQLDeploymentMode}}
         
-  {{Ec2RoleName}}
+  {{CfDeployRoleName}}
 
   {{ADScenarioType}}
 
