@@ -11,21 +11,21 @@ const JobMonitoringApi = () => {
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
 
-    // skipApiCall to skip APi call when isActive is not true
-    const [skipApiCall, setSkipApiCall] = useState(true);
+    // skipApiCall to skip APi call when isActive is not true. Will make it true once API will be available.
+    const [skipApiCall, setSkipApiCall] = useState(false);
 
-    useEffect(() => {
-        setSkipApiCall(true);
-        setTimeout(() => {
-            dispatch(jobMonitoringApi.util.resetApiState());
-            dispatch(addInitialJMData(initialJobMonitoringState));
-            const toDate = Date.now();
-            const fromDate = toDate - timeInterval * (3600 * 1000 * 24);
-            setTime({startTime: fromDate, endTime: toDate});
-            setSkipApiCall(false);
-        }, 0);
-        
-    }, [timeInterval]);
+    // Will Uncomment once API will be available
+    // useEffect(() => {
+    //     setSkipApiCall(true);
+    //     setTimeout(() => {
+    //         dispatch(jobMonitoringApi.util.resetApiState());
+    //         dispatch(addInitialJMData(initialJobMonitoringState));
+    //         const toDate = Date.now();
+    //         const fromDate = toDate - timeInterval * (3600 * 1000 * 24);
+    //         setTime({startTime: fromDate, endTime: toDate});
+    //         setSkipApiCall(false);
+    //     }, 0);
+    // }, [timeInterval]);
 
     const {
         data: jmJobsList,
