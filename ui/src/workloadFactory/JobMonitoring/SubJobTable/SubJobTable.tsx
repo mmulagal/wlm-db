@@ -27,8 +27,8 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     } = useGetSubTaskListQuery(jobId);
 
     useEffect(() => {
-        if(jmSubTaskList?.jobs && jmSubTaskList?.jobs.length > 0){
-            setSubTaskList(jmSubTaskList?.jobs[0]?.subJobs);
+        if(jmSubTaskList){
+            setSubTaskList(jmSubTaskList?.subJobs);
         }
     }, [jmSubTaskList]);
 

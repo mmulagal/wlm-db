@@ -17,7 +17,7 @@ const jobMonitoringSlice = createSlice({
             state.jobsList = action.payload;
         },
         setTimeInterval: (state, action: PayloadAction<any>) => {
-            state.timeRange = action.payload;
+            state.timeInterval = action.payload;
         },
         addInitialJMData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
