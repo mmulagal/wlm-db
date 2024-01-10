@@ -317,25 +317,27 @@ async function getDataVolumes(credentialsId: string, region: string, fileSystemI
     const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fileSystemId);
 
     const dataVolumes: Volume[] = [];
-    for (const volume of volumes!) {
-        let tags;
-        if (volume?.Tags) {
-            tags = volume.Tags;
-        } else {
-            const input: ListTagsForResourceCommandInput = {
-                ResourceARN: volume.ResourceARN!
-            };
-            ({ Tags: tags } = (await listResourceTags(credentialsId, region, input)) || {});
-        }
+    await Promise.all(
+        (volumes || []).map(async volume => {
+            let tags;
+            if (volume?.Tags) {
+                tags = volume.Tags;
+            } else {
+                const input: ListTagsForResourceCommandInput = {
+                    ResourceARN: volume.ResourceARN!
+                };
+                ({ Tags: tags } = (await listResourceTags(credentialsId, region, input)) || {});
+            }
 
-        const isValidDataTag = tags?.some(
-            ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
-        );
+            const isValidDataTag = tags?.some(
+                ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
+            );
 
-        if (isValidDataTag) {
-            dataVolumes.push(volume);
-        }
-    }
+            if (isValidDataTag) {
+                dataVolumes.push(volume);
+            }
+        })
+    );
 
     const filteredVolumes = dataVolumes?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
 
