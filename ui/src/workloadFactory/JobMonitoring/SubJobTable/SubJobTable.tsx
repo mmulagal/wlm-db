@@ -10,21 +10,18 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
-import { useRunOnce } from '../../../common/hooks/useRunOnce';
+// import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useGetSubTaskListQuery } from '../../../utils/apiService';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
-    const [leftPos, setLeftPos] = useState(0);
+    // const [leftPos, setLeftPos] = useState(0);
     const [subTaskList, setSubTaskList] = useState<any>([]);
 
     const ExpandedRow = ({ rowData }: any) => {
-        return <TaskTable taskList={rowData?.subJobs}/>;
+        return <TaskTable taskList={rowData?.subJobs} />;
     };
 
-    const {
-        data: jmSubTaskList,
-        isFetching: jmSubTaskListLoading,
-    } = useGetSubTaskListQuery(jobId);
+    const { data: jmSubTaskList, isFetching: jmSubTaskListLoading } = useGetSubTaskListQuery(jobId);
 
     useEffect(() => {
         if(jmSubTaskList){
@@ -32,19 +29,19 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         }
     }, [jmSubTaskList]);
 
-    useRunOnce(() => {
-        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-        if (currentTable[0]) {
-            setTimeout(() => {
-                currentTable[0].scrollLeft = currentTable[1].scrollLeft;
-                if (currentTable[1].scrollLeft > 56) {
-                    setLeftPos(currentTable[1].scrollLeft - 2);
-                } else {
-                    setLeftPos(currentTable[1].scrollLeft - 4);
-                }
-            });
-        }
-    });
+    // useRunOnce(() => {
+    //     const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+    //     if (currentTable[0]) {
+    //         setTimeout(() => {
+    //             currentTable[0].scrollLeft = currentTable[1].scrollLeft;
+    //             if (currentTable[1].scrollLeft > 56) {
+    //                 setLeftPos(currentTable[1].scrollLeft - 2);
+    //             } else {
+    //                 setLeftPos(currentTable[1].scrollLeft - 4);
+    //             }
+    //         });
+    //     }
+    // });
 
     const expandRow = (
         updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
@@ -111,14 +108,14 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                     <div className={styles.statusCol}>
                         <div>
                             {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
-                            {cellData === JOB_MONITORING_STATUS.FAILED &&
+                            {cellData === JOB_MONITORING_STATUS.FAILED && (
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
                                     children={<Typography variant="Regular_14">{rowData?.error}</Typography>}
                                     trigger="hover"
                                     container={<ErrorIcon className={styles.statusIcon} />}
                                 />
-                            }
+                            )}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>
@@ -176,7 +173,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                 <div
                     //  @ts-ignore
                     className={`${styles.table}`}
-                    style={{ position: 'relative', left: `${leftPos}px` }}
+                    // style={{ position: 'relative', left: `${leftPos}px` }}
                 >
                     <Table
                         {...tableComponentProps}

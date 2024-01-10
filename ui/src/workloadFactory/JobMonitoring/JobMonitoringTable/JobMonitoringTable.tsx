@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -12,37 +11,37 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
-import { useRunOnce } from '../../../common/hooks/useRunOnce';
+// import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const JobMonitoringTable = () => {
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
 
-    const [scrollPos, setScrollPos] = useState(0);
+    // const [scrollPos, setScrollPos] = useState(0);
 
-    useRunOnce(() => {
-        const handleOuterScroll = () => {
-            setScrollPos(currentTable[0].scrollLeft);
-        };
+    // useRunOnce(() => {
+    //     const handleOuterScroll = () => {
+    //         setScrollPos(currentTable[0].scrollLeft);
+    //     };
 
-        const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
+    //     const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
 
-        if (currentTable[0]) {
-            //@ts-ignore
-            currentTable[0].addEventListener('scroll', handleOuterScroll);
-        }
+    //     if (currentTable[0]) {
+    //         //@ts-ignore
+    //         currentTable[0].addEventListener('scroll', handleOuterScroll);
+    //     }
 
-        return () => {
-            if (currentTable[0]) {
-                //@ts-ignore
-                currentTable[0].removeEventListener('scroll', handleOuterScroll);
-            }
-        };
-    });
+    //     return () => {
+    //         if (currentTable[0]) {
+    //             //@ts-ignore
+    //             currentTable[0].removeEventListener('scroll', handleOuterScroll);
+    //         }
+    //     };
+    // });
 
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
-        return <SubJobTable jobId={rowData?.id} statusType={statusType} scrollPosition={scrollPos} />;
+        return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
     };
 
     const expandRow = (
@@ -105,14 +104,14 @@ const JobMonitoringTable = () => {
                     <div className={styles.statusCol}>
                         <div>
                             {cellData === JOB_MONITORING_STATUS.COMPLETED && <Success />}
-                            {cellData === JOB_MONITORING_STATUS.FAILED && 
+                            {cellData === JOB_MONITORING_STATUS.FAILED && (
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
                                     children={<Typography variant="Regular_14">{rowData?.error}</Typography>}
                                     trigger="hover"
                                     container={<ErrorIcon className={styles.statusIcon} />}
                                 />
-                            }
+                            )}
                             {cellData === JOB_MONITORING_STATUS.IN_PROGRESS && <InProgress />}
                         </div>
                         <div>{jobMonitoringStatusMapping(cellData)}</div>
