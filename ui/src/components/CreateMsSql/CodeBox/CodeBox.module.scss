@@ -18,6 +18,11 @@
         white-space: initial;
     }
 
+    .awsCliHighlightClass {
+        color: var(--blue-30);
+        background-color: transparent;
+    }
+
     .topBar {
         height: 60px;
         background-color: var(--grey-65);

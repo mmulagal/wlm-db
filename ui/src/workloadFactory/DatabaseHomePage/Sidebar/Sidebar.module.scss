@@ -406,6 +406,11 @@
         background-color: var(--grey-30);
     }
 
+    .awsCliHighlightClass {
+        color: var(--blue-30);
+        background-color: transparent;
+    }
+
     [class*='SearchInput-module_base'] {
         svg {
             --icon-primary-color: var(--white);

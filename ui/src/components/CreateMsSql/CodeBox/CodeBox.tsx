@@ -17,7 +17,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -164,9 +164,17 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
+                        {rightPanelTemplateResponse?.cliCommand ? (
+                            <Highlighter
+                                highlightClassName={styles.awsCliHighlightClass}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                                autoEscape={true}
+                                textToHighlight={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                            /> 
+                            ): (
+                                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                            )
+                        }
                     </Typography>
                 </HighlighterWord>
             );
