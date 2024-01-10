@@ -49,6 +49,8 @@ import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import { addEscapeInCli, maskAwsCli, setMaskedPassword } from './CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
+import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
+import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 
 type ConfigType = {
     id?: string;
@@ -469,14 +471,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
+            ) : getRightPanelTemplateResponse(openKey)?.template ? (
+                <ThemeProvider theme={'dark'} isRoot={false}>
+                    {/* @ts-ignore */}
+                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                        {getRightPanelTemplateResponse(openKey)?.template}
+                    </SyntaxHighlighter>
+                </ThemeProvider>
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
-                        {getRightPanelTemplateResponse(openKey)?.template || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
-                    </pre>
-                </HighlighterWord>
+                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {

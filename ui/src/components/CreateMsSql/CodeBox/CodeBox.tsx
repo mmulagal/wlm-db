@@ -31,6 +31,8 @@ import {
 } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
+import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
+import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -121,12 +123,15 @@ const CodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
+            ) : rightPanelTemplateResponse?.template ? (
+                <ThemeProvider theme={'dark'} isRoot={false}>
+                    {/* @ts-ignore */}
+                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                        {rightPanelTemplateResponse?.template}
+                    </SyntaxHighlighter>
+                </ThemeProvider>
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.template || <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />}
-                    </pre>
-                </HighlighterWord>
+                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
