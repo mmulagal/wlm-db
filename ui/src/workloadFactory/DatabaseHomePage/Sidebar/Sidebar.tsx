@@ -42,7 +42,8 @@ import {
     WLF_TO_FORM_NAVIGATE,
     CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS,
-    CODEBOX_REST_RES
+    CODEBOX_REST_RES,
+    AWS_CLI_HIGHLIGHT_STRINGS
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
@@ -506,9 +507,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={styles.colorAutomation}>
-                        {maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand) || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
+                        {getRightPanelTemplateResponse(openKey)?.cliCommand ? (
+                            <Highlighter
+                                highlightClassName={styles.awsCliHighlightClass}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                                autoEscape={true}
+                                textToHighlight={maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand)}
+                            /> 
+                            ): (
+                                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                            )
+                        }
                     </Typography>
                 </HighlighterWord>
             );

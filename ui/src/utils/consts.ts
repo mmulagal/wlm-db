@@ -195,3 +195,12 @@ export const COSTING_TYPES = {
     BILLING: 'billing',
     PRICING: 'pricing'
 };
+
+export const AWS_CLI_HIGHLIGHT_STRINGS = [
+    "ParameterKey=",
+    "ParameterValue=",
+    "--stack-name",
+    "--template-url",
+    "--region",
+    "--parameters"
+]
