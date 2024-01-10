@@ -77,7 +77,7 @@ import {
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
-import { uploadTemplates } from './template-operations';
+import { addTemplateParameters, uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
@@ -219,13 +219,16 @@ async function getCloudformationTemplate(
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
+    const templateParamsInCfFormat = await addTemplateParameters(templateParameters);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
+        customMasterTemplatePath,
+        templateParamsInCfFormat
     );
 
     let masterTemplateContents;
@@ -328,6 +331,7 @@ async function deployStackOrCreateTemplateURL(
             credentialsId,
             region
         );
+
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
             const response = await createCloudFormationTemplateForUserDeployment(
@@ -436,15 +440,6 @@ async function createCloudFormationTemplateForUserDeployment(
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(
-        ASSETS_BUCKET_REGION,
-        DatabaseTypes.MS_SQL_SERVER,
-        derivedParams.StackName,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
-    );
-
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
@@ -452,11 +447,24 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
+    const templateParamsAsList: Array<Parameter> = [
+        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+    ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
         }
     });
 
@@ -475,12 +483,31 @@ async function createCloudFormationTemplateForUserDeployment(
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
         }
     });
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
         templateParams += `&param_${key}=${value}`;
+        templateParamsAsList.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
     });
+
+    const templateParamsInCfFormat = await addTemplateParameters(templateParamsAsList);
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        derivedParams.StackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 

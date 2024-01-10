@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import yaml from 'yaml';
+import { Parameter } from '@aws-sdk/client-cloudformation';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
@@ -14,7 +15,8 @@ import {
     MASTER_TEMPLATE_DISTRIBUTION,
     SIGNED_URL_ERROR_MESSAGE,
     HttpErrorCodes,
-    DEFAULT_TAGS
+    DEFAULT_TAGS,
+    PARAMETERS
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 
@@ -66,7 +68,8 @@ async function updateTemplateUrls(
     templateType: string,
     stackName: string,
     tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string
+    templatePath?: string,
+    templateParameters?: object
 ) {
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
@@ -105,7 +108,8 @@ async function updateTemplateUrls(
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
             Tags: tags?.length ? yamlStr : '',
-            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || '')
+            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || ''),
+            ...templateParameters
         });
         await putObjectBucket(region, BUCKET_NAME, templatePath!, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
@@ -219,7 +223,8 @@ async function uploadTemplates(
     resourceType: DatabaseTypes,
     stackName: string,
     tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string
+    templatePath?: string,
+    templateParameters?: object
 ) {
     logger.info('Uploading templates ', region, resourceType);
 
@@ -236,10 +241,39 @@ async function uploadTemplates(
                 MASTER_TEMPLATE_DISTRIBUTION.name,
                 stackName,
                 tags,
-                templatePath
+                templatePath,
+                templateParameters
             )
         );
     }
 }
 
-export { uploadTemplates };
+async function addTemplateParameters(templateParameters: Parameter[]) {
+    logger.info('Add parameters to template');
+    const parameters = {};
+    PARAMETERS.map(async parameter => {
+        const { name } = parameter;
+        const paramValue = templateParameters.find(param => param.ParameterKey === name);
+        const paramData = {};
+        (paramData as { [index: string]: object })[name] = {
+            Description: parameter.description,
+            Type: parameter.type,
+            Default: paramValue && paramValue.ParameterValue !== '' ? paramValue.ParameterValue : parameter.default!,
+            NoEcho: parameter.noEcho!,
+            MinLength: parameter.minLength!,
+            MaxLength: parameter.maxLength!,
+            MinValue: parameter.minValue!,
+            MaxValue: parameter.maxValue!,
+            AllowedValues: parameter.allowedValues!,
+            AllowedPattern: parameter.pattern!
+        };
+
+        (parameters as { [index: string]: string })[name] = yaml.stringify(paramData, {
+            indent: 4,
+            collectionStyle: 'block'
+        });
+    });
+    return parameters;
+}
+
+export { uploadTemplates, addTemplateParameters };
