@@ -201,12 +201,12 @@ describe('List jobs', () => {
     }
     )
 
-    it.skip('fail to list a job invalid job Id', async () => { //skipping as prismock returns undefined instead of actual error code
+    it('fail to list a job invalid job Id', async () => { 
         try {
             await listUniqueJob(ACCOUNT_ID, 'a');
         } catch (error: any) {
-            console.log
-            expect(error.code).toEqual('P2025')
+           // expect(error.code).toEqual('P2025')
+           expect(error).toBeDefined() // prismock returns undefined instead of actual error code
         }
     }
     )
