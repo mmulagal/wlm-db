@@ -12,29 +12,12 @@ const ListJobsQueryString = Type.Object({
     startTime: Type.Optional(Type.Number()),
     endTime: Type.Optional(Type.Number()),
     pageSize: Type.Optional(Type.Number()),
-    nextToken: Type.Optional(Type.String())
+    nextToken: Type.Optional(Type.String()),
+    includeSubJobs: Type.Optional(Type.Boolean())
 });
 
 type ListJobsQueryType = Static<typeof ListJobsQueryString>;
 
-const ListJobsResponseObject = Type.Object({
-    id: Type.String(),
-    name: Type.String(),
-    status: Type.String(),
-    description: Type.Optional(Type.String()),
-    parentJobId: Type.Optional(Type.String()),
-    resourceName: Type.String(),
-    type: Type.String(),
-    startTime: Type.Number(),
-    endTime: Type.Optional(Type.Number()),
-    error: Type.Optional(Type.String())
-});
-
-const ListJobsResponse = Type.Object({
-    count: Type.Number(),
-    items: Type.Array(ListJobsResponseObject),
-    nextToken: Type.Optional(Type.String())
-});
 
 const JobObject = Type.Object({
     id: Type.String(),
@@ -48,7 +31,13 @@ const JobObject = Type.Object({
     startTime: Type.Number(),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String()),
-    subJobs: Type.Optional(Type.Array(Type.Object(Type.Any())))
+    subJobs: Type.Optional(Type.Array(Type.Any()))
+});
+
+const ListJobsResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(JobObject),
+    nextToken: Type.Optional(Type.String())
 });
 
 const JobDetailsResponse = Type.Object({

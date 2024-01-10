@@ -64,7 +64,7 @@ async function getJobs(
     filterParams: ListJobsQueryType = {}
 ) {
     logger.info(' Get jobs', { accountId, filterParams });
-    const { parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken } = filterParams;
+    const { parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken, includeSubJobs = false } = filterParams;
 
     let typeFilter;
     if (type) {
@@ -77,6 +77,13 @@ async function getJobs(
     }
 
     const records = await listJobs(accountId, parentJobId, sort, sortOrder, initiator, typeFilter, statusFilter, startTime, endTime, pageSize, nextToken);
+    
+    if(includeSubJobs){
+        await Promise.all((records || []).map(async (record: JobWithSubJobsDbSchema) => {
+            const allLevelSubJobs = await getSubJobs(accountId, record.id);
+            record.subJobs = allLevelSubJobs;
+        }));
+    }
 
     const jobs = trimAccountIdForDemo(records);
     const items = isEmpty(jobs) ? [] : jobs.map(formatJob);
