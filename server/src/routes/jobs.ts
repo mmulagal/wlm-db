@@ -4,9 +4,11 @@ import {
     ListJobsSchema,
     JobDetailsSchema,
     DeleteJobSchema,
-    ModifyJobSchema
+    UpdateJobSchema,
+    CreateJobSchema
 } from './schemas/jobs-schemas';
-import { deleteJobsWithAllSubJobs, getJobDetails, getJobs, modifyJobDetails } from '../operations/database/job-operations';
+import { deleteJobsWithAllSubJobs, getJobDetails, getJobs, registerJobs, updateJobDetails } from '../operations/database/job-operations';
+import { JobRecordType } from './types/jobs.types';
 
 const JOBS_API_PATH: string = '/v1/jobs';
 
@@ -16,21 +18,12 @@ export default function jobsRoutes(fastify: FastifyInstance) {
     server.get(`${JOBS_API_PATH}`, { schema: ListJobsSchema }, async (request, reply) => {
         const {
             params: { accountId },
-            query: { parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken }
+            query
         } = request;
         const response = await getJobs(
             accountId,
-            parentJobId,
-            sort,
-            sortOrder,
-            initiator,
-            type,
-            status,
-            startTime,
-            endTime,
-            pageSize,
-            nextToken
-        ) 
+            query
+        )
         return reply.send(response);
     });
 
@@ -39,8 +32,8 @@ export default function jobsRoutes(fastify: FastifyInstance) {
             params: { accountId, jobId },
         } = request;
         const response = await getJobDetails(
-            accountId,jobId
-        ) 
+            accountId, jobId
+        )
         return reply.send(response);
     });
 
@@ -50,18 +43,31 @@ export default function jobsRoutes(fastify: FastifyInstance) {
             params: { accountId, jobId },
         } = request;
         const response = await deleteJobsWithAllSubJobs(
-            accountId,jobId
-        ) 
+            accountId, jobId
+        )
         return reply.send(response);
     });
 
-    server.patch(`${JOBS_API_PATH}/:jobId`, { schema: ModifyJobSchema }, async (request, reply) => {
+    server.patch(`${JOBS_API_PATH}/:jobId`, { schema: UpdateJobSchema }, async (request, reply) => {
         const {
             params: { accountId, jobId },
+            body
         } = request;
-        const response = await modifyJobDetails(
-            accountId,jobId
-        ) 
+        const response = await updateJobDetails(
+            accountId, jobId, body
+        )
+        return reply.send(response);
+    });
+
+    server.post(`${JOBS_API_PATH}`, { schema: CreateJobSchema }, async (request, reply) => {
+        const {
+            params: { accountId },
+        } = request;
+
+        const { items } = request.body;
+        const response = await registerJobs(
+            accountId, items as JobRecordType[]
+        )
         return reply.send(response);
     });
 }

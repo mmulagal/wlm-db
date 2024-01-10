@@ -1,15 +1,15 @@
 
-import { JOBSTATUS } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import {
     Job,
     registerJobs,
     getJobs,
     getJobDetails,
-    modifyJobDetails,
+    updateJobDetails,
     deleteJobsWithAllSubJobs
 } from '../../../src/operations/database/job-operations'
 import { ACCOUNT_ID } from '../../utils/consts';
-import { deleteJobsAtAccount, listJobs } from '../../../src/lib/database/job';
+import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
 
 beforeEach(async () => {
     await registerJobs(ACCOUNT_ID, [{
@@ -20,7 +20,7 @@ beforeEach(async () => {
         initiator: 'test-user',
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: 'Deployment'
+        type: JOBTYPE.DEPLOYMENT
     },
     {
         accountId: ACCOUNT_ID,
@@ -30,11 +30,11 @@ beforeEach(async () => {
         initiator: 'test-user',
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: 'Deployment'
+        type: JOBTYPE.DEPLOYMENT
     }]);
 })
 afterAll(async () => {
-    await deleteJobsAtAccount(ACCOUNT_ID)
+    await deleteJobsOfAccount(ACCOUNT_ID)
 })
 describe('Job operations', () => {
     it('Register Jobs', async () => {
@@ -46,7 +46,7 @@ describe('Job operations', () => {
             initiator: 'test-user',
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         },
         {
             accountId: ACCOUNT_ID,
@@ -56,7 +56,7 @@ describe('Job operations', () => {
             initiator: 'test-user',
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         }]);
         expect(response.count).toEqual(2);
     });
@@ -75,7 +75,7 @@ describe('Job operations', () => {
             initiator: 'filterMe',
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         }]);
         const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, 'filterMe');
         const response = await getJobDetails(ACCOUNT_ID, jobDetails.id);
@@ -85,14 +85,14 @@ describe('Job operations', () => {
     it('Modify Job Details', async () => {
         const [job] = await listJobs(ACCOUNT_ID);
         const jobDetails = await getJobDetails(ACCOUNT_ID, job.id);
-        const response = await modifyJobDetails(ACCOUNT_ID, job.id, 'modified-description', JOBSTATUS.COMPLETED, Date.now());
+        const response = await updateJobDetails(ACCOUNT_ID, job.id, { description: 'modified-description', status: JOBSTATUS.COMPLETED, endTime: Date.now() });
         if (response.id) {
             expect(response.id).toEqual(jobDetails.id);
             expect(response.name).toEqual(jobDetails.name);
             expect(response.description).toEqual('modified-description');
             expect(response.status).toEqual(JOBSTATUS.COMPLETED);
         }
-        await deleteJobsAtAccount(ACCOUNT_ID);
+        await deleteJobsOfAccount(ACCOUNT_ID);
     });
 
     it('Delete all jobs with sub jobs', async () => {
@@ -108,7 +108,7 @@ describe('Job operations', () => {
             initiator: 'test-user',
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment',
+            type: JOBTYPE.DEPLOYMENT,
             parentJobId: jobId
         },
         {
@@ -119,7 +119,7 @@ describe('Job operations', () => {
             initiator: 'test-user',
             startTime: Date.now(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment',
+            type: JOBTYPE.DEPLOYMENT,
             parentJobId: jobId
         }]);
         const jobDetails = await getJobDetails(ACCOUNT_ID, jobId);
@@ -138,7 +138,7 @@ describe('Job operations', () => {
                 initiator: 'test-user',
                 startTime: Date.now(),
                 status: JOBSTATUS.IN_PROGRESS,
-                type: 'Deployment',
+                type: JOBTYPE.DEPLOYMENT,
                 parentJobId: level2JobIds[0]
             },
             {
@@ -149,7 +149,7 @@ describe('Job operations', () => {
                 initiator: 'test-user',
                 startTime: Date.now(),
                 status: JOBSTATUS.IN_PROGRESS,
-                type: 'Deployment',
+                type: JOBTYPE.DEPLOYMENT,
                 parentJobId: level2JobIds[0]
             },
             {
@@ -160,7 +160,7 @@ describe('Job operations', () => {
                 initiator: 'test-user',
                 startTime: Date.now(),
                 status: JOBSTATUS.IN_PROGRESS,
-                type: 'Deployment',
+                type: JOBTYPE.DEPLOYMENT,
                 parentJobId: level2JobIds[1]
             },
             {
@@ -171,7 +171,7 @@ describe('Job operations', () => {
                 initiator: 'test-user',
                 startTime: Date.now(),
                 status: JOBSTATUS.IN_PROGRESS,
-                type: 'Deployment',
+                type: JOBTYPE.DEPLOYMENT,
                 parentJobId: level2JobIds[1]
             }]);
         }

@@ -1,6 +1,6 @@
-import { JOBSTATUS } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
-import { createJobs, deleteJobs, deleteJobsAtAccount, listJobs, listUniqueJob, modifyJob } from '../../../src/lib/database/job';
+import { createJobs, deleteJobs, deleteJobsOfAccount, listJobs, listUniqueJob, updateJob } from '../../../src/lib/database/job';
 import { ACCOUNT_ID } from '../../utils/consts';
 import moment from 'moment';
 
@@ -13,11 +13,11 @@ beforeEach(async () => {
         initiator: 'test-user',
         start_time: new Date(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: 'Deployment'
+        type: JOBTYPE.DEPLOYMENT
     }])
 })
 afterAll(async () => {
-    await deleteJobsAtAccount(ACCOUNT_ID)
+    await deleteJobsOfAccount(ACCOUNT_ID)
 })
 describe('Create jobs', () => {
     it('should create a job', async () => {
@@ -29,7 +29,7 @@ describe('Create jobs', () => {
             initiator: 'test-user',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         }]);
         expect(response.count).toEqual(1);
     }
@@ -44,7 +44,7 @@ describe('Create jobs', () => {
             initiator: 'test-user',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         },
         {
             account_id: ACCOUNT_ID,
@@ -54,7 +54,7 @@ describe('Create jobs', () => {
             initiator: 'test-user',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         }])
 
         expect(response.count).toEqual(2);
@@ -71,7 +71,7 @@ describe('Create jobs', () => {
             initiator: 'test-user',
             start_time: startTime,
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         },
         {
             account_id: ACCOUNT_ID,
@@ -81,7 +81,7 @@ describe('Create jobs', () => {
             initiator: 'test-user',
             start_time: startTime,
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         }])
 
         expect(response.count).toEqual(0);
@@ -107,7 +107,7 @@ describe('Delete jobs', () => {
             initiator: 'test-user',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment'
+            type: JOBTYPE.DEPLOYMENT
         }]);
         const [jobs] = await listJobs(ACCOUNT_ID);
         await createJobs(ACCOUNT_ID, [{
@@ -118,7 +118,7 @@ describe('Delete jobs', () => {
             initiator: 'test-user',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment',
+            type: JOBTYPE.DEPLOYMENT,
             parent_job_id: jobs.id
         }]);
 
@@ -140,7 +140,7 @@ describe('Modify jobs', () => {
         const jobs = await listJobs(ACCOUNT_ID);
         const [jobIds] = jobs.map(({ id }) => id);
         const endTime = moment(new Date()).valueOf();
-        const response = await modifyJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, endTime);
+        const response = await updateJob(ACCOUNT_ID, jobIds, 'modified-description', JOBSTATUS.COMPLETED, endTime);
         expect(response.description).equal('modified-description');
         expect(response.status, JOBSTATUS.COMPLETED);
     }
@@ -148,7 +148,7 @@ describe('Modify jobs', () => {
 
     it('should fail to modify a job invalid Job Id', async () => {
         try {
-            await modifyJob(ACCOUNT_ID, 'a', 'modified-description', JOBSTATUS.COMPLETED)
+            await updateJob(ACCOUNT_ID, 'a', 'modified-description', JOBSTATUS.COMPLETED)
         } catch (error: any) {
             expect(error?.meta?.cause).toEqual('Record to update not found.')
         }
@@ -174,7 +174,7 @@ describe('List jobs', () => {
             initiator: 'abc',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment',
+            type: JOBTYPE.DEPLOYMENT,
             parent_job_id: jobId
         },
         {
@@ -185,7 +185,7 @@ describe('List jobs', () => {
             initiator: 'test-user',
             start_time: new Date(),
             status: JOBSTATUS.IN_PROGRESS,
-            type: 'Deployment',
+            type: JOBTYPE.DEPLOYMENT,
             parent_job_id: jobId
         }]);
         const subJobs = await listJobs(ACCOUNT_ID, jobId, 'name', 'desc',);

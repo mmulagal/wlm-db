@@ -1,4 +1,4 @@
-import { JOBSTATUS } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
@@ -7,7 +7,7 @@ const logger = getLogger();
 
 interface readOnlyJob {
     account_id: string
-    type: string
+    type: JOBTYPE
     status: JOBSTATUS
     resource_name: string
     name: string
@@ -21,11 +21,11 @@ interface readOnlyJob {
 
 async function listJobs(
     accountId: string,
-    parentJobId?: string,
-    sort?: string,
-    sortOrder?: string,
+    parentJobId: string | null = null,
+    sort: string = 'start_time',
+    sortOrder: string = 'desc',
     initiator?: string,
-    type?: string[],
+    type?: JOBTYPE[],
     status?: JOBSTATUS[],
     startTime?: number,
     endTime?: number,
@@ -34,11 +34,10 @@ async function listJobs(
 ) {
     logger.info('Listing jobs', { accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken });
 
-   accountId = checkAccount(accountId);
+    accountId = checkAccount(accountId);
 
-    sort = sort || 'start_time';
-    sortOrder = sortOrder || 'desc';
     const parentJobIdFilter = parentJobId ? parentJobId : null
+
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
@@ -100,8 +99,8 @@ async function createJobs(accountId: string, jobs: readOnlyJob[]) {
     })
 }
 
-async function modifyJob(accountId: string, jobId: string, description?: string, status?: JOBSTATUS, endTime?: number, error?: string) {
-    logger.info('Modifying a job', { accountId, jobId, description, status, endTime, error });
+async function updateJob(accountId: string, jobId: string, description?: string, status?: JOBSTATUS, endTime?: number, error?: string) {
+    logger.info('Updating a job', { accountId, jobId, description, status, endTime, error });
 
 
     accountId = checkAccount(accountId);
@@ -128,7 +127,6 @@ async function deleteJobs(accountId: string, jobId: string[]) {
                 id: { in: jobId }
             },
             {
-                account_id: accountId,
                 parent_job_id: { in: jobId }
             }]
         }
@@ -136,12 +134,12 @@ async function deleteJobs(accountId: string, jobId: string[]) {
     return response;
 }
 
-async function deleteJobsAtAccount(accountId: string) {
-    logger.info('Deleting all jobs in an account',accountId);
+async function deleteJobsOfAccount(accountId: string) {
+    logger.info('Deleting all jobs in an account', accountId);
     accountId = checkAccount(accountId);
     return prisma.client.job.deleteMany({
         where: {
-           account_id: accountId
+            account_id: accountId
         }
     })
 }
@@ -150,7 +148,7 @@ export {
     listJobs,
     listUniqueJob,
     createJobs,
-    modifyJob,
+    updateJob,
     deleteJobs,
-    deleteJobsAtAccount
+    deleteJobsOfAccount
 };

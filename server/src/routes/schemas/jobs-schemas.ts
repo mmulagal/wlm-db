@@ -5,7 +5,10 @@ import {
     ListJobsResponse,
     JobDetailsResponse,
     DeleteJobResponse,
-    ModifyJobResponse
+    UpdateJobResponse,
+    CreateJobResponse,
+    CreateJobRequestBody,
+    UpdateJobRequestBody
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -48,14 +51,27 @@ const DeleteJobSchema = {
     }
 };
 
-const ModifyJobSchema = {
+// Update job
+const UpdateJobSchema = {
     tags: [RouteTags.JOB_MONITORING],
     params: JobsParams,
-    summary: 'Delete a job with all its child jobs',
-    description: 'API to delete a job and all its subjobs',
+    summary: 'Update a job',
+    description: 'API to update job details',
+    body: UpdateJobRequestBody,
     response: {
-        200: ModifyJobResponse
+        200: UpdateJobResponse
     }
 };
 
-export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, ModifyJobSchema };
+// Create jobs
+const CreateJobSchema = {
+    ...baseRequest,
+    summary: 'Create jobs',
+    description: 'API to create jobs',
+    body: CreateJobRequestBody,
+    response: {
+        200: CreateJobResponse
+    }
+};
+
+export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, UpdateJobSchema, CreateJobSchema };

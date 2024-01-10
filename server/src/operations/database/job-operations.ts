@@ -1,40 +1,20 @@
 import createError from 'http-errors';
-import { JOBSTATUS, job } from "@prisma/client";
-import { createJobs, deleteJobs, listJobs, listUniqueJob, modifyJob } from "../../lib/database/job";
+import { JOBSTATUS, JOBTYPE, job } from "@prisma/client";
+import { createJobs, deleteJobs, listJobs, listUniqueJob, updateJob } from "../../lib/database/job";
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from "./database-operations";
 import { isEmpty } from 'lodash-es';
 import moment from 'moment';
+import { JobRecordType, ListJobsQueryType, UpdateJobRecordType } from '../../routes/types/jobs.types';
 const logger = getLogger();
 
-interface Job {
-    id: string,
-    accountId: string,
-    name: string,
-    description?: string | undefined,
-    resourceName: string,
-    initiator: string,
-    startTime: number,
-    endTime?: number,
-    error?: string,
-    parentJobId?: string,
-    type: string,
-    status: JOBSTATUS
-}
-interface JobRecord {
-    accountId: string,
-    name: string,
-    description?: string | undefined,
-    resourceName: string,
-    initiator: string,
-    startTime: number,
-    endTime?: number,
-    error?: string,
-    parentJobId?: string,
-    type: string,
-    status: JOBSTATUS
-}
 
+interface Job extends JobRecordType {
+    id: string
+}
+interface JobWithSubJobs extends Job {
+    subJobs?: Job[]
+}
 
 function formatJob(job: job) {
     const { id, account_id, type, status, resource_name, name, description, error, start_time, initiator, end_time, parent_job_id } = job;
@@ -54,16 +34,16 @@ function formatJob(job: job) {
     }
 }
 
-function formatJobDbSchema(job: JobRecord) {
+function formatJobDbSchema(job: JobRecordType) {
     const { accountId, type, status, resourceName, name, description, error, startTime, endTime, initiator, parentJobId } = job;
     return {
-        account_id: accountId, type, status: status as JOBSTATUS, resource_name: resourceName, name, description, error, start_time: new Date(startTime), initiator, end_time: endTime ? new Date(endTime) : undefined, parent_job_id: parentJobId
+        account_id: accountId, type: type as JOBTYPE, status: status as JOBSTATUS, resource_name: resourceName, name, description, error, start_time: new Date(startTime), initiator, end_time: endTime ? new Date(endTime) : undefined, parent_job_id: parentJobId
     }
 }
 
 async function registerJobs(
     accountId: string,
-    jobs: JobRecord[] | []
+    jobs: JobRecordType[] | []
 ) {
     logger.info('Registering jobs', { accountId, jobs: jobs?.length });
     logger.debug('Bulk creating jobs', jobs);
@@ -78,22 +58,14 @@ async function registerJobs(
 
 async function getJobs(
     accountId: string,
-    parentJobId?: string,
-    sort?: string,
-    sortOrder?: string,
-    initiator?: string,
-    type?: string,
-    status?: string,
-    startTime?: number,
-    endTime?: number,
-    pageSize: number = 50,
-    nextToken?: string
+    filterParams: ListJobsQueryType = {}
 ) {
-    logger.info(' Get jobs', { accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken });
+    logger.info(' Get jobs', { accountId, filterParams });
+    const { parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken } = filterParams;
 
     let typeFilter;
     if (type) {
-        typeFilter = type.split(',');
+        typeFilter = type.split(',') as JOBTYPE[];
     }
 
     let statusFilter;
@@ -124,7 +96,7 @@ async function getJobDetails(
     job.subJobs = [];
 
     let formattedJob = formatJob(job);
-    const subJobsDbSchema = await listJobs(accountId, jobId);
+    const subJobsDbSchema = await listJobs(accountId, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
     let subJobs = trimAccountIdForDemo(subJobsDbSchema);
     subJobs = isEmpty(subJobsDbSchema) ? [] : subJobsDbSchema.map(formatJob);
 
@@ -132,16 +104,17 @@ async function getJobDetails(
         ...formattedJob,
         subJobs
     }
-   
+
     return response;
 }
 
 
-async function modifyJobDetails(
-    accountId: string, jobId: string, description?: string, status?: JOBSTATUS, endTime?: number, error?: string
+async function updateJobDetails(
+    accountId: string, jobId: string, params: UpdateJobRecordType
 ) {
+    const { description, status, endTime, error } = params;
     logger.info(' Modifying job details', { accountId, jobId, description, status, endTime, error });
-    const response = await modifyJob(accountId, jobId, description, status, endTime, error);
+    const response = await updateJob(accountId, jobId, description, status as JOBSTATUS, endTime, error);
     if (response) {
         return formatJob(response);
     }
@@ -155,11 +128,14 @@ async function deleteJobsWithAllSubJobs(
     logger.info(' Deleting jobs with all its subjobs', { accountId, jobId });
     const allLevelJobs = await getAllDependantJobs(accountId, jobId);
     let jobIdsToDelete = [jobId];
-
-    if (allLevelJobs?.subJobs) {
-        const level2Jobs = allLevelJobs?.subJobs as Job[];
-        const level3JobIds = level2Jobs.map(({ id }) => id);
-        jobIdsToDelete = jobIdsToDelete.concat(level3JobIds);
+    const level2Jobs = allLevelJobs?.subJobs;
+    if (level2Jobs.length > 0) {
+        level2Jobs.map((level2Job: JobWithSubJobs) => {
+            const level3JobIds = level2Job?.subJobs?.map(({ id }) => id);
+            if (level3JobIds && level3JobIds?.length > 0) {
+                jobIdsToDelete = jobIdsToDelete.concat(level3JobIds);
+            }
+        });
     }
 
     return deleteJobs(accountId, jobIdsToDelete);
@@ -169,12 +145,10 @@ async function deleteJobsWithAllSubJobs(
 async function getAllDependantJobs(accountId: string, jobId: string) {
     const parentJobDetails = await getJobDetails(accountId, jobId);
     if (parentJobDetails?.subJobs?.length) {
-        for (const subJob of parentJobDetails?.subJobs) {
+        await Promise.all(parentJobDetails?.subJobs.map(async (subJob: JobWithSubJobs) => {
             const { subJobs: level3Jobs } = await getJobDetails(accountId, subJob.id);
-
-            subJob.subJobs = level3Jobs;
-
-        }
+            subJob.subJobs = level3Jobs
+        }));
     }
     return parentJobDetails;
 }
@@ -184,6 +158,6 @@ export {
     registerJobs,
     getJobs,
     getJobDetails,
-    modifyJobDetails,
+    updateJobDetails,
     deleteJobsWithAllSubJobs
 }

@@ -1,8 +1,8 @@
 -- CreateTable
 CREATE TABLE `job` (
-    `id` VARCHAR(191) NOT NULL,
-    `account_id` VARCHAR(80) NOT NULL,
-    `type` VARCHAR(80) NOT NULL,
+    `id` VARCHAR(40) NOT NULL,
+    `account_id` VARCHAR(30) NOT NULL,
+    `type` ENUM('DEPLOYMENT') NOT NULL,
     `status` ENUM('IN_PROGRESS', 'COMPLETED', 'FAILED') NOT NULL,
     `resource_name` VARCHAR(255) NOT NULL,
     `name` VARCHAR(255) NOT NULL,
@@ -10,8 +10,9 @@ CREATE TABLE `job` (
     `error` TEXT NULL,
     `start_time` DATETIME(0) NOT NULL,
     `end_time` DATETIME(0) NULL,
-    `parent_job_id` VARCHAR(80) NULL,
+    `parent_job_id` VARCHAR(40) NULL,
     `initiator` VARCHAR(80) NOT NULL DEFAULT 'SYSTEM',
+    `last_update_time` DATETIME(0) NULL,
 
     INDEX `k_wlmdb_job_account_id`(`account_id`),
     INDEX `k_wlmdb_job_parent_job_id`(`parent_job_id`),

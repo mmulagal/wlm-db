@@ -105,7 +105,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .get(`${API_PREFIX_PATH}/deployments`, { schema: DeploymentSummaryListSchema }, async (request, reply) => {
+        .get(`/v1/deployments`, { schema: DeploymentSummaryListSchema }, async (request, reply) => {
             const {
                 params: { accountId },
                 query: { statuses, nextToken }
