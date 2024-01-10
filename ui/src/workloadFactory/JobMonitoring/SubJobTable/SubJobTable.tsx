@@ -8,7 +8,7 @@ import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
 import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useGetSubTaskListQuery } from '../../../utils/apiService';
@@ -114,7 +114,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                             {cellData === JOB_MONITORING_STATUS.FAILED &&
                                 <Popover
                                     popoverClass={CommonStyles['popover']}
-                                    children={<Typography variant="Regular_14">{rowData?.errorMsg}</Typography>}
+                                    children={<Typography variant="Regular_14">{rowData?.error}</Typography>}
                                     trigger="hover"
                                     container={<ErrorIcon className={styles.statusIcon} />}
                                 />
@@ -131,14 +131,20 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'Start Time',
             accessor: 'startTime',
             isSortable: true,
-            width: '240px'
+            width: '240px',
+            renderCell: (cellData: any) => {
+                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+            }
         },
         {
             id: '5',
             Header: 'End Time',
             accessor: 'endTime',
             isSortable: true,
-            width: '240px'
+            width: '240px',
+            renderCell: (cellData: any) => {
+                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+            }
         },
         {
             id: '6',

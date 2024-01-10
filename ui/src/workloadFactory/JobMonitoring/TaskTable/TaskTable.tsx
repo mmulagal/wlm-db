@@ -5,7 +5,7 @@ import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { Popover, Typography } from '@netapp/design-system';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 
 const TaskTable = ({ taskList }: any) => {
     
@@ -26,7 +26,7 @@ const TaskTable = ({ taskList }: any) => {
                                 {task.status === JOB_MONITORING_STATUS.FAILED && 
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
-                                        children={<Typography variant="Regular_14">{task?.errorMsg}</Typography>}
+                                        children={<Typography variant="Regular_14">{task?.error}</Typography>}
                                         trigger="hover"
                                         container={
                                             <ErrorIcon className={styles.statusIcon}/>
@@ -38,10 +38,10 @@ const TaskTable = ({ taskList }: any) => {
                             <Typography variant="Regular_14">{jobMonitoringStatusMapping(task?.status)}</Typography>
                         </div>
                         <Typography variant="Regular_14" className={styles.fourthItem}>
-                            {task.startTime}
+                            {formatDateWithTime(task.startTime)}
                         </Typography>
                         <Typography variant="Regular_14" className={styles.fifthItem}>
-                            {task.endTime}
+                            {formatDateWithTime(task.endTime)}
                         </Typography>
                     </div>
                 );
