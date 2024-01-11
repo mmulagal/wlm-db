@@ -97,7 +97,7 @@ Metadata:
             CfDeployRoleName:
                 default: Cloud formation deployment role name
             UniqueID:
-                default: Unique ID for BlueXP WLM SQL resource group
+                default: Unique ID for WLMDB SQL resource group
             ADScenarioType:
                 default: AD Scenario Type
             DNSIpAddresses:
@@ -113,9 +113,9 @@ Metadata:
             KeyPairName:
                 default: Key Pair Name
             AssetsBucketName:
-                default: Launch Wizard S3 Bucket Name
+                default: WLMDB S3 Bucket Name
             AssetsS3KeyPrefix:
-                default: Launch Wizard S3 Key Prefix
+                default: WLMDB S3 Key Prefix
             SQLAMIID:
                 default: SQL Server Version
             SQLServiceAccountName:
@@ -239,9 +239,7 @@ Parameters:
         Default: templates
     MSSQLMediaBucketName:
         Default: LaunchWizard-sqlha
-        Description: S3 bucket name for the Launch Wizard assets. Launch Wizard bucket
-            name can include numbers, lowercase letters, uppercase letters, and
-            hyphens (-). It cannot start or end with a hyphen (-).
+        Description: S3 bucket name for MSSQL assets.
         Type: String
     MSSQLMediaPathKey:
         Description: S3 key prefix for the media for SQL Server for FCI. Launch Wizard
@@ -250,7 +248,7 @@ Parameters:
         Type: String
         Default: launchwizardscripts/sqlmedia/sqlserver.iso
     SQLAMIID:
-        Description: Version of SQL Windows AMI ID
+        Description: SQL node AMI image id
         Type: String
         MinLength: 1
     SQLServiceAccountName:

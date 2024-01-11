@@ -62,7 +62,7 @@ const PARAMETERS = [
     },
     {
         name: 'DomainMemberSGID',
-        description: 'Public/private key pairs allow you to securely connect to your instance after it launches',
+        description: 'Security group ID of the members group for existing AD',
         type: 'String'
     },
     {
@@ -84,28 +84,25 @@ const PARAMETERS = [
     },
     {
         name: 'AssetsS3KeyPrefix',
-        description:
-            'S3 key prefix for the Launch Wizard assets. Launch Wizard key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).',
+        description: 'S3 key prefix for WLMDB assets.',
         type: 'String',
         default: 'templates'
     },
     {
         name: 'MSSQLMediaBucketName',
-        description:
-            'S3 bucket name for the Launch Wizard assets. Launch Wizard bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).',
+        description: 'S3 bucket name for MSSQL assets.',
         type: 'String',
         default: 'LaunchWizard-sqlha'
     },
     {
         name: 'MSSQLMediaPathKey',
-        description:
-            'S3 key prefix for the media for SQL Server for FCI. Launch Wizard key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).',
+        description: 'S3 key prefix for the media for SQL Server for FCI.',
         type: 'String',
         default: 'launchwizardscripts/sqlmedia/sqlserver.iso'
     },
     {
         name: 'SQLAMIID',
-        description: 'Version of SQL Windows AMI ID',
+        description: 'SQL node AMI image id',
         type: 'String',
         minLength: 1
     },
