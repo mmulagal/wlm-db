@@ -12,6 +12,8 @@ import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
+import JobMonitoringJobs from '../../src/workloadFactory/JobMonitoring/jobMonitoringJobs.json';
+import JobMonitoringSubTask from '../../src/workloadFactory/JobMonitoring/JobMonitoringSubTask.json';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -380,19 +382,31 @@ export const jobMonitoringApi = createApi({
     baseQuery: dynamicBaseQuery,
     endpoints: builder => {
         return {
+            // getJobsList: builder.query({
+            //     query: ({ nextToken = null, startTime, endTime }) => {
+            //         if (nextToken) {
+            //             return `../v2/jobs?nextToken=${nextToken}&startTime=${startTime}&endTime=${endTime}`;
+            //         } else {
+            //             return `../v2/jobs?startTime=${startTime}&endTime=${endTime}`;
+            //         }
+            //     }
+            // }),
+            // getSubTaskList: builder.query({
+            //     query: id => ({
+            //         url: `../v2/jobs/${id}`
+            //     })
+            // }),
+
+            // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
-                query: ({ nextToken = null }) => {
-                    if (nextToken) {
-                        return `../v2/jobs?nextToken=${nextToken}`;
-                    } else {
-                        return `../v2/jobs`;
-                    }
-                }
+                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return ({data: JobMonitoringJobs});
+                },
             }),
             getSubTaskList: builder.query({
-                query: id => ({
-                    url: `../v2/jobs/${id}`
-                })
+                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return ({data: JobMonitoringSubTask});
+                },
             })
         };
     }
@@ -459,6 +473,6 @@ export const {
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useGetJobsListQuery, useLazyGetSubTaskListQuery } = jobMonitoringApi;
+export const { useGetJobsListQuery, useGetSubTaskListQuery } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;

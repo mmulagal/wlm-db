@@ -957,3 +957,507 @@ Resources:
                 - FCI
                 - Standalone
             FileSystemType: FSx ONTAP
+  DomainAdminSecretName:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: ${AWS::StackName}-domain
+      Description: Secret for Domain Account
+      SecretString: '{ "username": "${DomainAdminUser}", "password":
+        "${DomainAdminPassword}" }'
+  SQLServiceAccountSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: ${AWS::StackName}-sql
+      Description: Secret for SQL Service Account
+      SecretString: '{ "username": "${SQLServiceAccountName}", "password":
+        "${SQLServiceAccountPassword}" }'
+  TrackStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      AccountId: AccountId
+      CloudProviderAccountId: CloudProviderAccountId
+      CredentialsId: RoleCredentialsId
+      JWToken: JwtToken
+      Region: AWS::Region
+      StackName: AWS::StackName
+      ResourceName: SqlServerName
+      SQLDeploymentType:
+        - IsFailoverCluster
+        - FCI
+        - Standalone
+      FileSystemType: FSx for ONTAP
+      DatabaseType: Microsoft SQL server
+  ValidationStack1:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: TrackStackDeployment
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummycreds%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummycreds&X-Amz-SignedHeaders=host&x-id=GetObject
+      Parameters:
+        DomainAdminSecretName:
+          Ref: DomainAdminSecretName
+        DomainAdminUser:
+          Ref: DomainAdminUser
+        DomainDNSName:
+          Ref: DomainDNSName
+        DNSIpAddresses:
+          Ref: DNSIpAddresses
+        KeyPairName:
+          Ref: KeyPairName
+        SubnetID:
+          Ref: PrivateSubnet1ID
+        VPCID:
+          Ref: VPCID
+        Ec2RoleName:
+          Ref: Ec2RoleName
+        PerformADCheck: "true"
+        AssetsBucketName:
+          Ref: AssetsBucketName
+        AssetsS3KeyPrefix:
+          Ref: AssetsS3KeyPrefix
+        AssetsS3RegionCode:
+          Ref: AssetsS3RegionCode
+        AMI:
+          Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - - Ref: NotificationARN
+            - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+          - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      Tags:
+        - Key: created_by_flow
+          Value: WLMDB
+  ValidationStack2:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsFailoverCluster
+    DependsOn: TrackStackDeployment
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummycreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
+      Parameters:
+        DomainAdminSecretName:
+          Ref: DomainAdminSecretName
+        DomainAdminUser:
+          Ref: DomainAdminUser
+        DomainDNSName:
+          Ref: DomainDNSName
+        DNSIpAddresses:
+          Ref: DNSIpAddresses
+        KeyPairName:
+          Ref: KeyPairName
+        SubnetID:
+          Ref: PrivateSubnet2ID
+        VPCID:
+          Ref: VPCID
+        Ec2RoleName:
+          Ref: Ec2RoleName
+        PerformADCheck: "false"
+        AssetsBucketName:
+          Ref: AssetsBucketName
+        AssetsS3KeyPrefix:
+          Ref: AssetsS3KeyPrefix
+        AssetsS3RegionCode:
+          Ref: AssetsS3RegionCode
+        AMI:
+          Ref: ValidationAmi
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - - Ref: NotificationARN
+            - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+          - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      Tags:
+        - Key: created_by_flow
+          Value: WLMDB
+  FCIWaitHandler:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Condition: IsFailoverCluster
+    DependsOn:
+      - TrackStackDeployment
+      - ValidationStack2
+      - ValidationStack1
+  SIWaitHandler:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Condition: IsStandalone
+    DependsOn:
+      - TrackStackDeployment
+      - ValidationStack1
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Handle:
+        - IsFailoverCluster
+        - FCIWaitHandler
+        - SIWaitHandler
+      Timeout: "7200"
+      Count: 0
+  FSxNSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: ${AWS::StackName}-fsx
+      Description: Secret for FSxN filesystem
+      SecretString: '{ "username": "${FSxAdminUsername}", "password":
+        "${FSxAdminPassword}" }'
+  NewFSxStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: NewOntapFsx
+    DependsOn: WaitCondition
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-new.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=9908c42ed2e8637ee39d205af561493396a613dc053b4606c7ad66fd7fc4b013&X-Amz-SignedHeaders=host&x-id=GetObject
+      Parameters:
+        DeploymentMode:
+          Ref: DeploymentMode
+        FSxFileSystemName:
+          Ref: FSxFileSystemName
+        FSxAdministratorPasswordSecret:
+          Ref: FSxNSecret
+        FSxVolumeThroughputCapacity:
+          Ref: FSxVolumeThroughputCapacity
+        FSxStorageCapacity:
+          Ref: FSxStorageCapacity
+        FSxDataVolumeName:
+          Ref: FSxDataVolumeName
+        FSxDataVolumeSize:
+          Ref: FSxDataVolumeSize
+        FSxLogVolumeName:
+          Ref: FSxLogVolumeName
+        FSxLogVolumeSize:
+          Ref: FSxLogVolumeSize
+        FSxTempDbVolumeName:
+          Ref: FSxTempDbVolumeName
+        FSxTempDbVolumeSize:
+          Ref: FSxTempDbVolumeSize
+        FSxClusterQuorumVolumeName:
+          Ref: FSxQuorumVolumeName
+        FSxClusterQuorumVolumeSize:
+          Ref: FSxQuorumVolumeSize
+        FSxSvmName:
+          Ref: SQLSvmName
+        VPCID:
+          Ref: VPCID
+        VPCCIDR:
+          Ref: VPCCIDR
+        PreferredSubnetId:
+          Ref: PrivateSubnet1ID
+        PreferredRouteTableId:
+          Ref: RouteTable1Id
+        StandbySubnetId:
+          Ref: PrivateSubnet2ID
+        StandbyRouteTableId:
+          Ref: RouteTable2Id
+        FSxKmsKeyId:
+          Ref: FileSystemEncryptionKeyId
+        FSxDiskIops:
+          Ref: FSxDiskIops
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - - Ref: NotificationARN
+            - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+          - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      Tags:
+        - Key: created_by_flow
+          Value: WLMDB
+  ExistingFSxStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: ExistingOntapFsx
+    DependsOn: WaitCondition
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-existing.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
+      Parameters:
+        DeploymentMode:
+          Ref: DeploymentMode
+        FSxSvmName:
+          Ref: SQLSvmName
+        FSxFileSystemId:
+          Ref: FSxFileSystemId
+        FSxDataVolumeName:
+          Ref: FSxDataVolumeName
+        FSxDataVolumeSize:
+          Ref: FSxDataVolumeSize
+        FSxLogVolumeName:
+          Ref: FSxLogVolumeName
+        FSxLogVolumeSize:
+          Ref: FSxLogVolumeSize
+        FSxTempDbVolumeName:
+          Ref: FSxTempDbVolumeName
+        FSxTempDbVolumeSize:
+          Ref: FSxTempDbVolumeSize
+        FSxClusterQuorumVolumeName:
+          Ref: FSxQuorumVolumeName
+        FSxClusterQuorumVolumeSize:
+          Ref: FSxQuorumVolumeSize
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - - Ref: NotificationARN
+            - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+          - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      Tags:
+        - Key: created_by_flow
+          Value: WLMDB
+  SQLServerStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsFailoverCluster
+    DependsOn: WaitCondition
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/sql-windows-fci-config_nosignal.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
+      Parameters:
+        UniqueID:
+          Ref: UniqueID
+        Ec2RoleName:
+          Ref: Ec2RoleName
+        ADDnsIpAddresses:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: DNSIpAddresses
+        DomainAdminSecretName:
+          Ref: DomainAdminSecretName
+        DomainAdminUser:
+          Ref: DomainAdminUser
+        DomainDNSName:
+          Ref: DomainDNSName
+        DomainMemberSGID:
+          Ref: DomainMemberSGID
+        KeyPairName:
+          Ref: KeyPairName
+        PrivateSubnet1ID:
+          Ref: PrivateSubnet1ID
+        RouteTable1Id:
+          Ref: RouteTable1Id
+        RouteTable2Id:
+          Ref: RouteTable2Id
+        PrivateSubnet2ID:
+          Ref: PrivateSubnet2ID
+        AssetsBucketName:
+          Ref: AssetsBucketName
+        FSxDataLunSize:
+          Ref: FSxDataLunSize
+        AssetsS3RegionCode:
+          Ref: AssetsS3RegionCode
+        AssetsS3KeyPrefix:
+          Ref: AssetsS3KeyPrefix
+        MSSQLMediaBucketName:
+          Ref: MSSQLMediaBucketName
+        MSSQLMediaPathKey:
+          Ref: MSSQLMediaPathKey
+        AMIID:
+          Ref: SQLAMIID
+        SqlFSxWSFCName:
+          Ref: SqlFSxWSFCName
+        SqlFSxFCIName:
+          Ref: SqlServerName
+        SQLAdminAccounts:
+          Ref: SQLServiceAccountName
+        SQLServiceAccountSecret:
+          Ref: SQLServiceAccountSecret
+        VPCID:
+          Ref: VPCID
+        VPCCIDR:
+          Ref: VPCCIDR
+        WorkloadInstanceType:
+          Ref: WorkloadInstanceType
+        SqlFSxServerNetBIOSName1:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+        SqlFSxServerNetBIOSName2:
+          Fn::Select:
+            - "1"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+        FSxFileSystemId:
+          - NewOntapFsx
+          - NewFSxStack.Outputs.FSxFileSystemLogicalId
+          - ExistingFSxStack.Outputs.FSxFileSystemId
+        FsxAdminPassword:
+          Ref: FSxNSecret
+        SQLSvmName:
+          Ref: SQLSvmName
+        FSxDataVolumeName:
+          Ref: FSxDataVolumeName
+        FSxTempDbVolumeName:
+          Ref: FSxTempDbVolumeName
+        FSxQuorumVolumeName:
+          Ref: FSxQuorumVolumeName
+        SQLigroupname:
+          Ref: SQLigroupname
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        ParentStackName:
+          Ref: AWS::StackName
+        NumberOfNodes: "2"
+        FSxLogVolumeName:
+          Ref: FSxLogVolumeName
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - - Ref: NotificationARN
+            - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+          - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      Tags:
+        - Key: created_by_flow
+          Value: WLMDB
+  SQLStandaloneStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: IsStandalone
+    DependsOn: WaitCondition
+    Properties:
+      TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/standalone-deployment.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummysig&X-Amz-SignedHeaders=host&x-id=GetObject
+      Parameters:
+        UniqueID:
+          Ref: UniqueID
+        Ec2RoleName:
+          Ref: Ec2RoleName
+        ADDnsIpAddresses:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: DNSIpAddresses
+        DomainAdminSecretName:
+          Ref: DomainAdminSecretName
+        DomainAdminUser:
+          Ref: DomainAdminUser
+        DomainDNSName:
+          Ref: DomainDNSName
+        DomainMemberSGID:
+          Ref: DomainMemberSGID
+        KeyPairName:
+          Ref: KeyPairName
+        PrivateSubnetID:
+          Ref: PrivateSubnet1ID
+        RouteTableId:
+          Ref: RouteTable1Id
+        AssetsBucketName:
+          Ref: AssetsBucketName
+        FSxDataLunSize:
+          Ref: FSxDataLunSize
+        AssetsS3RegionCode:
+          Ref: AssetsS3RegionCode
+        AssetsS3KeyPrefix:
+          Ref: AssetsS3KeyPrefix
+        MSSQLMediaBucketName:
+          Ref: MSSQLMediaBucketName
+        MSSQLMediaPathKey:
+          Ref: MSSQLMediaPathKey
+        AMIID:
+          Ref: SQLAMIID
+        SQLAdminAccounts:
+          Ref: SQLServiceAccountName
+        SQLServiceAccountSecret:
+          Ref: SQLServiceAccountSecret
+        VPCID:
+          Ref: VPCID
+        VPCCIDR:
+          Ref: VPCCIDR
+        WorkloadInstanceType:
+          Ref: WorkloadInstanceType
+        SqlFSxServerNetBIOSName:
+          Fn::Select:
+            - "0"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+        FSxFileSystemId:
+          - NewOntapFsx
+          - NewFSxStack.Outputs.FSxFileSystemLogicalId
+          - ExistingFSxStack.Outputs.FSxFileSystemId
+        FsxAdminPassword:
+          Ref: FSxNSecret
+        SQLSvmName:
+          Ref: SQLSvmName
+        FSxDataVolumeName:
+          Ref: FSxDataVolumeName
+        FSxTempDbVolumeName:
+          Ref: FSxTempDbVolumeName
+        SQLigroupname:
+          Ref: SQLigroupname
+        ONTAPSecurityGroupID:
+          - NewOntapFsx
+          - NewFSxStack.Outputs.FsxSecurityGroupID
+          - ONTAPSecurityGroupID
+        EnableCloudWatchLogFeature:
+          Ref: EnableCloudWatchLogFeature
+        NumberOfNodes: "1"
+        FSxLogVolumeName:
+          Ref: FSxLogVolumeName
+        ParentStackName:
+          Ref: AWS::StackName
+        SqlServerName:
+          Ref: SqlServerName
+      NotificationARNs:
+        Fn::If:
+          - IncludeNotification
+          - - Ref: NotificationARN
+            - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+          - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      Tags:
+        - Key: created_by_flow
+          Value: WLMDB
+  PostStackDeployment:
+    Type: Custom::MyCustomResource
+    Properties:
+      ServiceToken: arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+      AccountId: AccountId
+      CloudProviderAccountId: CloudProviderAccountId
+      CredentialsId: RoleCredentialsId
+      JWToken: JwtToken
+      Region: AWS::Region
+      StackName: AWS::StackName
+      DomainAdminSecretName: ${AWS::StackName}-domain
+      FSxNSecret: ${AWS::StackName}-fsx
+      SQLServiceAccountSecret: ${AWS::StackName}-sql
+      FSxFileSystemId:
+        - NewOntapFsx
+        - NewFSxStack.Outputs.FSxFileSystemLogicalId
+        - ExistingFSxStack.Outputs.FSxFileSystemId
+      ActiveInstanceIp:
+        - IsFailoverCluster
+        - SQLServerStack.Outputs.SQLFSx1InstanceIPMAD
+        - SQLStandaloneStack.Outputs.SqlNodeIp
+      ActiveInstanceId:
+        - IsFailoverCluster
+        - SQLServerStack.Outputs.SQLFSx1InstanceId
+        - SQLStandaloneStack.Outputs.SqlNodeId
+      ActiveInstanceName:
+        Fn::Select:
+          - "0"
+          - Fn::Split:
+              - ","
+              - Ref: NodeNetBIOSNames
+      StandbyInstanceIp:
+        - IsFailoverCluster
+        - SQLServerStack.Outputs.SQLFSx2InstanceIPMAD
+        - AWS::NoValue
+      StandbyInstanceId:
+        - IsFailoverCluster
+        - SQLServerStack.Outputs.SQLFSx2InstanceId
+        - AWS::NoValue
+      StandbyInstanceName:
+        - IsFailoverCluster
+        - Fn::Select:
+            - "1"
+            - Fn::Split:
+                - ","
+                - Ref: NodeNetBIOSNames
+        - AWS::NoValue
+      ResourceName: SqlServerName
+      SQLDeploymentType:
+        - IsFailoverCluster
+        - FCI
+        - Standalone
+      FileSystemType: FSx for ONTAP

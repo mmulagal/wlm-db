@@ -229,7 +229,8 @@ async function getTopology(
             region: AWS_REGIONS.has(region) ? AWS_REGIONS.get(region)! : region,
             serverType: SERVER_TYPE_MAPPING.get(resourceType)!,
             serverInstallationMode: sqlDeploymentType !== undefined ? sqlDeploymentType : '',
-            fileSystemType: fileSystemType !== undefined ? fileSystemType : '',
+            fileSystemType:
+                fileSystemType !== undefined ? (fileSystemType === 'FSx ONTAP' ? 'FSx for ONTAP' : fileSystemType) : '',
             fileSystemId: fileSystemId!,
             ...(fileSystemName && { fileSystemName }),
             ...(fileSystemDeploymentMode && { fileSystemDeploymentMode }),
@@ -534,10 +535,7 @@ async function getDatabaseHostsSummary(
 
     if (isEmpty(resourceDetails)) {
         logger.error(`No successfully deployed database hosts found for account ${accountId}.`);
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `No successfully deployed database hosts found for account ${accountId}`
-        );
+        return { count: 0, items: [], nextToken: '' };
     }
 
     let fieldsValues: Array<string> = [];
@@ -782,8 +780,9 @@ async function getDatabases(accountId: string, databaseHostId: string): Promise<
     const [resourceDetail] = await listResources(accountId, databaseHostId);
 
     if (isEmpty(resourceDetail)) {
-        logger.error(`No deployed host with id ${databaseHostId} in ${accountId} is found.`);
-        return { count: 0, items: [], nextToken: '' };
+        const errorMessage = `No database host by id ${databaseHostId} for ${accountId} is found.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.NOT_FOUND, `${errorMessage}`);
     }
 
     const { region, co_relation_id: fileSystemId, metadata } = resourceDetail;

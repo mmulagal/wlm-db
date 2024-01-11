@@ -39,7 +39,7 @@ const TopologyResponse = Type.Object({
     region: Type.String(),
     serverType: Type.String({ enum: ['Microsoft SQL Server'] }),
     serverInstallationMode: Type.String({ enum: ['Standalone', 'FCI'] }),
-    fileSystemType: Type.String({ enum: ['EBS', 'FSx ONTAP'] }),
+    fileSystemType: Type.String({ enum: ['EBS', 'FSx for ONTAP', 'FSx for Windows'] }),
     fileSystemId: Type.String(),
     fileSystemName: Type.Optional(Type.String()),
     fileSystemDeploymentMode: Type.Optional(Type.String()),

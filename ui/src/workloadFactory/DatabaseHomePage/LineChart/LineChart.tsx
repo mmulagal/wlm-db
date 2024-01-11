@@ -52,7 +52,13 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
         gradientStroke2.addColorStop(0, '#DA1E21');
         gradientStroke2.addColorStop(1, 'rgba(104, 198, 179, 0.00)');
 
-        var gradientFill2 = ctx.createLinearGradient(0, 0, 0, 165);
+        let gradientFill2;
+
+        if (selectedTimeFrame === 'Last 30 days') {
+            gradientFill2 = ctx.createLinearGradient(0, 0, 0, 185);
+        } else {
+            gradientFill2 = ctx.createLinearGradient(0, 0, 0, 165);
+        }
 
         gradientFill2.addColorStop(0, '#DA1E21');
         gradientFill2.addColorStop(1, 'rgba(255, 0, 0, 0.00)');
@@ -117,10 +123,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                         // pointHoverRadius: 10,
                         // pointHoverBorderWidth: 1,
                         pointRadius: 4,
-                        fill: {
-                            target: 'origin', // Set the fill options
-                            above: 'rgba(104, 198, 179, 0.10)'
-                        },
+                        fill: true,
                         backgroundColor: 'rgba(104, 198, 179, 0.10)',
                         borderWidth: 3
                     },
@@ -184,7 +187,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 100,
+                        grace: 150,
                         ticks: {
                             color: isDarkTheme ? '#fff' : '#404040'
                         }

@@ -22,6 +22,7 @@
         "react-redux": "^9.0.3",
         "react-router-dom": "^6.16.0",
         "react-scripts": "5.0.1",
+        "react-syntax-highlighter": "^15.5.0",
         "redux-mock-store": "^1.5.4",
         "sanitize-html": "^2.11.0",
         "web-vitals": "^3.5.0"
@@ -54,22 +55,22 @@
         ]
     },
     "devDependencies": {
-        "@types/numeral": "^2.0.2",
-        "@types/redux-mock-store": "^1.0.3",
-        "cross-env": "^7.0.3",
-        "dotenv-cli": "^4.0.0",
-        "ejs": "^3.1.9",
-        "typescript": "5.3.3",
-        "jest-teamcity-reporter": "^0.9.0",
-        "react-scripts": "5.0.1",
-        "sass": "^1.66.0",
         "@testing-library/jest-dom": "^5.16.5",
         "@testing-library/react": "^13.4.0",
         "@testing-library/user-event": "^13.5.0",
         "@types/jest": "^29.5.5",
         "@types/node": "^20.8.2",
+        "@types/numeral": "^2.0.2",
         "@types/react": "^18.2.24",
-        "@types/react-dom": "^18.2.8"
+        "@types/react-dom": "^18.2.8",
+        "@types/redux-mock-store": "^1.0.3",
+        "cross-env": "^7.0.3",
+        "dotenv-cli": "^4.0.0",
+        "ejs": "^3.1.9",
+        "jest-teamcity-reporter": "^0.9.0",
+        "react-scripts": "5.0.1",
+        "sass": "^1.66.0",
+        "typescript": "5.3.3"
     },
     "jest": {
         "transformIgnorePatterns": []

@@ -22,7 +22,7 @@ describe('Cost explorer Operations', () => {
             metadata: {
                 fsxSecret: 'WLMDB-SqlFciStack-1700643938368-fsx',
                 credentialsId: '22fcbfda-2a9b-41b5-901e-256c1aab4eb4',
-                fileSystemType: 'FSx ONTAP',
+                fileSystemType: 'FSx for ONTAP',
                 domainAdminSecret: 'WLMDB-SqlFciStack-1700643938368-domain',
                 sqlDeploymentType: 'FCI',
                 activeNodeInstanceId: 'i-07a29eb681ba37679',
