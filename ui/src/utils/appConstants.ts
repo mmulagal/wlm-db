@@ -488,7 +488,7 @@ export const GENERAL = {
     //Job Monitoring constants
     JM_COMPLETED: 'Completed',
     JM_IN_PROGRESS: 'In Progress',
-    JM_FAILED: 'Failed'
+    JM_FAILED: 'Failed',
 };
 
 export const CODE_VIEWER = {

@@ -1,6 +1,7 @@
 import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
+import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
 import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -8,7 +9,7 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
-import { generateOptionType, getCredDetails } from '../../../utils/utilityFunctions';
+import { generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -17,7 +18,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CREATE_DATABASE_YAML, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -448,18 +449,37 @@ const CodeBox = () => {
                             {dropDownValue}
                         </Typography>
                     </div>
-                    <div className={styles.copyPopOver}>
-                        <Popover
-                            popoverClass={styles['copy-popover']}
-                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                            container={
-                                <CopyToClipboard text={copyResponseData()}>
-                                    <div className={styles.menuItem}>
-                                        <Copy />
-                                    </div>
-                                </CopyToClipboard>
+                    <div className={styles.actionPopOver}>
+                        <div className={styles.actions}>
+                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && 
+                                (
+                                    isRightPanelTemplateLoading ? 
+                                    <div className={styles.menuItemDisabled}>
+                                        <Download />
+                                    </div> : 
+                                    <Download onClick={() => handleDownloadYAML(rightPanelTemplateResponse?.template, CREATE_DATABASE_YAML)} />
+                                ) 
                             }
-                        />
+                            {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
+                                // Disabled copy button
+                                <div className={styles.menuItemDisabled}>
+                                    <Copy />
+                                </div>
+                            ) : (
+                                // Enabled copy button
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                    container={
+                                        <CopyToClipboard text={copyResponseData()}>
+                                            <div className={styles.menuItem}>
+                                                <Copy />
+                                            </div>
+                                        </CopyToClipboard>
+                                    }
+                                />
+                            )}
+                        </div>
                     </div>
 
                     {/* <div className={styles.searchPart}>
