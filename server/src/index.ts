@@ -266,7 +266,7 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && (
 
 try {
     initializeDatabase();
-    if (!process.env.hasOwnProperty('isActive') || process.env.isActive) {
+    if (!process.env.hasOwnProperty('isActive') || process.env.isActive === 'true') {
         await execute('node_modules/prisma/build/index.js migrate deploy');
     }
 } catch (error) {
