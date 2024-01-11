@@ -17,7 +17,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -31,6 +31,8 @@ import {
 } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
+import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
+import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -121,12 +123,15 @@ const CodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
+            ) : rightPanelTemplateResponse?.template ? (
+                <ThemeProvider theme={'dark'} isRoot={false}>
+                    {/* @ts-ignore */}
+                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                        {rightPanelTemplateResponse?.template}
+                    </SyntaxHighlighter>
+                </ThemeProvider>
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.template || <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />}
-                    </pre>
-                </HighlighterWord>
+                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
@@ -159,9 +164,17 @@ const CodeBox = () => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
+                        {rightPanelTemplateResponse?.cliCommand ? (
+                            <Highlighter
+                                highlightClassName={styles.awsCliHighlightClass}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                                autoEscape={true}
+                                textToHighlight={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                            /> 
+                            ): (
+                                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                            )
+                        }
                     </Typography>
                 </HighlighterWord>
             );

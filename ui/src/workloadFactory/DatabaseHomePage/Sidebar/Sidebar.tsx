@@ -42,13 +42,16 @@ import {
     WLF_TO_FORM_NAVIGATE,
     CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS,
-    CODEBOX_REST_RES
+    CODEBOX_REST_RES,
+    AWS_CLI_HIGHLIGHT_STRINGS
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
 import { addEscapeInCli, maskAwsCli, setMaskedPassword } from './CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
+import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
+import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 
 type ConfigType = {
     id?: string;
@@ -469,14 +472,15 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
+            ) : getRightPanelTemplateResponse(openKey)?.template ? (
+                <ThemeProvider theme={'dark'} isRoot={false}>
+                    {/* @ts-ignore */}
+                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                        {getRightPanelTemplateResponse(openKey)?.template}
+                    </SyntaxHighlighter>
+                </ThemeProvider>
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
-                        {getRightPanelTemplateResponse(openKey)?.template || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
-                    </pre>
-                </HighlighterWord>
+                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
@@ -503,9 +507,17 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             ) : (
                 <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
                     <Typography variant="Regular_14" className={styles.colorAutomation}>
-                        {maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand) || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
+                        {getRightPanelTemplateResponse(openKey)?.cliCommand ? (
+                            <Highlighter
+                                highlightClassName={styles.awsCliHighlightClass}
+                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                                autoEscape={true}
+                                textToHighlight={maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand)}
+                            /> 
+                            ): (
+                                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                            )
+                        }
                     </Typography>
                 </HighlighterWord>
             );

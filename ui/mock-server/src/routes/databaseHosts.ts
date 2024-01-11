@@ -50,11 +50,13 @@ router.delete(`${BASE_URL}/v1/jobs/jobId/:id`, async (req: {}, res: any) => {
 router.get(`${BASE_URL}/v2/jobs`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringJobs);
-    }, 3000);
+    }, 2000);
 });
 
 router.get(`${BASE_URL}/v2/jobs/:jobId`, async (req: {}, res: any) => {
-    generateResponse(res, 200, JobMonitoringSubTask);
+    setTimeout(() => {
+        generateResponse(res, 200, JobMonitoringSubTask);
+    }, 2000);
 });
 
 export default router;
