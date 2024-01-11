@@ -205,7 +205,7 @@ Parameters:
         MinLength: '5'
         Type: String
     DomainAdminPassword:
-        Description: Password for Domain Adminstrator.
+        Description: Password for Domain Administrator.
         Type: String
         NoEcho: true
         MinLength: 8

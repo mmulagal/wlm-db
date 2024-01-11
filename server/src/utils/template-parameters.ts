@@ -47,7 +47,7 @@ const PARAMETERS = [
     },
     {
         name: 'DomainAdminPassword',
-        description: 'Password for Domain Adminstrator',
+        description: 'Password for Domain Administrator',
         type: 'String',
         minLength: 8,
         noEcho: true
