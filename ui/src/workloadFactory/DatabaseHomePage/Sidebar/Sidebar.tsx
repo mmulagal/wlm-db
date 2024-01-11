@@ -505,7 +505,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
-                <Typography variant="Regular_14" className={styles.colorAutomation}>
+                <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.newClass}`}>
                     {getRightPanelTemplateResponse(openKey)?.cliCommand ? (
                         <Highlighter
                             highlightClassName={styles.awsCliHighlightClass}

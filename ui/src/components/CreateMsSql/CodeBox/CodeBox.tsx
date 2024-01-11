@@ -162,7 +162,10 @@ const CodeBox = () => {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
-                <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
+                <Typography
+                    variant="Regular_14"
+                    className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
+                >
                     {rightPanelTemplateResponse?.cliCommand ? (
                         <Highlighter
                             highlightClassName={styles.awsCliHighlightClass}
