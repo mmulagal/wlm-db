@@ -203,4 +203,6 @@ export const AWS_CLI_HIGHLIGHT_STRINGS = [
     "--template-url",
     "--region",
     "--parameters"
-]
+];
+
+export const CREATE_DATABASE_YAML = 'Create_Database';
