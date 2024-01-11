@@ -505,21 +505,18 @@ const Sidebar = ({ isOpen, onClose }: any) => {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
-                <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
-                    <Typography variant="Regular_14" className={styles.colorAutomation}>
-                        {getRightPanelTemplateResponse(openKey)?.cliCommand ? (
-                            <Highlighter
-                                highlightClassName={styles.awsCliHighlightClass}
-                                searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
-                                autoEscape={true}
-                                textToHighlight={maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand)}
-                            /> 
-                            ): (
-                                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                            )
-                        }
-                    </Typography>
-                </HighlighterWord>
+                <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.newClass}`}>
+                    {getRightPanelTemplateResponse(openKey)?.cliCommand ? (
+                        <Highlighter
+                            highlightClassName={styles.awsCliHighlightClass}
+                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                            autoEscape={true}
+                            textToHighlight={maskAwsCli(getRightPanelTemplateResponse(openKey)?.cliCommand)}
+                        />
+                    ) : (
+                        <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                    )}
+                </Typography>
             );
         }
     };

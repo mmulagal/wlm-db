@@ -1,6 +1,6 @@
-import { ReactComponent as StandardCreate } from '../../../assets/standard-create.svg';
+import { ReactComponent as StandardCreate } from '../../../assets/Advanced create.svg';
 import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
-import { ReactComponent as EasyCreate } from '../../../assets/easy-create.svg';
+import { ReactComponent as EasyCreate } from '../../../assets/Quick create.svg';
 
 import styles from './SelectConfig.module.scss';
 
