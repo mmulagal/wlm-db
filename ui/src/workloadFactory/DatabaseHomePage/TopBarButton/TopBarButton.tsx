@@ -68,7 +68,7 @@ const TopBarButton = () => {
                         {GENERAL.DEPLOY_NEW_DATABASE}
                     </div>
                 </Button>
-                <ButtonWithDropdown
+                {/* <ButtonWithDropdown
                     variant="secondary"
                     items={[
                         {
@@ -83,7 +83,7 @@ const TopBarButton = () => {
                     ]}
                 >
                     Actions
-                </ButtonWithDropdown>
+                </ButtonWithDropdown> */}
             </div>
         </div>
     );
