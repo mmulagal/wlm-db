@@ -166,7 +166,7 @@ function checkIfRequired(required: boolean | { key: string; value: string; opera
 async function validate(key: string, params: Params, oldParams: Params) {
     const shouldSkip = params?.[key] && oldParams?.[key] && oldParams[key] === params[key];
     logger.debug('skip check', shouldSkip);
-    let response: ValidationResponse = { value: params[key] };
+    let response: ValidationResponse = { key, value: params[key] };
     if (!shouldSkip) {
         switch (key) {
             case CREDENTIALS_ID: {
@@ -236,7 +236,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
                 break;
             }
             case FSX_DEPLOYMENT_MODE: {
-                response = { value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
+                response = { key, value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
                 break;
             }
             case DB_SIZE: {
@@ -248,7 +248,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
                 break;
             }
             case FSX_IOPS: {
-                response = { value: 3 * params[DB_SIZE] };
+                response = { key, value: 3 * params[DB_SIZE] };
                 break;
             }
             case ONTAP_SG_ID: {

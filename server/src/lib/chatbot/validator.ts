@@ -85,6 +85,7 @@ async function validateCredentials(credentialsId: string, key: string) {
     }
 
     return {
+        key,
         value: credentialsMatched.credentialsId
     };
 }
@@ -131,6 +132,7 @@ async function validateRegion(credentialsId: string, value: string, key: string)
     }
 
     return {
+        key,
         value: regionsMatched[0]?.regionCode
     };
 }
@@ -184,9 +186,10 @@ async function validateVpcId(
 
     switch (key) {
         case VPC_ID:
-            return { value: isValidVpc.id };
+            return { key, value: isValidVpc.id };
         case VPC_CIDR:
             return {
+                key,
                 value: isValidVpc.cidrBlock?.[0].CidrBlock
             };
         case AZ_1: {
@@ -211,6 +214,7 @@ async function validateVpcId(
                 };
             }
             return {
+                key,
                 value: az1
             };
         }
@@ -247,6 +251,7 @@ async function validateVpcId(
             }
 
             return {
+                key,
                 value: az2
             };
         }
@@ -297,11 +302,13 @@ async function validateVpcId(
             }
 
             return {
+                key,
                 value: key === PRIVATE_SUBNET_1 ? subnet1 : subnet2
             };
         }
         case ROUTE_TABLE_1: {
             return {
+                key,
                 value: isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId
             };
         }
@@ -328,6 +335,7 @@ async function validateVpcId(
             }
 
             return {
+                key,
                 value: isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId
             };
         }
@@ -360,6 +368,7 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
         };
     }
     return {
+        key,
         value: isValidKey.name
     };
 }
@@ -411,6 +420,7 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
         };
     }
     return {
+        key,
         value: isValidAmi.imageId
     };
 }
@@ -418,6 +428,7 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
 async function validateAdScenarioType(type: string, key: string) {
     if (type === 'AWS_MANAGED_AD' || type === 'USER_MANAGED_AD') {
         return {
+            key,
             value: type
         };
     }
@@ -462,6 +473,7 @@ async function validateInstanceType(credentialsId: string, region: string, workl
         };
     }
     return {
+        key,
         value: isValidType.instanceType
     };
 }
@@ -494,6 +506,7 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
     }
 
     return {
+        key,
         value: isValidFsx.fileSystemId
     };
 }
@@ -511,6 +524,7 @@ async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
         };
     }
     return {
+        key,
         value: enableCloudWatch
     };
 }
@@ -526,6 +540,7 @@ async function validateTags(key: string, tags?: Array<{ key: string; value: stri
         };
     }
     return {
+        key,
         value: tags
     };
 }
@@ -558,14 +573,14 @@ async function validateDomain(
     const isAWSManagedDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
     switch (key) {
         case DOMAIN_DNS:
-            return { value: domainDnsname };
+            return { key, value: domainDnsname };
         case AD_SCENARIO_TYPE:
-            return { value: isAWSManagedDomain ? AWS_MANAGED_AD : USER_MANAGED_AD };
+            return { key, value: isAWSManagedDomain ? AWS_MANAGED_AD : USER_MANAGED_AD };
         case DNS_IP:
             return isAWSManagedDomain
-                ? { value: isAWSManagedDomain?.dnsIpAddress?.join(',') }
+                ? { key, value: isAWSManagedDomain?.dnsIpAddress?.join(',') }
                 : dnsIp
-                ? { value: dnsIp }
+                ? { key, value: dnsIp }
                 : { key, ...errorResponse };
         default:
             return {};
@@ -582,7 +597,7 @@ function validateText(text: string, key: string, fsxType?: string) {
             ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
         };
     }
-    return { value: text };
+    return { key, value: text };
 }
 
 function validateDbSize(size: number, key: string) {
@@ -597,6 +612,7 @@ function validateDbSize(size: number, key: string) {
     }
 
     return {
+        key,
         value: size
     };
 }
@@ -626,7 +642,7 @@ function validateThroughPut(iops: number, key: string) {
             allowedValues: ThroughPut
         };
     }
-    return { value: isValid.value };
+    return { key, value: isValid.value };
 }
 
 async function validateSecurityGroup(
@@ -667,6 +683,7 @@ async function validateSecurityGroup(
         };
     }
     return {
+        key,
         value: isValid.id
     };
 }
@@ -684,7 +701,7 @@ async function validateSqlDeploymentType(deploymentType: string, key: string) {
             ]
         };
     }
-    return { value: deploymentType };
+    return { key, value: deploymentType };
 }
 
 function checkFsxType(type: string, key: string) {
@@ -700,6 +717,7 @@ function checkFsxType(type: string, key: string) {
         };
     }
     return {
+        key,
         value: type.toUpperCase()
     };
 }
@@ -707,6 +725,7 @@ function checkFsxType(type: string, key: string) {
 function validateDeploymentEnv(key: string, value: string) {
     if ([PROD, DEV, CUSTOM].includes(value)) {
         return {
+            key,
             value
         };
     }
