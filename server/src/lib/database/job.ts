@@ -29,7 +29,7 @@ async function listJobs(
     status?: JOBSTATUS[],
     startTime?: number,
     endTime?: number,
-    pageSize: number = 50,
+    pageSize?: number,
     nextToken?: string
 ) {
     logger.info('Listing jobs', { accountId, parentJobId, sort, sortOrder, initiator, type, status, startTime, endTime, pageSize, nextToken });
