@@ -13,6 +13,7 @@
         background-color: var(--blue-10);
         position: sticky;
         left: 0px;
+        color: var(--grey-50) !important;
     }
 
     .secondItem {
@@ -22,6 +23,7 @@
         align-items: center;
         padding-left: 24px;
         background-color: var(--blue-10);
+        color: var(--grey-50) !important;
     }
 
     .thirdItem {
@@ -32,6 +34,7 @@
         padding-left: 24px;
         background-color: var(--blue-10);
         gap: 16px;
+        color: var(--grey-50) !important;
         .statusIcon {
             width: 20px;
             height: 20px;
@@ -45,6 +48,7 @@
         align-items: center;
         padding-left: 24px;
         background-color: var(--blue-10);
+        color: var(--grey-50) !important;
     }
 
     .fifthItem {
@@ -54,5 +58,6 @@
         align-items: center;
         padding-left: 24px;
         background-color: var(--blue-10);
+        color: var(--grey-50) !important;
     }
 }
