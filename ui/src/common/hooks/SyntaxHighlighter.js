@@ -16,8 +16,9 @@ const style = {
     'code[class*="language-"]': {
         color: 'var(--text-primary)',
         background: 'none',
-        fontFamily: "Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace",
-        fontSize: '0.875em',
+        fontFamily:
+            "-apple-system, 'system-ui', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji'",
+        fontSize: '14px',
         textAlign: 'left',
         whiteSpace: 'pre',
         wordSpacing: 'normal',
@@ -34,8 +35,9 @@ const style = {
     },
     'pre[class*="language-"]': {
         color: 'var(--text-primary)',
-        fontFamily: "Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace",
-        fontSize: '0.875em',
+        fontFamily:
+            "-apple-system, 'system-ui', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji'",
+        fontSize: '14px',
         textAlign: 'left',
         whiteSpace: 'pre',
         wordSpacing: 'normal',
@@ -180,7 +182,7 @@ const style = {
         color: 'var(--warning)'
     },
     important: {
-        color: 'var(--text-primary)',
+        color: 'var(--text-primary)'
         // fontWeight: 'bold'
     },
     variable: {
