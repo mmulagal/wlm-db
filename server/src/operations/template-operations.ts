@@ -15,9 +15,9 @@ import {
     MASTER_TEMPLATE_DISTRIBUTION,
     SIGNED_URL_ERROR_MESSAGE,
     HttpErrorCodes,
-    DEFAULT_TAGS,
-    PARAMETERS
+    DEFAULT_TAGS
 } from '../utils/consts';
+import PARAMETERS from '../utils/template-parameters';
 import getLogger from '../utils/logger';
 
 interface TemplateDetails {
@@ -248,24 +248,25 @@ async function uploadTemplates(
     }
 }
 
-async function addTemplateParameters(templateParameters: Parameter[]) {
+async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
     logger.info('Add parameters to template');
     const parameters = {};
     PARAMETERS.map(async parameter => {
-        const { name } = parameter;
+        const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
+            parameter;
         const paramValue = templateParameters.find(param => param.ParameterKey === name);
         const paramData = {};
         (paramData as { [index: string]: object })[name] = {
-            Description: parameter.description,
-            Type: parameter.type,
+            Description: description,
+            Type: type,
             Default: paramValue && paramValue.ParameterValue !== '' ? paramValue.ParameterValue : parameter.default!,
-            NoEcho: parameter.noEcho!,
-            MinLength: parameter.minLength!,
-            MaxLength: parameter.maxLength!,
-            MinValue: parameter.minValue!,
-            MaxValue: parameter.maxValue!,
-            AllowedValues: parameter.allowedValues!,
-            AllowedPattern: parameter.pattern!
+            NoEcho: noEcho!,
+            MinLength: minLength!,
+            MaxLength: maxLength!,
+            MinValue: minValue!,
+            MaxValue: maxValue!,
+            AllowedValues: allowedValues!,
+            AllowedPattern: pattern!
         };
 
         (parameters as { [index: string]: string })[name] = yaml.stringify(paramData, {
@@ -276,4 +277,4 @@ async function addTemplateParameters(templateParameters: Parameter[]) {
     return parameters;
 }
 
-export { uploadTemplates, addTemplateParameters };
+export { uploadTemplates, formatTemplateParametersToCf };

@@ -77,7 +77,7 @@ import {
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
-import { addTemplateParameters, uploadTemplates } from './template-operations';
+import { formatTemplateParametersToCf, uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
@@ -219,7 +219,8 @@ async function getCloudformationTemplate(
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
-    const templateParamsInCfFormat = await addTemplateParameters(templateParameters);
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
 
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
@@ -498,7 +499,9 @@ async function createCloudFormationTemplateForUserDeployment(
         });
     });
 
-    const templateParamsInCfFormat = await addTemplateParameters(templateParamsAsList);
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         ASSETS_BUCKET_REGION,
