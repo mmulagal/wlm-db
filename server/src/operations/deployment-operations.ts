@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
+import yaml from 'yaml';
 import { escapeRegExp } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
@@ -77,13 +78,14 @@ import {
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
-import { formatTemplateParametersToCf, uploadTemplates } from './template-operations';
+import { uploadTemplates } from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
+import PARAMETERS from '../utils/template-parameters';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -173,6 +175,37 @@ async function formatTemplateParameters(
     });
 
     return { stackName, templateParameters: templateParams };
+}
+
+async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
+    logger.info('Add parameters to template in cloud formation format');
+    const parameters = {};
+    PARAMETERS.map(async parameter => {
+        const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
+            parameter;
+        const paramValue = templateParameters.find(param => param.ParameterKey === name);
+        const paramData = {};
+        (paramData as { [index: string]: object })[name] = {
+            Description: description,
+            Type: type,
+            Default: paramValue && paramValue.ParameterValue !== '' ? paramValue.ParameterValue : parameter.default!,
+            NoEcho: noEcho!,
+            MinLength: minLength!,
+            MaxLength: maxLength!,
+            MinValue: minValue!,
+            MaxValue: maxValue!,
+            AllowedValues: allowedValues!,
+            AllowedPattern: pattern!
+        };
+
+        (parameters as { [index: string]: string })[name] = yaml.stringify(paramData, {
+            indent: 4,
+            collectionStyle: 'block'
+        });
+    });
+
+    logger.debug('Formatted cloud formation parameters', parameters);
+    return parameters;
 }
 
 async function getCloudformationTemplate(

@@ -2,7 +2,6 @@ import createError from 'http-errors';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import yaml from 'yaml';
-import { Parameter } from '@aws-sdk/client-cloudformation';
 import { preSignedUrl, putObjectBucket } from '../lib/aws/s3';
 import {
     DatabaseTypes,
@@ -17,7 +16,6 @@ import {
     HttpErrorCodes,
     DEFAULT_TAGS
 } from '../utils/consts';
-import PARAMETERS from '../utils/template-parameters';
 import getLogger from '../utils/logger';
 
 interface TemplateDetails {
@@ -248,33 +246,4 @@ async function uploadTemplates(
     }
 }
 
-async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
-    logger.info('Add parameters to template');
-    const parameters = {};
-    PARAMETERS.map(async parameter => {
-        const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
-            parameter;
-        const paramValue = templateParameters.find(param => param.ParameterKey === name);
-        const paramData = {};
-        (paramData as { [index: string]: object })[name] = {
-            Description: description,
-            Type: type,
-            Default: paramValue && paramValue.ParameterValue !== '' ? paramValue.ParameterValue : parameter.default!,
-            NoEcho: noEcho!,
-            MinLength: minLength!,
-            MaxLength: maxLength!,
-            MinValue: minValue!,
-            MaxValue: maxValue!,
-            AllowedValues: allowedValues!,
-            AllowedPattern: pattern!
-        };
-
-        (parameters as { [index: string]: string })[name] = yaml.stringify(paramData, {
-            indent: 4,
-            collectionStyle: 'block'
-        });
-    });
-    return parameters;
-}
-
-export { uploadTemplates, formatTemplateParametersToCf };
+export { uploadTemplates };
