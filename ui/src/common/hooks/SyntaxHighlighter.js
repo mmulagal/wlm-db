@@ -134,7 +134,7 @@ const style = {
         color: 'var(--success)'
     },
     string: {
-        color: 'var(--success)'
+        color: 'var(--text-primary)'
     },
     char: {
         color: 'var(--success)'
@@ -180,8 +180,8 @@ const style = {
         color: 'var(--warning)'
     },
     important: {
-        color: 'var(--warning)',
-        fontWeight: 'bold'
+        color: 'var(--text-primary)',
+        // fontWeight: 'bold'
     },
     variable: {
         color: 'var(--warning)'
