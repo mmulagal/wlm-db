@@ -37,6 +37,11 @@ const AvailabilityZone = () => {
     const [routeTable1, setRouteTable1] = useState(undefined);
     const [routeTable2, setRouteTable2] = useState(undefined);
 
+    // Backup of AZ 2 if switches between FCI and standalone
+    const [backupAzNode2, setBackupAzNode2] = useState(undefined);
+    const [backupSubnetNode2, setBackupSubnetNode2] = useState(undefined);
+    const [backupRouteTable2, setBackupRouteTable2] = useState(undefined);
+
     //Refs
     const az1Ref = useRef(null);
     const az2Ref = useRef(null);
@@ -58,12 +63,27 @@ const AvailabilityZone = () => {
 
     useEffect(() => {
         if(deploymentMode?.label === GENERAL.SINGLE_INSTANCE) {
+            setBackupAzNode2(selectedZone2);
+            setBackupSubnetNode2(selectedSubnet2);
+            setBackupRouteTable2(selectedSubnet2?.data?.routeTableId);
             dispatch(setSelectedAzNode2(null));
             dispatch(setSelectedSubnetNode2(null));
             setRouteTable2(undefined);
         }
+        if(deploymentMode?.label === GENERAL.FAILOVER_CLUSTER && backupAzNode2 && backupSubnetNode2) {
+            dispatch(setSelectedAzNode2(backupAzNode2));
+            dispatch(setSelectedSubnetNode2(backupSubnetNode2));
+            setRouteTable2(backupRouteTable2);
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [deploymentMode]);
+
+    // Clear AZ 2 backup when user changes AZ 1
+    useEffect(() => {
+        setBackupAzNode2(undefined);
+        setBackupSubnetNode2(undefined);
+        setBackupRouteTable2(undefined);
+    }, [selectedZone1]);
 
     //Function to generate the options for Select Field for Zone 1
     const generateZones1 = useMemo<optionType[]>((): optionType[] => {
