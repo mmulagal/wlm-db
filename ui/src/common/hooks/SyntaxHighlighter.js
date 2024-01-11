@@ -134,7 +134,7 @@ const style = {
         color: 'var(--success)'
     },
     string: {
-        color: 'var(--text-primary)' 
+        color: 'var(--text-primary)'
     },
     char: {
         color: 'var(--success)'
