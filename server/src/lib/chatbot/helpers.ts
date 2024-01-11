@@ -66,6 +66,7 @@ type ValidationResponse = {
     message?: string;
     allowedValues?: any;
     value?: any;
+    data?: any;
 };
 
 function findChangedKeys(params: Params, oldParams: Params) {
