@@ -1,10 +1,11 @@
-import { Popover, Table, Typography, useTable } from '@netapp/design-system';
+import { FlashingDotsLoader, Popover, Table, Typography, useTable } from '@netapp/design-system';
 import styles from './SubJobTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
@@ -12,6 +13,7 @@ import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/u
 import { useEffect, useState } from 'react';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useGetSubTaskListQuery } from '../../../utils/apiService';
+import { GENERAL } from '../../../utils/appConstants';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     // const [leftPos, setLeftPos] = useState(0);
@@ -162,7 +164,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
 
     const tableComponentProps = {
         ExpandedRow,
-        lazyLoadingText: 'Loading...'
+        lazyLoadingText: GENERAL.LOADING_DATA
     };
 
     return (
@@ -170,19 +172,33 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             <div className={styles.subJobTable}>
                 <div className={`${styles.statusbar} ${styles[statusType]} ${styles.extraDiv}`}>&nbsp;</div>
                 <div className={styles.extraDiv2} />
-                <div
-                    //  @ts-ignore
-                    className={`${styles.table}`}
-                    // style={{ position: 'relative', left: `${leftPos}px` }}
-                >
-                    <Table
-                        {...tableComponentProps}
-                        //@ts-ignore
-                        tableProps={tableProps}
-                        isDoubleRow={true}
-                        variant="innerTable"
-                    />
-                </div>
+                {jmSubTaskListLoading && 
+                    <Typography variant="Regular_14" className={styles.loadingTable}>
+                        <FlashingDotsLoader />
+                        <div>{GENERAL.LOADING_DATA}</div>
+                    </Typography>
+                }
+                {!jmSubTaskListLoading && !subTaskList && 
+                    <Typography variant="Regular_14" className={styles.loadingTable}>
+                        <NoDataIcon />
+                        <div>{GENERAL.NO_DATA}</div>
+                    </Typography>
+                }
+                {!jmSubTaskListLoading && subTaskList &&
+                    <div
+                        //  @ts-ignore
+                        className={`${styles.table}`}
+                        // style={{ position: 'relative', left: `${leftPos}px` }}
+                    >
+                        <Table
+                            {...tableComponentProps}
+                            //@ts-ignore
+                            tableProps={tableProps}
+                            isDoubleRow={true}
+                            variant="innerTable"
+                        />
+                    </div>
+                }
             </div>
         </>
     );

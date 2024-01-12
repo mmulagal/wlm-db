@@ -11,6 +11,7 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { GENERAL } from '../../../utils/appConstants';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 
 const JobMonitoringTable = () => {
@@ -177,7 +178,7 @@ const JobMonitoringTable = () => {
 
     const tableComponentProps = {
         ExpandedRow,
-        lazyLoadingText: 'Loading'
+        lazyLoadingText: GENERAL.LOADING_DATA
     };
 
     const exportToCsv = {

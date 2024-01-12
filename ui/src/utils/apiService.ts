@@ -385,17 +385,17 @@ export const jobMonitoringApi = createApi({
             // getJobsList: builder.query({
             //     query: ({ nextToken = null, startTime, endTime }) => {
             //         if (nextToken) {
-            //             return `../v2/jobs?nextToken=${nextToken}&startTime=${startTime}&endTime=${endTime}`;
+            //             return `jobs?nextToken=${nextToken}&startTime=${startTime}&endTime=${endTime}`;
             //         } else {
-            //             return `../v2/jobs?startTime=${startTime}&endTime=${endTime}`;
+            //             return `jobs?startTime=${startTime}&endTime=${endTime}`;
             //         }
             //     }
             // }),
             // getSubTaskList: builder.query({
             //     query: id => ({
-            //         url: `../v2/jobs/${id}`
+            //         url: `jobs/${id}`
             //     })
-            // }),
+            // })
 
             // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
