@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
+import yaml from 'yaml';
 import { escapeRegExp } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
@@ -30,7 +31,7 @@ import {
     WLM_ASSETS,
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
-    EC2_ROLE_NAME,
+    CF_DEPLOY_ROLE_NAME,
     DatabaseTypes,
     ACCOUNT_ID,
     TEMPLATE_JWT_TOKEN,
@@ -84,6 +85,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
+import PARAMETERS from '../utils/template-parameters';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -116,7 +118,7 @@ async function formatTemplateParameters(
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
     const templateParams: Array<Parameter> = [
-        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
@@ -175,6 +177,37 @@ async function formatTemplateParameters(
     return { stackName, templateParameters: templateParams };
 }
 
+async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
+    logger.info('Add parameters to template in cloud formation format');
+    const parameters = {};
+    PARAMETERS.forEach(parameter => {
+        const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
+            parameter;
+        const paramValue = templateParameters.find(param => param.ParameterKey === name);
+        const paramData = {};
+        (paramData as { [index: string]: object })[name] = {
+            Description: description,
+            Type: type,
+            Default: paramValue && paramValue.ParameterValue !== '' ? paramValue.ParameterValue : parameter.default!,
+            NoEcho: noEcho!,
+            MinLength: minLength!,
+            MaxLength: maxLength!,
+            MinValue: minValue!,
+            MaxValue: maxValue!,
+            AllowedValues: allowedValues!,
+            AllowedPattern: pattern!
+        };
+
+        (parameters as { [index: string]: string })[name] = yaml.stringify(paramData, {
+            indent: 4,
+            collectionStyle: 'block'
+        });
+    });
+
+    logger.debug('Formatted cloud formation parameters', parameters);
+    return parameters;
+}
+
 async function getCloudformationTemplate(
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
@@ -219,13 +252,17 @@ async function getCloudformationTemplate(
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
+        customMasterTemplatePath,
+        templateParamsInCfFormat
     );
 
     let masterTemplateContents;
@@ -328,6 +365,7 @@ async function deployStackOrCreateTemplateURL(
             credentialsId,
             region
         );
+
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
             const response = await createCloudFormationTemplateForUserDeployment(
@@ -436,15 +474,6 @@ async function createCloudFormationTemplateForUserDeployment(
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(
-        ASSETS_BUCKET_REGION,
-        DatabaseTypes.MS_SQL_SERVER,
-        derivedParams.StackName,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
-    );
-
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
@@ -452,11 +481,24 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    const templateParamsAsList: Array<Parameter> = [
+        { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+    ];
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
         }
     });
 
@@ -475,12 +517,33 @@ async function createCloudFormationTemplateForUserDeployment(
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
         }
     });
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
         templateParams += `&param_${key}=${value}`;
+        templateParamsAsList.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
     });
+
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        derivedParams.StackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
