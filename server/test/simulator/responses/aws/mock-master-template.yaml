@@ -1,458 +1,960 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: This template deploys Windows Server Failover Clustering (WSFC) and
-  SQL Server AlwaysOn Availability Group nodes. This template may also deploy
-  the require AD architecture outlined in "Implementing Active Directory Domain
-  Services in the AWS Cloud" **WARNING** This template creates Amazon EC2
-  Windows instance and related resources. You will be billed for the AWS
-  resources used if you create a stack from this template.
+    SQL Server AlwaysOn Availability Group nodes. This template may also deploy
+    the require AD architecture outlined in "Implementing Active Directory Domain
+    Services in the AWS Cloud" **WARNING** This template creates Amazon EC2
+    Windows instance and related resources. You will be billed for the AWS
+    resources used if you create a stack from this template.
 Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: Network Configuration
-        Parameters:
-          - VPCID
-          - VPCCIDR
-          - PrivateSubnet1ID
-          - RouteTable1Id
-          - PrivateSubnet2ID
-          - RouteTable2Id
-      - Label:
-          default: Amazon EC2 Configuration
-        Parameters:
-          - WorkloadInstanceType
-          - NodeNetBIOSNames
-          - KeyPairName
-          - ValidationAmi
-          - Ec2RoleName
-      - Label:
-          default: Microsoft Active Directory Configuration
-        Parameters:
-          - ADScenarioType
-          - DomainDNSName
-          - DomainAdminUser
-          - DomainAdminPassword
-          - DNSIpAddresses
-          - DomainMemberSGID
-      - Label:
-          default: Amazon FSx for ONTAP Volume Configuration
-        Parameters:
-          - DeploymentMode
-          - FSxFileSystemName
-          - FSxFileSystemId
-          - FSxAdminUsername
-          - FSxAdminPassword
-          - FSxSvmName
-          - FSxStorageCapacity
-          - FSxDataVolumeName
-          - FSxDataVolumeSize
-          - FSxLogVolumeName
-          - FSxLogVolumeSize
-          - FSxTempDbVolumeName
-          - FSxTempDbVolumeSize
-          - FSxQuorumVolumeName
-          - FSxQuorumVolumeSize
-          - FSxDataLunSize
-          - FSxVolumeThroughputCapacity
-          - SQLigroupname
-          - ONTAPSecurityGroupID
-          - FileSystemEncryptionKeyId
-          - FSxDiskIops
-          - SQLSvmName
-      - Label:
-          default: Microsoft SQL Server Configuration
-        Parameters:
-          - SQLDeploymentMode
-          - SQLAMIID
-          - SQLServiceAccountName
-          - SQLServiceAccountPassword
-          - SqlFSxWSFCName
-          - SqlServerName
-      - Label:
-          default: CloudWatch, SNS Topic and Resource Tags configuration
-        Parameters:
-          - EnableCloudWatchLogFeature
-          - NotificationARN
-      - Label:
-          default: WLM SQL Assets Configuration
-        Parameters:
-          - AssetsBucketName
-          - AssetsS3KeyPrefix
-          - AssetsS3RegionCode
-          - MSSQLMediaBucketName
-          - MSSQLMediaPathKey
-      - Label:
-          default: Custom Resource configuration ( DO NOT EDIT )
-        Parameters:
-          - AccountId
-          - CloudProviderAccountId
-          - RoleCredentialsId
-          - JwtToken
-    ParameterLabels:
-      DeploymentMode:
-        default: File system deployment mode
-      ApplicationName:
-        default: Application Name
-      Ec2RoleName:
-        default: ""
-      UniqueID:
-        default: Unique ID for BlueXP WLM SQL resource group
-      ADScenarioType:
-        default: AD Scenario Type
-      DNSIpAddresses:
-        default: DNS IP Addresses
-      DomainAdminUser:
-        default: Domain Admin User Name
-      DomainAdminPassword:
-        default: Domain Admin Password
-      DomainDNSName:
-        default: Domain DNS Name
-      SqlFSxWSFCName:
-        default: Windows Server Failover Cluster name
-      KeyPairName:
-        default: Key Pair Name
-      AssetsBucketName:
-        default: Launch Wizard S3 Bucket Name
-      AssetsS3KeyPrefix:
-        default: Launch Wizard S3 Key Prefix
-      SQLAMIID:
-        default: SQL Server Version
-      SQLServiceAccountName:
-        default: Service Account Name
-      SQLServiceAccountPassword:
-        default: Service Account Password
-      SQLigroupname:
-        default: SQL igroup Name
-      SqlServerName:
-        default: SQL Server Name
-      VPCName:
-        default: Name your VPC
-      VPCCIDR:
-        default: VPC CIDR
-      VPCID:
-        default: VPC ID
-      FSxStorageCapacity:
-        default: SSD storage capacity
-      PrivateSubnet1ID:
-        default: Private Subnet 1 ID for the first SQL node for existing VPC e.g
-          subnet-000dc866d93550eb0
-      PrivateSubnet2ID:
-        default: Private Subnet 2 ID for the second SQL node for existing VPC e.g
-          subnet-000dc866d93550eb0
-      RouteTable1Id:
-        default: Route Table ID of private subnet 1
-      RouteTable2Id:
-        default: Route Table ID of private subnet 2
-      WorkloadInstanceType:
-        default: Instance Type for Cluster Nodes
-      NodeNetBIOSNames:
-        default: Cluster Nodes NetBIOS Names
-      ONTAPSecurityGroupID:
-        default: Security Group ID for FSxN
-      SQLSvmName:
-        default: SVM for creating SQL volumes
-      FSxDiskIops:
-        default: Provisioned SSD IOPS
-      EnableCloudWatchLogFeature:
-        default: (optional) Enable monitoring by CloudWatch Logging
-      NotificationARN:
-        default: (optional) Notification ARN
-      ValidationAmi:
-        default: Validation node AMI image id
-      SQLDeploymentMode:
-        default: SQL server deployment mode
+    AWS::CloudFormation::Interface:
+        ParameterGroups:
+            - Label:
+                  default: Network Configuration
+              Parameters:
+                  - VPCID
+                  - VPCCIDR
+                  - PrivateSubnet1ID
+                  - RouteTable1Id
+                  - PrivateSubnet2ID
+                  - RouteTable2Id
+            - Label:
+                  default: Amazon EC2 Configuration
+              Parameters:
+                  - WorkloadInstanceType
+                  - NodeNetBIOSNames
+                  - KeyPairName
+                  - ValidationAmi
+                  - CfDeployRoleName
+            - Label:
+                  default: Microsoft Active Directory Configuration
+              Parameters:
+                  - ADScenarioType
+                  - DomainDNSName
+                  - DomainAdminUser
+                  - DomainAdminPassword
+                  - DNSIpAddresses
+                  - DomainMemberSGID
+            - Label:
+                  default: Amazon FSx for ONTAP Volume Configuration
+              Parameters:
+                  - DeploymentMode
+                  - FSxFileSystemName
+                  - FSxFileSystemId
+                  - FSxAdminUsername
+                  - FSxAdminPassword
+                  - FSxSvmName
+                  - FSxStorageCapacity
+                  - FSxDataVolumeName
+                  - FSxDataVolumeSize
+                  - FSxLogVolumeName
+                  - FSxLogVolumeSize
+                  - FSxTempDbVolumeName
+                  - FSxTempDbVolumeSize
+                  - FSxQuorumVolumeName
+                  - FSxQuorumVolumeSize
+                  - FSxDataLunSize
+                  - FSxVolumeThroughputCapacity
+                  - SQLigroupname
+                  - ONTAPSecurityGroupID
+                  - FileSystemEncryptionKeyId
+                  - FSxDiskIops
+                  - SQLSvmName
+            - Label:
+                  default: Microsoft SQL Server Configuration
+              Parameters:
+                  - SQLDeploymentMode
+                  - SQLAMIID
+                  - SQLServiceAccountName
+                  - SQLServiceAccountPassword
+                  - SqlFSxWSFCName
+                  - SqlServerName
+            - Label:
+                  default: CloudWatch, SNS Topic and Resource Tags configuration
+              Parameters:
+                  - EnableCloudWatchLogFeature
+                  - NotificationARN
+            - Label:
+                  default: WLM SQL Assets Configuration
+              Parameters:
+                  - AssetsBucketName
+                  - AssetsS3KeyPrefix
+                  - AssetsS3RegionCode
+                  - MSSQLMediaBucketName
+                  - MSSQLMediaPathKey
+            - Label:
+                  default: Custom Resource configuration ( DO NOT EDIT )
+              Parameters:
+                  - AccountId
+                  - CloudProviderAccountId
+                  - RoleCredentialsId
+                  - JwtToken
+        ParameterLabels:
+            DeploymentMode:
+                default: File system deployment mode
+            ApplicationName:
+                default: Application Name
+            CfDeployRoleName:
+                default: Cloud formation deployment role name
+            UniqueID:
+                default: Unique ID for WLMDB SQL resource group
+            ADScenarioType:
+                default: AD Scenario Type
+            DNSIpAddresses:
+                default: DNS IP Addresses
+            DomainAdminUser:
+                default: Domain Admin User Name
+            DomainAdminPassword:
+                default: Domain Admin Password
+            DomainDNSName:
+                default: Domain DNS Name
+            SqlFSxWSFCName:
+                default: Windows Server Failover Cluster name
+            KeyPairName:
+                default: Key Pair Name
+            AssetsBucketName:
+                default: WLMDB S3 Bucket Name
+            AssetsS3KeyPrefix:
+                default: WLMDB S3 Key Prefix
+            SQLAMIID:
+                default: SQL Server Version
+            SQLServiceAccountName:
+                default: Service Account Name
+            SQLServiceAccountPassword:
+                default: Service Account Password
+            SQLigroupname:
+                default: SQL igroup Name
+            SqlServerName:
+                default: SQL Server Name
+            VPCName:
+                default: Name your VPC
+            VPCCIDR:
+                default: VPC CIDR
+            VPCID:
+                default: VPC ID
+            FSxStorageCapacity:
+                default: SSD storage capacity
+            PrivateSubnet1ID:
+                default: Private Subnet 1 ID for the first SQL node for existing VPC e.g
+                    subnet-000dc866d93550eb0
+            PrivateSubnet2ID:
+                default: Private Subnet 2 ID for the second SQL node for existing VPC e.g
+                    subnet-000dc866d93550eb0
+            RouteTable1Id:
+                default: Route Table ID of private subnet 1
+            RouteTable2Id:
+                default: Route Table ID of private subnet 2
+            WorkloadInstanceType:
+                default: Instance Type for Cluster Nodes
+            NodeNetBIOSNames:
+                default: Cluster Nodes NetBIOS Names
+            ONTAPSecurityGroupID:
+                default: Security Group ID for FSxN
+            SQLSvmName:
+                default: SVM for creating SQL volumes
+            FSxDiskIops:
+                default: Provisioned SSD IOPS
+            EnableCloudWatchLogFeature:
+                default: (optional) Enable monitoring by CloudWatch Logging
+            NotificationARN:
+                default: (optional) Notification ARN
+            ValidationAmi:
+                default: Validation node AMI image id
+            SQLDeploymentMode:
+                default: SQL server deployment mode
 Parameters:
-  DeploymentMode:
-    Description: File system deployment mode
-    Type: String
-    Default: MULTI_AZ_1
-    AllowedValues:
-      - SINGLE_AZ_1
-      - MULTI_AZ_1
-  SQLDeploymentMode:
-    Description: SQL server deployment mode
-    Type: String
-    Default: fci
-    AllowedValues:
-      - fci
-      - standalone
-  Ec2RoleName:
-    Description: EC2 instance role name
-    Type: String
-    MinLength: 1
-  UniqueID:
-    Description: Automation Execution Unique ID.
-    Type: String
-  ADScenarioType:
-    AllowedValues:
-      - AWS_MANAGED_AD
-      - USER_MANAGED_AD
-    Description: "Select the type of AD DS deployment to use: AWS Directory Service
-      for Microsoft AD or managing your own Amazon EC2 AD instances."
-    Type: String
-  DNSIpAddresses:
-    Description: Fixed private IPs for the Active Directory servers
-    Type: String
-    MinLength: 1
-  DomainAdminUser:
-    AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
-    Description: 'User name for the account that will be added as Domain
-      Administrator. This is separate from the default "Administrator" account.
-      Note: This user will always default to "Admin" when using AWS Directory
-      Service regardless of the value provided.'
-    MaxLength: "20"
-    MinLength: "5"
-    Type: String
-  DomainAdminPassword:
-    Description: Password for Domain Adminstrator.
-    Type: String
-    NoEcho: true
-    MinLength: 8
-  DomainDNSName:
-    AllowedPattern: "[a-zA-Z0-9\\-]+\\..+"
-    Description: Fully qualified domain name (FQDN) of the forest root domain e.g.
-      example.com
-    MaxLength: "255"
-    MinLength: "2"
-    Type: String
-  DomainMemberSGID:
-    Description: Security group ID of the members group for existing AD
-    Type: String
-  KeyPairName:
-    Description: Public/private key pairs allow you to securely connect to your
-      instance after it launches
-    Type: AWS::EC2::KeyPair::KeyName
-  AssetsBucketName:
-    Description: S3 bucket name for WLMDB assets.
-    Type: String
-    Default: staging.wlmdb.workloads.netapp.com
-  AssetsS3RegionCode:
-    Description: S3 region code.
-    Type: String
-    Default: s3.us-east-1
-  AssetsS3KeyPrefix:
-    Description: S3 key prefix for the Launch Wizard assets. Launch Wizard key
-      prefix can include numbers, lowercase letters, uppercase letters, hyphens
-      (-), and forward slash (/).
-    Type: String
-    Default: templates
-  MSSQLMediaBucketName:
-    Default: LaunchWizard-sqlha
-    Description: S3 bucket name for the Launch Wizard assets. Launch Wizard bucket
-      name can include numbers, lowercase letters, uppercase letters, and
-      hyphens (-). It cannot start or end with a hyphen (-).
-    Type: String
-  MSSQLMediaPathKey:
-    Description: S3 key prefix for the media for SQL Server for FCI. Launch Wizard
-      key prefix can include numbers, lowercase letters, uppercase letters,
-      hyphens (-), and forward slash (/).
-    Type: String
-    Default: launchwizardscripts/sqlmedia/sqlserver.iso
-  SQLAMIID:
-    Description: Version of SQL Windows AMI ID
-    Type: String
-    MinLength: 1
-  SQLServiceAccountName:
-    AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
-    Description: User name for the SQL Server Service Account. This Account is a
-      Domain User.
-    MaxLength: "20"
-    MinLength: "5"
-    Type: String
-  SQLServiceAccountPassword:
-    Description: Password for the SQL Server Service Account.
-    Type: String
-    NoEcho: true
-    MinLength: 8
-  SQLigroupname:
-    Description: SQL igroupname
-    Type: String
-    MinLength: 1
-  SqlServerName:
-    Description: SQL Server Name
-    Type: String
-    MinLength: 1
-  SqlFSxWSFCName:
-    AllowedPattern: "[a-zA-Z0-9\\-]+"
-    Description: Windows Server Failover Cluster name
-    MaxLength: "15"
-    MinLength: "4"
-    Type: String
-    Default: WSFCluster1
-  VPCCIDR:
-    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.0.0/16
-    Description: CIDR Block for the VPC
-    Type: String
-  PrivateSubnet1ID:
-    Description: ID of private subnet 1 in Availability Zone 1 for the Workload
-      (e.g., subnet-a0246dcd)
-    Type: String
-    MinLength: 1
-  PrivateSubnet2ID:
-    Description: ID of private subnet 2 in Availability Zone 2 for the Workload
-      (e.g., subnet-a0246dcd)
-    Type: String
-  RouteTable1Id:
-    Description: Comma seperated list of all route table ids' for SQL subnets.
-    Type: String
-    MinLength: 1
-  RouteTable2Id:
-    Description: Comma seperated list of all route table ids' for SQL subnets.
-    Type: String
-  SQLSvmName:
-    Description: SQL Storage Machine Virtual Name
-    Type: String
-    MinLength: 1
-  WorkloadInstanceType:
-    Description: Amazon EC2 instance type for the WSFC Nodes
-    Type: String
-    MinLength: 1
-  NodeNetBIOSNames:
-    Type: String
-    Description: NetBIOS name of Nodes (each one up to 15 characters)
-    MinLength: 1
-  FSxStorageCapacity:
-    Description: Storage capacity of the file system. Minimum 1024 GiB, maximum 192 TiB.
-    Type: Number
-    MinValue: 1024
-    MaxValue: 196608
-  FSxDataVolumeSize:
-    Description: Size of the data volume, in megabytes (MiB).
-    Type: Number
-  FSxDataVolumeName:
-    Description: FSx data volume name
-    Type: String
-    MinLength: 1
-  FSxLogVolumeName:
-    Description: FSx log volume name
-    Type: String
-    MinLength: 1
-  FSxLogVolumeSize:
-    Description: Size of the log volume, in megabytes (MiB).
-    Type: Number
-  FSxTempDbVolumeName:
-    Description: FSx TempDB volume name
-    Type: String
-    MinLength: 1
-  FSxTempDbVolumeSize:
-    Description: FSx TempDB volume size, in megabytes (MiB)
-    Type: Number
-  FSxQuorumVolumeName:
-    Description: FSx quorum volume name
-    Type: String
-    Default: wlmdb-quorum
-  FSxQuorumVolumeSize:
-    Description: Size of the cluster quorum volume, in megabytes (MiB).
-    Type: Number
-    Default: 100
-  FSxDataLunSize:
-    Description: Size of the SQL data lun, in megabytes (MiB)
-    Type: Number
-  FSxAdminUsername:
-    Description: FSxN username
-    Type: String
-    MinLength: 1
-  FSxAdminPassword:
-    Description: Password for FSxAdminUsername.
-    Type: String
-    NoEcho: true
-    MinLength: 8
-  FSxSvmName:
-    Type: String
-    MinLength: 1
-    MaxLength: 47
-  FSxFileSystemName:
-    Type: String
-    Description: Fsx Filesystem name
-  FSxFileSystemId:
-    Description: FSx Filesystem ID
-    Type: String
-  FSxDiskIops:
-    Description: The total number of SSD IOPS provisioned for the file
-      system.  Maximum 80,000 IOPS.
-    Default: 3
-    Type: Number
-    MinValue: 3
-    MaxValue: 80000
-  FSxVolumeThroughputCapacity:
-    Description: Throughput capacity of FSx volume
-    Type: Number
-    Default: 128
-    AllowedValues:
-      - 128
-      - 256
-      - 512
-      - 1024
-      - 2048
-  FileSystemEncryptionKeyId:
-    Description: ID of the AWS Key Management Service key.
-    Type: String
-  VPCID:
-    Description: Existing VPC ID for deployment
-    Type: String
-    MinLength: 1
-  ONTAPSecurityGroupID:
-    Description: ONTAP Security Group ID
-    Type: String
-  EnableCloudWatchLogFeature:
-    Default: false
-    Description: Enable CloudWatch Log Feature
-    Type: String
-    AllowedValues:
-      - true
-      - false
-  NotificationARN:
-    Description: (optional) Amazon SNS topic ARNs to publish stack related events
-    Type: String
-  ValidationAmi:
-    Description: Validation node AMI image id
-    Type: String
-    MinLength: 1
-  RoleCredentialsId:
-    Description: WLM account credentials id to deploy and manage resources (DO NOT EDIT)
-    Type: String
-    NoEcho: true
-  AccountId:
-    Description: WLM tenancy account id (DO NOT EDIT)
-    Type: String
-    NoEcho: true
-  CloudProviderAccountId:
-    Description: AWS CloudProviderAccountId id (DO NOT EDIT)
-    Type: String
-    NoEcho: true
-  JwtToken:
-    Description: JWT Token to grant access to a resource (DO NOT EDIT)
-    Type: String
-    NoEcho: true
-  WlmdbAwsAccountId:
-    Description: WLMDB AWS Account ID (DO NOT EDIT)
-    Type: String
-    NoEcho: true
+    DeploymentMode:
+        Description: File system deployment mode
+        Type: String
+        Default: MULTI_AZ_1
+        AllowedValues:
+            - SINGLE_AZ_1
+            - MULTI_AZ_1
+    SQLDeploymentMode:
+        Description: SQL server deployment mode
+        Type: String
+        Default: fci
+        AllowedValues:
+            - fci
+            - standalone
+    CfDeployRoleName:
+        Description: Cloud formation deployment role name
+        Type: String
+        MinLength: 1
+    UniqueID:
+        Description: Automation Execution Unique ID.
+        Type: String
+    ADScenarioType:
+        AllowedValues:
+            - AWS_MANAGED_AD
+            - USER_MANAGED_AD
+        Description: 'Select the type of AD DS deployment to use: AWS Directory Service
+            for Microsoft AD or managing your own Amazon EC2 AD instances.'
+        Type: String
+    DNSIpAddresses:
+        Description: Fixed private IPs for the Active Directory servers
+        Type: String
+        MinLength: 1
+    DomainAdminUser:
+        AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
+        Description: 'User name for the account that will be added as Domain
+            Administrator. This is separate from the default "Administrator" account.
+            Note: This user will always default to "Admin" when using AWS Directory
+            Service regardless of the value provided.'
+        MaxLength: '20'
+        MinLength: '5'
+        Type: String
+    DomainAdminPassword:
+        Description: Password for Domain Administrator.
+        Type: String
+        NoEcho: true
+        MinLength: 8
+    DomainDNSName:
+        AllowedPattern: "[a-zA-Z0-9\\-]+\\..+"
+        Description: Fully qualified domain name (FQDN) of the forest root domain e.g.
+            example.com
+        MaxLength: '255'
+        MinLength: '2'
+        Type: String
+    DomainMemberSGID:
+        Description: Security group ID of the members group for existing AD
+        Type: String
+    KeyPairName:
+        Description: Public/private key pairs allow you to securely connect to your
+            instance after it launches
+        Type: AWS::EC2::KeyPair::KeyName
+    AssetsBucketName:
+        Description: S3 bucket name for WLMDB assets.
+        Type: String
+        Default: staging.wlmdb.workloads.netapp.com
+    AssetsS3RegionCode:
+        Description: S3 region code.
+        Type: String
+        Default: s3.us-east-1
+    AssetsS3KeyPrefix:
+        Description: S3 key prefix for the Launch Wizard assets. Launch Wizard key
+            prefix can include numbers, lowercase letters, uppercase letters, hyphens
+            (-), and forward slash (/).
+        Type: String
+        Default: templates
+    MSSQLMediaBucketName:
+        Default: LaunchWizard-sqlha
+        Description: S3 bucket name for MSSQL assets.
+        Type: String
+    MSSQLMediaPathKey:
+        Description: S3 key prefix for the media for SQL Server for FCI. Launch Wizard
+            key prefix can include numbers, lowercase letters, uppercase letters,
+            hyphens (-), and forward slash (/).
+        Type: String
+        Default: launchwizardscripts/sqlmedia/sqlserver.iso
+    SQLAMIID:
+        Description: SQL node AMI image id
+        Type: String
+        MinLength: 1
+    SQLServiceAccountName:
+        AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
+        Description: User name for the SQL Server Service Account. This Account is a
+            Domain User.
+        MaxLength: '20'
+        MinLength: '5'
+        Type: String
+    SQLServiceAccountPassword:
+        Description: Password for the SQL Server Service Account.
+        Type: String
+        NoEcho: true
+        MinLength: 8
+    SQLigroupname:
+        Description: SQL igroupname
+        Type: String
+        MinLength: 1
+    SqlServerName:
+        Description: SQL Server Name
+        Type: String
+        MinLength: 1
+    SqlFSxWSFCName:
+        AllowedPattern: "[a-zA-Z0-9\\-]+"
+        Description: Windows Server Failover Cluster name
+        MaxLength: '15'
+        MinLength: '4'
+        Type: String
+        Default: WSFCluster1
+    VPCCIDR:
+        AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+        ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+        Default: 10.0.0.0/16
+        Description: CIDR Block for the VPC
+        Type: String
+    PrivateSubnet1ID:
+        Description: ID of private subnet 1 in Availability Zone 1 for the Workload
+            (e.g., subnet-a0246dcd)
+        Type: String
+        MinLength: 1
+    PrivateSubnet2ID:
+        Description: ID of private subnet 2 in Availability Zone 2 for the Workload
+            (e.g., subnet-a0246dcd)
+        Type: String
+    RouteTable1Id:
+        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Type: String
+        MinLength: 1
+    RouteTable2Id:
+        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Type: String
+    SQLSvmName:
+        Description: SQL Storage Machine Virtual Name
+        Type: String
+        MinLength: 1
+    WorkloadInstanceType:
+        Description: Amazon EC2 instance type for the WSFC Nodes
+        Type: String
+        MinLength: 1
+    NodeNetBIOSNames:
+        Type: String
+        Description: NetBIOS name of Nodes (each one up to 15 characters)
+        MinLength: 1
+    FSxStorageCapacity:
+        Description: Storage capacity of the file system. Minimum 1024 GiB, maximum 192 TiB.
+        Type: Number
+        MinValue: 1024
+        MaxValue: 196608
+    FSxDataVolumeSize:
+        Description: Size of the data volume, in megabytes (MiB).
+        Type: Number
+    FSxDataVolumeName:
+        Description: FSx data volume name
+        Type: String
+        MinLength: 1
+    FSxLogVolumeName:
+        Description: FSx log volume name
+        Type: String
+        MinLength: 1
+    FSxLogVolumeSize:
+        Description: Size of the log volume, in megabytes (MiB).
+        Type: Number
+    FSxTempDbVolumeName:
+        Description: FSx TempDB volume name
+        Type: String
+        MinLength: 1
+    FSxTempDbVolumeSize:
+        Description: FSx TempDB volume size, in megabytes (MiB)
+        Type: Number
+    FSxQuorumVolumeName:
+        Description: FSx quorum volume name
+        Type: String
+        Default: wlmdb-quorum
+    FSxQuorumVolumeSize:
+        Description: Size of the cluster quorum volume, in megabytes (MiB).
+        Type: Number
+        Default: 100
+    FSxDataLunSize:
+        Description: Size of the SQL data lun, in megabytes (MiB)
+        Type: Number
+    FSxAdminUsername:
+        Description: FSxN username
+        Type: String
+        MinLength: 1
+    FSxAdminPassword:
+        Description: Password for FSxAdminUsername.
+        Type: String
+        NoEcho: true
+        MinLength: 8
+    FSxSvmName:
+        Type: String
+        MinLength: 1
+        MaxLength: 47
+    FSxFileSystemName:
+        Type: String
+        Description: Fsx Filesystem name
+    FSxFileSystemId:
+        Description: FSx Filesystem ID
+        Type: String
+    FSxDiskIops:
+        Description: The total number of SSD IOPS provisioned for the file
+            system.  Maximum 80,000 IOPS.
+        Default: 3
+        Type: Number
+        MinValue: 3
+        MaxValue: 80000
+    FSxVolumeThroughputCapacity:
+        Description: Throughput capacity of FSx volume
+        Type: Number
+        Default: 128
+        AllowedValues:
+            - 128
+            - 256
+            - 512
+            - 1024
+            - 2048
+    FileSystemEncryptionKeyId:
+        Description: ID of the AWS Key Management Service key.
+        Type: String
+    VPCID:
+        Description: Existing VPC ID for deployment
+        Type: String
+        MinLength: 1
+    ONTAPSecurityGroupID:
+        Description: ONTAP Security Group ID
+        Type: String
+    EnableCloudWatchLogFeature:
+        Default: false
+        Description: Enable CloudWatch Log Feature
+        Type: String
+        AllowedValues:
+            - true
+            - false
+    NotificationARN:
+        Description: (optional) Amazon SNS topic ARNs to publish stack related events
+        Type: String
+    ValidationAmi:
+        Description: Validation node AMI image id
+        Type: String
+        MinLength: 1
+    RoleCredentialsId:
+        Description: WLM account credentials id to deploy and manage resources (DO NOT EDIT)
+        Type: String
+        NoEcho: true
+    AccountId:
+        Description: WLM tenancy account id (DO NOT EDIT)
+        Type: String
+        NoEcho: true
+    CloudProviderAccountId:
+        Description: AWS CloudProviderAccountId id (DO NOT EDIT)
+        Type: String
+        NoEcho: true
+    JwtToken:
+        Description: JWT Token to grant access to a resource (DO NOT EDIT)
+        Type: String
+        NoEcho: true
+    WlmdbAwsAccountId:
+        Description: WLMDB AWS Account ID (DO NOT EDIT)
+        Type: String
+        NoEcho: true
 Conditions:
-  UseAWSDirectoryServiceEE:
-    Fn::Equals:
-      - Ref: ADScenarioType
-      - AWS_MANAGED_AD
-  NewOntapFsx:
-    - FSxFileSystemId
-    - ""
-  ExistingOntapFsx:
-    Fn::Not:
-      - Condition: NewOntapFsx
-  ExcludeNotification:
-    - NotificationARN
-    - ""
-  IncludeNotification:
-    - Condition: ExcludeNotification
-  IsStandalone:
-    - SQLDeploymentMode
-    - standalone
-  IsFailoverCluster:
-    - Condition: IsStandalone
+    UseAWSDirectoryServiceEE:
+        Fn::Equals:
+            - Ref: ADScenarioType
+            - AWS_MANAGED_AD
+    NewOntapFsx:
+        - FSxFileSystemId
+        - ''
+    ExistingOntapFsx:
+        Fn::Not:
+            - Condition: NewOntapFsx
+    ExcludeNotification:
+        - NotificationARN
+        - ''
+    IncludeNotification:
+        - Condition: ExcludeNotification
+    IsStandalone:
+        - SQLDeploymentMode
+        - standalone
+    IsFailoverCluster:
+        - Condition: IsStandalone
 Resources:
+    DomainAdminSecretName:
+        Type: AWS::SecretsManager::Secret
+        Properties:
+            Name: ${AWS::StackName}-domain
+            Description: Secret for Domain Account
+            SecretString: '{ "username": "${DomainAdminUser}", "password":
+                "${DomainAdminPassword}" }'
+    SQLServiceAccountSecret:
+        Type: AWS::SecretsManager::Secret
+        Properties:
+            Name: ${AWS::StackName}-sql
+            Description: Secret for SQL Service Account
+            SecretString: '{ "username": "${SQLServiceAccountName}", "password":
+                "${SQLServiceAccountPassword}" }'
+    TrackStackDeployment:
+        Type: Custom::MyCustomResource
+        Properties:
+            ServiceToken: arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            AccountId: AccountId
+            CloudProviderAccountId: CloudProviderAccountId
+            CredentialsId: RoleCredentialsId
+            JWToken: JwtToken
+            Region: AWS::Region
+            StackName: AWS::StackName
+            ResourceName: SqlServerName
+            SQLDeploymentType:
+                - IsFailoverCluster
+                - FCI
+                - Standalone
+            FileSystemType: FSx ONTAP
+            DatabaseType: Microsoft SQL server
+    ValidationStack1:
+        Type: AWS::CloudFormation::Stack
+        DependsOn: TrackStackDeployment
+        Properties:
+            TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummycreds%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummycreds&X-Amz-SignedHeaders=host&x-id=GetObject
+            Parameters:
+                DomainAdminSecretName:
+                    Ref: DomainAdminSecretName
+                DomainAdminUser:
+                    Ref: DomainAdminUser
+                DomainDNSName:
+                    Ref: DomainDNSName
+                DNSIpAddresses:
+                    Ref: DNSIpAddresses
+                KeyPairName:
+                    Ref: KeyPairName
+                SubnetID:
+                    Ref: PrivateSubnet1ID
+                VPCID:
+                    Ref: VPCID
+                Ec2RoleName:
+                    Ref: AWS::StackName
+                PerformADCheck: 'true'
+                AssetsBucketName:
+                    Ref: AssetsBucketName
+                AssetsS3KeyPrefix:
+                    Ref: AssetsS3KeyPrefix
+                AssetsS3RegionCode:
+                    Ref: AssetsS3RegionCode
+                AMI:
+                    Ref: ValidationAmi
+                EnableCloudWatchLogFeature:
+                    Ref: EnableCloudWatchLogFeature
+                ParentStackName:
+                    Ref: AWS::StackName
+            NotificationARNs:
+                Fn::If:
+                    - IncludeNotification
+                    - - Ref: NotificationARN
+                      - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+                    - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            Tags:
+                - Key: created_by_flow
+                  Value: WLMDB
+    ValidationStack2:
+        Type: AWS::CloudFormation::Stack
+        Condition: IsFailoverCluster
+        DependsOn: TrackStackDeployment
+        Properties:
+            TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/vpc-ad-validation.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummycreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
+            Parameters:
+                DomainAdminSecretName:
+                    Ref: DomainAdminSecretName
+                DomainAdminUser:
+                    Ref: DomainAdminUser
+                DomainDNSName:
+                    Ref: DomainDNSName
+                DNSIpAddresses:
+                    Ref: DNSIpAddresses
+                KeyPairName:
+                    Ref: KeyPairName
+                SubnetID:
+                    Ref: PrivateSubnet2ID
+                VPCID:
+                    Ref: VPCID
+                Ec2RoleName:
+                    Ref: AWS::StackName
+                PerformADCheck: 'false'
+                AssetsBucketName:
+                    Ref: AssetsBucketName
+                AssetsS3KeyPrefix:
+                    Ref: AssetsS3KeyPrefix
+                AssetsS3RegionCode:
+                    Ref: AssetsS3RegionCode
+                AMI:
+                    Ref: ValidationAmi
+                EnableCloudWatchLogFeature:
+                    Ref: EnableCloudWatchLogFeature
+                ParentStackName:
+                    Ref: AWS::StackName
+            NotificationARNs:
+                Fn::If:
+                    - IncludeNotification
+                    - - Ref: NotificationARN
+                      - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+                    - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            Tags:
+                - Key: created_by_flow
+                  Value: WLMDB
+    FCIWaitHandler:
+        Type: AWS::CloudFormation::WaitConditionHandle
+        Condition: IsFailoverCluster
+        DependsOn:
+            - TrackStackDeployment
+            - ValidationStack2
+            - ValidationStack1
+    SIWaitHandler:
+        Type: AWS::CloudFormation::WaitConditionHandle
+        Condition: IsStandalone
+        DependsOn:
+            - TrackStackDeployment
+            - ValidationStack1
+    WaitCondition:
+        Type: AWS::CloudFormation::WaitCondition
+        Properties:
+            Handle:
+                - IsFailoverCluster
+                - FCIWaitHandler
+                - SIWaitHandler
+            Timeout: '7200'
+            Count: 0
+    FSxNSecret:
+        Type: AWS::SecretsManager::Secret
+        Properties:
+            Name: ${AWS::StackName}-fsx
+            Description: Secret for FSxN filesystem
+            SecretString: '{ "username": "${FSxAdminUsername}", "password":
+                "${FSxAdminPassword}" }'
+    NewFSxStack:
+        Type: AWS::CloudFormation::Stack
+        Condition: NewOntapFsx
+        DependsOn: WaitCondition
+        Properties:
+            TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-new.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=9908c42ed2e8637ee39d205af561493396a613dc053b4606c7ad66fd7fc4b013&X-Amz-SignedHeaders=host&x-id=GetObject
+            Parameters:
+                DeploymentMode:
+                    Ref: DeploymentMode
+                FSxFileSystemName:
+                    Ref: FSxFileSystemName
+                FSxAdministratorPasswordSecret:
+                    Ref: FSxNSecret
+                FSxVolumeThroughputCapacity:
+                    Ref: FSxVolumeThroughputCapacity
+                FSxStorageCapacity:
+                    Ref: FSxStorageCapacity
+                FSxDataVolumeName:
+                    Ref: FSxDataVolumeName
+                FSxDataVolumeSize:
+                    Ref: FSxDataVolumeSize
+                FSxLogVolumeName:
+                    Ref: FSxLogVolumeName
+                FSxLogVolumeSize:
+                    Ref: FSxLogVolumeSize
+                FSxTempDbVolumeName:
+                    Ref: FSxTempDbVolumeName
+                FSxTempDbVolumeSize:
+                    Ref: FSxTempDbVolumeSize
+                FSxClusterQuorumVolumeName:
+                    Ref: FSxQuorumVolumeName
+                FSxClusterQuorumVolumeSize:
+                    Ref: FSxQuorumVolumeSize
+                FSxSvmName:
+                    Ref: SQLSvmName
+                VPCID:
+                    Ref: VPCID
+                VPCCIDR:
+                    Ref: VPCCIDR
+                PreferredSubnetId:
+                    Ref: PrivateSubnet1ID
+                PreferredRouteTableId:
+                    Ref: RouteTable1Id
+                StandbySubnetId:
+                    Ref: PrivateSubnet2ID
+                StandbyRouteTableId:
+                    Ref: RouteTable2Id
+                FSxKmsKeyId:
+                    Ref: FileSystemEncryptionKeyId
+                FSxDiskIops:
+                    Ref: FSxDiskIops
+            NotificationARNs:
+                Fn::If:
+                    - IncludeNotification
+                    - - Ref: NotificationARN
+                      - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+                    - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            Tags:
+                - Key: created_by_flow
+                  Value: WLMDB
+    ExistingFSxStack:
+        Type: AWS::CloudFormation::Stack
+        Condition: ExistingOntapFsx
+        DependsOn: WaitCondition
+        Properties:
+            TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/templates/fsx-existing.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
+            Parameters:
+                DeploymentMode:
+                    Ref: DeploymentMode
+                FSxSvmName:
+                    Ref: SQLSvmName
+                FSxFileSystemId:
+                    Ref: FSxFileSystemId
+                FSxDataVolumeName:
+                    Ref: FSxDataVolumeName
+                FSxDataVolumeSize:
+                    Ref: FSxDataVolumeSize
+                FSxLogVolumeName:
+                    Ref: FSxLogVolumeName
+                FSxLogVolumeSize:
+                    Ref: FSxLogVolumeSize
+                FSxTempDbVolumeName:
+                    Ref: FSxTempDbVolumeName
+                FSxTempDbVolumeSize:
+                    Ref: FSxTempDbVolumeSize
+                FSxClusterQuorumVolumeName:
+                    Ref: FSxQuorumVolumeName
+                FSxClusterQuorumVolumeSize:
+                    Ref: FSxQuorumVolumeSize
+            NotificationARNs:
+                Fn::If:
+                    - IncludeNotification
+                    - - Ref: NotificationARN
+                      - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+                    - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            Tags:
+                - Key: created_by_flow
+                  Value: WLMDB
+    SQLServerStack:
+        Type: AWS::CloudFormation::Stack
+        Condition: IsFailoverCluster
+        DependsOn: WaitCondition
+        Properties:
+            TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/sql-windows-fci-config_nosignal.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummySig&X-Amz-SignedHeaders=host&x-id=GetObject
+            Parameters:
+                UniqueID:
+                    Ref: UniqueID
+                Ec2RoleName:
+                    Ref: AWS::StackName
+                ADDnsIpAddresses:
+                    Fn::Select:
+                        - '0'
+                        - Fn::Split:
+                              - ','
+                              - Ref: DNSIpAddresses
+                DomainAdminSecretName:
+                    Ref: DomainAdminSecretName
+                DomainAdminUser:
+                    Ref: DomainAdminUser
+                DomainDNSName:
+                    Ref: DomainDNSName
+                DomainMemberSGID:
+                    Ref: DomainMemberSGID
+                KeyPairName:
+                    Ref: KeyPairName
+                PrivateSubnet1ID:
+                    Ref: PrivateSubnet1ID
+                RouteTable1Id:
+                    Ref: RouteTable1Id
+                RouteTable2Id:
+                    Ref: RouteTable2Id
+                PrivateSubnet2ID:
+                    Ref: PrivateSubnet2ID
+                AssetsBucketName:
+                    Ref: AssetsBucketName
+                FSxDataLunSize:
+                    Ref: FSxDataLunSize
+                AssetsS3RegionCode:
+                    Ref: AssetsS3RegionCode
+                AssetsS3KeyPrefix:
+                    Ref: AssetsS3KeyPrefix
+                MSSQLMediaBucketName:
+                    Ref: MSSQLMediaBucketName
+                MSSQLMediaPathKey:
+                    Ref: MSSQLMediaPathKey
+                AMIID:
+                    Ref: SQLAMIID
+                SqlFSxWSFCName:
+                    Ref: SqlFSxWSFCName
+                SqlFSxFCIName:
+                    Ref: SqlServerName
+                SQLAdminAccounts:
+                    Ref: SQLServiceAccountName
+                SQLServiceAccountSecret:
+                    Ref: SQLServiceAccountSecret
+                VPCID:
+                    Ref: VPCID
+                VPCCIDR:
+                    Ref: VPCCIDR
+                WorkloadInstanceType:
+                    Ref: WorkloadInstanceType
+                SqlFSxServerNetBIOSName1:
+                    Fn::Select:
+                        - '0'
+                        - Fn::Split:
+                              - ','
+                              - Ref: NodeNetBIOSNames
+                SqlFSxServerNetBIOSName2:
+                    Fn::Select:
+                        - '1'
+                        - Fn::Split:
+                              - ','
+                              - Ref: NodeNetBIOSNames
+                FSxFileSystemId:
+                    - NewOntapFsx
+                    - NewFSxStack.Outputs.FSxFileSystemLogicalId
+                    - ExistingFSxStack.Outputs.FSxFileSystemId
+                FsxAdminPassword:
+                    Ref: FSxNSecret
+                SQLSvmName:
+                    Ref: SQLSvmName
+                FSxDataVolumeName:
+                    Ref: FSxDataVolumeName
+                FSxTempDbVolumeName:
+                    Ref: FSxTempDbVolumeName
+                FSxQuorumVolumeName:
+                    Ref: FSxQuorumVolumeName
+                SQLigroupname:
+                    Ref: SQLigroupname
+                EnableCloudWatchLogFeature:
+                    Ref: EnableCloudWatchLogFeature
+                ParentStackName:
+                    Ref: AWS::StackName
+                NumberOfNodes: '2'
+                FSxLogVolumeName:
+                    Ref: FSxLogVolumeName
+            NotificationARNs:
+                Fn::If:
+                    - IncludeNotification
+                    - - Ref: NotificationARN
+                      - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+                    - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            Tags:
+                - Key: created_by_flow
+                  Value: WLMDB
+    SQLStandaloneStack:
+        Type: AWS::CloudFormation::Stack
+        Condition: IsStandalone
+        DependsOn: WaitCondition
+        Properties:
+            TemplateURL: https://s3.us-east-1.amazonaws.com/staging.wlmdb.workloads.netapp.com/WLMDB-SqlFciStack-1699615560096/templates/standalone-deployment.yaml?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=dummyCreds%2F20231110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231110T112600Z&X-Amz-Expires=604800&X-Amz-Signature=dummysig&X-Amz-SignedHeaders=host&x-id=GetObject
+            Parameters:
+                UniqueID:
+                    Ref: UniqueID
+                Ec2RoleName:
+                    Ref: AWS::StackName
+                ADDnsIpAddresses:
+                    Fn::Select:
+                        - '0'
+                        - Fn::Split:
+                              - ','
+                              - Ref: DNSIpAddresses
+                DomainAdminSecretName:
+                    Ref: DomainAdminSecretName
+                DomainAdminUser:
+                    Ref: DomainAdminUser
+                DomainDNSName:
+                    Ref: DomainDNSName
+                DomainMemberSGID:
+                    Ref: DomainMemberSGID
+                KeyPairName:
+                    Ref: KeyPairName
+                PrivateSubnetID:
+                    Ref: PrivateSubnet1ID
+                RouteTableId:
+                    Ref: RouteTable1Id
+                AssetsBucketName:
+                    Ref: AssetsBucketName
+                FSxDataLunSize:
+                    Ref: FSxDataLunSize
+                AssetsS3RegionCode:
+                    Ref: AssetsS3RegionCode
+                AssetsS3KeyPrefix:
+                    Ref: AssetsS3KeyPrefix
+                MSSQLMediaBucketName:
+                    Ref: MSSQLMediaBucketName
+                MSSQLMediaPathKey:
+                    Ref: MSSQLMediaPathKey
+                AMIID:
+                    Ref: SQLAMIID
+                SQLAdminAccounts:
+                    Ref: SQLServiceAccountName
+                SQLServiceAccountSecret:
+                    Ref: SQLServiceAccountSecret
+                VPCID:
+                    Ref: VPCID
+                VPCCIDR:
+                    Ref: VPCCIDR
+                WorkloadInstanceType:
+                    Ref: WorkloadInstanceType
+                SqlFSxServerNetBIOSName:
+                    Fn::Select:
+                        - '0'
+                        - Fn::Split:
+                              - ','
+                              - Ref: NodeNetBIOSNames
+                FSxFileSystemId:
+                    - NewOntapFsx
+                    - NewFSxStack.Outputs.FSxFileSystemLogicalId
+                    - ExistingFSxStack.Outputs.FSxFileSystemId
+                FsxAdminPassword:
+                    Ref: FSxNSecret
+                SQLSvmName:
+                    Ref: SQLSvmName
+                FSxDataVolumeName:
+                    Ref: FSxDataVolumeName
+                FSxTempDbVolumeName:
+                    Ref: FSxTempDbVolumeName
+                SQLigroupname:
+                    Ref: SQLigroupname
+                ONTAPSecurityGroupID:
+                    - NewOntapFsx
+                    - NewFSxStack.Outputs.FsxSecurityGroupID
+                    - ONTAPSecurityGroupID
+                EnableCloudWatchLogFeature:
+                    Ref: EnableCloudWatchLogFeature
+                NumberOfNodes: '1'
+                FSxLogVolumeName:
+                    Ref: FSxLogVolumeName
+                ParentStackName:
+                    Ref: AWS::StackName
+                SqlServerName:
+                    Ref: SqlServerName
+            NotificationARNs:
+                Fn::If:
+                    - IncludeNotification
+                    - - Ref: NotificationARN
+                      - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+                    - - arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            Tags:
+                - Key: created_by_flow
+                  Value: WLMDB
+    PostStackDeployment:
+        Type: Custom::MyCustomResource
+        Properties:
+            ServiceToken: arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb
+            AccountId: AccountId
+            CloudProviderAccountId: CloudProviderAccountId
+            CredentialsId: RoleCredentialsId
+            JWToken: JwtToken
+            Region: AWS::Region
+            StackName: AWS::StackName
+            DomainAdminSecretName: ${AWS::StackName}-domain
+            FSxNSecret: ${AWS::StackName}-fsx
+            SQLServiceAccountSecret: ${AWS::StackName}-sql
+            FSxFileSystemId:
+                - NewOntapFsx
+                - NewFSxStack.Outputs.FSxFileSystemLogicalId
+                - ExistingFSxStack.Outputs.FSxFileSystemId
+            ActiveInstanceIp:
+                - IsFailoverCluster
+                - SQLServerStack.Outputs.SQLFSx1InstanceIPMAD
+                - SQLStandaloneStack.Outputs.SqlNodeIp
+            ActiveInstanceId:
+                - IsFailoverCluster
+                - SQLServerStack.Outputs.SQLFSx1InstanceId
+                - SQLStandaloneStack.Outputs.SqlNodeId
+            ActiveInstanceName:
+                Fn::Select:
+                    - '0'
+                    - Fn::Split:
+                          - ','
+                          - Ref: NodeNetBIOSNames
+            StandbyInstanceIp:
+                - IsFailoverCluster
+                - SQLServerStack.Outputs.SQLFSx2InstanceIPMAD
+                - AWS::NoValue
+            StandbyInstanceId:
+                - IsFailoverCluster
+                - SQLServerStack.Outputs.SQLFSx2InstanceId
+                - AWS::NoValue
+            StandbyInstanceName:
+                - IsFailoverCluster
+                - Fn::Select:
+                      - '1'
+                      - Fn::Split:
+                            - ','
+                            - Ref: NodeNetBIOSNames
+                - AWS::NoValue
+            ResourceName: SqlServerName
+            SQLDeploymentType:
+                - IsFailoverCluster
+                - FCI
+                - Standalone
+            FileSystemType: FSx ONTAP
   DomainAdminSecretName:
     Type: AWS::SecretsManager::Secret
     Properties:

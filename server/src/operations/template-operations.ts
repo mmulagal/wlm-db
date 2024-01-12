@@ -66,7 +66,8 @@ async function updateTemplateUrls(
     templateType: string,
     stackName: string,
     tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string
+    templatePath?: string,
+    templateParameters?: object
 ) {
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
@@ -105,7 +106,8 @@ async function updateTemplateUrls(
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
             Tags: tags?.length ? yamlStr : '',
-            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || '')
+            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || ''),
+            ...templateParameters
         });
         await putObjectBucket(region, BUCKET_NAME, templatePath!, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
@@ -219,7 +221,8 @@ async function uploadTemplates(
     resourceType: DatabaseTypes,
     stackName: string,
     tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string
+    templatePath?: string,
+    templateParameters?: object
 ) {
     logger.info('Uploading templates ', region, resourceType);
 
@@ -236,7 +239,8 @@ async function uploadTemplates(
                 MASTER_TEMPLATE_DISTRIBUTION.name,
                 stackName,
                 tags,
-                templatePath
+                templatePath,
+                templateParameters
             )
         );
     }
