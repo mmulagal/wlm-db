@@ -1,6 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
+    DeploymentJobsCountSchema,
     ListJobsSchema,
     JobDetailsSchema,
     DeleteJobSchema,
@@ -10,10 +11,21 @@ import {
 import { deleteJobsWithAllSubJobs, getJobDetails, getJobs, registerJobs, updateJobDetails } from '../operations/database/job-operations';
 import { JobRecordType } from './types/jobs.types';
 
+import { getDeploymentJobsCount } from '../operations/jobs-operations';
+
 const JOBS_API_PATH: string = '/v1/jobs';
 
 export default function jobsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
+    //TODO : DELETE ME
+    server.get(`${JOBS_API_PATH}/summary`, { schema: DeploymentJobsCountSchema }, async (request, reply) => {
+        const {
+            params: { accountId },
+            query: { duration }
+        } = request;
+        const response = await getDeploymentJobsCount(accountId, duration);
+        return reply.send(response);
+    });
 
     server.get(`${JOBS_API_PATH}`, { schema: ListJobsSchema }, async (request, reply) => {
         const {

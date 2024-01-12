@@ -1,6 +1,16 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
+//TODO : DELETE ME
+const DeploymentJobsCountQueryString = Type.Object({
+    duration: Type.Optional(Type.Number())
+});
+
+const DeploymentJobsCountResponse = Type.Object({
+    success: Type.Number(),
+    initializing: Type.Number(),
+    failed: Type.Number()
+});
 
 const ListJobsQueryString = Type.Object({
     parentJobId: Type.Optional(Type.String()),
@@ -128,5 +138,8 @@ export {
     CreateJobResponse,
     CreateJobObject,
     JobRecordType,
-    JobsParams
+    JobsParams,
+    //TODO : DELETE ME
+    DeploymentJobsCountQueryString,
+    DeploymentJobsCountResponse
 };

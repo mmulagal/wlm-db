@@ -8,7 +8,9 @@ import {
     CreateJobResponse,
     CreateJobRequestBody,
     UpdateJobRequestBody,
-    JobDetailsResponse
+    JobDetailsResponse,
+    DeploymentJobsCountQueryString,
+    DeploymentJobsCountResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -74,4 +76,16 @@ const CreateJobSchema = {
     }
 };
 
-export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, UpdateJobSchema, CreateJobSchema };
+// //TODO : DELETE ME Get Deployment jobs summary details
+const DeploymentJobsCountSchema = {
+    ...baseRequest,
+    summary: 'Get deployment jobs count',
+    description: 'API to get deployment jobs count for given duration in days',
+    querystring: DeploymentJobsCountQueryString,
+    response: {
+        200: DeploymentJobsCountResponse
+    }
+};
+
+
+export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, UpdateJobSchema, CreateJobSchema, DeploymentJobsCountSchema };
