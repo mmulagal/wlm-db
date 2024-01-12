@@ -330,9 +330,9 @@ export const databaseHomeApi = createApi({
             getDatabaseJobs: builder.query({
                 query: ({ nextToken = null }) => {
                     if (nextToken) {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
+                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
                     } else {
-                        return `jobs?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
+                        return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS`;
                     }
                 }
             }),
@@ -400,13 +400,13 @@ export const jobMonitoringApi = createApi({
             // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return ({data: JobMonitoringJobs});
-                },
+                    return { data: JobMonitoringJobs };
+                }
             }),
             getSubTaskList: builder.query({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return ({data: JobMonitoringSubTask});
-                },
+                    return { data: JobMonitoringSubTask };
+                }
             })
         };
     }
