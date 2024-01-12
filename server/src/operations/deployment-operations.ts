@@ -180,7 +180,7 @@ async function formatTemplateParameters(
 async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
     logger.info('Add parameters to template in cloud formation format');
     const parameters = {};
-    PARAMETERS.map(async parameter => {
+    PARAMETERS.forEach(parameter => {
         const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
             parameter;
         const paramValue = templateParameters.find(param => param.ParameterKey === name);
