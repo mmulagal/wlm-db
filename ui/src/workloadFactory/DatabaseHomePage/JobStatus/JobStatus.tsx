@@ -1,7 +1,8 @@
-import { Button, FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import styles from './JobStatus.module.scss';
 import JobDoughnutChart from './JobDoughnut/JobDoughnutChart';
+import { ReactComponent as JM_ARROW } from '../../../assets/ic_arrow_right_JM.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 
@@ -19,16 +20,17 @@ const JobStatus = () => {
                 {jobsSummaryLoading ? (
                     <FlashingDotsLoader />
                 ) : (
-                    <Typography variant="Regular_13" style={{ lineHeight: 'unset' }}>
-                        <Button
-                            variant="text"
-                            onClick={() => {
-                                navigate('../job-monitor');
-                            }}
-                        >
-                            {GENERAL.JOB_STATUS_DAYS}
-                        </Button>
-                    </Typography>
+                    <div
+                        className={styles.buttonContainer}
+                        onClick={() => {
+                            navigate('../job-monitor');
+                        }}
+                    >
+                        <Typography variant="Regular_14" style={{ lineHeight: 'unset' }} className={styles.buttonStyle}>
+                            {GENERAL.VIEW_JOB_MONITORING}
+                        </Typography>
+                        <JM_ARROW />
+                    </div>
                 )}
             </div>
 
@@ -40,6 +42,7 @@ const JobStatus = () => {
                 <div className={styles.rightSection}>
                     <div className={styles.rowData} style={{ marginTop: '0' }}>
                         <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
+                        <Typography variant="Regular_13">{GENERAL.JOB_STATUS_DAYS}</Typography>
                     </div>
 
                     <div className={styles.jobSeparator} />
