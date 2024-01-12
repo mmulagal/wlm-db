@@ -33,7 +33,8 @@ const CloudFormationTemplateSchema = {
 
 
 const DeploymentSummaryListSchema = {
-    ...baseRequest,
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
     summary: 'Get deployment jobs summary',
     description: 'API to get deployment jobs summary for given deployment status types',
     querystring: DeploymentSummaryQueryString,
