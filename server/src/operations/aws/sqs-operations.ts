@@ -39,6 +39,8 @@ import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments, getResources } from '../database/database-operations';
 import { tagEc2Resource } from './ec2-operations';
 import { tagFsxResource } from './fsx-operations';
+import { decryptString } from './kms-operations';
+import registerFsxOntapCredentials from '../../lib/cloud-manager/fsx-core';
 
 const logger = getLogger();
 
@@ -255,7 +257,7 @@ async function processCloudFormationMessages() {
                                                 if (
                                                     masterStackDeployment &&
                                                     masterStackDeployment.deployment_status !==
-                                                        DEPLOYMENT_STATUS.CREATE_COMPLETE
+                                                    DEPLOYMENT_STATUS.CREATE_COMPLETE
                                                 ) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
@@ -279,7 +281,9 @@ async function processCloudFormationMessages() {
                                                         DomainAdminSecretName: domainAdminSecret,
                                                         SQLServiceAccountSecret: sqlServiceAccountSecret,
                                                         ActiveDirectoryName: activeDirectoryName,
-                                                        ActiveDirectoryAddress: activeDirectoryAddress
+                                                        ActiveDirectoryAddress: activeDirectoryAddress,
+                                                        EncryptedFsxPassword: encryptedFsxPassword,
+                                                        //EncryptedFsxUsername: encryptedFsxUsername
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -297,6 +301,14 @@ async function processCloudFormationMessages() {
                                                             region
                                                         });
                                                     }
+
+                                                    if (encryptedFsxPassword) {
+                                                        const { credentials_id: deploymentCredentialId, region: deploymentRegion } = masterStackDeployment;
+                                                        const decryptedPassword = await decryptString(encryptedFsxPassword);
+                                                        if (decryptedPassword)
+                                                            await registerFsxOntapCredentials(accountId, deploymentCredentialId, deploymentRegion, fsxId, decryptedPassword);
+                                                    }
+                                                    
                                                     const resourceId = getMsSqlResourceId(
                                                         activeNodeInstanceId,
                                                         standbyNodeInstanceId
@@ -375,7 +387,7 @@ async function processCloudFormationMessages() {
                                             if (
                                                 masterStackDeployment &&
                                                 masterStackDeployment.deployment_status !==
-                                                    DEPLOYMENT_STATUS.CREATE_FAILED
+                                                DEPLOYMENT_STATUS.CREATE_FAILED
                                             ) {
                                                 await updateDeployment(accountId, masterStackDeployment.id, {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,

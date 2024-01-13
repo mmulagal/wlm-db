@@ -88,6 +88,8 @@ Metadata:
           - CloudProviderAccountId
           - RoleCredentialsId
           - JwtToken
+          - EncryptedFsxUsername
+          - EncryptedFsxPassword
     ParameterLabels:
       DeploymentMode:
         default: File system deployment mode
@@ -475,6 +477,16 @@ Parameters:
   
   JwtToken:
     Description: JWT Token to grant access to a resource (DO NOT EDIT)
+    Type: String
+    NoEcho: true
+  
+  EncryptedFsxUsername:
+    Description: Encrypted value of FSX username filled by user in the DB deployment wizard (DO NOT EDIT)
+    Type: String
+    NoEcho: true
+  
+  EncryptedFsxPassword:
+    Description: Encrypted value of FSX password filled by user in the DB deployment wizard (DO NOT EDIT)
     Type: String
     NoEcho: true
 
@@ -1100,7 +1112,6 @@ Resources:
       DomainAdminSecretName: !Sub ${AWS::StackName}-domain
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
-
       FSxFileSystemId:
           !If
             - NewOntapFsx
@@ -1150,3 +1161,5 @@ Resources:
       FileSystemType: 'FSx for ONTAP'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
+      EncryptedFsxUsername: !Ref 'EncryptedFsxUsername'
+      EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'

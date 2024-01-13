@@ -64,7 +64,9 @@ import {
     FCI_NETWORK_VIOLATION_MESSAGE,
     IAM_LINKEDROLE_CONDITION,
     IAM_EC2_SERVICE,
-    IAM_PASSROLE_CONDITION
+    IAM_PASSROLE_CONDITION,
+    TEMPLATE_FSX_USERNAME,
+    TEMPLATE_FSX_PASSWORD
 } from '../utils/consts';
 import {
     deployedStackUrl,
@@ -84,6 +86,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
+import { encryptString } from './aws/kms-operations';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -124,6 +127,13 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
+    if (fsxConfiguration.fsxPassword) {
+        const encryptedFsxUserName = await encryptString(fsxConfiguration.fsxUsername);
+        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+        templateParams.push({ ParameterKey: TEMPLATE_FSX_USERNAME, ParameterValue: encryptedFsxUserName },
+            { ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword }
+        )
+    }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
@@ -280,18 +290,16 @@ async function getCloudformationTemplate(
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
-        region ? `--region ${region}` : ''
-    }`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${region ? `--region ${region}` : ''
+        }`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
         urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
     });
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
-        region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
-    }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
+        }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
     return {
         url: signedTemplateURL,
@@ -453,7 +461,11 @@ async function createCloudFormationTemplateForUserDeployment(
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
-
+    if (fsxConfiguration.fsxPassword) {
+        const encryptedFsxUserName = await encryptString(fsxConfiguration.fsxUsername);
+        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+        templateParams += `&param_${TEMPLATE_FSX_USERNAME}=${encryptedFsxUserName}&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`
+    }
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
