@@ -610,13 +610,17 @@ async function deployCloudFormationTemplate(
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
+        customMasterTemplatePath,
+        templateParamsInCfFormat
     );
 
     const deployStackResponse = await createStack(
