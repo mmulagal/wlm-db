@@ -8,7 +8,9 @@ import {
     ListAliasesRequest,
     AliasListEntry,
     EncryptCommand,
-    DecryptCommand
+    DecryptCommand,
+    EncryptCommandInput,
+    DecryptCommandInput
 } from '@aws-sdk/client-kms';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
@@ -109,18 +111,14 @@ async function listKeys(
     return data;
 }
 
-async function encrypt(kmsKeyId: string, textToEncrypt: string) {
+async function encrypt(params: EncryptCommandInput) {
     const kms = await getKMS(DEFAULT_AWS_REGION);
-
-    const plaintext = Buffer.from(textToEncrypt);
-    return kms.send(new EncryptCommand({ KeyId: kmsKeyId, Plaintext: plaintext }));
+    return kms.send(new EncryptCommand(params));
 }
 
-async function decrypt(kmsKeyId: string, encryptedText: string) {
+async function decrypt(params: DecryptCommandInput) {
     const kms = await getKMS(DEFAULT_AWS_REGION);
-
-    const cipherText = Buffer.from(encryptedText);
-    return kms.send(new DecryptCommand({ KeyId: kmsKeyId, CiphertextBlob: cipherText }));
+    return kms.send(new DecryptCommand(params));
 
 }
 
