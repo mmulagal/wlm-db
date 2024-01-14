@@ -4,6 +4,7 @@ import styles from './OverviewTabs.module.scss';
 import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
+import { GENERAL } from '../../../utils/appConstants';
 
 const OverviewTabs = () => {
     const dispatch = useDispatch();
@@ -33,7 +34,7 @@ const OverviewTabs = () => {
                 }
                 onClick={() => handleClick('Overview')}
             >
-                Overview
+                {GENERAL.OVERVIEW}
             </Typography>
             <Typography
                 variant="Semibold_14"
@@ -42,7 +43,7 @@ const OverviewTabs = () => {
                 }
                 onClick={() => handleClick('Database list')}
             >
-                Database list
+                {GENERAL.DATABASES}
             </Typography>
         </div>
     );
