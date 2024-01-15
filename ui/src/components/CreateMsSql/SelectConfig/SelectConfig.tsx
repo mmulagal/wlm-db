@@ -21,7 +21,7 @@ const SelectConfig = () => {
             <div
                 id="easy-create"
                 className={
-                    selectedConfig === SELECT_CONFIG.EASY_CREATE
+                    selectedConfig === SELECT_CONFIG.EASY_CREATE || selectedConfig === 'Easy create'
                         ? `${styles['easy-create']} ${styles['add-border']}`
                         : styles['easy-create']
                 }
@@ -40,7 +40,7 @@ const SelectConfig = () => {
                     </div>
                 </div>
 
-                {selectedConfig === SELECT_CONFIG.EASY_CREATE && (
+                {(selectedConfig === SELECT_CONFIG.EASY_CREATE || selectedConfig === 'Easy create') && (
                     <div className={styles['tick-placement']}>
                         <BlueTick />
                     </div>
@@ -52,7 +52,7 @@ const SelectConfig = () => {
             {/* Standard create section here */}
             <div
                 className={
-                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE
+                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE || selectedConfig === 'Standard create'
                         ? `${styles['standard-create']} ${styles['add-border']}`
                         : styles['standard-create']
                 }
@@ -71,7 +71,7 @@ const SelectConfig = () => {
                     </div>
                 </div>
 
-                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
+                {(selectedConfig === SELECT_CONFIG.STANDARD_CREATE || selectedConfig === 'Standard create') && (
                     <div className={styles['tick-placement']}>
                         <BlueTick />
                     </div>
