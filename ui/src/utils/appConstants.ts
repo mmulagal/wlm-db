@@ -490,7 +490,8 @@ export const GENERAL = {
     JM_COMPLETED: 'Completed',
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
-    NO_DATA: 'No data'
+    NO_DATA: 'No data',
+    JM_RUNNING: 'Running'
 };
 
 export const CODE_VIEWER = {
