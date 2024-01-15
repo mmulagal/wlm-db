@@ -214,14 +214,6 @@ const AwsAccount = () => {
                                             </span>{' '}
                                             {GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
-                                        <Button
-                                            Component="button"
-                                            variant="link"
-                                            onClick={openCredentialTab}
-                                            className={CommonStyles.buttonClass}
-                                        >
-                                            {GENERAL.HOW_TO_ADD_AWS_CRED}
-                                        </Button>
                                     </div>
                                 </div>
                                 <div className={styles.noaccount_options}>
@@ -266,7 +258,7 @@ const AwsAccount = () => {
                                                 onClick={() => openDialog('view')}
                                                 className={CommonStyles.buttonClass}
                                             >
-                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS2}
                                             </Button>
                                         </span>
                                     </Typography>
