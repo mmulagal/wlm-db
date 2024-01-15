@@ -52,6 +52,7 @@ import {
 import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
+import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 const _ = require('lodash');
 
 type optionsType = {
@@ -76,9 +77,7 @@ const Chatbot = () => {
     );
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
-    //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
     const [isBotReplying, setIsBotReplying] = useState(false);
-    //const [currentIntent, setCurrentIntent] = useState<any>('');
     const [isPayloadReady, setIsPayloadReady] = useState(false);
     const [payloadContent, setPayloadContent] = useState<any>('');
     const [activeField, setActiveField] = useState<any>('');
@@ -581,11 +580,6 @@ const Chatbot = () => {
         setIsBotReplying(true);
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
-        // handleSendMsg(
-        //     `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`,
-        //     false,
-        //     messages
-        // );
         sendMsgToBot({
             payload: {
                 prompt: wrapContext(
@@ -645,48 +639,6 @@ const Chatbot = () => {
             dispatch(setPanelType(''));
         };
     };
-
-    useEffect(() => {
-        setIsBotReplying(true);
-        setTimeout(() => {
-            dispatch(
-                setMessages([
-                    ...messages,
-                    {
-                        sender: 'bot',
-                        type: 'confirm',
-                        active: true,
-                        msg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
-                        confirmData: {
-                            confirmMsg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
-                            confirmBtnTxt: 'Continue',
-                            cancelBtnTxt: 'Discard',
-                            onConfirm: async () => {
-                                dispatch(
-                                    setMessages([
-                                        {
-                                            sender: 'bot',
-                                            msg: 'Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?'
-                                        },
-                                        {
-                                            sender: 'user',
-                                            msg: 'Continue'
-                                        }
-                                    ])
-                                );
-                                setContext();
-                            },
-                            onCancel: () => {
-                                dispatch(setMessages([]));
-                                dispatch(setMssqlForm(initialMssqlState));
-                            }
-                        }
-                    }
-                ])
-            );
-            setIsBotReplying(false);
-        }, 5000);
-    }, []);
 
     useEffect(() => {
         dispatch(
@@ -815,47 +767,49 @@ const Chatbot = () => {
                     }
                 }
             ];
-        } else if (
-            lastMsg &&
-            lastMsg.sender === 'bot' &&
-            !lastMsg.intent &&
-            currentIntent &&
-            currentIntent.type === 'DeployMsSql' &&
-            lastMsg.type !== 'confirm'
-        ) {
-            const existingMessages = updatedMsgs ? updatedMsgs : [];
-            return [
-                ...existingMessages,
-                {
-                    sender: 'bot',
-                    type: 'confirm',
-                    active: true,
-                    msg: 'Deployment of MS SQL is in progress. Do you want to continue?',
-                    confirmData: {
-                        confirmMsg: 'Deployment of MS SQL is in progress. Do you want to continue?',
-                        confirmBtnTxt: 'Continue',
-                        cancelBtnTxt: 'Discard',
-                        onConfirm: (messages: messageType[]) => {
-                            const botMsgs = messages.filter(item => item.sender === 'bot');
-                            const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
-                            const updatedMsgs = [...messages];
-                            dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
-                        },
-                        onCancel: () => {
-                            dispatch(setCurrentIntent(''));
-                        }
-                    }
-                }
-            ];
-        } else {
+        }
+        //  else if (
+        //     lastMsg &&
+        //     lastMsg.sender === 'bot' &&
+        //     !lastMsg.intent &&
+        //     currentIntent &&
+        //     currentIntent.type === 'DeployMsSql' &&
+        //     lastMsg.type !== 'confirm'
+        // ) {
+        //     const existingMessages = updatedMsgs ? updatedMsgs : [];
+        //     return [
+        //         ...existingMessages,
+        //         {
+        //             sender: 'bot',
+        //             type: 'confirm',
+        //             active: true,
+        //             msg: 'Deployment of MS SQL is in progress. Do you want to continue?',
+        //             confirmData: {
+        //                 confirmMsg: 'Deployment of MS SQL is in progress. Do you want to continue?',
+        //                 confirmBtnTxt: 'Continue',
+        //                 cancelBtnTxt: 'Discard',
+        //                 onConfirm: (messages: messageType[]) => {
+        //                     const botMsgs = messages.filter(item => item.sender === 'bot');
+        //                     const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
+        //                     const updatedMsgs = [...messages];
+        //                     dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
+        //                 },
+        //                 onCancel: () => {
+        //                     dispatch(setCurrentIntent(''));
+        //                 }
+        //             }
+        //         }
+        //     ];
+        // }
+        else {
             return updatedMsgs;
         }
     }, [messages, currentIntent, showRetry]);
 
     return (
         <div className={styles['chatbot']}>
-            {/* <Header /> */}
             <div className={styles['page-content']}>
+                <ChatbotHeader />
                 <ChatBox
                     isBotReplying={isBotReplying || isReceivingMsg}
                     handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
@@ -863,6 +817,7 @@ const Chatbot = () => {
                     messagesToShow={messagesToShow ? messagesToShow : []}
                     messages={messages ? messages : []}
                     activeField={activeField}
+                    setContext={setContext}
                 />
             </div>
         </div>
