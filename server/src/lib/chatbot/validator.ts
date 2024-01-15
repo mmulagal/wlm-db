@@ -405,7 +405,7 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
     };
 }
 
-async function validateAdScenarioType(type: string, key: string) {
+function validateAdScenarioType(type: string, key: string) {
     if (type === 'AWS_MANAGED_AD' || type === 'USER_MANAGED_AD') {
         return {
             key,
@@ -419,8 +419,8 @@ async function validateAdScenarioType(type: string, key: string) {
         message:
             'The active directory type that you provided is not correct. Please provide a valid active directory type',
         allowedValues: [
-            { label: 'AWS_MANAGED_AD', value: 'AWS_MANAGED_AD' },
-            { label: 'USER_MANAGED_AD', value: 'USER_MANAGED_AD' }
+            { label: 'Select an existing domain', value: AWS_MANAGED_AD },
+            { label: 'Add new domain', value: USER_MANAGED_AD }
         ]
     };
 }

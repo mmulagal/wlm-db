@@ -2,6 +2,8 @@ import { Type, Static } from '@fastify/type-provider-typebox';
 
 const PromptRequestBodySchema = Type.Object({
     prompt: Type.String(),
+    intent: Type.Optional(Type.String()),
+    promptType: Type.Optional(Type.Union([Type.Literal('query'), Type.Literal('response')])),
     params: Type.Optional(Type.Any())
 });
 
