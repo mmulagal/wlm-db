@@ -494,6 +494,8 @@ export const GENERAL = {
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
     NO_DATA: 'No data',
+    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     JM_RUNNING: 'Running'
 };
 
