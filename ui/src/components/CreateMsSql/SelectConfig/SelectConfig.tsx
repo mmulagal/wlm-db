@@ -33,7 +33,7 @@ const SelectConfig = () => {
                 <div className={styles.level}>
                     <EasyCreate />
                     <div className={styles['easy-create-content']}>
-                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
+                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.QUICK_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
                             {SELECT_CONFIG.EASY_CREATE_CONTENT}
                         </Typography>
@@ -64,7 +64,7 @@ const SelectConfig = () => {
                 <div className={styles.level}>
                     <StandardCreate />
                     <div className={styles['standard-create-content']}>
-                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
+                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.ADVANCED_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['standard-create-content-text']}>
                             {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
                         </Typography>

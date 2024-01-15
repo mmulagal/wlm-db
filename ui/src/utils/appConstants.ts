@@ -1,6 +1,8 @@
 export const SELECT_CONFIG = {
-    STANDARD_CREATE: `Advanced create`,
-    EASY_CREATE: `Quick create`,
+    STANDARD_CREATE: `Standard create`,
+    EASY_CREATE: `Easy create`,
+    ADVANCED_CREATE: 'Advanced create',
+    QUICK_CREATE: 'Quick create',
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
         'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
