@@ -27,6 +27,11 @@
                 }
             }
         }
+
+        [class*='Table-module_table-wrapper'] {
+            position: relative;
+            z-index: 1;
+        }
     }
 
     .secondLevel {
