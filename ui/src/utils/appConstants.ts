@@ -555,3 +555,11 @@ export const CHATBOT_FIELD_MAPPING: any = {
     fsxType: 'fsx type',
     fsxFileSystemId: 'fsx file system id'
 };
+
+export const CHATBOT = {
+    WELCOME_PAGE: {
+        DB_WORKLOAD_EXPERT: 'Database Workload expert',
+        WELCOME_MSG:
+            "Hello! I'm your virtual assistant for database lifecycle management. Use it learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation."
+    }
+};

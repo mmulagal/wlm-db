@@ -14,7 +14,7 @@ import {
 import { SELECT_CONFIG } from '../../../utils/appConstants';
 import { API_NAME, FROM_DIALOG } from '../../../utils/consts';
 import { navigateToCanvas } from '../../../utils/appConfig';
-import { setLoadConfigClicked } from '../../../store/chatbot/chatbotSlice';
+import { setIsWizardTouched, setLoadConfigClicked } from '../../../store/chatbot/chatbotSlice';
 
 /*
 This function is used to load config data on click on config load. 
@@ -41,6 +41,7 @@ export const LoadConfiguration = (
                     dispatch(setRefetchApiCountLoading(true));
                 }
                 dispatch(setMssqlForm(data?.data?.data));
+                dispatch(setIsWizardTouched(true));
                 dispatch(setLoadConfigClicked(true));
             } else {
                 dispatch(setIsLoadConfig(false));

@@ -197,12 +197,19 @@ export const COSTING_TYPES = {
 };
 
 export const AWS_CLI_HIGHLIGHT_STRINGS = [
-    "ParameterKey=",
-    "ParameterValue=",
-    "--stack-name",
-    "--template-url",
-    "--region",
-    "--parameters"
+    'ParameterKey=',
+    'ParameterValue=',
+    '--stack-name',
+    '--template-url',
+    '--region',
+    '--parameters'
 ];
 
 export const CREATE_DATABASE_YAML = 'Create_Database';
+
+export const CHATBOT_WELCOME_CARDS = [
+    'Help me Deploy MsSql on FSx For NetApp.',
+    'What are the key features of Amazon FSx for NetApp ONTAP for databases?',
+    'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?',
+    'What is the FSx for ONTAP best practice for Microsoft SQL server?'
+];

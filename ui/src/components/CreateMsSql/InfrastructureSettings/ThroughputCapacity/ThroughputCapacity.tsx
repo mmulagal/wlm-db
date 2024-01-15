@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setThroughputValue } from '../../../../store/mssql/mssqlFormSlice';
 import { selectFsxThroughput } from '../../MSSqlServer/MSSqlUtils';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const ThroughputCapacity = () => {
     const dispatch = useDispatch();
@@ -84,6 +85,7 @@ const ThroughputCapacity = () => {
                                 defaultValue={selectedThroughput ? selectedThroughput : [generateThroughputUnits[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setThroughputValue(selectedOptions));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={false}
                                 options={generateThroughputUnits}

@@ -1,0 +1,21 @@
+.bubbles-container {
+    width: 100%;
+    display: inline-block;
+    margin: -50px 0 0 100px;
+
+    .bubble-item {
+        float: left;
+        border: 1px solid var(--blue-80);
+        border-radius: 10px;
+        color: var(--blue-80);
+        width: fit-content;
+        padding: 10px;
+        margin: 10px;
+        transition: 0.3s;
+    }
+
+    .bubble-item:hover {
+        cursor: pointer;
+        background-color: var(--blue-10);
+    }
+}

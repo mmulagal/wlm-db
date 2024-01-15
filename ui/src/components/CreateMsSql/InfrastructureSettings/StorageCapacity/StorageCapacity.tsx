@@ -9,6 +9,7 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssqlFormSlice';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const StorageCapacity = () => {
     const dispatch = useDispatch();
@@ -30,9 +31,9 @@ const StorageCapacity = () => {
     }, []);
 
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig) {
             dispatch(setStorageUnit(generateUnitsForStorage[1]));
-            if(!inputCapacity){
+            if (!inputCapacity) {
                 dispatch(setStorageCapacity('1024'));
             }
         }
@@ -58,12 +59,15 @@ const StorageCapacity = () => {
         if (e.target.value === '' || re.test(e.target.value)) {
             // setInput(e.target.value);
             dispatch(setStorageCapacity(e.target.value));
+            dispatch(setIsWizardTouched(true));
         }
     };
 
     const checkError = () => {
-        if ((selectedUnit?.label === 'TiB' && (Number(inputCapacity) > 130 || Number(inputCapacity) < 1)) || 
-        (selectedUnit?.label === 'GiB' && (Number(inputCapacity) > 133120 || Number(inputCapacity) < 120))) {
+        if (
+            (selectedUnit?.label === 'TiB' && (Number(inputCapacity) > 130 || Number(inputCapacity) < 1)) ||
+            (selectedUnit?.label === 'GiB' && (Number(inputCapacity) > 133120 || Number(inputCapacity) < 120))
+        ) {
             return GENERAL.ERROR_CAPACITY;
         }
     };
@@ -102,6 +106,7 @@ const StorageCapacity = () => {
                                 defaultValue={selectedUnit ? [selectedUnit] : [generateUnitsForStorage[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setStorageUnit(selectedOptions));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateUnitsForStorage.length > 5}
                                 options={generateUnitsForStorage}
