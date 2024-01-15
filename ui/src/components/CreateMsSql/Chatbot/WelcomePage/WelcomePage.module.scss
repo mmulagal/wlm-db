@@ -36,8 +36,8 @@
                 width: 394px;
                 height: 72px;
                 padding: 12px 16px 12px 16px;
-                border: 1px solid var(--grey-25);
-                box-shadow: 2px 2px 6px 0px var(--grey-15);
+                border: 1px solid var(--toggle-off-bg);
+                box-shadow: 2px 2px 6px 0px var(--drop-shadow);
                 transition: 0.3s;
 
                 .chatbot-card-text {
@@ -47,8 +47,8 @@
 
             .card:hover {
                 cursor: pointer;
-                border: 2px solid var(--blue-70);
-                background: var(--blue-10);
+                border: 2px solid var(--button-primary-bg);
+                background: var(--hover-background);
             }
         }
     }

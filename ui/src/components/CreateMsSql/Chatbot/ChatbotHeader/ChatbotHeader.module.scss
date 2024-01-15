@@ -1,7 +1,7 @@
 .chatbot-header {
     height: 60px;
     width: 100%;
-    box-shadow: 0px -1px 0px 0px var(--grey-15) inset;
+    box-shadow: 0px -1px 0px 0px var(--drop-shadow) inset;
     background-color: var(--content-background);
     display: flex;
     flex-direction: row;
@@ -13,7 +13,6 @@
         height: 24px;
         padding: 2px 12px 2px 12px;
         border-radius: 24px;
-        background-color: var(--purple-01);
-        color: var(--purle-25);
+        background-color: var(--tag-2-bg);
     }
 }

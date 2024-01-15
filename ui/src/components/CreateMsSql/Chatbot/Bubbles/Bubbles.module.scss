@@ -5,9 +5,9 @@
 
     .bubble-item {
         float: left;
-        border: 1px solid var(--blue-80);
+        border: 1px solid var(--text-button-primary-hover);
         border-radius: 10px;
-        color: var(--blue-80);
+        color: var(--text-button-primary-hover);
         width: fit-content;
         padding: 10px;
         margin: 10px;
@@ -16,6 +16,6 @@
 
     .bubble-item:hover {
         cursor: pointer;
-        background-color: var(--blue-10);
+        background-color: var(--hover-background);
     }
 }

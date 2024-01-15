@@ -9,6 +9,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
 import Bubbles from '../Bubbles/Bubbles';
+import { CHATBOT_SUGGESTION_BUBBLES } from '../../../../utils/consts';
 
 type optionsType = {
     value?: string | number;
@@ -69,10 +70,7 @@ const ChatBox = ({
         if ((currentIntent?.type || isWizardTouched) && !messagesToShow.length) {
             dispatch(
                 setSuggestionBubbles({
-                    list: [
-                        { label: 'Resume current MSSQL Deployment', value: 'resume' },
-                        { label: 'Start new MSSQL Deployment', value: 'start' }
-                    ],
+                    list: CHATBOT_SUGGESTION_BUBBLES,
                     onBubbleClick: (label: string, value: string) => {
                         if (value === 'resume') {
                             setContext();

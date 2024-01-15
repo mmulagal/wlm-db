@@ -213,3 +213,8 @@ export const CHATBOT_WELCOME_CARDS = [
     'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?',
     'What is the FSx for ONTAP best practice for Microsoft SQL server?'
 ];
+
+export const CHATBOT_SUGGESTION_BUBBLES = [
+    { label: 'Resume current MSSQL Deployment', value: 'resume' },
+    { label: 'Start new MSSQL Deployment', value: 'start' }
+];
