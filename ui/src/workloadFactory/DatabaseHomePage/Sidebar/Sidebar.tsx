@@ -606,7 +606,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                         {CODE_VIEWER.CODEBOX}
                     </Typography>
                 </div>
-                <div className={styles.rightSection}>
+                <div className={styles.rightSection} id={isOpen ? 'codebox-collapse' : 'codebox-expand'}>
                     {!isOpen && <ArrowRight />}
                     <Typography variant="Regular_16" className={styles.colorExpandCollapse} onClick={handleClose}>
                         {!isOpen ? CODE_VIEWER.EXPAND : CODE_VIEWER.COLLAPSE}

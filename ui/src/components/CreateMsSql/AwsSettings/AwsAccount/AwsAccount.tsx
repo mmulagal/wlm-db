@@ -25,6 +25,7 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
 import { PERMISSIONS } from '../../../../utils/permissions';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();
@@ -55,7 +56,7 @@ const AwsAccount = () => {
             accordionContext({
                 1: true
             });
-        } 
+        }
     }, [credentialData]);
 
     useEffect(() => {
@@ -92,7 +93,9 @@ const AwsAccount = () => {
         const fsxPasswordValPass = !fsxPassVal(fsxCredPassword) ? true : false;
         if (
             isCreatePresed &&
-            (noAccount || permissionWarning || !isVPCNotFilled ||
+            (noAccount ||
+                permissionWarning ||
+                !isVPCNotFilled ||
                 !isAZNotFilled ||
                 !isDBCredPassword ||
                 !dbPasswordValPass ||
@@ -173,13 +176,13 @@ const AwsAccount = () => {
         const data = JSON.stringify(type === 'view' ? PERMISSIONS.view : PERMISSIONS.operate, null, 2);
         setDialog(
             <DialogComponent
-                header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS: GENERAL.REQUIRED_OPERATE_PERMISSIONS}
+                header={type === 'view' ? GENERAL.REQUIRED_VIEW_PERMISSIONS : GENERAL.REQUIRED_OPERATE_PERMISSIONS}
                 content={<ViewDialog data={data} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
         );
-    }
+    };
 
     return (
         <div className={styles['aws-account']}>
@@ -195,60 +198,67 @@ const AwsAccount = () => {
                             <div className={styles['noaccount']}>
                                 <div className={styles['default-sub-text']}>{GENERAL.DEFAULT_AWS_ACCOUNT_SUB_TEXT}</div>
                                 <div className={styles.noaccount_options}>
-                                    <Typography variant="Semibold_14">
-                                        {GENERAL.STEP_ONE}
-                                    </Typography>
+                                    <Typography variant="Semibold_14">{GENERAL.STEP_ONE}</Typography>
                                     <div>
                                         <Typography variant="Regular_14">
                                             {GENERAL.NAVIGATE_TO[0]}{' '}
                                             <span>
-                                                <Button Component="button" onClick={openCredentialTab} variant="text" ref={noCredRef}>
+                                                <Button
+                                                    Component="button"
+                                                    onClick={openCredentialTab}
+                                                    variant="text"
+                                                    ref={noCredRef}
+                                                >
                                                     {GENERAL.CREDENTIALS}
                                                 </Button>
-                                            </span>
-                                            {' '}{GENERAL.NAVIGATE_TO[1]}
+                                            </span>{' '}
+                                            {GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
-                                    </div>  
+                                    </div>
                                 </div>
                                 <div className={styles.noaccount_options}>
-                                    <Typography variant="Semibold_14">
-                                        {GENERAL.STEP_TWO}
-                                    </Typography>
+                                    <Typography variant="Semibold_14">{GENERAL.STEP_TWO}</Typography>
                                     <div>
-                                        <Typography variant="Regular_14">
-                                            {GENERAL.STEP_TWO_TEXT[0]}
-                                        </Typography>
-                                        <Typography variant="Regular_14">
-                                            {GENERAL.STEP_TWO_TEXT[1]}
-                                        </Typography>
-                                        <Button Component="button" onClick={() => openDialog('operate')} variant="text" className={CommonStyles.buttonClass}>
+                                        <Typography variant="Regular_14">{GENERAL.STEP_TWO_TEXT[0]}</Typography>
+                                        <Typography variant="Regular_14">{GENERAL.STEP_TWO_TEXT[1]}</Typography>
+                                        <Button
+                                            Component="button"
+                                            onClick={() => openDialog('operate')}
+                                            variant="text"
+                                            className={CommonStyles.buttonClass}
+                                        >
                                             {GENERAL.STEP_TWO_TEXT[2]}
                                         </Button>
                                     </div>
                                 </div>
-                                {noAccount && isCreateHit !== 0 && 
+                                {noAccount && isCreateHit !== 0 && (
                                     <div className={styles.options}>
-                                        <ErrorIcon className={styles.icon}/>
+                                        <ErrorIcon className={styles.icon} />
                                         <div className={styles.noaccount_options}>
-                                            <Typography variant="Semibold_14">
-                                                {GENERAL.ERROR}
-                                            </Typography>
+                                            <Typography variant="Semibold_14">{GENERAL.ERROR}</Typography>
                                             <Typography variant="Regular_14" className={styles.noteText}>
                                                 {GENERAL.NO_CRED}
                                             </Typography>
                                         </div>
                                     </div>
-                                }
+                                )}
                             </div>
                         ) : (
                             <div className={styles['aws-account-content']}>
                                 <div className={styles.listItem}>
                                     <Bullet />
                                     <Typography variant="Regular_14" className={styles.buttonStyle}>
-                                        {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_READ : GENERAL.AWS_ACCOUNT_SUB_TEXT_READ}{' '}
+                                        {isWorkloadFactoryStatus
+                                            ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_READ
+                                            : GENERAL.AWS_ACCOUNT_SUB_TEXT_READ}{' '}
                                         <span>
-                                            <Button Component="button" variant="text" onClick={() => openDialog('view')} className={CommonStyles.buttonClass}>
-                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
+                                            <Button
+                                                Component="button"
+                                                variant="text"
+                                                onClick={() => openDialog('view')}
+                                                className={CommonStyles.buttonClass}
+                                            >
+                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS2}
                                             </Button>
                                         </span>
                                     </Typography>
@@ -256,14 +266,21 @@ const AwsAccount = () => {
                                 <div className={styles.listItem}>
                                     <Bullet />
                                     <Typography variant="Regular_14" className={styles.buttonStyle}>
-                                        {isWorkloadFactoryStatus ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE : GENERAL.AWS_ACCOUNT_SUB_TEXT_AUTOMATE}{' '}
+                                        {isWorkloadFactoryStatus
+                                            ? GENERAL.AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE
+                                            : GENERAL.AWS_ACCOUNT_SUB_TEXT_AUTOMATE}{' '}
                                         <span>
-                                            <Button Component="button" variant="text" onClick={() => openDialog('operate')} className={CommonStyles.buttonClass}>
-                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS2}
+                                            <Button
+                                                Component="button"
+                                                variant="text"
+                                                onClick={() => openDialog('operate')}
+                                                className={CommonStyles.buttonClass}
+                                            >
+                                                {GENERAL.REQUIRED_PERMISSION_LINK_ACCOUNTS}
                                             </Button>
                                         </span>
                                     </Typography>
-                                </div>         
+                                </div>
                                 <div className={styles.selectField}>
                                     <SelectField
                                         ref={perWarningRef}
@@ -273,6 +290,7 @@ const AwsAccount = () => {
                                             selectedCredential ? [selectedCredential] : [generateAWSAccounts[0]]
                                         }
                                         onChange={(selectedOptions: any): void => {
+                                            dispatch(setIsWizardTouched(true));
                                             dispatch(setSelectedCredentials(selectedOptions));
                                         }}
                                         isSearchable={generateAWSAccounts.length > 5}
@@ -285,23 +303,24 @@ const AwsAccount = () => {
                                         {GENERAL.CREDENTIALS}.
                                     </Button>
                                 </div>
-                                {permissionWarning && isCreateHit !== 0 && 
+                                {permissionWarning && isCreateHit !== 0 && (
                                     <div className={styles.permissionError}>
-                                        <ErrorIcon className={styles.icon}/>
+                                        <ErrorIcon className={styles.icon} />
                                         <div className={styles.noaccount_options}>
-                                            <Typography variant="Semibold_14">
-                                                {GENERAL.ERROR}
-                                            </Typography>
+                                            <Typography variant="Semibold_14">{GENERAL.ERROR}</Typography>
                                             <Typography variant="Regular_14" className={styles.noteText}>
                                                 {GENERAL.CREATE_PERMISSION_ERROR}
-                                                <Button Component="button" variant="text" onClick={() => openDialog('operate')}>
+                                                <Button
+                                                    Component="button"
+                                                    variant="text"
+                                                    onClick={() => openDialog('operate')}
+                                                >
                                                     {GENERAL.REQUIRED_PERMISSIONS}
                                                 </Button>
                                             </Typography>
                                         </div>
                                     </div>
-                                }
-                                
+                                )}
                             </div>
                         )}
                     </Typography>
