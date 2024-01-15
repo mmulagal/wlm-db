@@ -16,7 +16,7 @@ const JobDistribution = () => {
         >
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
-                    Job Distributions
+                    {GENERAL.JOB_DISTRIBUTION}
                 </Typography>
             </div>
 
