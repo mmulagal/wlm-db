@@ -24,7 +24,7 @@ Metadata:
           - NodeNetBIOSNames
           - KeyPairName
           - ValidationAmi
-          - Ec2RoleName
+          - CfDeployRoleName
       - Label:
           default: Microsoft Active Directory Configuration
         Parameters:
@@ -93,10 +93,10 @@ Metadata:
         default: File system deployment mode
       ApplicationName:
         default: Application Name
-      Ec2RoleName:
-        default: ""
+      CfDeployRoleName:
+        default: Cloud formation deployment role name
       UniqueID:
-        default: Unique ID for BlueXP WLM SQL resource group
+        default: Unique ID for WLMDB SQL resource group
       ADScenarioType:
         default: AD Scenario Type
       DNSIpAddresses:
@@ -112,9 +112,9 @@ Metadata:
       KeyPairName:
         default: Key Pair Name
       AssetsBucketName:
-        default: Launch Wizard S3 Bucket Name
+        default: WLMDB S3 Bucket Name
       AssetsS3KeyPrefix:
-        default: Launch Wizard S3 Key Prefix
+        default: WLMDB S3 Key Prefix
       SQLAMIID:
         default: SQL Server Version
       SQLServiceAccountName:
@@ -160,328 +160,123 @@ Metadata:
       SQLDeploymentMode:
         default: SQL server deployment mode
 Parameters: 
-  DeploymentMode:
-        Description: File system deployment mode
-        Type: String
-        Default: MULTI_AZ_1
-        AllowedValues: [SINGLE_AZ_1, MULTI_AZ_1]
-  
-  SQLDeploymentMode:
-        Description: SQL server deployment mode
-        Type: String
-        Default: fci
-        AllowedValues: [fci, standalone]
-
-  Ec2RoleName:
-    Description: EC2 instance role name
-    Type: String
-
   UniqueID:
     Description: Automation Execution Unique ID.
-    Type: String
+    Type: String 
 
-  ADScenarioType:
-    AllowedValues:
-      - AWS_MANAGED_AD
-      - USER_MANAGED_AD
-    Description:
-      "Select the type of AD DS deployment to use: AWS Directory Service
-      for Microsoft AD or managing your own Amazon EC2 AD instances."
-    Type: String
-
-  DNSIpAddresses:
-    Description: Fixed private IPs for the Active Directory servers
-    Type: String
-    MinLength: 1
-
-  DomainAdminUser:
-    AllowedPattern: "([a-zA-Z0-9]+(\\.|_|-|@)*)+"
-    Description:
-      'User name for the account that will be added as Domain Administrator.
-      This is separate from the default "Administrator" account. Note: This user will
-      always default to "Admin" when using AWS Directory Service regardless of the
-      value provided.'
-    MaxLength: "20"
-    MinLength: "5"
-    Type: String
-
-  DomainAdminPassword:
-    Description: Password for Domain Adminstrator.
-    Type: String
-    NoEcho: true
-    MinLength: 8
-
-  DomainDNSName:
-    AllowedPattern: "[a-zA-Z0-9\\-]+\\..+"
-    Description:
-      Fully qualified domain name (FQDN) of the forest root domain e.g.
-      example.com
-    MaxLength: "255"
-    MinLength: "2"
-    Type: String
-
-  DomainMemberSGID:
-    Description: Security group ID of the members group for existing AD
-    Type: String
-
-  KeyPairName:
-    Description:
-      Public/private key pairs allow you to securely connect to your instance
-      after it launches
-    Type: AWS::EC2::KeyPair::KeyName
-
-  AssetsBucketName:
-    Description:
-      S3 bucket name for WLMDB assets. 
-    Type: String
-    Default: staging.wlmdb.workloads.netapp.com
-
-  AssetsS3RegionCode:
-    Description: S3 region code.
-    Type: String
-    Default: s3.us-east-1
-
-  AssetsS3KeyPrefix:
-    Description:
-      S3 key prefix for the Launch Wizard assets. Launch Wizard key prefix
-      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
-    Type: String
-    Default: templates
-
-
-  MSSQLMediaBucketName:
-    Default: LaunchWizard-sqlha
-    Description:
-      S3 bucket name for the Launch Wizard assets. Launch Wizard bucket
-      name can include numbers, lowercase letters, uppercase letters, and hyphens
-      (-). It cannot start or end with a hyphen (-).
-    Type: String
-
-  MSSQLMediaPathKey:
-    Description:
-      S3 key prefix for the media for SQL Server for FCI. Launch Wizard
-      key prefix can include numbers, lowercase letters, uppercase letters, hyphens
-      (-), and forward slash (/).
-    Type: String
-    Default: launchwizardscripts/sqlmedia/sqlserver.iso
-
-  SQLAMIID:
-    Description: Version of SQL Windows AMI ID
-    Type: String
-    MinLength: 1
-
-  SQLServiceAccountName:
-    AllowedPattern: "([a-zA-Z0-9]+(\\.|_|-|@)*)+"
-    Description:
-      User name for the SQL Server Service Account. This Account is a Domain
-      User.
-    MaxLength: "20"
-    MinLength: "5"
-    Type: String
+  {{DeploymentMode}}
   
-  SQLServiceAccountPassword:
-    Description: Password for the SQL Server Service Account.
-    Type: String
-    NoEcho: true
-    MinLength: 8
+  {{SQLDeploymentMode}}
+        
+  {{CfDeployRoleName}}
 
-  SQLigroupname:
-    Description: SQL igroupname
-    Type: String
-    MinLength: 1
+  {{ADScenarioType}}
 
-  SqlServerName:
-    Description: SQL Server Name
-    Type: String
-    MinLength: 1
+  {{DNSIpAddresses}}
 
-  SqlFSxWSFCName:
-    AllowedPattern: "[a-zA-Z0-9\\-]+"
-    Description:  Windows Server Failover Cluster name
-    MaxLength: "15"
-    MinLength: "4"
-    Type: String
-    Default: WSFCluster1
+  {{DomainAdminUser}}
 
-  VPCCIDR:
-    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
-    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-    Default: 10.0.0.0/16
-    Description: CIDR Block for the VPC
-    Type: String
+  {{DomainAdminPassword}}
 
-  PrivateSubnet1ID:
-    Description: ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)
-    Type: String
-    MinLength: 1
+  {{DomainDNSName}}
 
-  PrivateSubnet2ID:
-    Description: ID of private subnet 2 in Availability Zone 2 for the Workload (e.g., subnet-a0246dcd)
-    Type: String
+  {{DomainMemberSGID}}
 
-  RouteTable1Id:
-    Description: Comma seperated list of all route table ids' for SQL subnets.
-    Type: String
-    MinLength: 1
+  {{KeyPairName}}
+
+  {{AssetsBucketName}}
+
+  {{AssetsS3RegionCode}}
+
+  {{AssetsS3KeyPrefix}}
+
+  {{MSSQLMediaBucketName}}
+
+  {{MSSQLMediaPathKey}}
+
+  {{SQLAMIID}}
+
+  {{SQLServiceAccountName}}
   
-  RouteTable2Id:
-    Description: Comma seperated list of all route table ids' for SQL subnets.
-    Type: String
-  
-  SQLSvmName:
-    Description: SQL Storage Machine Virtual Name
-    Type: String
-    MinLength: 1
+  {{SQLServiceAccountPassword}}
 
-  WorkloadInstanceType:
-    Description: Amazon EC2 instance type for the WSFC Nodes
-    Type: String
-    MinLength: 1
+  {{SQLigroupname}}
 
-  NodeNetBIOSNames:
-    Type: String
-    Description: NetBIOS name of Nodes (each one up to 15 characters)
-    MinLength: 1
-  
-  FSxStorageCapacity:
-    Description: Storage capacity of the file system. Minimum 1024 GiB, maximum 192 TiB.
-    Type: Number
-    MinValue: 1024
-    MaxValue: 196608
-  
-  FSxDataVolumeSize:
-    Description: Size of the data volume, in megabytes (MiB).
-    Type: Number
+  {{SqlServerName}}
 
-  FSxDataVolumeName:
-    Description: FSx data volume name
-    Type: String
-    MinLength: 1
-  
-  FSxLogVolumeName:
-    Description: FSx log volume name
-    Type: String
-    MinLength: 1
-  
-  FSxLogVolumeSize:
-    Description: Size of the log volume, in megabytes (MiB).
-    Type: Number
-  
-  FSxTempDbVolumeName:
-    Description: FSx TempDB volume name
-    Type: String
-    MinLength: 1
-  
-  FSxTempDbVolumeSize:
-    Description: FSx TempDB volume size, in megabytes (MiB)
-    Type: Number
-  
-  FSxQuorumVolumeName:
-    Description: FSx quorum volume name
-    Type: String
-    Default: wlmdb-quorum
-  
-  FSxQuorumVolumeSize:
-    Description: Size of the cluster quorum volume, in megabytes (MiB).
-    Type: Number
-    Default: 100
+  {{SqlFSxWSFCName}}
 
-  FSxDataLunSize:
-    Description: Size of the SQL data lun, in megabytes (MiB)
-    Type: Number
+  {{VPCCIDR}}
 
-  FSxAdminUsername:
-    Description: FSxN username
-    Type: String
-    MinLength: 1
+  {{PrivateSubnet1ID}}
+
+  {{PrivateSubnet2ID}}
+
+  {{RouteTable1Id}}
+  
+  {{RouteTable2Id}}
+  
+  {{SQLSvmName}}
+
+  {{WorkloadInstanceType}}
+
+  {{NodeNetBIOSNames}}
+  
+  {{FSxStorageCapacity}}
+  
+  {{FSxDataVolumeSize}}
+
+  {{FSxDataVolumeName}}
+  
+  {{FSxLogVolumeName}}
+  
+  {{FSxLogVolumeSize}}
+  
+  {{FSxTempDbVolumeName}}
+  
+  {{FSxTempDbVolumeSize}}
+  
+  {{FSxQuorumVolumeName}}
+  
+  {{FSxQuorumVolumeSize}}
+
+  {{FSxDataLunSize}}
+
+  {{FSxAdminUsername}}
          
-  FSxAdminPassword:
-    Description: Password for FSxAdminUsername.
-    Type: String
-    NoEcho: true
-    MinLength: 8
+  {{FSxAdminPassword}}
 
-  FSxSvmName:
-    Type: String
-    MinLength: 1
-    MaxLength: 47
+  {{FSxSvmName}}
   
-  FSxFileSystemName:
-    Type: String
-    Description: Fsx Filesystem name 
+  {{FSxFileSystemName}}
 
-  FSxFileSystemId:
-    Description: FSx Filesystem ID
-    Type: String
+  {{FSxFileSystemId}}
   
-  FSxDiskIops:
-    Description: The total number of SSD IOPS provisioned for the file system.  Maximum 80,000 IOPS.
-    Default: 3
-    Type: Number
-    MinValue: 3
-    MaxValue: 80000
+  {{FSxDiskIops}}
   
-  FSxVolumeThroughputCapacity:
-    Description: Throughput capacity of FSx volume
-    Type: Number
-    Default: 128
-    AllowedValues: [128, 256, 512, 1024, 2048]
+  {{FSxVolumeThroughputCapacity}}
   
-  FileSystemEncryptionKeyId:
-    Description: ID of the AWS Key Management Service key.
-    Type: String
+  {{FileSystemEncryptionKeyId}}
   
-  VPCID:
-    Description: Existing VPC ID for deployment
-    Type: String
-    MinLength: 1
+  {{VPCID}}
   
-  ONTAPSecurityGroupID:
-    Description: ONTAP Security Group ID
-    Type: String
+  {{ONTAPSecurityGroupID}}
   
-  EnableCloudWatchLogFeature:
-    Default: false
-    Description: Enable CloudWatch Log Feature
-    Type: String
-    AllowedValues:
-      - true
-      - false
+  {{EnableCloudWatchLogFeature}}
 
-  NotificationARN:
-    Description: (optional) Amazon SNS topic ARNs to publish stack related events
-    Type: String
+  {{NotificationARN}}
   
-  ValidationAmi:
-    Description: Validation node AMI image id
-    Type: String
-    MinLength: 1
+  {{ValidationAmi}}
   
-  RoleCredentialsId:
-    Description: WLM account credentials id to deploy and manage resources (DO NOT EDIT)
-    Type: String
-    NoEcho: true
+  {{RoleCredentialsId}}
   
-  AccountId:
-    Description: WLM tenancy account id (DO NOT EDIT)
-    Type: String
-    NoEcho: true
+  {{AccountId}}
     
-  CloudProviderAccountId:
-    Description: AWS CloudProviderAccountId id (DO NOT EDIT)
-    Type: String
-    NoEcho: true
+  {{CloudProviderAccountId}}
   
-  JwtToken:
-    Description: JWT Token to grant access to a resource (DO NOT EDIT)
-    Type: String
-    NoEcho: true
+  {{JwtToken}}
 
-  WlmdbAwsAccountId:
-    Description: WLMDB AWS Account ID (DO NOT EDIT)
-    Type: String
-    NoEcho: true
+  {{WlmdbAwsAccountId}}
     
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -671,7 +466,7 @@ Resources:
             - IsFailoverCluster
             - 'FCI'
             - 'Standalone'
-      FileSystemType: 'FSx ONTAP'
+      FileSystemType: 'FSx for ONTAP'
       DatabaseType: 'Microsoft SQL server'
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
@@ -1147,6 +942,6 @@ Resources:
             - IsFailoverCluster
             - 'FCI'
             - 'Standalone'
-      FileSystemType: 'FSx ONTAP'
+      FileSystemType: 'FSx for ONTAP'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses

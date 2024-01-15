@@ -9,8 +9,12 @@ import { GENERAL } from '../../utils/appConstants';
 import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
 import { generateOptionType } from '../../utils/utilityFunctions';
+import JobMonitoringApi from './JobMonitoringApi';
+import { setTimeInterval } from '../../store/workloadFactory/jobMonitoringSlice';
+import { useAppDispatch } from '../../store/storeHooks';
 
 const JobMonitoring = () => {
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
     const [dropDownValue, setDropdownValue] = useState('Last 24 hours');
@@ -25,6 +29,20 @@ const JobMonitoring = () => {
         });
         return options;
     }, []);
+
+    const setTimeRange = (selectedTime: string) => {
+        let days = 1;
+        if(selectedTime === 'Last 7 days') {
+            days = 7;
+        } else if (selectedTime === 'Last 14 days') {
+            days = 14;
+        } else if (selectedTime === 'Last 30 days') {
+            days = 30;
+        }
+        dispatch(setTimeInterval(days));
+    };
+
+    JobMonitoringApi();
 
     return (
         <div className={styles.jobMonitoring}>
@@ -54,6 +72,7 @@ const JobMonitoring = () => {
                         isClearable={false}
                         onChange={(selectedOptions: any): void => {
                             setDropdownValue(selectedOptions?.value);
+                            setTimeRange(selectedOptions?.value);
                         }}
                         isSearchable={false}
                         variant="underline"

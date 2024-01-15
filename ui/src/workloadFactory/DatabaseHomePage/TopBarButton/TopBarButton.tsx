@@ -61,13 +61,14 @@ const TopBarButton = () => {
                     onClick={() => {
                         navigate(WLF_TO_FORM_NAVIGATE);
                     }}
+                    id={'deploy-button'}
                 >
                     <div className={styles.buttonStyle}>
                         <SpaceShip />
                         {GENERAL.DEPLOY_NEW_DATABASE}
                     </div>
                 </Button>
-                <ButtonWithDropdown
+                {/* <ButtonWithDropdown
                     variant="secondary"
                     items={[
                         {
@@ -82,7 +83,7 @@ const TopBarButton = () => {
                     ]}
                 >
                     Actions
-                </ButtonWithDropdown>
+                </ButtonWithDropdown> */}
             </div>
         </div>
     );

@@ -9,10 +9,16 @@
         [class*='Table-module_header-row'] {
             z-index: 3 !important;
         }
-    }
 
-    .firstCol {
-        box-shadow: 4px 0px 2px #e0e0e0;
+        [class*='Table-module_header-row'] {
+            [class*='Table-module_header-cell'] {
+                &:nth-child(2) {
+                    [class*='Table-module_right-border'] {
+                        pointer-events: none;
+                    }
+                }
+            }
+        }
     }
 
     .secondLevel {
@@ -29,7 +35,8 @@
             &.failed {
                 background-color: var(--error);
             }
-            &.running {
+            &.running,
+            &.in_progress {
                 background-color: var(--cyan-60);
             }
         }
@@ -44,7 +51,7 @@
     .statusbar {
         width: 3px;
         margin-left: -24px;
-        height: inherit;
+        height: 64px;
 
         &.completed {
             background-color: var(--success);
@@ -52,7 +59,8 @@
         &.failed {
             background-color: var(--error);
         }
-        &.running {
+        &.running,
+        &.in_progress {
             background-color: var(--cyan-60);
         }
     }
@@ -90,6 +98,9 @@
     .jobMonitoringTable {
         .table {
             width: 1127px;
+        }
+        .firstCol {
+            box-shadow: 4px 0px 2px var(--grey-15);
         }
     }
 }

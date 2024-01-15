@@ -18,6 +18,21 @@
         white-space: initial;
     }
 
+    // .newClass {
+    //     span {
+    //         mark:nth-of-type(1),
+    //         mark:nth-of-type(2),
+    //         mark:nth-of-type(3) {
+    //             color: var(--red-20);
+    //         }
+    //     }
+    // }
+
+    .awsCliHighlightClass {
+        color: var(--blue-30);
+        background-color: transparent;
+    }
+
     .topBar {
         height: 60px;
         background-color: var(--grey-65);
@@ -191,11 +206,25 @@
     .payloadContainer {
         padding: 0 40px 0 40px;
 
-        .copyPopOver {
+        .actionPopOver {
             width: 100px;
             display: flex;
             justify-content: flex-end;
             // height: 20px;
+            .actions {
+                gap: 16px;
+                display: flex;
+            }
+            
+            .menuItemDisabled {
+                pointer-events: none;
+                svg {
+                    path {
+                        fill: var(--grey-25);
+                    }
+                }
+            }
+
             .copy-popover {
                 width: 140px;
                 font-size: 13px;

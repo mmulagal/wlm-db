@@ -1,9 +1,9 @@
 export const SELECT_CONFIG = {
-    STANDARD_CREATE: `Standard create`,
-    EASY_CREATE: `Easy create`,
+    STANDARD_CREATE: `Advanced create`,
+    EASY_CREATE: `Quick create`,
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
-        'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
+        'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
@@ -399,10 +399,11 @@ export const GENERAL = {
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
-    DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
+    DB_HOST_FILE_SYSTEM_TYPE: 'Storage type',
     // Job Status constants
     JOB_STATUS: 'Job status',
-    JOB_STATUS_DAYS: 'Last 30 days',
+    JOB_STATUS_DAYS: '(Last 90 days)',
+    VIEW_JOB_MONITORING: 'View job monitoring',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',
     JOB_STATUS_INITIALIZING: 'In Progress',
@@ -484,7 +485,12 @@ export const GENERAL = {
     STEP2POINT4ACTIVATE: 'Activate.',
     JOBS_STATUS_OVER_TIME: 'Jobs status over time',
     JOB_MONITORING: 'Job monitoring',
-    POLICY_MANAGEMENT: 'Policy management'
+    POLICY_MANAGEMENT: 'Policy management',
+    //Job Monitoring constants
+    JM_COMPLETED: 'Completed',
+    JM_IN_PROGRESS: 'In Progress',
+    JM_FAILED: 'Failed',
+    NO_DATA: 'No data'
 };
 
 export const CODE_VIEWER = {

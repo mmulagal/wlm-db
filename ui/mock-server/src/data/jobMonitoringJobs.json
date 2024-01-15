@@ -1,0 +1,78 @@
+{
+    "count": 6,
+    "items": [
+      {
+        "id": "9876543219236789",
+        "name": "Microsoft SQL server deployed with stack <stack-name>",
+        "description": "Microsoft SQL server deployed with stack <stack-name>",
+        "type": "Deployment",
+        "status": "COMPLETED",
+        "startTime": 1704785588798,
+        "endTime": 1704871988798,
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "error": ""
+      },
+      {
+        "id": "2876543219236789",
+        "name": "Microsoft SQL server deployed with stack <stack-name>",
+        "description": "Microsoft SQL server deployed with stack <stack-name>",
+        "type": "Deployment",
+        "status": "COMPLETED",
+        "startTime": 1704785588798,
+        "endTime": 1704871988798,
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "error": ""
+      },
+      {
+        "id": "4876543219006789",
+        "name": "Backup of <host-name>/<job-name> with policy <policy-name>",
+        "description": "Microsoft SQL server deployed with stack <stack-name>",
+        "type": "Backup",
+        "status": "FAILED",
+        "startTime": 1704785588798,
+        "endTime": 1704871988798,
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "error": "Embedded stack arn:aws:cloudformation:ap-southeast-1:464262061435:stack/WLMDB-SqlFciStack-1704443882020-ValidationStack1-1DM7D6502JCM8/d389a1b0-aba5-11ee-9f10-067d5fa9eb92 was not successfully created: The following resource(s) failed to create: [ValidationNode1]."
+      },
+      {
+        "id": "3876543219006789",
+        "name": "Backup of <host-name>/<job-name> with policy <policy-name>",
+        "description": "Backup of <host-name>/<job-name> with policy <policy-name>",
+        "type": "Backup",
+        "status": "IN_PROGRESS",
+        "startTime": 1704785588798,
+        "endTime": 1704871988798,
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "error": ""
+      },
+      {
+        "id": "7876543219036789",
+        "name": "Clone of <host-name>/<job-name>",
+        "description": "Clone of <host-name>/<job-name>",
+        "type": "Clone",
+        "status": "IN_PROGRESS",
+        "startTime": 1704785588798,
+        "endTime": 1704871988798,
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "error": ""
+      },
+      {
+        "id": "8876543219036789",
+        "name": "Clone of <host-name>/<job-name>",
+        "description": "Clone of <host-name>/<job-name>",
+        "type": "Clone",
+        "status": "COMPLETED",
+        "startTime": 1704785588798,
+        "endTime": 1704871988798,
+        "resourceName": "SQL",
+        "parentJobId": "",
+        "error": ""
+      }
+    ],
+    "nextToken": null
+}

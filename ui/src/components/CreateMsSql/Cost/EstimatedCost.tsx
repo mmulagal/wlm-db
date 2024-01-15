@@ -158,10 +158,16 @@ const EstimatedCost = () => {
     // }, [fetchResult]);
 
     const setHeader = () => {
-        if (!regionValue || !selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
+        if (!regionValue) {
             return (
                 <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.ESTIMATED_COST_HEADER}
+                </Typography>
+            );
+        }else if (!selectedZone1 || (deploymentModel?.label === GENERAL.FAILOVER_CLUSTER && !selectedZone2)) {
+            return (
+                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                    {GENERAL.SELECT_AZ}
                 </Typography>
             );
         }else if (isLoading) {

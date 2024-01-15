@@ -12,7 +12,7 @@
         position: sticky;
         left: 4px;
         z-index: 2;
-        background-color: var(--white);
+        background-color: var(--content-background);
         border-bottom: 1px solid var(--border);
     }
 
@@ -23,6 +23,10 @@
         align-items: flex-start;
         align-self: stretch;
         z-index: 1 !important;
+
+        [class*='Table-module_horizontal-scroll'] {
+            visibility: hidden;
+        }
     }
 
     .statusbar {
@@ -36,7 +40,8 @@
         &.failed {
             border-left: 4px solid var(--error);
         }
-        &.running {
+        &.running,
+        &.in_progress {
             border-left: 4px solid var(--cyan-60);
         }
     }
@@ -67,6 +72,23 @@
         overflow: hidden;
         text-overflow: ellipsis;
         line-height: 24px;
+    }
+
+    .loadingTable {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        position: relative;
+        height: 240px;
+        width: -webkit-fill-available;
+        justify-content: center;
+
+        svg {
+            path {
+                fill: var(--grey-65);
+            }
+        }
     }
 
     [class*='Table-module_cell'] {

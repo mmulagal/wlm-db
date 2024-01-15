@@ -1,6 +1,7 @@
 import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
 import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
+import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
 import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
@@ -8,7 +9,7 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
-import { generateOptionType, getCredDetails } from '../../../utils/utilityFunctions';
+import { generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -17,7 +18,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CREATE_DATABASE_YAML, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -31,6 +32,8 @@ import {
 } from '../../../workloadFactory/DatabaseHomePage/Sidebar/CodeboxUtility';
 import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
+import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
+import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -121,12 +124,15 @@ const CodeBox = () => {
         if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_CLOUD_FORMATION} />
+            ) : rightPanelTemplateResponse?.template ? (
+                <ThemeProvider theme={'dark'} isRoot={false}>
+                    {/* @ts-ignore */}
+                    <SyntaxHighlighter wrapLongLines={true} language="yaml">
+                        {rightPanelTemplateResponse?.template}
+                    </SyntaxHighlighter>
+                </ThemeProvider>
             ) : (
-                <HighlighterWord highlight={searchInput} count={countDetails}>
-                    <pre className={styles.colorAutomation}>
-                        {rightPanelTemplateResponse?.template || <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />}
-                    </pre>
-                </HighlighterWord>
+                <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
             );
         }
         if (dropDownValue === CODE_VIEWER.REST_API) {
@@ -157,13 +163,21 @@ const CodeBox = () => {
             return isRightPanelTemplateLoading ? (
                 <LoadingCodeBox text={CODE_VIEWER.LOADING_AWS_CLI} />
             ) : (
-                <HighlighterWord highlight={searchInput} isAWSCli={true} count={countDetails}>
-                    <Typography variant="Regular_14" className={`${styles.colorAutomation} ${styles.awsCli}`}>
-                        {maskAwsCli(rightPanelTemplateResponse?.cliCommand) || (
-                            <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
-                        )}
-                    </Typography>
-                </HighlighterWord>
+                <Typography
+                    variant="Regular_14"
+                    className={`${styles.colorAutomation} ${styles.awsCli} ${styles.newClass}`}
+                >
+                    {rightPanelTemplateResponse?.cliCommand ? (
+                        <Highlighter
+                            highlightClassName={styles.awsCliHighlightClass}
+                            searchWords={AWS_CLI_HIGHLIGHT_STRINGS}
+                            autoEscape={true}
+                            textToHighlight={maskAwsCli(rightPanelTemplateResponse?.cliCommand)}
+                        />
+                    ) : (
+                        <NoDataCodeBox text={CODE_VIEWER.NO_DATA_MSG} />
+                    )}
+                </Typography>
             );
         }
     };
@@ -435,18 +449,37 @@ const CodeBox = () => {
                             {dropDownValue}
                         </Typography>
                     </div>
-                    <div className={styles.copyPopOver}>
-                        <Popover
-                            popoverClass={styles['copy-popover']}
-                            children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
-                            container={
-                                <CopyToClipboard text={copyResponseData()}>
-                                    <div className={styles.menuItem}>
-                                        <Copy />
-                                    </div>
-                                </CopyToClipboard>
+                    <div className={styles.actionPopOver}>
+                        <div className={styles.actions}>
+                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && 
+                                (
+                                    isRightPanelTemplateLoading ? 
+                                    <div className={styles.menuItemDisabled}>
+                                        <Download />
+                                    </div> : 
+                                    <Download onClick={() => handleDownloadYAML(rightPanelTemplateResponse?.template, CREATE_DATABASE_YAML)} />
+                                ) 
                             }
-                        />
+                            {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
+                                // Disabled copy button
+                                <div className={styles.menuItemDisabled}>
+                                    <Copy />
+                                </div>
+                            ) : (
+                                // Enabled copy button
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
+                                    container={
+                                        <CopyToClipboard text={copyResponseData()}>
+                                            <div className={styles.menuItem}>
+                                                <Copy />
+                                            </div>
+                                        </CopyToClipboard>
+                                    }
+                                />
+                            )}
+                        </div>
                     </div>
 
                     {/* <div className={styles.searchPart}>

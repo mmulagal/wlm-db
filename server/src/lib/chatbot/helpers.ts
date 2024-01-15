@@ -66,6 +66,7 @@ type ValidationResponse = {
     message?: string;
     allowedValues?: any;
     value?: any;
+    data?: any;
 };
 
 function findChangedKeys(params: Params, oldParams: Params) {
@@ -119,12 +120,28 @@ async function validateParams(
                         return { errors: recursiveValidationResponse.errors, params: validatedParams };
                     }
                 } else if (checkIfRequired(reqParam[key].required, params)) {
-                    promises.push(validate(key, params, oldParams, errors, validatedParams));
+                    promises.push(validate(key, params, oldParams));
                 }
             }
         }
     }
-    await Promise.all(promises);
+    const responses = await Promise.all(promises);
+    responses.forEach(resp => {
+        if ((resp as ValidationResponse)?.status === 'error') {
+            const currKey = resp.key as string;
+            delete params[currKey];
+            delete oldParams[currKey];
+            delete validatedParams[currKey];
+            errors.push(resp as ValidationResponse);
+        }
+
+        if (resp?.value !== null && resp?.value !== undefined) {
+            const currKey = resp.key as string;
+            validatedParams[currKey] = resp.value;
+            params[currKey] = resp.value;
+            oldParams[currKey] = resp.value;
+        }
+    });
     return { errors, params: validatedParams };
 }
 
@@ -147,16 +164,10 @@ function checkIfRequired(required: boolean | { key: string; value: string; opera
     return !!required;
 }
 
-async function validate(
-    key: string,
-    params: Params,
-    oldParams: Params,
-    errors: Array<ValidationResponse>,
-    validatedParams: Params
-) {
+async function validate(key: string, params: Params, oldParams: Params) {
     const shouldSkip = params?.[key] && oldParams?.[key] && oldParams[key] === params[key];
     logger.debug('skip check', shouldSkip);
-    let response;
+    let response: ValidationResponse = { key, value: params[key] };
     if (!shouldSkip) {
         switch (key) {
             case CREDENTIALS_ID: {
@@ -226,7 +237,7 @@ async function validate(
                 break;
             }
             case FSX_DEPLOYMENT_MODE: {
-                response = { value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
+                response = { key, value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
                 break;
             }
             case DB_SIZE: {
@@ -238,7 +249,7 @@ async function validate(
                 break;
             }
             case FSX_IOPS: {
-                response = { value: 3 * params[DB_SIZE] };
+                response = { key, value: 3 * params[DB_SIZE] };
                 break;
             }
             case ONTAP_SG_ID: {
@@ -273,21 +284,9 @@ async function validate(
             }
             default:
         }
-    } else {
-        validatedParams[key] = params[key];
-    }
-    if ((response as ValidationResponse)?.status === 'error') {
-        delete params[key];
-        delete oldParams[key];
-        delete validatedParams[key];
-        errors.push(response as ValidationResponse);
     }
 
-    if (response?.value !== null && response?.value !== undefined) {
-        validatedParams[key] = response?.value;
-        params[key] = response?.value;
-        oldParams[key] = response?.value;
-    }
+    return response;
 }
 
 export { validateParams, resetNextParamsOnUpdate, wrapContext, findChangedKeys };

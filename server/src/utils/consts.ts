@@ -123,6 +123,7 @@ enum RouteTags {
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
+    JOB_MONITORING = 'Job Monitoring',
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
     BATCH = 'Batch',
@@ -272,7 +273,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 
 enum FileSystemTypes {
     EBS = 'EBS',
-    FSXONTAP = 'FSx ONTAP'
+    FSXONTAP = 'FSx for ONTAP',
+    FSXWINDOWS = 'FSx for Windows'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -507,7 +509,7 @@ const WLMDB = 'wlmdb';
 const BUCKET_NAME = process.env.WLMDB_BUCKET_NAME || config.get<string>('templates.bucket');
 const ASSETS_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
-const EC2_ROLE_NAME = 'Ec2RoleName';
+const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
@@ -1004,7 +1006,7 @@ export {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
-    EC2_ROLE_NAME,
+    CF_DEPLOY_ROLE_NAME,
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     DISABLE_ROLLBACK,
