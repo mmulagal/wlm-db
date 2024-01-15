@@ -72,7 +72,7 @@ Metadata:
             PerformFSxCheck:
                 default: Boolean to check whether to validate FSx credentials and reachability from subnet
             FSxFileSystemId:
-                default: Fsx Filesystem ID
+                default: FSx Filesystem ID
             FSxAdministratorPasswordSecret:
                 default: Secret String for FSx user account
 Parameters:
@@ -146,7 +146,7 @@ Parameters:
         Description: Boolean to check whether to validate FSx credentials and reachability from subnet
         Type: String
     FSxFileSystemId:
-        Description: Fsx Filesystem ID
+        Description: FSx Filesystem ID
         Type: String
     FSxAdministratorPasswordSecret:
         Description: Secret String for FSx user account
