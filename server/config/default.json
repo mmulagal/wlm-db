@@ -55,7 +55,7 @@
     },
     "ssm": {
         "poll-interval": "1s",
-        "execution-timeout": "30"
+        "execution-timeout": "60"
     },
     "auth": {
         "wlmdb": {
