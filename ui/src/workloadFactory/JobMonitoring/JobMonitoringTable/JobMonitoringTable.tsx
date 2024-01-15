@@ -20,20 +20,6 @@ import { setDownloadData } from '../../../store/workloadFactory/jobMonitoringSli
 import { useEffect } from 'react';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
-interface Job {
-    id: string;
-    name: string;
-    description: string;
-    type: string;
-    status: string;
-    startTime: number;
-    endTime: number;
-    resourceName: string;
-    parentJobId: string;
-    error: string;
-    subJobs?: Job[];
-  }
-
 const JobMonitoringTable = () => {
     const dispatch = useDispatch();
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
