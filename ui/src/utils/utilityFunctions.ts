@@ -11,6 +11,7 @@ import {
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
+    JM_DOWNLOAD,
     JOB_MONITORING_STATUS,
     PENDING_DELETION,
     PRODUCTION,
@@ -940,4 +941,53 @@ export const jobMonitoringStatusMapping = (val : string) => {
         statusValue = GENERAL.JM_IN_PROGRESS;
     }
     return statusValue;
+}
+
+export const downloadCsv = (data: any) => {
+    const csv = 'data:text/csv;charset=utf-8,' + data;
+    const excel = encodeURI(csv); //Links to CSV
+
+    const link = document.createElement('a');
+    link.setAttribute('href', excel); //Links to CSV File
+
+    link.setAttribute('download', 'job_monitoring'); //Filename that CSV is saved as
+    link.click();
+}
+
+export const addBlankCell = (level: number, result: any) => {
+    for(var i : number = 0; i < level; i++)  
+      {
+        result += ',';
+      }
+    return result;
+}
+
+export const createJobMonitorCSV = (array: any, keys: any, headers: any, result: string, level: number) => {
+    result = addBlankCell(level, result);
+    result += headers;
+    result += '\n'; //New Row
+  
+    array.map((item: any) => {
+      //Goes Through Each Array Object
+      result = addBlankCell(level, result);
+      keys.map((key: string) => {
+        //Goes Through Each Object value
+        if (key && key !== '') {
+          result += item[key] + ','; //Comma Seperates Each Key Value in a Row
+        }
+      });
+      result += '\n'; //Creates New Row
+      if (item?.subJobs) {
+        result = createJobMonitorCSV(
+            item?.subJobs, 
+            JM_DOWNLOAD.SUB_JOBS_KEYS, 
+            JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS, 
+            result, 
+            level+1
+        );
+      }
+    });
+
+    result += '\n'; //New Row
+    return result;
 }

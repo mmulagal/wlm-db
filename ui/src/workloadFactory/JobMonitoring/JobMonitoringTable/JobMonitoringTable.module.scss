@@ -2,6 +2,14 @@
     .table {
         width: 1612px;
 
+        .downloadDisable {
+            svg {
+                path {
+                    fill: var(--grey-30);
+                }
+            }
+        }
+        
         .topBarStyle {
             z-index: 3 !important;
         }
