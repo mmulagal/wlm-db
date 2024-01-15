@@ -58,7 +58,7 @@ $Certificate = Import-Certificate -FilePath C:\cfn\FSxCertificate.pem -CertStore
 $regionCertificateificate = Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object { $_.Subject -like $Certificate.Subject }
 
 $Params = @{
-    "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/storage/volumes"
+    "URI"         = "https://management.${FSxFileSystemId}.fsx.${FSxRegion}.amazonaws.com/api/cluster?fields=version"
     "Method"      = "GET"
     "Headers"     = @{"Authorization" = "Basic $FSxCredentialsInBase64" }
     "ContentType" = "application/json"
