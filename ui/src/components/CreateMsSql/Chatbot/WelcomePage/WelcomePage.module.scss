@@ -39,6 +39,10 @@
                 border: 1px solid var(--grey-25);
                 box-shadow: 2px 2px 6px 0px var(--grey-15);
                 transition: 0.3s;
+
+                .chatbot-card-text {
+                    text-align: center;
+                }
             }
 
             .card:hover {

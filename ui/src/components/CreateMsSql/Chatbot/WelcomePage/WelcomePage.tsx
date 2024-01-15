@@ -22,18 +22,26 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
             <div className={styles['welcome-cards-container']}>
                 <div className={styles['card-row']}>
                     <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[0])}>
-                        <Typography variant="Regular_14">{CHATBOT_WELCOME_CARDS[0]}</Typography>
+                        <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
+                            {CHATBOT_WELCOME_CARDS[0]}
+                        </Typography>
                     </div>
                     <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[1])}>
-                        <Typography variant="Regular_14">{CHATBOT_WELCOME_CARDS[1]}</Typography>
+                        <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
+                            {CHATBOT_WELCOME_CARDS[1]}
+                        </Typography>
                     </div>
                 </div>
                 <div className={styles['card-row']}>
                     <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[2])}>
-                        <Typography variant="Regular_14">{CHATBOT_WELCOME_CARDS[2]}</Typography>
+                        <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
+                            {CHATBOT_WELCOME_CARDS[2]}
+                        </Typography>
                     </div>
                     <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[3])}>
-                        <Typography variant="Regular_14">{CHATBOT_WELCOME_CARDS[3]}</Typography>
+                        <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
+                            {CHATBOT_WELCOME_CARDS[3]}
+                        </Typography>
                     </div>
                 </div>
             </div>
