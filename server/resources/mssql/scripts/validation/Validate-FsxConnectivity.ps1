@@ -32,6 +32,7 @@ $InstanceID = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} 
 if (${PerformFSxCheck} -ne 'true' ) {
     Write-Output @{ status= "Skipped"; reason= "Deployment creates new FSx." } | ConvertTo-Json -Compress
     Start-Process "cfn-signal.exe" -ArgumentList "-e 0 $WaitHandler" -Wait -NoNewWindow
+    exit(0)
 }
 
 $ErrorActionPreference = "Stop"
