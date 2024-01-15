@@ -409,6 +409,7 @@ export const GENERAL = {
     JOB_STATUS_INITIALIZING: 'In Progress',
     JOB_STATUS_JOBS: ' Jobs',
     JOBS_DISTRIBUTION: 'Jobs distribution',
+    JOB_DISTRIBUTION: 'Job distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
