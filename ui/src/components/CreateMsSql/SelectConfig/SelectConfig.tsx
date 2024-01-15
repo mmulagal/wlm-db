@@ -21,7 +21,7 @@ const SelectConfig = () => {
             <div
                 id="easy-create"
                 className={
-                    selectedConfig === SELECT_CONFIG.EASY_CREATE || selectedConfig === 'Easy create'
+                    selectedConfig === SELECT_CONFIG.EASY_CREATE
                         ? `${styles['easy-create']} ${styles['add-border']}`
                         : styles['easy-create']
                 }
@@ -33,14 +33,14 @@ const SelectConfig = () => {
                 <div className={styles.level}>
                     <EasyCreate />
                     <div className={styles['easy-create-content']}>
-                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
+                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.QUICK_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
                             {SELECT_CONFIG.EASY_CREATE_CONTENT}
                         </Typography>
                     </div>
                 </div>
 
-                {(selectedConfig === SELECT_CONFIG.EASY_CREATE || selectedConfig === 'Easy create') && (
+                {selectedConfig === SELECT_CONFIG.EASY_CREATE && (
                     <div className={styles['tick-placement']}>
                         <BlueTick />
                     </div>
@@ -52,7 +52,7 @@ const SelectConfig = () => {
             {/* Standard create section here */}
             <div
                 className={
-                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE || selectedConfig === 'Standard create'
+                    selectedConfig === SELECT_CONFIG.STANDARD_CREATE
                         ? `${styles['standard-create']} ${styles['add-border']}`
                         : styles['standard-create']
                 }
@@ -64,14 +64,14 @@ const SelectConfig = () => {
                 <div className={styles.level}>
                     <StandardCreate />
                     <div className={styles['standard-create-content']}>
-                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
+                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.ADVANCED_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['standard-create-content-text']}>
                             {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
                         </Typography>
                     </div>
                 </div>
 
-                {(selectedConfig === SELECT_CONFIG.STANDARD_CREATE || selectedConfig === 'Standard create') && (
+                {selectedConfig === SELECT_CONFIG.STANDARD_CREATE && (
                     <div className={styles['tick-placement']}>
                         <BlueTick />
                     </div>
