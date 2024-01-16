@@ -56,7 +56,7 @@ const MSSqlFooter = () => {
                 <DialogComponent
                     header={GENERAL.DEMO_TITLE}
                     content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
-                    primaryButton={GENERAL.CLOSE}
+                    primaryButton={GENERAL.CONTINUE}
                     callback={() => {}}
                 />
             );
