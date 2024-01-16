@@ -9,7 +9,7 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
-import { generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
+import { cfDownloadName, generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -18,7 +18,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { AWS_CLI_HIGHLIGHT_STRINGS, CREATE_DATABASE_YAML, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -57,6 +57,7 @@ const CodeBox = () => {
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+    const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -457,7 +458,9 @@ const CodeBox = () => {
                                     <div className={styles.menuItemDisabled}>
                                         <Download />
                                     </div> : 
-                                    <Download onClick={() => handleDownloadYAML(rightPanelTemplateResponse?.template, CREATE_DATABASE_YAML)} />
+                                    <Download onClick={() => 
+                                        handleDownloadYAML(rightPanelTemplateResponse?.template, cfDownloadName(selectedDBName))
+                                    } />
                                 ) 
                             }
                             {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
