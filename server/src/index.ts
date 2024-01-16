@@ -275,13 +275,13 @@ try {
     logger.error('Failed to initialize database', error);
 }
 
-// Register scheduled jobs
+// Initialize cron jobs
 try {
     if (isActiveInstance()) {
         purgeOlderJobs();
     }
 } catch (error) {
-    logger.error('Failed to register scheduled jobs', error);
+    logger.error('Failed to initialize cron jobs', error);
 }
 
 app.listen({ port, host }, err => {
