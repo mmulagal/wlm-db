@@ -36,7 +36,9 @@ const ENABLE_CLOUD_WATCH = 'enableCloudWatch';
 const SQL_SERVER_NAME = 'sqlServerName';
 const TAGS = 'tags';
 const DEPLOYMENT_ENVIRONMENT = 'deploymentEnvironment';
-
+const FCI_ABBREVIATION = 'FCI (Failover cluster instance)';
+const MULTI_AZ_SMALL = 'Multi_AZ_1';
+const SINGLE_AZ_SMALL = 'Single_AZ_1';
 const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
 const SINGLE_AZ = 'SINGLE_AZ_1';
@@ -405,5 +407,10 @@ export {
     PROD,
     DEV,
     CUSTOM,
-    MSSQL_ENV_PRE_CONFIG
+    MSSQL_ENV_PRE_CONFIG,
+    M5_2XL,
+    FCI_ABBREVIATION,
+    MULTI_AZ_SMALL,
+    SINGLE_AZ_SMALL,
+    M5_XL
 };
