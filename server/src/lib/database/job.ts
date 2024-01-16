@@ -167,18 +167,18 @@ async function deleteOlderJobs(olderDate: number) {
     });
 }
 
-async function getJobCountByStatus(accountId: string, jobStartTime: Date, jobEndTime: Date) {
-    logger.info('Getting Job Count By Status', { accountId, jobStartTime, jobEndTime });
+async function getJobCountByStatus(accountId: string, startTime: number, endTime: number) {
+    logger.info('Getting Job Count By Status', { accountId, startTime, endTime });
 
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
             parent_job_id: null,
             start_time: {
-                gte: jobStartTime
+                gte: new Date(startTime)
             },
             end_time: {
-                lte: jobEndTime
+                lte: new Date(endTime)
             }
         },
         by: ['status'],

@@ -1,7 +1,8 @@
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE, job as jobDbSchema } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { camelCase, isEmpty } from 'lodash-es';
 import moment from 'moment';
+import ms from 'ms';
 import {
     createJobs,
     deleteJobs,
@@ -21,7 +22,7 @@ import {
 
 const logger = getLogger();
 
-const NUMBER_OF_DAYS = 30;
+const DEFAULT_TIME_RANGE = '30d';
 
 interface Job extends JobRecordType {
     id: string;
@@ -243,29 +244,22 @@ async function getJobSummary(
         throw createError(400, 'Start time cannot be greater than end time');
     }
 
-    let jobStartTime: Date;
-    if (startTime) {
-        jobStartTime = new Date(startTime);
-    } else {
-        const defaultStartTime = new Date();
-        defaultStartTime.setDate(defaultStartTime.getDate() - NUMBER_OF_DAYS);
-        jobStartTime = defaultStartTime;
-    }
+    // Default time range is 30 days
+    startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
+    endTime = endTime || Date.now();
 
-    const jobEndTime = endTime ? new Date(endTime) : new Date();
-
-    const groups = await getJobCountByStatus(accountId, jobStartTime, jobEndTime);
+    const groups = await getJobCountByStatus(accountId, startTime, endTime);
 
     const defaultSummary = Object.values(JOBSTATUS).reduce(
         (summary: JobSummary, status: string) => ({
             ...summary,
-            [status.toLowerCase()]: 0
+            [camelCase(status?.toLowerCase())]: 0
         }),
         {}
     );
 
     return groups.reduce((summary: JobSummary, group: JobGroup) => {
-        const status = group?.status?.toLowerCase();
+        const status = camelCase(group?.status?.toLowerCase());
         const count = group?._count?._all;
         return {
             ...summary,

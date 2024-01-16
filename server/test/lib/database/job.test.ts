@@ -225,7 +225,7 @@ describe('List jobs', () => {
 
 describe('Group jobs by status', () => {
     it('should group jobs by status', async () => {
-        const response = await getJobCountByStatus(ACCOUNT_ID, new Date('2024-01-01'), new Date());
+        const response = await getJobCountByStatus(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
         expect(response[0]).toHaveProperty(['status']);
         expect(response[0]).toHaveProperty(['_count']);
     });

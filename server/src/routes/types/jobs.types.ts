@@ -7,7 +7,7 @@ const JobSummaryQueryString = Type.Object({
 });
 
 const JobSummaryResponse = Type.Object({
-    in_progress: Type.Number(),
+    inProgress: Type.Number(),
     completed: Type.Number(),
     failed: Type.Number()
 });
