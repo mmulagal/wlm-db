@@ -35,7 +35,7 @@ const JobStatus = () => {
             </div>
 
             <div className={styles.mainSection}>
-                <JobDoughnutChart />
+                <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} />
 
                 {/* <div className={styles.jobSeparator} /> */}
 

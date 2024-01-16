@@ -337,6 +337,9 @@ export const databaseHomeApi = createApi({
                     }
                 }
             }),
+            // getJobsSummary: builder.query({
+            //     query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+            // }),
             getJobsSummary: builder.query({
                 query: () => `jobs/summary`
             }),
@@ -418,6 +421,9 @@ export const jobMonitoringApi = createApi({
             //         url: `jobs/${id}`
             //     })
             // })
+            // getJobsSummaryData: builder.query({
+            //     query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+            // }),
 
             // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
@@ -433,6 +439,11 @@ export const jobMonitoringApi = createApi({
             getSubTaskList: builder.query({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
                     return { data: JobMonitoringSubTask };
+                }
+            }),
+            getJobsSummaryData: builder.query({
+                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+                    return { data: {'inProgress': 2,'completed': 3,'failed': 1} };
                 }
             })
         };
@@ -500,6 +511,6 @@ export const {
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useGetJobsListQuery, useGetFullJobsListQuery, useGetSubTaskListQuery } = jobMonitoringApi;
+export const { useGetJobsListQuery, useGetFullJobsListQuery, useGetSubTaskListQuery, useGetJobsSummaryDataQuery } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;
