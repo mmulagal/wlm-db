@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { jobMonitoringApi, useGetJobsListQuery } from "../../utils/apiService";
-import { addInitialJMData, initialJobMonitoringState, setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { useGetJobsListQuery } from "../../utils/apiService";
+import { setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
 
 const JobMonitoringApi = () => {
     const dispatch = useAppDispatch();
 
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
+    const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
+    const toTime = useAppSelector(state => state.jobMonitoring.toTime);
+
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
 
@@ -18,14 +21,14 @@ const JobMonitoringApi = () => {
     // useEffect(() => {
     //     setSkipApiCall(true);
     //     setTimeout(() => {
-    //         dispatch(jobMonitoringApi.util.resetApiState());
-    //         dispatch(addInitialJMData(initialJobMonitoringState));
-    //         const toDate = Date.now();
-    //         const fromDate = toDate - timeInterval * (3600 * 1000 * 24);
-    //         setTime({startTime: fromDate, endTime: toDate});
-    //         setSkipApiCall(false);
+    //         if (timeInterval && fromTime && toTime) {
+    //             dispatch(setJobsListLoading(false));
+    //             dispatch(setJobsList([]));
+    //             setTime({startTime: fromTime, endTime: toTime});
+    //             setSkipApiCall(false);
+    //         }
     //     }, 0);
-    // }, [timeInterval]);
+    // }, [fromTime]);
 
     const {
         data: jmJobsList,
