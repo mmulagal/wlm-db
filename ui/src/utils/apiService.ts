@@ -382,32 +382,32 @@ export const jobMonitoringApi = createApi({
     baseQuery: dynamicBaseQuery,
     endpoints: builder => {
         return {
-            // getJobsList: builder.query({
-            //     query: ({ nextToken = null, startTime, endTime }) => {
-            //         if (nextToken) {
-            //             return `jobs?nextToken=${nextToken}&startTime=${startTime}&endTime=${endTime}`;
-            //         } else {
-            //             return `jobs?startTime=${startTime}&endTime=${endTime}`;
-            //         }
-            //     }
-            // }),
-            // getSubTaskList: builder.query({
-            //     query: id => ({
-            //         url: `jobs/${id}`
-            //     })
-            // })
-
-            // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
-                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return { data: JobMonitoringJobs };
+                query: ({ nextToken = null, startTime, endTime }) => {
+                    if (nextToken) {
+                        return `jobs?nextToken=${nextToken}&startTime=${startTime}&endTime=${endTime}`;
+                    } else {
+                        return `jobs?startTime=${startTime}&endTime=${endTime}`;
+                    }
                 }
             }),
             getSubTaskList: builder.query({
-                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return { data: JobMonitoringSubTask };
-                }
+                query: id => ({
+                    url: `jobs/${id}`
+                })
             })
+
+            // Will uncomment and use above code once APIs will get available
+            // getJobsList: builder.query({
+            //     async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+            //         return { data: JobMonitoringJobs };
+            //     }
+            // }),
+            // getSubTaskList: builder.query({
+            //     async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
+            //         return { data: JobMonitoringSubTask };
+            //     }
+            // })
         };
     }
 });
@@ -473,6 +473,6 @@ export const {
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useGetJobsListQuery, useGetSubTaskListQuery } = jobMonitoringApi;
+export const { useGetJobsListQuery, useLazyGetJobsListQuery, useGetSubTaskListQuery } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;

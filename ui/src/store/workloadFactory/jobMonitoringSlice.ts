@@ -4,7 +4,8 @@ export const initialJobMonitoringState: any = {
     jobsList: [],
     jobsListLoading: false,
     timeInterval: 1, // last 1/7/14/30 days data
-    downloadData: null
+    downloadJobsLoading: null,
+    downloadJobsList: [],
 }
 
 const jobMonitoringSlice = createSlice({
@@ -20,8 +21,11 @@ const jobMonitoringSlice = createSlice({
         setTimeInterval: (state, action: PayloadAction<any>) => {
             state.timeInterval = action.payload;
         },
-        setDownloadData: (state, action: PayloadAction<any>) => {
-            state.downloadData = action.payload;
+        setDownloadJobsLoading: (state, action: PayloadAction<any>) => {
+            state.downloadJobsLoading = action.payload;
+        },
+        setDownloadJobsList: (state, action: PayloadAction<any>) => {
+            state.downloadJobsList = action.payload;
         },
         addInitialJMData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
@@ -33,7 +37,8 @@ export const {
     setJobsList,
     setJobsListLoading,
     setTimeInterval,
-    setDownloadData,
+    setDownloadJobsLoading,
+    setDownloadJobsList,
     addInitialJMData
 } = jobMonitoringSlice.actions;
 
