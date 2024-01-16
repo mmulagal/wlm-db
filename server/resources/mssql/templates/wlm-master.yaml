@@ -277,6 +277,10 @@ Parameters:
   {{JwtToken}}
 
   {{WlmdbAwsAccountId}}
+
+  MetadataParam:
+    Description: Metadata param used for internal audit( DO NOT EDIT) 
+    Type: CommaDelimitedList
     
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -468,6 +472,7 @@ Resources:
             - 'Standalone'
       FileSystemType: 'FSx for ONTAP'
       DatabaseType: 'Microsoft SQL server'
+      MetadataParam: !Ref MetadataParam
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn:

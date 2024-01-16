@@ -64,6 +64,13 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+const CloudFormationTemplateHeader = Type.Object({
+    'triggered-from': Type.String({
+        enum: ['wizard-advance', 'wizard-easy', 'chatbot', 'rest-api'],
+        default: 'rest-api'
+    })
+});
+
 // Cloud formation template, yaml and cli creation
 const CloudFormationStaticTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,
@@ -175,4 +182,5 @@ export {
     CloudFormationDeploymentResponse,
     DeploymentSummaryQueryString,
     DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 };

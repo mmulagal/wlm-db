@@ -558,7 +558,8 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     keyPairName: 'KeyPairName',
 
     topicArn: 'NotificationARN',
-    enableCloudWatch: 'EnableCloudWatchLogFeature'
+    enableCloudWatch: 'EnableCloudWatchLogFeature',
+    metadataParam: 'MetadataParam'
 };
 
 const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -625,6 +626,8 @@ const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
+const TEMPLATE_RESOURCE_CREATED_BY = 'ResourceCreatedBy';
+const TEMPLATE_METADATA_PARAM = 'MetadataParam';
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -1148,5 +1151,7 @@ export {
     BXP_TOKEN,
     IAM_LINKEDROLE_CONDITION,
     IAM_PASSROLE_CONDITION,
-    IAM_EC2_SERVICE
+    IAM_EC2_SERVICE,
+    TEMPLATE_RESOURCE_CREATED_BY,
+    TEMPLATE_METADATA_PARAM
 };

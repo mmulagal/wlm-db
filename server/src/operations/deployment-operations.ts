@@ -65,7 +65,8 @@ import {
     FCI_NETWORK_VIOLATION_MESSAGE,
     IAM_LINKEDROLE_CONDITION,
     IAM_EC2_SERVICE,
-    IAM_PASSROLE_CONDITION
+    IAM_PASSROLE_CONDITION,
+    TEMPLATE_METADATA_PARAM
 } from '../utils/consts';
 import {
     deployedStackUrl,
@@ -98,6 +99,7 @@ async function formatTemplateParameters(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string,
     enableCloudWatch: boolean,
+    metadataParam: string,
     credentialsId?: string,
     region?: string,
     skipPasswords?: boolean
@@ -115,8 +117,8 @@ async function formatTemplateParameters(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
-    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-
+    // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
+    const awsAccountId = '464262061435';
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -124,7 +126,8 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
-        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_METADATA_PARAM, ParameterValue: metadataParam }
     ];
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -216,6 +219,7 @@ async function getCloudformationTemplate(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    triggeredFrom: string,
     tags?: Array<{ key: string; value: string }>,
     credentialsId?: string,
     region?: string
@@ -228,8 +232,12 @@ async function getCloudformationTemplate(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
+        triggeredFrom,
         tags
     });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const metadataParam = `triggered-from:${triggeredFrom},deployed-from:cloudformation, instance-type:${workloadInstanceType}`;
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -239,6 +247,7 @@ async function getCloudformationTemplate(
         sqlConfiguration,
         topicArn,
         enableCloudWatch,
+        metadataParam,
         credentialsId,
         region,
         true
@@ -347,6 +356,7 @@ async function deployStackOrCreateTemplateURL(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    triggeredFrom: string,
     tags?: Array<{ key: string; value: string }>
 ) {
     logger.info('Deploy Stack or Create Template URL For user deployment', {
@@ -357,8 +367,12 @@ async function deployStackOrCreateTemplateURL(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
-        tags
+        tags,
+        triggeredFrom
     });
+
+    const { workloadInstanceType } = ec2Configuration;
+    let metadataParam = `triggered-from:${triggeredFrom},instance-type:${workloadInstanceType}`;
 
     try {
         const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
@@ -368,6 +382,9 @@ async function deployStackOrCreateTemplateURL(
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
+            // Need to check if we are tracking this way of deployment and this is CF way of deployment
+            // since
+            metadataParam += ',deployed-from:cloudformation';
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
@@ -378,11 +395,13 @@ async function deployStackOrCreateTemplateURL(
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
+                metadataParam,
                 tags
             );
             response.missingPermissions = MISSING_PERMISSIONS(permissions);
             return response;
         }
+        metadataParam += ',deployed-from:wlmdb';
         return await deployCloudFormationTemplate(
             credentialsId,
             region,
@@ -393,11 +412,13 @@ async function deployStackOrCreateTemplateURL(
             sqlConfiguration,
             topicArn,
             enableCloudWatch,
+            metadataParam,
             tags
         );
     } catch (err: any) {
         // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
+            metadataParam += ',deployed-from:cloudformation';
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
@@ -408,6 +429,7 @@ async function deployStackOrCreateTemplateURL(
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
+                metadataParam,
                 tags
             );
             response.missingPermissions = MISSING_PERMISSIONS(err?.message);
@@ -430,6 +452,7 @@ async function createCloudFormationTemplateForUserDeployment(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    metadataParam: string,
     tags?: Array<{ key: string; value: string }>
 ): Promise<CloudFormationDeploymentResponseType> {
     logger.info('Create cloud formation template for user deployment', {
@@ -440,6 +463,7 @@ async function createCloudFormationTemplateForUserDeployment(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
+        metadataParam,
         tags
     });
 
@@ -510,7 +534,8 @@ async function createCloudFormationTemplateForUserDeployment(
         ...ec2Configuration,
         ...fsxConfiguration,
         topicArn,
-        enableCloudWatch
+        enableCloudWatch,
+        metadataParam
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
@@ -548,6 +573,7 @@ async function createCloudFormationTemplateForUserDeployment(
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
+    logger.info('metadataParam here', metadataParam);
 
     return { cloudFormationUrl: signedTemplateURL };
 }
@@ -562,6 +588,7 @@ async function deployCloudFormationTemplate(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    metadataParam: string,
     tags?: Array<{ key: string; value: string }>
 ): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     logger.info('Deploy sql cloud formation template ', {
@@ -572,7 +599,8 @@ async function deployCloudFormationTemplate(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
-        tags
+        tags,
+        metadataParam
     });
 
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
@@ -598,6 +626,7 @@ async function deployCloudFormationTemplate(
         sqlConfiguration,
         topicArn,
         enableCloudWatch,
+        metadataParam,
         credentialsId,
         region
     );

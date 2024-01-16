@@ -27,6 +27,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
             { schema: CloudFormationTemplateSchema },
             async (request, reply) => {
                 const {
+                    headers: { 'triggered-from': triggeredFrom },
                     body: {
                         networkConfiguration,
                         ec2Configuration,
@@ -48,6 +49,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
+                    triggeredFrom,
                     tags,
                     credentialsId,
                     region
@@ -58,6 +60,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         .post(`${API_PREFIX_PATH}/cloudformation/deploy`, { schema: DeployTemplateSchema }, async (request, reply) => {
             const {
                 params: { credentialsId, region },
+                headers: { 'triggered-from': triggeredFrom },
                 body: {
                     networkConfiguration,
                     ec2Configuration,
@@ -69,6 +72,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     tags
                 }
             } = request;
+            // console.log('header', metadataParam);
             const response = await deployStackOrCreateTemplateURL(
                 credentialsId,
                 region,
@@ -79,6 +83,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
+                triggeredFrom,
                 tags
             );
             return reply.code(202).send(response);
@@ -105,7 +110,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .get(`/v1/deployments`, { schema: DeploymentSummaryListSchema }, async (request, reply) => {
+        .get('/v1/deployments', { schema: DeploymentSummaryListSchema }, async (request, reply) => {
             const {
                 params: { accountId },
                 query: { statuses, nextToken }
