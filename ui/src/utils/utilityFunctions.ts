@@ -951,7 +951,7 @@ export const downloadCsv = (data: any) => {
     const link = document.createElement('a');
     link.setAttribute('href', excel); //Links to CSV File
 
-    link.setAttribute('download', 'job_monitoring'); //Filename that CSV is saved as
+    link.setAttribute('download', 'Job_Monitoring_' + Date.now()); //Filename that CSV is saved as
     link.click();
 };
 
@@ -988,8 +988,9 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         );
       }
     });
-
-    result += '\n'; //New Row
+    if (level === 1){
+        result += '\n'; //New Row
+    }
     return result;
 };
 
