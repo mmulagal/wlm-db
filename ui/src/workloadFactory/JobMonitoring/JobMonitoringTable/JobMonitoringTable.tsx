@@ -14,12 +14,11 @@ import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { createJobMonitorCSV, downloadCsv, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
-import JobMonitoringDownload from '../../JobMonitoring/jobMonitoringDownload.json';
 import { useDispatch } from 'react-redux';
 import { setDownloadJobsList, setDownloadJobsLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { useEffect, useState } from 'react';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
-import { jobMonitoringApi, useGetJobsListQuery } from '../../../utils/apiService';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { useGetFullJobsListQuery } from '../../../utils/apiService';
 
 const JobMonitoringTable = () => {
     const dispatch = useDispatch();
@@ -28,6 +27,8 @@ const JobMonitoringTable = () => {
     const downloadJobsLoading = useAppSelector(state => state.jobMonitoring.downloadJobsLoading);
     const downloadJobsList = useAppSelector(state => state.jobMonitoring.downloadJobsList);
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
+    const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
+    const toTime = useAppSelector(state => state.jobMonitoring.toTime);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
@@ -57,48 +58,65 @@ const JobMonitoringTable = () => {
     //     };
     // });
 
-    useEffect(() => {
-        if (downloadJobsLoading === false) {
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: GENERAL.JM_DOWNLOAD_SUCCESS
-                })
-            );
-        }
-
-        if (downloadJobsLoading === true && timeInterval) {
-            setTimeout(() => {
-                dispatch(jobMonitoringApi.util.resetApiState());
-                dispatch(setDownloadJobsList([]));
-                const toDate = Date.now();
-                const fromDate = toDate - timeInterval * (3600 * 1000 * 24);
-                setTime({startTime: fromDate, endTime: toDate});
-                setSkipApiCall(false);
-            }, 0)
-        }
-    }, [downloadJobsLoading]);
-
+    // API call to download job monitoring data where includeSubJobs is true. It will include subtasks also.
     const {
         data: jmJobsList,
         isFetching: jmJobsListLoading,
-    } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+        isError: jmJobsListError
+    } = useGetFullJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime, 
+        includeSubJobs: true}, {skip: skipApiCall});
 
+    // When download starts it will read timeInterval and start API call 
     useEffect(() => {
-        let oldList = downloadJobsList || [];
-        let newList = jmJobsList?.items || [];
-        let mergedList = [...oldList, ...newList]
-        dispatch(setDownloadJobsList(mergedList));
-        setJobsCursor(jmJobsList?.nextToken || null);
-        if (jmJobsList?.nextToken === null) {
-            const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
-            const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
-            const result = '';
-            const csv = createJobMonitorCSV(mergedList, keys, headers, result, 0);
-            downloadCsv(csv);
-            dispatch(setDownloadJobsLoading(false));
+        if (downloadJobsLoading && timeInterval && fromTime && toTime) {
+            setTimeout(() => {
+                dispatch(setDownloadJobsList([]));
+                setTime({startTime: fromTime, endTime: toTime});
+                setSkipApiCall(false);
+            }, 0)
+        } else {
+            setSkipApiCall(true);
         }
-    }, [jmJobsList]);
+    }, [downloadJobsLoading]);
+
+    // Download Job monitoring download function
+    const downloadJMTable = (dataList: any) => {
+        const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
+        const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
+        const result = '';
+        const csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
+        downloadCsv(csv);
+        dispatch(setDownloadJobsLoading(false));
+    };
+
+    // Logic to read API response and download file
+    useEffect(() => {
+        if (!jmJobsListLoading) {
+            let oldList = downloadJobsList || [];
+            let newList = jmJobsList?.items || [];
+            let mergedList = [...oldList, ...newList]
+            dispatch(setDownloadJobsList(mergedList));
+            setJobsCursor(jmJobsList?.nextToken || null);
+            dispatch(clearNotifications());
+
+            if (jmJobsList?.nextToken === null) {
+                // Download logic 
+                downloadJMTable(mergedList);
+
+                // success notification
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.SUCCESS,
+                        message: GENERAL.JM_DOWNLOAD_SUCCESS
+                    })
+                );
+            } else if (jmJobsListError) {
+                // in case of API error set loading as false
+                dispatch(setDownloadJobsLoading(false));
+            }
+        }
+        
+    }, [jmJobsList, jmJobsListLoading, jmJobsListError]);
 
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
@@ -152,7 +170,11 @@ const JobMonitoringTable = () => {
             Header: 'Type',
             accessor: 'type',
             width: '160px',
-            filterOptions: 'auto'
+            filterOptions: [
+                { value: 'awdawd 1', label: 'awdawd 1' },
+                { value: 'awdawd 2', label: 'awdawd 2' },
+                { value: 'awdawd 3', label: 'awdawd 3' },
+              ],
         },
         {
             id: '3',
@@ -265,7 +287,12 @@ const JobMonitoringTable = () => {
                         singularTitle="Job"
                         className={styles.topBarStyle}
                         actionsRight={
-                            <div>
+                            <div className={styles.downloadButton}>
+                                {jobsListLoading && !downloadJobsLoading && 
+                                    <div className={styles.downloadDisable}>
+                                        <DownloadIcon />
+                                    </div>
+                                }
                                 {downloadJobsLoading && 
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
@@ -280,7 +307,7 @@ const JobMonitoringTable = () => {
                                         }
                                     />
                                 }
-                                {!downloadJobsLoading && 
+                                {!downloadJobsLoading && !jobsListLoading && 
                                     <DownloadIcon 
                                         onClick={downloadJobMonitoring}
                                 />}
