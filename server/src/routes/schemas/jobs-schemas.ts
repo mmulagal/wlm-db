@@ -9,8 +9,8 @@ import {
     CreateJobRequestBody,
     UpdateJobRequestBody,
     JobDetailsResponse,
-    DeploymentJobsCountQueryString,
-    DeploymentJobsCountResponse
+    JobSummaryQueryString,
+    JobSummaryResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -42,9 +42,20 @@ const JobDetailsSchema = {
     }
 };
 
+const JobSummarySchema = {
+    ...baseRequest,
+    summary: 'Get job summary',
+    description: 'API to get job summary for a given account and time range',
+    querystring: JobSummaryQueryString,
+    response: {
+        200: JobSummaryResponse
+    }
+};
+
 // Delete job
 const DeleteJobSchema = {
     tags: [RouteTags.JOB_MONITORING],
+    hide: process.env.NODE_ENV === 'production',
     params: JobsParams,
     summary: 'Delete a job with all its child jobs',
     description: 'API to delete a job and all its subjobs',
@@ -56,6 +67,7 @@ const DeleteJobSchema = {
 // Update job
 const UpdateJobSchema = {
     tags: [RouteTags.JOB_MONITORING],
+    hide: process.env.NODE_ENV === 'production',
     params: JobsParams,
     summary: 'Update a job',
     description: 'API to update job details',
@@ -68,6 +80,7 @@ const UpdateJobSchema = {
 // Create jobs
 const CreateJobSchema = {
     ...baseRequest,
+    hide: process.env.NODE_ENV === 'production',
     summary: 'Create jobs',
     description: 'API to create jobs',
     body: CreateJobRequestBody,
@@ -76,16 +89,4 @@ const CreateJobSchema = {
     }
 };
 
-// //TODO : DELETE ME Get Deployment jobs summary details
-const DeploymentJobsCountSchema = {
-    ...baseRequest,
-    summary: 'Get deployment jobs count',
-    description: 'API to get deployment jobs count for given duration in days',
-    querystring: DeploymentJobsCountQueryString,
-    response: {
-        200: DeploymentJobsCountResponse
-    }
-};
-
-
-export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, UpdateJobSchema, CreateJobSchema, DeploymentJobsCountSchema };
+export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, UpdateJobSchema, CreateJobSchema, JobSummarySchema };

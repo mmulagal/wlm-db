@@ -66,5 +66,13 @@
             "timeout": "10s",
             "interval": "500ms"
         }
+    },
+    "db": {
+        "jobs": {
+            "purge": {
+                "interval": "24h",
+                "older-than": "90"
+            }
+        }
     }
 }
