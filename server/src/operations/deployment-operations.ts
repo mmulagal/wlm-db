@@ -66,7 +66,6 @@ import {
     IAM_LINKEDROLE_CONDITION,
     IAM_EC2_SERVICE,
     IAM_PASSROLE_CONDITION,
-    TEMPLATE_FSX_USERNAME,
     TEMPLATE_FSX_PASSWORD
 } from '../utils/consts';
 import {
@@ -130,12 +129,8 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
     if (fsxConfiguration.fsxPassword) {
-        const encryptedFsxUserName = await encryptString(fsxConfiguration.fsxUsername);
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        templateParams.push(
-            { ParameterKey: TEMPLATE_FSX_USERNAME, ParameterValue: encryptedFsxUserName },
-            { ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword }
-        );
+        templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
     }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -503,9 +498,8 @@ async function createCloudFormationTemplateForUserDeployment(
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
-        const encryptedFsxUserName = await encryptString(fsxConfiguration.fsxUsername);
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        templateParams += `&param_${TEMPLATE_FSX_USERNAME}=${encryptedFsxUserName}&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+        templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
     }
 
     Object.entries(derivedParams).forEach(([key, value]) => {

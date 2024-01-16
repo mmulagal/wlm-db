@@ -352,6 +352,12 @@ const PARAMETERS = [
         noEcho: true
     },
     {
+        name: 'EncryptedFsxPassword',
+        description: 'Encrypted value of fsx password entered by user in DB deployment wizard (DO NOT EDIT)',
+        type: 'String',
+        noEcho: true
+    },
+    {
         name: 'WlmdbAwsAccountId',
         description: 'WLMDB AWS Account ID (DO NOT EDIT)',
         type: 'String',

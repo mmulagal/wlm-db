@@ -283,7 +283,6 @@ async function processCloudFormationMessages() {
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
                                                         EncryptedFsxPassword: encryptedFsxPassword
-                                                        // EncryptedFsxUsername: encryptedFsxUsername
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
