@@ -74,6 +74,23 @@
         line-height: 24px;
     }
 
+    .loadingTable {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        position: relative;
+        height: 240px;
+        width: -webkit-fill-available;
+        justify-content: center;
+
+        svg {
+            path {
+                fill: var(--grey-65);
+            }
+        }
+    }
+
     [class*='Table-module_cell'] {
         background-color: var(--main-background) !important;
     }

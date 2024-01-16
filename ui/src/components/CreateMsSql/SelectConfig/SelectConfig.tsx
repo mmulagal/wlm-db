@@ -10,6 +10,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { Typography } from '@netapp/design-system';
+import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 const SelectConfig = () => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
@@ -24,12 +25,15 @@ const SelectConfig = () => {
                         ? `${styles['easy-create']} ${styles['add-border']}`
                         : styles['easy-create']
                 }
-                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE))}
+                onClick={() => {
+                    dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
+                    dispatch(setIsWizardTouched(true));
+                }}
             >
                 <div className={styles.level}>
                     <EasyCreate />
                     <div className={styles['easy-create-content']}>
-                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
+                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.QUICK_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
                             {SELECT_CONFIG.EASY_CREATE_CONTENT}
                         </Typography>
@@ -52,12 +56,15 @@ const SelectConfig = () => {
                         ? `${styles['standard-create']} ${styles['add-border']}`
                         : styles['standard-create']
                 }
-                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE))}
+                onClick={() => {
+                    dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+                    dispatch(setIsWizardTouched(true));
+                }}
             >
                 <div className={styles.level}>
                     <StandardCreate />
                     <div className={styles['standard-create-content']}>
-                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
+                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.ADVANCED_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['standard-create-content-text']}>
                             {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
                         </Typography>

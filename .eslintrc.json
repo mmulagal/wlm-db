@@ -96,6 +96,7 @@
         "no-trailing-spaces": 2,
         "import/group-exports": 2,
         "import/prefer-default-export": 1,
+        "no-prototype-builtins": 0,
         "import/no-duplicates": 1,
         "import/extensions": 0,
         "import/no-extraneous-dependencies": 0,

@@ -1,21 +1,82 @@
 import { RouteTags } from '../../utils/consts';
 import {
-    DeploymentJobsCountResponse,
-    DeploymentJobsCountQueryString,
-    DeploymentJobsSummaryQueryString,
-    DeploymentJobsSummaryListResponse,
     JobsParams,
-    DeleteJobResponse
+    ListJobsQueryString,
+    ListJobsResponse,
+    DeleteJobResponse,
+    UpdateJobResponse,
+    CreateJobResponse,
+    CreateJobRequestBody,
+    UpdateJobRequestBody,
+    JobDetailsResponse,
+    DeploymentJobsCountQueryString,
+    DeploymentJobsCountResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
 // Base Request for Deployment Routes
 const baseRequest = {
-    tags: [RouteTags.DEPLOYMENT],
+    tags: [RouteTags.JOB_MONITORING],
     params: AccountIdParams
 };
 
-// Get Deployment jobs summary details
+// Get all jobs
+const ListJobsSchema = {
+    ...baseRequest,
+    summary: 'List all jobs',
+    description: 'API to list all jobs in a tenancy account',
+    querystring: ListJobsQueryString,
+    response: {
+        200: ListJobsResponse
+    }
+};
+
+// Get job details
+const JobDetailsSchema = {
+    tags: [RouteTags.JOB_MONITORING],
+    params: JobsParams,
+    summary: 'Get job details with child jobs',
+    description: 'API to list all jobs in a tenancy account with its immediate level child jobs',
+    response: {
+        200: JobDetailsResponse
+    }
+};
+
+// Delete job
+const DeleteJobSchema = {
+    tags: [RouteTags.JOB_MONITORING],
+    params: JobsParams,
+    summary: 'Delete a job with all its child jobs',
+    description: 'API to delete a job and all its subjobs',
+    response: {
+        200: DeleteJobResponse
+    }
+};
+
+// Update job
+const UpdateJobSchema = {
+    tags: [RouteTags.JOB_MONITORING],
+    params: JobsParams,
+    summary: 'Update a job',
+    description: 'API to update job details',
+    body: UpdateJobRequestBody,
+    response: {
+        200: UpdateJobResponse
+    }
+};
+
+// Create jobs
+const CreateJobSchema = {
+    ...baseRequest,
+    summary: 'Create jobs',
+    description: 'API to create jobs',
+    body: CreateJobRequestBody,
+    response: {
+        200: CreateJobResponse
+    }
+};
+
+// //TODO : DELETE ME Get Deployment jobs summary details
 const DeploymentJobsCountSchema = {
     ...baseRequest,
     summary: 'Get deployment jobs count',
@@ -26,24 +87,11 @@ const DeploymentJobsCountSchema = {
     }
 };
 
-const DeploymentJobsSummaryListSchema = {
-    ...baseRequest,
-    summary: 'Get deployment jobs summary',
-    description: 'API to get deployment jobs summary for given deployment status types',
-    querystring: DeploymentJobsSummaryQueryString,
-    response: {
-        200: DeploymentJobsSummaryListResponse
-    }
+export {
+    ListJobsSchema,
+    JobDetailsSchema,
+    DeleteJobSchema,
+    UpdateJobSchema,
+    CreateJobSchema,
+    DeploymentJobsCountSchema
 };
-
-const DeleteDeploymentJobsSchema = {
-    tags: [RouteTags.DEPLOYMENT],
-    params: JobsParams,
-    summary: 'Delete deployment Job',
-    description: 'Delete deployment Job for the given job Id',
-    response: {
-        200: DeleteJobResponse
-    }
-};
-
-export { DeploymentJobsCountSchema, DeploymentJobsSummaryListSchema, DeleteDeploymentJobsSchema };

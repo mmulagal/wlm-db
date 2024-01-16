@@ -23,6 +23,7 @@ import { setSelectedRegionData, setSelectedVPC } from '../../../../store/mssql/m
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
@@ -174,6 +175,7 @@ const RegionVpc = () => {
                             onChange={(selectedOptions: any): void => {
                                 dispatch(setSelectedRegionData(selectedOptions));
                                 dispatch(setSelectedVPC(null));
+                                dispatch(setIsWizardTouched(true));
                             }}
                             isSearchable={generateRegionsData.length > 5}
                             options={generateRegionsData}
@@ -226,6 +228,7 @@ const RegionVpc = () => {
                                     value={selectedVPCData ? selectedVPCData : null}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedVPC(selectedOptions));
+                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     placeholder="Select a VPC"
                                     isSearchable={generateVPCOptions.length > 5}

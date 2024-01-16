@@ -1,4 +1,5 @@
 .taskTable {
+
     .taskRow {
         display: flex;
         margin-bottom: 1px;
@@ -59,5 +60,22 @@
         padding-left: 24px;
         background-color: var(--blue-10);
         color: var(--grey-50) !important;
+    }
+
+    .emptyTable {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        position: relative;
+        height: 240px;
+        width: -webkit-fill-available;
+        justify-content: center;
+
+        svg {
+            path {
+                fill: var(--grey-65);
+            }
+        }
     }
 }

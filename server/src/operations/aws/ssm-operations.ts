@@ -32,9 +32,11 @@ async function pollCommandStatus(
 
         switch (status) {
             case CommandInvocationStatus.SUCCESS:
+                return response;
             case CommandInvocationStatus.FAILED:
             case CommandInvocationStatus.TIMED_OUT:
             case CommandInvocationStatus.CANCELLED:
+                logger.error(`SSM execution ${status} for command ${pollParams.CommandId}`);
                 return response;
             case CommandInvocationStatus.CANCELLING:
             case CommandInvocationStatus.DELAYED:
@@ -113,24 +115,27 @@ async function isSSMConnectionSuccessful(
     credentialsId: string,
     region: string,
     activeNodeInstanceId: string,
-    standbyNodeInstanceId?: string
+    standbyNodeInstanceId?: string,
+    resourceId?: string
 ) {
     logger.info(
         'Check if SSM connection is a success',
         credentialsId,
         region,
         activeNodeInstanceId,
-        standbyNodeInstanceId
+        standbyNodeInstanceId,
+        resourceId
     );
     try {
         let connectionStatus = await getSSMConnectionStatus(credentialsId, region!, activeNodeInstanceId);
-
+        const resourceError = `for resource ID ${resourceId}`;
         // Connection to activenode is successful
         if (connectionStatus.Status === ConnectionStatus.CONNECTED) {
             return true;
         }
 
         let errorMessage = `SSM connection to node ${activeNodeInstanceId} has failed.`;
+        errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
         logger.error(errorMessage);
 
         // Check for connection to standby node
@@ -141,11 +146,12 @@ async function isSSMConnectionSuccessful(
             }
 
             errorMessage = `SSM connection to nodes ${activeNodeInstanceId} and ${standbyNodeInstanceId} has failed.`;
+            errorMessage = resourceId ? errorMessage.concat(resourceError) : errorMessage;
             logger.error(errorMessage);
         }
     } catch (error) {
         logger.error(
-            `Error while checking SSM connection ${credentialsId}, ${region}, ${activeNodeInstanceId}, ${standbyNodeInstanceId}`
+            `Error while checking SSM connection ${credentialsId}, ${region}, ${activeNodeInstanceId}, ${standbyNodeInstanceId} for resource ID ${resourceId}`
         );
         return false;
     }

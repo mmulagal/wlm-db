@@ -5,12 +5,14 @@ import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
     COSTING_TYPES,
+    CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
+    JM_DOWNLOAD,
     JOB_MONITORING_STATUS,
     PENDING_DELETION,
     PRODUCTION,
@@ -408,13 +410,17 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
     }
-    const totalJobs = (data?.failed || 0) + (data?.initializing || 0) + (data?.success || 0);
+    // ToDo: Will remove succes and initializing once jobs summary API changes will be on stage
+    const completed = (data?.success || data?.completed || 0);
+    const failed = (data?.failed || 0);
+    const inProgress = (data?.initializing || data?.inProgress || 0)
+    const totalJobs = failed + inProgress + completed;
     const newData = {
         ...data,
         totalJobs: totalJobs,
-        successPercent: data?.success ? (data.success / totalJobs) * 100 : 0,
-        failedPercent: data?.failed ? (data.failed / totalJobs) * 100 : 0,
-        initializingPercent: data?.initializing ? (data.initializing / totalJobs) * 100 : 0
+        successPercent: completed ? (completed / totalJobs) * 100 : 0,
+        failedPercent: failed ? (failed / totalJobs) * 100 : 0,
+        initializingPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
     };
     return newData;
 };
@@ -893,7 +899,7 @@ function getLastSevenDays() {
         dates.push(date);
     }
     return dates;
-}
+};
 
 // Getting the last 7 days
 export const lastSevenDays = getLastSevenDays().reverse();
@@ -908,7 +914,7 @@ function getLast14Days() {
         }
     }
     return dates;
-}
+};
 
 // Getting the last 7 days
 export const last14Days = getLast14Days().reverse();
@@ -921,14 +927,14 @@ function get30Days() {
         dates.push(date);
     }
     return dates;
-}
+};
 
 export const last30Days = get30Days().reverse();
 
 export const resetDBHomePageState = (dispatch: any) => {
     dispatch(databaseHomeApi.util.resetApiState());
     dispatch(addInitialData(initialDBHomepageState));
-}
+};
 
 export const jobMonitoringStatusMapping = (val : string) => {
     let statusValue = val;
@@ -940,4 +946,58 @@ export const jobMonitoringStatusMapping = (val : string) => {
         statusValue = GENERAL.JM_IN_PROGRESS;
     }
     return statusValue;
-}
+};
+
+export const downloadCsv = (data: any) => {
+    const csv = 'data:text/csv;charset=utf-8,' + data;
+    const excel = encodeURI(csv); //Links to CSV
+
+    const link = document.createElement('a');
+    link.setAttribute('href', excel); //Links to CSV File
+
+    link.setAttribute('download', 'Job_Monitoring_' + Date.now()); //Filename that CSV is saved as
+    link.click();
+};
+
+export const addBlankCell = (level: number, result: any) => {
+    for(var i : number = 0; i < level; i++)  
+      {
+        result += ',';
+      }
+    return result;
+};
+
+export const createJobMonitorCSV = (array: any, keys: any, headers: any, result: string, level: number) => {
+    result = addBlankCell(level, result);
+    result += headers;
+    result += '\n'; //New Row
+  
+    array.map((item: any) => {
+      //Goes Through Each Array Object
+      result = addBlankCell(level, result);
+      keys.map((key: string) => {
+        //Goes Through Each Object value
+        if (key && key !== '') {
+          result += item[key] + ','; //Comma Seperates Each Key Value in a Row
+        }
+      });
+      result += '\n'; //Creates New Row
+      if (item?.subJobs) {
+        result = createJobMonitorCSV(
+            item?.subJobs, 
+            JM_DOWNLOAD.SUB_JOBS_KEYS, 
+            JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS, 
+            result, 
+            level+1
+        );
+      }
+    });
+    if (level === 1){
+        result += '\n'; //New Row
+    }
+    return result;
+};
+
+export const cfDownloadName = (name: string) => {
+    return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
+};

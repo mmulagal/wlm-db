@@ -469,5 +469,6 @@ export {
     deleteConfig,
     listRelationshipsResources,
     deploymentJobsCount,
-    deleteDeploymentJobById
+    deleteDeploymentJobById,
+    checkAccount
 };
