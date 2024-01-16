@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { useGetJobsListQuery } from "../../utils/apiService";
-import { setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { useGetJobsListQuery, useGetJobsSummaryDataQuery } from "../../utils/apiService";
+import { setJmJobsSummary, setJmJobsSummaryLoading, setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { jobStatusPercent } from "../../utils/utilityFunctions";
 
 const JobMonitoringApi = () => {
     const dispatch = useAppDispatch();
@@ -35,6 +36,11 @@ const JobMonitoringApi = () => {
         isFetching: jmJobsListLoading,
     } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
+    const {
+        data: jmJobsSummary,
+        isFetching: jmJobsSummaryLoading,
+    } = useGetJobsSummaryDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+
     useEffect(() => {
         let oldList = jobsList || [];
         let newList = jmJobsList?.items || [];
@@ -46,6 +52,15 @@ const JobMonitoringApi = () => {
     useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));
     }, [jmJobsListLoading]);
+
+    useEffect(() => {
+        const data = jobStatusPercent(jmJobsSummary || {}) ;
+        dispatch(setJmJobsSummary(data));
+    }, [jmJobsSummary]);
+
+    useEffect(() => {
+        dispatch(setJmJobsSummaryLoading(jmJobsSummaryLoading));
+    }, [jmJobsSummaryLoading]);
 
 }
 

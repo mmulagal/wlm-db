@@ -71,9 +71,11 @@ export interface DatabaseJobsItem {
 }
 
 export interface JobsSummaryRes {
-    success: number;
-    failed: number;
-    initializing: number;
+    success?: number;
+    completed?: number;
+    failed?: number;
+    initializing?: number;
+    inProgress?: number;
     totalJobs?: number;
     successPercent?: number;
     failedPercent?: number;
