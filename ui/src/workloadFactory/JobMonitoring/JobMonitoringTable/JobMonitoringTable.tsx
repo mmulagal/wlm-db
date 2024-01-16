@@ -16,15 +16,24 @@ import { GENERAL } from '../../../utils/appConstants';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import JobMonitoringDownload from '../../JobMonitoring/jobMonitoringDownload.json';
 import { useDispatch } from 'react-redux';
-import { setDownloadData } from '../../../store/workloadFactory/jobMonitoringSlice';
-import { useEffect } from 'react';
+import { setDownloadJobsList, setDownloadJobsLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { useEffect, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { jobMonitoringApi, useGetJobsListQuery } from '../../../utils/apiService';
 
 const JobMonitoringTable = () => {
     const dispatch = useDispatch();
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
-    const downloadData = useAppSelector(state => state.jobMonitoring.downloadData);
+    const downloadJobsLoading = useAppSelector(state => state.jobMonitoring.downloadJobsLoading);
+    const downloadJobsList = useAppSelector(state => state.jobMonitoring.downloadJobsList);
+    const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
+
+    const [jobsCursor, setJobsCursor] = useState(null);
+    const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
+
+    // skipApiCall to skip APi call when isActive is not true. Will make it true once API will be available.
+    const [skipApiCall, setSkipApiCall] = useState(true);
 
     // const [scrollPos, setScrollPos] = useState(0);
 
@@ -49,22 +58,47 @@ const JobMonitoringTable = () => {
     // });
 
     useEffect(() => {
-        if (downloadData === true) {
-            dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.INFO,
-                    message: 'Download jobs table is in progress'
-                })
-            );
-        } else if (downloadData === false) {
+        if (downloadJobsLoading === false) {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,
-                    message: 'Jobs table downloaded successfully'
+                    message: GENERAL.JM_DOWNLOAD_SUCCESS
                 })
             );
         }
-    }, [downloadData]);
+
+        if (downloadJobsLoading === true && timeInterval) {
+            setTimeout(() => {
+                dispatch(jobMonitoringApi.util.resetApiState());
+                dispatch(setDownloadJobsList([]));
+                const toDate = Date.now();
+                const fromDate = toDate - timeInterval * (3600 * 1000 * 24);
+                setTime({startTime: fromDate, endTime: toDate});
+                setSkipApiCall(false);
+            }, 0)
+        }
+    }, [downloadJobsLoading]);
+
+    const {
+        data: jmJobsList,
+        isFetching: jmJobsListLoading,
+    } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+
+    useEffect(() => {
+        let oldList = downloadJobsList || [];
+        let newList = jmJobsList?.items || [];
+        let mergedList = [...oldList, ...newList]
+        dispatch(setDownloadJobsList(mergedList));
+        setJobsCursor(jmJobsList?.nextToken || null);
+        if (jmJobsList?.nextToken === null) {
+            const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
+            const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
+            const result = '';
+            const csv = createJobMonitorCSV(mergedList, keys, headers, result, 0);
+            downloadCsv(csv);
+            dispatch(setDownloadJobsLoading(false));
+        }
+    }, [jmJobsList]);
 
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
@@ -207,18 +241,14 @@ const JobMonitoringTable = () => {
         lazyLoadingText: GENERAL.LOADING_DATA
     };
 
-    const downloadJobMonitoring = (data: any) => {
-        dispatch(setDownloadData(true));
-        
-        // TODO: API integration for download
-        setTimeout(() => {
-            const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
-            const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
-            const result = '';
-            const csv = createJobMonitorCSV(data, keys, headers, result, 0);
-            downloadCsv(csv);
-            dispatch(setDownloadData(false));
-        }, 5000);
+    const downloadJobMonitoring = () => {
+        dispatch(setDownloadJobsLoading(true));
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: GENERAL.JM_DOWNLOAD_PROGRESS
+            })
+        );
     }
 
     return (
@@ -236,7 +266,7 @@ const JobMonitoringTable = () => {
                         className={styles.topBarStyle}
                         actionsRight={
                             <div>
-                                {downloadData && 
+                                {downloadJobsLoading && 
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
                                         children={
@@ -250,9 +280,9 @@ const JobMonitoringTable = () => {
                                         }
                                     />
                                 }
-                                {!downloadData && 
+                                {!downloadJobsLoading && 
                                     <DownloadIcon 
-                                        onClick={() => {downloadJobMonitoring(JobMonitoringDownload?.items)}}
+                                        onClick={downloadJobMonitoring}
                                 />}
                             </div>
                           }
