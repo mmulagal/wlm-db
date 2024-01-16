@@ -496,6 +496,8 @@ export const GENERAL = {
     JM_FAILED: 'Failed',
     NO_DATA: 'No data',
     JM_RUNNING: 'Running',
+    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
     DEMO_TITLE: 'This is a Demo account',
     DEMO_CONTENT:
         'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation'

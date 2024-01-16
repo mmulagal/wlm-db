@@ -566,7 +566,8 @@ async function getDatabaseHostsSummary(
                     credentialsId,
                     region!,
                     activeNodeInstanceId,
-                    standbyNodeInstanceId
+                    standbyNodeInstanceId,
+                    resourceId
                 );
 
                 let serverStatus: string = ServerState.DOWN;
@@ -685,7 +686,8 @@ async function getDatabaseHostSummary(
             credentialsId,
             region!,
             activeNodeInstanceId,
-            standbyNodeInstanceId
+            standbyNodeInstanceId,
+            resourceId
         );
 
         let serverStatus: string = ServerState.DOWN;

@@ -5,18 +5,26 @@ import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import { ReactComponent as InProgress } from '../../../assets/In Progress.svg';
 import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
+import { ReactComponent as DownloadIcon } from '../../../assets/ic_download.svg';
 
 import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
-import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
+import { createJobMonitorCSV, downloadCsv, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
+import JobMonitoringDownload from '../../JobMonitoring/jobMonitoringDownload.json';
+import { useDispatch } from 'react-redux';
+import { setDownloadData } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { useEffect } from 'react';
+import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 
 const JobMonitoringTable = () => {
+    const dispatch = useDispatch();
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
+    const downloadData = useAppSelector(state => state.jobMonitoring.downloadData);
 
     // const [scrollPos, setScrollPos] = useState(0);
 
@@ -39,6 +47,24 @@ const JobMonitoringTable = () => {
     //         }
     //     };
     // });
+
+    useEffect(() => {
+        if (downloadData === true) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: 'Download jobs table is in progress'
+                })
+            );
+        } else if (downloadData === false) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.SUCCESS,
+                    message: 'Jobs table downloaded successfully'
+                })
+            );
+        }
+    }, [downloadData]);
 
     const ExpandedRow = ({ rowData }: any) => {
         const statusType = rowData?.status.toLowerCase();
@@ -181,10 +207,19 @@ const JobMonitoringTable = () => {
         lazyLoadingText: GENERAL.LOADING_DATA
     };
 
-    const exportToCsv = {
-        options: {},
-        fileName: 'Test'
-    };
+    const downloadJobMonitoring = (data: any) => {
+        dispatch(setDownloadData(true));
+        
+        // TODO: API integration for download
+        setTimeout(() => {
+            const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
+            const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
+            const result = '';
+            const csv = createJobMonitorCSV(data, keys, headers, result, 0);
+            downloadCsv(csv);
+            dispatch(setDownloadData(false));
+        }, 5000);
+    }
 
     return (
         <>
@@ -199,7 +234,28 @@ const JobMonitoringTable = () => {
                         pluralTitle="Jobs"
                         singularTitle="Job"
                         className={styles.topBarStyle}
-                        exportToCsvOptions={exportToCsv}
+                        actionsRight={
+                            <div>
+                                {downloadData && 
+                                    <Popover
+                                        popoverClass={CommonStyles['popover']}
+                                        children={
+                                            <Typography variant="Regular_14">{GENERAL.JM_DOWNLOAD_PROGRESS}</Typography>
+                                        }
+                                        trigger="hover"
+                                        container={
+                                            <div className={styles.downloadDisable}>
+                                                <DownloadIcon />
+                                            </div>
+                                        }
+                                    />
+                                }
+                                {!downloadData && 
+                                    <DownloadIcon 
+                                        onClick={() => {downloadJobMonitoring(JobMonitoringDownload?.items)}}
+                                />}
+                            </div>
+                          }
                     />
 
                     <Table

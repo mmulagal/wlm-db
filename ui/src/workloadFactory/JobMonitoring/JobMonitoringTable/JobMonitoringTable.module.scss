@@ -2,6 +2,14 @@
     .table {
         width: 1612px;
 
+        .downloadDisable {
+            svg {
+                path {
+                    fill: var(--grey-30);
+                }
+            }
+        }
+        
         .topBarStyle {
             z-index: 3 !important;
         }
@@ -18,6 +26,11 @@
                     }
                 }
             }
+        }
+
+        [class*='Table-module_table-wrapper'] {
+            position: relative;
+            z-index: 1;
         }
     }
 
