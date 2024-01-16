@@ -133,11 +133,10 @@ async function callSsmExecution(
     if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
         logger.info('Reading from cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
         const cacheResponse = readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
-        if(!isEmpty(cacheResponse)){
-            return cacheResponse
+        if (!isEmpty(cacheResponse)) {
+            return cacheResponse;
         }
-        logger.info('Cache data is empty. Re-running query.', cacheResponse)
-    
+        logger.info('Cache data is empty. Re-running query.', cacheResponse);
     }
 
     let response;
