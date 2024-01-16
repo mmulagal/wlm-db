@@ -9,7 +9,8 @@ import {
     CloudFormationStaticTemplateRequestBody,
     CloudFormationStaticTemplateResponse,
     DeploymentSummaryQueryString,
-    DeploymentSummaryListResponse
+    DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
