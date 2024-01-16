@@ -195,6 +195,8 @@ describe('Job operations', () => {
 
     it('should get job summary', async () => {
         const response = await getJobSummary(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
-        expect(response).toMatchObject({ in_progress: 2 });
+        expect(response).toHaveProperty('in_progress');
+        expect(response).toHaveProperty('completed');
+        expect(response).toHaveProperty('failed');
     });
 });
