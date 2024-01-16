@@ -156,12 +156,12 @@ async function deleteJobsOfAccount(accountId: string) {
     });
 }
 
-async function deleteOlderJobs(date: Date) {
-    logger.info('Delete Older Jobs ');
+async function deleteOlderJobs(olderDate: number) {
+    logger.info('Delete Older Jobs ', { olderDate });
     return prisma.client.job.deleteMany({
         where: {
             start_time: {
-                lt: date
+                lt: new Date(olderDate)
             }
         }
     });

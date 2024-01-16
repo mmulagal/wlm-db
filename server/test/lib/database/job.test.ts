@@ -5,6 +5,7 @@ import {
     createJobs,
     deleteJobs,
     deleteJobsOfAccount,
+    deleteOlderJobs,
     getJobCountByStatus,
     listJobs,
     listUniqueJob,
@@ -225,7 +226,14 @@ describe('List jobs', () => {
 describe('Group jobs by status', () => {
     it('should group jobs by status', async () => {
         const response = await getJobCountByStatus(ACCOUNT_ID, new Date('2024-01-01'), new Date());
-        expect(response[0]).toHaveProperty([ 'status' ]);
-        expect(response[0]).toHaveProperty([ '_count' ]);
+        expect(response[0]).toHaveProperty(['status']);
+        expect(response[0]).toHaveProperty(['_count']);
     });
+});
+
+// This test case should be the last one in this file
+it('should delete jobs lesser than a time', async () => {
+    await deleteOlderJobs(Date.now());
+    const jobs = await listJobs(ACCOUNT_ID);
+    expect(jobs.length).toBe(0);
 });

@@ -71,7 +71,7 @@
         "jobs": {
             "purge": {
                 "interval": "24h",
-                "older-than": "90"
+                "older-than": "90d"
             }
         }
     }

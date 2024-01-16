@@ -9,9 +9,7 @@ export default function purgeOlderJobs() {
     logger.info('Purging older jobs');
 
     const purgeInterval = ms(config.get('db.jobs.purge.interval'));
-    const purgeThresholdDays = ms(config.get('db.jobs.purge.older-than')); // in days
+    const purgeAfter = ms(config.get('db.jobs.purge.older-than'));
 
-    const date = new Date();
-    date.setDate(date.getDate() - Number(purgeThresholdDays));
-    setInterval(async () => deleteOlderJobs(date), Number(purgeInterval));
+    setInterval(async () => deleteOlderJobs(Date.now() - Number(purgeAfter)), Number(purgeInterval));
 }
