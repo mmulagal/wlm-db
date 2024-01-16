@@ -19,6 +19,22 @@ interface readOnlyJob {
     initiator?: string;
 }
 
+async function countParentJobs(accountId: string) {
+    logger.info('Counting parent jobs', accountId);
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.job.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            account_id: accountId,
+            parent_job_id: null
+        }
+    });
+}
+
 async function listJobs(
     accountId: string,
     parentJobId: string | null = null,
@@ -189,6 +205,7 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
 }
 
 export {
+    countParentJobs,
     listJobs,
     listUniqueJob,
     createJobs,

@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
 import moment from 'moment';
 import {
+    countParentJobs,
     createJobs,
     deleteJobs,
     deleteJobsOfAccount,
@@ -170,6 +171,13 @@ describe('Modify jobs', () => {
 });
 
 describe('List jobs', () => {
+    it('should return a count of parent jobs in an account', async () => {
+        const {
+            _count: { id: parentJobsCount }
+        } = await countParentJobs(ACCOUNT_ID);
+        expect(parentJobsCount).toBeGreaterThan(0);
+    });
+
     it('should list all jobs in an account', async () => {
         const jobs = await listJobs(ACCOUNT_ID);
         expect(jobs.length).toBeGreaterThan(0);

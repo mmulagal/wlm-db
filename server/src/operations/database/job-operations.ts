@@ -4,6 +4,7 @@ import { camelCase, isEmpty } from 'lodash-es';
 import moment from 'moment';
 import ms from 'ms';
 import {
+    countParentJobs,
     createJobs,
     deleteJobs,
     getJobCountByStatus,
@@ -127,7 +128,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         status,
         startTime,
         endTime,
-        pageSize = 50,
+        limit = 50,
         nextToken,
         includeSubJobs = false
     } = filterParams;
@@ -142,6 +143,9 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         statusFilter = status.split(',') as JOBSTATUS[];
     }
 
+    const {
+        _count: { id: totalParentJobIdCount }
+    } = await countParentJobs(accountId);
     const records = await listJobs(
         accountId,
         parentJobId,
@@ -152,10 +156,9 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         statusFilter,
         startTime,
         endTime,
-        pageSize,
+        limit,
         nextToken
     );
-
     if (includeSubJobs) {
         await Promise.all(
             (records || []).map(async (record: JobWithSubJobsDbSchema) => {
@@ -170,7 +173,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     return {
         count: items?.length,
         items,
-        nextToken: items?.length > pageSize ? items[items.length - 1].id : undefined
+        nextToken: totalParentJobIdCount > limit && records.length >= limit ? items[items.length - 1].id : undefined
     };
 }
 

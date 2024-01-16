@@ -23,7 +23,7 @@ const ListJobsQueryString = Type.Object({
     status: Type.Optional(Type.String()),
     startTime: Type.Optional(Type.Number()),
     endTime: Type.Optional(Type.Number()),
-    pageSize: Type.Optional(Type.Number()),
+    limit: Type.Optional(Type.Number()),
     nextToken: Type.Optional(Type.String()),
     includeSubJobs: Type.Optional(Type.Boolean())
 });
