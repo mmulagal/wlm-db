@@ -257,7 +257,7 @@ async function processCloudFormationMessages() {
                                                 if (
                                                     masterStackDeployment &&
                                                     masterStackDeployment.deployment_status !==
-                                                    DEPLOYMENT_STATUS.CREATE_COMPLETE
+                                                        DEPLOYMENT_STATUS.CREATE_COMPLETE
                                                 ) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.CREATE_COMPLETE,
@@ -282,8 +282,8 @@ async function processCloudFormationMessages() {
                                                         SQLServiceAccountSecret: sqlServiceAccountSecret,
                                                         ActiveDirectoryName: activeDirectoryName,
                                                         ActiveDirectoryAddress: activeDirectoryAddress,
-                                                        EncryptedFsxPassword: encryptedFsxPassword,
-                                                        //EncryptedFsxUsername: encryptedFsxUsername
+                                                        EncryptedFsxPassword: encryptedFsxPassword
+                                                        // EncryptedFsxUsername: encryptedFsxUsername
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -303,12 +303,24 @@ async function processCloudFormationMessages() {
                                                     }
 
                                                     if (encryptedFsxPassword) {
-                                                        const { credentials_id: deploymentCredentialId, region: deploymentRegion } = masterStackDeployment;
-                                                        const decryptedPassword = await decryptString(encryptedFsxPassword);
-                                                        if (decryptedPassword)
-                                                            await registerFsxOntapCredentials(accountId, deploymentCredentialId, deploymentRegion, fsxId, decryptedPassword);
+                                                        const {
+                                                            credentials_id: deploymentCredentialId,
+                                                            region: deploymentRegion
+                                                        } = masterStackDeployment;
+                                                        const decryptedPassword = await decryptString(
+                                                            encryptedFsxPassword
+                                                        );
+                                                        if (decryptedPassword) {
+                                                            await registerFsxOntapCredentials(
+                                                                accountId,
+                                                                deploymentCredentialId,
+                                                                deploymentRegion,
+                                                                fsxId,
+                                                                decryptedPassword
+                                                            );
+                                                        }
                                                     }
-                                                    
+
                                                     const resourceId = getMsSqlResourceId(
                                                         activeNodeInstanceId,
                                                         standbyNodeInstanceId
@@ -387,7 +399,7 @@ async function processCloudFormationMessages() {
                                             if (
                                                 masterStackDeployment &&
                                                 masterStackDeployment.deployment_status !==
-                                                DEPLOYMENT_STATUS.CREATE_FAILED
+                                                    DEPLOYMENT_STATUS.CREATE_FAILED
                                             ) {
                                                 await updateDeployment(accountId, masterStackDeployment.id, {
                                                     deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,

@@ -130,9 +130,10 @@ async function formatTemplateParameters(
     if (fsxConfiguration.fsxPassword) {
         const encryptedFsxUserName = await encryptString(fsxConfiguration.fsxUsername);
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        templateParams.push({ ParameterKey: TEMPLATE_FSX_USERNAME, ParameterValue: encryptedFsxUserName },
+        templateParams.push(
+            { ParameterKey: TEMPLATE_FSX_USERNAME, ParameterValue: encryptedFsxUserName },
             { ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword }
-        )
+        );
     }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -290,16 +291,18 @@ async function getCloudformationTemplate(
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
     });
-    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${region ? `--region ${region}` : ''
-        }`;
+    const cloudFormationCli = `${CLOUD_FORMATION_CLI_COMMAND} --stack-name ${stackName} --template-url '${signedMasterTemplateUrl}' --parameters ${cliParams} --capabilities CAPABILITY_NAMED_IAM ${
+        region ? `--region ${region}` : ''
+    }`;
 
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
         urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
     });
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
-        }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
+    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
+        region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
+    }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
     return {
         url: signedTemplateURL,
@@ -464,7 +467,7 @@ async function createCloudFormationTemplateForUserDeployment(
     if (fsxConfiguration.fsxPassword) {
         const encryptedFsxUserName = await encryptString(fsxConfiguration.fsxUsername);
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        templateParams += `&param_${TEMPLATE_FSX_USERNAME}=${encryptedFsxUserName}&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`
+        templateParams += `&param_${TEMPLATE_FSX_USERNAME}=${encryptedFsxUserName}&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
     }
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {

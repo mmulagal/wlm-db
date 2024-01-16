@@ -36,7 +36,7 @@ describe('KMS Lib', () => {
 
     it('should encrypt a string', async () => {
         const params = {
-            KeyId: "1234abcd-12ab-34cd-56ef-1234567890ab",
+            KeyId: '1234abcd-12ab-34cd-56ef-1234567890ab',
             Plaintext: Buffer.from('abcdef')
         };
         const resp = await encrypt(params);
@@ -45,7 +45,7 @@ describe('KMS Lib', () => {
 
     it('should decrypt a string', async () => {
         const params = {
-            KeyId: "1234abcd-12ab-34cd-56ef-1234567890ab",
+            KeyId: '1234abcd-12ab-34cd-56ef-1234567890ab',
             CiphertextBlob: Buffer.from('abcdef')
         };
         const resp = await decrypt(params);

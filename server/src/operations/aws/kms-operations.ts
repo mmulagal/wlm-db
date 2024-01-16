@@ -71,10 +71,11 @@ async function encryptString(textToEncrypt: string) {
 
     const kmsKeyId = SECRETS_MANAGER_KEYS.KMS_KEY_ID;
     const plaintext = Buffer.from(textToEncrypt);
-    const encryptParams = { KeyId: kmsKeyId, Plaintext: plaintext }
+    const encryptParams = { KeyId: kmsKeyId, Plaintext: plaintext };
     const { CiphertextBlob: cipherText } = await encrypt(encryptParams);
-    if (cipherText)
+    if (cipherText) {
         return Buffer.from(cipherText).toString('base64');
+    }
 }
 
 async function decryptString(encryptedText: string) {
@@ -83,12 +84,12 @@ async function decryptString(encryptedText: string) {
     const kmsKeyId = SECRETS_MANAGER_KEYS.KMS_KEY_ID;
 
     const cipherText = Buffer.from(encryptedText);
-    const decryptParams = { KeyId: kmsKeyId, CiphertextBlob: cipherText }
+    const decryptParams = { KeyId: kmsKeyId, CiphertextBlob: cipherText };
 
     const { Plaintext: plaintext } = await decrypt(decryptParams);
-    if (plaintext)
+    if (plaintext) {
         return String.fromCharCode.apply(null, Array.from(plaintext));
+    }
 }
-
 
 export { getKmsKeysList, encryptString, decryptString };

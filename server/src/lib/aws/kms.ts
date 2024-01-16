@@ -112,14 +112,19 @@ async function listKeys(
 }
 
 async function encrypt(params: EncryptCommandInput) {
+    logger.info('Encrypting', {
+        params
+    });
     const kms = await getKMS(DEFAULT_AWS_REGION);
     return kms.send(new EncryptCommand(params));
 }
 
 async function decrypt(params: DecryptCommandInput) {
+    logger.info('Decrypting', {
+        params
+    });
     const kms = await getKMS(DEFAULT_AWS_REGION);
     return kms.send(new DecryptCommand(params));
-
 }
 
 export { describeKey, listKeys, listAliases, encrypt, decrypt };
