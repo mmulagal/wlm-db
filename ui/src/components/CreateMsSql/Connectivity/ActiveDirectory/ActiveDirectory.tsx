@@ -253,7 +253,7 @@ const ActiveDirectory = () => {
                                     />
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    const inputVal = e.target.value.replace(/[^0-9.]/g, '');
+                                    const inputVal = e.target.value.replace(/[^0-9.,]/g, '');
                                     dispatch(setSelectedADDomainAddress(inputVal));
                                     dispatch(setIsWizardTouched(true));
                                 }}

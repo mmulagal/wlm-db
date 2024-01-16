@@ -5,6 +5,7 @@ import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
     COSTING_TYPES,
+    CREATE_DATABASE_YAML,
     CREDENTIAL_PROD_LINK,
     CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
@@ -894,7 +895,7 @@ function getLastSevenDays() {
         dates.push(date);
     }
     return dates;
-}
+};
 
 // Getting the last 7 days
 export const lastSevenDays = getLastSevenDays().reverse();
@@ -909,7 +910,7 @@ function getLast14Days() {
         }
     }
     return dates;
-}
+};
 
 // Getting the last 7 days
 export const last14Days = getLast14Days().reverse();
@@ -922,14 +923,14 @@ function get30Days() {
         dates.push(date);
     }
     return dates;
-}
+};
 
 export const last30Days = get30Days().reverse();
 
 export const resetDBHomePageState = (dispatch: any) => {
     dispatch(databaseHomeApi.util.resetApiState());
     dispatch(addInitialData(initialDBHomepageState));
-}
+};
 
 export const jobMonitoringStatusMapping = (val : string) => {
     let statusValue = val;
@@ -941,7 +942,7 @@ export const jobMonitoringStatusMapping = (val : string) => {
         statusValue = GENERAL.JM_IN_PROGRESS;
     }
     return statusValue;
-}
+};
 
 export const downloadCsv = (data: any) => {
     const csv = 'data:text/csv;charset=utf-8,' + data;
@@ -952,7 +953,7 @@ export const downloadCsv = (data: any) => {
 
     link.setAttribute('download', 'job_monitoring'); //Filename that CSV is saved as
     link.click();
-}
+};
 
 export const addBlankCell = (level: number, result: any) => {
     for(var i : number = 0; i < level; i++)  
@@ -960,7 +961,7 @@ export const addBlankCell = (level: number, result: any) => {
         result += ',';
       }
     return result;
-}
+};
 
 export const createJobMonitorCSV = (array: any, keys: any, headers: any, result: string, level: number) => {
     result = addBlankCell(level, result);
@@ -990,4 +991,8 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
 
     result += '\n'; //New Row
     return result;
-}
+};
+
+export const cfDownloadName = (name: string) => {
+    return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
+};

@@ -15,6 +15,7 @@ import Highlighter from 'react-highlight-words';
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
 import {
+    cfDownloadName,
     formatDateWithTime,
     generateOptionType,
     getCredDetails,
@@ -94,6 +95,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [countWord, setCountWord] = useState(0);
 
     const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
+    const [dbName, setDbName] = useState('');
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
@@ -374,6 +376,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 loadConfigDataExe({ configId: id })
                     .then(data => {
                         const actualData = data?.data?.data;
+                        setDbName(actualData?.dbName);
                         setCredDetailsData(actualData);
                         loadRestApi(actualData, id, true);
                     })
@@ -880,7 +883,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     } else if (menuId === 'downloadYaml') {
                                                         handleDownloadYAML(
                                                             getRightPanelTemplateResponse(openKey)?.template,
-                                                            openedItem?.name
+                                                            cfDownloadName(dbName || openedItem?.name || '')
                                                         );
                                                     } else if (menuId === 'viewAwsCloudFormation') {
                                                         handleViewInAwsCloudFormation();
