@@ -170,11 +170,7 @@ const JobMonitoringTable = () => {
             Header: 'Type',
             accessor: 'type',
             width: '160px',
-            filterOptions: [
-                { value: 'awdawd 1', label: 'awdawd 1' },
-                { value: 'awdawd 2', label: 'awdawd 2' },
-                { value: 'awdawd 3', label: 'awdawd 3' },
-              ],
+            filterOptions: 'auto'
         },
         {
             id: '3',
