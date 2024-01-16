@@ -45,6 +45,8 @@ spec:
         envFrom:
         - configMapRef:
             name: wlmdb-config
+        - configMapRef:
+            name: dr-status
         env:
           {{ if .Values.global.NFSlogs }}
           - name: POD_NAME
