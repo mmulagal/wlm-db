@@ -25,6 +25,7 @@ const prepareHeaders = (
     const { getState, endpoint } = api;
     const { accessToken, workspaceId, isDemoMode, isWorkloadFactory } = (getState() as RootState).auth;
     const { selectConfig } = (getState() as RootState).mssqlForm;
+    const  isChatbot  = (getState() as RootState).chatbot.isShow;
     if (accessToken) {
         headers.set('authorization', accessToken);
     }
@@ -37,12 +38,13 @@ const prepareHeaders = (
     if (!isWorkloadFactory) {
         headers.set('x-netapp-referer', 'BlueXP');
     }
-    if (endpoint === 'deploySqlTemplate') {
+    if (endpoint === 'deploySqlTemplate' || endpoint === 'getTemplates') {
         headers.set(
           'triggered-from',
+            isChatbot ? 'chatbot':(
           selectConfig === SELECT_CONFIG.EASY_CREATE
-            ? 'wizard-quick-create'
-            : 'wizard-advanced-create'
+            ? 'wizard-quick'
+            : 'wizard-advanced')
         );
       }
     return headers;
