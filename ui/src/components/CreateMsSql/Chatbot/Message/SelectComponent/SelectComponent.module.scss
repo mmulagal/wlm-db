@@ -2,8 +2,8 @@
     background: none;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: 400px;
+    gap: 24px;
+    width: fit-content;
 
     [class*='design-system-select__single-value'] {
         max-width: 330px !important;
@@ -11,7 +11,26 @@
 
     .select-component-heading {
         display: block;
+        box-shadow: 2px 2px 6px 0px var(--border);
+        width: fit-content;
+        background-color: white;
+        padding: 12px 16px 12px 16px;
         color: var(--grey-55);
+        border-radius: 4px;
+    }
+
+    .dropdown-container {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+
+        .select-field-container {
+            width: 400px;
+        }
+
+        .add-btn {
+            width: 120px;
+        }
     }
 
     .select-component-highlight {
