@@ -410,13 +410,17 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
     }
-    const totalJobs = (data?.failed || 0) + (data?.initializing || 0) + (data?.success || 0);
+    // ToDo: Will remove succes and initializing once jobs summary API changes will be on stage
+    const completed = (data?.success || data?.completed || 0);
+    const failed = (data?.failed || 0);
+    const inProgress = (data?.initializing || data?.inProgress || 0)
+    const totalJobs = failed + inProgress + completed;
     const newData = {
         ...data,
         totalJobs: totalJobs,
-        successPercent: data?.success ? (data.success / totalJobs) * 100 : 0,
-        failedPercent: data?.failed ? (data.failed / totalJobs) * 100 : 0,
-        initializingPercent: data?.initializing ? (data.initializing / totalJobs) * 100 : 0
+        successPercent: completed ? (completed / totalJobs) * 100 : 0,
+        failedPercent: failed ? (failed / totalJobs) * 100 : 0,
+        initializingPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
     };
     return newData;
 };
@@ -951,7 +955,7 @@ export const downloadCsv = (data: any) => {
     const link = document.createElement('a');
     link.setAttribute('href', excel); //Links to CSV File
 
-    link.setAttribute('download', 'job_monitoring'); //Filename that CSV is saved as
+    link.setAttribute('download', 'Job_Monitoring_' + Date.now()); //Filename that CSV is saved as
     link.click();
 };
 
@@ -988,8 +992,9 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         );
       }
     });
-
-    result += '\n'; //New Row
+    if (level === 1){
+        result += '\n'; //New Row
+    }
     return result;
 };
 

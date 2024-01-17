@@ -1,10 +1,15 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 export const initialJobMonitoringState: any = {
-    jobsList: [],
-    jobsListLoading: false,
+    jobsList: [], // Jobs list exclusing subtasks
+    jobsListLoading: false, // Loading check for jobsList
     timeInterval: 1, // last 1/7/14/30 days data
-    downloadData: null
+    fromTime: null, // start date and time
+    toTime: null, // End date and time
+    downloadJobsLoading: false, // Laoding check for job monitoring download
+    downloadJobsList: [], // Jobs list including subtasks data
+    jmJobsSummary: {}, // Job distribution count data
+    jmJobsSummaryLoading: false // Job summary API loading for job distribution
 }
 
 const jobMonitoringSlice = createSlice({
@@ -20,8 +25,23 @@ const jobMonitoringSlice = createSlice({
         setTimeInterval: (state, action: PayloadAction<any>) => {
             state.timeInterval = action.payload;
         },
-        setDownloadData: (state, action: PayloadAction<any>) => {
-            state.downloadData = action.payload;
+        setFromTime: (state, action: PayloadAction<any>) => {
+            state.fromTime = action.payload;
+        },
+        setToTime: (state, action: PayloadAction<any>) => {
+            state.toTime = action.payload;
+        },
+        setDownloadJobsLoading: (state, action: PayloadAction<any>) => {
+            state.downloadJobsLoading = action.payload;
+        },
+        setDownloadJobsList: (state, action: PayloadAction<any>) => {
+            state.downloadJobsList = action.payload;
+        },
+        setJmJobsSummaryLoading: (state, action: PayloadAction<any>) => {
+            state.jmJobsSummaryLoading = action.payload;
+        },
+        setJmJobsSummary: (state, action: PayloadAction<any>) => {
+            state.jmJobsSummary = action.payload;
         },
         addInitialJMData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
@@ -33,7 +53,12 @@ export const {
     setJobsList,
     setJobsListLoading,
     setTimeInterval,
-    setDownloadData,
+    setFromTime,
+    setToTime,
+    setDownloadJobsLoading,
+    setDownloadJobsList,
+    setJmJobsSummaryLoading,
+    setJmJobsSummary,
     addInitialJMData
 } = jobMonitoringSlice.actions;
 

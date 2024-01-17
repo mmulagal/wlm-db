@@ -1,16 +1,18 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
-//TODO : DELETE ME
-const DeploymentJobsCountQueryString = Type.Object({
-    duration: Type.Optional(Type.Number())
+const JobSummaryQueryString = Type.Object({
+    startTime: Type.Optional(Type.Number()),
+    endTime: Type.Optional(Type.Number())
 });
 
-const DeploymentJobsCountResponse = Type.Object({
-    success: Type.Number(),
-    initializing: Type.Number(),
+const JobSummaryResponse = Type.Object({
+    inProgress: Type.Number(),
+    completed: Type.Number(),
     failed: Type.Number()
 });
+
+type JobSummaryResponseType = Static<typeof JobSummaryResponse>;
 
 const ListJobsQueryString = Type.Object({
     parentJobId: Type.Optional(Type.String()),
@@ -21,13 +23,12 @@ const ListJobsQueryString = Type.Object({
     status: Type.Optional(Type.String()),
     startTime: Type.Optional(Type.Number()),
     endTime: Type.Optional(Type.Number()),
-    pageSize: Type.Optional(Type.Number()),
+    limit: Type.Optional(Type.Number()),
     nextToken: Type.Optional(Type.String()),
     includeSubJobs: Type.Optional(Type.Boolean())
 });
 
 type ListJobsQueryType = Static<typeof ListJobsQueryString>;
-
 
 const JobObject = Type.Object({
     id: Type.String(),
@@ -74,7 +75,7 @@ const UpdateJobRequestBody = Type.Object({
     description: Type.Optional(Type.String()),
     endTime: Type.Optional(Type.Number()),
     error: Type.Optional(Type.String())
-})
+});
 
 type UpdateJobRecordType = Static<typeof UpdateJobRequestBody>;
 
@@ -115,7 +116,7 @@ type JobRecordType = Static<typeof CreateJobObject>;
 
 const CreateJobRequestBody = Type.Object({
     items: Type.Array(CreateJobObject)
-})
+});
 const CreateJobResponse = Type.Object({
     count: Type.Number()
 });
@@ -139,7 +140,7 @@ export {
     CreateJobObject,
     JobRecordType,
     JobsParams,
-    //TODO : DELETE ME
-    DeploymentJobsCountQueryString,
-    DeploymentJobsCountResponse
+    JobSummaryQueryString,
+    JobSummaryResponse,
+    JobSummaryResponseType
 };

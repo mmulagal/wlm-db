@@ -79,7 +79,7 @@ import {
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
-import { uploadTemplates } from './template-operations';
+import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
