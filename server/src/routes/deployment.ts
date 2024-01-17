@@ -72,7 +72,6 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     tags
                 }
             } = request;
-            // console.log('header', metadataParam);
             const response = await deployStackOrCreateTemplateURL(
                 credentialsId,
                 region,

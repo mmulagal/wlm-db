@@ -117,8 +117,7 @@ async function formatTemplateParameters(
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
-    // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-    const awsAccountId = '464262061435';
+    const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
@@ -382,8 +381,6 @@ async function deployStackOrCreateTemplateURL(
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-            // Need to check if we are tracking this way of deployment and this is CF way of deployment
-            // since
             metadataParam += ',deployed-from:cloudformation';
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
@@ -573,7 +570,6 @@ async function createCloudFormationTemplateForUserDeployment(
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
-    logger.info('metadataParam here', metadataParam);
 
     return { cloudFormationUrl: signedTemplateURL };
 }

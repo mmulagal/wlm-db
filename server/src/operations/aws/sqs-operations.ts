@@ -16,12 +16,12 @@ import {
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    // WLMDB,
+    WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject } from '../../utils/utils';
+import { derivePropertiesFromARN, getQueueUrl, checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -159,11 +159,9 @@ async function tagResources(
 }
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
-    // eslint-disable-next-line no-constant-condition
-    if (true) {
-        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-        // const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
-        const queueUrl = 'https://sqs.us-east-1.amazonaws.com/464262061435/wlmdb';
+    if (process.env.AWS_ROLE_ARN) {
+        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
                 QueueUrl: queueUrl,
