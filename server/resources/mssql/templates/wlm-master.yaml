@@ -511,7 +511,10 @@ Resources:
           - 'true'
           - 'false'
         FSxFileSystemId: 
-          Ref: FSxFileSystemId
+          Fn::If:
+          - ExistingOntapFsx
+          - Ref: FSxFileSystemId
+          - 'fs-id'
         FSxAdministratorPasswordSecret:
           Ref: FSxNSecret
       NotificationARNs:
@@ -558,6 +561,18 @@ Resources:
           Ref: EnableCloudWatchLogFeature
         ParentStackName:
           Ref: AWS::StackName
+        PerformFSxCheck:
+          Fn::If:
+          - ExistingOntapFsx
+          - 'true'
+          - 'false'
+        FSxFileSystemId: 
+          Fn::If:
+          - ExistingOntapFsx
+          - Ref: FSxFileSystemId
+          - 'fs-id'
+        FSxAdministratorPasswordSecret:
+          Ref: FSxNSecret
       NotificationARNs:
         Fn::If:
         - IncludeNotification
