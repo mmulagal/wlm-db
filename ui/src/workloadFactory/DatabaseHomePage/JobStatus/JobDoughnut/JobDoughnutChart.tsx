@@ -26,8 +26,8 @@ const JobDoughnutChart = ({jobsSummaryData, jobsSummaryLoading}: any) => {
             datasets: [
                 {
                     data: [
-                        jobsSummaryData?.successPercent,
-                        jobsSummaryData?.initializingPercent,
+                        jobsSummaryData?.completedPercent,
+                        jobsSummaryData?.inProgressPercent,
                         jobsSummaryData?.failedPercent
                     ],
                     backgroundColor: ['#68C6B3', '#0BAFFC', '#FE5502']

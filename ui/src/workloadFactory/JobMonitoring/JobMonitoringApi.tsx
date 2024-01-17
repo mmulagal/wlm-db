@@ -15,21 +15,19 @@ const JobMonitoringApi = () => {
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
 
-    // skipApiCall to skip APi call when isActive is not true. Will make it true once API will be available.
-    const [skipApiCall, setSkipApiCall] = useState(false);
+    const [skipApiCall, setSkipApiCall] = useState(true);
 
-    // Will Uncomment once API will be available
-    // useEffect(() => {
-    //     setSkipApiCall(true);
-    //     setTimeout(() => {
-    //         if (timeInterval && fromTime && toTime) {
-    //             dispatch(setJobsListLoading(false));
-    //             dispatch(setJobsList([]));
-    //             setTime({startTime: fromTime, endTime: toTime});
-    //             setSkipApiCall(false);
-    //         }
-    //     }, 0);
-    // }, [fromTime]);
+    useEffect(() => {
+        setSkipApiCall(true);
+        setTimeout(() => {
+            if (timeInterval && fromTime && toTime) {
+                dispatch(setJobsListLoading(false));
+                dispatch(setJobsList([]));
+                setTime({startTime: fromTime, endTime: toTime});
+                setSkipApiCall(false);
+            }
+        }, 0);
+    }, [fromTime]);
 
     const {
         data: jmJobsList,
@@ -42,16 +40,15 @@ const JobMonitoringApi = () => {
     } = useGetJobsSummaryDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
     useEffect(() => {
-        let oldList = jobsList || [];
-        let newList = jmJobsList?.items || [];
-        let mergedList = [...oldList, ...newList]
-        dispatch(setJobsList(mergedList));
-        setJobsCursor(jmJobsList?.nextToken || null);
-    }, [jmJobsList]);
-
-    useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));
-    }, [jmJobsListLoading]);
+        if (!jmJobsListLoading) {
+            let oldList = jobsList || [];
+            let newList = jmJobsList?.items || [];
+            let mergedList = [...oldList, ...newList]
+            dispatch(setJobsList(mergedList));
+            setJobsCursor(jmJobsList?.nextToken || null);
+        }
+    }, [jmJobsList, jmJobsListLoading]);
 
     useEffect(() => {
         const data = jobStatusPercent(jmJobsSummary || {}) ;

@@ -337,11 +337,8 @@ export const databaseHomeApi = createApi({
                     }
                 }
             }),
-            // getJobsSummary: builder.query({
-            //     query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
-            // }),
             getJobsSummary: builder.query({
-                query: () => `jobs/summary`
+                query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -421,9 +418,9 @@ export const jobMonitoringApi = createApi({
             //         url: `jobs/${id}`
             //     })
             // })
-            // getJobsSummaryData: builder.query({
-            //     query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
-            // }),
+            getJobsSummaryData: builder.query({
+                query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+            }),
 
             // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
@@ -439,11 +436,6 @@ export const jobMonitoringApi = createApi({
             getSubTaskList: builder.query({
                 async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
                     return { data: JobMonitoringSubTask };
-                }
-            }),
-            getJobsSummaryData: builder.query({
-                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return { data: {'inProgress': 2,'completed': 3,'failed': 1} };
                 }
             })
         };
