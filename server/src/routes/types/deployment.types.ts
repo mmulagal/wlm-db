@@ -66,7 +66,7 @@ const CloudFormationTemplateRequestBody = Type.Object({
 
 const CloudFormationTemplateHeader = Type.Object({
     'triggered-from': Type.String({
-        enum: ['wizard-advance', 'wizard-easy', 'chatbot', 'rest-api'],
+        enum: ['wizard-advance', 'wizard-quick', 'chatbot', 'rest-api'],
         default: 'rest-api'
     })
 });

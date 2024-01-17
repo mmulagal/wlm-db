@@ -66,7 +66,14 @@ import {
     IAM_LINKEDROLE_CONDITION,
     IAM_EC2_SERVICE,
     IAM_PASSROLE_CONDITION,
-    TEMPLATE_METADATA_PARAM
+    TEMPLATE_METADATA_PARAM,
+    TRIGGERED_FROM,
+    DEPLOYED_FROM,
+    WLMDB,
+    AWSServiceNames,
+    INSTANCE_TYPE,
+    SQL_VERSION,
+    DATABASE_SIZE
 } from '../utils/consts';
 import {
     deployedStackUrl,
@@ -236,7 +243,9 @@ async function getCloudformationTemplate(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const metadataParam = `triggered-from:${triggeredFrom},deployed-from:cloudformation, instance-type:${workloadInstanceType}`;
+    const { sqlAmiId } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+    const metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}: ${sqlAmiId},${DATABASE_SIZE}: ${databaseSize}`;
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -371,7 +380,9 @@ async function deployStackOrCreateTemplateURL(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    let metadataParam = `triggered-from:${triggeredFrom},instance-type:${workloadInstanceType}`;
+    const { sqlAmiId } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+    let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}: ${sqlAmiId},${DATABASE_SIZE}: ${databaseSize}`;
 
     try {
         const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
@@ -381,7 +392,7 @@ async function deployStackOrCreateTemplateURL(
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-            metadataParam += ',deployed-from:cloudformation';
+            metadataParam += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
@@ -398,7 +409,7 @@ async function deployStackOrCreateTemplateURL(
             response.missingPermissions = MISSING_PERMISSIONS(permissions);
             return response;
         }
-        metadataParam += ',deployed-from:wlmdb';
+        metadataParam += `,${DEPLOYED_FROM}:${WLMDB}`;
         return await deployCloudFormationTemplate(
             credentialsId,
             region,
@@ -415,7 +426,7 @@ async function deployStackOrCreateTemplateURL(
     } catch (err: any) {
         // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
-            metadataParam += ',deployed-from:cloudformation';
+            metadataParam += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,

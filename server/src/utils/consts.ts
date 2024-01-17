@@ -945,6 +945,13 @@ const MSSQL_DATABASE_TYPES = {
 const WF_TOKEN = 'WF_TOKEN';
 const BXP_TOKEN = 'BXP_TOKEN';
 
+// Metrics data const
+const TRIGGERED_FROM = 'triggered-from';
+const DEPLOYED_FROM = 'deployed-from';
+const INSTANCE_TYPE = 'instance-type';
+const SQL_VERSION = 'sql-version';
+const DATABASE_SIZE = 'database-size';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1155,5 +1162,10 @@ export {
     IAM_LINKEDROLE_CONDITION,
     IAM_PASSROLE_CONDITION,
     IAM_EC2_SERVICE,
-    TEMPLATE_METADATA_PARAM
+    TEMPLATE_METADATA_PARAM,
+    TRIGGERED_FROM,
+    DEPLOYED_FROM,
+    INSTANCE_TYPE,
+    SQL_VERSION,
+    DATABASE_SIZE
 };

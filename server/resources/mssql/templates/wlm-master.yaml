@@ -281,6 +281,7 @@ Parameters:
   MetadataParam:
     Description: Metadata param used for internal audit( DO NOT EDIT) 
     Type: CommaDelimitedList
+    NoEcho: true
     
 Conditions:
   UseAWSDirectoryServiceEE:
