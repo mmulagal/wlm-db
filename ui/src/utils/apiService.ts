@@ -417,7 +417,7 @@ export const jobMonitoringApi = createApi({
             //     query: id => ({
             //         url: `jobs/${id}`
             //     })
-            // })
+            // }),
             getJobsSummaryData: builder.query({
                 query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
