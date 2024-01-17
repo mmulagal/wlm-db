@@ -49,6 +49,8 @@ import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-o
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 import chatbotRoutes from './routes/chatbot';
+import purgeOlderJobs from './operations/cron-operations';
+import { isActiveInstance } from './utils/utils';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -255,7 +257,7 @@ const app = fastify({
     });
 
 // Blocking for simulator
-if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && (!process.env.hasOwnProperty('isActive') || process.env.isActive === 'true')) {
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && isActiveInstance()) {
     try {
         await createAndSubscribeToSnsTopicInAllRegions();
         processCloudFormationMessages();
@@ -266,11 +268,20 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && (
 
 try {
     initializeDatabase();
-    if (!process.env.hasOwnProperty('isActive') || process.env.isActive === 'true') {
+    if (isActiveInstance()) {
         await execute('node_modules/prisma/build/index.js migrate deploy');
     }
 } catch (error) {
     logger.error('Failed to initialize database', error);
+}
+
+// Initialize cron jobs
+try {
+    if (isActiveInstance()) {
+        purgeOlderJobs();
+    }
+} catch (error) {
+    logger.error('Failed to initialize cron jobs', error);
 }
 
 app.listen({ port, host }, err => {
