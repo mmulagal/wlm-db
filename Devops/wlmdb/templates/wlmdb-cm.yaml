@@ -6,8 +6,6 @@ data:
   AUTH0_AUDIENCE: api.cloud.netapp.com
   SECRET_NAME: wlmdb
   REGION: {{ .Values.global.region }}
-  isActive: {{ .Values.global.isActive | quote }}
-  isPrimary: {{ .Values.global.isPrimary | quote }}
   TRACE_EXPORTER_URL: http://signoz-otel-collector.signoz.svc.cluster.local:4318
   SIGNOZ_ENDPOINT: signoz-otel-collector.signoz.svc.cluster.local:4318/v1/traces
   WLMDB_BUCKET_REGION: {{ .Values.global.region }}

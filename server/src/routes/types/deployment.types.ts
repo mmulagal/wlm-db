@@ -174,5 +174,5 @@ export {
     CloudFormationStaticTemplateRequestBody,
     CloudFormationDeploymentResponse,
     DeploymentSummaryQueryString,
-    DeploymentSummaryListResponse,
+    DeploymentSummaryListResponse
 };

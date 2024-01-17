@@ -1,13 +1,29 @@
 import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE, job as jobDbSchema } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { camelCase, isEmpty } from 'lodash-es';
 import moment from 'moment';
-import { createJobs, deleteJobs, listJobs, listUniqueJob, updateJob } from '../../lib/database/job';
+import ms from 'ms';
+import {
+    countParentJobs,
+    createJobs,
+    deleteJobs,
+    getJobCountByStatus,
+    listJobs,
+    listUniqueJob,
+    updateJob
+} from '../../lib/database/job';
 import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from './database-operations';
-import { JobRecordType, ListJobsQueryType, UpdateJobRecordType } from '../../routes/types/jobs.types';
+import {
+    JobRecordType,
+    JobSummaryResponseType,
+    ListJobsQueryType,
+    UpdateJobRecordType
+} from '../../routes/types/jobs.types';
 
 const logger = getLogger();
+
+const DEFAULT_TIME_RANGE = '30d';
 
 interface Job extends JobRecordType {
     id: string;
@@ -15,38 +31,47 @@ interface Job extends JobRecordType {
 interface JobWithSubJobs extends Job {
     subJobs?: Job[];
 }
+interface JobSummary {
+    [key: string]: number;
+}
+interface JobGroup {
+    status: string;
+    _count: {
+        _all: number;
+    };
+}
 
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
 
 function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
     const {
         id,
-        account_id,
+        account_id: accountId,
         type,
         status,
-        resource_name,
+        resource_name: resourceName,
         name,
         description,
         error,
-        start_time,
+        start_time: startTime,
         initiator,
-        end_time,
-        parent_job_id,
+        end_time: endTime,
+        parent_job_id: parentJobId,
         subJobs
     } = job;
     return {
         id,
-        accountId: account_id,
+        accountId,
         type,
         status,
-        resourceName: resource_name,
+        resourceName,
         name,
         ...(description && { description }),
         ...(error && { error }),
-        startTime: moment(start_time).unix() * 1000,
-        ...(end_time && { endTime: moment(end_time).unix() * 1000 }),
+        startTime: moment(startTime).unix() * 1000,
+        ...(endTime && { endTime: moment(endTime).unix() * 1000 }),
         initiator,
-        ...(parent_job_id && { parentJobId: parent_job_id }),
+        ...(parentJobId && { parentJobId }),
         ...(subJobs && subJobs.length && { subJobs: subJobs.map(formatJob) })
     };
 }
@@ -103,7 +128,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         status,
         startTime,
         endTime,
-        pageSize = 50,
+        limit = 50,
         nextToken,
         includeSubJobs = false
     } = filterParams;
@@ -118,7 +143,8 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         statusFilter = status.split(',') as JOBSTATUS[];
     }
 
-    const records = await listJobs(
+    const countPromise = countParentJobs(accountId);
+    const listPromise = listJobs(
         accountId,
         parentJobId,
         sort,
@@ -129,9 +155,14 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         statusFilter,
         startTime,
         endTime,
-        pageSize,
+        limit,
         nextToken
     );
+
+    const {
+        _count: { id: totalParentJobIdCount }
+    } = await countPromise;
+    const records = await listPromise;
 
     if (includeSubJobs) {
         await Promise.all(
@@ -147,7 +178,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
     return {
         count: items?.length,
         items,
-        nextToken: items?.length > pageSize ? items[items.length - 1].id : undefined
+        nextToken: totalParentJobIdCount > limit && records.length >= limit ? items[items.length - 1].id : undefined
     };
 }
 
@@ -158,7 +189,7 @@ async function getJobDetails(accountId: string, jobId: string) {
     const [job] = trimAccountIdForDemo([record]);
     job.subJobs = [];
 
-    let formattedJob = formatJob(job);
+    const formattedJob = formatJob(job);
     const subJobsDbSchema = await getSubJobs(accountId, jobId); // 2nd arg in listJobs is parentJObId, the idea here is to list all subs of a jobId in context. Hence passing down jobId as parentJobId
     let subJobs = trimAccountIdForDemo(subJobsDbSchema);
     subJobs = isEmpty(subJobsDbSchema) ? [] : subJobsDbSchema.map(formatJob);
@@ -199,8 +230,8 @@ async function deleteJobsWithAllSubJobs(accountId: string, jobId: string) {
     const level2Jobs = await getSubJobs(accountId, jobId);
     let jobIdsToDelete = [jobId];
     if (level2Jobs.length > 0) {
-        level2Jobs.map((level2Job: JobWithSubJobsDbSchema) => {
-            const level3JobIds = level2Job?.subJobs?.map(({ id }) => id);
+        level2Jobs.forEach((level2Job: JobWithSubJobsDbSchema) => {
+            const level3JobIds = level2Job?.subJobs?.map(({ id }: { id: string }) => id);
             if (level3JobIds && level3JobIds?.length > 0) {
                 jobIdsToDelete = jobIdsToDelete.concat(level3JobIds);
             }
@@ -210,4 +241,39 @@ async function deleteJobsWithAllSubJobs(accountId: string, jobId: string) {
     return deleteJobs(accountId, jobIdsToDelete);
 }
 
-export { Job, registerJobs, getJobs, getJobDetails, updateJobDetails, deleteJobsWithAllSubJobs };
+async function getJobSummary(
+    accountId: string,
+    startTime: number | undefined,
+    endTime: number | undefined
+): Promise<JobSummaryResponseType> {
+    logger.info('Getting job summary', { accountId, startTime, endTime });
+
+    if (startTime && endTime && startTime > endTime) {
+        throw createError(400, 'Start time cannot be greater than end time');
+    }
+
+    // Default time range is 30 days
+    startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
+    endTime = endTime || Date.now();
+
+    const groups = await getJobCountByStatus(accountId, startTime, endTime);
+
+    const defaultSummary = Object.values(JOBSTATUS).reduce(
+        (summary: JobSummary, status: string) => ({
+            ...summary,
+            [camelCase(status?.toLowerCase())]: 0
+        }),
+        {}
+    );
+
+    return groups.reduce((summary: JobSummary, group: JobGroup) => {
+        const status = camelCase(group?.status?.toLowerCase());
+        const count = group?._count?._all;
+        return {
+            ...summary,
+            [status]: status in summary ? summary[status] + count : count
+        };
+    }, defaultSummary) as JobSummaryResponseType;
+}
+
+export { Job, registerJobs, getJobs, getJobDetails, updateJobDetails, deleteJobsWithAllSubJobs, getJobSummary };

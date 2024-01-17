@@ -2,14 +2,12 @@ import { Typography } from '@netapp/design-system';
 import { Chart } from 'chart.js';
 import { registerables } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
-import { useAppSelector } from '../../../../store/storeHooks';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './JobDoughnutchart.module.scss';
 
 Chart.register(...registerables);
 
-const JobDoughnutChart = () => {
-    const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
+const JobDoughnutChart = ({jobsSummaryData, jobsSummaryLoading}: any) => {
 
     const ref = useRef<HTMLCanvasElement>(null);
     const [doughnutChart, setDoughnutChart] = useState<any>();

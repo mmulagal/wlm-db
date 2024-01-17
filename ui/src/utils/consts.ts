@@ -196,13 +196,32 @@ export const COSTING_TYPES = {
     PRICING: 'pricing'
 };
 
+export const JM_DOWNLOAD = {
+    MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime', 'error'],
+    MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time,Error',
+    SUB_JOBS_KEYS: ['name', 'description', 'status', 'startTime', 'endTime', 'error'],
+    SUB_JOBS_CSV_HEADERS: 'Name,Description,Status,Start time,End time,Error'
+}
+
 export const AWS_CLI_HIGHLIGHT_STRINGS = [
-    "ParameterKey=",
-    "ParameterValue=",
-    "--stack-name",
-    "--template-url",
-    "--region",
-    "--parameters"
+    'ParameterKey=',
+    'ParameterValue=',
+    '--stack-name',
+    '--template-url',
+    '--region',
+    '--parameters'
 ];
 
 export const CREATE_DATABASE_YAML = 'Create_Database';
+
+export const CHATBOT_WELCOME_CARDS = [
+    'Help me Deploy MsSql on FSx For NetApp.',
+    'What are the key features of Amazon FSx for NetApp ONTAP for databases?',
+    'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?',
+    'What is the FSx for ONTAP best practice for Microsoft SQL server?'
+];
+
+export const CHATBOT_SUGGESTION_BUBBLES = [
+    { label: 'Resume current MSSQL Deployment', value: 'resume' },
+    { label: 'Start new MSSQL Deployment', value: 'start' }
+];

@@ -8,6 +8,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
@@ -60,6 +61,7 @@ const DatabaseVersion = () => {
                                 defaultValue={getDBVersion ? [getDBVersion] : [generateDbVersions[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setDBVersion(selectedOptions));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateDbVersions.length > 5}
                                 options={generateDbVersions}

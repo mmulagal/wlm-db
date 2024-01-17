@@ -55,7 +55,7 @@
     },
     "ssm": {
         "poll-interval": "1s",
-        "execution-timeout": "30"
+        "execution-timeout": "45"
     },
     "auth": {
         "wlmdb": {
@@ -65,6 +65,14 @@
         "bluexp": {
             "timeout": "10s",
             "interval": "500ms"
+        }
+    },
+    "db": {
+        "jobs": {
+            "purge": {
+                "interval": "24h",
+                "older-than": "90d"
+            }
         }
     }
 }

@@ -5,7 +5,8 @@ import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 
 const JobDistribution = () => {
-    const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
+    const jobsSummaryData = useAppSelector(state => state.jobMonitoring.jmJobsSummary);
+    const jobsSummaryLoading  = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
     return (
         <div
             className={
@@ -16,12 +17,12 @@ const JobDistribution = () => {
         >
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
-                    Job Distributions
+                    {GENERAL.JOB_DISTRIBUTION}
                 </Typography>
             </div>
 
             <div className={styles.mainSection}>
-                <JobDoughnutChart />
+                <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading}/>
                 {window.innerWidth <= 1500 && (
                     <div className={styles.rightSection}>
                         <div className={styles.rowData} style={{ marginTop: '0' }}>
@@ -35,7 +36,7 @@ const JobDistribution = () => {
                                 <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
                             </div>
                             <Typography variant="Semibold_14">
-                                {(jobsSummaryData?.success || 0) + GENERAL.JOB_STATUS_JOBS}
+                                {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -47,7 +48,7 @@ const JobDistribution = () => {
                                 <Typography variant="Regular_14">{GENERAL.JM_RUNNING}</Typography>
                             </div>
                             <Typography variant="Semibold_14">
-                                {(jobsSummaryData?.initializing || 0) + GENERAL.JOB_STATUS_JOBS}
+                                {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
                             </Typography>
                         </div>
 
@@ -71,7 +72,7 @@ const JobDistribution = () => {
                     <div className={styles.flexRightSection}>
                         <div className={styles.valueContainer} style={{ width: '143px' }}>
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
-                                180
+                                {jobsSummaryData?.completed}
                             </Typography>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
@@ -81,7 +82,7 @@ const JobDistribution = () => {
                         <div className={styles.jobDistributionSeparator} />
                         <div className={styles.valueContainer} style={{ width: '124px' }}>
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
-                                48
+                                {jobsSummaryData?.inProgress}
                             </Typography>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
@@ -91,7 +92,7 @@ const JobDistribution = () => {
                         <div className={styles.jobDistributionSeparator} />
                         <div className={styles.valueContainer}>
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
-                                48
+                                {jobsSummaryData?.failed}
                             </Typography>
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />

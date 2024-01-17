@@ -9,7 +9,7 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
-import { generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
+import { cfDownloadName, generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -18,7 +18,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { AWS_CLI_HIGHLIGHT_STRINGS, CREATE_DATABASE_YAML, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -34,6 +34,8 @@ import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
 import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
 import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+
 const _ = require('lodash');
 
 const CodeBox = () => {
@@ -50,13 +52,15 @@ const CodeBox = () => {
     const [rightPanelMaskedHidePasswordResponse, setRightPanelMaskedHidePasswordResponse] = useState<any>('');
     const [countWord, setCountWord] = useState(0);
 
-    const { closeDialog } = useDialog();
+    const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
 
     const [loadTemplateData] = useGetTemplatesMutation();
 
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -335,17 +339,32 @@ const CodeBox = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mssqlFormData]);
 
+    const openDemoInfoDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.DEMO_TITLE}
+                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
+                primaryButton={GENERAL.CONTINUE}
+                callback={() => {}}
+            />
+        );
+    };
+
     // "Redirect to CloudFormation" click implementation
     const handleRedirectToCF = () => {
-        if (!formData || !_.isEqual(mssqlFormData, formData)) {
-            // If form changed so template API will get called again to get latest CF url
-            dispatch(setIsLoading(true));
-            setFormData(mssqlFormData);
-            getTemplateResponse(true);
+        if (isDemoMode) {
+            openDemoInfoDialog();
         } else {
-            // If data is already stored
-            if (rightPanelTemplateResponse?.url) {
-                window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+            if (!formData || !_.isEqual(mssqlFormData, formData)) {
+                // If form changed so template API will get called again to get latest CF url
+                dispatch(setIsLoading(true));
+                setFormData(mssqlFormData);
+                getTemplateResponse(true);
+            } else {
+                // If data is already stored
+                if (rightPanelTemplateResponse?.url) {
+                    window.open(rightPanelTemplateResponse?.url, '_blank', 'noopener');
+                }
             }
         }
     };
@@ -451,15 +470,21 @@ const CodeBox = () => {
                     </div>
                     <div className={styles.actionPopOver}>
                         <div className={styles.actions}>
-                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION && 
-                                (
-                                    isRightPanelTemplateLoading ? 
+                            {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                                (isRightPanelTemplateLoading ? (
                                     <div className={styles.menuItemDisabled}>
                                         <Download />
-                                    </div> : 
-                                    <Download onClick={() => handleDownloadYAML(rightPanelTemplateResponse?.template, CREATE_DATABASE_YAML)} />
-                                ) 
-                            }
+                                    </div>
+                                ) : (
+                                    <Download
+                                        onClick={() =>
+                                            handleDownloadYAML(
+                                                rightPanelTemplateResponse?.template,
+                                                cfDownloadName(selectedDBName)
+                                            )
+                                        }
+                                    />
+                                ))}
                             {dropDownValue !== CODE_VIEWER.REST_API && isRightPanelTemplateLoading ? (
                                 // Disabled copy button
                                 <div className={styles.menuItemDisabled}>

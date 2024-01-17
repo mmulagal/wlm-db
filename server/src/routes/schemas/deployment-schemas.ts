@@ -31,7 +31,6 @@ const CloudFormationTemplateSchema = {
     }
 };
 
-
 const DeploymentSummaryListSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
@@ -75,4 +74,10 @@ const DeploymentStatusSchema = {
     }
 };
 
-export { DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema, CloudFormationTemplateSchema, DeploymentSummaryListSchema };
+export {
+    DeployTemplateSchema,
+    DeploymentStatusListSchema,
+    DeploymentStatusSchema,
+    CloudFormationTemplateSchema,
+    DeploymentSummaryListSchema
+};
