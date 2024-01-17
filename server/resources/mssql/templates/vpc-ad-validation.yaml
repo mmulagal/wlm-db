@@ -24,6 +24,12 @@ Metadata:
                   - DomainAdminUser
                   - DomainAdminSecretName
             - Label:
+                  default: Amazon FSx for ONTAP Volume Configuration
+              Parameters:
+                  - PerformFSxCheck
+                  - FSxFileSystemId
+                  - FSxAdministratorPasswordSecret
+            - Label:
                   default: AWS Launch Wizard Configuration
               Parameters:
                   - AssetsBucketName
@@ -63,6 +69,12 @@ Metadata:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
                 default: Stack name for parent cloud formation stack
+            PerformFSxCheck:
+                default: Boolean to check whether to validate FSx credentials and reachability from subnet
+            FSxFileSystemId:
+                default: FSx Filesystem ID
+            FSxAdministratorPasswordSecret:
+                default: Secret String for FSx user account
 Parameters:
     UniqueID:
         Default: UID123
@@ -125,6 +137,19 @@ Parameters:
         Type: String
     ParentStackName:
         Description: Stack name for parent cloud formation stack
+        Type: String
+    PerformFSxCheck:
+        AllowedValues:
+            - 'true'
+            - 'false'
+        Default: 'false'
+        Description: Boolean to check whether to validate FSx credentials and reachability from subnet
+        Type: String
+    FSxFileSystemId:
+        Description: FSx Filesystem ID
+        Type: String
+    FSxAdministratorPasswordSecret:
+        Description: Secret String for FSx user account
         Type: String
 Conditions:
     isGovRegion: !Or
@@ -281,6 +306,8 @@ Resources:
                             source: {{ ScriptRestartComputer }}
                         C:\cfn\scripts\Validate-Credentials.ps1:
                             source: {{ ScriptAdValidation }}
+                        C:\cfn\scripts\Validate-FsxConnectivity.ps1:
+                            source: {{ ScriptFSxValidation }}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -334,7 +361,26 @@ Resources:
                                   - '"'
                                   - '"'
                             waitAfterCompletion: '0'
-                        c-signal-resource:
+                        c-validate-fsx:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
+                                - !Ref 'PerformFSxCheck'
+                                - ' -FSxFileSystemId '
+                                - !Ref 'FSxFileSystemId'
+                                - ' -FSxRegion '
+                                - !Ref 'AWS::Region'
+                                - ' -FSxAdministratorPasswordSecret '
+                                - !Ref 'FSxAdministratorPasswordSecret'
+                                - ' -Stackname '
+                                - !Ref 'AWS::StackName'
+                                - ' -ResourceID ValidationNode1'
+                                - ' -WaitHandler '
+                                - '"'
+                                - Fn::Base64: !Ref 'ValidationNode1WaitHandler'
+                                - '"'
+                                - '"'
+                        d-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode1
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'
@@ -469,6 +515,8 @@ Resources:
                             source: {{ AmazonLaunchWizardForCFN }}
                         C:\cfn\scripts\Validate-VPC.ps1:
                             source: {{ ScriptVpcCheck }}
+                        C:\cfn\scripts\Validate-FsxConnectivity.ps1:
+                            source: {{ ScriptFSxValidation }}
                 LaunchWizardCFNSetup:
                     commands:
                         b-unpack-launchwizard-module:
@@ -493,7 +541,26 @@ Resources:
                                   - '"'
                                   - '"'
                             waitAfterCompletion: '0'
-                        b-signal-resource:
+                        b-validate-fsx:
+                            command: !Join
+                                - ''
+                                - - 'powershell.exe -Command "C:\cfn\scripts\Validate-FsxConnectivity.ps1 -PerformFSxCheck '
+                                - !Ref 'PerformFSxCheck'
+                                - ' -FSxFileSystemId '
+                                - !Ref 'FSxFileSystemId'
+                                - ' -FSxRegion '
+                                - !Ref 'AWS::Region'
+                                - ' -FSxAdministratorPasswordSecret '
+                                - !Ref 'FSxAdministratorPasswordSecret'
+                                - ' -Stackname '
+                                - !Ref 'AWS::StackName'
+                                - ' -ResourceID ValidationNode2'
+                                - ' -WaitHandler '
+                                - '"'
+                                - Fn::Base64: !Ref 'ValidationNode2WaitHandler'
+                                - '"'
+                                - '"'
+                        c-signal-resource:
                             command: !Sub 'cfn-signal.exe -e %ERRORLEVEL% --resource ValidationNode2
                                 --stack ${AWS::StackName} --region ${AWS::Region}'
                             waitAfterCompletion: '0'

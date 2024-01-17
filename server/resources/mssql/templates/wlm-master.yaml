@@ -505,6 +505,15 @@ Resources:
           Ref: EnableCloudWatchLogFeature
         ParentStackName:
           Ref: AWS::StackName
+        PerformFSxCheck:
+          Fn::If:
+          - ExistingOntapFsx
+          - 'true'
+          - 'false'
+        FSxFileSystemId: 
+          Ref: FSxFileSystemId
+        FSxAdministratorPasswordSecret:
+          Ref: FSxNSecret
       NotificationARNs:
         Fn::If:
         - IncludeNotification
