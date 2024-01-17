@@ -143,10 +143,8 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         statusFilter = status.split(',') as JOBSTATUS[];
     }
 
-    const {
-        _count: { id: totalParentJobIdCount }
-    } = await countParentJobs(accountId);
-    const records = await listJobs(
+    const countPromise = countParentJobs(accountId);
+    const listPromise = listJobs(
         accountId,
         parentJobId,
         sort,
@@ -159,6 +157,12 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         limit,
         nextToken
     );
+
+    const {
+        _count: { id: totalParentJobIdCount }
+    } = await countPromise;
+    const records = await listPromise;
+
     if (includeSubJobs) {
         await Promise.all(
             (records || []).map(async (record: JobWithSubJobsDbSchema) => {
