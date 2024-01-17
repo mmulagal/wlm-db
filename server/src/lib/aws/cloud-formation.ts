@@ -28,7 +28,7 @@ async function listStacks(credentialsId: string, region: string, stackStatusFilt
     logger.info(`List cloudformation stacks in region ${region} with credentials ${credentialsId}.`);
     const input: ListStacksCommandInput = { StackStatusFilter: stackStatusFilter };
     const cloudformationClient = await getCloudformationClient(credentialsId, region);
-   const resp = await cloudformationClient.send(new ListStacksCommand(input));
+    const resp = await cloudformationClient.send(new ListStacksCommand(input));
     logger.debug('Stacks response', resp);
 
     return resp;

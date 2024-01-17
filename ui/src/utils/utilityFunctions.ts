@@ -410,13 +410,16 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
     }
-    const totalJobs = (data?.failed || 0) + (data?.initializing || 0) + (data?.success || 0);
+    const completed = (data?.completed || 0);
+    const failed = (data?.failed || 0);
+    const inProgress = (data?.inProgress || 0)
+    const totalJobs = failed + inProgress + completed;
     const newData = {
         ...data,
         totalJobs: totalJobs,
-        successPercent: data?.success ? (data.success / totalJobs) * 100 : 0,
-        failedPercent: data?.failed ? (data.failed / totalJobs) * 100 : 0,
-        initializingPercent: data?.initializing ? (data.initializing / totalJobs) * 100 : 0
+        completedPercent: completed ? (completed / totalJobs) * 100 : 0,
+        failedPercent: failed ? (failed / totalJobs) * 100 : 0,
+        inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
     };
     return newData;
 };

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { useGetJobsListQuery } from "../../utils/apiService";
-import { setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { useGetJobsListQuery, useGetJobsSummaryDataQuery } from "../../utils/apiService";
+import { setJmJobsSummary, setJmJobsSummaryLoading, setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { jobStatusPercent } from "../../utils/utilityFunctions";
 
 const JobMonitoringApi = () => {
     const dispatch = useAppDispatch();
@@ -14,38 +15,49 @@ const JobMonitoringApi = () => {
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
 
-    // skipApiCall to skip APi call when isActive is not true. Will make it true once API will be available.
-    const [skipApiCall, setSkipApiCall] = useState(false);
+    const [skipApiCall, setSkipApiCall] = useState(true);
 
-    // Will Uncomment once API will be available
-    // useEffect(() => {
-    //     setSkipApiCall(true);
-    //     setTimeout(() => {
-    //         if (timeInterval && fromTime && toTime) {
-    //             dispatch(setJobsListLoading(false));
-    //             dispatch(setJobsList([]));
-    //             setTime({startTime: fromTime, endTime: toTime});
-    //             setSkipApiCall(false);
-    //         }
-    //     }, 0);
-    // }, [fromTime]);
+    useEffect(() => {
+        setSkipApiCall(true);
+        setTimeout(() => {
+            if (timeInterval && fromTime && toTime) {
+                dispatch(setJobsListLoading(false));
+                dispatch(setJobsList([]));
+                setTime({startTime: fromTime, endTime: toTime});
+                setSkipApiCall(false);
+            }
+        }, 0);
+    }, [fromTime]);
 
     const {
         data: jmJobsList,
         isFetching: jmJobsListLoading,
     } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
-    useEffect(() => {
-        let oldList = jobsList || [];
-        let newList = jmJobsList?.items || [];
-        let mergedList = [...oldList, ...newList]
-        dispatch(setJobsList(mergedList));
-        setJobsCursor(jmJobsList?.nextToken || null);
-    }, [jmJobsList]);
+    const {
+        data: jmJobsSummary,
+        isFetching: jmJobsSummaryLoading,
+    } = useGetJobsSummaryDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
     useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));
-    }, [jmJobsListLoading]);
+        if (!jmJobsListLoading) {
+            let oldList = jobsList || [];
+            let newList = jmJobsList?.items || [];
+            let mergedList = [...oldList, ...newList]
+            dispatch(setJobsList(mergedList));
+            setJobsCursor(jmJobsList?.nextToken || null);
+        }
+    }, [jmJobsList, jmJobsListLoading]);
+
+    useEffect(() => {
+        const data = jobStatusPercent(jmJobsSummary || {}) ;
+        dispatch(setJmJobsSummary(data));
+    }, [jmJobsSummary]);
+
+    useEffect(() => {
+        dispatch(setJmJobsSummaryLoading(jmJobsSummaryLoading));
+    }, [jmJobsSummaryLoading]);
 
 }
 

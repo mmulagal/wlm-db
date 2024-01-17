@@ -35,7 +35,7 @@ const JobStatus = () => {
             </div>
 
             <div className={styles.mainSection}>
-                <JobDoughnutChart />
+                <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} />
 
                 {/* <div className={styles.jobSeparator} /> */}
 
@@ -52,7 +52,7 @@ const JobStatus = () => {
                             <Typography variant="Regular_14">{GENERAL.JOB_STATUS_SUCCESS}</Typography>
                         </div>
                         <Typography variant="Semibold_14">
-                            {(jobsSummaryData?.success || 0) + GENERAL.JOB_STATUS_JOBS}
+                            {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
                         </Typography>
                     </div>
 
@@ -64,7 +64,7 @@ const JobStatus = () => {
                             <Typography variant="Regular_14">{GENERAL.JOB_STATUS_INITIALIZING}</Typography>
                         </div>
                         <Typography variant="Semibold_14">
-                            {(jobsSummaryData?.initializing || 0) + GENERAL.JOB_STATUS_JOBS}
+                            {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
                         </Typography>
                     </div>
 

@@ -8,6 +8,8 @@ export const initialJobMonitoringState: any = {
     toTime: null, // End date and time
     downloadJobsLoading: false, // Laoding check for job monitoring download
     downloadJobsList: [], // Jobs list including subtasks data
+    jmJobsSummary: {}, // Job distribution count data
+    jmJobsSummaryLoading: false // Job summary API loading for job distribution
 }
 
 const jobMonitoringSlice = createSlice({
@@ -35,6 +37,12 @@ const jobMonitoringSlice = createSlice({
         setDownloadJobsList: (state, action: PayloadAction<any>) => {
             state.downloadJobsList = action.payload;
         },
+        setJmJobsSummaryLoading: (state, action: PayloadAction<any>) => {
+            state.jmJobsSummaryLoading = action.payload;
+        },
+        setJmJobsSummary: (state, action: PayloadAction<any>) => {
+            state.jmJobsSummary = action.payload;
+        },
         addInitialJMData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
         }
@@ -49,6 +57,8 @@ export const {
     setToTime,
     setDownloadJobsLoading,
     setDownloadJobsList,
+    setJmJobsSummaryLoading,
+    setJmJobsSummary,
     addInitialJMData
 } = jobMonitoringSlice.actions;
 

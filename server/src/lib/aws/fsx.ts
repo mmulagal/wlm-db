@@ -87,7 +87,9 @@ async function describeFSxVolumes(
 
 async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId: string) {
     logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
-    const input: DescribeStorageVirtualMachinesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+    const input: DescribeStorageVirtualMachinesCommandInput = {
+        Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }]
+    };
 
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeStorageVirtualMachinesCommand(input));
@@ -103,7 +105,7 @@ async function describeFSxBackups(
 ): Promise<DescribeBackupsCommandOutput> {
     logger.info('Describe Amazon FSx backups:', { credentialsId, region, volumeIds });
 
-    const input:DescribeBackupsCommandInput  = {
+    const input: DescribeBackupsCommandInput = {
         Filters: [{ Name: 'volume-id', Values: volumeIds }]
     };
 

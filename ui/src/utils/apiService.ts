@@ -338,7 +338,7 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getJobsSummary: builder.query({
-                query: () => `jobs/summary`
+                query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -418,6 +418,9 @@ export const jobMonitoringApi = createApi({
             //         url: `jobs/${id}`
             //     })
             // })
+            getJobsSummaryData: builder.query({
+                query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+            }),
 
             // Will uncomment and use above code once APIs will get available
             getJobsList: builder.query({
@@ -500,6 +503,6 @@ export const {
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useGetJobsListQuery, useGetFullJobsListQuery, useGetSubTaskListQuery } = jobMonitoringApi;
+export const { useGetJobsListQuery, useGetFullJobsListQuery, useGetSubTaskListQuery, useGetJobsSummaryDataQuery } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;
