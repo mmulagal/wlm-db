@@ -6,8 +6,12 @@ import Chatbot from '../Chatbot/Chatbot';
 import { setIsShow } from '../../../store/chatbot/chatbotSlice';
 import { useDispatch } from 'react-redux';
 
-const CreateMsSqlLayout = () => {
-    const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
+type CreateMsSqlLayoutProps = {
+    selectedTab: 'chatbot' | 'wizard';
+    setSelectedTab: (tab: 'chatbot' | 'wizard') => void;
+};
+
+const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutProps) => {
     const dispatch = useDispatch();
 
     useEffect(() => {

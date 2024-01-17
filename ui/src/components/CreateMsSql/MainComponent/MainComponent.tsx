@@ -9,10 +9,12 @@ import { useAppSelector } from '../../../store/storeHooks';
 import CreateMsSqlLayout from '../CreateMsSqlLayout/CreateMsSqlLayout';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import CodeBox from '../CodeBox/CodeBox';
+import { useState } from 'react';
 
 const MainComponent = () => {
     const loading = useAppSelector(state => state.msSqlAction.isLoading);
     const showChatbot = useAppSelector(state => state.auth?.isWorkloadFactory);
+    const [selectedTab, setSelectedTab] = useState<'wizard' | 'chatbot'>('wizard');
 
     return showChatbot && window.location.pathname === '/databases' ? (
         <div className={styles.mainContainer}>
@@ -34,11 +36,17 @@ const MainComponent = () => {
                 <StepLayout className={styles.header}>
                     <MSSqlHeader />
                     <WizardContent className={styles.content}>
-                        {showChatbot ? <CreateMsSqlLayout /> : <MSSqlServer />}
+                        {showChatbot ? (
+                            <CreateMsSqlLayout selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+                        ) : (
+                            <MSSqlServer />
+                        )}
                     </WizardContent>
-                    <WizardFooter>
-                        <MSSqlFooter />
-                    </WizardFooter>
+                    {selectedTab === 'wizard' && (
+                        <WizardFooter>
+                            <MSSqlFooter />
+                        </WizardFooter>
+                    )}
                 </StepLayout>
             </div>
             {showChatbot && (

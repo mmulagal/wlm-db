@@ -10,4 +10,8 @@ export interface ChatbotEntities {
         list: Array<{ label: string; value: string }>;
         onBubbleClick: (label?: string, value?: string) => void;
     };
+    expectingResponse: {
+        type: 'none' | 'text' | 'password' | 'number';
+        fieldName: string;
+    };
 }
