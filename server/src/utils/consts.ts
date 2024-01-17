@@ -726,6 +726,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
+    },
+    {
+        name: 'ScriptFSxValidation',
+        url: 'validation/Validate-FsxConnectivity.ps1'
     }
 ];
 

@@ -164,7 +164,8 @@ async function updateTemplateUrls(
             ScriptUpdateDnsServers: decodeURI(signedUrls.get('ScriptUpdateDnsServers')?.url || ''),
             ScriptRenameComputer: decodeURI(signedUrls.get('ScriptRenameComputer')?.url || ''),
             ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
-            ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || '')
+            ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || ''),
+            ScriptFSxValidation: decodeURI(signedUrls.get('ScriptFSxValidation')?.url || '')
         });
 
         const ValidationTemplate = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');
