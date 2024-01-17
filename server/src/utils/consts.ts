@@ -951,6 +951,7 @@ const DEPLOYED_FROM = 'deployed-from';
 const INSTANCE_TYPE = 'instance-type';
 const SQL_VERSION = 'sql-version';
 const DATABASE_SIZE = 'database-size';
+const SQL_HOST_NAME = 'sql-host-name';
 
 export {
     WLMDB,
@@ -1167,5 +1168,6 @@ export {
     DEPLOYED_FROM,
     INSTANCE_TYPE,
     SQL_VERSION,
-    DATABASE_SIZE
+    DATABASE_SIZE,
+    SQL_HOST_NAME
 };

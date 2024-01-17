@@ -73,7 +73,8 @@ import {
     AWSServiceNames,
     INSTANCE_TYPE,
     SQL_VERSION,
-    DATABASE_SIZE
+    DATABASE_SIZE,
+    SQL_HOST_NAME
 } from '../utils/consts';
 import {
     deployedStackUrl,
@@ -243,9 +244,9 @@ async function getCloudformationTemplate(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlAmiId } = sqlConfiguration;
+    const { sqlAmiId, sqlServerName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
-    const metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}: ${sqlAmiId},${DATABASE_SIZE}: ${databaseSize}`;
+    const metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}: ${sqlAmiId},${DATABASE_SIZE}: ${databaseSize},${SQL_HOST_NAME}: ${sqlServerName}`;
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -380,9 +381,9 @@ async function deployStackOrCreateTemplateURL(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlAmiId } = sqlConfiguration;
+    const { sqlAmiId, sqlServerName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
-    let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}: ${sqlAmiId},${DATABASE_SIZE}: ${databaseSize}`;
+    let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}: ${sqlAmiId},${DATABASE_SIZE}: ${databaseSize}, ${SQL_HOST_NAME}: ${sqlServerName}`;
 
     try {
         const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
