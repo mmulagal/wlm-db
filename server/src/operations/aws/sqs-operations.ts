@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { Message, ReceiveMessageCommandInput } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { inspect } from 'util';
+import { JSONObject } from '@fastify/swagger';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
 import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
 import {
@@ -83,7 +84,7 @@ async function getMatchingMasterStackDeployment(stackName: string) {
 }
 
 async function getMatchingMasterJob(accountId: string, stackName: string) {
-    const MASTER_JOB_NAME_PATTERN = /WLMDB-(.+[a-zA-Z])-(\d{13})/;
+    const MASTER_JOB_NAME_PATTERN = /Microsoft SQL server deployment with stack WLMDB-(.+[a-zA-Z])-(\d{13})/;
     const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
     if (matchingMasterJob) {
         const [masterJobName] = matchingMasterJob;
@@ -258,15 +259,15 @@ async function processCloudFormationMessages() {
                                                 });
 
                                                 // Create master job
-                                                logger.info('Creating master job:', stackName);
+                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
+                                                logger.info('Creating master job:', masterJobName);
                                                 await createJobs(accountId, [
                                                     {
                                                         account_id: accountId,
                                                         type: JOBTYPE.DEPLOYMENT,
                                                         status: JOBSTATUS.IN_PROGRESS,
                                                         resource_name: trackresourceName,
-                                                        name: stackName,
-                                                        description: `${trackdatabaseType} deployment with stack ${stackName}`,
+                                                        name: masterJobName,
                                                         start_time: new Date(messageTimestamp)
                                                     }
                                                 ]);
@@ -290,23 +291,25 @@ async function processCloudFormationMessages() {
                                                     });
 
                                                     // Update master job with completion status
+                                                    const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                     const [masterJob] = await listJobs(
                                                         accountId,
                                                         undefined,
                                                         undefined,
                                                         undefined,
-                                                        stackName
+                                                        masterJobName
                                                     );
 
                                                     logger.info(
                                                         'Update master job to status completed:',
                                                         masterJob.id,
-                                                        stackName
+                                                        masterJobName
                                                     );
-                                                    await updateJobDetails(accountId, masterJob.id, {
+                                                    const response = await updateJobDetails(accountId, masterJob.id, {
                                                         status: JOBSTATUS.COMPLETED,
                                                         endTime: new Date(messageTimestamp).valueOf()
                                                     });
+                                                    logger.debug('Update master job response:', response);
 
                                                     const {
                                                         ActiveInstanceId: activeNodeInstanceId,
@@ -428,23 +431,24 @@ async function processCloudFormationMessages() {
                                                 });
 
                                                 // Update master job with failed status
+                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                 const [masterJob] = await listJobs(
                                                     accountId,
                                                     undefined,
                                                     undefined,
                                                     undefined,
-                                                    stackName
+                                                    masterJobName
                                                 );
-
                                                 logger.info(
                                                     'Update master job to status failed:',
                                                     masterJob.id,
-                                                    stackName
+                                                    masterJobName
                                                 );
-                                                await updateJobDetails(accountId, masterJob.id, {
+                                                const response = await updateJobDetails(accountId, masterJob.id, {
                                                     status: JOBSTATUS.FAILED,
                                                     endTime: new Date(messageTimestamp).valueOf()
                                                 });
+                                                logger.debug('Update master job response:', response);
 
                                                 // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
                                                 // const notificationData = {
@@ -476,22 +480,24 @@ async function processCloudFormationMessages() {
                                             });
 
                                             // Update master job with failed status
-                                            const masterJob = await getMatchingMasterJob(accountId, stackName);
+                                            const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
+                                            const masterJob = await getMatchingMasterJob(accountId, masterJobName);
                                             if (!masterJob) {
                                                 logger.error(
                                                     'No entry in database job table for stackname:',
-                                                    stackName
+                                                    masterJobName
                                                 );
                                             } else {
                                                 logger.info(
                                                     'Update master job to status failed:',
                                                     masterJob?.id,
-                                                    stackName
+                                                    masterJobName
                                                 );
-                                                await updateJobDetails(accountId, masterJob.id, {
+                                                const response = await updateJobDetails(accountId, masterJob.id, {
                                                     status: JOBSTATUS.FAILED,
                                                     endTime: new Date(messageTimestamp).valueOf()
                                                 });
+                                                logger.debug('Update master job response:', response);
                                             }
 
                                             // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
@@ -530,6 +536,7 @@ async function processCloudFormationMessages() {
                             const {
                                 StackId: stackId,
                                 StackName: stackName,
+                                PhysicalResourceId: physicalResourceId,
                                 LogicalResourceId: logicalResourceId,
                                 ResourceType: resourceType,
                                 Timestamp: timestamp,
@@ -562,23 +569,26 @@ async function processCloudFormationMessages() {
                                         ? JOBSTATUS.IN_PROGRESS
                                         : JOBSTATUS.FAILED;
 
-                                    const masterJob = await getMatchingMasterJob(accountId, stackName);
+                                    const { databaseType } = data as JSONObject;
+                                    const masterJobName = `${databaseType} deployment with stack ${stackName}`;
+                                    const masterJob = await getMatchingMasterJob(accountId, masterJobName);
                                     if (!masterJob) {
-                                        logger.error('No entry found in database for job with name', stackName);
+                                        logger.error('No entry found in database for job with name', masterJobName);
                                     } else {
+                                        const level2JobName = `Deploying ${stackName}`;
                                         const [level2Job] = await listJobs(
                                             accountId,
                                             masterJob.id,
                                             undefined,
                                             undefined,
-                                            stackName
+                                            level2JobName
                                         );
                                         if (!level2Job) {
                                             logger.info(
-                                                'Create level 2 job for master stack:',
+                                                'Create level 2 job:',
                                                 masterJob.id,
                                                 masterJob.name,
-                                                stackName,
+                                                level2JobName,
                                                 jobStatus
                                             );
                                             await createJobs(accountId, [
@@ -588,34 +598,37 @@ async function processCloudFormationMessages() {
                                                     type: JOBTYPE.DEPLOYMENT,
                                                     status: jobStatus,
                                                     resource_name: masterJob.resource_name,
-                                                    name: stackName,
+                                                    name: level2JobName,
                                                     parent_job_id: masterJob.id,
-                                                    description: masterJob.description || '',
+                                                    description: physicalResourceId
+                                                        ? `Physical resource id: ${physicalResourceId}`
+                                                        : '',
                                                     start_time: new Date(messageTimestamp)
                                                 }
                                             ]);
-                                        } else {
+                                        } else if (level2Job.name === `Deploying ${logicalResourceId}`) {
                                             try {
                                                 logger.info(
-                                                    'Update level 2 job for master stack:',
+                                                    'Update level 2 job:',
                                                     masterJob.id,
                                                     masterJob.name,
                                                     level2Job.id,
                                                     level2Job.name,
                                                     jobStatus
                                                 );
-                                                await updateJobDetails(accountId, level2Job.id, {
+                                                const response = await updateJobDetails(accountId, level2Job.id, {
                                                     status: jobStatus,
-                                                    error: resourceStatusReason,
+                                                    error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : '',
                                                     endTime: new Date(messageTimestamp).valueOf()
                                                 });
+                                                logger.debug('Update level job 2 response:', response);
                                             } catch (error) {
                                                 logger.error(
                                                     'Error while updating level 2 job with status:',
                                                     masterJob.id,
                                                     masterJob.name,
                                                     level2Job.id,
-                                                    stackName,
+                                                    level2Job.name,
                                                     jobStatus,
                                                     error
                                                 );
@@ -692,11 +705,12 @@ async function processCloudFormationMessages() {
                                                     masterJob.name,
                                                     jobStatus
                                                 );
-                                                await updateJobDetails(accountId, masterJob.id, {
+                                                const response = await updateJobDetails(accountId, masterJob.id, {
                                                     status: jobStatus,
-                                                    error: resourceStatusReason,
+                                                    error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : '',
                                                     endTime: new Date(messageTimestamp).valueOf()
                                                 });
+                                                logger.debug('Update master job response:', response);
                                             } catch (error) {
                                                 logger.error(
                                                     'Error while updating master job with status:',
@@ -732,11 +746,12 @@ async function processCloudFormationMessages() {
                                                     masterJob.name,
                                                     jobStatus
                                                 );
-                                                await updateJobDetails(accountId, masterJob.id, {
+                                                const response = await updateJobDetails(accountId, masterJob.id, {
                                                     status: jobStatus,
-                                                    error: resourceStatusReason,
+                                                    error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : '',
                                                     endTime: new Date(messageTimestamp).valueOf()
                                                 });
+                                                logger.debug('Update master job response:', response);
                                             } catch (error) {
                                                 logger.error(
                                                     'Error while updating master job with status:',
@@ -764,56 +779,32 @@ async function processCloudFormationMessages() {
                                         logger.error('Failed to create event', error);
                                     }
 
-                                    // Update level 2 job
+                                    // Update level 3 job
+                                    const level2JobName = `Deploying ${stackName}`;
                                     const [level2Job] = await listJobs(
                                         accountId,
                                         masterJob?.id,
                                         undefined,
                                         undefined,
-                                        stackName
+                                        level2JobName
                                     );
-                                    try {
-                                        logger.info(
-                                            'Update level 2 job:',
-                                            masterJob?.id,
-                                            masterJob?.name,
-                                            level2Job.id,
-                                            level2Job.name,
-                                            jobStatus
-                                        );
-                                        await updateJobDetails(accountId, level2Job.id, {
-                                            status: jobStatus,
-                                            error: resourceStatusReason,
-                                            endTime: new Date(messageTimestamp).valueOf()
-                                        });
-                                    } catch (error) {
-                                        logger.error(
-                                            'Error while updating level 2 job :',
-                                            masterJob?.id,
-                                            masterJob?.name,
-                                            level2Job.id,
-                                            level2Job.name,
-                                            jobStatus,
-                                            error
-                                        );
-                                    }
-
+                                    const level3JobName = `Deploying ${logicalResourceId}(${resourceType})`;
                                     const [level3Job] = await listJobs(
                                         accountId,
-                                        level2Job?.id,
+                                        level2Job.id,
                                         undefined,
                                         undefined,
-                                        logicalResourceId
+                                        level3JobName
                                     );
 
-                                    if (!level3Job) {
+                                    if (!level3Job && level2Job.name !== `Deploying ${logicalResourceId}`) {
                                         logger.info(
                                             'Create level 3 job:',
                                             masterJob?.id,
                                             masterJob?.name,
                                             level2Job.id,
                                             level2Job.name,
-                                            logicalResourceId
+                                            level3JobName
                                         );
                                         await createJobs(accountId, [
                                             // Level 3 Job
@@ -822,28 +813,31 @@ async function processCloudFormationMessages() {
                                                 type: JOBTYPE.DEPLOYMENT,
                                                 status: jobStatus,
                                                 resource_name: level2Job.resource_name,
-                                                name: logicalResourceId,
+                                                name: level3JobName,
                                                 parent_job_id: level2Job.id,
-                                                description: level2Job.description || '',
+                                                description: physicalResourceId
+                                                    ? `Physical resource id: ${physicalResourceId}`
+                                                    : '',
                                                 start_time: new Date(messageTimestamp)
                                             }
                                         ]);
-                                    } else {
+                                    } else if (level2Job.name !== `Deploying ${logicalResourceId}`) {
                                         logger.info(
                                             'Update level 3 job:',
                                             masterJob?.id,
                                             masterJob?.name,
                                             level2Job.id,
                                             level2Job.name,
-                                            logicalResourceId,
+                                            level3JobName,
                                             jobStatus
                                         );
                                         try {
-                                            await updateJobDetails(accountId, level3Job.id, {
+                                            const response = await updateJobDetails(accountId, level3Job.id, {
                                                 status: jobStatus,
-                                                error: resourceStatusReason,
+                                                error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : '',
                                                 endTime: new Date(messageTimestamp).valueOf()
                                             });
+                                            logger.debug('Update level 3 job response:', response);
                                         } catch (error) {
                                             logger.error(
                                                 'Error while updating level 3 job :',
