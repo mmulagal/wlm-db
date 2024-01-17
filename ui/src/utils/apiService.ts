@@ -12,6 +12,7 @@ import { API_MAX_RETRIES } from './consts';
 import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
+import { SELECT_CONFIG } from './appConstants';
 import JobMonitoringFullJobs from '../../src/workloadFactory/JobMonitoring/jobMonitoringDownload.json';
 import JobMonitoringJobs from '../../src/workloadFactory/JobMonitoring/jobMonitoringJobs.json';
 import JobMonitoringSubTask from '../../src/workloadFactory/JobMonitoring/JobMonitoringSubTask.json';
@@ -21,8 +22,9 @@ const prepareHeaders = (
     headers: Headers,
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
-    const { getState } = api;
+    const { getState, endpoint } = api;
     const { accessToken, workspaceId, isDemoMode, isWorkloadFactory } = (getState() as RootState).auth;
+    const { selectConfig } = (getState() as RootState).mssqlForm;
     if (accessToken) {
         headers.set('authorization', accessToken);
     }
@@ -35,6 +37,14 @@ const prepareHeaders = (
     if (!isWorkloadFactory) {
         headers.set('x-netapp-referer', 'BlueXP');
     }
+    if (endpoint === 'deploySqlTemplate') {
+        headers.set(
+          'triggered-from',
+          selectConfig === SELECT_CONFIG.EASY_CREATE
+            ? 'wizard-quick-create'
+            : 'wizard-advanced-create'
+        );
+      }
     return headers;
 };
 
