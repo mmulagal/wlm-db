@@ -240,7 +240,7 @@ const JobMonitoringTable = () => {
             id: '8',
             Header: '',
             accessor: '',
-            width: '40px'
+            width: '42px'
         }
     ];
 
