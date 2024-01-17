@@ -37,12 +37,12 @@ const prepareHeaders = (
     if (!isWorkloadFactory) {
         headers.set('x-netapp-referer', 'BlueXP');
     }
-    if (endpoint === 'deploySqlTemplate') {
+    if (endpoint === 'deploySqlTemplate' || endpoint === 'getTemplates') {
         headers.set(
           'triggered-from',
           selectConfig === SELECT_CONFIG.EASY_CREATE
-            ? 'wizard-quick-create'
-            : 'wizard-advanced-create'
+            ? 'wizard-quick'
+            : 'wizard-advanced'
         );
       }
     return headers;
