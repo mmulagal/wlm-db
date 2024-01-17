@@ -83,7 +83,7 @@ describe('Job operations', () => {
                 type: JOBTYPE.DEPLOYMENT
             }
         ]);
-        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, 'filterMe');
+        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, undefined, 'filterMe');
         const response = await getJobDetails(ACCOUNT_ID, jobDetails.id);
         expect(response.description).toEqual('test-filtered-job-description');
     });
