@@ -5,7 +5,8 @@ import {
     getJobs,
     getJobDetails,
     updateJobDetails,
-    deleteJobsWithAllSubJobs
+    deleteJobsWithAllSubJobs,
+    getJobSummary
 } from '../../../src/operations/database/job-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
@@ -82,7 +83,7 @@ describe('Job operations', () => {
                 type: JOBTYPE.DEPLOYMENT
             }
         ]);
-        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, 'filterMe');
+        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, undefined, 'filterMe');
         const response = await getJobDetails(ACCOUNT_ID, jobDetails.id);
         expect(response.description).toEqual('test-filtered-job-description');
     });
@@ -190,5 +191,12 @@ describe('Job operations', () => {
 
         const response = await deleteJobsWithAllSubJobs(ACCOUNT_ID, jobId);
         expect(response.count).toEqual(7);
+    });
+
+    it('should get job summary', async () => {
+        const response = await getJobSummary(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
+        expect(response).toHaveProperty('inProgress');
+        expect(response).toHaveProperty('completed');
+        expect(response).toHaveProperty('failed');
     });
 });

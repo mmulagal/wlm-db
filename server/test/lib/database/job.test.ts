@@ -2,9 +2,12 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
 import moment from 'moment';
 import {
+    countParentJobs,
     createJobs,
     deleteJobs,
     deleteJobsOfAccount,
+    deleteOlderJobs,
+    getJobCountByStatus,
     listJobs,
     listUniqueJob,
     updateJob
@@ -168,6 +171,13 @@ describe('Modify jobs', () => {
 });
 
 describe('List jobs', () => {
+    it('should return a count of parent jobs in an account', async () => {
+        const {
+            _count: { id: parentJobsCount }
+        } = await countParentJobs(ACCOUNT_ID);
+        expect(parentJobsCount).toBeGreaterThan(0);
+    });
+
     it('should list all jobs in an account', async () => {
         const jobs = await listJobs(ACCOUNT_ID);
         expect(jobs.length).toBeGreaterThan(0);
@@ -214,9 +224,24 @@ describe('List jobs', () => {
     it('fail to list a job invalid job Id', async () => {
         try {
             await listUniqueJob(ACCOUNT_ID, 'a');
-        } catch (error: any) {
+        } catch (error) {
             // expect(error.code).toEqual('P2025')
             expect(error).toBeDefined(); // prismock returns undefined instead of actual error code
         }
     });
+});
+
+describe('Group jobs by status', () => {
+    it('should group jobs by status', async () => {
+        const response = await getJobCountByStatus(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
+        expect(response[0]).toHaveProperty(['status']);
+        expect(response[0]).toHaveProperty(['_count']);
+    });
+});
+
+// This test case should be the last one in this file
+it('should delete jobs lesser than a time', async () => {
+    await deleteOlderJobs(Date.now());
+    const jobs = await listJobs(ACCOUNT_ID);
+    expect(jobs.length).toBe(0);
 });

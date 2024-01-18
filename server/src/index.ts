@@ -49,6 +49,7 @@ import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-o
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 import chatbotRoutes from './routes/chatbot';
+import purgeOlderJobs from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 
 const logger = getLogger();
@@ -272,6 +273,15 @@ try {
     }
 } catch (error) {
     logger.error('Failed to initialize database', error);
+}
+
+// Initialize cron jobs
+try {
+    if (isActiveInstance()) {
+        purgeOlderJobs();
+    }
+} catch (error) {
+    logger.error('Failed to initialize cron jobs', error);
 }
 
 app.listen({ port, host }, err => {

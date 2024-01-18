@@ -410,17 +410,16 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
     }
-    // ToDo: Will remove succes and initializing once jobs summary API changes will be on stage
-    const completed = (data?.success || data?.completed || 0);
+    const completed = (data?.completed || 0);
     const failed = (data?.failed || 0);
-    const inProgress = (data?.initializing || data?.inProgress || 0)
+    const inProgress = (data?.inProgress || 0)
     const totalJobs = failed + inProgress + completed;
     const newData = {
         ...data,
         totalJobs: totalJobs,
-        successPercent: completed ? (completed / totalJobs) * 100 : 0,
+        completedPercent: completed ? (completed / totalJobs) * 100 : 0,
         failedPercent: failed ? (failed / totalJobs) * 100 : 0,
-        initializingPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
+        inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
     };
     return newData;
 };
@@ -973,24 +972,28 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
     result += '\n'; //New Row
   
     array.map((item: any) => {
-      //Goes Through Each Array Object
-      result = addBlankCell(level, result);
-      keys.map((key: string) => {
-        //Goes Through Each Object value
-        if (key && key !== '') {
-          result += item[key] + ','; //Comma Seperates Each Key Value in a Row
+        //Goes Through Each Array Object
+        result = addBlankCell(level, result);
+        keys.map((key: string) => {
+            //Goes Through Each Object value
+            if (key && key !== '') {
+                if (key === 'startTime' || key === 'endTime') {
+                    result += formatDateWithTime(item[key]).replace(',', '') + ',';
+                } else {
+                    result += item[key] + ',';
+                }
+            }
+        });
+        result += '\n'; //Creates New Row
+        if (item?.subJobs) {
+            result = createJobMonitorCSV(
+                item?.subJobs, 
+                JM_DOWNLOAD.SUB_JOBS_KEYS, 
+                JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS, 
+                result, 
+                level+1
+                );
         }
-      });
-      result += '\n'; //Creates New Row
-      if (item?.subJobs) {
-        result = createJobMonitorCSV(
-            item?.subJobs, 
-            JM_DOWNLOAD.SUB_JOBS_KEYS, 
-            JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS, 
-            result, 
-            level+1
-        );
-      }
     });
     if (level === 1){
         result += '\n'; //New Row

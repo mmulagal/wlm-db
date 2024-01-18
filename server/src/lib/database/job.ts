@@ -19,11 +19,28 @@ interface readOnlyJob {
     initiator?: string;
 }
 
+async function countParentJobs(accountId: string) {
+    logger.info('Counting parent jobs', accountId);
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.job.aggregate({
+        _count: {
+            id: true
+        },
+        where: {
+            account_id: accountId,
+            parent_job_id: null
+        }
+    });
+}
+
 async function listJobs(
     accountId: string,
     parentJobId: string | null = null,
     sort: string = 'start_time',
     sortOrder: string = 'desc',
+    jobname?: string,
     initiator?: string,
     type?: JOBTYPE[],
     status?: JOBSTATUS[],
@@ -48,14 +65,13 @@ async function listJobs(
 
     accountId = checkAccount(accountId);
 
-    const parentJobIdFilter = parentJobId || null;
-
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
-            parent_job_id: parentJobIdFilter,
+            parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),
+            ...(jobname && { name: jobname }),
             ...(initiator && { initiator }),
             ...(startTime !== undefined && {
                 start_time: {
@@ -158,4 +174,46 @@ async function deleteJobsOfAccount(accountId: string) {
     });
 }
 
-export { listJobs, listUniqueJob, createJobs, updateJob, deleteJobs, deleteJobsOfAccount };
+async function deleteOlderJobs(olderDate: number) {
+    logger.info('Delete Older Jobs ', { olderDate });
+    return prisma.client.job.deleteMany({
+        where: {
+            start_time: {
+                lt: new Date(olderDate)
+            }
+        }
+    });
+}
+
+async function getJobCountByStatus(accountId: string, startTime: number, endTime: number) {
+    logger.info('Getting Job Count By Status', { accountId, startTime, endTime });
+
+    return prisma.client.job.groupBy({
+        where: {
+            account_id: accountId,
+            parent_job_id: null,
+            start_time: {
+                gte: new Date(startTime)
+            },
+            end_time: {
+                lte: new Date(endTime)
+            }
+        },
+        by: ['status'],
+        _count: {
+            _all: true
+        }
+    });
+}
+
+export {
+    countParentJobs,
+    listJobs,
+    listUniqueJob,
+    createJobs,
+    updateJob,
+    deleteJobs,
+    deleteJobsOfAccount,
+    deleteOlderJobs,
+    getJobCountByStatus
+};

@@ -32,9 +32,11 @@ const JobMonitoringTable = () => {
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
-
-    // skipApiCall to skip APi call when isActive is not true. Will make it true once API will be available.
     const [skipApiCall, setSkipApiCall] = useState(true);
+
+    // Filter options to use while downloading
+    const [typeFilter, setTypeFilter] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
     // const [scrollPos, setScrollPos] = useState(0);
 
@@ -64,7 +66,7 @@ const JobMonitoringTable = () => {
         isFetching: jmJobsListLoading,
         isError: jmJobsListError
     } = useGetFullJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime, 
-        includeSubJobs: true}, {skip: skipApiCall});
+        includeSubJobs: true, type: typeFilter, status: statusFilter}, {skip: skipApiCall});
 
     // When download starts it will read timeInterval and start API call 
     useEffect(() => {
@@ -98,8 +100,7 @@ const JobMonitoringTable = () => {
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             dispatch(clearNotifications());
-
-            if (jmJobsList?.nextToken === null) {
+            if (jmJobsList && !jmJobsList?.nextToken) {
                 // Download logic 
                 downloadJMTable(mergedList);
 
@@ -240,7 +241,7 @@ const JobMonitoringTable = () => {
             id: '8',
             Header: '',
             accessor: '',
-            width: '40px'
+            width: '42px'
         }
     ];
 
@@ -253,6 +254,22 @@ const JobMonitoringTable = () => {
         isHorizontalScroll: true,
         isLazyLoading: jobsListLoading
     });
+
+    // logic to get type and status filter values
+    useEffect(() => {
+        const filters = tableProps?.filterState?.columns;
+        JobsColDefs.map((col: any) => {
+            if (col?.id in filters){
+                let filterValues = Object.keys(filters[col?.id]?.values);
+                if (col?.accessor === 'type' && filterValues) {
+                    setTypeFilter(filterValues.join(','));
+                }
+                if (col?.accessor === 'status' && filterValues) {
+                    setStatusFilter(filterValues.join(','));
+                }
+            }
+        })
+    }, [tableProps]);
 
     const tableComponentProps = {
         ExpandedRow,
@@ -284,7 +301,7 @@ const JobMonitoringTable = () => {
                         className={styles.topBarStyle}
                         actionsRight={
                             <div className={styles.downloadButton}>
-                                {jobsListLoading && !downloadJobsLoading && 
+                                {(jobsListLoading && !downloadJobsLoading) || jobsList.length === 0 && 
                                     <div className={styles.downloadDisable}>
                                         <DownloadIcon />
                                     </div>
@@ -303,7 +320,7 @@ const JobMonitoringTable = () => {
                                         }
                                     />
                                 }
-                                {!downloadJobsLoading && !jobsListLoading && 
+                                {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && 
                                     <DownloadIcon 
                                         onClick={downloadJobMonitoring}
                                 />}

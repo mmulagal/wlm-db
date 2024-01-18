@@ -94,6 +94,7 @@
         "no-underscore-dangle": 0,
         "no-nested-ternary": 0,
         "no-trailing-spaces": 2,
+        "no-prototype-builtins": 0,
         "import/group-exports": 2,
         "import/prefer-default-export": 1,
         "no-prototype-builtins": 0,

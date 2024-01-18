@@ -10,6 +10,7 @@ import { useDispatch } from 'react-redux';
 import { setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
 import Bubbles from '../Bubbles/Bubbles';
 import { CHATBOT_SUGGESTION_BUBBLES } from '../../../../utils/consts';
+import { validateChatbotField } from '../../../../utils/utilityFunctions';
 
 type optionsType = {
     value?: string | number;
@@ -46,7 +47,13 @@ const ChatBox = ({
     activeField,
     setContext
 }: ChatBoxPropTypes) => {
-    const { isWizardTouched, currentIntent, suggestionBubbles } = useAppSelector(state => state.chatbot);
+    const {
+        isWizardTouched,
+        currentIntent,
+        suggestionBubbles,
+        expectingResponse,
+        messages: stateMsgs
+    } = useAppSelector(state => state.chatbot);
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef(null);
 
@@ -54,7 +61,25 @@ const ChatBox = ({
 
     const handleSendMsg = () => {
         if (userInput.trim()) {
-            sendMsg(userInput);
+            if (expectingResponse.type !== 'none') {
+                const valueToShow = expectingResponse.type === 'password' ? '********' : userInput;
+                const validationError = validateChatbotField(expectingResponse.fieldName, userInput);
+                if (validationError) {
+                    dispatch(
+                        setMessages([
+                            ...stateMsgs,
+                            { sender: 'user', msg: valueToShow },
+                            { sender: 'bot', msg: validationError }
+                        ])
+                    );
+                } else {
+                    handleSelectButtonClicked({
+                        [expectingResponse.fieldName]: { label: userInput, value: userInput }
+                    });
+                }
+            } else {
+                sendMsg(userInput);
+            }
             setUserInput('');
         }
     };
@@ -102,7 +127,9 @@ const ChatBox = ({
                             activeField={activeField}
                         />
                     ))}
-                    <ChatBotResponseLoader isBotReplying={isBotReplying} />
+                    {!(!messagesToShow.length && !isWizardTouched) && (
+                        <ChatBotResponseLoader isBotReplying={isBotReplying} />
+                    )}
                     {suggestionBubbles.list.length ? (
                         <div className={styles['bubble-container']}>
                             <Bubbles
@@ -132,6 +159,7 @@ const ChatBox = ({
                         className="current-msg-input"
                         ref={inputRef}
                         autoFocus
+                        type={expectingResponse.type === 'none' ? 'text' : expectingResponse.type}
                     ></input>
                     <div onClick={() => handleSendMsg()}>
                         <SendButton />

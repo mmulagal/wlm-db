@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import styles from './SelectComponent.module.scss';
-import { SelectField } from '@netapp/design-system';
-import { generateOptionType } from '../../../../../utils/utilityFunctions';
+import { Button, SelectField, Typography } from '@netapp/design-system';
+import { generateOptionType, openCredentialTab } from '../../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setSuggestionBubbles } from '../../../../../store/chatbot/chatbotSlice';
+import { GENERAL } from '../../../../../utils/appConstants';
 
 type selectComponentPropType = {
     options: any;
@@ -11,6 +14,8 @@ type selectComponentPropType = {
     paramObj: any;
     allowCreate?: boolean;
     activeField?: any;
+    handleSelectButtonClicked: (paramObj: any) => void;
+    link?: any;
 };
 
 const delay = () => {
@@ -28,11 +33,14 @@ const SelectComponent = ({
     selectKey,
     paramObj,
     allowCreate = false,
-    activeField
+    activeField,
+    handleSelectButtonClicked,
+    link
 }: selectComponentPropType) => {
     const [selected, setSelected] = useState('');
     const [optionsToShow, setOptionsToShow] = useState<any>([]);
     const [isCreating, setIsCreating] = useState(false);
+    const dispatch = useDispatch();
 
     //@ts-ignore
     useEffect(() => {
@@ -50,6 +58,26 @@ const SelectComponent = ({
         }
     }, [options, paramObj]);
 
+    useEffect(() => {
+        if (options.length < 10) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: optionsToShow,
+                    onBubbleClick: (label: string, value: string) => {
+                        onChange(selectKey, value, label);
+                        setSelected(value);
+                        handleSelectButtonClicked({ ...paramObj, [selectKey]: { label: label, value: value } });
+                        dispatch(
+                            setSuggestionBubbles({
+                                list: []
+                            })
+                        );
+                    }
+                })
+            );
+        }
+    }, [options, optionsToShow]);
+
     const addNewOption = async (option: any) => {
         setIsCreating(true);
         const updatedOptions = [...optionsToShow, { label: option, value: option }];
@@ -61,73 +89,57 @@ const SelectComponent = ({
 
     return (
         <div className={styles['select-component']}>
-            <div className={styles['select-component-heading']}>{heading}</div>
-            <SelectField
-                id={selectKey}
-                label={''}
-                isClearable={false}
-                defaultValue={options[0]}
-                isCreatingOption={isCreating}
-                isOptionsAddingEnabled={allowCreate}
-                //@ts-ignore
-                onCreateOption={addNewOption}
-                onChange={(selectedOptions: any): void => {
-                    onChange(selectKey, selectedOptions.value, selectedOptions.label);
-                    setSelected(selectedOptions.value);
-                }}
-                isSearchable={optionsToShow.length > 5 || allowCreate}
-                options={optionsToShow}
-                className={activeField === selectKey ? styles['select-component-highlight'] : ''}
-            />
-            {/* {options.length > 4 && (
-                <div className={styles['search-container']}>
-                    <input className={styles['search-input']} onChange={e => setSearchText(e.target.value)} />
-                    <SearchIcon className={styles['search-icon']} />
+            <div className={styles['select-component-heading']}>
+                <Typography variant="Regular_14" className={styles.fixColor}>
+                    {heading}
+                </Typography>
+                {link && (
+                    <Typography className={`${styles.link} ${styles.fixColor}`} variant="Regular_14">
+                        {link.description}{' '}
+                        <Button
+                            Component="button"
+                            onClick={() => {
+                                if (link.path === '/credentials') {
+                                    openCredentialTab();
+                                }
+                            }}
+                            variant="text"
+                        >
+                            {GENERAL.CREDENTIAL}
+                        </Button>
+                    </Typography>
+                )}
+            </div>
+            {options.length >= 10 || options.length === 0 ? (
+                <div className={styles['dropdown-container']}>
+                    <SelectField
+                        id={selectKey}
+                        label={''}
+                        isClearable={false}
+                        defaultValue={options[0]}
+                        isCreatingOption={isCreating}
+                        isOptionsAddingEnabled={allowCreate}
+                        //@ts-ignore
+                        onCreateOption={addNewOption}
+                        onChange={(selectedOptions: any): void => {
+                            onChange(selectKey, selectedOptions.value, selectedOptions.label);
+                            setSelected(selectedOptions.value);
+                        }}
+                        isSearchable={optionsToShow.length > 5 || allowCreate}
+                        options={optionsToShow}
+                        className={`${styles['select-field-container']} ${
+                            activeField === selectKey ? styles['select-component-highlight'] : ''
+                        }`}
+                    />
+                    <Button
+                        variant="primary"
+                        onClick={() => handleSelectButtonClicked(paramObj)}
+                        className={styles['add-btn']}
+                    >
+                        Add
+                    </Button>
                 </div>
-            )}
-            <div className={styles['select-list-container']}>
-                {filteredOptions.map((item: any, idx: number) => {
-                    return (
-                        <div className={styles['select-component-item']} key={`option-${idx}`}>
-                            <button
-                                className={`${styles['select-button']} ${
-                                    selected === item.value ? styles['selected'] : ''
-                                }`}
-                                onClick={() => {
-                                    onChange(selectKey, item.value, item.label);
-                                    setSelected(item.value);
-                                }}
-                            ></button>
-                            <div className={styles['select-button-text']}>
-                                <div className={selectKey === 'imageId' ? styles['first-line'] : ''}>
-                                    {item.label || item.value}
-                                </div>
-                                {selectKey === 'imageId' && (
-                                    <div className={styles['second-line']} title={item.value}>
-                                        {item.value}
-                                    </div>
-                                )}
-                                {selectKey === 'imageId' && (
-                                    <div
-                                        className={styles['third-line']}
-                                        title={`Virtualization: ${item.metadata.virtualization}    ENA enabled: ${item.metadata.enaEnabled}    Root device type: ${item.metadata.rootDeviceType}`}
-                                    >
-                                        <span
-                                            className={styles['second-line-span']}
-                                        >{`Virtualization: ${item.metadata.virtualization}`}</span>
-                                        <span
-                                            className={styles['second-line-span']}
-                                        >{`ENA enabled: ${item.metadata.enaEnabled}`}</span>
-                                        <span
-                                            className={styles['second-line-span']}
-                                        >{`Root device type: ${item.metadata.rootDeviceType}`}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div> */}
+            ) : null}
         </div>
     );
 };
