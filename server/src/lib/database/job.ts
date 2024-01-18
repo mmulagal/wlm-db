@@ -78,20 +78,11 @@ async function listJobs(
                     gte: new Date(startTime)
                 }
             }),
-            OR: [
-                {
-                    ...(endTime !== undefined && {
-                        end_time: {
-                            lte: new Date(endTime)
-                        }
-                    }),
-                    ...(endTime !== undefined && {
-                        start_time: {
-                            lte: new Date(endTime)
-                        }
-                    })
+            ...(endTime !== undefined && {
+                start_time: {
+                    lte: new Date(endTime)
                 }
-            ]
+            })
         },
         orderBy: {
             [sort]: `${sortOrder}`
@@ -202,20 +193,9 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
             account_id: accountId,
             parent_job_id: null,
             start_time: {
-                gte: new Date(startTime)
-            },
-            OR: [
-                {
-                    end_time: {
-                        lte: new Date(endTime)
-                    }
-                },
-                {
-                    start_time: {
-                        lte: new Date(endTime)
-                    }
-                }
-            ]
+                gte: new Date(startTime),
+                lte: new Date(endTime)
+            }
         },
         by: ['status'],
         _count: {
