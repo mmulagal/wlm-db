@@ -41,7 +41,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'triggered-from:chatbot,instance-type:m5.large'
         );
         expect(resp).toBeDefined();
     });
@@ -53,7 +56,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'chatbot'
         );
         expect(resp).toBeDefined();
     });
@@ -65,7 +71,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'triggered-from:chatbot,instance-type:m5.large'
         );
         expect(resp).toBeDefined();
     });
@@ -75,7 +84,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'chatbot'
         );
         expect(resp).toBeDefined();
     });

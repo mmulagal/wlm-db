@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Typography, SearchInput, Popover, FlashingDotsLoader, Button } from '@netapp/design-system';
+import { Typography, SearchInput, Popover, FlashingDotsLoader, Button, useDialog } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as ArrowRight } from '../../../assets/ic_arrow_right.svg';
 import { ReactComponent as ArrowLeft } from '../../../assets/ic_arrow_left.svg';
@@ -15,6 +15,7 @@ import Highlighter from 'react-highlight-words';
 import styles from './Sidebar.module.scss';
 import Accordion from '../Accordion/Accordion';
 import {
+    cfDownloadName,
     formatDateWithTime,
     generateOptionType,
     getCredDetails,
@@ -52,6 +53,8 @@ import CodeBoxColor from '../../../common/CodeBoxColor/CodeBoxColor';
 import NoDataCodeBox from '../../../common/NoDataCodebox/NoDataCodebox';
 import SyntaxHighlighter from '../../../common/hooks/SyntaxHighlighter';
 import ThemeProvider from '../../../common/ThemeProvider/ThemeProvider';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { useAppSelector } from '../../../store/storeHooks';
 
 type ConfigType = {
     id?: string;
@@ -66,6 +69,8 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [openedItem, setOpenedItem] = useState<ConfigType>({});
     const [searchInput, setSearchInput] = useState('');
     const [credDetailsData, setCredDetailsData] = useState({});
+    const { setDialog } = useDialog();
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     //To get configDatalist
     const [configData, setConfigData] = useState<any>([]);
@@ -94,6 +99,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
     const [countWord, setCountWord] = useState(0);
 
     const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
+    const [dbName, setDbName] = useState('');
 
     const [loadConfigDataExe] = useLazyGetConfigDataQuery();
     const [loadTemplateData] = useGetTemplatesMutation();
@@ -374,6 +380,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                 loadConfigDataExe({ configId: id })
                     .then(data => {
                         const actualData = data?.data?.data;
+                        setDbName(actualData?.dbName);
                         setCredDetailsData(actualData);
                         loadRestApi(actualData, id, true);
                     })
@@ -546,9 +553,23 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    const openDemoInfoDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.DEMO_TITLE}
+                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
+                primaryButton={GENERAL.CONTINUE}
+                callback={() => {}}
+            />
+        );
+    };
     const handleViewInAwsCloudFormation = () => {
-        if (getRightPanelTemplateResponse(openKey)?.url) {
-            window.open(getRightPanelTemplateResponse(openKey)?.url, '_blank', 'noopener');
+        if (isDemoMode) {
+            openDemoInfoDialog();
+        } else {
+            if (getRightPanelTemplateResponse(openKey)?.url) {
+                window.open(getRightPanelTemplateResponse(openKey)?.url, '_blank', 'noopener');
+            }
         }
     };
 
@@ -880,7 +901,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                     } else if (menuId === 'downloadYaml') {
                                                         handleDownloadYAML(
                                                             getRightPanelTemplateResponse(openKey)?.template,
-                                                            openedItem?.name
+                                                            cfDownloadName(dbName || openedItem?.name || '')
                                                         );
                                                     } else if (menuId === 'viewAwsCloudFormation') {
                                                         handleViewInAwsCloudFormation();

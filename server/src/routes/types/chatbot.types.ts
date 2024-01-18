@@ -31,7 +31,15 @@ const queryBotResponse = Type.Object({
                     Type.Array(
                         Type.Object({
                             label: Type.Optional(Type.String()),
-                            value: Type.String()
+                            value: Type.String(),
+                            data: Type.Optional(
+                                Type.Array(
+                                    Type.Object({
+                                        label: Type.Optional(Type.String()),
+                                        value: Type.Optional(Type.String())
+                                    })
+                                )
+                            )
                         })
                     )
                 ),

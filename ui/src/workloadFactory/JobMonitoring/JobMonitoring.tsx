@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
 import { generateOptionType } from '../../utils/utilityFunctions';
 import JobMonitoringApi from './JobMonitoringApi';
-import { setTimeInterval } from '../../store/workloadFactory/jobMonitoringSlice';
+import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch } from '../../store/storeHooks';
 
 const JobMonitoring = () => {
@@ -39,8 +39,20 @@ const JobMonitoring = () => {
         } else if (selectedTime === 'Last 30 days') {
             days = 30;
         }
+        dispatchTimeInterval(days);
+    };
+
+    const dispatchTimeInterval = (days: number) => {
+        const toDate = Date.now();
+        const fromDate = toDate - days * (3600 * 1000 * 24);
+        dispatch(setFromTime(fromDate));
+        dispatch(setToTime(toDate));
         dispatch(setTimeInterval(days));
     };
+
+    useEffect(() => {
+        dispatchTimeInterval(1);
+    }, []);
 
     JobMonitoringApi();
 

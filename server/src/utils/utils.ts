@@ -276,6 +276,10 @@ function generateRandomIP(): string {
     return ip;
 }
 
+function isActiveInstance() {
+    return !process.env.hasOwnProperty('isActive') || process.env.isActive === 'true';
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -294,5 +298,6 @@ export {
     sizeInGigaBytes,
     waitForResolution,
     deployedStackUrl,
-    generateRandomIP
+    generateRandomIP,
+    isActiveInstance
 };

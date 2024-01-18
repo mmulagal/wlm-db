@@ -25,7 +25,12 @@ import {
     FSX_USERNAME,
     PROD,
     DEV,
-    CUSTOM
+    CUSTOM,
+    M5_2XL,
+    FCI_ABBREVIATION,
+    MULTI_AZ_SMALL,
+    SINGLE_AZ_SMALL,
+    M5_XL
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -715,10 +720,29 @@ function validateDeploymentEnv(key: string, value: string) {
         status: 'error',
         message: 'Select a deployment environment',
         allowedValues: [
-            { label: 'Production', value: PROD },
-            { label: 'Develpoment', value: DEV },
+            {
+                label: 'Production',
+                value: PROD,
+                data: [
+                    { label: 'SQL Deployment model', value: FCI_ABBREVIATION },
+                    { label: 'Deployment model', value: MULTI_AZ_SMALL },
+                    { label: 'Database size', value: 500 },
+                    { label: 'Instance type', value: M5_2XL }
+                ]
+            },
+            {
+                label: 'Develpoment',
+                value: DEV,
+                data: [
+                    { label: 'SQL Deployment model', value: 'Standalone' },
+                    { label: 'Deployment model', value: SINGLE_AZ_SMALL },
+                    { label: 'Database size', value: 100 },
+                    { label: 'Instance type', value: M5_XL }
+                ]
+            },
             { label: 'Custom', value: CUSTOM }
-        ]
+        ],
+        type: 'card'
     };
 }
 

@@ -1,6 +1,8 @@
 export const SELECT_CONFIG = {
-    STANDARD_CREATE: `Advanced create`,
-    EASY_CREATE: `Quick create`,
+    STANDARD_CREATE: `Standard create`,
+    EASY_CREATE: `Easy create`,
+    ADVANCED_CREATE: 'Advanced create',
+    QUICK_CREATE: 'Quick create',
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
         'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
@@ -85,6 +87,7 @@ export const GENERAL = {
     REQUIRED_VIEW_PERMISSIONS: 'Required permissions',
     REQUIRED_OPERATE_PERMISSIONS: 'Required permissions',
     CANCEL: 'Cancel',
+    CONTINUE: 'Continue',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Option 1:',
     STEP_TWO: 'Option 2:',
@@ -492,7 +495,12 @@ export const GENERAL = {
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
     NO_DATA: 'No data',
-    JM_RUNNING: 'Running'
+    JM_RUNNING: 'Running',
+    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
+    DEMO_TITLE: 'This is a Demo account',
+    DEMO_CONTENT:
+        'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation.'
 };
 
 export const CODE_VIEWER = {
