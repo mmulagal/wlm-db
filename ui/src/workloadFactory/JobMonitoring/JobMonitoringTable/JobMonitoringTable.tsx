@@ -302,7 +302,7 @@ const JobMonitoringTable = () => {
                         className={styles.topBarStyle}
                         actionsRight={
                             <div className={styles.downloadButton}>
-                                {jobsListLoading && !downloadJobsLoading && 
+                                {(jobsListLoading && !downloadJobsLoading) || jobsList.length === 0 && 
                                     <div className={styles.downloadDisable}>
                                         <DownloadIcon />
                                     </div>
@@ -321,7 +321,7 @@ const JobMonitoringTable = () => {
                                         }
                                     />
                                 }
-                                {!downloadJobsLoading && !jobsListLoading && 
+                                {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && 
                                     <DownloadIcon 
                                         onClick={downloadJobMonitoring}
                                 />}
