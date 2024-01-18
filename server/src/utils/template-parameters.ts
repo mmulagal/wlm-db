@@ -356,6 +356,12 @@ const PARAMETERS = [
         description: 'WLMDB AWS Account ID (DO NOT EDIT)',
         type: 'String',
         noEcho: true
+    },
+    {
+        name: 'MetadataParam',
+        description: 'Metadata param used for internal audit( DO NOT EDIT) ',
+        type: 'CommaDelimitedList',
+        noEcho: true
     }
 ];
 
