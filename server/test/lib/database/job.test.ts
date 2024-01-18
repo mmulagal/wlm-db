@@ -1,5 +1,4 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-
 import moment from 'moment';
 import {
     countParentJobs,
@@ -241,7 +240,19 @@ describe('Group jobs by status', () => {
 
 // This test case should be the last one in this file
 it('should delete jobs lesser than a time', async () => {
+    await createJobs('DELETE_TEST_ACCOUNT_ID', [
+        {
+            account_id: 'DELETE_TEST_ACCOUNT_ID',
+            name: 'test-job-delete',
+            description: 'test-job-description-delete',
+            resource_name: 'test-resource',
+            initiator: 'test-user',
+            start_time: new Date('2024-01-01'),
+            status: JOBSTATUS.IN_PROGRESS,
+            type: JOBTYPE.DEPLOYMENT
+        }
+    ]);
     await deleteOlderJobs(Date.now());
-    const jobs = await listJobs(ACCOUNT_ID);
+    const jobs = await listJobs('DELETE_TEST_ACCOUNT_ID');
     expect(jobs.length).toBe(0);
 });
