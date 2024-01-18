@@ -241,7 +241,7 @@ describe('Group jobs by status', () => {
 
 // This test case should be the last one in this file
 it('should delete jobs lesser than a time', async () => {
-    await deleteOlderJobs(Date.now());
+    await deleteOlderJobs(Date.now() + 1000);
     const jobs = await listJobs(ACCOUNT_ID);
     expect(jobs.length).toBe(0);
 });
