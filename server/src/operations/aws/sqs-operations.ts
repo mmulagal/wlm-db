@@ -162,7 +162,6 @@ async function processCloudFormationMessages() {
     if (process.env.AWS_ROLE_ARN) {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
-
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
                 QueueUrl: queueUrl,
@@ -206,7 +205,8 @@ async function processCloudFormationMessages() {
                                         SQLDeploymentType: trackSqlDeploymentType,
                                         DatabaseType: trackdatabaseType,
                                         ResourceName: trackresourceName,
-                                        FileSystemType: trackfileSystemType
+                                        FileSystemType: trackfileSystemType,
+                                        MetadataParam: trackMetadataParam
                                     } = resourceProperties;
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
@@ -241,7 +241,8 @@ async function processCloudFormationMessages() {
                                                     data: {
                                                         databaseType: trackdatabaseType,
                                                         resourceName: trackresourceName,
-                                                        fileSystemType: trackfileSystemType
+                                                        fileSystemType: trackfileSystemType,
+                                                        metadataParam: trackMetadataParam
                                                     }
                                                 });
                                             } else {
