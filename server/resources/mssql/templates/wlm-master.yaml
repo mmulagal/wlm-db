@@ -88,7 +88,6 @@ Metadata:
           - CloudProviderAccountId
           - RoleCredentialsId
           - JwtToken
-          - EncryptedFsxUsername
           - EncryptedFsxPassword
     ParameterLabels:
       DeploymentMode:
@@ -277,8 +276,6 @@ Parameters:
   {{CloudProviderAccountId}}
   
   {{JwtToken}}
-
-  {{EncryptedFsxUsername}}
 
   {{EncryptedFsxPassword}}
   
@@ -982,5 +979,4 @@ Resources:
       FileSystemType: 'FSx for ONTAP'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
-      EncryptedFsxUsername: !Ref 'EncryptedFsxUsername'
       EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'
