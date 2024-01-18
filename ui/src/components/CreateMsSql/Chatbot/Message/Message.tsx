@@ -3,13 +3,15 @@ import SelectComponent from './SelectComponent/SelectComponent';
 import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.svg';
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
 import { GENERAL } from '../../../../utils/appConstants';
 import { openCredentialTab } from '../../../../utils/utilityFunctions';
+import { useDispatch } from 'react-redux';
+import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
 
 type optionsType = {
     value?: string | number;
@@ -48,16 +50,36 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
     const [paramObj, setParamObj] = useState({});
     const [errorFields, setErrorFields] = useState<string[]>([]);
     const isLastMessage = idx === messages.length - 1;
+    const dispatch = useDispatch();
 
     //@ts-ignore
     const isContinueDisabled = useMemo(() => {
         return Object.keys(paramObj).length !== fieldsArr.length || errorFields.length > 0;
     }, [paramObj, fieldsArr, errorFields]);
 
+    const item = fieldsArr[0];
+
+    useEffect(() => {
+        if (fieldsArr?.length) {
+            if (fieldsArr[0]?.type === 'text') {
+                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldsArr[0].key }));
+            } else if (fieldsArr[0]?.type === 'password') {
+                dispatch(setExpectingResponse({ type: 'password', fieldName: fieldsArr[0].key }));
+            } else if (fieldsArr[0]?.type === 'number') {
+                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldsArr[0].key }));
+            } else {
+                dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
+            }
+        }
+    }, [fieldsArr]);
+
     return (
         <>
             {(!isLastMessage || !isUserInputRequired || !isBotReplying) && (
-                <div className={styles['message-item']} key={`msg-${idx}`}>
+                <div
+                    className={`${styles['message-item']} ${msgObj.sender === 'user' ? styles['user-msg'] : ''}`}
+                    key={`msg-${idx}`}
+                >
                     <div
                         className={`${styles['message-icon']} ${
                             msgObj.sender === 'bot' ? styles['bot-icon'] : styles['user-icon']
@@ -68,114 +90,60 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                     {isUserInputRequired ? (
                         msgObj.active ? (
                             <div className={styles['msg-group-container']}>
-                                {fieldsArr.map((item: any, idx: number) => {
-                                    return (
-                                        <>
-                                            {msgObj.active && item.allowedValues ? (
-                                                <div className={styles['select-container']}>
-                                                    <SelectComponent
-                                                        options={
-                                                            item.key === 'region'
-                                                                ? item.allowedValues.map((item: any) => {
-                                                                      return {
-                                                                          ...item,
-                                                                          label: `${item.value} | ${item.label}`
-                                                                      };
-                                                                  })
-                                                                : item.allowedValues
-                                                        }
-                                                        onChange={(
-                                                            key: string,
-                                                            val: string | number,
-                                                            label: string
-                                                        ) => {
-                                                            setParamObj({
-                                                                ...paramObj,
-                                                                [key]: { label: label, value: val }
-                                                            });
-                                                        }}
-                                                        heading={item.message}
-                                                        selectKey={item.key}
-                                                        paramObj={paramObj}
-                                                        allowCreate={item.allowCreate}
-                                                        activeField={activeField}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                msgObj.active &&
-                                                (item.type === 'text' ||
-                                                    item.type === 'password' ||
-                                                    item.type === 'number') && (
-                                                    <div className={styles['select-container']}>
-                                                        <InputComponent
-                                                            heading={item.message}
-                                                            onChange={(key: string, val: string | number) => {
-                                                                setParamObj({
-                                                                    ...paramObj,
-                                                                    [key]: { label: val, value: val }
-                                                                });
-                                                            }}
-                                                            selectKey={item.key}
-                                                            fieldType={item.type}
-                                                            defaultValue={item.default}
-                                                            isDisabled={item.disable}
-                                                            errorFields={errorFields}
-                                                            setErrorFields={setErrorFields}
-                                                            activeField={activeField}
-                                                        />
-                                                    </div>
-                                                )
-                                            )}
-                                            {msgObj.active && item.type === 'tags' && (
-                                                <TagsComponent
-                                                    onChange={(key: string, val: string) => {
-                                                        setParamObj({
-                                                            ...paramObj,
-                                                            [key]: { label: val, value: val }
-                                                        });
-                                                    }}
-                                                />
-                                            )}
-                                            {item.link && (
-                                                <Typography className={styles.link} variant="Regular_14">
-                                                    {item.link.description}{' '}
-                                                    <Button
-                                                        Component="button"
-                                                        onClick={() => {
-                                                            if (item.link.path === '/credentials') {
-                                                                openCredentialTab();
-                                                            }
-                                                        }}
-                                                        variant="text"
-                                                    >
-                                                        {GENERAL.CREDENTIAL}
-                                                    </Button>
-                                                </Typography>
-                                            )}
-                                        </>
-                                    );
-                                })}
-                                <div className={styles['buttons-container']}>
-                                    {/* <button className="discard-button">Discard</button> */}
-                                    <Button
-                                        className={`${styles['select-chosen-button']} ${
-                                            activeField === 'continue-button' ? styles['highlight-button'] : ''
-                                        }`}
-                                        onClick={() => {
-                                            if (!isContinueDisabled) {
-                                                handleSelectButtonClicked(paramObj);
-                                            }
-                                        }}
-                                        disabled={isContinueDisabled}
-                                        id="continue-button"
-                                    >
-                                        Continue
-                                    </Button>
-                                </div>
+                                <>
+                                    {msgObj.active && item.allowedValues ? (
+                                        <div className={styles['select-container']}>
+                                            <SelectComponent
+                                                options={
+                                                    item.key === 'region'
+                                                        ? item.allowedValues.map((item: any) => {
+                                                              return {
+                                                                  ...item,
+                                                                  label: `${item.value} | ${item.label}`
+                                                              };
+                                                          })
+                                                        : item.allowedValues
+                                                }
+                                                onChange={(key: string, val: string | number, label: string) => {
+                                                    setParamObj({
+                                                        ...paramObj,
+                                                        [key]: { label: label, value: val }
+                                                    });
+                                                }}
+                                                heading={item.message}
+                                                selectKey={item.key}
+                                                paramObj={paramObj}
+                                                allowCreate={item.allowCreate}
+                                                activeField={activeField}
+                                                handleSelectButtonClicked={handleSelectButtonClicked}
+                                                link={item.link}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Typography
+                                            variant="Regular_14"
+                                            className={`${styles['message-text']} ${
+                                                msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
+                                            }`}
+                                        >
+                                            {`${fieldsArr[0].message}`}
+                                        </Typography>
+                                    )}
+                                    {msgObj.active && item.type === 'tags' && (
+                                        <TagsComponent
+                                            onChange={(key: string, val: string) => {
+                                                setParamObj({
+                                                    ...paramObj,
+                                                    [key]: { label: val, value: val }
+                                                });
+                                            }}
+                                        />
+                                    )}
+                                </>
                             </div>
                         ) : (
                             <Typography
-                                variant="Regular_16"
+                                variant="Regular_14"
                                 className={`${styles['message-text']} ${
                                     msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                 }`}
@@ -195,7 +163,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                         </div>
                     ) : (
                         <Typography
-                            variant="Regular_16"
+                            variant="Regular_14"
                             className={`${styles['message-text']} ${
                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                             }`}

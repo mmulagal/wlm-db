@@ -1,3 +1,4 @@
+import { Typography } from '@netapp/design-system';
 import styles from './Bubbles.module.scss';
 
 type BubblesPropsType = {
@@ -16,7 +17,9 @@ const Bubbles = ({ bubbleList, onBubbleClick }: BubblesPropsType) => {
             {bubbleList.map((bubble: bubbleItemType) => {
                 return (
                     <div className={styles['bubble-item']} onClick={() => onBubbleClick(bubble?.label, bubble?.value)}>
-                        {bubble.label}
+                        <Typography variant="Semibold_13" className={styles['bubble-label']}>
+                            {bubble.label}
+                        </Typography>
                     </div>
                 );
             })}

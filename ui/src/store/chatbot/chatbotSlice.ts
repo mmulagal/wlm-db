@@ -12,6 +12,10 @@ const initialState: ChatbotEntities = {
     suggestionBubbles: {
         list: [],
         onBubbleClick: () => {}
+    },
+    expectingResponse: {
+        type: 'none',
+        fieldName: ''
     }
 };
 
@@ -42,6 +46,9 @@ const chatbotSlice = createSlice({
         },
         setSuggestionBubbles: (state, action: PayloadAction<any>) => {
             state.suggestionBubbles = action.payload;
+        },
+        setExpectingResponse: (state, action: PayloadAction<any>) => {
+            state.expectingResponse = action.payload;
         }
     }
 });
@@ -54,6 +61,7 @@ export const {
     setLoadConfigClicked,
     setShowRetry,
     setIsWizardTouched,
-    setSuggestionBubbles
+    setSuggestionBubbles,
+    setExpectingResponse
 } = chatbotSlice.actions;
 export default chatbotSlice;
