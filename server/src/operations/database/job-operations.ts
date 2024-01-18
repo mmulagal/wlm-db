@@ -150,6 +150,7 @@ async function getJobs(accountId: string, filterParams: ListJobsQueryType = {}) 
         sort,
         sortOrder,
         initiator,
+        undefined,
         typeFilter,
         statusFilter,
         startTime,

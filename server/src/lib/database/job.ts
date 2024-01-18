@@ -40,6 +40,7 @@ async function listJobs(
     parentJobId: string | null = null,
     sort: string = 'start_time',
     sortOrder: string = 'desc',
+    jobname?: string,
     initiator?: string,
     type?: JOBTYPE[],
     status?: JOBSTATUS[],
@@ -70,6 +71,7 @@ async function listJobs(
             parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),
+            ...(jobname && { name: jobname }),
             ...(initiator && { initiator }),
             ...(startTime !== undefined && {
                 start_time: {
