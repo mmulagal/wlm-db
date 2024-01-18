@@ -277,7 +277,9 @@ Parameters:
   {{JwtToken}}
 
   {{WlmdbAwsAccountId}}
-
+  
+  {{MetadataParam}}
+   
   MetadataParam:
     Description: Metadata param used for internal audit( DO NOT EDIT) 
     Type: CommaDelimitedList
