@@ -38,7 +38,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             }
         } = request;
 
-        const response = await discoverMsSqlServer(
+        return discoverMsSqlServer(
             accountId,
             credentialsId,
             region,
@@ -49,7 +49,6 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             standbyNodeInstanceName,
             fsxId
         );
-        return response;
     });
 
     server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async request => {
@@ -57,8 +56,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             params: { accountId, resourceId }
         } = request;
 
-        const response = await deleteResourceById(accountId, resourceId);
-        return response;
+        return deleteResourceById(accountId, resourceId);
     });
 
     server.get(
@@ -68,8 +66,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
-            return response;
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
         }
     );
 
@@ -80,8 +77,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
-            return response;
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
         }
     );
 
@@ -92,8 +88,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
-            return response;
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
         }
     );
 
@@ -101,8 +96,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         const {
             params: { resourceId }
         } = request;
-        const response = await getDataBasesSummary(resourceId);
-        return response;
+        return getDataBasesSummary(resourceId);
     });
 
     server.get(`${MSSQL_DATA_API_PATH}/summary`, { schema: GetServerSummarySchema }, async request => {
@@ -110,15 +104,13 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             params: { resourceId }
         } = request;
 
-        const response = await getServerSummary(resourceId);
-        return response;
+        return getServerSummary(resourceId);
     });
 
     server.get(`${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`, { schema: GetTablesSchema }, async request => {
         const {
             params: { resourceId, databaseName }
         } = request;
-        const response = await getTablesSummary(resourceId, databaseName);
-        return response;
+        return getTablesSummary(resourceId, databaseName);
     });
 }
