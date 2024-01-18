@@ -49,7 +49,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             standbyNodeInstanceName,
             fsxId
         );
-        return reply.send(response);
+        return response;
     });
 
     server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async (request, reply) => {
@@ -58,7 +58,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         } = request;
 
         const response = await deleteResourceById(accountId, resourceId);
-        return reply.send(response);
+        return response;
     });
 
     server.get(
@@ -69,7 +69,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
                 params: { resourceId }
             } = request;
             const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
-            return reply.send(response);
+            return response;
         }
     );
 
@@ -81,7 +81,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
                 params: { resourceId }
             } = request;
             const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
-            return reply.send(response);
+            return response;
         }
     );
 
@@ -93,7 +93,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
                 params: { resourceId }
             } = request;
             const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
-            return reply.send(response);
+            return response;
         }
     );
 
@@ -102,7 +102,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             params: { resourceId }
         } = request;
         const response = await getDataBasesSummary(resourceId);
-        return reply.send(response);
+        return response;
     });
 
     server.get(`${MSSQL_DATA_API_PATH}/summary`, { schema: GetServerSummarySchema }, async (request, reply) => {
@@ -111,7 +111,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         } = request;
 
         const response = await getServerSummary(resourceId);
-        return reply.send(response);
+        return response;
     });
 
     server.get(
@@ -122,7 +122,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
                 params: { resourceId, databaseName }
             } = request;
             const response = await getTablesSummary(resourceId, databaseName);
-            return reply.send(response);
+            return response;
         }
     );
 }
