@@ -16,7 +16,11 @@ const Bubbles = ({ bubbleList, onBubbleClick }: BubblesPropsType) => {
         <div className={styles['bubbles-container']}>
             {bubbleList.map((bubble: bubbleItemType) => {
                 return (
-                    <div className={styles['bubble-item']} onClick={() => onBubbleClick(bubble?.label, bubble?.value)}>
+                    <div
+                        className={styles['bubble-item']}
+                        onClick={() => onBubbleClick(bubble?.label, bubble?.value)}
+                        id={bubble.value === 'deploy' ? 'chatbot-deploy-btn' : ''}
+                    >
                         <Typography variant="Semibold_13" className={styles['bubble-label']}>
                             {bubble.label}
                         </Typography>
