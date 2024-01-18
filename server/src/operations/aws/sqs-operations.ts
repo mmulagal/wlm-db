@@ -41,7 +41,7 @@ import { getDeployments, getResources } from '../database/database-operations';
 import { tagEc2Resource } from './ec2-operations';
 import { tagFsxResource } from './fsx-operations';
 import { decryptString } from './kms-operations';
-import registerFsxOntapCredentials from '../../lib/cloud-manager/fsx-core';
+import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { updateJobDetails } from '../database/job-operations';
 

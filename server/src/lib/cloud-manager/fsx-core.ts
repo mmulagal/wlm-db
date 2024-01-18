@@ -10,7 +10,7 @@ interface registerCredentialsResponse {
     ontapCredentialsId: string;
 }
 
-export default async function registerFsxOntapCredentials(
+async function registerFsxOntapCredentials(
     accountId: string,
     credentialsId: string,
     region: string,
@@ -37,3 +37,28 @@ export default async function registerFsxOntapCredentials(
         .json<registerCredentialsResponse>();
     return response;
 }
+
+interface listCredentialsResponse {
+    credentials: {
+        ip: string;
+        userName: string;
+        password: string;
+    };
+}
+async function listFsxOntapCredentials(accountId: string, fsxId: string) {
+    logger.info('Listing FSX ONTAP credentials ', { accountId, fsxId });
+
+    const { token } = await getWfServiceToken();
+
+    const response = await gotInstanceForInternalRequest
+        .get(`accounts/${accountId}/fsx/v2/file-systems/${fsxId}/ontap-credentials`, {
+            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+            headers: {
+                [HEADERS.AUTHORIZATION]: token
+            }
+        })
+        .json<listCredentialsResponse>();
+    return response;
+}
+
+export { registerFsxOntapCredentials, listFsxOntapCredentials };
