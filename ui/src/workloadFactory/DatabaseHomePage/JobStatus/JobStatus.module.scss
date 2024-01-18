@@ -9,6 +9,16 @@
         border-bottom: 1px solid #e0e0e0;
     }
 
+    .buttonContainer {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        cursor: pointer;
+        .buttonStyle {
+            color: #0067c5;
+        }
+    }
+
     .title {
         display: flex;
     }

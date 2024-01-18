@@ -6,11 +6,19 @@ import { Popover, Typography } from '@netapp/design-system';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
+import { GENERAL } from '../../../utils/appConstants';
 
 const TaskTable = ({ taskList }: any) => {
     
     return (
         <div className={styles.taskTable}>
+            {!taskList || taskList.length === 0 && 
+                <Typography variant="Regular_14" className={styles.emptyTable}>
+                    <NoDataIcon />
+                    <div>{GENERAL.NO_DATA}</div>
+                </Typography>
+            }
             {taskList.map((task: any) => {
                 return (
                     <div className={styles.taskRow}>

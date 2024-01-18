@@ -64,6 +64,13 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+const CloudFormationTemplateHeader = Type.Object({
+    'triggered-from': Type.String({
+        enum: ['wizard-advanced', 'wizard-quick', 'chatbot', 'rest-api'],
+        default: 'rest-api'
+    })
+});
+
 // Cloud formation template, yaml and cli creation
 const CloudFormationStaticTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,
@@ -114,6 +121,32 @@ const DeploymentStatusObjectParams = Type.Object({
     region: Type.String({ minLength: 1 }),
     stackName: Type.String({ minLength: 1 })
 });
+
+const DeploymentSummaryQueryString = Type.Object({
+    statuses: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String())
+});
+
+const DeploymentJobsSummaryResponse = Type.Object({
+    id: Type.String(),
+    deploymentId: Type.String(),
+    deploymentName: Type.String(),
+    name: Type.Optional(Type.String()),
+    status: Type.String(),
+    metadata: Type.Object({
+        region: Type.Optional(Type.String()),
+        serverType: Type.Optional(Type.String()),
+        serverInstallationMode: Type.Optional(Type.String()),
+        fileSystemType: Type.Optional(Type.String())
+    })
+});
+
+const DeploymentSummaryListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(DeploymentJobsSummaryResponse),
+    nextToken: Type.Optional(Type.String())
+});
+
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
 const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
@@ -146,5 +179,8 @@ export {
     CloudFormationStaticTemplateResponse,
     CloudFormationStaticTemplateResponseType,
     CloudFormationStaticTemplateRequestBody,
-    CloudFormationDeploymentResponse
+    CloudFormationDeploymentResponse,
+    DeploymentSummaryQueryString,
+    DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 };

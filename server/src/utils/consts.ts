@@ -123,6 +123,7 @@ enum RouteTags {
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
+    JOB_MONITORING = 'Job Monitoring',
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
     BATCH = 'Batch',
@@ -508,7 +509,7 @@ const WLMDB = 'wlmdb';
 const BUCKET_NAME = process.env.WLMDB_BUCKET_NAME || config.get<string>('templates.bucket');
 const ASSETS_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
-const EC2_ROLE_NAME = 'Ec2RoleName';
+const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
@@ -557,7 +558,8 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     keyPairName: 'KeyPairName',
 
     topicArn: 'NotificationARN',
-    enableCloudWatch: 'EnableCloudWatchLogFeature'
+    enableCloudWatch: 'EnableCloudWatchLogFeature',
+    metadataParam: 'MetadataParam'
 };
 
 const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -624,6 +626,7 @@ const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
+const TEMPLATE_METADATA_PARAM = 'MetadataParam';
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -725,6 +728,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
+    },
+    {
+        name: 'ScriptFSxValidation',
+        url: 'validation/Validate-FsxConnectivity.ps1'
     }
 ];
 
@@ -938,6 +945,14 @@ const MSSQL_DATABASE_TYPES = {
 const WF_TOKEN = 'WF_TOKEN';
 const BXP_TOKEN = 'BXP_TOKEN';
 
+// Metrics data const
+const TRIGGERED_FROM = 'triggered-from';
+const DEPLOYED_FROM = 'deployed-from';
+const INSTANCE_TYPE = 'instance-type';
+const SQL_VERSION = 'sql-version';
+const DATABASE_SIZE = 'database-size';
+const SQL_HOST_NAME = 'sql-host-name';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1005,7 +1020,7 @@ export {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
-    EC2_ROLE_NAME,
+    CF_DEPLOY_ROLE_NAME,
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     DISABLE_ROLLBACK,
@@ -1147,5 +1162,12 @@ export {
     BXP_TOKEN,
     IAM_LINKEDROLE_CONDITION,
     IAM_PASSROLE_CONDITION,
-    IAM_EC2_SERVICE
+    IAM_EC2_SERVICE,
+    TEMPLATE_METADATA_PARAM,
+    TRIGGERED_FROM,
+    DEPLOYED_FROM,
+    INSTANCE_TYPE,
+    SQL_VERSION,
+    DATABASE_SIZE,
+    SQL_HOST_NAME
 };

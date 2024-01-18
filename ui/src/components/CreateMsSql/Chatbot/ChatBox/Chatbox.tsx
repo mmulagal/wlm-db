@@ -1,11 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReactComponent as SendButton } from '../../../../assets/send-button.svg';
-import { ReactComponent as BedrockPoweredIcon } from '../../../../assets/bedrock-powered-icon.svg';
 import Message from '../Message/Message';
 
 import styles from './Chatbox.module.scss';
 import ChatBotResponseLoader from '../ChatBotResponseLoader/ChatBotResponseLoader';
-import { Typography } from '@netapp/design-system';
+import WelcomePage from '../WelcomePage/WelcomePage';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useDispatch } from 'react-redux';
+import { setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
+import Bubbles from '../Bubbles/Bubbles';
+import { CHATBOT_SUGGESTION_BUBBLES } from '../../../../utils/consts';
+import { validateChatbotField } from '../../../../utils/utilityFunctions';
 
 type optionsType = {
     value?: string | number;
@@ -30,6 +35,7 @@ type ChatBoxPropTypes = {
     isBotReplying: boolean;
     messagesToShow: any;
     activeField: any;
+    setContext: () => void;
 };
 
 const ChatBox = ({
@@ -38,14 +44,42 @@ const ChatBox = ({
     sendMsg,
     isBotReplying,
     messagesToShow,
-    activeField
+    activeField,
+    setContext
 }: ChatBoxPropTypes) => {
+    const {
+        isWizardTouched,
+        currentIntent,
+        suggestionBubbles,
+        expectingResponse,
+        messages: stateMsgs
+    } = useAppSelector(state => state.chatbot);
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef(null);
 
+    const dispatch = useDispatch();
+
     const handleSendMsg = () => {
         if (userInput.trim()) {
-            sendMsg(userInput);
+            if (expectingResponse.type !== 'none') {
+                const valueToShow = expectingResponse.type === 'password' ? '********' : userInput;
+                const validationError = validateChatbotField(expectingResponse.fieldName, userInput);
+                if (validationError) {
+                    dispatch(
+                        setMessages([
+                            ...stateMsgs,
+                            { sender: 'user', msg: valueToShow },
+                            { sender: 'bot', msg: validationError }
+                        ])
+                    );
+                } else {
+                    handleSelectButtonClicked({
+                        [expectingResponse.fieldName]: { label: userInput, value: userInput }
+                    });
+                }
+            } else {
+                sendMsg(userInput);
+            }
             setUserInput('');
         }
     };
@@ -57,16 +91,31 @@ const ChatBox = ({
         }
     }, [isBotReplying]);
 
+    useEffect(() => {
+        if ((currentIntent?.type || isWizardTouched) && !messagesToShow.length) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: CHATBOT_SUGGESTION_BUBBLES,
+                    onBubbleClick: (label: string, value: string) => {
+                        if (value === 'resume') {
+                            setContext();
+                        }
+                        if (value === 'start') {
+                            sendMsg('Deploy Mssql', false);
+                        }
+                        dispatch(setMessages([{ sender: 'user', msg: label }]));
+                        dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                    }
+                })
+            );
+        }
+    }, []);
+
     return (
         <div className={styles['chat-container']}>
             <div className={styles['chat-window-container']}>
                 <div className={styles['chat-window']} id="chat_id">
-                    {!messagesToShow.length && (
-                        <div className={styles['bedrock-powered-container']}>
-                            <BedrockPoweredIcon />
-                            <Typography variant="Semibold_16">BedRock powered chat</Typography>
-                        </div>
-                    )}
+                    {!messagesToShow.length && !isWizardTouched && <WelcomePage handleSendMsg={sendMsg} />}
                     {messagesToShow.map((msgObj: any, idx: number) => (
                         <Message
                             idx={idx}
@@ -78,7 +127,19 @@ const ChatBox = ({
                             activeField={activeField}
                         />
                     ))}
-                    <ChatBotResponseLoader isBotReplying={isBotReplying} />
+                    {!(!messagesToShow.length && !isWizardTouched) && (
+                        <ChatBotResponseLoader isBotReplying={isBotReplying} />
+                    )}
+                    {suggestionBubbles.list.length ? (
+                        <div className={styles['bubble-container']}>
+                            <Bubbles
+                                bubbleList={suggestionBubbles.list}
+                                onBubbleClick={suggestionBubbles.onBubbleClick}
+                            />
+                        </div>
+                    ) : (
+                        ''
+                    )}
                 </div>
             </div>
 
@@ -98,6 +159,7 @@ const ChatBox = ({
                         className="current-msg-input"
                         ref={inputRef}
                         autoFocus
+                        type={expectingResponse.type === 'none' ? 'text' : expectingResponse.type}
                     ></input>
                     <div onClick={() => handleSendMsg()}>
                         <SendButton />

@@ -66,7 +66,8 @@ async function updateTemplateUrls(
     templateType: string,
     stackName: string,
     tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string
+    templatePath?: string,
+    templateParameters?: object
 ) {
     logger.info('Updating templates and uploading to bucket', region, templateFilepath, templateType);
     const source = readFileSync(templateFilepath).toString();
@@ -105,7 +106,8 @@ async function updateTemplateUrls(
             FSXExistingTemplate: decodeURI(signedUrls.get('FSXExistingTemplate')?.url || ''),
             SQLTemplate: decodeURI(signedUrls.get('SQLTemplate')?.url || ''),
             Tags: tags?.length ? yamlStr : '',
-            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || '')
+            SQLStandaloneTemplate: decodeURI(signedUrls.get('SQLStandaloneTemplate')?.url || ''),
+            ...templateParameters
         });
         await putObjectBucket(region, BUCKET_NAME, templatePath!, contents);
     } else if (templateType === TEMPLATE_TYPES.SQLSTACK) {
@@ -162,7 +164,8 @@ async function updateTemplateUrls(
             ScriptUpdateDnsServers: decodeURI(signedUrls.get('ScriptUpdateDnsServers')?.url || ''),
             ScriptRenameComputer: decodeURI(signedUrls.get('ScriptRenameComputer')?.url || ''),
             ScriptRestartComputer: decodeURI(signedUrls.get('ScriptRestartComputer')?.url || ''),
-            ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || '')
+            ScriptAdValidation: decodeURI(signedUrls.get('ScriptAdValidation')?.url || ''),
+            ScriptFSxValidation: decodeURI(signedUrls.get('ScriptFSxValidation')?.url || '')
         });
 
         const ValidationTemplate = SQL_TEMPLATES_ASSETS.find(asset => asset.name === 'ValidationTemplate');
@@ -219,7 +222,8 @@ async function uploadTemplates(
     resourceType: DatabaseTypes,
     stackName: string,
     tags?: Array<{ Key: string; Value: string }>,
-    templatePath?: string
+    templatePath?: string,
+    templateParameters?: object
 ) {
     logger.info('Uploading templates ', region, resourceType);
 
@@ -236,10 +240,11 @@ async function uploadTemplates(
                 MASTER_TEMPLATE_DISTRIBUTION.name,
                 stackName,
                 tags,
-                templatePath
+                templatePath,
+                templateParameters
             )
         );
     }
 }
 
-export { uploadTemplates };
+export default uploadTemplates;

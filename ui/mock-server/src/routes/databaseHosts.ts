@@ -7,6 +7,7 @@ import DatabaseJobs from '../data/databaseJobs.json';
 import JobsSummary from '../data/jobsSummary.json';
 import Templates from '../data/template.json';
 import JobMonitoringJobs from '../data/jobMonitoringJobs.json';
+import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
 import JobMonitoringSubTask from '../data/JobMonitoringSubTask.json';
 
 const router = require('express').Router();
@@ -25,7 +26,7 @@ router.get(`${BASE_URL}/v1/database-hosts/:id/databases`, async (req: {}, res: a
     generateResponse(res, 200, DatabaseList);
 });
 
-router.get(`${BASE_URL}/v1/jobs`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/deployments`, async (req: {}, res: any) => {
     generateResponse(res, 200, DatabaseJobs);
 });
 
@@ -47,16 +48,16 @@ router.delete(`${BASE_URL}/v1/jobs/jobId/:id`, async (req: {}, res: any) => {
     generateResponse(res, 200, { success: 'ok' });
 });
 
-router.get(`${BASE_URL}/v2/jobs`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/jobs`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, JobMonitoringJobs);
+        generateResponse(res, 200, JobMonitoringDownloads);
     }, 2000);
 });
 
-router.get(`${BASE_URL}/v2/jobs/:jobId`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v1/jobs/:jobId`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, JobMonitoringSubTask);
-    }, 2000);
+    }, 3000);
 });
 
 export default router;

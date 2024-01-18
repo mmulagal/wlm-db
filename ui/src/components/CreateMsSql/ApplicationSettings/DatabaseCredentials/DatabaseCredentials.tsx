@@ -15,9 +15,9 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { SQL_USERNAME } from '../../../../utils/consts';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseCredentials = () => {
-
     const userName = useAppSelector(state => state.mssqlForm.dbCredentials.name);
     const password = useAppSelector(state => state.mssqlForm.dbCredentials.password);
 
@@ -40,7 +40,7 @@ const DatabaseCredentials = () => {
                 passwordRef?.current?.focus();
             }, 60);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBPasswordFilled, isCreateHit]);
 
     //Set the Header text here
@@ -116,6 +116,7 @@ const DatabaseCredentials = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     setCredName(e.target.value);
                                     dispatch(setDBCredentialsName(e.target.value));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 value={credName}
                                 className={styles.textField}
@@ -140,6 +141,7 @@ const DatabaseCredentials = () => {
                                 }
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     dispatch(setDBCredentialsPassword(e.target.value));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 value={password}
                                 className={styles.textField}

@@ -242,5 +242,6 @@ export {
     getAllDeploymentStatus,
     getDeploymentStatusByName,
     getDeployments,
-    getResources
+    getResources,
+    trimAccountIdForDemo
 };

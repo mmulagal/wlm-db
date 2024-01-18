@@ -1,6 +1,8 @@
 export const SELECT_CONFIG = {
-    STANDARD_CREATE: `Advanced create`,
-    EASY_CREATE: `Quick create`,
+    STANDARD_CREATE: `Standard create`,
+    EASY_CREATE: `Easy create`,
+    ADVANCED_CREATE: 'Advanced create',
+    QUICK_CREATE: 'Quick create',
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
         'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
@@ -85,6 +87,7 @@ export const GENERAL = {
     REQUIRED_VIEW_PERMISSIONS: 'Required permissions',
     REQUIRED_OPERATE_PERMISSIONS: 'Required permissions',
     CANCEL: 'Cancel',
+    CONTINUE: 'Continue',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
     STEP_ONE: 'Option 1:',
     STEP_TWO: 'Option 2:',
@@ -402,12 +405,14 @@ export const GENERAL = {
     DB_HOST_FILE_SYSTEM_TYPE: 'Storage type',
     // Job Status constants
     JOB_STATUS: 'Job status',
-    JOB_STATUS_DAYS: 'Last 30 days',
+    JOB_STATUS_DAYS: '(Last 30 days)',
+    VIEW_JOB_MONITORING: 'View job monitoring',
     JOB_STATUS_SUCCESS: 'Success',
     JOB_STATUS_FAILED: 'Failed',
     JOB_STATUS_INITIALIZING: 'In Progress',
     JOB_STATUS_JOBS: ' Jobs',
     JOBS_DISTRIBUTION: 'Jobs distribution',
+    JOB_DISTRIBUTION: 'Job distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
@@ -489,6 +494,13 @@ export const GENERAL = {
     JM_COMPLETED: 'Completed',
     JM_IN_PROGRESS: 'In Progress',
     JM_FAILED: 'Failed',
+    NO_DATA: 'No data',
+    JM_RUNNING: 'Running',
+    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
+    DEMO_TITLE: 'This is a Demo account',
+    DEMO_CONTENT:
+        'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation.'
 };
 
 export const CODE_VIEWER = {
@@ -552,4 +564,15 @@ export const CHATBOT_FIELD_MAPPING: any = {
     ontapSgGroupId: 'ontap security group id',
     fsxType: 'fsx type',
     fsxFileSystemId: 'fsx file system id'
+};
+
+export const CHATBOT = {
+    WELCOME_PAGE: {
+        DB_WORKLOAD_EXPERT: 'Database Workload expert',
+        WELCOME_MSG:
+            "Hello! I'm your virtual assistant for database lifecycle management. Use it to learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation."
+    },
+    HEADER: {
+        PREVIEW: 'Preview'
+    }
 };

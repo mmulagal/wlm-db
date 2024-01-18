@@ -7,7 +7,10 @@ import {
     DeploymentStatusResponse,
     DeploymentStatusObjectParams,
     CloudFormationStaticTemplateRequestBody,
-    CloudFormationStaticTemplateResponse
+    CloudFormationStaticTemplateResponse,
+    DeploymentSummaryQueryString,
+    DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -22,6 +25,7 @@ const CloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
     summary: 'Create CloudFormation template',
+    headers: CloudFormationTemplateHeader,
     description: 'Create CloudFormation template in URL, YAML and CLI format for user deployment',
     body: CloudFormationStaticTemplateRequestBody,
     response: {
@@ -29,9 +33,21 @@ const CloudFormationTemplateSchema = {
     }
 };
 
+const DeploymentSummaryListSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Get deployment jobs summary',
+    description: 'API to get deployment jobs summary for given deployment status types',
+    querystring: DeploymentSummaryQueryString,
+    response: {
+        200: DeploymentSummaryListResponse
+    }
+};
+
 // Create CloudFormation template or Deploy Schema
 const DeployTemplateSchema = {
     ...baseRequest,
+    headers: CloudFormationTemplateHeader,
     summary: 'Deploy CloudFormation template',
     description: 'Deploy CloudFormation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
@@ -61,4 +77,10 @@ const DeploymentStatusSchema = {
     }
 };
 
-export { DeployTemplateSchema, DeploymentStatusListSchema, DeploymentStatusSchema, CloudFormationTemplateSchema };
+export {
+    DeployTemplateSchema,
+    DeploymentStatusListSchema,
+    DeploymentStatusSchema,
+    CloudFormationTemplateSchema,
+    DeploymentSummaryListSchema
+};
