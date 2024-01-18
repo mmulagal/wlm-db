@@ -26,7 +26,7 @@ const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-    server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async (request, reply) => {
+    server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async request => {
         const {
             params: { accountId, credentialsId, region },
             body: {
@@ -52,7 +52,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         return response;
     });
 
-    server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async (request, reply) => {
+    server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async request => {
         const {
             params: { accountId, resourceId }
         } = request;
@@ -64,7 +64,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseCpuUtilisationResponseSchema },
-        async (request, reply) => {
+        async request => {
             const {
                 params: { resourceId }
             } = request;
@@ -76,7 +76,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/memory`,
         { schema: DatabaseMemoryUtilisationResponseSchema },
-        async (request, reply) => {
+        async request => {
             const {
                 params: { resourceId }
             } = request;
@@ -88,7 +88,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/disk`,
         { schema: DatabaseStorageUtilisationResponseSchema },
-        async (request, reply) => {
+        async request => {
             const {
                 params: { resourceId }
             } = request;
@@ -97,7 +97,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
+    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async request => {
         const {
             params: { resourceId }
         } = request;
@@ -105,7 +105,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         return response;
     });
 
-    server.get(`${MSSQL_DATA_API_PATH}/summary`, { schema: GetServerSummarySchema }, async (request, reply) => {
+    server.get(`${MSSQL_DATA_API_PATH}/summary`, { schema: GetServerSummarySchema }, async request => {
         const {
             params: { resourceId }
         } = request;
@@ -114,15 +114,11 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
         return response;
     });
 
-    server.get(
-        `${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`,
-        { schema: GetTablesSchema },
-        async (request, reply) => {
-            const {
-                params: { resourceId, databaseName }
-            } = request;
-            const response = await getTablesSummary(resourceId, databaseName);
-            return response;
-        }
-    );
+    server.get(`${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`, { schema: GetTablesSchema }, async request => {
+        const {
+            params: { resourceId, databaseName }
+        } = request;
+        const response = await getTablesSummary(resourceId, databaseName);
+        return response;
+    });
 }
