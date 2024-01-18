@@ -100,8 +100,7 @@ const JobMonitoringTable = () => {
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             dispatch(clearNotifications());
-
-            if (jmJobsList?.nextToken === null) {
+            if (!jmJobsList?.nextToken) {
                 // Download logic 
                 downloadJMTable(mergedList);
 
