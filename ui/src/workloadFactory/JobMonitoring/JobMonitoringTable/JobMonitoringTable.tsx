@@ -211,10 +211,9 @@ const JobMonitoringTable = () => {
             Header: 'Job Name',
             accessor: 'name',
             isSortable: true,
-            className: styles.wrapText,
             width: '340px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
             }
         },
         {
@@ -224,7 +223,8 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
@@ -234,7 +234,8 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {

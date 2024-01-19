@@ -96,7 +96,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '498px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
             }
         },
         {
@@ -132,7 +132,8 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
@@ -142,7 +143,8 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
