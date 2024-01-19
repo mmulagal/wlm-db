@@ -90,9 +90,11 @@ const SelectComponent = ({
     return (
         <div className={styles['select-component']}>
             <div className={styles['select-component-heading']}>
-                <Typography variant="Regular_14">{heading}</Typography>
+                <Typography variant="Regular_14" className={styles.fixColor}>
+                    {heading}
+                </Typography>
                 {link && (
-                    <Typography className={styles.link} variant="Regular_14">
+                    <Typography className={`${styles.link} ${styles.fixColor}`} variant="Regular_14">
                         {link.description}{' '}
                         <Button
                             Component="button"
