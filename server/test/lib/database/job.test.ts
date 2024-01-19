@@ -1,5 +1,4 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-
 import moment from 'moment';
 import {
     countParentJobs,

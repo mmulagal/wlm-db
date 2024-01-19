@@ -67,7 +67,6 @@ const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
 };
 
-
 const fsxService = {
     ServiceCode: 'AmazonFSx'
 };
