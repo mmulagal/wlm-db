@@ -9,7 +9,9 @@ export const initialJobMonitoringState: any = {
     downloadJobsLoading: false, // Laoding check for job monitoring download
     downloadJobsList: [], // Jobs list including subtasks data
     jmJobsSummary: {}, // Job distribution count data
-    jmJobsSummaryLoading: false // Job summary API loading for job distribution
+    jmJobsSummaryLoading: false, // Job summary API loading for job distribution
+    jobsSummaryTimeline: {},
+    jobsSummaryTimelineLoading: false
 }
 
 const jobMonitoringSlice = createSlice({
@@ -43,6 +45,12 @@ const jobMonitoringSlice = createSlice({
         setJmJobsSummary: (state, action: PayloadAction<any>) => {
             state.jmJobsSummary = action.payload;
         },
+        setJobsSummaryTimelineLoading: (state, action: PayloadAction<any>) => {
+            state.jobsSummaryTimelineLoading = action.payload;
+        },
+        setJobsSummaryTimeline: (state, action: PayloadAction<any>) => {
+            state.jobsSummaryTimeline = action.payload;
+        },
         addInitialJMData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
         }
@@ -59,6 +67,8 @@ export const {
     setDownloadJobsList,
     setJmJobsSummaryLoading,
     setJmJobsSummary,
+    setJobsSummaryTimelineLoading,
+    setJobsSummaryTimeline,
     addInitialJMData
 } = jobMonitoringSlice.actions;
 
