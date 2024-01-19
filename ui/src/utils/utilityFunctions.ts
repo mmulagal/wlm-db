@@ -978,7 +978,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
             //Goes Through Each Object value
             if (key && key !== '') {
                 if (key === 'startTime' || key === 'endTime') {
-                    result += formatDateWithTime(item[key]).replace(',', '') + ',';
+                    result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
                 } else {
                     result += item[key] + ',';
                 }

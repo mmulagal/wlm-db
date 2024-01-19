@@ -197,10 +197,10 @@ export const COSTING_TYPES = {
 };
 
 export const JM_DOWNLOAD = {
-    MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime', 'error'],
-    MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time,Error',
-    SUB_JOBS_KEYS: ['name', 'description', 'status', 'startTime', 'endTime', 'error'],
-    SUB_JOBS_CSV_HEADERS: 'Name,Description,Status,Start time,End time,Error'
+    MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime'],
+    MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time',
+    SUB_JOBS_KEYS: ['name', 'description', 'status', 'startTime', 'endTime'],
+    SUB_JOBS_CSV_HEADERS: 'Name,Description,Status,Start time,End time'
 }
 
 export const AWS_CLI_HIGHLIGHT_STRINGS = [
