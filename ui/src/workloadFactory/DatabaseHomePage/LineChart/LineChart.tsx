@@ -207,9 +207,11 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
     return (
         <div className={styles.lineChart}>
-            {/* <div className={styles.noData}>
-                <NoData />
-            </div> */}
+            {!timelineData || timelineData?.completed?.length === 0 &&  
+                <div className={styles.noData}>
+                    <NoData />
+                </div>
+            }
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
             {/* <Typography variant="Semibold_14" className={styles.text}>
