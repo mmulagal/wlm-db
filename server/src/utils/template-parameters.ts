@@ -154,7 +154,7 @@ const PARAMETERS = [
     {
         name: 'PrivateSubnet1ID',
         description: 'ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)',
-        type: 'String',
+        type: 'AWS::EC2::Subnet::Id',
         minLength: 1
     },
     {
@@ -301,7 +301,7 @@ const PARAMETERS = [
     {
         name: 'VPCID',
         description: 'Existing VPC ID for deployment',
-        type: 'String',
+        type: 'AWS::EC2::VPC::Id',
         minLength: 1
     },
     {
