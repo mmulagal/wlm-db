@@ -5,6 +5,7 @@ import DatabaseList from '../data/databaseList.json';
 import DatabaseHosts from '../data/databaseHosts.json';
 import DatabaseJobs from '../data/databaseJobs.json';
 import JobsSummary from '../data/jobsSummary.json';
+import JobsSummaryTimeline from '../data/jobsSummaryTimeline.json';
 import Templates from '../data/template.json';
 import JobMonitoringJobs from '../data/jobMonitoringJobs.json';
 import JobMonitoringDownloads from '../data/jobMonitoringDownload.json';
@@ -31,7 +32,15 @@ router.get(`${BASE_URL}/v1/deployments`, async (req: {}, res: any) => {
 });
 
 router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
-    generateResponse(res, 200, JobsSummary);
+    setTimeout(() => {
+        generateResponse(res, 200, JobsSummary);
+    }, 3000);
+});
+
+router.get(`${BASE_URL}/v1/jobs/summarybytime`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, JobsSummaryTimeline['30']);
+    }, 3000);
 });
 
 router.post(`${BASE_URL}/v1/cloudformation/template`, async (req: {}, res: any) => {
