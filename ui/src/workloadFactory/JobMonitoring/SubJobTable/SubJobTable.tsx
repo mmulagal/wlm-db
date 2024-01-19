@@ -20,14 +20,14 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>([]);
 
     const ExpandedRow = ({ rowData }: any) => {
-        return <TaskTable taskList={rowData?.subJobs} />;
+        return <TaskTable taskList={rowData?.subJobs || []} />;
     };
 
     const { data: jmSubTaskList, isFetching: jmSubTaskListLoading } = useGetSubTaskListQuery(jobId);
 
     useEffect(() => {
         if(jmSubTaskList){
-            setSubTaskList(jmSubTaskList?.subJobs);
+            setSubTaskList(jmSubTaskList?.subJobs || []);
         }
     }, [jmSubTaskList]);
 
