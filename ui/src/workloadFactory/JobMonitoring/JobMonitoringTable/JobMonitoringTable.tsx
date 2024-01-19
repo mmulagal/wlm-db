@@ -201,14 +201,14 @@ const JobMonitoringTable = () => {
         },
         {
             id: '4',
-            Header: 'Resource Name',
+            Header: 'Resource name',
             accessor: 'resourceName',
             isSortable: true,
             width: '168px'
         },
         {
             id: '5',
-            Header: 'Job Name',
+            Header: 'Job name',
             accessor: 'name',
             isSortable: true,
             width: '340px',
@@ -218,7 +218,7 @@ const JobMonitoringTable = () => {
         },
         {
             id: '6',
-            Header: 'Start Time',
+            Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
             width: '200px',
@@ -229,7 +229,7 @@ const JobMonitoringTable = () => {
         },
         {
             id: '7',
-            Header: 'End Time',
+            Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
             width: '200px',
