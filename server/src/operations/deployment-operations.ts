@@ -140,7 +140,9 @@ async function formatTemplateParameters(
     ];
     if (fsxConfiguration.fsxPassword) {
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+        if (encryptedFsxPassword) {
+            templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+        }
     }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
@@ -532,7 +534,9 @@ async function createCloudFormationTemplateForUserDeployment(
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+        if (encryptedFsxPassword) {
+            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+        }
     }
 
     Object.entries(derivedParams).forEach(([key, value]) => {

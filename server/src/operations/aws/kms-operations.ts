@@ -67,7 +67,8 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
 }
 
 async function encryptString(textToEncrypt: string) {
-    logger.info('Encrypt a string', { textToEncrypt });
+    logger.info('Encrypt a string');
+    logger.debug({ textToEncrypt });
 
     const plaintext = Buffer.from(textToEncrypt);
     const encryptParams = { KeyId: KMS_KEY_ALIAS, Plaintext: plaintext };
