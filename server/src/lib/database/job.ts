@@ -79,7 +79,7 @@ async function listJobs(
                 }
             }),
             ...(endTime !== undefined && {
-                end_time: {
+                start_time: {
                     lte: new Date(endTime)
                 }
             })
@@ -193,9 +193,7 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
             account_id: accountId,
             parent_job_id: null,
             start_time: {
-                gte: new Date(startTime)
-            },
-            end_time: {
+                gte: new Date(startTime),
                 lte: new Date(endTime)
             }
         },
