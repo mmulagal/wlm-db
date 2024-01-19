@@ -9,7 +9,7 @@ import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/u
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
 
-const TaskTable = ({ taskList }: any) => {
+const TaskTable = ({ taskList = [] }: any) => {
     
     return (
         <div className={styles.taskTable}>
