@@ -127,7 +127,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         },
         {
             id: '4',
-            Header: 'Start Time',
+            Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
             width: '240px',
@@ -138,7 +138,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         },
         {
             id: '5',
-            Header: 'End Time',
+            Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
             width: '240px',
