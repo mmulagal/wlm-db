@@ -20,14 +20,14 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     const [subTaskList, setSubTaskList] = useState<any>([]);
 
     const ExpandedRow = ({ rowData }: any) => {
-        return <TaskTable taskList={rowData?.subJobs} />;
+        return <TaskTable taskList={rowData?.subJobs || []} />;
     };
 
     const { data: jmSubTaskList, isFetching: jmSubTaskListLoading } = useGetSubTaskListQuery(jobId);
 
     useEffect(() => {
         if(jmSubTaskList){
-            setSubTaskList(jmSubTaskList?.subJobs);
+            setSubTaskList(jmSubTaskList?.subJobs || []);
         }
     }, [jmSubTaskList]);
 
@@ -96,7 +96,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '498px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
             }
         },
         {
@@ -127,22 +127,24 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         },
         {
             id: '4',
-            Header: 'Start Time',
+            Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
             id: '5',
-            Header: 'End Time',
+            Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {

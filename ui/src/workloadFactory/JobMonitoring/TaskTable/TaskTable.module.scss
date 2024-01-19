@@ -17,6 +17,13 @@
         color: var(--grey-50) !important;
     }
 
+    .firstItemText {
+        margin-left: 80px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
     .secondItem {
         height: 72px;
         width: 498px;

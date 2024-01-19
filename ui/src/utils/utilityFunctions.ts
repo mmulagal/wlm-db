@@ -978,7 +978,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
             //Goes Through Each Object value
             if (key && key !== '') {
                 if (key === 'startTime' || key === 'endTime') {
-                    result += formatDateWithTime(item[key]).replace(',', '') + ',';
+                    result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
                 } else {
                     result += item[key] + ',';
                 }
@@ -1004,3 +1004,59 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
 export const cfDownloadName = (name: string) => {
     return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
 };
+
+export const groupByJobSummaryTimeline = (data: any, days: number) => {
+    const groupedData: any = {'time': [], 'completed': [], 'failed': []};
+    if (!data || data?.length === 0) {
+        return groupedData;
+    }
+    const dayGrouping : any = {};
+    data.map((perObj: any) => {
+        if (perObj?.timeInterval) {
+            dayGrouping[perObj?.timeInterval] = {
+                'completed': perObj?.completed || 0,
+                'failed': perObj?.failed || 0
+            }
+        }
+    });
+
+    let lastDaysList: any[] = [];
+    let daysList: any[] = [];
+    if (days === 1) {
+        const dateStr = Date.now().toString();
+        let hr =  moment(new Date(parseInt(dateStr))).format('HH');
+        if (hr > 0 && hr <= 4) {
+            daysList = [8, 12, 16, 20, 0, 4];
+        } else if (hr > 4 && hr <= 8) {
+            daysList = [12, 16, 20, 0, 4, 8];
+        } else if (hr > 8 && hr <= 12) {
+            daysList = [16, 20, 0, 4, 8, 12];
+        } else if (hr > 12 && hr <= 16) {
+            daysList = [20, 0, 4, 8, 12, 16];
+        } else if (hr > 16 && hr <= 20) {
+            daysList = [0, 4, 8, 12, 16, 20];
+        } else if (hr > 20 && hr <= 24) {
+            daysList = [4, 8, 12, 16, 20, 0];
+        }
+    } else {
+        if (days === 7) {
+            lastDaysList = lastSevenDays;
+        } else if (days === 14) {
+            lastDaysList = last14Days;
+        } else if (days === 30) {
+            lastDaysList = last30Days;
+        } 
+    
+        daysList = lastDaysList.map(date => {
+            const day = date.getDate();
+            return `${day}`;
+        });
+    }
+
+    daysList.map((day) => {
+        groupedData['time'].push(day);
+        groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
+        groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
+    })
+    return groupedData;
+}

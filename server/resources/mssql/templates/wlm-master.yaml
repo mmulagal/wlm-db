@@ -930,6 +930,8 @@ Resources:
       DomainAdminSecretName: !Sub ${AWS::StackName}-domain
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
+      DatabaseType: 'Microsoft SQL server'
+
       FSxFileSystemId:
           !If
             - NewOntapFsx
