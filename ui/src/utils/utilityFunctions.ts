@@ -1006,10 +1006,10 @@ export const cfDownloadName = (name: string) => {
 };
 
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
-    if (!data) {
-        return;
-    }
     const groupedData: any = {'time': [], 'completed': [], 'failed': []};
+    if (!data || data?.length === 0) {
+        return groupedData;
+    }
     const dayGrouping : any = {};
     data.map((perObj: any) => {
         if (perObj?.timeInterval) {
