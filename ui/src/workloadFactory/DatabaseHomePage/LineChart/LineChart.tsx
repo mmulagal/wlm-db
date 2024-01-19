@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
 import styles from './LineChart.module.scss';
 import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
+const moment = require('moment');
 
 Chart.register(...registerables);
 
@@ -11,9 +12,10 @@ type colorCodes = {
     startColor: string;
     endColor: string;
     selectedTimeFrame: string;
+    timelineData: any;
 };
 
-const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
+const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: colorCodes) => {
     const chartRef = useRef(null);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -35,6 +37,24 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
         const day = date.getDate();
         return `${month} ${day}`;
     });
+
+    const formattedLast24Hour = () => {
+        const dateStr = Date.now().toString();
+        let hr =  moment(new Date(parseInt(dateStr))).format('HH');
+        if (hr > 0 && hr <= 4) {
+            return ['08:00', '12:00', '16:00', '20:00', '00:00', '04:00'];
+        } else if (hr > 4 && hr <= 8) {
+            return ['12:00', '16:00', '20:00', '00:00', '04:00', '08:00'];
+        } else if (hr > 8 && hr <= 12) {
+            return ['16:00', '20:00', '00:00', '04:00', '08:00', '12:00'];
+        } else if (hr > 12 && hr <= 16) {
+            return ['20:00', '00:00', '04:00', '08:00', '12:00', '16:00'];
+        } else if (hr > 16 && hr <= 20) {
+            return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+        } else if (hr > 20 && hr <= 24) {
+            return ['04:00', '08:00', '12:00', '16:00', '20:00', '00:00'];
+        }
+    };
 
     useEffect(() => {
         //@ts-ignore
@@ -71,38 +91,16 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
             } else if (selectedTimeFrame === 'Last 30 days') {
                 return formattedLast30DaysDates;
             } else {
-                return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+                return formattedLast24Hour();
             }
         };
 
         const constructDataSuccess = () => {
-            if (selectedTimeFrame === 'Last 7 days') {
-                return [310, 270, 290, 300, 315, 210, 250];
-            } else if (selectedTimeFrame === 'Last 14 days') {
-                return [310, 270, 290, 300, 315, 210, 250];
-            } else if (selectedTimeFrame === 'Last 30 days') {
-                return [
-                    310, 270, 290, 300, 315, 210, 250, 310, 270, 290, 300, 315, 210, 250, 310, 270, 290, 300, 315, 210,
-                    250, 310, 270, 290, 300, 315, 210, 250, 220, 320
-                ];
-            } else {
-                return [310, 270, 290, 300, 315, 210];
-            }
+            return timelineData?.completed;
         };
 
         const constructDataFailed = () => {
-            if (selectedTimeFrame === 'Last 7 days') {
-                return [100, 90, 110, 70, 85, 99, 105];
-            } else if (selectedTimeFrame === 'Last 14 days') {
-                return [100, 90, 110, 70, 85, 99, 105];
-            } else if (selectedTimeFrame === 'Last 30 days') {
-                return [
-                    100, 90, 110, 70, 85, 99, 105, 100, 90, 110, 70, 85, 99, 105, 100, 90, 110, 70, 85, 99, 105, 100,
-                    90, 110, 70, 85, 99, 105, 88, 97
-                ];
-            } else {
-                return [100, 90, 110, 70, 85, 99];
-            }
+            return timelineData?.failed;
         };
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
@@ -187,7 +185,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 150,
+                        grace: 5,
                         ticks: {
                             color: isDarkTheme ? '#fff' : '#404040'
                         }
@@ -204,7 +202,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
         return () => {
             mayBarChart.destroy();
         };
-    }, [selectedTimeFrame]);
+    }, [selectedTimeFrame, timelineData]);
 
     return (
         <div className={styles.lineChart}>

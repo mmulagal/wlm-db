@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
-import { useGetJobsListQuery, useGetJobsSummaryDataQuery } from "../../utils/apiService";
-import { setJmJobsSummary, setJmJobsSummaryLoading, setJobsList, setJobsListLoading } from "../../store/workloadFactory/jobMonitoringSlice";
-import { jobStatusPercent } from "../../utils/utilityFunctions";
+import { useGetJobsListQuery, useGetJobsSummaryDataQuery, useGetJobsSummaryTimelineDataQuery } from "../../utils/apiService";
+import { setJmJobsSummary, setJmJobsSummaryLoading, setJobsList, setJobsListLoading, setJobsSummaryTimeline, setJobsSummaryTimelineLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { groupByJobSummaryTimeline, jobStatusPercent } from "../../utils/utilityFunctions";
 
 const JobMonitoringApi = () => {
     const dispatch = useAppDispatch();
@@ -39,6 +39,11 @@ const JobMonitoringApi = () => {
         isFetching: jmJobsSummaryLoading,
     } = useGetJobsSummaryDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
+    const {
+        data: jobsSummaryTimeline,
+        isFetching: jobsSummaryTimelineLoading,
+    } = useGetJobsSummaryTimelineDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+
     useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));
         if (!jmJobsListLoading) {
@@ -58,6 +63,16 @@ const JobMonitoringApi = () => {
     useEffect(() => {
         dispatch(setJmJobsSummaryLoading(jmJobsSummaryLoading));
     }, [jmJobsSummaryLoading]);
+
+    useEffect(() => {
+        dispatch(setJobsSummaryTimelineLoading(jobsSummaryTimelineLoading));
+        if (jobsSummaryTimelineLoading) {
+            dispatch(setJobsSummaryTimeline([]));
+        } else {
+            const data = groupByJobSummaryTimeline(jobsSummaryTimeline || [], timeInterval) ;
+            dispatch(setJobsSummaryTimeline(data));
+        }
+    }, [jobsSummaryTimeline, jobsSummaryTimelineLoading]);
 
 }
 
