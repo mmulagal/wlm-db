@@ -67,7 +67,7 @@ const MSSqlFooter = () => {
 
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
-        if(stackName && stackName.includes('/')){
+        if (stackName && stackName.includes('/')) {
             stackName = stackName.split('/')[1];
         }
         let message;
@@ -75,29 +75,26 @@ const MSSqlFooter = () => {
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName: ''}
-                    {stackName && stackUrl && 
+                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName : ''}
+                    {stackName && stackUrl && (
                         <>
                             {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
-                            <Button
-                                Component="button"
-                                variant="link"
-                                onClick={() => openDemoInfoDialog(stackUrl)}
-                            >
+                            <Button Component="button" variant="link" onClick={() => openDemoInfoDialog(stackUrl)}>
                                 {stackName}
                             </Button>
                         </>
-                    }
+                    )}
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
                 </>
             );
         } else {
-            const timelineUrl = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
+            const timelineUrl =
+                process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE[0]}
-                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName: ''}
-                    {stackName && stackUrl && 
+                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName : ''}
+                    {stackName && stackUrl && (
                         <>
                             {GENERAL.CREATE_INFO_MESSAGE[1]}
                             <Button
@@ -108,7 +105,7 @@ const MSSqlFooter = () => {
                                 {stackName}
                             </Button>
                         </>
-                    }
+                    )}
                     {GENERAL.CREATE_INFO_MESSAGE[2]}
                     <Button
                         Component="button"
@@ -121,9 +118,9 @@ const MSSqlFooter = () => {
                 </>
             );
         }
-        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message}));
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
         setTimeout(() => {
-            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE): navigateToCanvas('/');
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
         }, 3000);
     };
 
@@ -132,7 +129,7 @@ const MSSqlFooter = () => {
             <Button variant="secondary" isThin onClick={() => navigateToCanvas('/')}>
                 {SELECT_CONFIG.CANCEL}
             </Button>
-            <Button isThin onClick={handleCreate}>
+            <Button isThin onClick={handleCreate} id="wizard-deploy-btn">
                 {SELECT_CONFIG.CREATE}
             </Button>
         </>
