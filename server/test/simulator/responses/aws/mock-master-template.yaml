@@ -1419,6 +1419,7 @@ Resources:
       DomainAdminSecretName: ${AWS::StackName}-domain
       FSxNSecret: ${AWS::StackName}-fsx
       SQLServiceAccountSecret: ${AWS::StackName}-sql
+      DatabaseType: 'Microsoft SQL server'
       FSxFileSystemId:
         - NewOntapFsx
         - NewFSxStack.Outputs.FSxFileSystemLogicalId
