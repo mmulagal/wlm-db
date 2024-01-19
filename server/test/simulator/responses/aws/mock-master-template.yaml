@@ -287,7 +287,7 @@ Parameters:
     PrivateSubnet1ID:
         Description: ID of private subnet 1 in Availability Zone 1 for the Workload
             (e.g., subnet-a0246dcd)
-        Type: String
+        Type: AWS::EC2::Subnet::Id
         MinLength: 1
     PrivateSubnet2ID:
         Description: ID of private subnet 2 in Availability Zone 2 for the Workload
@@ -390,7 +390,7 @@ Parameters:
         Type: String
     VPCID:
         Description: Existing VPC ID for deployment
-        Type: String
+        Type: AWS::EC2::VPC::Id
         MinLength: 1
     ONTAPSecurityGroupID:
         Description: ONTAP Security Group ID
