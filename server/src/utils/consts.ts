@@ -955,6 +955,8 @@ const SQL_VERSION = 'sql-version';
 const DATABASE_SIZE = 'database-size';
 const SQL_HOST_NAME = 'sql-host-name';
 
+const JOBS_DEFAULT_TIME_RANGE = '30d';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1173,5 +1175,6 @@ export {
     INSTANCE_TYPE,
     SQL_VERSION,
     DATABASE_SIZE,
-    SQL_HOST_NAME
+    SQL_HOST_NAME,
+    JOBS_DEFAULT_TIME_RANGE
 };

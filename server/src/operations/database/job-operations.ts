@@ -22,10 +22,9 @@ import {
     ListJobsQueryType,
     UpdateJobRecordType
 } from '../../routes/types/jobs.types';
+import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
 
 const logger = getLogger();
-
-const DEFAULT_TIME_RANGE = '30d';
 
 interface Job extends JobRecordType {
     id: string;
@@ -270,7 +269,7 @@ async function getJobSummary(
     }
 
     // Default time range is 30 days
-    startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
+    startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
 
     const groups = await getJobCountByStatus(accountId, startTime, endTime);
@@ -307,9 +306,9 @@ async function getJobSummaryByTime(
     }
 
     // Default time range is 30 days
-    startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
+    startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
-    frequency = frequency || intervalType === 'day' ? 1 : 4;
+    frequency = frequency || (intervalType === 'day' ? 1 : 4);
 
     const groups = (await groupJobsByTimeAndStatus(
         accountId,

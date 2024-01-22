@@ -1,7 +1,9 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import ms from 'ms';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
+import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -65,6 +67,10 @@ async function listJobs(
 
     accountId = checkAccount(accountId);
 
+    // Default time range is 30 days
+    startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
+    endTime = endTime || Date.now();
+
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
@@ -73,16 +79,10 @@ async function listJobs(
             ...(status && { status: { in: status } }),
             ...(jobname && { name: jobname }),
             ...(initiator && { initiator }),
-            ...(startTime !== undefined && {
-                start_time: {
-                    gte: new Date(startTime)
-                }
-            }),
-            ...(endTime !== undefined && {
-                start_time: {
-                    lte: new Date(endTime)
-                }
-            })
+            start_time: {
+                gte: new Date(startTime),
+                lte: new Date(endTime)
+            }
         },
         orderBy: {
             [sort]: `${sortOrder}`
