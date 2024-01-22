@@ -971,7 +971,11 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
                 if (key === 'startTime' || key === 'endTime') {
                     result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
                 } else {
-                    result += item[key] + ',';
+                    if (item[key]) {
+                        result += item[key] + ',';
+                    } else {
+                        result += ' ,';
+                    }
                 }
             }
         });

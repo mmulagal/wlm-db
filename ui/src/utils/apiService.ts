@@ -13,7 +13,6 @@ import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { setResourceTables } from '../store/resource/resourceSlice';
 import { generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
-import JobsSummaryTimelineData from '../workloadFactory/JobMonitoring/jobsSummaryTimeline.json';
 
 //Place the relevant headers on all requests:
 const prepareHeaders = (
@@ -431,15 +430,9 @@ export const jobMonitoringApi = createApi({
             getJobsSummaryData: builder.query({
                 query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
-            // getJobsSummaryTimelineData: builder.query({
-            //     query: ({startTime, endTime, intervalType, frequency = 1}) => 
-            //     `jobs/summarybytime?startTime=${startTime}&endTime=${endTime}&intervalType=${intervalType}&frequency=${frequency}`
-            // }),
-
             getJobsSummaryTimelineData: builder.query({
-                async queryFn(arg, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
-                    return { data: JobsSummaryTimelineData['30'] };
-                }
+                query: ({startTime, endTime, intervalType, frequency = 1}) => 
+                `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}&intervalType=${intervalType}&frequency=${frequency}`
             })
         };
     }
