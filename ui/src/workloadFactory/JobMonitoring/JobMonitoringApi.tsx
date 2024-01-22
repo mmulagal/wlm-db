@@ -40,16 +40,9 @@ const JobMonitoringApi = () => {
         // settting interval type
         if (timeInterval === 1) {
             setIntervalType('hour');
+            setFrequency(4);
         } else {
             setIntervalType('day');
-        }
-
-        // setting frequency
-        if (timeInterval === 1) {
-            setFrequency(4);
-        } else if (timeInterval === 14) {
-            setFrequency(2);
-        } else {
             setFrequency(1);
         }
     }, [fromTime]);
