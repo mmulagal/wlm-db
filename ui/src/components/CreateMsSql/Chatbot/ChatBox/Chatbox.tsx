@@ -71,7 +71,7 @@ const ChatBox = ({
     const handleSendMsg = () => {
         if (userInput.trim()) {
             if (expectingResponse.type !== 'none') {
-                const valueToShow = expectingResponse.type === 'password' ? '********' : userInput;
+                const valueToShow = expectingResponse.type === 'password' ? 'Password Entered' : userInput;
                 const validationError = validateChatbotField(expectingResponse.fieldName, userInput);
                 if (validationError) {
                     dispatch(
@@ -83,7 +83,7 @@ const ChatBox = ({
                     );
                 } else {
                     handleSelectButtonClicked({
-                        [expectingResponse.fieldName]: { label: userInput, value: userInput }
+                        [expectingResponse.fieldName]: { label: valueToShow, value: userInput }
                     });
                 }
             } else {
