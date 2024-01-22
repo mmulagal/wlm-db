@@ -893,22 +893,9 @@ export const openCredentialTab = () => {
     window.open(url, '_blank', 'noopener');
 };
 
-function getLastSevenDays() {
+function getLastXDays(val: number) {
     let dates = [];
-    for (let i = 0; i < 7; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        dates.push(date);
-    }
-    return dates;
-}
-
-// Getting the last 7 days
-export const lastSevenDays = getLastSevenDays().reverse();
-
-function getLast14Days() {
-    let dates = [];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < val; i++) {
         let date = new Date();
         if (i % 2 === 0) {
             date.setDate(date.getDate() - i);
@@ -919,7 +906,10 @@ function getLast14Days() {
 }
 
 // Getting the last 7 days
-export const last14Days = getLast14Days().reverse();
+export const lastSevenDays = getLastXDays(7).reverse();
+
+// Getting the last 14 days
+export const last14Days = getLastXDays(14).reverse();
 
 function get30Days() {
     let dates = [];
