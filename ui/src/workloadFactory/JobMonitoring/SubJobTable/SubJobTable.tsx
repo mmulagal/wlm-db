@@ -104,7 +104,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'Status',
             accessor: 'status',
             width: '180px',
-            filterOptions: 'auto',
+            isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.statusCol}>
