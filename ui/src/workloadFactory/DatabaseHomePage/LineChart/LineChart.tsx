@@ -173,9 +173,10 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 5,
+                        // grace: 5,
                         ticks: {
-                            color: isDarkTheme ? '#fff' : '#404040'
+                            color: isDarkTheme ? '#fff' : '#404040',
+                            maxTicksLimit: 5
                         }
                         // stacked: true
                     }
@@ -194,11 +195,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
     return (
         <div className={styles.lineChart}>
-            {!timelineData || timelineData?.completed?.length === 0 &&  
-                <div className={styles.noData}>
-                    <NoData />
-                </div>
-            }
+            {!timelineData ||
+                (timelineData?.completed?.length === 0 && (
+                    <div className={styles.noData}>
+                        <NoData />
+                    </div>
+                ))}
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
             {/* <Typography variant="Semibold_14" className={styles.text}>
@@ -209,4 +211,3 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 };
 
 export default LineChart;
-
