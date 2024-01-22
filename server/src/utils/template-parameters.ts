@@ -313,7 +313,7 @@ const PARAMETERS = [
         name: 'EnableCloudWatchLogFeature',
         description: 'Enable CloudWatch Log Feature',
         type: 'String',
-        default: false,
+        default: true,
         allowedValues: [true, false]
     },
     {
