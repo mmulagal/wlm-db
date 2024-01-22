@@ -11,7 +11,7 @@ import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { createJobMonitorCSV, downloadCsv, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { createJobMonitorCSV, downloadCsv, expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useDispatch } from 'react-redux';
@@ -124,15 +124,6 @@ const JobMonitoringTable = () => {
         return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
     };
 
-    const expandRow = (
-        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
-        rowData: { id: any },
-        currentRowState: { isExpanded: any }
-    ) => {
-        updateRowState(rowData.id)({
-            isExpanded: !currentRowState?.isExpanded
-        });
-    };
 
     const JobsColDefs: ColumnProps[] = [
         {
@@ -150,7 +141,10 @@ const JobMonitoringTable = () => {
                         <div className={styles.arrow}>
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={() => expandRow(updateRowState, rowData, currentRowState)}
+                                onClick={(e: any) => {
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
                             />
                         </div>
                     </>

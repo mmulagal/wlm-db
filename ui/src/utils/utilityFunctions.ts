@@ -1049,3 +1049,22 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     });
     return groupedData;
 };
+
+
+export const expandTableRow = (
+    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+    rowData: { id: any },
+    currentRowState: { isExpanded: any },
+    rowState: any
+) => {
+    for (const rowId in rowState) {
+        if (rowState[rowId]?.isExpanded) {
+            updateRowState(rowId)({
+                isExpanded: !rowState[rowId]?.isExpanded
+            });
+        }
+    }
+    updateRowState(rowData.id)({
+        isExpanded: !currentRowState?.isExpanded
+    });
+};
