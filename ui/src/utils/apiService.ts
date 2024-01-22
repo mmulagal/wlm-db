@@ -432,7 +432,8 @@ export const jobMonitoringApi = createApi({
                 query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             // getJobsSummaryTimelineData: builder.query({
-            //     query: ({startTime, endTime}) => `jobs/summarybytime?startTime=${startTime}&endTime=${endTime}`
+            //     query: ({startTime, endTime, intervalType, frequency = 1}) => 
+            //     `jobs/summarybytime?startTime=${startTime}&endTime=${endTime}&intervalType=${intervalType}&frequency=${frequency}`
             // }),
 
             getJobsSummaryTimelineData: builder.query({
