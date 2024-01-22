@@ -278,6 +278,7 @@ export const regionsSort = (regions: Array<Regions>) => {
 
 export const isValidUserName = (userName: string) => {
     if (
+        userName &&
         userName.length &&
         (userName.length < 5 ||
             !/^[a-zA-Z0-9]+$/.test(userName) ||
@@ -410,9 +411,9 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
     }
-    const completed = (data?.completed || 0);
-    const failed = (data?.failed || 0);
-    const inProgress = (data?.inProgress || 0)
+    const completed = data?.completed || 0;
+    const failed = data?.failed || 0;
+    const inProgress = data?.inProgress || 0;
     const totalJobs = failed + inProgress + completed;
     const newData = {
         ...data,
@@ -572,8 +573,10 @@ export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDe
             requireBillingPerm = true;
         }
 
-        if (val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING || 
-            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.BILLING) {
+        if (
+            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING ||
+            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.BILLING
+        ) {
             noDeploymentChk = false;
         }
     });
@@ -898,7 +901,7 @@ function getLastSevenDays() {
         dates.push(date);
     }
     return dates;
-};
+}
 
 // Getting the last 7 days
 export const lastSevenDays = getLastSevenDays().reverse();
@@ -913,7 +916,7 @@ function getLast14Days() {
         }
     }
     return dates;
-};
+}
 
 // Getting the last 7 days
 export const last14Days = getLast14Days().reverse();
@@ -926,7 +929,7 @@ function get30Days() {
         dates.push(date);
     }
     return dates;
-};
+}
 
 export const last30Days = get30Days().reverse();
 
@@ -935,7 +938,7 @@ export const resetDBHomePageState = (dispatch: any) => {
     dispatch(addInitialData(initialDBHomepageState));
 };
 
-export const jobMonitoringStatusMapping = (val : string) => {
+export const jobMonitoringStatusMapping = (val: string) => {
     let statusValue = val;
     if (val === JOB_MONITORING_STATUS.COMPLETED) {
         statusValue = GENERAL.JM_COMPLETED;
@@ -959,10 +962,9 @@ export const downloadCsv = (data: any) => {
 };
 
 export const addBlankCell = (level: number, result: any) => {
-    for(var i : number = 0; i < level; i++)  
-      {
+    for (var i: number = 0; i < level; i++) {
         result += ',';
-      }
+    }
     return result;
 };
 
@@ -970,7 +972,7 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
     result = addBlankCell(level, result);
     result += headers;
     result += '\n'; //New Row
-  
+
     array.map((item: any) => {
         //Goes Through Each Array Object
         result = addBlankCell(level, result);
@@ -987,15 +989,15 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         result += '\n'; //Creates New Row
         if (item?.subJobs) {
             result = createJobMonitorCSV(
-                item?.subJobs, 
-                JM_DOWNLOAD.SUB_JOBS_KEYS, 
-                JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS, 
-                result, 
-                level+1
-                );
+                item?.subJobs,
+                JM_DOWNLOAD.SUB_JOBS_KEYS,
+                JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS,
+                result,
+                level + 1
+            );
         }
     });
-    if (level === 1){
+    if (level === 1) {
         result += '\n'; //New Row
     }
     return result;
@@ -1005,24 +1007,24 @@ export const cfDownloadName = (name: string) => {
     return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
 };
 
-export const getShiftedHoursList = (baseList : Array<String | number>) => {
+export const getShiftedHoursList = (baseList: Array<String | number>) => {
     const hr = moment().hour();
     const shift = (Math.ceil(hr / 4) + 1) % baseList.length;
     return [...baseList.slice(shift), ...baseList.slice(0, shift)];
-}
+};
 
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
-    const groupedData: any = {'time': [], 'completed': [], 'failed': []};
+    const groupedData: any = { time: [], completed: [], failed: [] };
     if (!data || data?.length === 0) {
         return groupedData;
     }
-    const dayGrouping : any = {};
+    const dayGrouping: any = {};
     data.map((perObj: any) => {
         if (perObj?.timeInterval) {
             dayGrouping[perObj?.timeInterval] = {
-                'completed': perObj?.completed || 0,
-                'failed': perObj?.failed || 0
-            }
+                completed: perObj?.completed || 0,
+                failed: perObj?.failed || 0
+            };
         }
     });
 
@@ -1038,19 +1040,18 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
             lastDaysList = last14Days;
         } else if (days === 30) {
             lastDaysList = last30Days;
-        } 
-    
+        }
+
         daysList = lastDaysList.map(date => {
             const day = date.getDate();
             return `${day}`;
         });
     }
 
-    daysList.map((day) => {
+    daysList.map(day => {
         groupedData['time'].push(day);
         groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
         groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
-    })
+    });
     return groupedData;
-}
-
+};

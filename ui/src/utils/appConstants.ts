@@ -568,9 +568,14 @@ export const CHATBOT_FIELD_MAPPING: any = {
 
 export const CHATBOT = {
     WELCOME_PAGE: {
-        DB_WORKLOAD_EXPERT: 'Database Workload expert',
+        DB_WORKLOAD_EXPERT: 'Database workload expert',
         WELCOME_MSG:
-            "Hello! I'm your virtual assistant for database lifecycle management. Use it to learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation."
+            "Hello! I'm your virtual assistant for database lifecycle management. I can help you learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation.",
+        RESUME_DEPLOYMENT_MSG:
+            'Hi, we see that you already initiated values for deployment. How would you like to proceed?',
+        ADVANCED_CREATE_MSG:
+            'Deployment via chatbot is supported only for Easy Create flow, Would you like to deploy with an Easy flow?',
+        START_NEW_CHAT: 'Start new chat'
     },
     HEADER: {
         PREVIEW: 'Preview'
