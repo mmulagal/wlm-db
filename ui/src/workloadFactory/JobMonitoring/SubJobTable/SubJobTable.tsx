@@ -9,11 +9,12 @@ import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useGetSubTaskListQuery } from '../../../utils/apiService';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     // const [leftPos, setLeftPos] = useState(0);
@@ -45,16 +46,6 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     //     }
     // });
 
-    const expandRow = (
-        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
-        rowData: { id: any },
-        currentRowState: { isExpanded: any }
-    ) => {
-        updateRowState(rowData.id)({
-            isExpanded: !currentRowState?.isExpanded
-        });
-    };
-
     const JobsColDefs: ColumnProps[] = [
         {
             id: '0',
@@ -73,7 +64,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
                                 onClick={(e: any) => {
                                     e.stopPropagation();
-                                    expandRow(updateRowState, rowData, currentRowState);
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
                                 }}
                             />
                         </div>
