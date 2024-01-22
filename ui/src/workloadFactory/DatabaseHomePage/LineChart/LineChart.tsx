@@ -90,6 +90,25 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
         const constructDataFailed = () => {
             return timelineData?.failed;
         };
+
+        const setMaxGraceValue = () => {
+            if (
+                timelineData?.completed &&
+                timelineData?.completed.length &&
+                timelineData?.failed &&
+                timelineData?.failed.length
+            ) {
+                const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
+                const maxVal = Math.max(...combinedArr);
+                if (maxVal === 1) {
+                    return 1;
+                } else {
+                    return 5;
+                }
+            } else {
+                return 1;
+            }
+        };
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
             type: 'line',
@@ -173,9 +192,11 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        // grace: 5,
+                        grace: setMaxGraceValue(),
+
                         ticks: {
                             color: isDarkTheme ? '#fff' : '#404040',
+
                             maxTicksLimit: 5
                         }
                         // stacked: true
