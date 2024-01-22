@@ -194,7 +194,7 @@ async function modifyMasterJobStatus(
     logger.info('Update job to status failed:', masterJob?.id, masterJobName);
     const response = await updateJobDetails(accountId, masterJob.id, {
         status: jobStatus,
-        endTime: new Date(timestamp).valueOf(),
+        endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
         error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined
     });
     logger.debug('Update job response:', response);
@@ -246,7 +246,7 @@ async function createOrUpdateChildJobs(
             const response = await updateJobDetails(accountId, childJob.id, {
                 status: jobStatus,
                 error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
-                endTime: new Date(timestamp).valueOf()
+                endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
             });
             logger.debug('Update child job response:', response);
         } catch (error) {
