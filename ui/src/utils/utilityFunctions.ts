@@ -13,6 +13,7 @@ import {
     DISABLED_STATE,
     ENABLED_STATE,
     JM_DOWNLOAD,
+    JOBS_REPORT,
     JOB_MONITORING_STATUS,
     PENDING_DELETION,
     PRODUCTION,
@@ -934,7 +935,7 @@ export const jobMonitoringStatusMapping = (val: string) => {
     } else if (val === JOB_MONITORING_STATUS.FAILED) {
         statusValue = GENERAL.JM_FAILED;
     } else if (val === JOB_MONITORING_STATUS.IN_PROGRESS) {
-        statusValue = GENERAL.JM_IN_PROGRESS;
+        statusValue = GENERAL.JM_RUNNING;
     }
     return statusValue;
 };
@@ -945,8 +946,8 @@ export const downloadCsv = (data: any) => {
 
     const link = document.createElement('a');
     link.setAttribute('href', excel); //Links to CSV File
-
-    link.setAttribute('download', 'Job_Monitoring_' + Date.now()); //Filename that CSV is saved as
+    const dateStr = Date.now().toString();
+    link.setAttribute('download', JOBS_REPORT + moment(new Date(parseInt(dateStr))).format('DD_MM_YYYY'));
     link.click();
 };
 

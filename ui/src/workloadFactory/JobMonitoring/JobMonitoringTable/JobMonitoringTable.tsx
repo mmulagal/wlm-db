@@ -171,7 +171,14 @@ const JobMonitoringTable = () => {
             Header: 'Type',
             accessor: 'type',
             width: '160px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                if (cellData) {
+                    return cellData.charAt(0).toUpperCase() + cellData.substr(1).toLowerCase();
+                } else {
+                    return cellData;
+                }
+            }
         },
         {
             id: '3',
