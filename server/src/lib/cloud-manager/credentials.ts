@@ -126,7 +126,7 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
     const { token } = await getWfServiceToken();
 
     return gotInstanceForInternalRequest
-        .get(`accounts/${accountId}/credentials/v1/credentials`, {
+        .get(`accounts/${accountId}/credentials/v1/credentials?filter=type eq 'AWS_ASSUME_ROLE'`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: token
