@@ -204,6 +204,35 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
     });
 }
 
+async function groupJobsByTimeAndStatus(
+    accountId: string,
+    startTime: number,
+    endTime: number,
+    intervalType: string,
+    frequency: number
+) {
+    logger.info('Group Jobs By Time And Status', { accountId, startTime, endTime, intervalType, frequency });
+
+    try {
+        const interval = `${
+            intervalType === 'day'
+                ? `CEIL(DAY(end_time) / ${frequency}) * ${frequency}`
+                : `CEIL(HOUR(end_time) / ${frequency}) * ${frequency}`
+        }`;
+        const query = `SELECT end_time as endTime, status, cast(count(*) as char(8)) as count, ${interval} as timeInterval FROM job WHERE account_id = ? AND parent_job_id IS NULL AND end_time IS NOT NULL AND start_time >= ? AND end_time <= ? GROUP BY ${interval}, status`;
+
+        return await prisma.client.$queryRawUnsafe(
+            query,
+            accountId,
+            new Date(startTime).toISOString(),
+            new Date(endTime).toISOString()
+        );
+    } catch (error) {
+        logger.error('Error while grouping jobs by time and status', error);
+        return [];
+    }
+}
+
 export {
     countParentJobs,
     listJobs,
@@ -213,5 +242,6 @@ export {
     deleteJobs,
     deleteJobsOfAccount,
     deleteOlderJobs,
-    getJobCountByStatus
+    getJobCountByStatus,
+    groupJobsByTimeAndStatus
 };
