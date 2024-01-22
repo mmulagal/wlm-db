@@ -1,4 +1,5 @@
 import { isEmpty, uniqBy } from 'lodash-es';
+import randomize from 'randomatic';
 import { getAdsList } from '../../operations/aws/directory-service-operations';
 import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
@@ -30,7 +31,9 @@ import {
     FCI_ABBREVIATION,
     MULTI_AZ_SMALL,
     SINGLE_AZ_SMALL,
-    M5_XL
+    M5_XL,
+    SQL_SERVER_NAME,
+    ENCRYPTION_KEY
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -490,11 +493,19 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
         };
     }
 
+    if (key === ENCRYPTION_KEY) {
+        return {
+            key,
+            value: isValidFsx?.kmsKeyId
+        };
+    }
+
     return {
         key,
         value: isValidFsx.fileSystemId
     };
 }
+
 async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
     logger.info(' Validate Cloud Watch', { enableCloudWatch, key });
     if (typeof enableCloudWatch !== 'boolean') {
@@ -574,6 +585,10 @@ async function validateDomain(
 }
 
 function validateText(text: string, key: string, fsxType?: string) {
+    // setting default value for sqlServerName if not provided from ui
+    if (key === SQL_SERVER_NAME && !text) {
+        text = `sqldatabase${randomize('a0', 4)}`;
+    }
     if (!text) {
         return {
             key,

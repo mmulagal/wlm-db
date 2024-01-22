@@ -43,6 +43,7 @@ const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
+const ENCRYPTION_KEY = 'encryptionKey';
 
 const EQ = 'EQ';
 
@@ -213,7 +214,6 @@ const CHATBOT_UI_PARAMS_FSX = [
             required: true
         }
     },
-
     {
         [SQL_SERVER_NAME]: {
             required: true
@@ -231,8 +231,8 @@ const CHATBOT_UI_PARAMS_FSX = [
         }
     },
     {
-        encryptionKey: {
-            required: false
+        [ENCRYPTION_KEY]: {
+            required: { key: FSX_TYPE, operand: EQ, value: EXISTING }
         }
     }
 ];
@@ -344,5 +344,6 @@ export {
     FCI_ABBREVIATION,
     MULTI_AZ_SMALL,
     SINGLE_AZ_SMALL,
-    M5_XL
+    M5_XL,
+    ENCRYPTION_KEY
 };

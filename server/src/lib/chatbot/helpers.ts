@@ -56,7 +56,8 @@ import {
     SQL_SERVER_NAME,
     MULTI_AZ,
     TAGS,
-    DEPLOYMENT_ENVIRONMENT
+    DEPLOYMENT_ENVIRONMENT,
+    ENCRYPTION_KEY
 } from './consts';
 
 const logger = getLogger();
@@ -274,6 +275,16 @@ async function validate(key: string, params: Params, oldParams: Params) {
             }
             case DEPLOYMENT_ENVIRONMENT: {
                 response = validateDeploymentEnv(key, params[key]);
+                break;
+            }
+            case ENCRYPTION_KEY: {
+                response = await validateFsx(
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[VPC_ID],
+                    params[FSX_FILE_SYSTEM_ID],
+                    key
+                );
                 break;
             }
             default:
