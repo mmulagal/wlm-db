@@ -230,3 +230,5 @@ export const ADV_CREATE_SUGGESTION_BUBBLES = [
     { label: 'Yes, I would like to deploy an Easy flow via chat', value: 'resume' },
     { label: 'No, I want to explore the chat', value: 'explore' }
 ];
+
+export const JOBS_REPORT = 'jobs_report_';
