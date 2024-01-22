@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/storeHooks";
 import { useGetJobsListQuery, useGetJobsSummaryDataQuery, useGetJobsSummaryTimelineDataQuery } from "../../utils/apiService";
-import { setJmJobsSummary, setJmJobsSummaryLoading, setJobsList, setJobsListLoading, setJobsSummaryTimeline, setJobsSummaryTimelineLoading } from "../../store/workloadFactory/jobMonitoringSlice";
+import { 
+    setJmJobsSummary, 
+    setJmJobsSummaryLoading, 
+    setJobsList, 
+    setJobsListLoading, 
+    setJobsSummaryTimeline, 
+    setJobsSummaryTimelineLoading 
+} from "../../store/workloadFactory/jobMonitoringSlice";
 import { groupByJobSummaryTimeline, jobStatusPercent } from "../../utils/utilityFunctions";
 
 const JobMonitoringApi = () => {
@@ -14,6 +21,8 @@ const JobMonitoringApi = () => {
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
+    const [intervalType, setIntervalType] = useState('hour');
+    const [frequency, setFrequency] = useState(1);
 
     const [skipApiCall, setSkipApiCall] = useState(true);
 
@@ -27,6 +36,22 @@ const JobMonitoringApi = () => {
                 setSkipApiCall(false);
             }
         }, 0);
+
+        // settting interval type
+        if (timeInterval === 1) {
+            setIntervalType('hour');
+        } else {
+            setIntervalType('day');
+        }
+
+        // setting frequency
+        if (timeInterval === 1) {
+            setFrequency(4);
+        } else if (timeInterval === 14) {
+            setFrequency(2);
+        } else {
+            setFrequency(1);
+        }
     }, [fromTime]);
 
     const {
@@ -42,7 +67,10 @@ const JobMonitoringApi = () => {
     const {
         data: jobsSummaryTimeline,
         isFetching: jobsSummaryTimelineLoading,
-    } = useGetJobsSummaryTimelineDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+    } = useGetJobsSummaryTimelineDataQuery(
+        {startTime: time?.startTime, endTime: time?.endTime, intervalType: intervalType, frequency: frequency}, 
+        {skip: skipApiCall}
+        );
 
     useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));

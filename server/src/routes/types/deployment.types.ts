@@ -53,7 +53,7 @@ const CloudFormationTemplateRequestBody = Type.Object({
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
     topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -79,7 +79,7 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
     topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({

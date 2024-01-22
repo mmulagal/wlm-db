@@ -1007,6 +1007,12 @@ export const cfDownloadName = (name: string) => {
     return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
 };
 
+export const getShiftedHoursList = (baseList: Array<String | number>) => {
+    const hr = moment().hour();
+    const shift = (Math.ceil(hr / 4) + 1) % baseList.length;
+    return [...baseList.slice(shift), ...baseList.slice(0, shift)];
+};
+
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
     const groupedData: any = { time: [], completed: [], failed: [] };
     if (!data || data?.length === 0) {
@@ -1040,6 +1046,8 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
         } else if (hr > 20 && hr <= 24) {
             daysList = [4, 8, 12, 16, 20, 0];
         }
+        const baseList = [0, 4, 8, 12, 16, 20];
+        daysList = getShiftedHoursList(baseList);
     } else {
         if (days === 7) {
             lastDaysList = lastSevenDays;

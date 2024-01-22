@@ -3,7 +3,7 @@ import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
 import { ReactComponent as NoData } from '../../../assets/empty table message.svg';
 import styles from './LineChart.module.scss';
-import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
+import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 const moment = require('moment');
 
@@ -40,21 +40,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
     });
 
     const formattedLast24Hour = () => {
-        const dateStr = Date.now().toString();
-        let hr = moment(new Date(parseInt(dateStr))).format('HH');
-        if (hr > 0 && hr <= 4) {
-            return ['08:00', '12:00', '16:00', '20:00', '00:00', '04:00'];
-        } else if (hr > 4 && hr <= 8) {
-            return ['12:00', '16:00', '20:00', '00:00', '04:00', '08:00'];
-        } else if (hr > 8 && hr <= 12) {
-            return ['16:00', '20:00', '00:00', '04:00', '08:00', '12:00'];
-        } else if (hr > 12 && hr <= 16) {
-            return ['20:00', '00:00', '04:00', '08:00', '12:00', '16:00'];
-        } else if (hr > 16 && hr <= 20) {
-            return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
-        } else if (hr > 20 && hr <= 24) {
-            return ['04:00', '08:00', '12:00', '16:00', '20:00', '00:00'];
-        }
+        const baseList = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+        return getShiftedHoursList(baseList);
     };
 
     useEffect(() => {
@@ -222,3 +209,4 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 };
 
 export default LineChart;
+
