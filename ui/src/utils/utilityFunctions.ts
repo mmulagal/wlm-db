@@ -897,10 +897,9 @@ function getLastXDays(val: number) {
     let dates = [];
     for (let i = 0; i < val; i++) {
         let date = new Date();
-        if (i % 2 === 0) {
-            date.setDate(date.getDate() - i);
-            dates.push(date);
-        }
+
+        date.setDate(date.getDate() - i);
+        dates.push(date);
     }
     return dates;
 }
