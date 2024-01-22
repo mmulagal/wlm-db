@@ -309,7 +309,7 @@ async function getJobSummaryByTime(
     // Default time range is 30 days
     startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
-    frequency = frequency || intervalType === 'day' ? 1 : 4;
+    frequency = frequency || (intervalType === 'day' ? 1 : 4);
 
     const groups = (await groupJobsByTimeAndStatus(
         accountId,
