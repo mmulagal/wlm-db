@@ -263,12 +263,12 @@ const CHATBOT_UI_PARAMS_FSX = [
                 [ENABLE_CLOUD_WATCH]: {
                     required: true
                 }
-            },
-            {
-                [TAGS]: {
-                    required: true
-                }
             }
+            // {
+            //     [TAGS]: {
+            //         required: true
+            //     }
+            // }
         ]
     },
     {
