@@ -19,7 +19,7 @@ const SelectConfig = () => {
         <div className={styles['select-config']}>
             {/* Easy create section from here */}
             <div
-                id="easy-create"
+                id="quick-create"
                 className={
                     selectedConfig === SELECT_CONFIG.EASY_CREATE
                         ? `${styles['easy-create']} ${styles['add-border']}`
@@ -51,6 +51,7 @@ const SelectConfig = () => {
             </div>
             {/* Standard create section here */}
             <div
+                id="advanced-create"
                 className={
                     selectedConfig === SELECT_CONFIG.STANDARD_CREATE
                         ? `${styles['standard-create']} ${styles['add-border']}`

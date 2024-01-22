@@ -9,7 +9,7 @@ import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/u
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
 
-const TaskTable = ({ taskList }: any) => {
+const TaskTable = ({ taskList = [] }: any) => {
     
     return (
         <div className={styles.taskTable}>
@@ -23,10 +23,10 @@ const TaskTable = ({ taskList }: any) => {
                 return (
                     <div className={styles.taskRow}>
                         <Typography variant="Regular_14" className={styles.firstItem}>
-                            {task.name}
+                            <div className={styles.firstItemText} title={task.name}>{task.name}</div>
                         </Typography>
                         <Typography variant="Regular_14" className={styles.secondItem}>
-                            {task.description}
+                            <div className={CommonStyles.wrapTextIn2Line} title={task.description}>{task.description}</div>
                         </Typography>
                         <div className={styles.thirdItem}>
                             <div>

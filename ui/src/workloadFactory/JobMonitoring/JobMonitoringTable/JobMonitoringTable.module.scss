@@ -99,15 +99,6 @@
             height: 20px;
         }
     }
-
-    .wrapText {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 24px;
-    }
 }
 
 @media screen and (min-width: 1351px) and (max-width: 1520px) {

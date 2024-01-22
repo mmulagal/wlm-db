@@ -100,8 +100,7 @@ const JobMonitoringTable = () => {
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             dispatch(clearNotifications());
-
-            if (jmJobsList?.nextToken === null) {
+            if (jmJobsList && !jmJobsList?.nextToken) {
                 // Download logic 
                 downloadJMTable(mergedList);
 
@@ -202,40 +201,41 @@ const JobMonitoringTable = () => {
         },
         {
             id: '4',
-            Header: 'Resource Name',
+            Header: 'Resource name',
             accessor: 'resourceName',
             isSortable: true,
             width: '168px'
         },
         {
             id: '5',
-            Header: 'Job Name',
+            Header: 'Job name',
             accessor: 'name',
             isSortable: true,
-            className: styles.wrapText,
             width: '340px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
             }
         },
         {
             id: '6',
-            Header: 'Start Time',
+            Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
             id: '7',
-            Header: 'End Time',
+            Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
@@ -302,7 +302,7 @@ const JobMonitoringTable = () => {
                         className={styles.topBarStyle}
                         actionsRight={
                             <div className={styles.downloadButton}>
-                                {jobsListLoading && !downloadJobsLoading && 
+                                {(jobsListLoading && !downloadJobsLoading) || jobsList.length === 0 && 
                                     <div className={styles.downloadDisable}>
                                         <DownloadIcon />
                                     </div>
@@ -321,7 +321,7 @@ const JobMonitoringTable = () => {
                                         }
                                     />
                                 }
-                                {!downloadJobsLoading && !jobsListLoading && 
+                                {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && 
                                     <DownloadIcon 
                                         onClick={downloadJobMonitoring}
                                 />}

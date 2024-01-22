@@ -950,6 +950,7 @@ const Chatbot = () => {
                     messages={messages ? messages : []}
                     activeField={activeField}
                     setContext={setContext}
+                    mapParamsToPayload={mapParamsToPayload}
                 />
             </div>
         </div>

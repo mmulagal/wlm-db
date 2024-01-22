@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { KeyListEntry } from '@aws-sdk/client-kms';
-import { listKeys, describeKey, listAliases } from '../../lib/aws/kms';
-import { AWS_FSX } from '../../utils/consts';
+import { listKeys, describeKey, listAliases, encrypt, decrypt } from '../../lib/aws/kms';
+import { AWS_FSX, KMS_KEY_ALIAS } from '../../utils/consts';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -66,4 +66,28 @@ async function getKmsKeyDetails(credentialsId: string, region: string, kmsKeysLi
     return keyData;
 }
 
-export { getKmsKeysList };
+async function encryptString(textToEncrypt: string) {
+    logger.info('Encrypt a string');
+    logger.debug({ textToEncrypt });
+
+    const plaintext = Buffer.from(textToEncrypt);
+    const encryptParams = { KeyId: KMS_KEY_ALIAS, Plaintext: plaintext };
+    const { CiphertextBlob: cipherText } = await encrypt(encryptParams);
+    if (cipherText) {
+        return Buffer.from(cipherText).toString('base64');
+    }
+}
+
+async function decryptString(encryptedText: string) {
+    logger.info('Decrypt a string', { encryptedText });
+
+    const cipherText = Buffer.from(encryptedText, 'base64');
+    const decryptParams = { KeyId: KMS_KEY_ALIAS, CiphertextBlob: cipherText };
+
+    const { Plaintext: plaintext } = await decrypt(decryptParams);
+    if (plaintext) {
+        return String.fromCharCode.apply(null, Array.from(new Uint8Array(plaintext)));
+    }
+}
+
+export { getKmsKeysList, encryptString, decryptString };

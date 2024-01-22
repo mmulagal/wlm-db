@@ -12,6 +12,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { openCredentialTab } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
+import CardComponent from './CardComponent/CardComponent';
 
 type optionsType = {
     value?: string | number;
@@ -91,7 +92,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                         msgObj.active ? (
                             <div className={styles['msg-group-container']}>
                                 <>
-                                    {msgObj.active && item.allowedValues ? (
+                                    {msgObj.active && item.allowedValues && item.type !== 'card' ? (
                                         <div className={styles['select-container']}>
                                             <SelectComponent
                                                 options={
@@ -137,6 +138,13 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                                     [key]: { label: val, value: val }
                                                 });
                                             }}
+                                        />
+                                    )}
+                                    {msgObj.active && item.type === 'card' && (
+                                        <CardComponent
+                                            cardList={item.allowedValues}
+                                            handleSelectButtonClicked={handleSelectButtonClicked}
+                                            selectKey={item.key}
                                         />
                                     )}
                                 </>

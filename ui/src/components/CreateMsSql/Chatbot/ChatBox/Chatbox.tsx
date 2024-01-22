@@ -7,10 +7,15 @@ import ChatBotResponseLoader from '../ChatBotResponseLoader/ChatBotResponseLoade
 import WelcomePage from '../WelcomePage/WelcomePage';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
-import { setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
+import { setIsWizardTouched, setMessages, setSuggestionBubbles } from '../../../../store/chatbot/chatbotSlice';
 import Bubbles from '../Bubbles/Bubbles';
-import { CHATBOT_SUGGESTION_BUBBLES } from '../../../../utils/consts';
-import { validateChatbotField } from '../../../../utils/utilityFunctions';
+import {
+    ADV_CREATE_SUGGESTION_BUBBLES,
+    CHATBOT_SUGGESTION_BUBBLES,
+    CHATBOT_WELCOME_CARDS
+} from '../../../../utils/consts';
+import { getChatbotParamsFromPayload, validateChatbotField } from '../../../../utils/utilityFunctions';
+import { CHATBOT } from '../../../../utils/appConstants';
 
 type optionsType = {
     value?: string | number;
@@ -36,6 +41,7 @@ type ChatBoxPropTypes = {
     messagesToShow: any;
     activeField: any;
     setContext: () => void;
+    mapParamsToPayload: (params: any) => void;
 };
 
 const ChatBox = ({
@@ -45,7 +51,8 @@ const ChatBox = ({
     isBotReplying,
     messagesToShow,
     activeField,
-    setContext
+    setContext,
+    mapParamsToPayload
 }: ChatBoxPropTypes) => {
     const {
         isWizardTouched,
@@ -54,15 +61,17 @@ const ChatBox = ({
         expectingResponse,
         messages: stateMsgs
     } = useAppSelector(state => state.chatbot);
+    const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef(null);
+    const messagesEnd: any = useRef(null);
 
     const dispatch = useDispatch();
 
     const handleSendMsg = () => {
         if (userInput.trim()) {
             if (expectingResponse.type !== 'none') {
-                const valueToShow = expectingResponse.type === 'password' ? '********' : userInput;
+                const valueToShow = expectingResponse.type === 'password' ? 'Password Entered' : userInput;
                 const validationError = validateChatbotField(expectingResponse.fieldName, userInput);
                 if (validationError) {
                     dispatch(
@@ -74,7 +83,7 @@ const ChatBox = ({
                     );
                 } else {
                     handleSelectButtonClicked({
-                        [expectingResponse.fieldName]: { label: userInput, value: userInput }
+                        [expectingResponse.fieldName]: { label: valueToShow, value: userInput }
                     });
                 }
             } else {
@@ -92,19 +101,67 @@ const ChatBox = ({
     }, [isBotReplying]);
 
     useEffect(() => {
+        messagesEnd?.current?.scrollIntoView({ behaviour: 'smooth' });
+    });
+
+    useEffect(() => {
         if ((currentIntent?.type || isWizardTouched) && !messagesToShow.length) {
+            const comingFromAdvCreate = mssqlFormData.selectConfig === 'Standard create';
+            dispatch(
+                setMessages([
+                    {
+                        sender: 'bot',
+                        msg: comingFromAdvCreate
+                            ? CHATBOT.WELCOME_PAGE.ADVANCED_CREATE_MSG
+                            : CHATBOT.WELCOME_PAGE.RESUME_DEPLOYMENT_MSG
+                    }
+                ])
+            );
             dispatch(
                 setSuggestionBubbles({
-                    list: CHATBOT_SUGGESTION_BUBBLES,
+                    list: comingFromAdvCreate ? ADV_CREATE_SUGGESTION_BUBBLES : CHATBOT_SUGGESTION_BUBBLES,
                     onBubbleClick: (label: string, value: string) => {
                         if (value === 'resume') {
                             setContext();
+                            dispatch(setMessages([{ sender: 'user', msg: label }]));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         }
                         if (value === 'start') {
+                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            let defaultObj: any = {};
+                            Object.keys(defaultParams).map((key: string) => {
+                                defaultObj[key] = null;
+                            });
+                            mapParamsToPayload(defaultObj);
                             sendMsg('Deploy Mssql', false);
+                            dispatch(setMessages([{ sender: 'user', msg: label }]));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         }
-                        dispatch(setMessages([{ sender: 'user', msg: label }]));
-                        dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                        if (value === 'explore') {
+                            dispatch(
+                                setMessages([
+                                    {
+                                        sender: 'bot',
+                                        msg: comingFromAdvCreate
+                                            ? CHATBOT.WELCOME_PAGE.ADVANCED_CREATE_MSG
+                                            : CHATBOT.WELCOME_PAGE.RESUME_DEPLOYMENT_MSG
+                                    },
+                                    { sender: 'user', msg: label },
+                                    { sender: 'bot', msg: CHATBOT.WELCOME_PAGE.WELCOME_MSG }
+                                ])
+                            );
+                            dispatch(
+                                setSuggestionBubbles({
+                                    list: CHATBOT_WELCOME_CARDS.map(item => {
+                                        return { label: item, value: item };
+                                    }),
+                                    onBubbleClick: (label?: string, value?: string) => {
+                                        sendMsg(label);
+                                        dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                                    }
+                                })
+                            );
+                        }
                     }
                 })
             );
@@ -140,6 +197,7 @@ const ChatBox = ({
                     ) : (
                         ''
                     )}
+                    <div style={{ float: 'left', clear: 'both' }} ref={messagesEnd}></div>
                 </div>
             </div>
 

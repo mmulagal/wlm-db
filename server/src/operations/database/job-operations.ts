@@ -8,6 +8,7 @@ import {
     createJobs,
     deleteJobs,
     getJobCountByStatus,
+    groupJobsByTimeAndStatus,
     listJobs,
     listUniqueJob,
     updateJob
@@ -16,6 +17,7 @@ import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from './database-operations';
 import {
     JobRecordType,
+    JobSummaryByTimeRecordType,
     JobSummaryResponseType,
     ListJobsQueryType,
     UpdateJobRecordType
@@ -39,6 +41,17 @@ interface JobGroup {
     _count: {
         _all: number;
     };
+}
+
+interface DatabaseGroup {
+    endTime: Date;
+    timeInterval: number;
+    status: string;
+    count: number;
+}
+
+interface GroupedObject extends JobSummaryByTimeRecordType {
+    [key: string]: number | string | undefined;
 }
 
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
@@ -76,6 +89,10 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
     };
 }
 
+function isValidStartTime(startTime: number) {
+    return Number(startTime) && !Number.isNaN(Number(startTime));
+}
+
 function formatJobDbSchema(job: JobRecordType) {
     const {
         accountId,
@@ -98,7 +115,7 @@ function formatJobDbSchema(job: JobRecordType) {
         name,
         description,
         error,
-        start_time: new Date(startTime),
+        start_time: isValidStartTime(startTime) ? new Date(startTime) : new Date(),
         initiator,
         end_time: endTime ? new Date(endTime) : undefined,
         parent_job_id: parentJobId
@@ -276,4 +293,71 @@ async function getJobSummary(
     }, defaultSummary) as JobSummaryResponseType;
 }
 
-export { Job, registerJobs, getJobs, getJobDetails, updateJobDetails, deleteJobsWithAllSubJobs, getJobSummary };
+async function getJobSummaryByTime(
+    accountId: string,
+    startTime: number | undefined,
+    endTime: number | undefined,
+    intervalType: string | undefined = 'day',
+    frequency: number | undefined
+): Promise<JobSummaryByTimeRecordType[]> {
+    logger.info('Getting job summary by time', { accountId, startTime, endTime, intervalType });
+
+    if (startTime && endTime && startTime > endTime) {
+        throw createError(400, 'Start time cannot be greater than end time');
+    }
+
+    // Default time range is 30 days
+    startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
+    endTime = endTime || Date.now();
+    frequency = frequency || intervalType === 'day' ? 1 : 4;
+
+    const groups = (await groupJobsByTimeAndStatus(
+        accountId,
+        startTime,
+        endTime,
+        intervalType,
+        frequency
+    )) as DatabaseGroup[];
+
+    const groupedData = groupDataByTime(groups, intervalType, frequency);
+
+    logger.debug('groupedData', groupedData);
+
+    return groupedData;
+}
+
+function groupDataByTime(groups: DatabaseGroup[], intervalType: string, frequency: number) {
+    logger.debug('groupDataByTime', { groups, intervalType, frequency });
+
+    if (groups.length === 0) {
+        return [];
+    }
+
+    return groups.reduce((acc: GroupedObject[], obj: DatabaseGroup) => {
+        const { timeInterval } = obj;
+
+        const status = camelCase(obj?.status?.toLowerCase());
+        const count = Number(obj?.count);
+        const endTime = obj?.endTime?.valueOf();
+
+        const existingObj = acc.find(el => el.timeInterval === timeInterval);
+        if (existingObj) {
+            existingObj[status] = count;
+        } else {
+            acc.push({ timeInterval, [status]: count, endTime, intervalType, frequency });
+        }
+
+        return acc;
+    }, []);
+}
+
+export {
+    Job,
+    registerJobs,
+    getJobs,
+    getJobDetails,
+    updateJobDetails,
+    deleteJobsWithAllSubJobs,
+    getJobSummary,
+    getJobSummaryByTime
+};
