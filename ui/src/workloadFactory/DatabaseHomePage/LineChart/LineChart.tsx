@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
+import { ReactComponent as NoData } from '../../../assets/empty table message.svg';
 import styles from './LineChart.module.scss';
 import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
@@ -40,7 +41,7 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
     const formattedLast24Hour = () => {
         const dateStr = Date.now().toString();
-        let hr =  moment(new Date(parseInt(dateStr))).format('HH');
+        let hr = moment(new Date(parseInt(dateStr))).format('HH');
         if (hr > 0 && hr <= 4) {
             return ['08:00', '12:00', '16:00', '20:00', '00:00', '04:00'];
         } else if (hr > 4 && hr <= 8) {
@@ -206,6 +207,11 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
     return (
         <div className={styles.lineChart}>
+            {!timelineData || timelineData?.completed?.length === 0 &&  
+                <div className={styles.noData}>
+                    <NoData />
+                </div>
+            }
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
             {/* <Typography variant="Semibold_14" className={styles.text}>

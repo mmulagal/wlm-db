@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { describeKey, listAliases, listKeys } from '../../../src/lib/aws/kms';
+import { decrypt, describeKey, encrypt, listAliases, listKeys } from '../../../src/lib/aws/kms';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -32,5 +32,23 @@ describe('KMS Lib', () => {
         };
         const resp = await listAliases(credentialsId, DEFAULT_AWS_REGION, params);
         expect(resp).toBeDefined();
+    });
+
+    it('should encrypt a string', async () => {
+        const params = {
+            KeyId: '1234abcd-12ab-34cd-56ef-1234567890ab',
+            Plaintext: Buffer.from('abcdef')
+        };
+        const resp = await encrypt(params);
+        expect(resp.CiphertextBlob).toBeDefined();
+    });
+
+    it('should decrypt a string', async () => {
+        const params = {
+            KeyId: '1234abcd-12ab-34cd-56ef-1234567890ab',
+            CiphertextBlob: Buffer.from('abcdef')
+        };
+        const resp = await decrypt(params);
+        expect(resp.Plaintext).toBeDefined();
     });
 });

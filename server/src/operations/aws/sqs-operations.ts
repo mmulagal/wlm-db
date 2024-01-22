@@ -40,6 +40,8 @@ import { associateResource } from '../../lib/cloud-manager/credentials';
 import { getDeployments, getResources } from '../database/database-operations';
 import { tagEc2Resource } from './ec2-operations';
 import { tagFsxResource } from './fsx-operations';
+import { decryptString } from './kms-operations';
+import { registerFsxOntapCredentials } from '../../lib/cloud-manager/fsx-core';
 import { createJobs, listJobs } from '../../lib/database/job';
 import { updateJobDetails } from '../database/job-operations';
 
@@ -418,7 +420,8 @@ async function processCloudFormationMessages() {
                                                         DomainAdminSecretName: domainAdminSecret,
                                                         SQLServiceAccountSecret: sqlServiceAccountSecret,
                                                         ActiveDirectoryName: activeDirectoryName,
-                                                        ActiveDirectoryAddress: activeDirectoryAddress
+                                                        ActiveDirectoryAddress: activeDirectoryAddress,
+                                                        EncryptedFsxPassword: encryptedFsxPassword
                                                     } = resourceProperties;
                                                     const [resourceDetails] = await getResources(
                                                         accountId,
@@ -436,6 +439,35 @@ async function processCloudFormationMessages() {
                                                             region
                                                         });
                                                     }
+
+                                                    if (encryptedFsxPassword) {
+                                                        const {
+                                                            credentials_id: deploymentCredentialId,
+                                                            region: deploymentRegion
+                                                        } = masterStackDeployment;
+                                                        const decryptedPassword = await decryptString(
+                                                            encryptedFsxPassword
+                                                        );
+                                                        if (decryptedPassword) {
+                                                            await registerFsxOntapCredentials(
+                                                                accountId,
+                                                                deploymentCredentialId,
+                                                                deploymentRegion,
+                                                                fsxId,
+                                                                decryptedPassword
+                                                            );
+                                                        } else {
+                                                            logger.error(
+                                                                'Failed to register FSX Ontap credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                { encryptedFsxPassword, decryptedPassword }
+                                                            );
+                                                        }
+                                                    } else {
+                                                        logger.error(
+                                                            'Failed to register FSX Ontap credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
+                                                        );
+                                                    }
+
                                                     const resourceId = getMsSqlResourceId(
                                                         activeNodeInstanceId,
                                                         standbyNodeInstanceId

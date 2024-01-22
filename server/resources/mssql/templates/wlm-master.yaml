@@ -88,6 +88,7 @@ Metadata:
           - CloudProviderAccountId
           - RoleCredentialsId
           - JwtToken
+          - EncryptedFsxPassword
     ParameterLabels:
       DeploymentMode:
         default: File system deployment mode
@@ -276,6 +277,8 @@ Parameters:
   
   {{JwtToken}}
 
+  {{EncryptedFsxPassword}}
+  
   {{WlmdbAwsAccountId}}
   
   {{MetadataParam}}
@@ -978,3 +981,4 @@ Resources:
       FileSystemType: 'FSx for ONTAP'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
+      EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'

@@ -721,7 +721,7 @@ function validateDeploymentEnv(key: string, value: string) {
         message: 'Select a deployment environment',
         allowedValues: [
             {
-                label: 'Production',
+                label: 'Production model',
                 value: PROD,
                 data: [
                     { label: 'SQL Deployment model', value: FCI_ABBREVIATION },
@@ -731,7 +731,7 @@ function validateDeploymentEnv(key: string, value: string) {
                 ]
             },
             {
-                label: 'Develpoment',
+                label: 'Dev/Test model',
                 value: DEV,
                 data: [
                     { label: 'SQL Deployment model', value: 'Standalone' },
@@ -740,7 +740,7 @@ function validateDeploymentEnv(key: string, value: string) {
                     { label: 'Instance type', value: M5_XL }
                 ]
             },
-            { label: 'Custom', value: CUSTOM }
+            { label: 'Deploy on your own', value: CUSTOM }
         ],
         type: 'card'
     };
