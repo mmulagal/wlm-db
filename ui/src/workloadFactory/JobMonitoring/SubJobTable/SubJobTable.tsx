@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 // import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useGetSubTaskListQuery } from '../../../utils/apiService';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
     // const [leftPos, setLeftPos] = useState(0);
