@@ -1005,6 +1005,12 @@ export const cfDownloadName = (name: string) => {
     return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
 };
 
+export const getShiftedHoursList = (baseList : Array<String | number>) => {
+    const hr = moment().hour();
+    const shift = (Math.ceil(hr / 4) + 1) % baseList.length;
+    return [...baseList.slice(shift), ...baseList.slice(0, shift)];
+}
+
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
     const groupedData: any = {'time': [], 'completed': [], 'failed': []};
     if (!data || data?.length === 0) {
@@ -1023,21 +1029,8 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     let lastDaysList: any[] = [];
     let daysList: any[] = [];
     if (days === 1) {
-        const dateStr = Date.now().toString();
-        let hr =  moment(new Date(parseInt(dateStr))).format('HH');
-        if (hr > 0 && hr <= 4) {
-            daysList = [8, 12, 16, 20, 0, 4];
-        } else if (hr > 4 && hr <= 8) {
-            daysList = [12, 16, 20, 0, 4, 8];
-        } else if (hr > 8 && hr <= 12) {
-            daysList = [16, 20, 0, 4, 8, 12];
-        } else if (hr > 12 && hr <= 16) {
-            daysList = [20, 0, 4, 8, 12, 16];
-        } else if (hr > 16 && hr <= 20) {
-            daysList = [0, 4, 8, 12, 16, 20];
-        } else if (hr > 20 && hr <= 24) {
-            daysList = [4, 8, 12, 16, 20, 0];
-        }
+        const baseList = [0, 4, 8, 12, 16, 20];
+        daysList = getShiftedHoursList(baseList);
     } else {
         if (days === 7) {
             lastDaysList = lastSevenDays;
@@ -1060,3 +1053,4 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     })
     return groupedData;
 }
+
