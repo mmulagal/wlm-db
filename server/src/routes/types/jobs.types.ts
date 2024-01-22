@@ -14,6 +14,27 @@ const JobSummaryResponse = Type.Object({
 
 type JobSummaryResponseType = Static<typeof JobSummaryResponse>;
 
+const JobSummaryByTimeQueryString = Type.Composite([
+    JobSummaryQueryString,
+    Type.Object({
+        intervalType: Type.Optional(Type.String({ enum: ['hour', 'day'] })),
+        frequency: Type.Optional(Type.Number())
+    })
+]);
+
+const JobSummaryByTimeRecord = Type.Object({
+    endTime: Type.Number(),
+    timeInterval: Type.Number(),
+    frequency: Type.Number(),
+    intervalType: Type.String({ enum: ['hour', 'day'] }),
+    completed: Type.Optional(Type.Number()),
+    failed: Type.Optional(Type.Number())
+});
+
+const JobSummaryByTimeResponse = Type.Array(Type.Optional(JobSummaryByTimeRecord));
+
+type JobSummaryByTimeRecordType = Static<typeof JobSummaryByTimeRecord>;
+
 const ListJobsQueryString = Type.Object({
     parentJobId: Type.Optional(Type.String()),
     sort: Type.Optional(Type.String()),
@@ -142,5 +163,8 @@ export {
     JobsParams,
     JobSummaryQueryString,
     JobSummaryResponse,
-    JobSummaryResponseType
+    JobSummaryResponseType,
+    JobSummaryByTimeQueryString,
+    JobSummaryByTimeResponse,
+    JobSummaryByTimeRecordType
 };

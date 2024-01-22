@@ -6,7 +6,8 @@ import {
     JobDetailsSchema,
     DeleteJobSchema,
     UpdateJobSchema,
-    CreateJobSchema
+    CreateJobSchema,
+    JobSummaryByTimeSchema
 } from './schemas/jobs-schemas';
 import {
     deleteJobsWithAllSubJobs,
@@ -14,7 +15,8 @@ import {
     getJobs,
     registerJobs,
     updateJobDetails,
-    getJobSummary
+    getJobSummary,
+    getJobSummaryByTime
 } from '../operations/database/job-operations';
 import { JobRecordType } from './types/jobs.types';
 
@@ -45,6 +47,15 @@ export default function jobsRoutes(fastify: FastifyInstance) {
             query: { startTime, endTime }
         } = request;
         const response = await getJobSummary(accountId, startTime, endTime);
+        return reply.send(response);
+    });
+
+    server.get(`${JOBS_API_PATH}/summary/timeline`, { schema: JobSummaryByTimeSchema }, async (request, reply) => {
+        const {
+            params: { accountId },
+            query: { startTime, endTime, intervalType, frequency }
+        } = request;
+        const response = await getJobSummaryByTime(accountId, startTime, endTime, intervalType, frequency);
         return reply.send(response);
     });
 

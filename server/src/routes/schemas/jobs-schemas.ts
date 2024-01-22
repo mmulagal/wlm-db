@@ -10,7 +10,9 @@ import {
     UpdateJobRequestBody,
     JobDetailsResponse,
     JobSummaryQueryString,
-    JobSummaryResponse
+    JobSummaryResponse,
+    JobSummaryByTimeQueryString,
+    JobSummaryByTimeResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -52,6 +54,16 @@ const JobSummarySchema = {
     }
 };
 
+const JobSummaryByTimeSchema = {
+    ...baseRequest,
+    summary: 'Get job summary by time',
+    description: 'API to get job summary by time for a given account and time range. Used for time series charting',
+    querystring: JobSummaryByTimeQueryString,
+    response: {
+        200: JobSummaryByTimeResponse
+    }
+};
+
 // Delete job
 const DeleteJobSchema = {
     tags: [RouteTags.JOB_MONITORING],
@@ -89,4 +101,12 @@ const CreateJobSchema = {
     }
 };
 
-export { ListJobsSchema, JobDetailsSchema, DeleteJobSchema, UpdateJobSchema, CreateJobSchema, JobSummarySchema };
+export {
+    ListJobsSchema,
+    JobDetailsSchema,
+    DeleteJobSchema,
+    UpdateJobSchema,
+    CreateJobSchema,
+    JobSummarySchema,
+    JobSummaryByTimeSchema
+};
