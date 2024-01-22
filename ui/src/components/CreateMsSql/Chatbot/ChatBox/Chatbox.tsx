@@ -64,6 +64,7 @@ const ChatBox = ({
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const [userInput, setUserInput] = useState('');
     const inputRef = useRef(null);
+    const messagesEnd: any = useRef(null);
 
     const dispatch = useDispatch();
 
@@ -98,6 +99,10 @@ const ChatBox = ({
             refToFocus.focus();
         }
     }, [isBotReplying]);
+
+    useEffect(() => {
+        messagesEnd?.current?.scrollIntoView({ behaviour: 'smooth' });
+    });
 
     useEffect(() => {
         if ((currentIntent?.type || isWizardTouched) && !messagesToShow.length) {
@@ -192,6 +197,7 @@ const ChatBox = ({
                     ) : (
                         ''
                     )}
+                    <div style={{ float: 'left', clear: 'both' }} ref={messagesEnd}></div>
                 </div>
             </div>
 
