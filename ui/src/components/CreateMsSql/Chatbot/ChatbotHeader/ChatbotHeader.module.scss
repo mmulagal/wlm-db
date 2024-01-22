@@ -15,4 +15,29 @@
         border-radius: 24px;
         background-color: var(--tag-2-bg);
     }
+
+    .start-new-chat {
+        display: flex;
+        flex-direction: row;
+
+        .start-new-chat-txt {
+            color: var(--text-button-primary);
+        }
+
+        svg path {
+            fill: var(--text-button-primary);
+        }
+    }
+
+    .start-new-chat:hover {
+        cursor: pointer;
+
+        .start-new-chat-txt {
+            color: var(--button-primary-hover-bg);
+        }
+
+        svg path {
+            fill: var(--button-primary-hover-bg);
+        }
+    }
 }
