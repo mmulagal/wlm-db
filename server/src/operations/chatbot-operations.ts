@@ -20,7 +20,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
         }
 
         switch (intent?.type) {
-            case 'QueryResponse': {
+            case 'Query': {
                 const value: queryBotResponseType = {
                     message: intent.response
                 };
