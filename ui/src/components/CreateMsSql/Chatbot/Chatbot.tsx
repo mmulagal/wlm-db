@@ -941,7 +941,7 @@ const Chatbot = () => {
     return (
         <div className={styles['chatbot']}>
             <div className={styles['page-content']}>
-                <ChatbotHeader />
+                <ChatbotHeader mapParamsToPayload={mapParamsToPayload} />
                 <ChatBox
                     isBotReplying={isBotReplying || isReceivingMsg}
                     handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
