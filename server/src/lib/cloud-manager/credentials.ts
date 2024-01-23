@@ -125,8 +125,10 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
 
     const { token } = await getWfServiceToken();
 
+    const filterString = encodeURIComponent(`type eq '${credentialsType}'`).replace(/'/g, escape);
+
     return gotInstanceForInternalRequest
-        .get(`accounts/${accountId}/credentials/v1/credentials?filter=type eq 'AWS_ASSUME_ROLE'`, {
+        .get(`accounts/${accountId}/credentials/v1/credentials?filter=${filterString}`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
                 [HEADERS.AUTHORIZATION]: token
