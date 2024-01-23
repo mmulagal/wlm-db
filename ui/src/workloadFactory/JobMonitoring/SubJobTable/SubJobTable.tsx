@@ -11,39 +11,42 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
-// import { useRunOnce } from '../../../common/hooks/useRunOnce';
-import { useGetSubTaskListQuery } from '../../../utils/apiService';
+import { useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
+import { setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { useDispatch } from 'react-redux';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
-    // const [leftPos, setLeftPos] = useState(0);
+    const dispatch = useDispatch();
     const [subTaskList, setSubTaskList] = useState<any>([]);
+    const [jmSubTaskListLoading, setJmSubTaskListLoading] = useState(false);
+    const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
 
     const ExpandedRow = ({ rowData }: any) => {
         return <TaskTable taskList={rowData?.subJobs || []} />;
     };
 
-    const { data: jmSubTaskList, isFetching: jmSubTaskListLoading } = useGetSubTaskListQuery(jobId);
+    const [subTaskListApi] = useLazyGetSubTaskListQuery();
 
     useEffect(() => {
-        if(jmSubTaskList){
-            setSubTaskList(jmSubTaskList?.subJobs || []);
+        setJmSubTaskListLoading(true);
+        if (subJobsData && subJobsData?.subJobs && subJobsData?.id === jobId) {
+            setSubTaskList(subJobsData?.subJobs || []);
+            setJmSubTaskListLoading(false);
+        } else {
+            subTaskListApi(jobId)
+                .then(data => {
+                    setSubTaskList(data?.data?.subJobs || []);
+                    dispatch(setSubJobsData(data?.data));
+                    setJmSubTaskListLoading(false);
+                })
+                .catch((error: any) => {
+                    dispatch(setSubJobsData({}));
+                    setJmSubTaskListLoading(false);
+                });
         }
-    }, [jmSubTaskList]);
-
-    // useRunOnce(() => {
-    //     const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-    //     if (currentTable[0]) {
-    //         setTimeout(() => {
-    //             currentTable[0].scrollLeft = currentTable[1].scrollLeft;
-    //             if (currentTable[1].scrollLeft > 56) {
-    //                 setLeftPos(currentTable[1].scrollLeft - 2);
-    //             } else {
-    //                 setLeftPos(currentTable[1].scrollLeft - 4);
-    //             }
-    //         });
-    //     }
-    // });
+    }, []);
 
     const JobsColDefs: ColumnProps[] = [
         {
