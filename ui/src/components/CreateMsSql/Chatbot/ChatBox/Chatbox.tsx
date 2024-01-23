@@ -35,7 +35,7 @@ type messageType = {
 
 type ChatBoxPropTypes = {
     messages: messageType[];
-    handleSelectButtonClicked: (paramObj: any) => void;
+    handleSelectButtonClicked: (paramObj: any, sender?: string) => void;
     sendMsg: (msg?: string, add?: boolean, msgs?: messageType[]) => void;
     isBotReplying: boolean;
     messagesToShow: any;
@@ -177,7 +177,9 @@ const ChatBox = ({
                         <Message
                             idx={idx}
                             msgObj={msgObj}
-                            handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
+                            handleSelectButtonClicked={(paramObj: any, sender?: string) =>
+                                handleSelectButtonClicked(paramObj, sender)
+                            }
                             handleSendMsg={handleSendMsg}
                             messages={messages}
                             isBotReplying={isBotReplying}
