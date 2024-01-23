@@ -37,7 +37,7 @@ type messageType = {
 type MessagePropType = {
     idx: number;
     msgObj: messageType;
-    handleSelectButtonClicked: (paramObj: any) => void;
+    handleSelectButtonClicked: (paramObj: any, sender?: string) => void;
     handleSendMsg: () => void;
     messages: messageType[];
     isBotReplying: boolean;

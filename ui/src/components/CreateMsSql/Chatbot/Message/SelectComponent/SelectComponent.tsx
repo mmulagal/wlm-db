@@ -14,7 +14,7 @@ type selectComponentPropType = {
     paramObj: any;
     allowCreate?: boolean;
     activeField?: any;
-    handleSelectButtonClicked: (paramObj: any) => void;
+    handleSelectButtonClicked: (paramObj: any, sender?: string) => void;
     link?: any;
 };
 
@@ -59,7 +59,20 @@ const SelectComponent = ({
     }, [options, paramObj]);
 
     useEffect(() => {
-        if (options.length < 10) {
+        if (options.length === 1) {
+            handleSelectButtonClicked(
+                {
+                    ...paramObj,
+                    [selectKey]: {
+                        label: `We will use ${
+                            options[0].label || options[0].value
+                        } ${selectKey}, this is the one we found!`,
+                        value: options[0].value
+                    }
+                },
+                'bot'
+            );
+        } else if (options.length < 10) {
             dispatch(
                 setSuggestionBubbles({
                     list: optionsToShow,
