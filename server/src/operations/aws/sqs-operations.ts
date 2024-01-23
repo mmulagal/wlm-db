@@ -17,12 +17,12 @@ import {
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    // WLMDB,
+    WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject } from '../../utils/utils';
+import { checkAndRetrieveJsonObject, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -213,6 +213,13 @@ async function createOrUpdateChildJobs(
     checkEventsOrder: boolean = false,
     stackName?: string
 ) {
+    // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
+    /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
+     * arrive quickly and since there is no sequence, we might end up processing CREATE_IN_PROGRESS after CREATE_COMPLETE.
+     *
+     * To reflect right status, look at all the events for the resource in event table ordered in descending order of time.
+     * The first element returned will be the latest status transition.
+     */
     if (checkEventsOrder) {
         const [event] = await listEvents(accountId, stackName, logicalResourceId);
         if (event) {
@@ -276,12 +283,10 @@ async function createOrUpdateChildJobs(
 }
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
-    // eslint-disable-next-line no-constant-condition
-    if (true) {
-        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-        // const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
-        const queueUrl = 'https://sqs.us-east-1.amazonaws.com/464262061435/wlmdb';
+    if (process.env.AWS_ROLE_ARN) {
+        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
                 QueueUrl: queueUrl,

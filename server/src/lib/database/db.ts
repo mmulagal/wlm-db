@@ -240,6 +240,27 @@ async function createEvent(params: Event) {
     });
 }
 
+async function listEvents(accountId?: string, deploymentName?: string, eventName?: string) {
+    logger.info('Listing events for a deployment', { accountId, deploymentName });
+
+    accountId = accountId ? checkAccount(accountId) : '';
+    return prisma.client.event.findMany({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(deploymentName && { deployment_name: deploymentName }),
+            ...(eventName && { event_id: { contains: eventName } })
+        },
+        orderBy: [
+            {
+                time: 'desc'
+            },
+            {
+                event_id: 'desc'
+            }
+        ]
+    });
+}
+
 async function deleteDeployment(accountId: string, deploymentId: string) {
     logger.info('Deleting deployment', { accountId, deploymentId });
     accountId = checkAccount(accountId);
@@ -470,5 +491,6 @@ export {
     listRelationshipsResources,
     deploymentJobsCount,
     deleteDeploymentJobById,
-    checkAccount
+    checkAccount,
+    listEvents
 };
