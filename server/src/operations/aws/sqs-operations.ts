@@ -17,18 +17,19 @@ import {
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
-    WLMDB,
+    // WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
+import { checkAndRetrieveJsonObject } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
     createDeployment,
     createEvent,
     createResource,
+    listEvents,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
@@ -208,8 +209,20 @@ async function createOrUpdateChildJobs(
     timestamp: number,
     resourceStatusReason: string,
     physicalResourceId: string,
-    logicalResourceId: string
+    logicalResourceId: string,
+    checkEventsOrder: boolean = false,
+    stackName?: string
 ) {
+    if (checkEventsOrder) {
+        const [event] = await listEvents(accountId, stackName, logicalResourceId);
+        if (event) {
+            jobStatus = event.event_status.includes('COMPLETE')
+                ? JOBSTATUS.COMPLETED
+                : event.event_status.includes('IN_PROGRESS')
+                ? JOBSTATUS.IN_PROGRESS
+                : JOBSTATUS.FAILED;
+        }
+    }
     const [childJob] = await listJobs(accountId, parentJob.id, undefined, undefined, childJobName);
     if (!childJob && parentJob.name !== `Deploying ${logicalResourceId}`) {
         logger.info('Create child level job:', {
@@ -264,9 +277,11 @@ async function createOrUpdateChildJobs(
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
     // eslint-disable-next-line no-constant-condition
-    if (process.env.AWS_ROLE_ARN) {
-        const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
-        const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+    if (true) {
+        // const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
+        // const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+
+        const queueUrl = 'https://sqs.us-east-1.amazonaws.com/464262061435/wlmdb';
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
                 QueueUrl: queueUrl,
@@ -825,7 +840,9 @@ async function processCloudFormationMessages() {
                                         messageTimestamp,
                                         resourceStatusReason,
                                         physicalResourceId,
-                                        logicalResourceId
+                                        logicalResourceId,
+                                        true,
+                                        stackName
                                     );
                                 }
 
