@@ -46,7 +46,8 @@ const SQL_CONFIGURATION = {
     sqlAmiId: 'ami-0e0f179ddde359def',
     serviceAccountName: 'sqladmin',
     serviceAccountPassword: 'netapp1!',
-    sqlServerName: 'SampleFci'
+    sqlServerName: 'SampleFci',
+    sqlAmiName: 'Windows_Server-2016-English-Full-SQL_2019_Standard-2024.01.16'
 };
 
 const SSM_PARAMS = {
