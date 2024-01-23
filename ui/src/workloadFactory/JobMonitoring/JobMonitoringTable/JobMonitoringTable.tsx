@@ -13,9 +13,8 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { createJobMonitorCSV, downloadCsv, expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
-// import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useDispatch } from 'react-redux';
-import { setDownloadJobsList, setDownloadJobsLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { setDownloadJobsList, setDownloadJobsLoading, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { useEffect, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery } from '../../../utils/apiService';
@@ -38,27 +37,9 @@ const JobMonitoringTable = () => {
     const [typeFilter, setTypeFilter] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-    // const [scrollPos, setScrollPos] = useState(0);
-
-    // useRunOnce(() => {
-    //     const handleOuterScroll = () => {
-    //         setScrollPos(currentTable[0].scrollLeft);
-    //     };
-
-    //     const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-
-    //     if (currentTable[0]) {
-    //         //@ts-ignore
-    //         currentTable[0].addEventListener('scroll', handleOuterScroll);
-    //     }
-
-    //     return () => {
-    //         if (currentTable[0]) {
-    //             //@ts-ignore
-    //             currentTable[0].removeEventListener('scroll', handleOuterScroll);
-    //         }
-    //     };
-    // });
+    useEffect(() => {
+        dispatch(setSubJobsData({}));
+    }, [timeInterval]);
 
     // API call to download job monitoring data where includeSubJobs is true. It will include subtasks also.
     const {
@@ -123,7 +104,6 @@ const JobMonitoringTable = () => {
         const statusType = rowData?.status.toLowerCase();
         return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
     };
-
 
     const JobsColDefs: ColumnProps[] = [
         {
@@ -280,6 +260,7 @@ const JobMonitoringTable = () => {
 
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));
+        dispatch(clearNotifications());
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,

@@ -502,7 +502,7 @@ export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadF
 export const { 
     useGetJobsListQuery, 
     useGetFullJobsListQuery, 
-    useGetSubTaskListQuery, 
+    useLazyGetSubTaskListQuery,
     useGetJobsSummaryDataQuery, 
     useGetJobsSummaryTimelineDataQuery 
 } = jobMonitoringApi;

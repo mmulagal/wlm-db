@@ -81,7 +81,10 @@
         }
     }
 
-    [class*='Table-module_cell'] {
-        background-color: var(--main-background) !important;
+    [class*='SubJobTable_table'] {
+        [class*='Table-module_cell'] {
+            background-color: var(--main-background) !important;
+        }
     }
+    
 }
