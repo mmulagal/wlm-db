@@ -112,8 +112,6 @@ async function createJobs(accountId: string, jobs: readOnlyJob[]) {
 
     logger.debug('Bulk creating jobs', { jobs });
 
-    accountId = checkAccount(accountId);
-
     // createMany doesnt return the records created, but only the count, it suits our current requirement, in future if ther is an ask to return the created record Ids, refer to comments in https://github.com/prisma/prisma/issues/8131
     return prisma.client.job.createMany({
         data: jobs,

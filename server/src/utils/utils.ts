@@ -4,7 +4,9 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import crypto, { randomUUID } from 'crypto';
+import { faker } from '@faker-js/faker';
+import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -280,6 +282,604 @@ function isActiveInstance() {
     return !process.env.hasOwnProperty('isActive') || process.env.isActive === 'true';
 }
 
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
+function checkAccount(accountId: string) {
+    logger.info('checking account id', accountId);
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const userId = getSubjectFromBearerToken();
+        return userId ? `${accountId}_${userId}` : accountId;
+    }
+    return accountId;
+}
+
+function masterStackData(accountId: string, resourceName: string, stackName: string, masterStackId: string) {
+    return [
+        {
+            id: masterStackId,
+            account_id: accountId,
+            name: `Microsoft SQL server deployment with stack ${stackName}`,
+            status: JOBSTATUS.COMPLETED,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
+function sqlFciServerStackData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    serverStackId: string,
+    masterStackId: string
+) {
+    return [
+        {
+            id: serverStackId,
+            account_id: accountId,
+            name: `Deploying ${stackName}-SQLServerStack-${faker.string.alphanumeric(12).toUpperCase()}`,
+            status: JOBSTATUS.COMPLETED,
+            description: `Creating resource lt-${faker.string.alphanumeric(17)}`,
+            parent_job_id: masterStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying SqlFSxInstanceMAD2(AWS::EC2::Instance)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying SqlFSxInstanceMAD1(AWS::EC2::Instance)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying NetworkInterface2(AWS::EC2::NetworkInterface)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying NetworkInterface1(AWS::EC2::NetworkInterface)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying DisableIMDSv1(AWS::EC2::LaunchTemplate)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying WorkloadSecurityGroup(AWS::EC2::SecurityGroup)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
+function fsxStackData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    existingFSxStackId: string,
+    masterStackId: string,
+    cloudProviderId: string,
+    fsxType: string,
+    region: string
+) {
+    return [
+        {
+            id: existingFSxStackId,
+            account_id: accountId,
+            name: `Deploying ${stackName}-${fsxType}-${faker.string.alphanumeric(12).toUpperCase()} `,
+            description: `Creating resource arn:aws:cloudformation:${region}:${cloudProviderId}:stack`,
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: masterStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying FSxTempDbVolumeConfiguration(AWS::FSx::Volume)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: existingFSxStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: existingFSxStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: existingFSxStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying FSxDataVolumeConfiguration(AWS::FSx::Volume)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: existingFSxStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying FSxLogVolumeConfiguration(AWS::FSx::Volume)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: existingFSxStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: existingFSxStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
+function validationStack2Data(
+    accountId: string,
+    resourceName: string,
+    stackname: string,
+    validationStack2Id: string,
+    masterStackId: string,
+    cloudProviderId: string,
+    region: string
+) {
+    return [
+        {
+            id: validationStack2Id,
+            account_id: accountId,
+            name: `Deploying ${stackname}-ValidationStack2-${faker.string.alphanumeric(12).toUpperCase()}`,
+            status: JOBSTATUS.COMPLETED,
+            description: `Creating resource arn:aws:cloudformation:${region}:${cloudProviderId}:stack/${stackname}-${faker.string
+                .alphanumeric(12)
+                .toUpperCase()}/${randomUUID()}`,
+            parent_job_id: masterStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationNode2(AWS::EC2::Instance)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack2Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack2Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying DomainMemberSG(AWS::EC2::SecurityGroup)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack2Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying DisableIMDSv1(AWS::EC2::LaunchTemplate)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack2Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack2Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationInstanceProfile(AWS::IAM::InstanceProfile)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack2Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+function validationStack1Data(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    validationStack1Id: string,
+    masterStackId: string,
+    cloudProviderId: string,
+    region: string
+) {
+    return [
+        {
+            id: validationStack1Id,
+            account_id: accountId,
+            name: `Deploying ${stackName}-ValidationStack1-${faker.string.alphanumeric(12).toUpperCase()}`,
+            status: JOBSTATUS.COMPLETED,
+            description: `Creating resource arn:aws:cloudformation:${region}:${cloudProviderId}:stack/${stackName}-${faker.string
+                .alphanumeric(12)
+                .toUpperCase()}/${randomUUID()}`,
+            parent_job_id: masterStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationNode1(AWS::EC2::Instance)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack1Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying DomainMemberSG(AWS::EC2::SecurityGroup)',
+            description: `Creating resource sg-${faker.string.alphanumeric(17)}`,
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack1Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying DisableIMDSv1(AWS::EC2::LaunchTemplate)',
+            status: JOBSTATUS.COMPLETED,
+            description: `Creating resource lt-${faker.string.alphanumeric(17)}`,
+            parent_job_id: validationStack1Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationInstanceProfile(AWS::IAM::InstanceProfile)',
+            description: `Creating resource ${stackName}-ValidationStack1-${faker.string
+                .alphanumeric(13)
+                .toUpperCase()}-ValidationInstanceProfile-${faker.string.alphanumeric(12)}`,
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack1Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack1Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: validationStack1Id,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
+function sqlStandaloneStackData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    serverStackId: string,
+    masterStackId: string,
+    cloudProviderId: string,
+    region: string
+) {
+    return [
+        {
+            id: serverStackId,
+            account_id: accountId,
+            name: `Deploying ${stackName}-SQLStandaloneStack-${faker.string.alphanumeric(12).toUpperCase()}`,
+            status: JOBSTATUS.COMPLETED,
+            description: `Creating resource arn:aws:cloudformation:${region}:${cloudProviderId}:stack/${stackName}-${faker.string
+                .alphanumeric(12)
+                .toUpperCase()}/${randomUUID()}`,
+            parent_job_id: masterStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying SqlNode(AWS::EC2::Instance)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying NetworkInterface(AWS::EC2::NetworkInterface)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying DisableIMDSv1(AWS::EC2::LaunchTemplate)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        },
+        {
+            id: randomUUID(),
+            account_id: accountId,
+            name: 'Deploying WorkloadSecurityGroup(AWS::EC2::SecurityGroup)',
+            status: JOBSTATUS.COMPLETED,
+            parent_job_id: serverStackId,
+            resource_name: resourceName,
+            type: JOBTYPE.DEPLOYMENT,
+            start_time: new Date(),
+            end_time: new Date(),
+            initiator: 'SYSTEM'
+        }
+    ];
+}
+
+async function createJobMockData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined,
+    cloudProviderId: string,
+    region: string
+) {
+    logger.info('Generate mock data for job table', accountId, resourceName, stackName);
+    accountId = checkAccount(accountId);
+    const masterStackId = randomUUID();
+    const serverStackId = randomUUID();
+    const fsxStackId = randomUUID();
+    const validationStack1Id = randomUUID();
+    const validationStack2Id = randomUUID();
+
+    const data: any[] = [];
+
+    const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
+
+    data.push(
+        ...masterStackData(accountId, resourceName, stackName, masterStackId),
+        ...fsxStackData(
+            accountId,
+            resourceName,
+            stackName,
+            fsxStackId,
+            masterStackId,
+            cloudProviderId,
+            fsxType,
+            region
+        ),
+        ...validationStack1Data(
+            accountId,
+            resourceName,
+            stackName,
+            validationStack1Id,
+            masterStackId,
+            cloudProviderId,
+            region
+        )
+    );
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        data.push(
+            ...sqlFciServerStackData(accountId, resourceName, stackName, serverStackId, masterStackId),
+            ...validationStack2Data(
+                accountId,
+                resourceName,
+                stackName,
+                validationStack2Id,
+                masterStackId,
+                cloudProviderId,
+                region
+            )
+        );
+    } else {
+        data.push(
+            ...sqlStandaloneStackData(
+                accountId,
+                resourceName,
+                stackName,
+                serverStackId,
+                masterStackId,
+                cloudProviderId,
+                region
+            )
+        );
+    }
+    return data;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -299,5 +899,7 @@ export {
     waitForResolution,
     deployedStackUrl,
     generateRandomIP,
-    isActiveInstance
+    isActiveInstance,
+    checkAccount,
+    createJobMockData
 };
