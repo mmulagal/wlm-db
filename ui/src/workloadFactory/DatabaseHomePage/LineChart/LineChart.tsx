@@ -100,16 +100,19 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
             ) {
                 const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
                 const maxVal = Math.max(...combinedArr);
-                if (maxVal === 1 || maxVal === 3) {
-                    return 1;
-                } else if (maxVal === 2 || maxVal === 5) {
-                    return 2;
-                } else if (maxVal === 5) {
-                    return 2;
-                } else if (maxVal < 100) {
-                    return 10;
-                } else {
-                    return 100;
+                switch (true) {
+                    case maxVal === 1:
+                    case maxVal === 3:
+                        return 1;
+                    case maxVal === 2:
+                    case maxVal === 5:
+                        return 2;
+                    case maxVal === 4:
+                        return 4;
+                    case maxVal < 100:
+                        return 10;
+                    default:
+                        return 100;
                 }
             } else {
                 return 1;
