@@ -103,6 +103,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                 switch (true) {
                     case maxVal === 1:
                     case maxVal === 3:
+                    case maxVal === 7:
+                    case maxVal === 6:
                         return 1;
                     case maxVal === 2:
                     case maxVal === 5:
