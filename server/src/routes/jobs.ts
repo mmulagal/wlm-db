@@ -53,9 +53,9 @@ export default function jobsRoutes(fastify: FastifyInstance) {
     server.get(`${JOBS_API_PATH}/summary/timeline`, { schema: JobSummaryByTimeSchema }, async (request, reply) => {
         const {
             params: { accountId },
-            query: { startTime, endTime, intervalType, frequency }
+            query: { startTime, endTime }
         } = request;
-        const response = await getJobSummaryByTime(accountId, startTime, endTime, intervalType, frequency);
+        const response = await getJobSummaryByTime(accountId, startTime, endTime);
         return reply.send(response);
     });
 

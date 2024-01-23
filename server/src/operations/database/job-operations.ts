@@ -37,20 +37,14 @@ interface JobSummary {
 }
 interface JobGroup {
     status: string;
+    end_time?: Date;
     _count: {
         _all: number;
     };
 }
 
-interface DatabaseGroup {
-    endTime: Date;
-    timeInterval: number;
-    status: string;
-    count: number;
-}
-
-interface GroupedObject extends JobSummaryByTimeRecordType {
-    [key: string]: number | string | undefined;
+interface JobSummaryByTime extends JobSummaryByTimeRecordType {
+    [key: string]: number | undefined;
 }
 
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
@@ -295,11 +289,9 @@ async function getJobSummary(
 async function getJobSummaryByTime(
     accountId: string,
     startTime: number | undefined,
-    endTime: number | undefined,
-    intervalType: string | undefined = 'day',
-    frequency: number | undefined
+    endTime: number | undefined
 ): Promise<JobSummaryByTimeRecordType[]> {
-    logger.info('Getting job summary by time', { accountId, startTime, endTime, intervalType });
+    logger.info('Getting job summary by time', { accountId, startTime, endTime });
 
     if (startTime && endTime && startTime > endTime) {
         throw createError(400, 'Start time cannot be greater than end time');
@@ -308,42 +300,19 @@ async function getJobSummaryByTime(
     // Default time range is 30 days
     startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
-    frequency = frequency || (intervalType === 'day' ? 1 : 4);
 
-    const groups = (await groupJobsByTimeAndStatus(
-        accountId,
-        startTime,
-        endTime,
-        intervalType,
-        frequency
-    )) as DatabaseGroup[];
+    const groups = (await groupJobsByTimeAndStatus(accountId, startTime, endTime)) as JobGroup[];
 
-    const groupedData = groupDataByTime(groups, intervalType, frequency);
+    return groups.reduce((acc: JobSummaryByTime[], group: JobGroup) => {
+        const status = camelCase(group?.status?.toLowerCase());
+        const count = group?._count?._all;
+        const endtime = new Date(group.end_time!)?.valueOf();
 
-    logger.debug('groupedData', groupedData);
-
-    return groupedData;
-}
-
-function groupDataByTime(groups: DatabaseGroup[], intervalType: string, frequency: number) {
-    logger.debug('groupDataByTime', { groups, intervalType, frequency });
-
-    if (groups.length === 0) {
-        return [];
-    }
-
-    return groups.reduce((acc: GroupedObject[], obj: DatabaseGroup) => {
-        const { timeInterval } = obj;
-
-        const status = camelCase(obj?.status?.toLowerCase());
-        const count = Number(obj?.count);
-        const endTime = obj?.endTime?.valueOf();
-
-        const existingObj = acc.find(el => el.timeInterval === timeInterval);
+        const existingObj = acc.find(el => el.endTime === endtime);
         if (existingObj) {
             existingObj[status] = count;
         } else {
-            acc.push({ timeInterval, [status]: count, endTime, intervalType, frequency });
+            acc.push({ endTime: endtime, [status]: count });
         }
 
         return acc;
