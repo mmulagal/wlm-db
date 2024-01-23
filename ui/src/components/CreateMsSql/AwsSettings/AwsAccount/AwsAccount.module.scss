@@ -8,6 +8,12 @@
         line-height: 27px; /* 171.429% */
     }
 
+    .openIntab {
+        text-decoration: none;
+        color: var(--button-secondary);
+        font-weight: 590;
+    }
+
     .list {
         display: flex;
         flex-direction: column;
@@ -113,7 +119,7 @@
         gap: 4px;
         margin-top: 24px;
     }
-    
+
     .buttonStyle {
         width: 750px;
         margin-bottom: 16px;
