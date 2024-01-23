@@ -1002,30 +1002,85 @@ export const cfDownloadName = (name: string) => {
 };
 
 export const getShiftedHoursList = (baseList: Array<String | number>) => {
-    const hr = moment().hour();
+    let hr = moment().hour();
+    // if time is 2 PM than it will be used as 14 but when time is 2:30 than it will be in 18
+    const min = moment().minute();
+    if (min > 0) {
+        hr += 1;
+    }
     const shift = (Math.ceil(hr / 4) + 1) % baseList.length;
     return [...baseList.slice(shift), ...baseList.slice(0, shift)];
 };
+
+export const groupByTime = (days: number, data: any, baseList: Array<number>, ) => {
+    const dayGrouping: any = {};
+    if (days === 1) {
+        // grouping for lats 24 hours
+        data.map((perObj: any) => {
+            if (perObj?.timeInterval || perObj?.timeInterval === 0) {
+                let hr = perObj?.timeInterval;
+                const min = perObj?.minutes;
+                if (min > 0) {
+                    hr += 1;
+                }
+                const index = Math.ceil(hr / 4) % baseList.length;
+                const newTimeInterval = baseList[index];
+                if (newTimeInterval in dayGrouping) {
+                    dayGrouping[newTimeInterval] = {
+                        completed: dayGrouping[newTimeInterval]?.completed + (perObj?.completed || 0),
+                        failed: dayGrouping[newTimeInterval]?.failed + (perObj?.failed || 0)
+                    };
+                } else {
+                    dayGrouping[newTimeInterval] = {
+                        completed: perObj?.completed || 0,
+                        failed: perObj?.failed || 0
+                    };
+                }
+            }
+        });
+    } else {
+        // Grouping for days
+        data.map((perObj: any) => {
+            if (perObj?.timeInterval) {
+                if (perObj?.timeInterval in dayGrouping) {
+                    dayGrouping[perObj?.timeInterval] = {
+                        completed: dayGrouping[perObj?.timeInterval]?.completed + (perObj?.completed || 0),
+                        failed: dayGrouping[perObj?.timeInterval]?.failed + (perObj?.failed || 0)
+                    };
+                } else {
+                    dayGrouping[perObj?.timeInterval] = {
+                        completed: perObj?.completed || 0,
+                        failed: perObj?.failed || 0
+                    };
+                }
+            }
+        });
+    }
+    return dayGrouping;
+}
 
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
     const groupedData: any = { time: [], completed: [], failed: [] };
     if (!data || data?.length === 0) {
         return groupedData;
     }
-    const dayGrouping: any = {};
-    data.map((perObj: any) => {
-        if (perObj?.timeInterval) {
-            dayGrouping[perObj?.timeInterval] = {
-                completed: perObj?.completed || 0,
-                failed: perObj?.failed || 0
-            };
-        }
-    });
 
+    // Using endTime calculate hr or day
+    if (days === 1) {
+        data = data.map((e: any) => (
+            { ...e, timeInterval: new Date(e.endTime).getHours(), minutes: new Date(e.endTime).getMinutes()}
+        ));
+    } else {
+        data = data.map((e: any) => ({ ...e, timeInterval: new Date(e.endTime).getDate()}));
+    }
+
+    // Used only in case of last 24 hours
+    const baseList = [0, 4, 8, 12, 16, 20];
+
+    // calculate daysList that is projected as x-axis also 
     let lastDaysList: any[] = [];
     let daysList: any[] = [];
     if (days === 1) {
-        const baseList = [0, 4, 8, 12, 16, 20];
         daysList = getShiftedHoursList(baseList);
     } else {
         if (days === 7) {
@@ -1035,18 +1090,21 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
         } else if (days === 30) {
             lastDaysList = last30Days;
         }
-
         daysList = lastDaysList.map(date => {
             const day = date.getDate();
             return `${day}`;
         });
     }
 
+    // Group data by time used in x-axis line chart
+    const dayGrouping = groupByTime(days, data, baseList);
+
     daysList.map(day => {
         groupedData['time'].push(day);
         groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
         groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
     });
+    
     return groupedData;
 };
 
