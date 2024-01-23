@@ -169,7 +169,8 @@ const AwsAccount = () => {
         } else {
             url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
         }
-        window.open(url, '_blank', 'noopener');
+        return url;
+        // window.open(url, '_blank', 'noopener');
     };
 
     const openDialog = (type: string) => {
@@ -203,14 +204,15 @@ const AwsAccount = () => {
                                         <Typography variant="Regular_14">
                                             {GENERAL.NAVIGATE_TO[0]}{' '}
                                             <span>
-                                                <Button
-                                                    Component="button"
-                                                    onClick={openCredentialTab}
-                                                    variant="text"
+                                                <a
+                                                    href={openCredentialTab()}
+                                                    className={styles.openIntab}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
                                                     ref={noCredRef}
                                                 >
                                                     {GENERAL.CREDENTIALS}
-                                                </Button>
+                                                </a>
                                             </span>{' '}
                                             {GENERAL.NAVIGATE_TO[1]}
                                         </Typography>
@@ -299,9 +301,14 @@ const AwsAccount = () => {
                                 </div>
                                 <div className={styles.bottomText}>
                                     {GENERAL.ADD_NEW_CREDENTIALS}{' '}
-                                    <Button Component="button" onClick={openCredentialTab} variant="text">
+                                    <a
+                                        href={openCredentialTab()}
+                                        className={styles.openIntab}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         {GENERAL.CREDENTIALS}.
-                                    </Button>
+                                    </a>
                                 </div>
                                 {permissionWarning && isCreateHit !== 0 && (
                                     <div className={styles.permissionError}>
