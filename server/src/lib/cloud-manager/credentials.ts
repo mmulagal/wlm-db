@@ -125,7 +125,7 @@ async function getAllWfCredentials(credentialsType: string, nextToken?: string):
 
     const { token } = await getWfServiceToken();
 
-    const filterString = encodeURIComponent(`type eq '${credentialsType}'`).replace(/'/g, escape);
+    const filterString = encodeURIComponent(`type eq '${credentialsType}'`);
 
     return gotInstanceForInternalRequest
         .get(`accounts/${accountId}/credentials/v1/credentials?filter=${filterString}`, {
