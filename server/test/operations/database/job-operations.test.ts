@@ -261,7 +261,13 @@ describe('getJobSummaryByTime', () => {
     it('should handle error and throw an error', async () => {
         vitest.spyOn(jobLibrary, 'groupJobsByTimeAndStatus').mockResolvedValue([]);
 
-        const result = await getJobSummaryByTime(ACCOUNT_ID, mockStartTime, mockEndTime, mockIntervalType, mockFrequency);
+        const result = await getJobSummaryByTime(
+            ACCOUNT_ID,
+            mockStartTime,
+            mockEndTime,
+            mockIntervalType,
+            mockFrequency
+        );
 
         expect(result.length).toEqual(0);
     });
