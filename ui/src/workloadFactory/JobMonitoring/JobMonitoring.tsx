@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { useNavigate } from 'react-router-dom';
 import LineChart from '../DatabaseHomePage/LineChart/LineChart';
@@ -11,11 +11,14 @@ import JobDistribution from './JobDistribution/JobDistribution';
 import { generateOptionType } from '../../utils/utilityFunctions';
 import JobMonitoringApi from './JobMonitoringApi';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
-import { useAppDispatch } from '../../store/storeHooks';
+import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 
 const JobMonitoring = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+
+    const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
+    const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
 
     const [dropDownValue, setDropdownValue] = useState('Last 24 hours');
 
@@ -104,6 +107,7 @@ const JobMonitoring = () => {
                     <div className={styles.headSection}>
                         <Typography variant="Regular_16" className={styles.title}>
                             {GENERAL.JOBS_STATUS_OVER_TIME}
+                            {timelineLoading && <FlashingDotsLoader />}
                         </Typography>
                     </div>
                     <div className={styles.mainSection}>
@@ -111,6 +115,7 @@ const JobMonitoring = () => {
                             startColor="#A815F3"
                             endColor="rgba(168, 21, 243, 0.00)"
                             selectedTimeFrame={dropDownValue}
+                            timelineData={timelineData}
                         />
                     </div>
                 </div>

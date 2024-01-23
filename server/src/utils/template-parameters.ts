@@ -154,7 +154,7 @@ const PARAMETERS = [
     {
         name: 'PrivateSubnet1ID',
         description: 'ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)',
-        type: 'String',
+        type: 'AWS::EC2::Subnet::Id',
         minLength: 1
     },
     {
@@ -301,7 +301,7 @@ const PARAMETERS = [
     {
         name: 'VPCID',
         description: 'Existing VPC ID for deployment',
-        type: 'String',
+        type: 'AWS::EC2::VPC::Id',
         minLength: 1
     },
     {
@@ -313,7 +313,7 @@ const PARAMETERS = [
         name: 'EnableCloudWatchLogFeature',
         description: 'Enable CloudWatch Log Feature',
         type: 'String',
-        default: false,
+        default: true,
         allowedValues: [true, false]
     },
     {
@@ -352,9 +352,21 @@ const PARAMETERS = [
         noEcho: true
     },
     {
+        name: 'EncryptedFsxPassword',
+        description: 'Encrypted value of fsx password entered by user in DB deployment wizard (DO NOT EDIT)',
+        type: 'String',
+        noEcho: true
+    },
+    {
         name: 'WlmdbAwsAccountId',
         description: 'WLMDB AWS Account ID (DO NOT EDIT)',
         type: 'String',
+        noEcho: true
+    },
+    {
+        name: 'MetadataParam',
+        description: 'Metadata param used for internal audit( DO NOT EDIT) ',
+        type: 'CommaDelimitedList',
         noEcho: true
     }
 ];

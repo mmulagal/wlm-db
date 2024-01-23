@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
+import { ReactComponent as NoData } from '../../../assets/empty table message.svg';
 import styles from './LineChart.module.scss';
-import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
+import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
+const moment = require('moment');
 
 Chart.register(...registerables);
 
@@ -11,9 +13,10 @@ type colorCodes = {
     startColor: string;
     endColor: string;
     selectedTimeFrame: string;
+    timelineData: any;
 };
 
-const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
+const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: colorCodes) => {
     const chartRef = useRef(null);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
@@ -35,6 +38,11 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
         const day = date.getDate();
         return `${month} ${day}`;
     });
+
+    const formattedLast24Hour = () => {
+        const baseList = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+        return getShiftedHoursList(baseList);
+    };
 
     useEffect(() => {
         //@ts-ignore
@@ -71,37 +79,45 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
             } else if (selectedTimeFrame === 'Last 30 days') {
                 return formattedLast30DaysDates;
             } else {
-                return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+                return formattedLast24Hour();
             }
         };
 
         const constructDataSuccess = () => {
-            if (selectedTimeFrame === 'Last 7 days') {
-                return [310, 270, 290, 300, 315, 210, 250];
-            } else if (selectedTimeFrame === 'Last 14 days') {
-                return [310, 270, 290, 300, 315, 210, 250];
-            } else if (selectedTimeFrame === 'Last 30 days') {
-                return [
-                    310, 270, 290, 300, 315, 210, 250, 310, 270, 290, 300, 315, 210, 250, 310, 270, 290, 300, 315, 210,
-                    250, 310, 270, 290, 300, 315, 210, 250, 220, 320
-                ];
-            } else {
-                return [310, 270, 290, 300, 315, 210];
-            }
+            return timelineData?.completed;
         };
 
         const constructDataFailed = () => {
-            if (selectedTimeFrame === 'Last 7 days') {
-                return [100, 90, 110, 70, 85, 99, 105];
-            } else if (selectedTimeFrame === 'Last 14 days') {
-                return [100, 90, 110, 70, 85, 99, 105];
-            } else if (selectedTimeFrame === 'Last 30 days') {
-                return [
-                    100, 90, 110, 70, 85, 99, 105, 100, 90, 110, 70, 85, 99, 105, 100, 90, 110, 70, 85, 99, 105, 100,
-                    90, 110, 70, 85, 99, 105, 88, 97
-                ];
+            return timelineData?.failed;
+        };
+
+        const setMaxGraceValue = () => {
+            if (
+                timelineData?.completed &&
+                timelineData?.completed.length &&
+                timelineData?.failed &&
+                timelineData?.failed.length
+            ) {
+                const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
+                const maxVal = Math.max(...combinedArr);
+                switch (true) {
+                    case maxVal === 1:
+                    case maxVal === 3:
+                    case maxVal === 7:
+                    case maxVal === 6:
+                        return 1;
+                    case maxVal === 2:
+                    case maxVal === 5:
+                        return 2;
+                    case maxVal === 4:
+                        return 4;
+                    case maxVal < 100:
+                        return 10;
+                    default:
+                        return 100;
+                }
             } else {
-                return [100, 90, 110, 70, 85, 99];
+                return 1;
             }
         };
         //@ts-ignore
@@ -187,9 +203,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 150,
+                        grace: setMaxGraceValue(),
+
                         ticks: {
-                            color: isDarkTheme ? '#fff' : '#404040'
+                            color: isDarkTheme ? '#fff' : '#404040',
+
+                            maxTicksLimit: 5
                         }
                         // stacked: true
                     }
@@ -204,10 +223,16 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame }: colorCodes) => {
         return () => {
             mayBarChart.destroy();
         };
-    }, [selectedTimeFrame]);
+    }, [selectedTimeFrame, timelineData]);
 
     return (
         <div className={styles.lineChart}>
+            {!timelineData ||
+                (timelineData?.completed?.length === 0 && (
+                    <div className={styles.noData}>
+                        <NoData />
+                    </div>
+                ))}
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
             {/* <Typography variant="Semibold_14" className={styles.text}>

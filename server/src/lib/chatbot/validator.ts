@@ -1,4 +1,5 @@
 import { isEmpty, uniqBy } from 'lodash-es';
+import randomize from 'randomatic';
 import { getAdsList } from '../../operations/aws/directory-service-operations';
 import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
@@ -25,7 +26,14 @@ import {
     FSX_USERNAME,
     PROD,
     DEV,
-    CUSTOM
+    CUSTOM,
+    M5_2XL,
+    FCI_ABBREVIATION,
+    MULTI_AZ_SMALL,
+    SINGLE_AZ_SMALL,
+    M5_XL,
+    SQL_SERVER_NAME,
+    ENCRYPTION_KEY
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -405,7 +413,7 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
     };
 }
 
-async function validateAdScenarioType(type: string, key: string) {
+function validateAdScenarioType(type: string, key: string) {
     if (type === 'AWS_MANAGED_AD' || type === 'USER_MANAGED_AD') {
         return {
             key,
@@ -419,8 +427,8 @@ async function validateAdScenarioType(type: string, key: string) {
         message:
             'The active directory type that you provided is not correct. Please provide a valid active directory type',
         allowedValues: [
-            { label: 'AWS_MANAGED_AD', value: 'AWS_MANAGED_AD' },
-            { label: 'USER_MANAGED_AD', value: 'USER_MANAGED_AD' }
+            { label: 'Select an existing domain', value: AWS_MANAGED_AD },
+            { label: 'Add new domain', value: USER_MANAGED_AD }
         ]
     };
 }
@@ -485,11 +493,19 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
         };
     }
 
+    if (key === ENCRYPTION_KEY) {
+        return {
+            key,
+            value: isValidFsx?.kmsKeyId
+        };
+    }
+
     return {
         key,
         value: isValidFsx.fileSystemId
     };
 }
+
 async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
     logger.info(' Validate Cloud Watch', { enableCloudWatch, key });
     if (typeof enableCloudWatch !== 'boolean') {
@@ -569,6 +585,10 @@ async function validateDomain(
 }
 
 function validateText(text: string, key: string, fsxType?: string) {
+    // setting default value for sqlServerName if not provided from ui
+    if (key === SQL_SERVER_NAME && !text) {
+        text = `sqldatabase${randomize('a0', 4)}`;
+    }
     if (!text) {
         return {
             key,
@@ -715,10 +735,29 @@ function validateDeploymentEnv(key: string, value: string) {
         status: 'error',
         message: 'Select a deployment environment',
         allowedValues: [
-            { label: 'Production', value: PROD },
-            { label: 'Develpoment', value: DEV },
-            { label: 'Custom', value: CUSTOM }
-        ]
+            {
+                label: 'Production model',
+                value: PROD,
+                data: [
+                    { label: 'SQL Deployment model', value: FCI_ABBREVIATION },
+                    { label: 'Deployment model', value: MULTI_AZ_SMALL },
+                    { label: 'Database size', value: 500 },
+                    { label: 'Instance type', value: M5_2XL }
+                ]
+            },
+            {
+                label: 'Dev/Test model',
+                value: DEV,
+                data: [
+                    { label: 'SQL Deployment model', value: 'Standalone' },
+                    { label: 'Deployment model', value: SINGLE_AZ_SMALL },
+                    { label: 'Database size', value: 100 },
+                    { label: 'Instance type', value: M5_XL }
+                ]
+            },
+            { label: 'Deploy on your own', value: CUSTOM }
+        ],
+        type: 'card'
     };
 }
 

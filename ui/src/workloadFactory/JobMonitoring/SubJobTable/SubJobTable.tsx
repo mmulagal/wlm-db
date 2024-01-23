@@ -9,50 +9,22 @@ import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
-// import { useRunOnce } from '../../../common/hooks/useRunOnce';
-import { useGetSubTaskListQuery } from '../../../utils/apiService';
 import { GENERAL } from '../../../utils/appConstants';
+import { useAppSelector } from '../../../store/storeHooks';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
-    // const [leftPos, setLeftPos] = useState(0);
-    const [subTaskList, setSubTaskList] = useState<any>([]);
-
-    const ExpandedRow = ({ rowData }: any) => {
-        return <TaskTable taskList={rowData?.subJobs} />;
-    };
-
-    const { data: jmSubTaskList, isFetching: jmSubTaskListLoading } = useGetSubTaskListQuery(jobId);
+    const [subTaskList, setSubTaskList] = useState<any>({});
+    const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
+    const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
 
     useEffect(() => {
-        if(jmSubTaskList){
-            setSubTaskList(jmSubTaskList?.subJobs);
-        }
-    }, [jmSubTaskList]);
+        setSubTaskList(subJobsData?.subJobs);
+    }, [subJobsData]);
 
-    // useRunOnce(() => {
-    //     const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-    //     if (currentTable[0]) {
-    //         setTimeout(() => {
-    //             currentTable[0].scrollLeft = currentTable[1].scrollLeft;
-    //             if (currentTable[1].scrollLeft > 56) {
-    //                 setLeftPos(currentTable[1].scrollLeft - 2);
-    //             } else {
-    //                 setLeftPos(currentTable[1].scrollLeft - 4);
-    //             }
-    //         });
-    //     }
-    // });
-
-    const expandRow = (
-        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
-        rowData: { id: any },
-        currentRowState: { isExpanded: any }
-    ) => {
-        updateRowState(rowData.id)({
-            isExpanded: !currentRowState?.isExpanded
-        });
+    const ExpandedRow = ({ rowData }: any) => {
+        return <TaskTable taskList={rowData?.subJobs || []} />;
     };
 
     const JobsColDefs: ColumnProps[] = [
@@ -73,7 +45,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
                                 onClick={(e: any) => {
                                     e.stopPropagation();
-                                    expandRow(updateRowState, rowData, currentRowState);
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
                                 }}
                             />
                         </div>
@@ -96,7 +68,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             isSortable: true,
             width: '498px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{cellData}</div>;
+                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
             }
         },
         {
@@ -104,7 +76,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             Header: 'Status',
             accessor: 'status',
             width: '180px',
-            filterOptions: 'auto',
+            isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.statusCol}>
@@ -127,22 +99,24 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         },
         {
             id: '4',
-            Header: 'Start Time',
+            Header: 'Start time',
             accessor: 'startTime',
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
             id: '5',
-            Header: 'End Time',
+            Header: 'End time',
             accessor: 'endTime',
             isSortable: true,
             width: '240px',
             renderCell: (cellData: any) => {
-                return <div className={styles.wrapText}>{formatDateWithTime(cellData)}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
+                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
             }
         },
         {
@@ -159,7 +133,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         rows: subTaskList,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: jmSubTaskListLoading
+        isLazyLoading: subJobsDataLoading
     });
 
     const tableComponentProps = {
@@ -172,19 +146,19 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             <div className={styles.subJobTable}>
                 <div className={`${styles.statusbar} ${styles[statusType]} ${styles.extraDiv}`}>&nbsp;</div>
                 <div className={styles.extraDiv2} />
-                {jmSubTaskListLoading && 
+                {subJobsDataLoading && 
                     <Typography variant="Regular_14" className={styles.loadingTable}>
                         <FlashingDotsLoader />
                         <div>{GENERAL.LOADING_DATA}</div>
                     </Typography>
                 }
-                {!jmSubTaskListLoading && !subTaskList && 
+                {!subJobsDataLoading && !subTaskList && 
                     <Typography variant="Regular_14" className={styles.loadingTable}>
                         <NoDataIcon />
                         <div>{GENERAL.NO_DATA}</div>
                     </Typography>
                 }
-                {!jmSubTaskListLoading && subTaskList &&
+                {!subJobsDataLoading && subTaskList &&
                     <div
                         //  @ts-ignore
                         className={`${styles.table}`}

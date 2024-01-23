@@ -32,7 +32,7 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
             >
                 <ChatbotIcon />
                 <Typography variant="Semibold_16" color={selectedTab === 'chatbot' ? '#0067c5' : '#404040'}>
-                    Database Chatbot
+                    Database chatbot
                 </Typography>
             </div>
         </div>

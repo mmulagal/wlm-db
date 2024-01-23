@@ -27,6 +27,12 @@
         [class*='Table-module_horizontal-scroll'] {
             visibility: hidden;
         }
+
+        [class*='Table-module_row'] {
+            span {
+                background-color: var(--main-background) !important;
+            }
+        }
     }
 
     .statusbar {
@@ -65,15 +71,6 @@
         }
     }
 
-    .wrapText {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 24px;
-    }
-
     .loadingTable {
         display: flex;
         flex-direction: column;
@@ -90,7 +87,9 @@
         }
     }
 
-    [class*='Table-module_cell'] {
-        background-color: var(--main-background) !important;
+    [class*='SubJobTable_table'] {
+        [class*='Table-module_cell'] {
+            background-color: var(--main-background) !important;
+        }
     }
 }

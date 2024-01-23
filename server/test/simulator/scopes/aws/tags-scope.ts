@@ -7,7 +7,6 @@ import {
 
 const resourceGroupClientMock = mockClient(ResourceGroupsTaggingAPIClient);
 
-
 const response: TagResourcesCommandOutput = {
     $metadata: {
         httpStatusCode: 200,
@@ -17,7 +16,5 @@ const response: TagResourcesCommandOutput = {
     },
     FailedResourcesMap: {}
 };
-
-
 
 resourceGroupClientMock.on(TagResourcesCommand).resolves(response);

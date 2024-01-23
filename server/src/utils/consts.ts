@@ -558,7 +558,8 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     keyPairName: 'KeyPairName',
 
     topicArn: 'NotificationARN',
-    enableCloudWatch: 'EnableCloudWatchLogFeature'
+    enableCloudWatch: 'EnableCloudWatchLogFeature',
+    metadataParam: 'MetadataParam'
 };
 
 const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -625,6 +626,8 @@ const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
+const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
+const TEMPLATE_METADATA_PARAM = 'MetadataParam';
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -943,6 +946,17 @@ const MSSQL_DATABASE_TYPES = {
 const WF_TOKEN = 'WF_TOKEN';
 const BXP_TOKEN = 'BXP_TOKEN';
 
+const KMS_KEY_ALIAS = process.env.KEY_ALIAS;
+// Metrics data const
+const TRIGGERED_FROM = 'triggered-from';
+const DEPLOYED_FROM = 'deployed-from';
+const INSTANCE_TYPE = 'instance-type';
+const SQL_VERSION = 'sql-version';
+const DATABASE_SIZE = 'database-size';
+const SQL_HOST_NAME = 'sql-host-name';
+
+const JOBS_DEFAULT_TIME_RANGE = '30d';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1060,6 +1074,7 @@ export {
     TEMPLATE_ACCOUNT_ID,
     TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
+    TEMPLATE_FSX_PASSWORD,
     CF_NOTIFICATION,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     ERROR_CODE_SQS_INVALID_TOKEN,
@@ -1152,5 +1167,14 @@ export {
     BXP_TOKEN,
     IAM_LINKEDROLE_CONDITION,
     IAM_PASSROLE_CONDITION,
-    IAM_EC2_SERVICE
+    IAM_EC2_SERVICE,
+    KMS_KEY_ALIAS,
+    TEMPLATE_METADATA_PARAM,
+    TRIGGERED_FROM,
+    DEPLOYED_FROM,
+    INSTANCE_TYPE,
+    SQL_VERSION,
+    DATABASE_SIZE,
+    SQL_HOST_NAME,
+    JOBS_DEFAULT_TIME_RANGE
 };

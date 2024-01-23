@@ -1,0 +1,440 @@
+{
+    "1": 
+    [
+        {
+            "time": 1705602600,
+            "completed": 1,
+            "failed": 1
+        },
+        {
+            "time": 1705606200,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "time": 1705609800,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "time": 1705613400,
+            "completed": 0,
+            "failed": 2
+        },
+        {
+            "time": 1705617000,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "time": 1705620600,
+            "completed": 0,
+            "failed": 2
+        },
+        {
+            "time": 1705624200,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "time": 1705627800,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "time": 1705631400,
+            "completed": 0,
+            "failed": 2
+        },
+        {
+            "time": 1705635000,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "time": 1705638600,
+            "completed": 0,
+            "failed": 1
+        },
+        {
+            "time": 1705642200,
+            "completed": 0,
+            "failed": 2
+        },
+        {
+            "time": 1705645800,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "time": 1705649400,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "time": 1705653000,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "time": 1705656600,
+            "completed": 0,
+            "failed": 1
+        },
+        {
+            "time": 1705660200,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "time": 1705663800,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "time": 1705667400,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "time": 1705671000,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "time": 1705674600,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "time": 1705678200,
+            "completed": 0,
+            "failed": 1
+        },
+        {
+            "time": 1705681800,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "time": 1705685400,
+            "completed": 1,
+            "failed": 1
+        } 
+    ],
+    "7": 
+    [
+        {
+            "endTime": 1705685400,
+            "timeInterval": 19,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705599000,
+            "timeInterval": 18,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705512600,
+            "timeInterval": 17,
+            "completed": 1,
+            "failed": 1
+        },
+        {
+            "endTime": 1705426200,
+            "timeInterval": 16,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "endTime": 1705339800,
+            "timeInterval": 15,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1705253400,
+            "timeInterval": 14,
+            "completed": 3,
+            "failed": 3
+        },
+        {
+            "endTime": 1705167000,
+            "timeInterval": 13,
+            "completed": 1,
+            "failed": 0
+        }
+    ],
+    "14": 
+    [
+        {
+            "endTime": 1705685400,
+            "timeInterval": 19,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705599000,
+            "timeInterval": 18,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705512600,
+            "timeInterval": 17,
+            "completed": 1,
+            "failed": 1
+        },
+        {
+            "endTime": 1705426200,
+            "timeInterval": 16,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "endTime": 1705339800,
+            "timeInterval": 15,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1705253400,
+            "timeInterval": 14,
+            "completed": 3,
+            "failed": 3
+        },
+        {
+            "endTime": 1705167000,
+            "timeInterval": 13,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705080600,
+            "timeInterval": 12,
+            "completed": 4,
+            "failed": 0
+        },
+        {
+            "endTime": 1704994200,
+            "timeInterval": 11,
+            "completed": 0,
+            "failed": 4
+        },
+        {
+            "endTime": 1704907800,
+            "timeInterval": 10,
+            "completed": 3,
+            "failed": 1
+        },
+        {
+            "endTime": 1704821400,
+            "timeInterval": 9,
+            "completed": 0,
+            "failed": 1
+        },
+        {
+            "endTime": 1704735000,
+            "timeInterval": 8,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1704648600,
+            "timeInterval": 7,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1704562200,
+            "timeInterval": 6,
+            "completed": 0,
+            "failed": 5
+        }
+    ],
+    "30": 
+    [
+        {
+            "endTime": 1705685400,
+            "timeInterval": 19,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705599000,
+            "timeInterval": 18,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705512600,
+            "timeInterval": 17,
+            "completed": 1,
+            "failed": 1
+        },
+        {
+            "endTime": 1705426200,
+            "timeInterval": 16,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "endTime": 1705339800,
+            "timeInterval": 15,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1705253400,
+            "timeInterval": 14,
+            "completed": 3,
+            "failed": 3
+        },
+        {
+            "endTime": 1705167000,
+            "timeInterval": 13,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705080600,
+            "timeInterval": 12,
+            "completed": 4,
+            "failed": 0
+        },
+        {
+            "endTime": 1704994200,
+            "timeInterval": 11,
+            "completed": 0,
+            "failed": 4
+        },
+        {
+            "endTime": 1704907800,
+            "timeInterval": 10,
+            "completed": 3,
+            "failed": 1
+        },
+        {
+            "endTime": 1704821400,
+            "timeInterval": 9,
+            "completed": 0,
+            "failed": 1
+        },
+        {
+            "endTime": 1704735000,
+            "timeInterval": 8,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1704648600,
+            "timeInterval": 7,
+            "completed": 2,
+            "failed": 1
+        },
+        {
+            "endTime": 1704562200,
+            "timeInterval": 6,
+            "completed": 0,
+            "failed": 5
+        },
+        {
+            "endTime": 1704475800,
+            "timeInterval": 5,
+            "completed": 6,
+            "failed": 1
+        },
+        {
+            "endTime": 1704389400,
+            "timeInterval": 4,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "endTime": 1704303000,
+            "timeInterval": 3,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "endTime": 1704216600,
+            "timeInterval": 2,
+            "completed": 1,
+            "failed": 3
+        },
+        {
+            "endTime": 1704130200,
+            "timeInterval": 1,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1704043800,
+            "timeInterval": 31,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "endTime": 1703957400,
+            "timeInterval": 30,
+            "completed": 3,
+            "failed": 1
+        },
+        {
+            "endTime": 1703871000,
+            "timeInterval": 29,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1703784600,
+            "timeInterval": 28,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "endTime": 1703698200,
+            "timeInterval": 27,
+            "completed": 0,
+            "failed": 2
+        },
+        {
+            "endTime": 1703611800,
+            "timeInterval": 26,
+            "completed": 0,
+            "failed": 2
+        },
+        {
+            "endTime": 1703525400,
+            "timeInterval": 25,
+            "completed": 5,
+            "failed": 1
+        },
+        {
+            "endTime": 1703439000,
+            "timeInterval": 24,
+            "completed": 3,
+            "failed": 1
+        },
+        {
+            "endTime": 1703352600,
+            "timeInterval": 23,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "endTime": 1703266200,
+            "timeInterval": 22,
+            "completed": 7,
+            "failed": 0
+        },
+        {
+            "endTime": 1703179800,
+            "timeInterval": 21,
+            "completed": 7,
+            "failed": 0
+        }
+    ]
+}

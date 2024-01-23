@@ -53,7 +53,7 @@ const CloudFormationTemplateRequestBody = Type.Object({
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
     topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -64,6 +64,13 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+const CloudFormationTemplateHeader = Type.Object({
+    'triggered-from': Type.String({
+        enum: ['wizard-advanced', 'wizard-quick', 'chatbot', 'rest-api'],
+        default: 'rest-api'
+    })
+});
+
 // Cloud formation template, yaml and cli creation
 const CloudFormationStaticTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,
@@ -72,7 +79,7 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
     topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -174,5 +181,6 @@ export {
     CloudFormationStaticTemplateRequestBody,
     CloudFormationDeploymentResponse,
     DeploymentSummaryQueryString,
-    DeploymentSummaryListResponse
+    DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 };

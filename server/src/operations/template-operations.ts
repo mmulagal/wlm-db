@@ -247,4 +247,4 @@ async function uploadTemplates(
     }
 }
 
-export { uploadTemplates };
+export default uploadTemplates;

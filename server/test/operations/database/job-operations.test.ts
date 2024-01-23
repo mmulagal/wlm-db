@@ -6,10 +6,12 @@ import {
     getJobDetails,
     updateJobDetails,
     deleteJobsWithAllSubJobs,
-    getJobSummary
+    getJobSummary,
+    getJobSummaryByTime
 } from '../../../src/operations/database/job-operations';
 import { ACCOUNT_ID } from '../../utils/consts';
 import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
+import * as jobLibrary from '../../../src/lib/database/job';
 
 beforeEach(async () => {
     await registerJobs(ACCOUNT_ID, [
@@ -83,7 +85,7 @@ describe('Job operations', () => {
                 type: JOBTYPE.DEPLOYMENT
             }
         ]);
-        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, 'filterMe');
+        const [jobDetails] = await listJobs(ACCOUNT_ID, undefined, undefined, undefined, undefined, 'filterMe');
         const response = await getJobDetails(ACCOUNT_ID, jobDetails.id);
         expect(response.description).toEqual('test-filtered-job-description');
     });
@@ -198,5 +200,75 @@ describe('Job operations', () => {
         expect(response).toHaveProperty('inProgress');
         expect(response).toHaveProperty('completed');
         expect(response).toHaveProperty('failed');
+    });
+});
+
+describe('getJobSummaryByTime', () => {
+    const mockStartTime = new Date('2024-01-01T0:00:00Z').valueOf();
+    const mockEndTime = new Date('2024-01-20T0:00:00Z').valueOf();
+    const mockIntervalType = 'day';
+    const mockFrequency = 1;
+
+    it('should return job summary by time', async () => {
+        vitest.spyOn(jobLibrary, 'groupJobsByTimeAndStatus').mockResolvedValue([
+            {
+                timeInterval: 1,
+                status: 'COMPLETED',
+                count: 2,
+                endTime: new Date('2024-01-01T12:00:00Z')
+            },
+            {
+                timeInterval: 1,
+                status: 'FAILED',
+                count: 1,
+                endTime: new Date('2024-01-01T12:00:00Z')
+            },
+            {
+                timeInterval: 2,
+                status: 'COMPLETED',
+                count: 3,
+                endTime: new Date('2024-01-02T12:00:00Z')
+            }
+        ]);
+
+        const result = await getJobSummaryByTime(
+            ACCOUNT_ID,
+            mockStartTime,
+            mockEndTime,
+            mockIntervalType,
+            mockFrequency
+        );
+
+        expect(result).toEqual([
+            {
+                timeInterval: 1,
+                completed: 2,
+                failed: 1,
+                frequency: 1,
+                endTime: new Date('2024-01-01T12:00:00Z').valueOf(),
+                intervalType: 'day'
+            },
+            {
+                timeInterval: 2,
+                completed: 3,
+                frequency: 1,
+                endTime: new Date('2024-01-02T12:00:00Z').valueOf(),
+                intervalType: 'day'
+            }
+        ]);
+    });
+
+    it('should handle error and throw an error', async () => {
+        vitest.spyOn(jobLibrary, 'groupJobsByTimeAndStatus').mockResolvedValue([]);
+
+        const result = await getJobSummaryByTime(
+            ACCOUNT_ID,
+            mockStartTime,
+            mockEndTime,
+            mockIntervalType,
+            mockFrequency
+        );
+
+        expect(result.length).toEqual(0);
     });
 });

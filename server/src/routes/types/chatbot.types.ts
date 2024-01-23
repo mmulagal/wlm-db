@@ -2,6 +2,8 @@ import { Type, Static } from '@fastify/type-provider-typebox';
 
 const PromptRequestBodySchema = Type.Object({
     prompt: Type.String(),
+    intent: Type.Optional(Type.String()),
+    promptType: Type.Optional(Type.String({ enum: ['query', 'response'] })),
     params: Type.Optional(Type.Any())
 });
 
@@ -29,7 +31,15 @@ const queryBotResponse = Type.Object({
                     Type.Array(
                         Type.Object({
                             label: Type.Optional(Type.String()),
-                            value: Type.String()
+                            value: Type.String(),
+                            data: Type.Optional(
+                                Type.Array(
+                                    Type.Object({
+                                        label: Type.Optional(Type.String()),
+                                        value: Type.Optional(Type.String())
+                                    })
+                                )
+                            )
                         })
                     )
                 ),

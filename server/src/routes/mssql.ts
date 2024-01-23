@@ -26,7 +26,7 @@ const MSSQL_DATA_API_PATH: string = '/v1/mssql/resources/:resourceId';
 export default function msSqlServerRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-    server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async (request, reply) => {
+    server.post(`${MSSQL_DISCOVER_API_PATH}`, { schema: PostSqlServerSchema }, async request => {
         const {
             params: { accountId, credentialsId, region },
             body: {
@@ -38,7 +38,7 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             }
         } = request;
 
-        const response = await discoverMsSqlServer(
+        return discoverMsSqlServer(
             accountId,
             credentialsId,
             region,
@@ -49,80 +49,68 @@ export default function msSqlServerRoutes(fastify: FastifyInstance) {
             standbyNodeInstanceName,
             fsxId
         );
-        return reply.send(response);
     });
 
-    server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async (request, reply) => {
+    server.delete(`${MSSQL_DATA_API_PATH}`, { schema: DeleteDatabaseSchema }, async request => {
         const {
             params: { accountId, resourceId }
         } = request;
 
-        const response = await deleteResourceById(accountId, resourceId);
-        return reply.send(response);
+        return deleteResourceById(accountId, resourceId);
     });
 
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/cpu`,
         { schema: DatabaseCpuUtilisationResponseSchema },
-        async (request, reply) => {
+        async request => {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
-            return reply.send(response);
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.CPU);
         }
     );
 
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/memory`,
         { schema: DatabaseMemoryUtilisationResponseSchema },
-        async (request, reply) => {
+        async request => {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
-            return reply.send(response);
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.MEMORY);
         }
     );
 
     server.get(
         `${MSSQL_DATA_API_PATH}/utilization/disk`,
         { schema: DatabaseStorageUtilisationResponseSchema },
-        async (request, reply) => {
+        async request => {
             const {
                 params: { resourceId }
             } = request;
-            const response = await getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
-            return reply.send(response);
+            return getResourceUtilisation(resourceId, DATABASE_METRIC_TYPE.DISK);
         }
     );
 
-    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async (request, reply) => {
+    server.get(`${MSSQL_DATA_API_PATH}/databases`, { schema: GetDatabasesSchema }, async request => {
         const {
             params: { resourceId }
         } = request;
-        const response = await getDataBasesSummary(resourceId);
-        return reply.send(response);
+        return getDataBasesSummary(resourceId);
     });
 
-    server.get(`${MSSQL_DATA_API_PATH}/summary`, { schema: GetServerSummarySchema }, async (request, reply) => {
+    server.get(`${MSSQL_DATA_API_PATH}/summary`, { schema: GetServerSummarySchema }, async request => {
         const {
             params: { resourceId }
         } = request;
 
-        const response = await getServerSummary(resourceId);
-        return reply.send(response);
+        return getServerSummary(resourceId);
     });
 
-    server.get(
-        `${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`,
-        { schema: GetTablesSchema },
-        async (request, reply) => {
-            const {
-                params: { resourceId, databaseName }
-            } = request;
-            const response = await getTablesSummary(resourceId, databaseName);
-            return reply.send(response);
-        }
-    );
+    server.get(`${MSSQL_DATA_API_PATH}/databases/:databaseName/tables`, { schema: GetTablesSchema }, async request => {
+        const {
+            params: { resourceId, databaseName }
+        } = request;
+        return getTablesSummary(resourceId, databaseName);
+    });
 }

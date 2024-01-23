@@ -10,6 +10,7 @@ import '../simulator/scopes/aws/ec2-scope';
 import '../simulator/scopes/aws/iam-scope';
 import '../simulator/scopes/aws/secrets-manager-scope';
 import '../simulator/scopes/aws/cloud-formation-scope';
+import '../simulator/scopes/aws/kms-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
 import '../simulator/scopes/cloud-manager/cloud-manager-tenancy-scope';
@@ -41,7 +42,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'triggered-from:chatbot,instance-type:m5.large'
         );
         expect(resp).toBeDefined();
     });
@@ -53,7 +57,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'chatbot'
         );
         expect(resp).toBeDefined();
     });
@@ -65,7 +72,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'triggered-from:chatbot,instance-type:m5.large'
         );
         expect(resp).toBeDefined();
     });
@@ -75,7 +85,10 @@ describe('Cloud formation operations', () => {
             EC2_CONFIGURATION,
             AD_CONFIGURATION,
             FSX_CONFIGURATION,
-            SQL_CONFIGURATION
+            SQL_CONFIGURATION,
+            '',
+            false,
+            'chatbot'
         );
         expect(resp).toBeDefined();
     });

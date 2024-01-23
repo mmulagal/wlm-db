@@ -88,6 +88,7 @@ Metadata:
           - CloudProviderAccountId
           - RoleCredentialsId
           - JwtToken
+          - EncryptedFsxPassword
     ParameterLabels:
       DeploymentMode:
         default: File system deployment mode
@@ -276,7 +277,16 @@ Parameters:
   
   {{JwtToken}}
 
+  {{EncryptedFsxPassword}}
+  
   {{WlmdbAwsAccountId}}
+  
+  {{MetadataParam}}
+   
+  MetadataParam:
+    Description: Metadata param used for internal audit( DO NOT EDIT) 
+    Type: CommaDelimitedList
+    NoEcho: true
     
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -468,6 +478,7 @@ Resources:
             - 'Standalone'
       FileSystemType: 'FSx for ONTAP'
       DatabaseType: 'Microsoft SQL server'
+      MetadataParam: !Ref MetadataParam
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -919,6 +930,7 @@ Resources:
       DomainAdminSecretName: !Sub ${AWS::StackName}-domain
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
+      DatabaseType: 'Microsoft SQL server'
 
       FSxFileSystemId:
           !If
@@ -969,3 +981,4 @@ Resources:
       FileSystemType: 'FSx for ONTAP'
       ActiveDirectoryName: !Ref DomainDNSName
       ActiveDirectoryAddress: !Ref DNSIpAddresses
+      EncryptedFsxPassword: !Ref 'EncryptedFsxPassword'

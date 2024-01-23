@@ -17,6 +17,10 @@
         padding: 12px 16px 12px 16px;
         color: var(--grey-55);
         border-radius: 4px;
+
+        .fixColor {
+            color: var(--grey-50) !important;
+        }
     }
 
     .dropdown-container {

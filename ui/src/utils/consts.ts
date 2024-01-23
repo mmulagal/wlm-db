@@ -197,11 +197,11 @@ export const COSTING_TYPES = {
 };
 
 export const JM_DOWNLOAD = {
-    MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime', 'error'],
-    MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time,Error',
-    SUB_JOBS_KEYS: ['name', 'description', 'status', 'startTime', 'endTime', 'error'],
-    SUB_JOBS_CSV_HEADERS: 'Name,Description,Status,Start time,End time,Error'
-}
+    MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime'],
+    MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time',
+    SUB_JOBS_KEYS: ['name', 'description', 'status', 'startTime', 'endTime'],
+    SUB_JOBS_CSV_HEADERS: 'Name,Description,Status,Start time,End time'
+};
 
 export const AWS_CLI_HIGHLIGHT_STRINGS = [
     'ParameterKey=',
@@ -215,13 +215,20 @@ export const AWS_CLI_HIGHLIGHT_STRINGS = [
 export const CREATE_DATABASE_YAML = 'Create_Database';
 
 export const CHATBOT_WELCOME_CARDS = [
-    'Help me Deploy MsSql on FSx For NetApp.',
+    'Help me deploy Microsoft SQL Server on FSx for ONTAP.',
     'What are the key features of Amazon FSx for NetApp ONTAP for databases?',
     'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?',
-    'What is the FSx for ONTAP best practice for Microsoft SQL server?'
+    'What is the FSx for ONTAP best practice for Microsoft SQL Server?'
 ];
 
 export const CHATBOT_SUGGESTION_BUBBLES = [
-    { label: 'Resume current MSSQL Deployment', value: 'resume' },
-    { label: 'Start new MSSQL Deployment', value: 'start' }
+    { label: 'Resume the current deployment', value: 'resume' },
+    { label: 'Start a new deployment', value: 'start' }
 ];
+
+export const ADV_CREATE_SUGGESTION_BUBBLES = [
+    { label: 'Yes, I would like to deploy an Easy flow via chat', value: 'resume' },
+    { label: 'No, I want to explore the chat', value: 'explore' }
+];
+
+export const JOBS_REPORT = 'jobs_report_';
