@@ -42,7 +42,8 @@ const SQLConfiguration = Type.Object({
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
     serviceAccountPassword: Type.String(),
-    sqlServerName: Type.String()
+    sqlServerName: Type.String(),
+    sqlAmiName: Type.String()
 });
 
 // Cloud formation template creation Request and Response
