@@ -2,15 +2,34 @@ import { Typography } from '@netapp/design-system';
 import styles from './ChatbotHeader.module.scss';
 import { CHATBOT } from '../../../../utils/appConstants';
 import { ReactComponent as AddIcon } from '../../../../assets/ic_add.svg';
-import { useAppDispatch } from '../../../../store/storeHooks';
-import { setIsWizardTouched, setMessages } from '../../../../store/chatbot/chatbotSlice';
+import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
+import {
+    setCurrentIntent,
+    setIsWizardTouched,
+    setMessages,
+    setSuggestionBubbles
+} from '../../../../store/chatbot/chatbotSlice';
+import { getChatbotParamsFromPayload } from '../../../../utils/utilityFunctions';
 
-const ChatbotHeader = () => {
+type ChatbotHeaderPropTypes = {
+    mapParamsToPayload: (paramObj: any) => void;
+};
+
+const ChatbotHeader = ({ mapParamsToPayload }: ChatbotHeaderPropTypes) => {
     const dispatch = useAppDispatch();
+    const mssqlFormData = useAppSelector(state => state.mssqlForm);
 
     const startNewChat = () => {
+        let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+        let defaultObj: any = {};
+        Object.keys(defaultParams).map((key: string) => {
+            defaultObj[key] = null;
+        });
+        mapParamsToPayload(defaultObj);
+        dispatch(setCurrentIntent(''));
         dispatch(setIsWizardTouched(false));
         dispatch(setMessages([]));
+        dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
     };
 
     return (
