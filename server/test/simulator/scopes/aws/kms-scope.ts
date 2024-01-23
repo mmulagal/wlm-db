@@ -12,47 +12,30 @@ import {
 } from '@aws-sdk/client-kms';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const keyArn = `${faker.string.alphanumeric(20)}`;
-const keyId = `${faker.string.alphanumeric(20)}`;
+const keyArnAwsManagedFsx = `${faker.string.alphanumeric(20)}`;
+const keyIdAwsManagedFsx = `${faker.string.alphanumeric(20)}`;
+const keyArnAwsManagedEbs = `${faker.string.alphanumeric(20)}`;
+const keyIdAwsManagedEbs = `${faker.string.alphanumeric(20)}`;
+const keyArnCustomerManaged = `${faker.string.alphanumeric(20)}`;
+const keyIdCustomerManaged = `${faker.string.alphanumeric(20)}`;
 const accountId = `${faker.string.numeric(12)}`;
 
 const listKeysResponse = {
-    KeyCount: 1,
+    KeyCount: 3,
     Keys: [
         {
-            KeyArn: keyArn,
-            KeyId: keyId
+            KeyArn: keyArnAwsManagedFsx,
+            KeyId: keyIdAwsManagedFsx
+        },
+        {
+            KeyArn: keyArnCustomerManaged,
+            KeyId: keyIdCustomerManaged
+        },
+        {
+            KeyArn: keyArnAwsManagedEbs,
+            KeyId: keyIdAwsManagedEbs
         }
     ]
-};
-
-const listKeyAliasesResponse = {
-    Aliases: [
-        {
-            AliasArn: keyArn,
-            AliasName: 'aws/fsx',
-            TargetKeyId: keyId
-        }
-    ],
-    Truncated: false
-};
-
-const describeKeyResponse = {
-    KeyMetadata: {
-        AWSAccountId: accountId,
-        Arn: keyArn,
-        CustomerMasterKeySpec: 'SYMMETRIC_DEFAULT',
-        Description: 'wlmdb-openLab',
-        Enabled: true,
-        EncryptionAlgorithms: ['SYMMETRIC_DEFAULT'],
-        KeyId: keyId,
-        KeyManager: 'CUSTOMER',
-        KeySpec: 'SYMMETRIC_DEFAULT',
-        KeyState: 'Enabled',
-        KeyUsage: 'ENCRYPT_DECRYPT',
-        MultiRegion: false,
-        Origin: 'AWS_KMS'
-    }
 };
 
 const encryptResponse = {
@@ -77,11 +60,139 @@ const decryptResponse = {
 
 const kmsMock = mockClient(KMSClient);
 
-kmsMock.on(DescribeKeyCommand).resolves(describeKeyResponse);
+kmsMock
+    .on(DescribeKeyCommand, {
+        KeyId: keyIdAwsManagedFsx
+    })
+    .resolves({
+        KeyMetadata: {
+            AWSAccountId: accountId,
+            Arn: keyArnAwsManagedFsx,
+            CustomerMasterKeySpec: 'SYMMETRIC_DEFAULT',
+            Description: 'wlmdb-openLab',
+            Enabled: true,
+            EncryptionAlgorithms: ['SYMMETRIC_DEFAULT'],
+            KeyId: keyIdAwsManagedFsx,
+            KeyManager: 'AWS',
+            KeySpec: 'SYMMETRIC_DEFAULT',
+            KeyState: 'Enabled',
+            KeyUsage: 'ENCRYPT_DECRYPT',
+            MultiRegion: false,
+            Origin: 'AWS_KMS'
+        }
+    })
+    .on(DescribeKeyCommand, {
+        KeyId: keyIdCustomerManaged
+    })
+    .resolves({
+        KeyMetadata: {
+            AWSAccountId: accountId,
+            Arn: keyArnAwsManagedFsx,
+            CustomerMasterKeySpec: 'SYMMETRIC_DEFAULT',
+            Description: 'wlmdb-openLab',
+            Enabled: true,
+            EncryptionAlgorithms: ['SYMMETRIC_DEFAULT'],
+            KeyId: keyIdCustomerManaged,
+            KeyManager: 'CUSTOMER',
+            KeySpec: 'SYMMETRIC_DEFAULT',
+            KeyState: 'Enabled',
+            KeyUsage: 'ENCRYPT_DECRYPT',
+            MultiRegion: false,
+            Origin: 'AWS_KMS'
+        }
+    })
+    .on(DescribeKeyCommand, {
+        KeyId: keyIdAwsManagedEbs
+    })
+    .resolves({
+        KeyMetadata: {
+            AWSAccountId: accountId,
+            Arn: keyArnAwsManagedFsx,
+            CustomerMasterKeySpec: 'SYMMETRIC_DEFAULT',
+            Description: 'wlmdb-openLab',
+            Enabled: true,
+            EncryptionAlgorithms: ['SYMMETRIC_DEFAULT'],
+            KeyId: keyIdAwsManagedEbs,
+            KeyManager: 'AWS',
+            KeySpec: 'SYMMETRIC_DEFAULT',
+            KeyState: 'Enabled',
+            KeyUsage: 'ENCRYPT_DECRYPT',
+            MultiRegion: false,
+            Origin: 'AWS_KMS'
+        }
+    })
+    .on(DescribeKeyCommand)
+    .resolves({
+        KeyMetadata: {
+            AWSAccountId: accountId,
+            Arn: keyArnAwsManagedFsx,
+            CustomerMasterKeySpec: 'SYMMETRIC_DEFAULT',
+            Description: 'wlmdb-openLab',
+            Enabled: true,
+            EncryptionAlgorithms: ['SYMMETRIC_DEFAULT'],
+            KeyId: keyIdAwsManagedFsx,
+            KeyManager: 'AWS',
+            KeySpec: 'SYMMETRIC_DEFAULT',
+            KeyState: 'Enabled',
+            KeyUsage: 'ENCRYPT_DECRYPT',
+            MultiRegion: false,
+            Origin: 'AWS_KMS'
+        }
+    });
 
 kmsMock.on(ListKeysCommand).resolves(listKeysResponse);
 
-kmsMock.on(ListAliasesCommand).resolves(listKeyAliasesResponse);
+kmsMock
+    .on(ListAliasesCommand, {
+        KeyId: keyIdAwsManagedFsx
+    })
+    .resolves({
+        Aliases: [
+            {
+                AliasArn: keyArnAwsManagedFsx,
+                AliasName: 'aws/fsx',
+                TargetKeyId: keyIdAwsManagedFsx
+            }
+        ],
+        Truncated: false
+    })
+    .on(ListAliasesCommand, {
+        KeyId: keyIdCustomerManaged
+    })
+    .resolves({
+        Aliases: [
+            {
+                AliasArn: keyArnCustomerManaged,
+                AliasName: 'cust-demo-key',
+                TargetKeyId: keyIdCustomerManaged
+            }
+        ],
+        Truncated: false
+    })
+    .on(ListAliasesCommand, {
+        KeyId: keyIdAwsManagedEbs
+    })
+    .resolves({
+        Aliases: [
+            {
+                AliasArn: keyArnAwsManagedEbs,
+                AliasName: 'aws/ebs',
+                TargetKeyId: keyIdAwsManagedEbs
+            }
+        ],
+        Truncated: false
+    })
+    .on(ListAliasesCommand)
+    .resolves({
+        Aliases: [
+            {
+                AliasArn: keyArnAwsManagedFsx,
+                AliasName: 'aws/fsx',
+                TargetKeyId: keyIdAwsManagedFsx
+            }
+        ],
+        Truncated: false
+    });
 
 kmsMock.on(EncryptCommand).resolves(encryptResponse);
 

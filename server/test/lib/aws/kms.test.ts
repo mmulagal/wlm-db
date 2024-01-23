@@ -22,7 +22,7 @@ describe('KMS Lib', () => {
     it('should return a list of kms keys', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
         const resp = await listKeys(credentialsId, DEFAULT_AWS_REGION);
-        expect(resp).toBeDefined();
+        expect(resp.length).toBeGreaterThan(0);
     });
 
     it('should return a list of key aliases', async () => {
@@ -31,7 +31,7 @@ describe('KMS Lib', () => {
             KeyId: '0a93acf4-ca6e-4847-8baa-9b0f561567b1'
         };
         const resp = await listAliases(credentialsId, DEFAULT_AWS_REGION, params);
-        expect(resp).toBeDefined();
+        expect(resp.length).toBeGreaterThan(0);
     });
 
     it('should encrypt a string', async () => {
