@@ -11,42 +11,21 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import { expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { useEffect, useState } from 'react';
-import { useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
-import { useDispatch } from 'react-redux';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
-    const dispatch = useDispatch();
-    const [subTaskList, setSubTaskList] = useState<any>([]);
-    const [jmSubTaskListLoading, setJmSubTaskListLoading] = useState(false);
+    const [subTaskList, setSubTaskList] = useState<any>({});
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
+    const subJobsDataLoading = useAppSelector(state => state.jobMonitoring.subJobsDataLoading);
+
+    useEffect(() => {
+        setSubTaskList(subJobsData?.subJobs);
+    }, [subJobsData]);
 
     const ExpandedRow = ({ rowData }: any) => {
         return <TaskTable taskList={rowData?.subJobs || []} />;
     };
-
-    const [subTaskListApi] = useLazyGetSubTaskListQuery();
-
-    useEffect(() => {
-        setJmSubTaskListLoading(true);
-        if (subJobsData && subJobsData?.subJobs && subJobsData?.id === jobId) {
-            setSubTaskList(subJobsData?.subJobs || []);
-            setJmSubTaskListLoading(false);
-        } else {
-            subTaskListApi(jobId)
-                .then(data => {
-                    setSubTaskList(data?.data?.subJobs || []);
-                    dispatch(setSubJobsData(data?.data));
-                    setJmSubTaskListLoading(false);
-                })
-                .catch((error: any) => {
-                    dispatch(setSubJobsData({}));
-                    setJmSubTaskListLoading(false);
-                });
-        }
-    }, []);
 
     const JobsColDefs: ColumnProps[] = [
         {
@@ -154,7 +133,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         rows: subTaskList,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: jmSubTaskListLoading
+        isLazyLoading: subJobsDataLoading
     });
 
     const tableComponentProps = {
@@ -167,19 +146,19 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             <div className={styles.subJobTable}>
                 <div className={`${styles.statusbar} ${styles[statusType]} ${styles.extraDiv}`}>&nbsp;</div>
                 <div className={styles.extraDiv2} />
-                {jmSubTaskListLoading && 
+                {subJobsDataLoading && 
                     <Typography variant="Regular_14" className={styles.loadingTable}>
                         <FlashingDotsLoader />
                         <div>{GENERAL.LOADING_DATA}</div>
                     </Typography>
                 }
-                {!jmSubTaskListLoading && !subTaskList && 
+                {!subJobsDataLoading && !subTaskList && 
                     <Typography variant="Regular_14" className={styles.loadingTable}>
                         <NoDataIcon />
                         <div>{GENERAL.NO_DATA}</div>
                     </Typography>
                 }
-                {!jmSubTaskListLoading && subTaskList &&
+                {!subJobsDataLoading && subTaskList &&
                     <div
                         //  @ts-ignore
                         className={`${styles.table}`}

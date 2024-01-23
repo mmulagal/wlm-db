@@ -46,10 +46,10 @@ const TaskTable = ({ taskList = [] }: any) => {
                             <Typography variant="Regular_14">{jobMonitoringStatusMapping(task?.status)}</Typography>
                         </div>
                         <Typography variant="Regular_14" className={styles.fourthItem}>
-                            {formatDateWithTime(task.startTime)}
+                            {task?.startTime ? formatDateWithTime(task?.startTime) : 'N/A'}
                         </Typography>
                         <Typography variant="Regular_14" className={styles.fifthItem}>
-                            {formatDateWithTime(task.endTime)}
+                            {task?.endTime ? formatDateWithTime(task?.endTime) : 'N/A'}
                         </Typography>
                     </div>
                 );

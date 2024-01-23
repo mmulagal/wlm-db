@@ -11,13 +11,13 @@ import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { createJobMonitorCSV, downloadCsv, expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { collapseAllRows, createJobMonitorCSV, downloadCsv, expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
-import { setDownloadJobsList, setDownloadJobsLoading, setSubJobsData } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { setDownloadJobsList, setDownloadJobsLoading, setSubJobsData, setSubJobsDataLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { useEffect, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { useGetFullJobsListQuery } from '../../../utils/apiService';
+import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 
 const JobMonitoringTable = () => {
     const dispatch = useDispatch();
@@ -28,6 +28,7 @@ const JobMonitoringTable = () => {
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
+    const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
@@ -36,6 +37,26 @@ const JobMonitoringTable = () => {
     // Filter options to use while downloading
     const [typeFilter, setTypeFilter] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
+
+    // to get sub jobs data
+    const [subTaskListApi] = useLazyGetSubTaskListQuery();
+
+    const getSubJobsData = (jobId: string) => {
+        dispatch(setSubJobsDataLoading(true));
+        if (subJobsData && subJobsData?.subJobs && subJobsData?.id === jobId) {
+            dispatch(setSubJobsDataLoading(false));
+        } else {
+            subTaskListApi(jobId)
+                .then(data => {
+                    dispatch(setSubJobsData(data?.data || {}));
+                    dispatch(setSubJobsDataLoading(false));
+                })
+                .catch((error: any) => {
+                    dispatch(setSubJobsData({}));
+                    dispatch(setSubJobsDataLoading(false));
+                });
+        }
+    };
 
     useEffect(() => {
         dispatch(setSubJobsData({}));
@@ -80,11 +101,10 @@ const JobMonitoringTable = () => {
             let mergedList = [...oldList, ...newList]
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
-            dispatch(clearNotifications());
             if (jmJobsList && !jmJobsList?.nextToken) {
                 // Download logic 
                 downloadJMTable(mergedList);
-
+                dispatch(clearNotifications());
                 // success notification
                 dispatch(
                     addNotification({
@@ -122,6 +142,7 @@ const JobMonitoringTable = () => {
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
                                 onClick={(e: any) => {
+                                    getSubJobsData(rowData?.id); // calling sub jobs api on expand click
                                     e.stopPropagation();
                                     expandTableRow(updateRowState, rowData, currentRowState, rowsState);
                                 }}
@@ -257,6 +278,10 @@ const JobMonitoringTable = () => {
         ExpandedRow,
         lazyLoadingText: GENERAL.LOADING_DATA
     };
+
+    useEffect(() => {
+        collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
+    }, [timeInterval]);
 
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));
