@@ -139,7 +139,8 @@ const DatabaseHostSummaryResponse = Type.Object({
     performance: Type.Optional(PerformanceResponse),
     storage: Type.Optional(StorageResponse),
     estimatedUsageCost: Type.Optional(UsageCostResponse),
-    resourceUtilization: Type.Optional(ResourcesUtilizationResponse)
+    resourceUtilization: Type.Optional(ResourcesUtilizationResponse),
+    errors: Type.Optional(Type.Any())
 });
 const DatabaseHostSummaryListResponse = Type.Object({
     count: Type.Number(),
