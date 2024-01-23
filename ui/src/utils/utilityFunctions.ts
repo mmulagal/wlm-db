@@ -1050,11 +1050,8 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
     return groupedData;
 };
 
-
-export const expandTableRow = (
-    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
-    rowData: { id: any },
-    currentRowState: { isExpanded: any },
+export const collapseAllRows = (
+    updateRowState: any,
     rowState: any
 ) => {
     for (const rowId in rowState) {
@@ -1064,6 +1061,15 @@ export const expandTableRow = (
             });
         }
     }
+};
+
+export const expandTableRow = (
+    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+    rowData: { id: any },
+    currentRowState: { isExpanded: any },
+    rowState: any
+) => {
+    collapseAllRows(updateRowState, rowState);
     updateRowState(rowData.id)({
         isExpanded: !currentRowState?.isExpanded
     });

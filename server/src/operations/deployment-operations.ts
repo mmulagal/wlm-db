@@ -79,6 +79,7 @@ import {
 } from '../utils/consts';
 import {
     createJobMockData,
+    calculateSQLandWindowsVersion,
     deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
@@ -254,9 +255,11 @@ async function getCloudformationTemplate(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlAmiId, sqlServerName } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
-    const metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlAmiId},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    const metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -391,9 +394,11 @@ async function deployStackOrCreateTemplateURL(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlAmiId, sqlServerName } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
-    let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlAmiId},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
         const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(

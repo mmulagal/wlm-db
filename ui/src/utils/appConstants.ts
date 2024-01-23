@@ -352,6 +352,7 @@ export const GENERAL = {
     DEFAULT: 'Default',
     CONFIGURATION: 'Configuration',
     PD_DISABLED: 'Disabled',
+    ENABLED: 'Enabled',
     YES: 'Yes',
     PD_AUTO_CREATE: 'Automatically create based on user selection',
     NO: 'No',

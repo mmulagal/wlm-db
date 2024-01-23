@@ -796,7 +796,7 @@ const Chatbot = () => {
         }
     };
 
-    const handleSelectButtonClicked = async (paramObj: any) => {
+    const handleSelectButtonClicked = async (paramObj: any, sender: string = 'user') => {
         const updatedMessages = messages ? [...messages] : [];
         if (updatedMessages.length) {
             updatedMessages[updatedMessages.length - 1] = {
@@ -808,7 +808,7 @@ const Chatbot = () => {
             };
         }
         updatedMessages.push({
-            sender: 'user',
+            sender: sender,
             msg: paramObj[Object.keys(paramObj)[0]].label
         });
         dispatch(setMessages(updatedMessages));
@@ -941,10 +941,12 @@ const Chatbot = () => {
     return (
         <div className={styles['chatbot']}>
             <div className={styles['page-content']}>
-                <ChatbotHeader />
+                <ChatbotHeader mapParamsToPayload={mapParamsToPayload} />
                 <ChatBox
                     isBotReplying={isBotReplying || isReceivingMsg}
-                    handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
+                    handleSelectButtonClicked={(paramObj: any, sender?: string) =>
+                        handleSelectButtonClicked(paramObj, sender)
+                    }
                     sendMsg={sendMsg}
                     messagesToShow={messagesToShow ? messagesToShow : []}
                     messages={messages ? messages : []}

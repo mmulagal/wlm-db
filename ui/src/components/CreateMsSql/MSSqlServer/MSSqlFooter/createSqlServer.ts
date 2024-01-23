@@ -18,12 +18,18 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificat
 
 const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
-    const licenseId = (() => {
+    const [licenseId, licenceName] = (() => {
         const licenseType = state.mssqlForm.license?.selectedLicenseType;
         if (licenseType === GENERAL.LICENSE_INCLUDED_AMI) {
-            return state.mssqlForm.license?.selectedLicenseId?.value;
+            return [
+                state.mssqlForm.license?.selectedLicenseId?.value,
+                state.mssqlForm.license?.selectedLicenseId?.data?.amiName
+            ];
         } else {
-            return state.mssqlForm.license?.selectedCustomAMI;
+            return [
+                state.mssqlForm.license?.selectedCustomAMI,
+                state.mssqlForm.license?.selectedCustomAMI?.data?.amiName
+            ];
         }
     })();
 
@@ -153,6 +159,7 @@ const createMssqlPayload = (state: any) => {
         sqlConfiguration: {
             sqlDeploymentMode: state.mssqlForm.dbDeploymentModel?.value || SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE,
             sqlAmiId: licenseId || '',
+            sqlAmiName: licenceName || '',
             serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
             serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
             sqlServerName: state.mssqlForm.dbName || ''
