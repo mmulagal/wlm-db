@@ -429,6 +429,10 @@ export const jobMonitoringApi = createApi({
             }),
             getJobsSummaryData: builder.query({
                 query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+            }),
+            getJobsSummaryTimelineData: builder.query({
+                query: ({startTime, endTime, intervalType, frequency = 1}) => 
+                `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}&intervalType=${intervalType}&frequency=${frequency}`
             })
         };
     }
@@ -495,6 +499,12 @@ export const {
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { useGetJobsListQuery, useGetFullJobsListQuery, useGetSubTaskListQuery, useGetJobsSummaryDataQuery } = jobMonitoringApi;
+export const { 
+    useGetJobsListQuery, 
+    useGetFullJobsListQuery, 
+    useGetSubTaskListQuery, 
+    useGetJobsSummaryDataQuery, 
+    useGetJobsSummaryTimelineDataQuery 
+} = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;

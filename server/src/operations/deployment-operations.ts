@@ -66,6 +66,7 @@ import {
     IAM_LINKEDROLE_CONDITION,
     IAM_EC2_SERVICE,
     IAM_PASSROLE_CONDITION,
+    TEMPLATE_FSX_PASSWORD,
     TEMPLATE_METADATA_PARAM,
     TRIGGERED_FROM,
     DEPLOYED_FROM,
@@ -95,6 +96,7 @@ import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/da
 // import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
+import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { createJobs } from '../lib/database/job';
 
@@ -138,6 +140,12 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_METADATA_PARAM, ParameterValue: metadataParam }
     ];
+    if (fsxConfiguration.fsxPassword) {
+        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+        if (encryptedFsxPassword) {
+            templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+        }
+    }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
@@ -526,6 +534,12 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    if (fsxConfiguration.fsxPassword) {
+        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+        if (encryptedFsxPassword) {
+            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+        }
+    }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {

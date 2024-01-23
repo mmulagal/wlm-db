@@ -1,4 +1,4 @@
-import { Typography } from '@netapp/design-system';
+import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import styles from './JobDistribution.module.scss';
 import JobDoughnutChart from '../../DatabaseHomePage/JobStatus/JobDoughnut/JobDoughnutChart';
 import { GENERAL } from '../../../utils/appConstants';
@@ -16,8 +16,9 @@ const JobDistribution = () => {
             }
         >
             <div className={styles.headSection}>
-                <Typography variant="Regular_16" className={styles.title}>
+                <Typography variant="Regular_16" className={styles.status}>
                     {GENERAL.JOB_DISTRIBUTION}
+                    {jobsSummaryLoading && <FlashingDotsLoader />}
                 </Typography>
             </div>
 
@@ -34,6 +35,7 @@ const JobDistribution = () => {
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
                                 <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
                                 {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
@@ -46,6 +48,7 @@ const JobDistribution = () => {
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
                                 <Typography variant="Regular_14">{GENERAL.JM_RUNNING}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
                                 {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}
@@ -58,6 +61,7 @@ const JobDistribution = () => {
                             <div className={styles.firstPart}>
                                 <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
                                 <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                             <Typography variant="Semibold_14">
                                 {(jobsSummaryData?.failed || 0) + GENERAL.JOB_STATUS_JOBS}
@@ -74,9 +78,12 @@ const JobDistribution = () => {
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
                                 {jobsSummaryData?.completed}
                             </Typography>
-                            <div className={styles.firstPart}>
-                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
-                                <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
+                            <div className={styles.status}>
+                                <div className={styles.firstPart}>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
+                                    <Typography variant="Regular_14">{GENERAL.JM_COMPLETED}</Typography>
+                                </div>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                         </div>
                         <div className={styles.jobDistributionSeparator} />
@@ -84,9 +91,12 @@ const JobDistribution = () => {
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
                                 {jobsSummaryData?.inProgress}
                             </Typography>
-                            <div className={styles.firstPart}>
-                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                                <Typography variant="Regular_14">{GENERAL.JM_RUNNING}</Typography>
+                            <div className={styles.status}>
+                                <div className={styles.firstPart}>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
+                                    <Typography variant="Regular_14">{GENERAL.JM_RUNNING}</Typography>
+                                </div>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                         </div>
                         <div className={styles.jobDistributionSeparator} />
@@ -94,9 +104,12 @@ const JobDistribution = () => {
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
                                 {jobsSummaryData?.failed}
                             </Typography>
-                            <div className={styles.firstPart}>
-                                <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
-                                <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                            <div className={styles.status}>
+                                <div className={styles.firstPart}>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-8)' }} />
+                                    <Typography variant="Regular_14">{GENERAL.JM_FAILED}</Typography>
+                                </div>
+                                {jobsSummaryLoading && <FlashingDotsLoader />}
                             </div>
                         </div>
                     </div>

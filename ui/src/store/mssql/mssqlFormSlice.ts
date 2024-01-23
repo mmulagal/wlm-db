@@ -78,7 +78,7 @@ export const initialMssqlState: any = {
         snsState: false,
         snsARN: ''
     },
-    cloudWatch: false,
+    cloudWatch: true,
     encryption: {
         encryptionType: GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT,
         selectedRow: null,
