@@ -25,7 +25,6 @@ import {
     discoverMsSqlServer,
     deleteResourceById,
     getServerIOLatency,
-    getServerState,
     getNativeSQLProtection
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
