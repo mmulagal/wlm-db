@@ -14,19 +14,8 @@ const JobSummaryResponse = Type.Object({
 
 type JobSummaryResponseType = Static<typeof JobSummaryResponse>;
 
-const JobSummaryByTimeQueryString = Type.Composite([
-    JobSummaryQueryString,
-    Type.Object({
-        intervalType: Type.Optional(Type.String({ enum: ['hour', 'day'] })),
-        frequency: Type.Optional(Type.Number())
-    })
-]);
-
 const JobSummaryByTimeRecord = Type.Object({
     endTime: Type.Number(),
-    timeInterval: Type.Number(),
-    frequency: Type.Number(),
-    intervalType: Type.String({ enum: ['hour', 'day'] }),
     completed: Type.Optional(Type.Number()),
     failed: Type.Optional(Type.Number())
 });
@@ -164,7 +153,6 @@ export {
     JobSummaryQueryString,
     JobSummaryResponse,
     JobSummaryResponseType,
-    JobSummaryByTimeQueryString,
     JobSummaryByTimeResponse,
     JobSummaryByTimeRecordType
 };

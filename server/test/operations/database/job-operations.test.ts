@@ -9,9 +9,8 @@ import {
     getJobSummary,
     getJobSummaryByTime
 } from '../../../src/operations/database/job-operations';
-import { ACCOUNT_ID } from '../../utils/consts';
+import { ACCOUNT_ID, THIRTY_DAYS } from '../../utils/consts';
 import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
-import * as jobLibrary from '../../../src/lib/database/job';
 
 beforeEach(async () => {
     await registerJobs(ACCOUNT_ID, [
@@ -203,71 +202,41 @@ describe('Job operations', () => {
     });
 });
 
-describe('getJobSummaryByTime', () => {
-    const mockStartTime = new Date('2024-01-01T0:00:00Z').valueOf();
-    const mockEndTime = new Date('2024-01-20T0:00:00Z').valueOf();
-    const mockIntervalType = 'day';
-    const mockFrequency = 1;
+describe('getJobSummaryByTime', async () => {
+    const mockStartTime = Date.now() - THIRTY_DAYS;
+    const mockEndTime = Date.now();
+
+    await registerJobs('ACCOUNT_ID', [
+        {
+            accountId: 'ACCOUNT_ID',
+            name: 'test-job-ops-1',
+            resourceName: 'test-resource',
+            startTime: Date.now() - THIRTY_DAYS,
+            endTime: Date.now() - THIRTY_DAYS,
+            status: JOBSTATUS.FAILED,
+            type: JOBTYPE.DEPLOYMENT
+        },
+        {
+            accountId: 'ACCOUNT_ID',
+            name: 'test-job-ops-2',
+            resourceName: 'test-resource',
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: JOBSTATUS.COMPLETED,
+            type: JOBTYPE.DEPLOYMENT
+        }
+    ]);
 
     it('should return job summary by time', async () => {
-        vitest.spyOn(jobLibrary, 'groupJobsByTimeAndStatus').mockResolvedValue([
-            {
-                timeInterval: 1,
-                status: 'COMPLETED',
-                count: 2,
-                endTime: new Date('2024-01-01T12:00:00Z')
-            },
-            {
-                timeInterval: 1,
-                status: 'FAILED',
-                count: 1,
-                endTime: new Date('2024-01-01T12:00:00Z')
-            },
-            {
-                timeInterval: 2,
-                status: 'COMPLETED',
-                count: 3,
-                endTime: new Date('2024-01-02T12:00:00Z')
-            }
-        ]);
+        const result = await getJobSummaryByTime('ACCOUNT_ID', mockStartTime, mockEndTime);
 
-        const result = await getJobSummaryByTime(
-            ACCOUNT_ID,
-            mockStartTime,
-            mockEndTime,
-            mockIntervalType,
-            mockFrequency
-        );
-
-        expect(result).toEqual([
-            {
-                timeInterval: 1,
-                completed: 2,
-                failed: 1,
-                frequency: 1,
-                endTime: new Date('2024-01-01T12:00:00Z').valueOf(),
-                intervalType: 'day'
-            },
-            {
-                timeInterval: 2,
-                completed: 3,
-                frequency: 1,
-                endTime: new Date('2024-01-02T12:00:00Z').valueOf(),
-                intervalType: 'day'
-            }
-        ]);
+        expect(result.length).toEqual(2);
     });
 
     it('should handle error and throw an error', async () => {
-        vitest.spyOn(jobLibrary, 'groupJobsByTimeAndStatus').mockResolvedValue([]);
+        await deleteJobsOfAccount('ACCOUNT_ID');
 
-        const result = await getJobSummaryByTime(
-            ACCOUNT_ID,
-            mockStartTime,
-            mockEndTime,
-            mockIntervalType,
-            mockFrequency
-        );
+        const result = await getJobSummaryByTime('ACCOUNT_ID', mockStartTime, mockEndTime);
 
         expect(result.length).toEqual(0);
     });

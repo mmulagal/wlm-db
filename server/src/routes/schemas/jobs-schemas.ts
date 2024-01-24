@@ -11,7 +11,6 @@ import {
     JobDetailsResponse,
     JobSummaryQueryString,
     JobSummaryResponse,
-    JobSummaryByTimeQueryString,
     JobSummaryByTimeResponse
 } from '../types/jobs.types';
 import { AccountIdParams } from '../types/generic.types';
@@ -58,7 +57,7 @@ const JobSummaryByTimeSchema = {
     ...baseRequest,
     summary: 'Get job summary by time',
     description: 'API to get job summary by time for a given account and time range. Used for time series charting',
-    querystring: JobSummaryByTimeQueryString,
+    querystring: JobSummaryQueryString,
     response: {
         200: JobSummaryByTimeResponse
     }

@@ -103,6 +103,9 @@ const ACCOUNT_ID = 'account-test';
 const CREDENTIALS_ID = `${faker.string.alphanumeric(20)}`;
 const ACTIVE_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
 const STANDBY_INSTANCE_ID = `${faker.string.alphanumeric(10)}`;
+
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
 export {
     SQL_CONFIGURATION,
     FSX_CONFIGURATION,
@@ -118,5 +121,6 @@ export {
     CREDENTIALS_ID,
     ACTIVE_INSTANCE_ID,
     STANDBY_INSTANCE_ID,
-    DEPLOYMENT_JOBS_COUNT_RESPONSE
+    DEPLOYMENT_JOBS_COUNT_RESPONSE,
+    THIRTY_DAYS
 };
