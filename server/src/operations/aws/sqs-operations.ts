@@ -870,10 +870,8 @@ async function processCloudFormationMessages() {
                         }
                     })
                 );
-                processCloudFormationMessages();
-            } else {
-                processCloudFormationMessages();
             }
+            processCloudFormationMessages();
         } catch (err: any) {
             if (err.code === ERROR_CODE_SQS_NON_EXISTENT_QUEUE) {
                 logger.warn(`'${queueUrl}' queue does not exist. Not polling for messages`);
