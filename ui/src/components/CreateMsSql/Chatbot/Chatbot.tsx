@@ -205,22 +205,6 @@ const Chatbot = () => {
         }
     }, [loadConfigClicked]);
 
-    const openDemoInfoDialog = (stackUrl: string) => {
-        const isDemoMode = state.auth?.isDemoMode;
-        if (isDemoMode) {
-            setDialog(
-                <DialogComponent
-                    header={GENERAL.DEMO_TITLE}
-                    content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
-                    primaryButton={GENERAL.CONTINUE}
-                    callback={() => {}}
-                />
-            );
-        } else {
-            window.open(stackUrl, '_blank', 'noopener');
-        }
-    };
-
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
         const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
@@ -232,12 +216,10 @@ const Chatbot = () => {
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName : ''}
-                    {stackName && stackUrl && (
+                    {(
                         <>
-                            {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
-                            <Button Component="button" variant="link" onClick={() => openDemoInfoDialog(stackUrl)}>
-                                {stackName}
+                            <Button Component="button" variant="text" onClick={() => navigate('../job-monitor')}>
+                                {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
                             </Button>
                         </>
                     )}
