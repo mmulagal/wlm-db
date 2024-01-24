@@ -16,7 +16,6 @@ const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    // const []
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
