@@ -16,7 +16,9 @@ const initialState: ChatbotEntities = {
     expectingResponse: {
         type: 'none',
         fieldName: ''
-    }
+    },
+    latestIntentMsg: '',
+    resumeCount: 0
 };
 
 const chatbotSlice = createSlice({
@@ -49,6 +51,12 @@ const chatbotSlice = createSlice({
         },
         setExpectingResponse: (state, action: PayloadAction<any>) => {
             state.expectingResponse = action.payload;
+        },
+        setLatestIntentMsg: (state, action: PayloadAction<any>) => {
+            state.latestIntentMsg = action.payload;
+        },
+        setResumeCount: (state, action: PayloadAction<any>) => {
+            state.resumeCount = action.payload;
         }
     }
 });
@@ -62,6 +70,8 @@ export const {
     setShowRetry,
     setIsWizardTouched,
     setSuggestionBubbles,
-    setExpectingResponse
+    setExpectingResponse,
+    setLatestIntentMsg,
+    setResumeCount
 } = chatbotSlice.actions;
 export default chatbotSlice;
