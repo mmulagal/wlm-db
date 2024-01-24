@@ -304,18 +304,30 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         };
         return diskUtilization;
     }
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId!,
-        undefined,
-        false
-    );
-    logger.debug('Fetching  utilization', response);
-    if (response) {
+
+    try {
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            standbyNodeInstanceId!,
+            undefined,
+            false
+        );
+        logger.debug('Utilization response', metricType, response);
+        if (!response) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                ` ${metricType} utilization data response is empty.`
+            );
+        }
         return sqlResponseParsing(response)[0];
+    } catch (error) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching ${metricType} utilization: ${activeNodeInstanceId} ${standbyNodeInstanceId}. Error: ${error}`
+        );
     }
 }
 
@@ -412,49 +424,51 @@ async function getServerSummary(resourceId: string) {
                 [`${PSSCRIPT} -Query "${query}"`],
                 activeNodeInstanceId,
                 standbyNodeInstanceId!
+            ).catch(error =>
+                logger.error(
+                    `Error while executing query: ${activeNodeInstanceId} ${standbyNodeInstanceId} ${query} Error: ${error}`
+                )
             )
         )
     );
 
-    if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo && severEditionInfo) {
-        const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
-        const [{ ServerEdition }] = sqlResponseParsing(severEditionInfo);
-        const serverInfo = serverDetails?.split('\t');
-        const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
-        const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
-        let [{ activeNode }] = sqlResponseParsing(nodeInfo);
-        const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
-        const [{ serverName: clusterName }] = sqlResponseParsing(serverNameInfo!);
-        const [{ creationDate }] = sqlResponseParsing(serverInstallDate!);
+    const serverDetails = serverDetailsInfo ? serverDetailsInfo?.replaceAll('\r\n', '') : '';
+    const [{ ServerEdition }] = severEditionInfo ? sqlResponseParsing(severEditionInfo) : '';
+    const serverInfo = serverDetails?.split('\t');
+    const serverStatus = stateInfo ? stateInfo.replace(/[\r\n.]/g, '') : '';
+    const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
+    let [{ activeNode }] = nodeInfo ? sqlResponseParsing(nodeInfo) : '';
+    const [{ isClustered }] = isClusteredInfo ? sqlResponseParsing(isClusteredInfo) : '';
+    const [{ serverName: clusterName }] = serverNameInfo ? sqlResponseParsing(serverNameInfo!) : '';
+    const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
 
-        let standbyNode: string = '';
-        if (isClustered && clusterNodesInfo) {
-            const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
+    let standbyNode: string = '';
+    if (isClustered && clusterNodesInfo) {
+        const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
-            if (node1?.is_current_owner) {
-                activeNode = node1?.NodeName;
-                standbyNode = node2?.NodeName;
-            } else {
-                activeNode = node2?.NodeName;
-                standbyNode = node1?.NodeName;
-            }
+        if (node1?.is_current_owner) {
+            activeNode = node1?.NodeName;
+            standbyNode = node2?.NodeName;
+        } else {
+            activeNode = node2?.NodeName;
+            standbyNode = node1?.NodeName;
         }
-
-        return {
-            serverId: resourceId,
-            serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
-            serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
-            serverEngine: '', // sending empty string to support blueXP endpoint
-            serverStatus,
-            activeConnections,
-            deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
-            activeNode,
-            ...(isClustered ? { standbyNode, clusterName } : {}),
-            operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
-            creationDate,
-            nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!]
-        };
     }
+
+    return {
+        serverId: resourceId,
+        serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+        serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
+        serverEngine: '', // sending empty string to support blueXP endpoint
+        serverStatus,
+        activeConnections,
+        deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
+        activeNode,
+        ...(isClustered ? { standbyNode, clusterName } : {}),
+        operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
+        creationDate,
+        nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!]
+    };
 }
 
 async function getSqlServerDetails(

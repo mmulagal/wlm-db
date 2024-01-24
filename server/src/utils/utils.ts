@@ -280,6 +280,25 @@ function isActiveInstance() {
     return !process.env.hasOwnProperty('isActive') || process.env.isActive === 'true';
 }
 
+function calculateSQLandWindowsVersion(sqlAmiName: string) {
+    logger.info('Calculate sql and windows version from the sql AMI name', sqlAmiName);
+
+    // Regex Pattern
+    const windowsVersionPattern = /Windows_Server-(\d+)/;
+    const sqlVersionPattern = /SQL_(\d+)_([^+]+)/;
+
+    // Extract Windows Version
+    const windowsVersionMatch = sqlAmiName.match(windowsVersionPattern);
+    const windowsVersion = windowsVersionMatch ? windowsVersionMatch[1] : '';
+
+    // Extract SQL version and SQL version type
+    const sqlVersionMatch = sqlAmiName.match(sqlVersionPattern);
+    const sqlVersion = sqlVersionMatch ? sqlVersionMatch[1] : '';
+    const sqlVersionType = sqlVersionMatch ? sqlVersionMatch[2] : '';
+
+    return [windowsVersion, sqlVersion, sqlVersionType];
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -299,5 +318,6 @@ export {
     waitForResolution,
     deployedStackUrl,
     generateRandomIP,
-    isActiveInstance
+    isActiveInstance,
+    calculateSQLandWindowsVersion
 };

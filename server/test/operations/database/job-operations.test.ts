@@ -6,9 +6,10 @@ import {
     getJobDetails,
     updateJobDetails,
     deleteJobsWithAllSubJobs,
-    getJobSummary
+    getJobSummary,
+    getJobSummaryByTime
 } from '../../../src/operations/database/job-operations';
-import { ACCOUNT_ID } from '../../utils/consts';
+import { ACCOUNT_ID, THIRTY_DAYS } from '../../utils/consts';
 import { deleteJobsOfAccount, listJobs } from '../../../src/lib/database/job';
 
 beforeEach(async () => {
@@ -198,5 +199,45 @@ describe('Job operations', () => {
         expect(response).toHaveProperty('inProgress');
         expect(response).toHaveProperty('completed');
         expect(response).toHaveProperty('failed');
+    });
+});
+
+describe('getJobSummaryByTime', async () => {
+    const mockStartTime = Date.now() - THIRTY_DAYS;
+    const mockEndTime = Date.now();
+
+    await registerJobs('ACCOUNT_ID', [
+        {
+            accountId: 'ACCOUNT_ID',
+            name: 'test-job-ops-1',
+            resourceName: 'test-resource',
+            startTime: Date.now() - THIRTY_DAYS,
+            endTime: Date.now() - THIRTY_DAYS,
+            status: JOBSTATUS.FAILED,
+            type: JOBTYPE.DEPLOYMENT
+        },
+        {
+            accountId: 'ACCOUNT_ID',
+            name: 'test-job-ops-2',
+            resourceName: 'test-resource',
+            startTime: Date.now(),
+            endTime: Date.now(),
+            status: JOBSTATUS.COMPLETED,
+            type: JOBTYPE.DEPLOYMENT
+        }
+    ]);
+
+    it('should return job summary by time', async () => {
+        const result = await getJobSummaryByTime('ACCOUNT_ID', mockStartTime, mockEndTime);
+
+        expect(result.length).toEqual(2);
+    });
+
+    it('should handle error and throw an error', async () => {
+        await deleteJobsOfAccount('ACCOUNT_ID');
+
+        const result = await getJobSummaryByTime('ACCOUNT_ID', mockStartTime, mockEndTime);
+
+        expect(result.length).toEqual(0);
     });
 });

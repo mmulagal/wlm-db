@@ -160,7 +160,7 @@ const PreviewDefault = () => {
             editable: 'N/A',
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: 'N/A', id: '15' }
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [

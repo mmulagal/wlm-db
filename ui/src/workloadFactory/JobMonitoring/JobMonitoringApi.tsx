@@ -21,8 +21,6 @@ const JobMonitoringApi = () => {
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
-    const [intervalType, setIntervalType] = useState('hour');
-    const [frequency, setFrequency] = useState(1);
 
     const [skipApiCall, setSkipApiCall] = useState(true);
 
@@ -36,22 +34,6 @@ const JobMonitoringApi = () => {
                 setSkipApiCall(false);
             }
         }, 0);
-
-        // settting interval type
-        if (timeInterval === 1) {
-            setIntervalType('hour');
-        } else {
-            setIntervalType('day');
-        }
-
-        // setting frequency
-        if (timeInterval === 1) {
-            setFrequency(4);
-        } else if (timeInterval === 14) {
-            setFrequency(2);
-        } else {
-            setFrequency(1);
-        }
     }, [fromTime]);
 
     const {
@@ -67,10 +49,7 @@ const JobMonitoringApi = () => {
     const {
         data: jobsSummaryTimeline,
         isFetching: jobsSummaryTimelineLoading,
-    } = useGetJobsSummaryTimelineDataQuery(
-        {startTime: time?.startTime, endTime: time?.endTime, intervalType: intervalType, frequency: frequency}, 
-        {skip: skipApiCall}
-        );
+    } = useGetJobsSummaryTimelineDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
     useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));

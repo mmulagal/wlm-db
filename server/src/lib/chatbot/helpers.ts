@@ -15,7 +15,8 @@ import {
     validateFsx,
     validateCloudWatch,
     validateTags,
-    validateDeploymentEnv
+    validateDeploymentEnv,
+    validateAdScenarioType
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -55,7 +56,8 @@ import {
     SQL_SERVER_NAME,
     MULTI_AZ,
     TAGS,
-    DEPLOYMENT_ENVIRONMENT
+    DEPLOYMENT_ENVIRONMENT,
+    ENCRYPTION_KEY
 } from './consts';
 
 const logger = getLogger();
@@ -103,45 +105,35 @@ async function validateParams(
 ): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
-    let validatedParams: Params = {};
-    const promises = [];
+    const validatedParams: Params = {};
+    // const promises = [];
     const errors: Array<ValidationResponse> = [];
     for (const reqParam of schemaParams) {
-        if (reqParam.required !== false) {
-            const keys = Object.keys(reqParam);
-            for (const key of keys) {
-                logger.debug('KEY>>>', key, reqParam[key]);
+        // if (reqParam.required !== false) {
+        const keys = Object.keys(reqParam);
+        for (const key of keys) {
+            logger.debug('KEY>>>', key, reqParam[key]);
 
-                if (Array.isArray(reqParam[key])) {
-                    const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    logger.debug('Response from Recursive Call>>>', recursiveValidationResponse);
-                    validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
-                    if (recursiveValidationResponse?.errors?.length) {
-                        return { errors: recursiveValidationResponse.errors, params: validatedParams };
-                    }
-                } else if (checkIfRequired(reqParam[key].required, params)) {
-                    promises.push(validate(key, params, oldParams));
+            if (checkIfRequired(reqParam[key].required, params)) {
+                const resp = await validate(key, params, oldParams);
+                if ((resp as ValidationResponse)?.status === 'error') {
+                    const currKey = resp.key as string;
+                    delete params[currKey];
+                    delete oldParams[currKey];
+                    delete validatedParams[currKey];
+                    errors.push(resp as ValidationResponse);
+                    return { errors, params: validatedParams };
+                }
+
+                if (resp?.value !== null && resp?.value !== undefined) {
+                    const currKey = resp.key as string;
+                    validatedParams[currKey] = resp.value;
+                    params[currKey] = resp.value;
+                    oldParams[currKey] = resp.value;
                 }
             }
         }
     }
-    const responses = await Promise.all(promises);
-    responses.forEach(resp => {
-        if ((resp as ValidationResponse)?.status === 'error') {
-            const currKey = resp.key as string;
-            delete params[currKey];
-            delete oldParams[currKey];
-            delete validatedParams[currKey];
-            errors.push(resp as ValidationResponse);
-        }
-
-        if (resp?.value !== null && resp?.value !== undefined) {
-            const currKey = resp.key as string;
-            validatedParams[currKey] = resp.value;
-            params[currKey] = resp.value;
-            oldParams[currKey] = resp.value;
-        }
-    });
     return { errors, params: validatedParams };
 }
 
@@ -210,7 +202,10 @@ async function validate(key: string, params: Params, oldParams: Params) {
                 response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
-            case AD_SCENARIO_TYPE:
+            case AD_SCENARIO_TYPE: {
+                response = validateAdScenarioType(params[key], key);
+                break;
+            }
             case DNS_IP:
             case DOMAIN_DNS: {
                 response = await validateDomain(
@@ -280,6 +275,16 @@ async function validate(key: string, params: Params, oldParams: Params) {
             }
             case DEPLOYMENT_ENVIRONMENT: {
                 response = validateDeploymentEnv(key, params[key]);
+                break;
+            }
+            case ENCRYPTION_KEY: {
+                response = await validateFsx(
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[VPC_ID],
+                    params[FSX_FILE_SYSTEM_ID],
+                    key
+                );
                 break;
             }
             default:

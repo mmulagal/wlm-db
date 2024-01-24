@@ -14,6 +14,16 @@ const JobSummaryResponse = Type.Object({
 
 type JobSummaryResponseType = Static<typeof JobSummaryResponse>;
 
+const JobSummaryByTimeRecord = Type.Object({
+    endTime: Type.Number(),
+    completed: Type.Optional(Type.Number()),
+    failed: Type.Optional(Type.Number())
+});
+
+const JobSummaryByTimeResponse = Type.Array(Type.Optional(JobSummaryByTimeRecord));
+
+type JobSummaryByTimeRecordType = Static<typeof JobSummaryByTimeRecord>;
+
 const ListJobsQueryString = Type.Object({
     parentJobId: Type.Optional(Type.String()),
     sort: Type.Optional(Type.String()),
@@ -142,5 +152,7 @@ export {
     JobsParams,
     JobSummaryQueryString,
     JobSummaryResponse,
-    JobSummaryResponseType
+    JobSummaryResponseType,
+    JobSummaryByTimeResponse,
+    JobSummaryByTimeRecordType
 };

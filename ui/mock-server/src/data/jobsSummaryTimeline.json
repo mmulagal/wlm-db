@@ -2,122 +2,122 @@
     "1": 
     [
         {
-            "time": 1705602600,
+            "endTime": 1705602600000,
             "completed": 1,
             "failed": 1
         },
         {
-            "time": 1705606200,
+            "endTime": 1705606200000,
             "completed": 2,
             "failed": 1
         },
         {
-            "time": 1705609800,
+            "endTime": 1705609800000,
             "completed": 2,
             "failed": 0
         },
         {
-            "time": 1705613400,
+            "endTime": 1705613400000,
             "completed": 0,
             "failed": 2
         },
         {
-            "time": 1705617000,
+            "endTime": 1705617000000,
             "completed": 0,
             "failed": 0
         },
         {
-            "time": 1705620600,
-            "completed": 0,
-            "failed": 2
-        },
-        {
-            "time": 1705624200,
-            "completed": 1,
-            "failed": 0
-        },
-        {
-            "time": 1705627800,
-            "completed": 2,
-            "failed": 0
-        },
-        {
-            "time": 1705631400,
+            "endTime": 1705620600000,
             "completed": 0,
             "failed": 2
         },
         {
-            "time": 1705635000,
-            "completed": 0,
+            "endTime": 1705624200000,
+            "completed": 1,
             "failed": 0
         },
         {
-            "time": 1705638600,
-            "completed": 0,
-            "failed": 1
+            "endTime": 1705627800000,
+            "completed": 2,
+            "failed": 0
         },
         {
-            "time": 1705642200,
+            "endTime": 1705631400000,
             "completed": 0,
             "failed": 2
         },
         {
-            "time": 1705645800,
-            "completed": 1,
+            "endTime": 1705635000000,
+            "completed": 0,
             "failed": 0
         },
         {
-            "time": 1705649400,
-            "completed": 1,
-            "failed": 0
-        },
-        {
-            "time": 1705653000,
-            "completed": 2,
-            "failed": 0
-        },
-        {
-            "time": 1705656600,
+            "endTime": 1705638600000,
             "completed": 0,
             "failed": 1
         },
         {
-            "time": 1705660200,
+            "endTime": 1705642200000,
             "completed": 0,
-            "failed": 0
+            "failed": 2
         },
         {
-            "time": 1705663800,
+            "endTime": 1705645800000,
             "completed": 1,
             "failed": 0
         },
         {
-            "time": 1705667400,
-            "completed": 0,
-            "failed": 0
-        },
-        {
-            "time": 1705671000,
+            "endTime": 1705649400000,
             "completed": 1,
             "failed": 0
         },
         {
-            "time": 1705674600,
+            "endTime": 1705653000000,
             "completed": 2,
             "failed": 0
         },
         {
-            "time": 1705678200,
+            "endTime": 1705656600000,
             "completed": 0,
             "failed": 1
         },
         {
-            "time": 1705681800,
+            "endTime": 1705660200000,
             "completed": 0,
             "failed": 0
         },
         {
-            "time": 1705685400,
+            "endTime": 1705663800000,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705667400000,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "endTime": 1705671000000,
+            "completed": 1,
+            "failed": 0
+        },
+        {
+            "endTime": 1705674600000,
+            "completed": 2,
+            "failed": 0
+        },
+        {
+            "endTime": 1705678200000,
+            "completed": 0,
+            "failed": 1
+        },
+        {
+            "endTime": 1705681800000,
+            "completed": 0,
+            "failed": 0
+        },
+        {
+            "endTime": 1705685400000,
             "completed": 1,
             "failed": 1
         } 
@@ -125,43 +125,41 @@
     "7": 
     [
         {
-            "endTime": 1705685400,
+            "endTime": 1705685400000,
             "timeInterval": 19,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705599000,
+            "endTime": 1705599000000,
             "timeInterval": 18,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705512600,
+            "endTime": 1705512600000,
             "timeInterval": 17,
-            "completed": 1,
-            "failed": 1
+            "completed": 1
         },
         {
-            "endTime": 1705426200,
-            "timeInterval": 16,
-            "completed": 0,
-            "failed": 0
+            "endTime": 1705512600000,
+            "timeInterval": 17,
+            "failed": 3
         },
         {
-            "endTime": 1705339800,
+            "endTime": 1705339800000,
             "timeInterval": 15,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1705253400,
+            "endTime": 1705253400000,
             "timeInterval": 14,
             "completed": 3,
             "failed": 3
         },
         {
-            "endTime": 1705167000,
+            "endTime": 1705167000000,
             "timeInterval": 13,
             "completed": 1,
             "failed": 0
@@ -170,85 +168,85 @@
     "14": 
     [
         {
-            "endTime": 1705685400,
+            "endTime": 1705685400000,
             "timeInterval": 19,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705599000,
+            "endTime": 1705599000000,
             "timeInterval": 18,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705512600,
+            "endTime": 1705512600000,
             "timeInterval": 17,
             "completed": 1,
             "failed": 1
         },
         {
-            "endTime": 1705426200,
+            "endTime": 1705426200000,
             "timeInterval": 16,
             "completed": 0,
             "failed": 0
         },
         {
-            "endTime": 1705339800,
+            "endTime": 1705339800000,
             "timeInterval": 15,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1705253400,
+            "endTime": 1705253400000,
             "timeInterval": 14,
             "completed": 3,
             "failed": 3
         },
         {
-            "endTime": 1705167000,
+            "endTime": 1705167000000,
             "timeInterval": 13,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705080600,
+            "endTime": 1705080600000,
             "timeInterval": 12,
             "completed": 4,
             "failed": 0
         },
         {
-            "endTime": 1704994200,
+            "endTime": 1704994200000,
             "timeInterval": 11,
             "completed": 0,
             "failed": 4
         },
         {
-            "endTime": 1704907800,
+            "endTime": 1704907800000,
             "timeInterval": 10,
             "completed": 3,
             "failed": 1
         },
         {
-            "endTime": 1704821400,
+            "endTime": 1704821400000,
             "timeInterval": 9,
             "completed": 0,
             "failed": 1
         },
         {
-            "endTime": 1704735000,
+            "endTime": 1704735000000,
             "timeInterval": 8,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1704648600,
+            "endTime": 1704648600000,
             "timeInterval": 7,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1704562200,
+            "endTime": 1704562200000,
             "timeInterval": 6,
             "completed": 0,
             "failed": 5
@@ -257,181 +255,181 @@
     "30": 
     [
         {
-            "endTime": 1705685400,
+            "endTime": 1705685400000,
             "timeInterval": 19,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705599000,
+            "endTime": 1705599000000,
             "timeInterval": 18,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705512600,
+            "endTime": 1705512600000,
             "timeInterval": 17,
             "completed": 1,
             "failed": 1
         },
         {
-            "endTime": 1705426200,
+            "endTime": 1705426200000,
             "timeInterval": 16,
             "completed": 0,
             "failed": 0
         },
         {
-            "endTime": 1705339800,
+            "endTime": 1705339800000,
             "timeInterval": 15,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1705253400,
+            "endTime": 1705253400000,
             "timeInterval": 14,
             "completed": 3,
             "failed": 3
         },
         {
-            "endTime": 1705167000,
+            "endTime": 1705167000000,
             "timeInterval": 13,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1705080600,
+            "endTime": 1705080600000,
             "timeInterval": 12,
             "completed": 4,
             "failed": 0
         },
         {
-            "endTime": 1704994200,
+            "endTime": 1704994200000,
             "timeInterval": 11,
             "completed": 0,
             "failed": 4
         },
         {
-            "endTime": 1704907800,
+            "endTime": 1704907800000,
             "timeInterval": 10,
             "completed": 3,
             "failed": 1
         },
         {
-            "endTime": 1704821400,
+            "endTime": 1704821400000,
             "timeInterval": 9,
             "completed": 0,
             "failed": 1
         },
         {
-            "endTime": 1704735000,
+            "endTime": 1704735000000,
             "timeInterval": 8,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1704648600,
+            "endTime": 1704648600000,
             "timeInterval": 7,
             "completed": 2,
             "failed": 1
         },
         {
-            "endTime": 1704562200,
+            "endTime": 1704562200000,
             "timeInterval": 6,
             "completed": 0,
             "failed": 5
         },
         {
-            "endTime": 1704475800,
+            "endTime": 1704475800000,
             "timeInterval": 5,
             "completed": 6,
             "failed": 1
         },
         {
-            "endTime": 1704389400,
+            "endTime": 1704389400000,
             "timeInterval": 4,
             "completed": 2,
             "failed": 0
         },
         {
-            "endTime": 1704303000,
+            "endTime": 1704303000000,
             "timeInterval": 3,
             "completed": 2,
             "failed": 0
         },
         {
-            "endTime": 1704216600,
+            "endTime": 1704216600000,
             "timeInterval": 2,
             "completed": 1,
             "failed": 3
         },
         {
-            "endTime": 1704130200,
+            "endTime": 1704130200000,
             "timeInterval": 1,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1704043800,
+            "endTime": 1704043800000,
             "timeInterval": 31,
             "completed": 2,
             "failed": 0
         },
         {
-            "endTime": 1703957400,
+            "endTime": 1703957400000,
             "timeInterval": 30,
             "completed": 3,
             "failed": 1
         },
         {
-            "endTime": 1703871000,
+            "endTime": 1703871000000,
             "timeInterval": 29,
             "completed": 1,
             "failed": 0
         },
         {
-            "endTime": 1703784600,
+            "endTime": 1703784600000,
             "timeInterval": 28,
             "completed": 0,
             "failed": 0
         },
         {
-            "endTime": 1703698200,
+            "endTime": 1703698200000,
             "timeInterval": 27,
             "completed": 0,
             "failed": 2
         },
         {
-            "endTime": 1703611800,
+            "endTime": 1703611800000,
             "timeInterval": 26,
             "completed": 0,
             "failed": 2
         },
         {
-            "endTime": 1703525400,
+            "endTime": 1703525400000,
             "timeInterval": 25,
             "completed": 5,
             "failed": 1
         },
         {
-            "endTime": 1703439000,
+            "endTime": 1703439000000,
             "timeInterval": 24,
             "completed": 3,
             "failed": 1
         },
         {
-            "endTime": 1703352600,
+            "endTime": 1703352600000,
             "timeInterval": 23,
             "completed": 2,
             "failed": 0
         },
         {
-            "endTime": 1703266200,
+            "endTime": 1703266200000,
             "timeInterval": 22,
             "completed": 7,
             "failed": 0
         },
         {
-            "endTime": 1703179800,
+            "endTime": 1703179800000,
             "timeInterval": 21,
             "completed": 7,
             "failed": 0

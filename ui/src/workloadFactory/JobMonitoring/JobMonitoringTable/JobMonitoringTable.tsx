@@ -11,14 +11,13 @@ import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { createJobMonitorCSV, downloadCsv, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import { collapseAllRows, createJobMonitorCSV, downloadCsv, expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
-// import { useRunOnce } from '../../../common/hooks/useRunOnce';
 import { useDispatch } from 'react-redux';
-import { setDownloadJobsList, setDownloadJobsLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
+import { setDownloadJobsList, setDownloadJobsLoading, setSubJobsData, setSubJobsDataLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
 import { useEffect, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { useGetFullJobsListQuery } from '../../../utils/apiService';
+import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 
 const JobMonitoringTable = () => {
     const dispatch = useDispatch();
@@ -29,6 +28,7 @@ const JobMonitoringTable = () => {
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
+    const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
@@ -38,27 +38,29 @@ const JobMonitoringTable = () => {
     const [typeFilter, setTypeFilter] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-    // const [scrollPos, setScrollPos] = useState(0);
+    // to get sub jobs data
+    const [subTaskListApi] = useLazyGetSubTaskListQuery();
 
-    // useRunOnce(() => {
-    //     const handleOuterScroll = () => {
-    //         setScrollPos(currentTable[0].scrollLeft);
-    //     };
+    const getSubJobsData = (jobId: string) => {
+        dispatch(setSubJobsDataLoading(true));
+        if (subJobsData && subJobsData?.subJobs && subJobsData?.id === jobId) {
+            dispatch(setSubJobsDataLoading(false));
+        } else {
+            subTaskListApi(jobId)
+                .then(data => {
+                    dispatch(setSubJobsData(data?.data || {}));
+                    dispatch(setSubJobsDataLoading(false));
+                })
+                .catch((error: any) => {
+                    dispatch(setSubJobsData({}));
+                    dispatch(setSubJobsDataLoading(false));
+                });
+        }
+    };
 
-    //     const currentTable = document.querySelectorAll("[class^='Table-module_horizontal-scroll__']");
-
-    //     if (currentTable[0]) {
-    //         //@ts-ignore
-    //         currentTable[0].addEventListener('scroll', handleOuterScroll);
-    //     }
-
-    //     return () => {
-    //         if (currentTable[0]) {
-    //             //@ts-ignore
-    //             currentTable[0].removeEventListener('scroll', handleOuterScroll);
-    //         }
-    //     };
-    // });
+    useEffect(() => {
+        dispatch(setSubJobsData({}));
+    }, [timeInterval]);
 
     // API call to download job monitoring data where includeSubJobs is true. It will include subtasks also.
     const {
@@ -99,11 +101,10 @@ const JobMonitoringTable = () => {
             let mergedList = [...oldList, ...newList]
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
-            dispatch(clearNotifications());
             if (jmJobsList && !jmJobsList?.nextToken) {
                 // Download logic 
                 downloadJMTable(mergedList);
-
+                dispatch(clearNotifications());
                 // success notification
                 dispatch(
                     addNotification({
@@ -124,16 +125,6 @@ const JobMonitoringTable = () => {
         return <SubJobTable jobId={rowData?.id} statusType={statusType} />;
     };
 
-    const expandRow = (
-        updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
-        rowData: { id: any },
-        currentRowState: { isExpanded: any }
-    ) => {
-        updateRowState(rowData.id)({
-            isExpanded: !currentRowState?.isExpanded
-        });
-    };
-
     const JobsColDefs: ColumnProps[] = [
         {
             id: '0',
@@ -150,7 +141,11 @@ const JobMonitoringTable = () => {
                         <div className={styles.arrow}>
                             <ArrowIcon
                                 className={currentRowState?.isExpanded ? styles['arrow-down'] : ''}
-                                onClick={() => expandRow(updateRowState, rowData, currentRowState)}
+                                onClick={(e: any) => {
+                                    getSubJobsData(rowData?.id); // calling sub jobs api on expand click
+                                    e.stopPropagation();
+                                    expandTableRow(updateRowState, rowData, currentRowState, rowsState);
+                                }}
                             />
                         </div>
                     </>
@@ -171,7 +166,14 @@ const JobMonitoringTable = () => {
             Header: 'Type',
             accessor: 'type',
             width: '160px',
-            filterOptions: 'auto'
+            filterOptions: 'auto',
+            renderCell: (cellData: any) => {
+                if (cellData) {
+                    return cellData.charAt(0).toUpperCase() + cellData.substr(1).toLowerCase();
+                } else {
+                    return cellData;
+                }
+            }
         },
         {
             id: '3',
@@ -277,8 +279,13 @@ const JobMonitoringTable = () => {
         lazyLoadingText: GENERAL.LOADING_DATA
     };
 
+    useEffect(() => {
+        collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
+    }, [timeInterval]);
+
     const downloadJobMonitoring = () => {
         dispatch(setDownloadJobsLoading(true));
+        dispatch(clearNotifications());
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,

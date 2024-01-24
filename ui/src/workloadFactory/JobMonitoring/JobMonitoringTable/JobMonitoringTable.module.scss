@@ -17,6 +17,19 @@
             z-index: 3 !important;
         }
 
+        [class*='Table-module_highlighted-row'] {
+            [class*='Table-module_high-row'] {
+                // background-color: transparent !important;
+                border-bottom: 1px solid var(--content-background) !important;
+                .statusbar {
+                    height: 74px;
+                }
+            }
+            span {
+                background-color: white !important;
+            }
+        }
+
         [class*='Table-module_header-row'] {
             z-index: 3 !important;
         }
@@ -65,7 +78,7 @@
     }
 
     .statusbar {
-        width: 3px;
+        width: 4px;
         margin-left: -24px;
         height: 64px;
 

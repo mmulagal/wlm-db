@@ -90,6 +90,36 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
         const constructDataFailed = () => {
             return timelineData?.failed;
         };
+
+        const setMaxGraceValue = () => {
+            if (
+                timelineData?.completed &&
+                timelineData?.completed.length &&
+                timelineData?.failed &&
+                timelineData?.failed.length
+            ) {
+                const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
+                const maxVal = Math.max(...combinedArr);
+                switch (true) {
+                    case maxVal === 1:
+                    case maxVal === 3:
+                    case maxVal === 7:
+                    case maxVal === 6:
+                        return 1;
+                    case maxVal === 2:
+                    case maxVal === 5:
+                        return 2;
+                    case maxVal === 4:
+                        return 4;
+                    case maxVal < 100:
+                        return 10;
+                    default:
+                        return 100;
+                }
+            } else {
+                return 1;
+            }
+        };
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
             type: 'line',
@@ -173,9 +203,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 5,
+                        grace: setMaxGraceValue(),
+
                         ticks: {
-                            color: isDarkTheme ? '#fff' : '#404040'
+                            color: isDarkTheme ? '#fff' : '#404040',
+
+                            maxTicksLimit: 5
                         }
                         // stacked: true
                     }
@@ -194,11 +227,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
     return (
         <div className={styles.lineChart}>
-            {!timelineData || timelineData?.completed?.length === 0 &&  
-                <div className={styles.noData}>
-                    <NoData />
-                </div>
-            }
+            {!timelineData ||
+                (timelineData?.completed?.length === 0 && (
+                    <div className={styles.noData}>
+                        <NoData />
+                    </div>
+                ))}
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
             {/* <Typography variant="Semibold_14" className={styles.text}>
@@ -209,4 +243,3 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 };
 
 export default LineChart;
-

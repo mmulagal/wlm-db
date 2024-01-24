@@ -7,11 +7,12 @@ import {
     deleteJobsOfAccount,
     deleteOlderJobs,
     getJobCountByStatus,
+    groupJobsByTimeAndStatus,
     listJobs,
     listUniqueJob,
     updateJob
 } from '../../../src/lib/database/job';
-import { ACCOUNT_ID } from '../../utils/consts';
+import { ACCOUNT_ID, THIRTY_DAYS } from '../../utils/consts';
 
 beforeEach(async () => {
     await createJobs(ACCOUNT_ID, [
@@ -230,11 +231,30 @@ describe('List jobs', () => {
     });
 });
 
-describe('Group jobs by status', () => {
+describe('Group jobs', async () => {
+    await createJobs(ACCOUNT_ID, [
+        {
+            account_id: ACCOUNT_ID,
+            name: 'test-job',
+            resource_name: 'test-resource',
+            start_time: new Date(Date.now() - THIRTY_DAYS),
+            end_time: new Date(),
+            status: JOBSTATUS.COMPLETED,
+            type: JOBTYPE.DEPLOYMENT
+        }
+    ]);
+
     it('should group jobs by status', async () => {
         const response = await getJobCountByStatus(ACCOUNT_ID, new Date('2024-01-01').valueOf(), Date.now());
         expect(response[0]).toHaveProperty(['status']);
         expect(response[0]).toHaveProperty(['_count']);
+    });
+
+    it('should group jobs by status and time', async () => {
+        const response = await groupJobsByTimeAndStatus(ACCOUNT_ID, Date.now() - THIRTY_DAYS, Date.now());
+        expect(response[0]).toHaveProperty(['status']);
+        expect(response[0]).toHaveProperty(['_count']);
+        expect(response[0]).toHaveProperty(['end_time']);
     });
 });
 

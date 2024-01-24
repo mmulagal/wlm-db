@@ -8,6 +8,7 @@ import {
     createJobs,
     deleteJobs,
     getJobCountByStatus,
+    groupJobsByTimeAndStatus,
     listJobs,
     listUniqueJob,
     updateJob
@@ -16,14 +17,14 @@ import getLogger from '../../utils/logger';
 import { trimAccountIdForDemo } from './database-operations';
 import {
     JobRecordType,
+    JobSummaryByTimeRecordType,
     JobSummaryResponseType,
     ListJobsQueryType,
     UpdateJobRecordType
 } from '../../routes/types/jobs.types';
+import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
 
 const logger = getLogger();
-
-const DEFAULT_TIME_RANGE = '30d';
 
 interface Job extends JobRecordType {
     id: string;
@@ -36,9 +37,14 @@ interface JobSummary {
 }
 interface JobGroup {
     status: string;
+    end_time?: Date;
     _count: {
         _all: number;
     };
+}
+
+interface JobSummaryByTime extends JobSummaryByTimeRecordType {
+    [key: string]: number | undefined;
 }
 
 type JobWithSubJobsDbSchema = jobDbSchema & { subJobs?: jobDbSchema[] };
@@ -76,6 +82,10 @@ function formatJob(job: JobWithSubJobsDbSchema): JobWithSubJobs {
     };
 }
 
+function isValidStartTime(startTime: number) {
+    return Number(startTime) && !Number.isNaN(Number(startTime));
+}
+
 function formatJobDbSchema(job: JobRecordType) {
     const {
         accountId,
@@ -98,7 +108,7 @@ function formatJobDbSchema(job: JobRecordType) {
         name,
         description,
         error,
-        start_time: new Date(startTime),
+        start_time: isValidStartTime(startTime) ? new Date(startTime) : new Date(),
         initiator,
         end_time: endTime ? new Date(endTime) : undefined,
         parent_job_id: parentJobId
@@ -253,7 +263,7 @@ async function getJobSummary(
     }
 
     // Default time range is 30 days
-    startTime = startTime || Date.now() - ms(DEFAULT_TIME_RANGE);
+    startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
     endTime = endTime || Date.now();
 
     const groups = await getJobCountByStatus(accountId, startTime, endTime);
@@ -276,4 +286,46 @@ async function getJobSummary(
     }, defaultSummary) as JobSummaryResponseType;
 }
 
-export { Job, registerJobs, getJobs, getJobDetails, updateJobDetails, deleteJobsWithAllSubJobs, getJobSummary };
+async function getJobSummaryByTime(
+    accountId: string,
+    startTime: number | undefined,
+    endTime: number | undefined
+): Promise<JobSummaryByTimeRecordType[]> {
+    logger.info('Getting job summary by time', { accountId, startTime, endTime });
+
+    if (startTime && endTime && startTime > endTime) {
+        throw createError(400, 'Start time cannot be greater than end time');
+    }
+
+    // Default time range is 30 days
+    startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
+    endTime = endTime || Date.now();
+
+    const groups = (await groupJobsByTimeAndStatus(accountId, startTime, endTime)) as JobGroup[];
+
+    return groups.reduce((acc: JobSummaryByTime[], group: JobGroup) => {
+        const status = camelCase(group?.status?.toLowerCase());
+        const count = group?._count?._all;
+        const endtime = new Date(group.end_time!)?.valueOf();
+
+        const existingObj = acc.find(el => el.endTime === endtime);
+        if (existingObj) {
+            existingObj[status] = count;
+        } else {
+            acc.push({ endTime: endtime, [status]: count });
+        }
+
+        return acc;
+    }, []);
+}
+
+export {
+    Job,
+    registerJobs,
+    getJobs,
+    getJobDetails,
+    updateJobDetails,
+    deleteJobsWithAllSubJobs,
+    getJobSummary,
+    getJobSummaryByTime
+};
