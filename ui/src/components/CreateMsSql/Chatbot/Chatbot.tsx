@@ -206,6 +206,7 @@ const Chatbot = () => {
     }, [loadConfigClicked]);
 
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
+        let notificationMsg: string | number | NodeJS.Timeout | undefined;
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
         const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
         if (stackName && stackName.includes('/')) {
@@ -218,7 +219,10 @@ const Chatbot = () => {
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
                     {(
                         <>
-                            <Button Component="button" variant="text" onClick={() => navigate('../job-monitor')}>
+                            <Button Component="button" variant="text" onClick={() => {
+                                    clearTimeout(notificationMsg);
+                                    navigate('../job-monitor')
+                                }}>
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
                             </Button>
                         </>
@@ -258,7 +262,7 @@ const Chatbot = () => {
             );
         }
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
-        setTimeout(() => {
+        notificationMsg = setTimeout(() => {
             isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
         }, 3000);
     };

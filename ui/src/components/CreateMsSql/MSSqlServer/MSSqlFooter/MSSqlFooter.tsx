@@ -16,6 +16,7 @@ const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    // const []
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
@@ -51,6 +52,7 @@ const MSSqlFooter = () => {
     };
 
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
+        let notificationMsg: string | number | NodeJS.Timeout | undefined;
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
         if (stackName && stackName.includes('/')) {
             stackName = stackName.split('/')[1];
@@ -62,7 +64,10 @@ const MSSqlFooter = () => {
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
                     {(
                         <>
-                            <Button Component="button" variant="text" onClick={() => navigate('../job-monitor')}>
+                            <Button Component="button" variant="text" onClick={() => {
+                                    clearTimeout(notificationMsg);
+                                    navigate('../job-monitor')
+                                }}>
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
                             </Button>
                         </>
@@ -102,7 +107,7 @@ const MSSqlFooter = () => {
             );
         }
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
-        setTimeout(() => {
+        notificationMsg = setTimeout(() => {
             isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
         }, 3000);
     };
