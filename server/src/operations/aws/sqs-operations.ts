@@ -871,6 +871,8 @@ async function processCloudFormationMessages() {
                     })
                 );
                 processCloudFormationMessages();
+            } else {
+                processCloudFormationMessages();
             }
         } catch (err: any) {
             if (err.code === ERROR_CODE_SQS_NON_EXISTENT_QUEUE) {
