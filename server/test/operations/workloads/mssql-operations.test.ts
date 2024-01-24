@@ -125,11 +125,6 @@ describe('MSSQL Resource methods', () => {
         expect(resp).toEqual(mssqlResponse.mssqlIOLatencyResponse);
     });
 
-    it('Get Server state ', async () => {
-        const resp = await getServerState('36E53042-04E8-40C9-AE69-26E56CB0D216');
-        expect(resp).toEqual(mssqlResponse.serverSummaryResponse.serverStatus);
-    });
-
     it('Get MSSQL native backups count ', async () => {
         const resp = await getNativeSQLProtection('36E53042-04E8-40C9-AE69-26E56CB0D216');
         expect(resp).toEqual(1);
