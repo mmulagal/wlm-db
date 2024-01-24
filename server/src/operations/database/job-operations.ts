@@ -111,7 +111,7 @@ function formatJobDbSchema(job: JobRecordType) {
         start_time: isValidStartTime(startTime) ? new Date(startTime) : new Date(),
         initiator,
         end_time: endTime ? new Date(endTime) : undefined,
-        parent_job_id: parentJobId
+        parent_job_id: parentJobId || undefined
     };
 }
 

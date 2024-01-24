@@ -282,12 +282,7 @@ Parameters:
   {{WlmdbAwsAccountId}}
   
   {{MetadataParam}}
-   
-  MetadataParam:
-    Description: Metadata param used for internal audit( DO NOT EDIT) 
-    Type: CommaDelimitedList
-    NoEcho: true
-    
+       
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -931,6 +926,7 @@ Resources:
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
+      MetadataParam: !Ref MetadataParam
 
       FSxFileSystemId:
           !If
