@@ -186,6 +186,8 @@ async function deleteOlderJobs(olderDate: number) {
 async function getJobCountByStatus(accountId: string, startTime: number, endTime: number) {
     logger.info('Getting Job Count By Status', { accountId, startTime, endTime });
 
+    accountId = checkAccount(accountId);
+
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
@@ -204,6 +206,8 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
 
 async function groupJobsByTimeAndStatus(accountId: string, startTime: number, endTime: number) {
     logger.info('Group Jobs By Time And Status', { accountId, startTime, endTime });
+
+    accountId = checkAccount(accountId);
 
     return prisma.client.job.groupBy({
         where: {
