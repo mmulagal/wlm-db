@@ -29,6 +29,7 @@ import {
     createDeployment,
     createEvent,
     createResource,
+    listEvents,
     updateDeployment,
     upsertDeployment
 } from '../../lib/database/db';
@@ -208,8 +209,27 @@ async function createOrUpdateChildJobs(
     timestamp: number,
     resourceStatusReason: string,
     physicalResourceId: string,
-    logicalResourceId: string
+    logicalResourceId: string,
+    checkEventsOrder: boolean = false,
+    stackName?: string
 ) {
+    // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
+    /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
+     * arrive quickly and since there is no sequence, we might end up processing CREATE_IN_PROGRESS after CREATE_COMPLETE.
+     *
+     * To reflect right status, look at all the events for the resource in event table ordered in descending order of time.
+     * The first element returned will be the latest status transition.
+     */
+    if (checkEventsOrder) {
+        const [event] = await listEvents(accountId, stackName, logicalResourceId);
+        if (event) {
+            jobStatus = event.event_status.includes('COMPLETE')
+                ? JOBSTATUS.COMPLETED
+                : event.event_status.includes('IN_PROGRESS')
+                ? JOBSTATUS.IN_PROGRESS
+                : JOBSTATUS.FAILED;
+        }
+    }
     const [childJob] = await listJobs(accountId, parentJob.id, undefined, undefined, childJobName);
     if (!childJob && parentJob.name !== `Deploying ${logicalResourceId}`) {
         logger.info('Create child level job:', {
@@ -263,7 +283,7 @@ async function createOrUpdateChildJobs(
 }
 async function processCloudFormationMessages() {
     logger.info('Processing cloud formation messages');
-    // eslint-disable-next-line no-constant-condition
+
     if (process.env.AWS_ROLE_ARN) {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
@@ -825,7 +845,9 @@ async function processCloudFormationMessages() {
                                         messageTimestamp,
                                         resourceStatusReason,
                                         physicalResourceId,
-                                        logicalResourceId
+                                        logicalResourceId,
+                                        true,
+                                        stackName
                                     );
                                 }
 
