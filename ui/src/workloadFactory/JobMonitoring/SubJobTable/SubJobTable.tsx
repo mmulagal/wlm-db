@@ -59,7 +59,10 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             accessor: 'name',
             isSortable: true,
             width: '230px',
-            isSticky: true
+            isSticky: true,
+            renderCell: (cellData: any) => {
+                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
+            }
         },
         {
             id: '2',
