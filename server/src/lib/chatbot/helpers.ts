@@ -213,6 +213,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
                     params[REGION],
                     params[DOMAIN_DNS],
                     params[DNS_IP],
+                    params[AD_SCENARIO_TYPE],
                     key
                 );
                 break;
