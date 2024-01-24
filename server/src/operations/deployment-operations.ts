@@ -78,6 +78,7 @@ import {
     SQL_HOST_NAME
 } from '../utils/consts';
 import {
+    createJobMockData,
     calculateSQLandWindowsVersion,
     deployedStackUrl,
     derivePropertiesFromARN,
@@ -98,6 +99,7 @@ import { createDeployment, createResource } from '../lib/database/db';
 import { Metadata, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
+import { createJobs } from '../lib/database/job';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -713,7 +715,8 @@ async function deployCloudFormationTemplate(
             stackName,
             region,
             credentialsId,
-            sqlConfiguration?.sqlDeploymentMode
+            sqlConfiguration?.sqlDeploymentMode,
+            fsxConfiguration?.fsxFileSystemId
         );
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
@@ -782,15 +785,17 @@ async function createDeploymentMockDataInDB(
     stackName: string,
     region: string,
     credentialId: string,
-    sqlDeploymentMode: string
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined
 ) {
-    logger.info('create deployment mock data in database', {
+    logger.info('create deployment, resource and job table mock data in database', {
         accountId,
         stackId,
         stackName,
         region,
         credentialId,
-        sqlDeploymentMode
+        sqlDeploymentMode,
+        fsxFileSystemId
     });
 
     const cloudProviderId = randomize('0', 8);
@@ -843,6 +848,17 @@ async function createDeploymentMockDataInDB(
         region,
         metadata
     });
+
+    const data = await createJobMockData(
+        accountId,
+        resourceName,
+        stackName,
+        sqlDeploymentMode,
+        fsxFileSystemId,
+        cloudProviderId,
+        region
+    );
+    await createJobs(accountId, data);
 }
 
 export {

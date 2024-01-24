@@ -4,7 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import crypto, { randomUUID } from 'crypto';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -24,6 +24,14 @@ import {
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
+import {
+    fsxStackData,
+    masterStackData,
+    sqlFciServerStackData,
+    sqlStandaloneStackData,
+    validationStack1Data,
+    validationStack2Data
+} from './job-monitoring-mockdata';
 
 const logger = getLogger();
 
@@ -280,6 +288,88 @@ function isActiveInstance() {
     return !process.env.hasOwnProperty('isActive') || process.env.isActive === 'true';
 }
 
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
+function checkAccount(accountId: string) {
+    logger.info('checking account id', accountId);
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const userId = getSubjectFromBearerToken();
+        return userId ? `${accountId}_${userId}` : accountId;
+    }
+    return accountId;
+}
+
+async function createJobMockData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined,
+    cloudProviderId: string,
+    region: string
+) {
+    logger.info('Generate mock data for job table', accountId, resourceName, stackName);
+    accountId = checkAccount(accountId);
+    const masterStackId = randomUUID();
+    const serverStackId = randomUUID();
+    const fsxStackId = randomUUID();
+    const validationStack1Id = randomUUID();
+    const validationStack2Id = randomUUID();
+
+    const data: any[] = [];
+
+    const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
+
+    data.push(
+        ...masterStackData(accountId, resourceName, stackName, masterStackId),
+        ...fsxStackData(
+            accountId,
+            resourceName,
+            stackName,
+            fsxStackId,
+            masterStackId,
+            cloudProviderId,
+            fsxType,
+            region
+        ),
+        ...validationStack1Data(
+            accountId,
+            resourceName,
+            stackName,
+            validationStack1Id,
+            masterStackId,
+            cloudProviderId,
+            region
+        )
+    );
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        data.push(
+            ...sqlFciServerStackData(accountId, resourceName, stackName, serverStackId, masterStackId),
+            ...validationStack2Data(
+                accountId,
+                resourceName,
+                stackName,
+                validationStack2Id,
+                masterStackId,
+                cloudProviderId,
+                region
+            )
+        );
+    } else {
+        data.push(
+            ...sqlStandaloneStackData(
+                accountId,
+                resourceName,
+                stackName,
+                serverStackId,
+                masterStackId,
+                cloudProviderId,
+                region
+            )
+        );
+    }
+    return data;
+}
 function calculateSQLandWindowsVersion(sqlAmiName: string) {
     logger.info('Calculate sql and windows version from the sql AMI name', sqlAmiName);
 
@@ -319,5 +409,7 @@ export {
     deployedStackUrl,
     generateRandomIP,
     isActiveInstance,
+    checkAccount,
+    createJobMockData,
     calculateSQLandWindowsVersion
 };
