@@ -210,7 +210,9 @@ async function groupJobsByTimeAndStatus(accountId: string, startTime: number, en
             account_id: accountId,
             parent_job_id: null,
             end_time: {
-                not: null,
+                not: null
+            },
+            start_time: {
                 gte: new Date(startTime),
                 lte: new Date(endTime)
             }
