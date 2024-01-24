@@ -791,7 +791,7 @@ async function getDatabaseHostSummary(
                 disk: diskUtilizationData! || {}
             };
         }
-        if (isEmpty(errormessages)) {
+        if (!isEmpty(errormessages)) {
             databaseHostDetails.errors = errormessages;
         }
     } catch (error) {

@@ -71,7 +71,9 @@ async function getSqsMessages(region: string, queueUrl: string) {
     };
 
     const { Messages } = await receiveMessage(region, input);
-    sqsMessages.push(Messages);
+    if (!isEmpty(Messages)) {
+        sqsMessages.push(Messages);
+    }
 
     return sqsMessages.flat();
 }
@@ -299,7 +301,7 @@ async function processCloudFormationMessages() {
         try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
             logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
-            if (sqsMessages) {
+            if (!isEmpty(sqsMessages)) {
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
@@ -837,18 +839,22 @@ async function processCloudFormationMessages() {
                                         level2JobName
                                     );
                                     const level3JobName = `Deploying ${logicalResourceId}(${resourceType})`;
-                                    await createOrUpdateChildJobs(
-                                        accountId,
-                                        level2Job,
-                                        level3JobName,
-                                        jobStatus,
-                                        messageTimestamp,
-                                        resourceStatusReason,
-                                        physicalResourceId,
-                                        logicalResourceId,
-                                        true,
-                                        stackName
-                                    );
+                                    if (!level2Job) {
+                                        logger.error(`No job found for ${stackName}`);
+                                    } else {
+                                        await createOrUpdateChildJobs(
+                                            accountId,
+                                            level2Job,
+                                            level3JobName,
+                                            jobStatus,
+                                            messageTimestamp,
+                                            resourceStatusReason,
+                                            physicalResourceId,
+                                            logicalResourceId,
+                                            true,
+                                            stackName
+                                        );
+                                    }
                                 }
 
                                 await deleteMessage(DEFAULT_AWS_REGION, {
