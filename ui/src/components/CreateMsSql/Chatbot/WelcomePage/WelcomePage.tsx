@@ -4,12 +4,15 @@ import { ReactComponent as BedrockPoweredIcon } from '../../../../assets/bedrock
 import styles from './WelcomePage.module.scss';
 import { CHATBOT_WELCOME_CARDS } from '../../../../utils/consts';
 import { CHATBOT } from '../../../../utils/appConstants';
+import { useDispatch } from 'react-redux';
+import { setLatestIntentMsg } from '../../../../store/chatbot/chatbotSlice';
 
 type WelcomePagePropTypes = {
     handleSendMsg: (msg: string | undefined) => void;
 };
 
 const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
+    const dispatch = useDispatch();
     return (
         <div className={styles['welcome-image-container']}>
             <BedrockPoweredIcon />
@@ -21,7 +24,13 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
             </div>
             <div className={styles['welcome-cards-container']}>
                 <div className={styles['card-row']}>
-                    <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[0])}>
+                    <div
+                        className={styles['card']}
+                        onClick={() => {
+                            handleSendMsg(CHATBOT_WELCOME_CARDS[0]);
+                            dispatch(setLatestIntentMsg(CHATBOT_WELCOME_CARDS[0]));
+                        }}
+                    >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
                             {CHATBOT_WELCOME_CARDS[0]}
                         </Typography>

@@ -13,6 +13,7 @@ import { openCredentialTab } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
 import CardComponent from './CardComponent/CardComponent';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
 type optionsType = {
     value?: string | number;
@@ -74,6 +75,149 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
         }
     }, [fieldsArr]);
 
+    const ValidationCriteria = () => {
+        const selectKey = fieldsArr[0]?.key;
+        if (selectKey === 'fsxUsername') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.USERNAME_TOOLTIP3}
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'fsxPassword') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_FSX_1}
+                        </Typography>
+                    </div>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_FSX_2}
+                        </Typography>
+                    </div>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_FSX_3}
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'serviceAccountName') {
+            return (
+                <div className={styles.userNameTooltip}>
+                    <div className={styles.list}>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP3}</div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        if (selectKey === 'serviceAccountPassword') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.list}>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>
+                                <Typography className={styles.infoMsg} variant="Regular_14">
+                                    {GENERAL.PASSWORD_CRED_1}
+                                </Typography>
+                            </div>
+                        </div>
+                        <div className={styles.subList}>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_1}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_2}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_3}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_4}
+                                    </Typography>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>
+                                <Typography className={styles.infoMsg} variant="Regular_14">
+                                    {GENERAL.PASSWORD_CRED_4}
+                                </Typography>
+                            </div>
+                        </div>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'domainUsername') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.USERNAME_TOOLTIP3}
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'domainPassword') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_MIN_LENGTH_8}
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        return null;
+    };
+
     return (
         <>
             {(!isLastMessage || !isUserInputRequired || !isBotReplying) && (
@@ -128,6 +272,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                             }`}
                                         >
                                             {`${fieldsArr[0].message}`}
+                                            <ValidationCriteria />
                                         </Typography>
                                     )}
                                     {msgObj.active && item.type === 'tags' && (
@@ -157,6 +302,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                 }`}
                             >
                                 {`${fieldsArr[0].message}`}
+                                <ValidationCriteria />
                             </Typography>
                         )
                     ) : msgObj.active && msgObj.type === 'confirm' ? (
@@ -177,6 +323,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                             }`}
                         >
                             {`${msgObj.msg}`}
+                            <ValidationCriteria />
                         </Typography>
                     )}
                 </div>

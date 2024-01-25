@@ -253,6 +253,7 @@ export const GENERAL = {
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
     USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
+    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example: "John Doe"',
 
     PASSWORD_MIN_LENGTH_8: 'Password must be atleast 8 characters long',
     PASSWORD_CRED_1:
