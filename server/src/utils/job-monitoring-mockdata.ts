@@ -7,7 +7,7 @@ function masterStackData(accountId: string, resourceName: string, stackName: str
         {
             id: masterStackId,
             account_id: accountId,
-            name: `Microsoft SQL server deployment with stack ${stackName}`,
+            name: `Microsoft SQL server deployment with stack ${stackName};href:mockLink`,
             status: JOBSTATUS.COMPLETED,
             resource_name: resourceName,
             type: JOBTYPE.DEPLOYMENT,
