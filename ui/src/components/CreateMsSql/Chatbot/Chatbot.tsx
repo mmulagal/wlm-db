@@ -164,6 +164,16 @@ const Chatbot = () => {
                             } else {
                                 setPayloadContent(intent.validatedJson);
                                 mapParamsToPayload(intent.params);
+                                dispatch(
+                                    setSuggestionBubbles({
+                                        list: [{ label: 'Deploy', value: 'deploy' }],
+                                        onBubbleClick: (label?: string, value?: string) => {
+                                            if (value === 'deploy') {
+                                                handleCreate();
+                                            }
+                                        }
+                                    })
+                                );
                             }
                             setIsPayloadReady(intent.complete);
                         }
@@ -405,7 +415,7 @@ const Chatbot = () => {
                         const zones = azData ? Object.keys(azData) : [];
                         const selectedAzNode2 = zones.filter(val => val === value)[0];
                         const subnetsList: Array<string> = [];
-                        azData[selectedAzNode2]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                        azData?.[selectedAzNode2]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
                         const data: any = {
                             availabilityZone: selectedAzNode2,
                             subnets: subnetsList
@@ -716,10 +726,16 @@ const Chatbot = () => {
         sendMsgToBot({
             payload: {
                 prompt: wrapContext(
-                    `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`
+                    `DeployMsSql with params: ${JSON.stringify({
+                        ...getChatbotParamsFromPayload(mssqlFormData),
+                        deploymentEnvironment: 'CUSTOM'
+                    })}`
                 ),
                 intent: 'DeployMsSql',
-                params: getChatbotParamsFromPayload(mssqlFormData)
+                params: {
+                    ...getChatbotParamsFromPayload(mssqlFormData),
+                    deploymentEnvironment: 'CUSTOM'
+                }
             }
         })
             .then((res: any) => {
@@ -733,6 +749,16 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
+                            dispatch(
+                                setSuggestionBubbles({
+                                    list: [{ label: 'Deploy', value: 'deploy' }],
+                                    onBubbleClick: (label?: string, value?: string) => {
+                                        if (value === 'deploy') {
+                                            handleCreate();
+                                        }
+                                    }
+                                })
+                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
