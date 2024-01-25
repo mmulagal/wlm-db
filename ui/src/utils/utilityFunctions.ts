@@ -133,7 +133,7 @@ export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
 };
 
 export const dbPassVal = (password: string) => {
-    if (password.length) {
+    if (password?.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
         if (state.auth.isDemoMode) {
