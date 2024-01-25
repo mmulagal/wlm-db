@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `job` MODIFY `name` VARCHAR(1000) NOT NULL;
