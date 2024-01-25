@@ -33,7 +33,8 @@ import {
     SINGLE_AZ_SMALL,
     M5_XL,
     SQL_SERVER_NAME,
-    ENCRYPTION_KEY
+    ENCRYPTION_KEY,
+    THROUGHPUT
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -597,7 +598,7 @@ function validateDbSize(size: number, key: string) {
 
 function validateThroughPut(iops: number, key: string) {
     logger.debug('Validate ThroughPut', { iops });
-    return { key, value: 128 };
+    return { key, value: THROUGHPUT };
 }
 
 async function validateSecurityGroup(
