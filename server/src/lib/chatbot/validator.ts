@@ -33,7 +33,8 @@ import {
     SINGLE_AZ_SMALL,
     M5_XL,
     SQL_SERVER_NAME,
-    ENCRYPTION_KEY
+    ENCRYPTION_KEY,
+    THROUGHPUT
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
@@ -380,36 +381,10 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
             (name.includes('Enterprise') || name.includes('Standard'))
     );
 
-    const errorObj = {
-        key,
-        status: 'error',
-        allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
-            label: name,
-            value: amiId,
-            metadata: {
-                description
-            }
-        })),
-        data: filteredAmis
-    };
-
-    if (!imageId) {
-        return {
-            ...errorObj,
-            message: 'Select an AWS AMI for the database.'
-        };
-    }
-
-    const isValidAmi = filteredAmis?.find(ami => ami.imageId === imageId);
-    if (!isValidAmi) {
-        return {
-            ...errorObj,
-            message: 'The image id that you provided is not correct. Please select a valid image id.'
-        };
-    }
+    // setting up the first value from the array list as the default ami selected
     return {
         key,
-        value: isValidAmi.imageId
+        value: filteredAmis[0]?.imageId
     };
 }
 
@@ -551,7 +526,7 @@ async function validateDomain(
     logger.debug('Validate Domain DNS', { credentialsId, region, domainDnsname, adType, key });
     const { directories } = await getAdsList(credentialsId, region);
     if (!domainDnsname && adType === USER_MANAGED_AD) {
-        return { status: 'error', message: 'Enter a domain name', type: 'text' };
+        return { key, status: 'error', message: 'Enter a domain name', type: 'text' };
     }
     if (!domainDnsname && adType === AWS_MANAGED_AD) {
         return {
@@ -610,7 +585,7 @@ function validateDbSize(size: number, key: string) {
             key,
             status: 'error',
             message:
-                'Specify the SQL data drive size only. The provisioning for long drive, tempdb and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration.',
+                'Enter a data drive size\nSpecify the SQL data drive size only. The provisioning for long drive, tempdb and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration.',
             type: 'number'
         };
     }
@@ -623,30 +598,7 @@ function validateDbSize(size: number, key: string) {
 
 function validateThroughPut(iops: number, key: string) {
     logger.debug('Validate ThroughPut', { iops });
-    const ThroughPut = [];
-    for (let i = 0; i <= 5; i++) {
-        ThroughPut.push({ label: `${128 * 2 ** i} Mbps`, value: 128 * 2 ** i });
-    }
-    if (!iops) {
-        return {
-            key,
-            status: 'error',
-            message: 'Select a throughput capacity.',
-            allowedValues: ThroughPut
-        };
-    }
-
-    const isValid = ThroughPut.find(({ value }) => value === iops);
-    if (!isValid) {
-        return {
-            key,
-            status: 'error',
-            message:
-                'The throughput capacity value that you provided is not correct. Please provide a valid throughput capacity.',
-            allowedValues: ThroughPut
-        };
-    }
-    return { key, value: isValid.value };
+    return { key, value: THROUGHPUT };
 }
 
 async function validateSecurityGroup(

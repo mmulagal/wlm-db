@@ -59,6 +59,7 @@ const CUSTOM = 'CUSTOM';
 
 const M5_2XL = 'm5.2xlarge';
 const M5_XL = 'm5.xlarge';
+const THROUGHPUT = 128;
 
 const CHATBOT_UI_PARAMS_FSX = [
     {
@@ -345,5 +346,6 @@ export {
     MULTI_AZ_SMALL,
     SINGLE_AZ_SMALL,
     M5_XL,
-    ENCRYPTION_KEY
+    ENCRYPTION_KEY,
+    THROUGHPUT
 };
