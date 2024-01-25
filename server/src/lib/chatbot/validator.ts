@@ -70,7 +70,7 @@ async function validateCredentials(credentialsId: string, key: string) {
     if (!credentialsId) {
         return {
             ...errorObj,
-            message: 'Select a credential to proceed further'
+            message: 'Select AWS credentials to use for the deployment'
         };
     }
 
@@ -110,7 +110,7 @@ async function validateRegion(credentialsId: string, value: string, key: string)
     if (!value) {
         return {
             ...errorObj,
-            message: 'Select an AWS region for the database.'
+            message: 'Select a region'
         };
     }
 
@@ -171,7 +171,7 @@ async function validateVpcId(
     if (!vpcId) {
         return {
             ...errorObj,
-            message: key === VPC_ID ? 'Select a VPC for the database.' : 'Select a VPC CIDR for the database.'
+            message: key === VPC_ID ? 'Select a VPC' : 'Select a VPC CIDR for the database.'
         };
     }
 
@@ -202,7 +202,7 @@ async function validateVpcId(
             if (!az1) {
                 return {
                     ...errorObj,
-                    message: 'Select an Availability Zone for the primary SQL node.'
+                    message: 'Select an Availability Zone for the primary SQL node 1'
                 };
             }
             const subnets = vpcs?.map(vpc => vpc?.subnets);
@@ -226,7 +226,7 @@ async function validateVpcId(
             if (!az2) {
                 return {
                     ...errorObj,
-                    message: 'Select an Availability Zone for the secondary SQL node.'
+                    message: 'Select an Availability Zone for the primary SQL node 2'
                 };
             }
 
@@ -234,7 +234,7 @@ async function validateVpcId(
                 return {
                     key,
                     status: 'error',
-                    message: 'Please select a different availability zone for the secondary sql node'
+                    message: 'Please select a different availability zone for the primary SQL node 2'
                 };
             }
             const subnets = vpcs?.map(vpc => vpc?.subnets);
@@ -271,7 +271,7 @@ async function validateVpcId(
             if ((key === PRIVATE_SUBNET_1 && !subnet1) || (key === PRIVATE_SUBNET_2 && !subnet2)) {
                 return {
                     ...errorObj,
-                    message: `Select the ${key === PRIVATE_SUBNET_1 ? 'primary' : 'secondary'} subnet id`
+                    message: `Select a subnet for AZ ${key === PRIVATE_SUBNET_1 ? 'node 1' : 'node 2'}`
                 };
             }
 
@@ -345,7 +345,7 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
     if (!keyName) {
         return {
             ...errorObj,
-            message: 'Select a key pair so that you can securely connect to your EC2 instance.'
+            message: 'Select a key pair'
         };
     }
 
@@ -424,11 +424,10 @@ function validateAdScenarioType(type: string, key: string) {
     return {
         key,
         status: 'error',
-        message:
-            'The active directory type that you provided is not correct. Please provide a valid active directory type',
+        message: 'Select a domain type',
         allowedValues: [
-            { label: 'Select an existing domain', value: AWS_MANAGED_AD },
-            { label: 'Add new domain', value: USER_MANAGED_AD }
+            { label: 'Add new domain', value: USER_MANAGED_AD },
+            { label: 'Select an existing domain', value: AWS_MANAGED_AD }
         ]
     };
 }
@@ -482,7 +481,7 @@ async function validateFsx(credentialsId: string, region: string, vpcId: string,
     if (!fsxId) {
         return {
             ...errorObj,
-            message: 'Select a FSxN name.'
+            message: 'Select a file system'
         };
     }
     const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
@@ -546,16 +545,19 @@ async function validateDomain(
     region: string,
     domainDnsname: string,
     dnsIp: string,
+    adType: string,
     key: string
 ) {
-    logger.debug('Validate Domain DNS', { credentialsId, region, domainDnsname, key });
+    logger.debug('Validate Domain DNS', { credentialsId, region, domainDnsname, adType, key });
     const { directories } = await getAdsList(credentialsId, region);
-    if (!domainDnsname) {
+    if (!domainDnsname && adType === USER_MANAGED_AD) {
+        return { status: 'error', message: 'Enter a domain name', type: 'text' };
+    }
+    if (!domainDnsname && adType === AWS_MANAGED_AD) {
         return {
             key,
             status: 'error',
-            message: 'Select the domain DNS name.',
-            allowCreate: true,
+            message: 'Select a domain',
             allowedValues: uniqBy(
                 directories.map(({ domainName }) => ({
                     label: domainName,
@@ -566,7 +568,7 @@ async function validateDomain(
             data: directories
         };
     }
-    const errorResponse = { status: 'error', message: 'Enter the value of domain ip address', type: 'text' };
+    const errorResponse = { status: 'error', message: 'Enter the DNS IP address', type: 'text' };
     const isAWSManagedDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
     switch (key) {
         case DOMAIN_DNS:
@@ -593,7 +595,7 @@ function validateText(text: string, key: string, fsxType?: string) {
         return {
             key,
             status: 'error',
-            message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
+            message: `${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
             type: key.toLowerCase().includes('password') ? 'password' : 'text',
             ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
         };
@@ -607,7 +609,8 @@ function validateDbSize(size: number, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Enter a value for data drive size(GiB) between 120 to 133120',
+            message:
+                'Specify the SQL data drive size only. The provisioning for long drive, tempdb and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration.',
             type: 'number'
         };
     }
@@ -694,7 +697,7 @@ async function validateSqlDeploymentType(deploymentType: string, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Select database deployment model.',
+            message: 'Select a database deployment model',
             allowedValues: [
                 { label: 'Single Instance', value: STANDALONE },
                 { label: 'Failover Cluster Instance (FCI)', value: FCI }
@@ -709,10 +712,10 @@ function checkFsxType(type: string, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Select a FSx type.',
+            message: 'Select an FSx for ONTAP file system',
             allowedValues: [
-                { label: 'New', value: NEW },
-                { label: 'Existing', value: EXISTING }
+                { label: 'Create a new file system', value: NEW },
+                { label: 'Select an existing file system', value: EXISTING }
             ]
         };
     }
@@ -733,7 +736,7 @@ function validateDeploymentEnv(key: string, value: string) {
     return {
         key,
         status: 'error',
-        message: 'Select a deployment environment',
+        message: 'Select a configuration model',
         allowedValues: [
             {
                 label: 'Production model',
@@ -741,7 +744,7 @@ function validateDeploymentEnv(key: string, value: string) {
                 data: [
                     { label: 'SQL Deployment model', value: FCI_ABBREVIATION },
                     { label: 'Deployment model', value: MULTI_AZ_SMALL },
-                    { label: 'Database size', value: 500 },
+                    { label: 'Database size', value: '500 GiB' },
                     { label: 'Instance type', value: M5_2XL }
                 ]
             },
@@ -751,7 +754,7 @@ function validateDeploymentEnv(key: string, value: string) {
                 data: [
                     { label: 'SQL Deployment model', value: 'Standalone' },
                     { label: 'Deployment model', value: SINGLE_AZ_SMALL },
-                    { label: 'Database size', value: 100 },
+                    { label: 'Database size', value: '100 GiB' },
                     { label: 'Instance type', value: M5_XL }
                 ]
             },

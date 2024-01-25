@@ -268,23 +268,23 @@ const KEY_LABEL_MAP = {
     [KEY_PAIR_NAME]: 'key pair name',
     [SQL_AMI]: 'sql ami id',
     [AD_SCENARIO_TYPE]: 'active directory scenario type',
-    [DNS_IP]: 'dns ip address',
-    [DOMAIN_DNS]: 'domain dns name',
-    [DOMAIN_USERNAME]: 'domain user name',
-    [DOMAIN_PASS]: 'domain password',
-    [FSX_USERNAME]: 'fsx user name',
-    [FSX_PASS]: 'fsx password',
-    [SERVICE_ACCOUNT_NAME]: 'service account name',
-    [SERVICE_ACCOUNT_PASS]: 'service account password',
+    [DNS_IP]: 'Enter the DNS IP address',
+    [DOMAIN_DNS]: 'Enter a domain name',
+    [DOMAIN_USERNAME]: 'Enter a user name for Active Directory', // extra value needed for suggesstion
+    [DOMAIN_PASS]: 'Enter a password for Active Directory',
+    [FSX_USERNAME]: 'Enter a user name for the file system', // suggestion
+    [FSX_PASS]: 'Enter a password for the user', // suggestion
+    [SERVICE_ACCOUNT_NAME]: 'Enter a user name for the database credentials',
+    [SERVICE_ACCOUNT_PASS]: 'Enter a password for database credentials.',
     [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
     [SQL_DEPLOYMENT_MODE]: 'sql deployment mode',
-    [DB_SIZE]: 'database size',
+    [DB_SIZE]: 'Enter a data drive size',
     [FSX_VOL_THROUGHPUT]: 'fsx volume throughput',
     [FSX_IOPS]: 'fsx IOPS',
     [ONTAP_SG_ID]: 'ontap security group id',
     [FSX_TYPE]: 'fsx type',
     [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
-    [SQL_SERVER_NAME]: 'database cluster name',
+    [SQL_SERVER_NAME]: 'Enter a value for database cluster name',
     [TAGS]: 'tags'
 };
 

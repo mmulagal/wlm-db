@@ -16,8 +16,10 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
 import {
     setCurrentIntent,
+    setLatestIntentMsg,
     setLoadConfigClicked,
     setMessages,
+    setResumeCount,
     setShowRetry,
     setSuggestionBubbles
 } from '../../../store/chatbot/chatbotSlice';
@@ -58,6 +60,7 @@ import {
 import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
 import {
     AWS_MANAGED_AD,
+    CHATBOT_WELCOME_CARDS,
     FORM_TO_WLF_NAVIGATE,
     PRODUCTION,
     SQL_DEPLOYMENT_MODE,
@@ -93,9 +96,8 @@ type messageType = {
 };
 
 const Chatbot = () => {
-    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry } = useAppSelector(
-        state => state.chatbot
-    );
+    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry, latestIntentMsg, resumeCount } =
+        useAppSelector(state => state.chatbot);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
     const state = useAppSelector(state => state);
@@ -217,16 +219,20 @@ const Chatbot = () => {
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {(
+                    {
                         <>
-                            <Button Component="button" variant="text" onClick={() => {
+                            <Button
+                                Component="button"
+                                variant="text"
+                                onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    navigate('../job-monitor')
-                                }}>
+                                    navigate('../job-monitor');
+                                }}
+                            >
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
                             </Button>
                         </>
-                    )}
+                    }
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
                 </>
             );
@@ -656,7 +662,7 @@ const Chatbot = () => {
                             mapParamsToPayload(intent.params);
                             dispatch(
                                 setSuggestionBubbles({
-                                    list: [{ label: 'Deploy!', value: 'deploy' }],
+                                    list: [{ label: 'Deploy', value: 'deploy' }],
                                     onBubbleClick: (label?: string, value?: string) => {
                                         if (value === 'deploy') {
                                             handleCreate();
@@ -689,6 +695,8 @@ const Chatbot = () => {
                             ...updatedMessages[updatedMessages.length - 3],
                             active: false
                         };
+                    } else {
+                        dispatch(setResumeCount(0));
                     }
 
                     dispatch(setMessages(updatedMessages));
@@ -801,6 +809,7 @@ const Chatbot = () => {
         const msgToBot = Object.keys(paramObj)
             .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
+        dispatch(setLatestIntentMsg(msgToBot));
         await handleSendMsg(msgToBot, false, updatedMessages);
     };
 
@@ -885,41 +894,98 @@ const Chatbot = () => {
                     }
                 }
             ];
-        }
-        //  else if (
-        //     lastMsg &&
-        //     lastMsg.sender === 'bot' &&
-        //     !lastMsg.intent &&
-        //     currentIntent &&
-        //     currentIntent.type === 'DeployMsSql' &&
-        //     lastMsg.type !== 'confirm'
-        // ) {
-        //     const existingMessages = updatedMsgs ? updatedMsgs : [];
-        //     return [
-        //         ...existingMessages,
-        //         {
-        //             sender: 'bot',
-        //             type: 'confirm',
-        //             active: true,
-        //             msg: 'Deployment of MS SQL is in progress. Do you want to continue?',
-        //             confirmData: {
-        //                 confirmMsg: 'Deployment of MS SQL is in progress. Do you want to continue?',
-        //                 confirmBtnTxt: 'Continue',
-        //                 cancelBtnTxt: 'Discard',
-        //                 onConfirm: (messages: messageType[]) => {
-        //                     const botMsgs = messages.filter(item => item.sender === 'bot');
-        //                     const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
-        //                     const updatedMsgs = [...messages];
-        //                     dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
-        //                 },
-        //                 onCancel: () => {
-        //                     dispatch(setCurrentIntent(''));
-        //                 }
-        //             }
-        //         }
-        //     ];
-        // }
-        else {
+        } else if (
+            lastMsg &&
+            lastMsg.sender === 'bot' &&
+            !lastMsg.intent &&
+            currentIntent &&
+            currentIntent.type === 'DeployMsSql' &&
+            lastMsg.type !== 'confirm' &&
+            !(lastMsg?.status === 'error') &&
+            resumeCount < 3
+        ) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Resume deployment', value: 'resume' }],
+                    onBubbleClick: async (label?: string, value?: string) => {
+                        if (value === 'resume') {
+                            await sendMsg(latestIntentMsg, false);
+                        }
+                        dispatch(
+                            setSuggestionBubbles({
+                                list: [],
+                                onBubbleClick: () => {}
+                            })
+                        );
+                    }
+                })
+            );
+            dispatch(setResumeCount(resumeCount + 1));
+            return updatedMsgs;
+            // const existingMessages = updatedMsgs ? updatedMsgs : [];
+            // return [
+            //     ...existingMessages,
+            //     {
+            //         sender: 'bot',
+            //         type: 'confirm',
+            //         active: true,
+            //         msg: 'Deployment of MS SQL is in progress. Do you want to continue?',
+            //         confirmData: {
+            //             confirmMsg: 'Deployment of MS SQL is in progress. Do you want to continue?',
+            //             confirmBtnTxt: 'Continue',
+            //             cancelBtnTxt: 'Discard',
+            //             onConfirm: (messages: messageType[]) => {
+            // const botMsgs = messages.filter(item => item.sender === 'bot');
+            // const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
+            // const updatedMsgs = [...messages];
+            // dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
+            //             },
+            //             onCancel: () => {
+            //                 dispatch(setCurrentIntent(''));
+            //             }
+            //         }
+            //     }
+            // ];
+        } else if (lastMsg?.status === 'error') {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [
+                        { label: 'Please give me examples for a valid request', value: 'suggestions' },
+                        { label: 'Resume deployment', value: 'resume' }
+                    ],
+                    onBubbleClick: async (label?: string, value?: string) => {
+                        if (value === 'suggestions') {
+                            dispatch(
+                                setSuggestionBubbles({
+                                    list: CHATBOT_WELCOME_CARDS.map(item => {
+                                        return { label: item, value: item };
+                                    }),
+                                    onBubbleClick: async (label?: string, value?: string) => {
+                                        dispatch(
+                                            setSuggestionBubbles({
+                                                list: [],
+                                                onBubbleClick: () => {}
+                                            })
+                                        );
+                                        await sendMsg(value);
+                                    }
+                                })
+                            );
+                        }
+                        if (value === 'resume') {
+                            await sendMsg(latestIntentMsg, false);
+                            dispatch(
+                                setSuggestionBubbles({
+                                    list: [],
+                                    onBubbleClick: () => {}
+                                })
+                            );
+                        }
+                    }
+                })
+            );
+            return updatedMsgs;
+        } else {
             return updatedMsgs;
         }
     }, [messages, currentIntent, showRetry]);

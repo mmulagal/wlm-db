@@ -69,11 +69,28 @@ const ChatBox = ({
     const dispatch = useDispatch();
 
     const handleSendMsg = () => {
-        if (userInput.trim()) {
+        const trimmedInput = userInput.trim();
+        dispatch(
+            setSuggestionBubbles({
+                list: [],
+                onBubbleClick: () => {}
+            })
+        );
+        if (trimmedInput) {
             if (expectingResponse.type !== 'none') {
-                const valueToShow = expectingResponse.type === 'password' ? 'Password Entered' : userInput;
-                const validationError = validateChatbotField(expectingResponse.fieldName, userInput);
-                if (validationError) {
+                const isDoubleQuotesCheckReq =
+                    expectingResponse.fieldName === 'domainUsername' ||
+                    expectingResponse.fieldName === 'fsxUsername' ||
+                    expectingResponse.fieldName === 'serviceAccountName';
+                const isResponse =
+                    (trimmedInput.length > 2 &&
+                        isDoubleQuotesCheckReq &&
+                        trimmedInput[0] === '"' &&
+                        trimmedInput[trimmedInput.length - 1] === '"') ||
+                    !isDoubleQuotesCheckReq;
+                const valueToShow = expectingResponse.type === 'password' ? 'Password Entered' : trimmedInput;
+                const validationError = validateChatbotField(expectingResponse.fieldName, trimmedInput);
+                if (isResponse && validationError) {
                     dispatch(
                         setMessages([
                             ...stateMsgs,
@@ -82,9 +99,16 @@ const ChatBox = ({
                         ])
                     );
                 } else {
-                    handleSelectButtonClicked({
-                        [expectingResponse.fieldName]: { label: valueToShow, value: userInput }
-                    });
+                    if (isResponse) {
+                        handleSelectButtonClicked({
+                            [expectingResponse.fieldName]: {
+                                label: valueToShow,
+                                value: userInput.trim().replace(/^"(.+(?="$))"$/, '$1')
+                            }
+                        });
+                    } else {
+                        sendMsg(userInput);
+                    }
                 }
             } else {
                 sendMsg(userInput);
@@ -189,7 +213,7 @@ const ChatBox = ({
                     {!(!messagesToShow.length && !isWizardTouched) && (
                         <ChatBotResponseLoader isBotReplying={isBotReplying} />
                     )}
-                    {suggestionBubbles.list.length ? (
+                    {!isBotReplying && suggestionBubbles.list.length ? (
                         <div className={styles['bubble-container']}>
                             <Bubbles
                                 bubbleList={suggestionBubbles.list}

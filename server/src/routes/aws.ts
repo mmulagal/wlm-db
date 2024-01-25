@@ -5,7 +5,7 @@ import {
     GetAmiSchema,
     GetVpcsListSchema,
     GetAdsSchema,
-    GetKmsKeysListSchema,
+    GetFsxKmsKeysListSchema,
     GetSnsTopicsSchema,
     GetFSxRegionsSchema,
     GetInstanceTypesSchema,
@@ -16,7 +16,7 @@ import { getAmiList, getVpcsList, getKeyPairsList, getInstanceTypes } from '../o
 import { getSnsTopics } from '../operations/aws/sns-operations';
 import { getAdsList } from '../operations/aws/directory-service-operations';
 import { getFSxFileSystemsList } from '../operations/aws/fsx-operations';
-import { getKmsKeysList } from '../operations/aws/kms-operations';
+import { getFsxKmsKeysList } from '../operations/aws/kms-operations';
 import { getFSxOntapRegionsList } from '../operations/aws/ssm-operations';
 
 const REGION_AGNOSTIC_PREFIX_PATH = '/v1/credentials/:credentialsId';
@@ -98,11 +98,11 @@ export default function awsRoutes(fastify: FastifyInstance) {
         }
     );
 
-    server.get(`${API_PREFIX_PATH}/kms-keys`, { schema: GetKmsKeysListSchema }, async (request, reply) => {
+    server.get(`${API_PREFIX_PATH}/kms-keys`, { schema: GetFsxKmsKeysListSchema }, async (request, reply) => {
         const {
             params: { credentialsId, region }
         } = request;
-        const response = await getKmsKeysList(credentialsId, region);
+        const response = await getFsxKmsKeysList(credentialsId, region);
         return reply.send(response);
     });
 

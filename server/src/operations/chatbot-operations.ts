@@ -53,7 +53,7 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                 }
                 return {
                     message:
-                        'Congratulations, you have completed filling in all required parameters. Please verify the genereated json including predefined parameters in the Codebox and hit the Create button to deploy. If you would like to modify a predefined parameter please request to modify the field.',
+                        'Congratulations, you have completed filling in all required parameters. Please verify the genereated json including predefined parameters in the Codebox and select Deploy.',
                     intent: {
                         complete: true,
                         params: validationResponse.params

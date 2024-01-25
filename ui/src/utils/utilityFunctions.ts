@@ -133,7 +133,7 @@ export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
 };
 
 export const dbPassVal = (password: string) => {
-    if (password.length) {
+    if (password?.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
         if (state.auth.isDemoMode) {
@@ -738,7 +738,8 @@ export const getCredDetails = (data: any) => {
     return result;
 };
 
-export const validateChatbotField = (fieldName: string, val: any) => {
+export const validateChatbotField = (fieldName: string, value: any) => {
+    const val = value.replace(/^"(.+(?="$))"$/, '$1');
     switch (fieldName) {
         case 'fsxPassword':
             return fsxPassVal(val) || '';
@@ -1012,7 +1013,7 @@ export const getShiftedHoursList = (baseList: Array<String | number>) => {
     return [...baseList.slice(shift), ...baseList.slice(0, shift)];
 };
 
-export const groupByTime = (days: number, data: any, baseList: Array<number>, ) => {
+export const groupByTime = (days: number, data: any, baseList: Array<number>) => {
     const dayGrouping: any = {};
     if (days === 1) {
         // grouping for lats 24 hours
@@ -1057,7 +1058,7 @@ export const groupByTime = (days: number, data: any, baseList: Array<number>, ) 
         });
     }
     return dayGrouping;
-}
+};
 
 export const groupByJobSummaryTimeline = (data: any, days: number) => {
     const groupedData: any = { time: [], completed: [], failed: [] };
@@ -1067,17 +1068,19 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
 
     // Using endTime calculate hr or day
     if (days === 1) {
-        data = data.map((e: any) => (
-            { ...e, timeInterval: new Date(e.endTime).getHours(), minutes: new Date(e.endTime).getMinutes()}
-        ));
+        data = data.map((e: any) => ({
+            ...e,
+            timeInterval: new Date(e.endTime).getHours(),
+            minutes: new Date(e.endTime).getMinutes()
+        }));
     } else {
-        data = data.map((e: any) => ({ ...e, timeInterval: new Date(e.endTime).getDate()}));
+        data = data.map((e: any) => ({ ...e, timeInterval: new Date(e.endTime).getDate() }));
     }
 
     // Used only in case of last 24 hours
     const baseList = [0, 4, 8, 12, 16, 20];
 
-    // calculate daysList that is projected as x-axis also 
+    // calculate daysList that is projected as x-axis also
     let lastDaysList: any[] = [];
     let daysList: any[] = [];
     if (days === 1) {
@@ -1104,14 +1107,11 @@ export const groupByJobSummaryTimeline = (data: any, days: number) => {
         groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
         groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
     });
-    
+
     return groupedData;
 };
 
-export const collapseAllRows = (
-    updateRowState: any,
-    rowState: any
-) => {
+export const collapseAllRows = (updateRowState: any, rowState: any) => {
     for (const rowId in rowState) {
         if (rowState[rowId]?.isExpanded) {
             updateRowState(rowId)({

@@ -78,6 +78,38 @@
             }
         }
     }
+
+    .infoMsg {
+        width: 452px;
+        margin-left: -12px;
+        color: var(--grey-55) !important;
+    }
+
+    .subList {
+        margin-left: 32px;
+
+        .infoMsg {
+            max-width: 400px;
+        }
+    }
+
+    .bulletContainer {
+        display: flex;
+        gap: 12px;
+
+        svg {
+            min-width: 24px;
+        }
+    }
+
+    ul {
+        li:first-child {
+            margin-bottom: 8px;
+        }
+        li:last-child {
+            margin-top: 8px;
+        }
+    }
 }
 
 .user-msg {

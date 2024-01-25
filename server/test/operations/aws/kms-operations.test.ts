@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { getKmsKeysList, encryptString, decryptString } from '../../../src/operations/aws/kms-operations';
+import { getFsxKmsKeysList, encryptString, decryptString } from '../../../src/operations/aws/kms-operations';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
@@ -14,8 +14,8 @@ const ENCRYPTED_STRING =
 describe('KMS Operations', () => {
     it('list of Kms Keys', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
-        const resp = await getKmsKeysList(credentialsId, DEFAULT_AWS_REGION);
-        expect(resp).toBeDefined();
+        const resp = await getFsxKmsKeysList(credentialsId, DEFAULT_AWS_REGION);
+        expect(resp.keys.length).toBeGreaterThan(0);
     });
 
     it('Encrypt string', async () => {
