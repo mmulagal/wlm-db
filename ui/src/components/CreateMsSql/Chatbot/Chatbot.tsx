@@ -662,7 +662,7 @@ const Chatbot = () => {
                             mapParamsToPayload(intent.params);
                             dispatch(
                                 setSuggestionBubbles({
-                                    list: [{ label: 'Deploy!', value: 'deploy' }],
+                                    list: [{ label: 'Deploy', value: 'deploy' }],
                                     onBubbleClick: (label?: string, value?: string) => {
                                         if (value === 'deploy') {
                                             handleCreate();
