@@ -1,0 +1,122 @@
+diff --git a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/lerna.json b/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/lerna.json
+deleted file mode 100644
+index d6707ca..0000000
+--- a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/lerna.json
++++ /dev/null
+@@ -1,6 +0,0 @@
+-{
+-  "packages": [
+-    "packages/*"
+-  ],
+-  "version": "0.0.0"
+-}
+diff --git a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/package.json b/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/package.json
+deleted file mode 100644
+index 8508f9d..0000000
+--- a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/package.json
++++ /dev/null
+@@ -1,20 +0,0 @@
+-{
+-  "name": "monorepo-symlink-test",
+-  "private": true,
+-  "version": "0.0.0",
+-  "description": "",
+-  "main": "index.js",
+-  "scripts": {
+-    "postinstall": "lerna bootstrap",
+-    "test": "node packages/package-a"
+-  },
+-  "author": "",
+-  "license": "MIT",
+-  "dependencies": {
+-    "jquery": "^3.3.1",
+-    "resolve": "../../../"
+-  },
+-  "devDependencies": {
+-    "lerna": "^3.4.3"
+-  }
+-}
+diff --git a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-a/index.js b/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-a/index.js
+deleted file mode 100644
+index 8875a32..0000000
+--- a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-a/index.js
++++ /dev/null
+@@ -1,35 +0,0 @@
+-'use strict';
+-
+-var assert = require('assert');
+-var path = require('path');
+-var resolve = require('resolve');
+-
+-var basedir = __dirname + '/node_modules/@my-scope/package-b';
+-
+-var expected = path.join(__dirname, '../../node_modules/jquery/dist/jquery.js');
+-
+-/*
+- * preserveSymlinks === false
+- * will search NPM package from
+- * - packages/package-b/node_modules
+- * - packages/node_modules
+- * - node_modules
+- */
+-assert.equal(resolve.sync('jquery', { basedir: basedir, preserveSymlinks: false }), expected);
+-assert.equal(resolve.sync('../../node_modules/jquery', { basedir: basedir, preserveSymlinks: false }), expected);
+-
+-/*
+- * preserveSymlinks === true
+- * will search NPM package from
+- * - packages/package-a/node_modules/@my-scope/packages/package-b/node_modules
+- * - packages/package-a/node_modules/@my-scope/packages/node_modules
+- * - packages/package-a/node_modules/@my-scope/node_modules
+- * - packages/package-a/node_modules/node_modules
+- * - packages/package-a/node_modules
+- * - packages/node_modules
+- * - node_modules
+- */
+-assert.equal(resolve.sync('jquery', { basedir: basedir, preserveSymlinks: true }), expected);
+-assert.equal(resolve.sync('../../../../../node_modules/jquery', { basedir: basedir, preserveSymlinks: true }), expected);
+-
+-console.log(' * all monorepo paths successfully resolved through symlinks');
+diff --git a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-a/package.json b/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-a/package.json
+deleted file mode 100644
+index 204de51..0000000
+--- a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-a/package.json
++++ /dev/null
+@@ -1,14 +0,0 @@
+-{
+-  "name": "@my-scope/package-a",
+-  "version": "0.0.0",
+-  "private": true,
+-  "description": "",
+-  "license": "MIT",
+-  "main": "index.js",
+-  "scripts": {
+-    "test": "echo \"Error: run tests from root\" && exit 1"
+-  },
+-  "dependencies": {
+-    "@my-scope/package-b": "^0.0.0"
+-  }
+-}
+diff --git a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-b/index.js b/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-b/index.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-b/package.json b/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-b/package.json
+deleted file mode 100644
+index f57c3b5..0000000
+--- a/node_modules/@prisma/internals/node_modules/resolve/test/resolver/multirepo/packages/package-b/package.json
++++ /dev/null
+@@ -1,14 +0,0 @@
+-{
+-  "name": "@my-scope/package-b",
+-  "private": true,
+-  "version": "0.0.0",
+-  "description": "",
+-  "license": "MIT",
+-  "main": "index.js",
+-  "scripts": {
+-    "test": "echo \"Error: run tests from root\" && exit 1"
+-  },
+-  "dependencies": {
+-    "@my-scope/package-a": "^0.0.0"
+-  }
+-}
