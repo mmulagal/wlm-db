@@ -230,7 +230,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                             msgObj.sender === 'bot' ? styles['bot-icon'] : styles['user-icon']
                         }`}
                     >
-                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon />}
+                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon"/>}
                     </div>
                     {isUserInputRequired ? (
                         msgObj.active ? (
