@@ -92,7 +92,8 @@ async function getMatchingMasterJob(accountId: string, stackName: string) {
     const MASTER_JOB_NAME_PATTERN = /Microsoft SQL server deployment with stack WLMDB-(.+[a-zA-Z])-(\d{13})/;
     const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
     if (matchingMasterJob) {
-        const [masterJobName] = matchingMasterJob;
+        let [masterJobName] = matchingMasterJob;
+        masterJobName += ';href:';
         const [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', masterJobName);
         return masterJob;
     }
