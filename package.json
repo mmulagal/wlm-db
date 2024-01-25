@@ -5,6 +5,7 @@
     },
     "lint-staged": {
         "./server/src/**/*.ts": [
+            "eslint",
             "prettier --check",
             "prettier --write"
         ]
