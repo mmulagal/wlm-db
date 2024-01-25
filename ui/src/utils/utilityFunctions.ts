@@ -157,7 +157,7 @@ export const dbPassVal = (password: string) => {
 };
 
 export const adPassVal = (password: string) => {
-    if (password.length && password.length < 8) {
+    if (password?.length && password.length < 8) {
         return GENERAL.PASSWORD_MIN_LENGTH_8;
     }
 };
@@ -878,6 +878,9 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         if (tags.length > 0) {
             params.tags = tags;
         }
+    }
+    if (payload?.activeDirectory?.scenarioType) {
+        params.adScenarioType = payload.activeDirectory.scenarioType;
     }
     params.enableCloudWatch = payload.cloudWatch || false;
     return params;
