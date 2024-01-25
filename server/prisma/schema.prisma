@@ -90,7 +90,7 @@ model job {
   type                      JOBTYPE
   status                    JOBSTATUS
   resource_name             String    @db.VarChar(255)
-  name                      String    @db.VarChar(255)
+  name                      String    @db.VarChar(1000)
   description               String?   @db.VarChar(255)
   error                     String?   @db.Text
   start_time                DateTime  @db.DateTime(0)

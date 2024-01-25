@@ -77,7 +77,11 @@ async function listJobs(
             parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),
-            ...(jobname && { name: jobname }),
+            ...(jobname && {
+                name: {
+                    contains: jobname
+                }
+            }),
             ...(initiator && { initiator }),
             start_time: {
                 gte: new Date(startTime),

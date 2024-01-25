@@ -1,4 +1,4 @@
-import { Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
+import { Button, Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -11,10 +11,22 @@ import SubJobTable from '../SubJobTable/SubJobTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { JM_DOWNLOAD, JOB_MONITORING_STATUS } from '../../../utils/consts';
-import { collapseAllRows, createJobMonitorCSV, downloadCsv, expandTableRow, formatDateWithTime, jobMonitoringStatusMapping } from '../../../utils/utilityFunctions';
+import {
+    collapseAllRows,
+    createJobMonitorCSV,
+    downloadCsv,
+    expandTableRow,
+    formatDateWithTime,
+    jobMonitoringStatusMapping
+} from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
 import { useDispatch } from 'react-redux';
-import { setDownloadJobsList, setDownloadJobsLoading, setSubJobsData, setSubJobsDataLoading } from '../../../store/workloadFactory/jobMonitoringSlice';
+import {
+    setDownloadJobsList,
+    setDownloadJobsLoading,
+    setSubJobsData,
+    setSubJobsDataLoading
+} from '../../../store/workloadFactory/jobMonitoringSlice';
 import { useEffect, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
@@ -31,7 +43,7 @@ const JobMonitoringTable = () => {
     const subJobsData = useAppSelector(state => state.jobMonitoring.subJobsData);
 
     const [jobsCursor, setJobsCursor] = useState(null);
-    const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
+    const [time, setTime] = useState<{ startTime: number; endTime: number } | null>(null);
     const [skipApiCall, setSkipApiCall] = useState(true);
 
     // Filter options to use while downloading
@@ -67,17 +79,26 @@ const JobMonitoringTable = () => {
         data: jmJobsList,
         isFetching: jmJobsListLoading,
         isError: jmJobsListError
-    } = useGetFullJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime, 
-        includeSubJobs: true, type: typeFilter, status: statusFilter}, {skip: skipApiCall});
+    } = useGetFullJobsListQuery(
+        {
+            nextToken: jobsCursor,
+            startTime: time?.startTime,
+            endTime: time?.endTime,
+            includeSubJobs: true,
+            type: typeFilter,
+            status: statusFilter
+        },
+        { skip: skipApiCall }
+    );
 
-    // When download starts it will read timeInterval and start API call 
+    // When download starts it will read timeInterval and start API call
     useEffect(() => {
         if (downloadJobsLoading && timeInterval && fromTime && toTime) {
             setTimeout(() => {
                 dispatch(setDownloadJobsList([]));
-                setTime({startTime: fromTime, endTime: toTime});
+                setTime({ startTime: fromTime, endTime: toTime });
                 setSkipApiCall(false);
-            }, 0)
+            }, 0);
         } else {
             setSkipApiCall(true);
         }
@@ -98,11 +119,11 @@ const JobMonitoringTable = () => {
         if (!jmJobsListLoading) {
             let oldList = downloadJobsList || [];
             let newList = jmJobsList?.items || [];
-            let mergedList = [...oldList, ...newList]
+            let mergedList = [...oldList, ...newList];
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (jmJobsList && !jmJobsList?.nextToken) {
-                // Download logic 
+                // Download logic
                 downloadJMTable(mergedList);
                 dispatch(clearNotifications());
                 // success notification
@@ -117,7 +138,6 @@ const JobMonitoringTable = () => {
                 dispatch(setDownloadJobsLoading(false));
             }
         }
-        
     }, [jmJobsList, jmJobsListLoading, jmJobsListError]);
 
     const ExpandedRow = ({ rowData }: any) => {
@@ -215,7 +235,36 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '340px',
             renderCell: (cellData: any) => {
-                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
+                // This is to accomadate the hyperlink in job name for only deployment cases.
+                // For other job hyperlink is not required and it will display the job name as is
+                const jobNameRegex = /(Microsoft SQL server deployment with stack) (WLMDB-[a-zA-Z]+-\d+)/;
+                const hrefRegex = /;href:(.+)/;
+
+                const jobNameMatch = cellData.match(jobNameRegex);
+                const hrefMatch = cellData.match(hrefRegex);
+                if (jobNameMatch && hrefMatch) {
+                    const jobName = `${jobNameMatch[1]} ${jobNameMatch[2]}`;
+                    const href = hrefMatch[1];
+
+                    return (
+                        <div className={CommonStyles.wrapTextIn2Line} title={jobName}>
+                            {jobNameMatch[1] + ' '}
+                            <Button
+                                Component="button"
+                                variant="link"
+                                onClick={() => window.open(href, '_blank', 'noopener')}
+                            >
+                                {jobNameMatch[2]}
+                            </Button>
+                        </div>
+                    );
+                } else {
+                    return (
+                        <div className={CommonStyles.wrapTextIn2Line} title={cellData}>
+                            {cellData}
+                        </div>
+                    );
+                }
             }
         },
         {
@@ -225,8 +274,12 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
-                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
+                        {formatDate}
+                    </div>
+                );
             }
         },
         {
@@ -236,8 +289,12 @@ const JobMonitoringTable = () => {
             isSortable: true,
             width: '200px',
             renderCell: (cellData: any) => {
-                const formatDate = cellData ? formatDateWithTime(cellData): 'N/A';
-                return <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>{formatDate}</div>;
+                const formatDate = cellData ? formatDateWithTime(cellData) : 'N/A';
+                return (
+                    <div className={CommonStyles.wrapTextIn2Line} title={formatDate}>
+                        {formatDate}
+                    </div>
+                );
             }
         },
         {
@@ -262,7 +319,7 @@ const JobMonitoringTable = () => {
     useEffect(() => {
         const filters = tableProps?.filterState?.columns;
         JobsColDefs.map((col: any) => {
-            if (col?.id in filters){
+            if (col?.id in filters) {
                 let filterValues = Object.keys(filters[col?.id]?.values);
                 if (col?.accessor === 'type' && filterValues) {
                     setTypeFilter(filterValues.join(','));
@@ -271,7 +328,7 @@ const JobMonitoringTable = () => {
                     setStatusFilter(filterValues.join(','));
                 }
             }
-        })
+        });
     }, [tableProps]);
 
     const tableComponentProps = {
@@ -292,7 +349,7 @@ const JobMonitoringTable = () => {
                 message: GENERAL.JM_DOWNLOAD_PROGRESS
             })
         );
-    }
+    };
 
     return (
         <>
@@ -309,12 +366,13 @@ const JobMonitoringTable = () => {
                         className={styles.topBarStyle}
                         actionsRight={
                             <div className={styles.downloadButton}>
-                                {(jobsListLoading && !downloadJobsLoading) || jobsList.length === 0 && 
-                                    <div className={styles.downloadDisable}>
-                                        <DownloadIcon />
-                                    </div>
-                                }
-                                {downloadJobsLoading && 
+                                {(jobsListLoading && !downloadJobsLoading) ||
+                                    (jobsList.length === 0 && (
+                                        <div className={styles.downloadDisable}>
+                                            <DownloadIcon />
+                                        </div>
+                                    ))}
+                                {downloadJobsLoading && (
                                     <Popover
                                         popoverClass={CommonStyles['popover']}
                                         children={
@@ -327,13 +385,12 @@ const JobMonitoringTable = () => {
                                             </div>
                                         }
                                     />
-                                }
-                                {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && 
-                                    <DownloadIcon 
-                                        onClick={downloadJobMonitoring}
-                                />}
+                                )}
+                                {!downloadJobsLoading && !jobsListLoading && jobsList.length > 0 && (
+                                    <DownloadIcon onClick={downloadJobMonitoring} />
+                                )}
                             </div>
-                          }
+                        }
                     />
 
                     <Table

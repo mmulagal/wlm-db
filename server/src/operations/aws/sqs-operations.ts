@@ -22,7 +22,7 @@ import {
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
+import { checkAndRetrieveJsonObject, deployedStackUrl, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -92,7 +92,8 @@ async function getMatchingMasterJob(accountId: string, stackName: string) {
     const MASTER_JOB_NAME_PATTERN = /Microsoft SQL server deployment with stack WLMDB-(.+[a-zA-Z])-(\d{13})/;
     const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
     if (matchingMasterJob) {
-        const [masterJobName] = matchingMasterJob;
+        let [masterJobName] = matchingMasterJob;
+        masterJobName += ';href:';
         const [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', masterJobName);
         return masterJob;
     }
@@ -376,13 +377,14 @@ async function processCloudFormationMessages() {
                                                 // Create master job
                                                 const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                 logger.info('Creating master job:', masterJobName);
+                                                const stackUrl = deployedStackUrl(region, stackName);
                                                 await createJobs(accountId, [
                                                     {
                                                         account_id: accountId,
                                                         type: JOBTYPE.DEPLOYMENT,
                                                         status: JOBSTATUS.IN_PROGRESS,
                                                         resource_name: trackresourceName,
-                                                        name: masterJobName,
+                                                        name: `${masterJobName};href:${stackUrl}`,
                                                         start_time: new Date(messageTimestamp)
                                                     }
                                                 ]);
