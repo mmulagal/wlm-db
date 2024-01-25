@@ -147,7 +147,10 @@ const Chatbot = () => {
             sendMsgToBot({
                 payload: {
                     prompt: wrapContext(
-                        `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`
+                        `DeployMsSql with params: ${JSON.stringify({
+                            ...getChatbotParamsFromPayload(mssqlFormData),
+                            deploymentEnvironment: 'CUSTOM'
+                        })}`
                     ),
                     intent: 'DeployMsSql',
                     params: getChatbotParamsFromPayload(mssqlFormData)
