@@ -22,19 +22,19 @@ const JobMonitoringApi = () => {
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
 
-    const [skipJobListApiCall, setJobListApiCall] = useState(true);
+    const [skipJobListApiCall, setSkipJobListApiCall] = useState(true);
     const [skipApiCall, setSkipApiCall] = useState(true);
 
     useEffect(() => {
         setSkipApiCall(true);
-        setJobListApiCall(true);
+        setSkipJobListApiCall(true);
         setTimeout(() => {
             if (timeInterval && fromTime && toTime) {
                 dispatch(setJobsListLoading(false));
                 dispatch(setJobsList([]));
                 setTime({startTime: fromTime, endTime: toTime});
                 setSkipApiCall(false);
-                setJobListApiCall(false);
+                setSkipJobListApiCall(false);
             }
         }, 0);
     }, [fromTime]);
@@ -63,7 +63,7 @@ const JobMonitoringApi = () => {
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (!jmJobsList?.nextToken) {
-                setJobListApiCall(true);
+                setSkipJobListApiCall(true);
             }
         }
     }, [jmJobsList, jmJobsListLoading]);
