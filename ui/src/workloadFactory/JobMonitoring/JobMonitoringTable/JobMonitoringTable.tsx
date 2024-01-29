@@ -134,7 +134,9 @@ const JobMonitoringTable = () => {
         const result = '';
         let csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
         // remove #
-        csv = csv.replace('#', '');
+        if (csv) {
+            csv = csv.replace('#', '');
+        }
         downloadCsv(csv);
         dispatch(setDownloadJobsLoading(false));
     };
