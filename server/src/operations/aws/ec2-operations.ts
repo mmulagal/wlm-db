@@ -465,6 +465,10 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
         logger.error(`Get EC2 resources ${resourceIds} has failed with the error`, error);
     }
 }
+
+// async function getVpcEndpoints(credentialsId: string, region: string, vpcId: string) {
+//     logger.info('Get vpc endpoints ', credentialsId, region, vpcId);
+// }
 export {
     getVpcsList,
     getAmiList,
