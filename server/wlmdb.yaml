@@ -1,0 +1,3375 @@
+openapi: 3.0.3
+info:
+  title: Workload Manager for DB API
+  version: 1.0.1
+components:
+  securitySchemes:
+    http:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas: {}
+paths:
+  /wlmdb/about:
+    get:
+      summary: Get system information
+      tags:
+        - System
+      description: Get information about the system
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                  nodeVersion:
+                    type: string
+                  mode:
+                    type: string
+                  build:
+                    type: string
+                required:
+                  - version
+                  - nodeVersion
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/vpcs:
+    get:
+      summary: List VPCs
+      tags: &a1
+        - AWS
+      description: List VPCs in the given AWS region
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: fields
+          required: false
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vpcs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        state:
+                          type: string
+                        cidrBlock: {}
+                        tags: {}
+                        isDefault:
+                          type: boolean
+                        name:
+                          type: string
+                        subnets:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              state:
+                                type: string
+                              vpcId:
+                                type: string
+                              cidrBlock:
+                                type: string
+                              availabilityZone:
+                                type: string
+                              availableIps:
+                                type: number
+                              tags:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    Key:
+                                      type: string
+                                    Value:
+                                      type: string
+                              name:
+                                type: string
+                              routeTableId:
+                                type: string
+                        securityGroups:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              description:
+                                type: string
+                              vpcId:
+                                type: string
+                              ipPermissions: {}
+                              name:
+                                type: string
+                              securityGroupName:
+                                type: string
+                required:
+                  - vpcs
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/amis:
+    get:
+      summary: List AMIs
+      tags: *a1
+      description: List AMIs in the given AWS region for the provided parameters
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - windows
+          in: query
+          name: osType
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: osVersion
+          required: false
+        - schema:
+            type: string
+            enum:
+              - sql
+          in: query
+          name: databaseType
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: databaseEdition
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: databaseVersion
+          required: false
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  amis:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        architecture:
+                          type: string
+                        imageId:
+                          type: string
+                        imageLocation:
+                          type: string
+                        public:
+                          type: boolean
+                        platform:
+                          type: string
+                        platformDetails:
+                          type: string
+                        state:
+                          type: string
+                        hypervisor:
+                          type: string
+                required:
+                  - amis
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/sns-topics:
+    get:
+      summary: Get SNS Topics
+      tags: *a1
+      description: Get SNS Topics in the given AWS region
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  topics:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        topicName:
+                          type: string
+                        topicArn:
+                          type: string
+                required:
+                  - topics
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/ads:
+    get:
+      summary: List AWS managed Active Directories
+      tags: *a1
+      description: List AWS managed Active Directories in the given AWS region
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  directories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        dnsIpAddress:
+                          type: array
+                          items:
+                            type: string
+                        launchTime:
+                          type: number
+                        domainName:
+                          type: string
+                        shortName:
+                          type: string
+                        ssoEnabled:
+                          type: boolean
+                        status:
+                          type: string
+                        type:
+                          type: string
+                        vpcSettings:
+                          type: object
+                          properties:
+                            vpcId:
+                              type: string
+                            subnetIds:
+                              type: array
+                              items:
+                                type: string
+                            availabilityZones:
+                              type: array
+                              items:
+                                type: string
+                            securityGroupId:
+                              type: string
+                required:
+                  - directories
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/instance-types:
+    get:
+      summary: List EC2 instance types
+      tags: *a1
+      description: Get EC2 instance types in the region supported for MS SQL deployment
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instanceTypes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        instanceType:
+                          type: string
+                        vCpus:
+                          type: number
+                        ramInMib:
+                          type: number
+                        iopsInMbps:
+                          type: number
+                        architecture:
+                          type: array
+                          items:
+                            type: string
+                required:
+                  - instanceTypes
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/fsx/regions:
+    get:
+      summary: List AWS regions that supports FSx
+      tags:
+        - AWS
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        regionCode:
+                          type: string
+                        regionName:
+                          type: string
+                      required:
+                        - regionCode
+                        - regionName
+                required:
+                  - regions
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/fsx/regions/{region}/vpcs/{vpcId}/file-systems:
+    get:
+      summary: List FSx for NetApp ONTAP filesystems
+      tags:
+        - AWS
+      description: List Amazon FSx for NetApp ONTAP filesystems
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: vpcId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filesystems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fileSystemId:
+                          type: string
+                        name:
+                          type: string
+                        kmsKeyId:
+                          type: string
+                        lifecycle:
+                          enum:
+                            - AVAILABLE
+                            - CREATING
+                            - DELETING
+                            - FAILED
+                            - MISCONFIGURED
+                            - MISCONFIGURED_UNAVAILABLE
+                            - UPDATING
+                          type: string
+                        networkInterfaceIds:
+                          type: array
+                          items:
+                            type: string
+                        subnetIds:
+                          type: array
+                          items:
+                            type: string
+                        vpcId:
+                          type: string
+                        securityGroups:
+                          type: array
+                          items:
+                            type: string
+                        ontapConfiguration:
+                          type: object
+                          properties:
+                            deploymentType:
+                              type: string
+                            endpointIpAddressRange:
+                              type: string
+                            fsxAdminPassword:
+                              type: string
+                            preferredSubnetId:
+                              type: string
+                            routeTableIds:
+                              type: array
+                              items:
+                                type: string
+                            throughputCapacity:
+                              type: number
+                            diskIopsConfiguration:
+                              type: object
+                              properties:
+                                iops:
+                                  type: number
+                                mode:
+                                  type: string
+                            endpoints:
+                              type: object
+                              properties:
+                                intercluster:
+                                  type: object
+                                  properties:
+                                    dnsName:
+                                      type: string
+                                    ipAddresses:
+                                      type: array
+                                      items:
+                                        type: string
+                                management:
+                                  type: object
+                                  properties:
+                                    dnsName:
+                                      type: string
+                                    ipAddresses:
+                                      type: array
+                                      items:
+                                        type: string
+                        volumes:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              volumeId:
+                                type: string
+                              volumeType:
+                                type: string
+                              securityStyle:
+                                type: string
+                              sizeInMegabytes:
+                                type: number
+                              storageEfficiencyEnabled:
+                                type: boolean
+                              storageVirtualMachineId:
+                                type: string
+                              ontapVolumeType:
+                                type: string
+                        storageVirtualMachines:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              storageVirtualMachineId:
+                                type: string
+                              storageVirtualMachineName:
+                                type: string
+                              resourceARN:
+                                type: string
+                              lifeCycle:
+                                type: string
+                              subtype:
+                                type: string
+                              creationTime: {}
+                              uuid:
+                                type: string
+                      required:
+                        - fileSystemId
+                        - lifecycle
+                required:
+                  - filesystems
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/kms-keys:
+    get:
+      summary: List KMS keys
+      tags: *a1
+      description: List KMS Keys in the given AWS region
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        origin:
+                          type: string
+                        state:
+                          type: string
+                        expirationDate:
+                          type: string
+                        isDefault:
+                          type: boolean
+                        formattedDate:
+                          type: string
+                required:
+                  - keys
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/key-pairs:
+    get:
+      summary: List Key Pairs
+      tags: *a1
+      description: List Key Pairs in the given AWS region
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keyPairs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                required:
+                  - keyPairs
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsType}:
+    get:
+      summary: List credentials
+      tags:
+        - Generic
+      description: List added credentials
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            enum:
+              - aws_assume_role
+            type: string
+          in: path
+          name: credentialsType
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    credentialsId:
+                      type: string
+                    name:
+                      type: string
+                    arn:
+                      type: string
+                    providerAccountId:
+                      type: string
+                  required:
+                    - credentialsId
+                    - name
+                    - arn
+                    - providerAccountId
+  /accounts/{accountId}/wlmdb/v1/cloudformation/template:
+    post:
+      summary: Create CloudFormation template
+      tags:
+        - Deployment
+      description: Create CloudFormation template in URL, YAML and CLI format for user
+        deployment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                networkConfiguration:
+                  type: object
+                  properties:
+                    vpcId:
+                      type: string
+                    vpcCidr:
+                      type: string
+                    privateSubnet1Id:
+                      type: string
+                    routeTable1Id:
+                      type: string
+                    availabilityZone1:
+                      type: string
+                    privateSubnet2Id:
+                      type: string
+                    routeTable2Id:
+                      type: string
+                    availabilityZone2:
+                      type: string
+                  required:
+                    - vpcId
+                    - vpcCidr
+                    - privateSubnet1Id
+                    - routeTable1Id
+                    - availabilityZone1
+                ec2Configuration:
+                  type: object
+                  properties:
+                    workloadInstanceType:
+                      type: string
+                    keyPairName:
+                      type: string
+                  required:
+                    - workloadInstanceType
+                    - keyPairName
+                adConfiguration:
+                  type: object
+                  properties:
+                    adScenarioType:
+                      enum:
+                        - AWS_MANAGED_AD
+                        - USER_MANAGED_AD
+                      type: string
+                    domainUsername:
+                      type: string
+                    domainPassword:
+                      type: string
+                    domainDnsname:
+                      type: string
+                    dnsIpaddress:
+                      type: string
+                    securityGroupId:
+                      type: string
+                  required:
+                    - adScenarioType
+                    - domainUsername
+                    - domainPassword
+                    - domainDnsname
+                    - dnsIpaddress
+                fsxConfiguration:
+                  type: object
+                  properties:
+                    fsxDeploymentMode:
+                      enum:
+                        - SINGLE_AZ_1
+                        - MULTI_AZ_1
+                      type: string
+                    fsxFileSystemId:
+                      type: string
+                    fsxUsername:
+                      type: string
+                    fsxPassword:
+                      type: string
+                    databaseSize:
+                      type: number
+                    ontapSgGroupId:
+                      type: array
+                      items:
+                        type: string
+                    fsxVolThroughput:
+                      enum:
+                        - 128
+                        - 256
+                        - 512
+                        - 1024
+                        - 2048
+                        - 4096
+                      type: number
+                    fsxIOPS:
+                      type: number
+                    encryptionKey:
+                      type: string
+                  required:
+                    - fsxDeploymentMode
+                    - fsxUsername
+                    - fsxPassword
+                    - databaseSize
+                    - ontapSgGroupId
+                    - fsxVolThroughput
+                    - fsxIOPS
+                sqlConfiguration:
+                  type: object
+                  properties:
+                    sqlDeploymentMode:
+                      enum:
+                        - standalone
+                        - fci
+                      type: string
+                    sqlAmiId:
+                      type: string
+                    serviceAccountName:
+                      type: string
+                    serviceAccountPassword:
+                      type: string
+                    sqlServerName:
+                      type: string
+                  required:
+                    - sqlDeploymentMode
+                    - sqlAmiId
+                    - serviceAccountName
+                    - serviceAccountPassword
+                    - sqlServerName
+                topicArn:
+                  type: string
+                enableCloudWatch:
+                  default: false
+                  type: boolean
+                tags:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    required:
+                      - key
+                      - value
+                credentialsId:
+                  type: string
+                region:
+                  type: string
+              required:
+                - networkConfiguration
+                - ec2Configuration
+                - adConfiguration
+                - fsxConfiguration
+                - sqlConfiguration
+        required: true
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            enum:
+              - wizard-advanced
+              - wizard-quick
+              - chatbot
+              - rest-api
+            default: rest-api
+            type: string
+          in: header
+          name: triggered-from
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  template:
+                    type: string
+                  cliCommand:
+                    type: string
+                required:
+                  - url
+                  - template
+                  - cliCommand
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/cloudformation/deploy:
+    post:
+      summary: Deploy CloudFormation template
+      tags: &a2
+        - Deployment
+      description: Deploy CloudFormation template to provision SQL FCI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                networkConfiguration:
+                  type: object
+                  properties:
+                    vpcId:
+                      type: string
+                    vpcCidr:
+                      type: string
+                    privateSubnet1Id:
+                      type: string
+                    routeTable1Id:
+                      type: string
+                    availabilityZone1:
+                      type: string
+                    privateSubnet2Id:
+                      type: string
+                    routeTable2Id:
+                      type: string
+                    availabilityZone2:
+                      type: string
+                  required:
+                    - vpcId
+                    - vpcCidr
+                    - privateSubnet1Id
+                    - routeTable1Id
+                    - availabilityZone1
+                ec2Configuration:
+                  type: object
+                  properties:
+                    workloadInstanceType:
+                      type: string
+                    keyPairName:
+                      type: string
+                  required:
+                    - workloadInstanceType
+                    - keyPairName
+                adConfiguration:
+                  type: object
+                  properties:
+                    adScenarioType:
+                      enum:
+                        - AWS_MANAGED_AD
+                        - USER_MANAGED_AD
+                      type: string
+                    domainUsername:
+                      type: string
+                    domainPassword:
+                      type: string
+                    domainDnsname:
+                      type: string
+                    dnsIpaddress:
+                      type: string
+                    securityGroupId:
+                      type: string
+                  required:
+                    - adScenarioType
+                    - domainUsername
+                    - domainPassword
+                    - domainDnsname
+                    - dnsIpaddress
+                fsxConfiguration:
+                  type: object
+                  properties:
+                    fsxDeploymentMode:
+                      enum:
+                        - SINGLE_AZ_1
+                        - MULTI_AZ_1
+                      type: string
+                    fsxFileSystemId:
+                      type: string
+                    fsxUsername:
+                      type: string
+                    fsxPassword:
+                      type: string
+                    databaseSize:
+                      type: number
+                    ontapSgGroupId:
+                      type: array
+                      items:
+                        type: string
+                    fsxVolThroughput:
+                      enum:
+                        - 128
+                        - 256
+                        - 512
+                        - 1024
+                        - 2048
+                        - 4096
+                      type: number
+                    fsxIOPS:
+                      type: number
+                    encryptionKey:
+                      type: string
+                  required:
+                    - fsxDeploymentMode
+                    - fsxUsername
+                    - fsxPassword
+                    - databaseSize
+                    - ontapSgGroupId
+                    - fsxVolThroughput
+                    - fsxIOPS
+                sqlConfiguration:
+                  type: object
+                  properties:
+                    sqlDeploymentMode:
+                      enum:
+                        - standalone
+                        - fci
+                      type: string
+                    sqlAmiId:
+                      type: string
+                    serviceAccountName:
+                      type: string
+                    serviceAccountPassword:
+                      type: string
+                    sqlServerName:
+                      type: string
+                  required:
+                    - sqlDeploymentMode
+                    - sqlAmiId
+                    - serviceAccountName
+                    - serviceAccountPassword
+                    - sqlServerName
+                topicArn:
+                  type: string
+                enableCloudWatch:
+                  default: false
+                  type: boolean
+                tags:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    required:
+                      - key
+                      - value
+              required:
+                - networkConfiguration
+                - ec2Configuration
+                - adConfiguration
+                - fsxConfiguration
+                - sqlConfiguration
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+        - schema:
+            enum:
+              - wizard-advanced
+              - wizard-quick
+              - chatbot
+              - rest-api
+            default: rest-api
+            type: string
+          in: header
+          name: triggered-from
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cloudFormationUrl:
+                    type: string
+                  cloudFormationStackId:
+                    type: string
+                  missingPermissions:
+                    type: string
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/cloudformation/stacks/status:
+    get:
+      summary: List CloudFormation deployments
+      tags: *a2
+      description: List CloudFormation deployment details
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    deploymentId:
+                      type: string
+                    deploymentName:
+                      type: string
+                    deploymentStatus:
+                      type: string
+                    deploymentFailureReason:
+                      type: string
+                  required:
+                    - deploymentId
+                    - deploymentName
+                    - deploymentStatus
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/regions/{region}/cloudformation/stacks/{stackName}/status:
+    get:
+      summary: Get CloudFormation deployment details
+      tags: *a2
+      description: Get CloudFormation deployment details for a given deployment Id
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: region
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: stackName
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deploymentId:
+                    type: string
+                  deploymentName:
+                    type: string
+                  deploymentStatus:
+                    type: string
+                  deploymentFailureReason:
+                    type: string
+                required:
+                  - deploymentId
+                  - deploymentName
+                  - deploymentStatus
+  /accounts/{accountId}/wlmdb/v1/deployments:
+    get:
+      summary: Get deployment jobs summary
+      tags:
+        - Deployment
+      description: API to get deployment jobs summary for given deployment status types
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: statuses
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: nextToken
+          required: false
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        deploymentId:
+                          type: string
+                        deploymentName:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          type: string
+                        metadata:
+                          type: object
+                          properties:
+                            region:
+                              type: string
+                            serverType:
+                              type: string
+                            serverInstallationMode:
+                              type: string
+                            fileSystemType:
+                              type: string
+                      required:
+                        - id
+                        - deploymentId
+                        - deploymentName
+                        - status
+                        - metadata
+                  nextToken:
+                    type: string
+                required:
+                  - count
+                  - items
+  /accounts/{accountId}/wlmdb/v1/configs:
+    get:
+      summary: List saved configurations
+      tags:
+        - Config
+      description: List all the saved configurations
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    creationTime:
+                      type: number
+                    accountId:
+                      type: string
+                    user:
+                      type: string
+                    modifiedTime:
+                      type: number
+                  required:
+                    - id
+                    - name
+                    - creationTime
+                    - accountId
+                    - user
+    post:
+      summary: Create a configuration
+      tags:
+        - Config
+      description: Create a configuration with given details for given account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                data: {}
+              required:
+                - name
+                - data
+        required: true
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    minLength: 1
+                    type: string
+                  accountId:
+                    minLength: 1
+                    type: string
+                  name:
+                    type: string
+                  creationTime:
+                    type: number
+                  user:
+                    type: string
+                  data: {}
+                required:
+                  - id
+                  - accountId
+                  - name
+                  - creationTime
+                  - user
+                  - data
+  /accounts/{accountId}/wlmdb/v1/configs/{id}:
+    get:
+      summary: Get a saved configuration
+      tags:
+        - Config
+      description: Get a saved configuration detail for given Id
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: id
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  creationTime:
+                    type: number
+                  accountId:
+                    type: string
+                  user:
+                    type: string
+                  data: {}
+                  modifiedTime:
+                    type: number
+                required:
+                  - id
+                  - name
+                  - creationTime
+                  - accountId
+                  - user
+                  - data
+    delete:
+      summary: Delete a saved configuration
+      tags:
+        - Config
+      description: Delete saved configuration for the given Id
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: id
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+    patch:
+      summary: Update a saved configuration
+      tags:
+        - Config
+      description: Update the configuration of given Id with data provided
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                data: {}
+              required:
+                - name
+        required: true
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: id
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    minLength: 1
+                    type: string
+                required:
+                  - id
+  /accounts/{accountId}/wlmdb/v1/mssql/credentials/{credentialsId}/regions/{region}:
+    post:
+      summary: Discover MSSQL
+      tags:
+        - Database
+      description: Discover Microsoft SQL Server
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activeNodeInstanceId:
+                  type: string
+                standbyNodeInstanceId:
+                  type: string
+                activeNodeInstanceName:
+                  type: string
+                standbyNodeInstanceName:
+                  type: string
+                fsxId:
+                  type: string
+              required:
+                - activeNodeInstanceId
+                - activeNodeInstanceName
+                - fsxId
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: region
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resourceId:
+                    type: string
+                  resourceName:
+                    type: string
+                required:
+                  - resourceId
+                  - resourceName
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}:
+    delete:
+      summary: Remove MSSQL resource
+      tags:
+        - Database
+      description: Remove the given MSSQL Server resource
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: resourceId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: header
+          name: x-workspace-id
+          required: false
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}/utilization/cpu:
+    get:
+      summary: Get MSSQL CPU utilisation
+      tags: &a3
+        - Database
+      description: Database Resource CPU Utilisation
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: resourceId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  percentUsed:
+                    type: string
+                  used:
+                    type: string
+                  total:
+                    type: string
+                  remaining:
+                    type: string
+                required:
+                  - percentUsed
+                  - used
+                  - total
+                  - remaining
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}/utilization/memory:
+    get:
+      summary: Get MSSQL Memory utilisation
+      tags: *a3
+      description: Database Resource Memory Utilisation
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: resourceId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  percentUsed:
+                    type: string
+                  used:
+                    type: string
+                  total:
+                    type: string
+                  remaining:
+                    type: string
+                required:
+                  - percentUsed
+                  - used
+                  - total
+                  - remaining
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}/utilization/disk:
+    get:
+      summary: Get MSSQL Storage utilisation
+      tags: *a3
+      description: Database Resource Storage Utilisation
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: resourceId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  percentUsed:
+                    type: string
+                  used:
+                    type: string
+                  total:
+                    type: string
+                  remaining:
+                    type: string
+                required:
+                  - percentUsed
+                  - used
+                  - total
+                  - remaining
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}/databases:
+    get:
+      summary: List databases
+      tags: *a3
+      description: List Databases for the given resource
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: resourceId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  databases:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        databaseId:
+                          type: number
+                        databaseName:
+                          type: string
+                        creationDate:
+                          type: string
+                        databaseStatus:
+                          type: string
+                        databaseSize:
+                          type: string
+                      required:
+                        - databaseId
+                        - databaseName
+                        - databaseSize
+                required:
+                  - databases
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}/summary:
+    get:
+      summary: Get MSSQL summary
+      tags: *a3
+      description: Get MSSQL summary of the given resource
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: resourceId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  serverId:
+                    type: string
+                  serverVersion:
+                    type: string
+                  serverEdition:
+                    type: string
+                  serverEngine:
+                    type: string
+                  serverStatus:
+                    type: string
+                  activeConnections:
+                    type: integer
+                  deploymentModel:
+                    type: string
+                  clusterName:
+                    type: string
+                  activeNode:
+                    type: string
+                  standbyNode:
+                    type: string
+                required:
+                  - serverId
+                  - serverVersion
+                  - serverEdition
+                  - serverStatus
+                  - activeConnections
+                  - deploymentModel
+                  - activeNode
+  /accounts/{accountId}/wlmdb/v1/mssql/resources/{resourceId}/databases/{databaseName}/tables:
+    get:
+      summary: List tables
+      tags: *a3
+      description: List of tables in the given database
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: resourceId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: databaseName
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tables:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tableName:
+                          type: string
+                        databaseName:
+                          type: string
+                        tableType:
+                          type: string
+                        tableSchema:
+                          type: string
+                        tableSize:
+                          type: number
+                      required:
+                        - tableName
+                        - databaseName
+                        - tableType
+                        - tableSchema
+                        - tableSize
+                required:
+                  - tables
+  /accounts/{accountId}/wlmdb/v1/batches:
+    post:
+      summary: Make concurrent API calls
+      tags:
+        - Batch
+      description: Make the batch of API calls concurrently
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  method:
+                    enum:
+                      - GET
+                      - POST
+                      - PUT
+                      - DELETE
+                      - PATCH
+                    type: string
+                  payload: {}
+                  headers: {}
+                required:
+                  - url
+                  - method
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data: {}
+                    error: {}
+  /accounts/{accountId}/wlmdb/v1/credentials/{credentialsId}/pricing:
+    post:
+      summary: MSSQL Server deployment cost estimation
+      tags:
+        - Pricing
+      description: Estimates monthly cost of deployable resources in USD for MSSQL server
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                compute:
+                  type: object
+                  properties:
+                    regionCode:
+                      minLength: 1
+                      type: string
+                    instanceType:
+                      minLength: 1
+                      type: string
+                    sqlSoftwareType:
+                      enum:
+                        - SQL std
+                        - SQL ent
+                        - SQL web
+                      type: string
+                    sqlDeploymentMode:
+                      enum:
+                        - fci
+                        - standalone
+                      type: string
+                  required:
+                    - regionCode
+                    - instanceType
+                    - sqlSoftwareType
+                    - sqlDeploymentMode
+                storage:
+                  type: object
+                  properties:
+                    regionCode:
+                      minLength: 1
+                      type: string
+                    diskSize:
+                      description: Database "data" volume size in GiB
+                      type: number
+                    throughput:
+                      description: Throughput is in MBps
+                      type: number
+                    iops:
+                      type: number
+                    deploymentOption:
+                      enum:
+                        - SINGLE_AZ_1
+                        - MULTI_AZ_1
+                      type: string
+                    storageCapacity:
+                      description: The total FSxN storage capacity in GB. "storageCapacity" and
+                        "diskSize" are mutually exclusive
+                      type: number
+                  required:
+                    - regionCode
+                    - diskSize
+                vpc:
+                  type: object
+                  properties:
+                    regionCode:
+                      minLength: 1
+                      type: string
+                  required:
+                    - regionCode
+              required:
+                - compute
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: credentialsId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  compute:
+                    type: number
+                  storage:
+                    type: object
+                    properties:
+                      capacity:
+                        type: number
+                      throughput:
+                        type: number
+                      size:
+                        description: All the sizes are in GiB
+                        type: object
+                        properties:
+                          data:
+                            type: number
+                          log:
+                            type: number
+                          tempdb:
+                            type: number
+                          quorum:
+                            type: number
+                          total:
+                            type: number
+                        required:
+                          - data
+                          - log
+                          - tempdb
+                          - total
+                    required:
+                      - capacity
+                      - throughput
+                  vpc:
+                    type: number
+                  total:
+                    type: number
+                required:
+                  - compute
+                  - total
+  /accounts/{accountId}/wlmdb/v1/database-hosts:
+    get:
+      summary: Get databse hosts details
+      tags: &a4
+        - Deployment
+      description: Get database hosts summary details
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: fields
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: nextToken
+          required: false
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          enum:
+                            - Up
+                            - Down
+                            - N/A
+                          type: string
+                        databaseCount:
+                          type: number
+                        databaseServer:
+                          type: object
+                          properties:
+                            operatingSystem:
+                              minLength: 1
+                              type: string
+                            serverEdition:
+                              minLength: 1
+                              type: string
+                            serverVersion:
+                              minLength: 1
+                              type: string
+                            clusterName:
+                              minLength: 1
+                              type: string
+                            activeNode:
+                              type: string
+                            nodeNames:
+                              type: array
+                              items:
+                                type: string
+                            activeConnections:
+                              type: number
+                            creationDate:
+                              minLength: 1
+                              type: string
+                          required:
+                            - operatingSystem
+                            - serverEdition
+                            - serverVersion
+                            - activeNode
+                            - nodeNames
+                            - activeConnections
+                            - creationDate
+                        topology:
+                          type: object
+                          properties:
+                            awsAccount:
+                              minLength: 1
+                              type: string
+                            region:
+                              type: string
+                            serverType:
+                              enum:
+                                - Microsoft SQL Server
+                              type: string
+                            serverInstallationMode:
+                              enum:
+                                - Standalone
+                                - FCI
+                              type: string
+                            fileSystemType:
+                              enum:
+                                - EBS
+                                - FSx for ONTAP
+                                - FSx for Windows
+                              type: string
+                            fileSystemId:
+                              type: string
+                            fileSystemName:
+                              type: string
+                            fileSystemDeploymentMode:
+                              type: string
+                            fileSystemStatus:
+                              type: string
+                            fileSystemStorageCapacity:
+                              type: number
+                            fileSystemThroughputCapacity:
+                              type: number
+                            vpcId:
+                              type: string
+                            keyPairName:
+                              type: string
+                            ec2Details:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  name:
+                                    type: string
+                                  ebsVolumeId:
+                                    type: string
+                                  instanceType:
+                                    type: string
+                                  availabilityZone:
+                                    type: string
+                                  subnetId:
+                                    type: string
+                                required:
+                                  - id
+                                  - name
+                                  - ebsVolumeId
+                            activeDirectoryDetails:
+                              type: object
+                              properties:
+                                name:
+                                  minLength: 1
+                                  type: string
+                                address:
+                                  minLength: 1
+                                  type: string
+                              required:
+                                - name
+                                - address
+                          required:
+                            - awsAccount
+                            - region
+                            - serverType
+                            - serverInstallationMode
+                            - fileSystemType
+                            - fileSystemId
+                            - ec2Details
+                        protection:
+                          type: object
+                          properties:
+                            isAwsBackUpEnabled:
+                              default: false
+                              type: boolean
+                            isFsxOntapSnapshotsEnabled:
+                              default: false
+                              type: boolean
+                            isSqlNativeEnabled:
+                              default: false
+                              type: boolean
+                            protectedDatabases:
+                              description: Number of protected databases
+                              type: number
+                          required:
+                            - isAwsBackUpEnabled
+                            - isFsxOntapSnapshotsEnabled
+                            - isSqlNativeEnabled
+                        performance:
+                          type: object
+                          properties:
+                            latency:
+                              description: Database server I/O latency in milliseconds
+                              type: number
+                            assessment:
+                              enum:
+                                - High
+                                - Medium
+                                - Low
+                              type: string
+                            rwMetrics:
+                              type: object
+                              properties:
+                                latency:
+                                  type: object
+                                  properties:
+                                    read:
+                                      description: Database server read performance for latency, IOPS or throughput
+                                      type: number
+                                    write:
+                                      description: Database server write performance for latency, IOPS or throughput
+                                      type: number
+                                  required:
+                                    - read
+                                    - write
+                                iops:
+                                  type: object
+                                  properties:
+                                    read:
+                                      description: Database server read performance for latency, IOPS or throughput
+                                      type: number
+                                    write:
+                                      description: Database server write performance for latency, IOPS or throughput
+                                      type: number
+                                  required:
+                                    - read
+                                    - write
+                                throughput:
+                                  type: object
+                                  properties:
+                                    read:
+                                      description: Database server read performance for latency, IOPS or throughput
+                                      type: number
+                                    write:
+                                      description: Database server write performance for latency, IOPS or throughput
+                                      type: number
+                                  required:
+                                    - read
+                                    - write
+                              required:
+                                - latency
+                                - iops
+                                - throughput
+                        storage:
+                          type: object
+                          properties:
+                            size:
+                              description: Provisioned size, in bytes
+                              type: number
+                            used:
+                              description: The virtual space used before storage efficiency, in bytes.
+                              type: number
+                            spaceSavings:
+                              description: Total disk space saved in the volume due to storage efficiency, in
+                                bytes.
+                              type: number
+                          required:
+                            - size
+                            - used
+                            - spaceSavings
+                        estimatedUsageCost:
+                          type: object
+                          properties:
+                            compute:
+                              description: Compute cost in dollars
+                              type: number
+                            storage:
+                              description: Storage  cost in dollars
+                              type: number
+                            connectivity:
+                              description: Connectivity cost in dollars
+                              type: number
+                            others:
+                              description: Other services like active directory, cloudwatch logging, etc costs
+                                in dollars
+                              type: number
+                            estimationType:
+                              enum:
+                                - billing
+                                - pricing
+                              type: string
+                          required:
+                            - compute
+                            - storage
+                            - connectivity
+                            - others
+                            - estimationType
+                        resourceUtilization:
+                          type: object
+                          properties:
+                            cpu:
+                              type: object
+                              properties:
+                                percentUsed:
+                                  minLength: 1
+                                  type: string
+                                used:
+                                  minLength: 1
+                                  type: string
+                                total:
+                                  minLength: 1
+                                  type: string
+                                remaining:
+                                  minLength: 1
+                                  type: string
+                              required:
+                                - percentUsed
+                                - used
+                                - total
+                                - remaining
+                            memory:
+                              type: object
+                              properties:
+                                percentUsed:
+                                  minLength: 1
+                                  type: string
+                                used:
+                                  minLength: 1
+                                  type: string
+                                total:
+                                  minLength: 1
+                                  type: string
+                                remaining:
+                                  minLength: 1
+                                  type: string
+                              required:
+                                - percentUsed
+                                - used
+                                - total
+                                - remaining
+                            disk:
+                              type: object
+                              properties:
+                                percentUsed:
+                                  minLength: 1
+                                  type: string
+                                used:
+                                  minLength: 1
+                                  type: string
+                                total:
+                                  minLength: 1
+                                  type: string
+                                remaining:
+                                  minLength: 1
+                                  type: string
+                              required:
+                                - percentUsed
+                                - used
+                                - total
+                                - remaining
+                          required:
+                            - cpu
+                            - memory
+                            - disk
+                      required:
+                        - id
+                        - name
+                        - status
+                        - databaseCount
+                  nextToken:
+                    type: string
+                required:
+                  - count
+                  - items
+  /accounts/{accountId}/wlmdb/v1/database-hosts/{databaseHostId}:
+    get:
+      summary: "Fetch database server details "
+      tags: *a4
+      description: Fetch database server resource (memory, cpu, disk) comsumption,
+        metadata about installation (server details, network, active directory),
+        storage savings, usage cost and databases in the server.
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: fields
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: nextToken
+          required: false
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: databaseHostId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    enum:
+                      - Up
+                      - Down
+                      - N/A
+                    type: string
+                  databaseCount:
+                    type: number
+                  databaseServer:
+                    type: object
+                    properties:
+                      operatingSystem:
+                        minLength: 1
+                        type: string
+                      serverEdition:
+                        minLength: 1
+                        type: string
+                      serverVersion:
+                        minLength: 1
+                        type: string
+                      clusterName:
+                        minLength: 1
+                        type: string
+                      activeNode:
+                        type: string
+                      nodeNames:
+                        type: array
+                        items:
+                          type: string
+                      activeConnections:
+                        type: number
+                      creationDate:
+                        minLength: 1
+                        type: string
+                    required:
+                      - operatingSystem
+                      - serverEdition
+                      - serverVersion
+                      - activeNode
+                      - nodeNames
+                      - activeConnections
+                      - creationDate
+                  topology:
+                    type: object
+                    properties:
+                      awsAccount:
+                        minLength: 1
+                        type: string
+                      region:
+                        type: string
+                      serverType:
+                        enum:
+                          - Microsoft SQL Server
+                        type: string
+                      serverInstallationMode:
+                        enum:
+                          - Standalone
+                          - FCI
+                        type: string
+                      fileSystemType:
+                        enum:
+                          - EBS
+                          - FSx for ONTAP
+                          - FSx for Windows
+                        type: string
+                      fileSystemId:
+                        type: string
+                      fileSystemName:
+                        type: string
+                      fileSystemDeploymentMode:
+                        type: string
+                      fileSystemStatus:
+                        type: string
+                      fileSystemStorageCapacity:
+                        type: number
+                      fileSystemThroughputCapacity:
+                        type: number
+                      vpcId:
+                        type: string
+                      keyPairName:
+                        type: string
+                      ec2Details:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            ebsVolumeId:
+                              type: string
+                            instanceType:
+                              type: string
+                            availabilityZone:
+                              type: string
+                            subnetId:
+                              type: string
+                          required:
+                            - id
+                            - name
+                            - ebsVolumeId
+                      activeDirectoryDetails:
+                        type: object
+                        properties:
+                          name:
+                            minLength: 1
+                            type: string
+                          address:
+                            minLength: 1
+                            type: string
+                        required:
+                          - name
+                          - address
+                    required:
+                      - awsAccount
+                      - region
+                      - serverType
+                      - serverInstallationMode
+                      - fileSystemType
+                      - fileSystemId
+                      - ec2Details
+                  protection:
+                    type: object
+                    properties:
+                      isAwsBackUpEnabled:
+                        default: false
+                        type: boolean
+                      isFsxOntapSnapshotsEnabled:
+                        default: false
+                        type: boolean
+                      isSqlNativeEnabled:
+                        default: false
+                        type: boolean
+                      protectedDatabases:
+                        description: Number of protected databases
+                        type: number
+                    required:
+                      - isAwsBackUpEnabled
+                      - isFsxOntapSnapshotsEnabled
+                      - isSqlNativeEnabled
+                  performance:
+                    type: object
+                    properties:
+                      latency:
+                        description: Database server I/O latency in milliseconds
+                        type: number
+                      assessment:
+                        enum:
+                          - High
+                          - Medium
+                          - Low
+                        type: string
+                      rwMetrics:
+                        type: object
+                        properties:
+                          latency:
+                            type: object
+                            properties:
+                              read:
+                                description: Database server read performance for latency, IOPS or throughput
+                                type: number
+                              write:
+                                description: Database server write performance for latency, IOPS or throughput
+                                type: number
+                            required:
+                              - read
+                              - write
+                          iops:
+                            type: object
+                            properties:
+                              read:
+                                description: Database server read performance for latency, IOPS or throughput
+                                type: number
+                              write:
+                                description: Database server write performance for latency, IOPS or throughput
+                                type: number
+                            required:
+                              - read
+                              - write
+                          throughput:
+                            type: object
+                            properties:
+                              read:
+                                description: Database server read performance for latency, IOPS or throughput
+                                type: number
+                              write:
+                                description: Database server write performance for latency, IOPS or throughput
+                                type: number
+                            required:
+                              - read
+                              - write
+                        required:
+                          - latency
+                          - iops
+                          - throughput
+                  storage:
+                    type: object
+                    properties:
+                      size:
+                        description: Provisioned size, in bytes
+                        type: number
+                      used:
+                        description: The virtual space used before storage efficiency, in bytes.
+                        type: number
+                      spaceSavings:
+                        description: Total disk space saved in the volume due to storage efficiency, in
+                          bytes.
+                        type: number
+                    required:
+                      - size
+                      - used
+                      - spaceSavings
+                  estimatedUsageCost:
+                    type: object
+                    properties:
+                      compute:
+                        description: Compute cost in dollars
+                        type: number
+                      storage:
+                        description: Storage  cost in dollars
+                        type: number
+                      connectivity:
+                        description: Connectivity cost in dollars
+                        type: number
+                      others:
+                        description: Other services like active directory, cloudwatch logging, etc costs
+                          in dollars
+                        type: number
+                      estimationType:
+                        enum:
+                          - billing
+                          - pricing
+                        type: string
+                    required:
+                      - compute
+                      - storage
+                      - connectivity
+                      - others
+                      - estimationType
+                  resourceUtilization:
+                    type: object
+                    properties:
+                      cpu:
+                        type: object
+                        properties:
+                          percentUsed:
+                            minLength: 1
+                            type: string
+                          used:
+                            minLength: 1
+                            type: string
+                          total:
+                            minLength: 1
+                            type: string
+                          remaining:
+                            minLength: 1
+                            type: string
+                        required:
+                          - percentUsed
+                          - used
+                          - total
+                          - remaining
+                      memory:
+                        type: object
+                        properties:
+                          percentUsed:
+                            minLength: 1
+                            type: string
+                          used:
+                            minLength: 1
+                            type: string
+                          total:
+                            minLength: 1
+                            type: string
+                          remaining:
+                            minLength: 1
+                            type: string
+                        required:
+                          - percentUsed
+                          - used
+                          - total
+                          - remaining
+                      disk:
+                        type: object
+                        properties:
+                          percentUsed:
+                            minLength: 1
+                            type: string
+                          used:
+                            minLength: 1
+                            type: string
+                          total:
+                            minLength: 1
+                            type: string
+                          remaining:
+                            minLength: 1
+                            type: string
+                        required:
+                          - percentUsed
+                          - used
+                          - total
+                          - remaining
+                    required:
+                      - cpu
+                      - memory
+                      - disk
+                required:
+                  - id
+                  - name
+                  - status
+                  - databaseCount
+  /accounts/{accountId}/wlmdb/v1/database-hosts/{databaseHostId}/databases:
+    get:
+      summary: "Fetch details about databases in a server "
+      tags: *a4
+      description: Fetch details about databases in a server - name, protection
+        status, availability status, size and type of database
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: databaseHostId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  nextToken:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          minLength: 1
+                          type: string
+                        status:
+                          minLength: 1
+                          type: string
+                        type:
+                          minLength: 1
+                          type: string
+                        size:
+                          type: number
+                        protection:
+                          type: object
+                          properties:
+                            isAwsBackUpEnabled:
+                              default: false
+                              type: boolean
+                            isFsxOntapSnapshotsEnabled:
+                              default: false
+                              type: boolean
+                            isSqlNativeEnabled:
+                              default: false
+                              type: boolean
+                            protectedDatabases:
+                              description: Number of protected databases
+                              type: number
+                          required:
+                            - isAwsBackUpEnabled
+                            - isFsxOntapSnapshotsEnabled
+                            - isSqlNativeEnabled
+                      required:
+                        - name
+                        - status
+                        - type
+                        - size
+                        - protection
+                required:
+                  - count
+                  - items
+  /accounts/{accountId}/wlmdb/v1/jobs:
+    get:
+      summary: List all jobs
+      tags: &a5
+        - Job Monitoring
+      description: API to list all jobs in a tenancy account
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: parentJobId
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: sort
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: initiator
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: type
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: status
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: startTime
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: endTime
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: false
+        - schema:
+            type: string
+          in: query
+          name: nextToken
+          required: false
+        - schema:
+            type: boolean
+          in: query
+          name: includeSubJobs
+          required: false
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        accountId:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          type: string
+                        description:
+                          type: string
+                        parentJobId:
+                          type: string
+                        resourceName:
+                          type: string
+                        type:
+                          type: string
+                        startTime:
+                          type: number
+                        endTime:
+                          type: number
+                        error:
+                          type: string
+                        subJobs:
+                          type: array
+                          items: {}
+                      required:
+                        - id
+                        - accountId
+                        - name
+                        - status
+                        - resourceName
+                        - type
+                        - startTime
+                  nextToken:
+                    type: string
+                required:
+                  - count
+                  - items
+    post:
+      summary: Create jobs
+      tags: *a5
+      description: API to create jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accountId:
+                        type: string
+                      name:
+                        type: string
+                      status:
+                        enum:
+                          - IN_PROGRESS
+                          - COMPLETED
+                          - FAILED
+                        type: string
+                      description:
+                        type: string
+                      parentJobId:
+                        type: string
+                      resourceName:
+                        type: string
+                      type:
+                        enum:
+                          - DEPLOYMENT
+                        type: string
+                      startTime:
+                        type: number
+                      endTime:
+                        type: number
+                      error:
+                        type: string
+                      initiator:
+                        type: string
+                    required:
+                      - accountId
+                      - name
+                      - status
+                      - resourceName
+                      - type
+                      - startTime
+              required:
+                - items
+        required: true
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                required:
+                  - count
+  /accounts/{accountId}/wlmdb/v1/jobs/{jobId}:
+    get:
+      summary: Get job details with child jobs
+      tags:
+        - Job Monitoring
+      description: API to list all jobs in a tenancy account with its immediate level
+        child jobs
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: jobId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  accountId:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  description:
+                    type: string
+                  parentJobId:
+                    type: string
+                  resourceName:
+                    type: string
+                  type:
+                    type: string
+                  startTime:
+                    type: number
+                  endTime:
+                    type: number
+                  error:
+                    type: string
+                  subJobs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        accountId:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          type: string
+                        description:
+                          type: string
+                        parentJobId:
+                          type: string
+                        resourceName:
+                          type: string
+                        type:
+                          type: string
+                        startTime:
+                          type: number
+                        endTime:
+                          type: number
+                        error:
+                          type: string
+                        subJobs:
+                          type: array
+                          items: {}
+                      required:
+                        - id
+                        - accountId
+                        - name
+                        - status
+                        - resourceName
+                        - type
+                        - startTime
+                required:
+                  - id
+                  - accountId
+                  - name
+                  - status
+                  - resourceName
+                  - type
+                  - startTime
+    delete:
+      summary: Delete a job with all its child jobs
+      tags:
+        - Job Monitoring
+      description: API to delete a job and all its subjobs
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: jobId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                required:
+                  - count
+    patch:
+      summary: Update a job
+      tags:
+        - Job Monitoring
+      description: API to update job details
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  enum:
+                    - IN_PROGRESS
+                    - COMPLETED
+                    - FAILED
+                  type: string
+                description:
+                  type: string
+                endTime:
+                  type: number
+                error:
+                  type: string
+              required:
+                - status
+        required: true
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: jobId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  accountId:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  description:
+                    type: string
+                  parentJobId:
+                    type: string
+                  resourceName:
+                    type: string
+                  type:
+                    type: string
+                  startTime:
+                    type: number
+                  endTime:
+                    type: number
+                  error:
+                    type: string
+                  subJobs: {}
+                required:
+                  - id
+                  - accountId
+                  - name
+                  - status
+                  - resourceName
+                  - type
+                  - startTime
+  /accounts/{accountId}/wlmdb/v1/jobs/summary:
+    get:
+      summary: Get job summary
+      tags: *a5
+      description: API to get job summary for a given account and time range
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTime
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: endTime
+          required: false
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inProgress:
+                    type: number
+                  completed:
+                    type: number
+                  failed:
+                    type: number
+                required:
+                  - inProgress
+                  - completed
+                  - failed
+  /accounts/{accountId}/wlmdb/v1/chatbot/prompt:
+    post:
+      summary: List response of chatbot
+      tags:
+        - Chatbot
+      description: List response of chatbot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                params: {}
+              required:
+                - prompt
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  status:
+                    type: string
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          type: string
+                        status:
+                          type: string
+                        message:
+                          type: string
+                        type:
+                          type: string
+                        disable:
+                          type: boolean
+                        default:
+                          type: string
+                        allowCreate:
+                          type: boolean
+                        link:
+                          type: object
+                          properties:
+                            text:
+                              type: string
+                            path:
+                              type: string
+                            description:
+                              type: string
+                        allowedValues:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              label:
+                                type: string
+                              value:
+                                type: string
+                              data:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    label:
+                                      type: string
+                                    value:
+                                      type: string
+                            required:
+                              - value
+                        data: {}
+                  intent:
+                    type: object
+                    properties:
+                      complete:
+                        type: boolean
+                      type:
+                        type: string
+                      userParams: {}
+                      params: {}
+                    required:
+                      - params
+  /accounts/{accountId}/wlmdb/v1/status:
+    get:
+      summary: Get status of the user
+      tags:
+        - System
+      description: Get status of the user
+      parameters:
+        - schema:
+            minLength: 1
+            type: string
+          in: path
+          name: accountId
+          required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isActive:
+                    type: boolean
+                required:
+                  - isActive
+servers:
+  - url: http://localhost:8085
+  - url: https://staging.api.workloads.netapp.com
+  - url: https://api.workloads.bluexp.netapp.com
+  - url: https://demo-wlmdb.api.workloads.bluexp.netapp.com
+security:
+  - http:
+      - scheme:bearer
+      - bearerFormat:JWT
