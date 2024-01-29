@@ -1002,6 +1002,7 @@ const subJobDescriptions: SubJobDescriptions = {
     'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
         'Signaling wait condition to resume next steps'
 };
+const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
 export {
     WLMDB,
@@ -1223,5 +1224,6 @@ export {
     DATABASE_SIZE,
     SQL_HOST_NAME,
     JOBS_DEFAULT_TIME_RANGE,
-    subJobDescriptions
+    subJobDescriptions,
+    CF_STACK_RESOURCE_TYPE
 };

@@ -1,4 +1,4 @@
-import { omit } from 'lodash-es';
+import { isEmpty, omit } from 'lodash-es';
 import Chatbot from '../lib/chatbot/chatbot';
 import { findChangedKeys, resetNextParamsOnUpdate, validateParams } from '../lib/chatbot/helpers';
 import { queryBotResponseType } from '../routes/types/chatbot.types';
@@ -40,9 +40,9 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
                 }
                 const validationResponse = await validateParams(params, oldParams || {}, CHATBOT_UI_PARAMS_FSX);
 
-                if (validationResponse?.errors?.length) {
+                if (!isEmpty(validationResponse?.error)) {
                     return {
-                        errors: validationResponse.errors,
+                        error: validationResponse.error,
                         intent: {
                             complete: false,
                             type: intent?.type,

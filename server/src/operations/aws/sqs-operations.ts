@@ -19,7 +19,8 @@ import {
     WLMDB,
     WF,
     DEPLOYMENT_JOBS_FAILED_STATUS,
-    WLMDB_COST_ALLOCATION_TAG
+    WLMDB_COST_ALLOCATION_TAG,
+    CF_STACK_RESOURCE_TYPE
 } from '../../utils/consts';
 import {
     checkAndRetrieveJsonObject,
@@ -94,12 +95,17 @@ async function getMatchingMasterStackDeployment(stackName: string) {
 }
 
 async function getMatchingMasterJob(accountId: string, stackName: string) {
-    const MASTER_JOB_NAME_PATTERN = /Microsoft SQL server deployment with stack WLMDB-(.+[a-zA-Z])-(\d{13})/;
+    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', `${stackName};href:`);
+    if (masterJob) {
+        return masterJob;
+    }
+    const MASTER_JOB_NAME_PATTERN =
+        /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
     const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
     if (matchingMasterJob) {
-        let [masterJobName] = matchingMasterJob;
+        let [, masterJobName] = matchingMasterJob;
         masterJobName += ';href:';
-        const [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', masterJobName);
+        [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', masterJobName);
         return masterJob;
     }
 }
@@ -295,6 +301,7 @@ async function processCloudFormationMessages() {
     if (process.env.AWS_ROLE_ARN) {
         const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
+
         try {
             const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
                 QueueUrl: queueUrl,
@@ -702,7 +709,8 @@ async function processCloudFormationMessages() {
                                     const masterJob = await getMatchingMasterJob(accountId, masterJobName);
                                     if (!masterJob) {
                                         logger.error('No entry found in database for job with name', masterJobName);
-                                    } else {
+                                    } else if (resourceType === CF_STACK_RESOURCE_TYPE) {
+                                        // For level 3 (resource) messages, level 2 (nested stack) jobs should not be updated
                                         const level2JobName = `Deploying ${stackName}`;
                                         await createOrUpdateChildJobs(
                                             accountId,

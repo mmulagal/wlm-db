@@ -44,7 +44,8 @@ import {
     CURL_REQ_TEMPLATE,
     CRED_PLACEHOLDERS,
     CODEBOX_REST_RES,
-    AWS_CLI_HIGHLIGHT_STRINGS
+    AWS_CLI_HIGHLIGHT_STRINGS,
+    UI_IDS
 } from '../../../utils/consts';
 import { initialMssqlState } from '../../../store/mssql/mssqlFormSlice';
 import LoadingCodeBox from '../../../common/LoadingCodebox/LoadingCodebox';
@@ -616,6 +617,16 @@ const Sidebar = ({ isOpen, onClose }: any) => {
         }
     };
 
+    const setCssId = () => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            return UI_IDS.DBP_CODEBOX_CF;
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            return UI_IDS.DBP_CODEBOX_AWS_CLI;
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            return UI_IDS.DBP_CODEBOX_REST_API;
+        }
+    };
+
     //Logic for Scroll space ends here
 
     return (
@@ -836,6 +847,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
 
                                 <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                                     <SelectField
+                                        id={setCssId()}
                                         isClearable={false}
                                         onChange={(selectedOptions: any): void => {
                                             setDropdownValue(selectedOptions?.value);
@@ -872,7 +884,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                                 children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                                 container={
                                                     <CopyToClipboard text={copyResponseData()}>
-                                                        <div className={styles.menuItem}>
+                                                        <div className={styles.menuItem} id={UI_IDS.DBP_CODEBOX_COPY}>
                                                             <Copy />
                                                         </div>
                                                     </CopyToClipboard>
@@ -922,7 +934,7 @@ const Sidebar = ({ isOpen, onClose }: any) => {
                                 !isRightPanelTemplateLoading &&
                                 getRightPanelTemplateResponse(openKey)?.template && (
                                     <div className={styles.cloudFormationButtonContainer}>
-                                        <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()}>
+                                        <Button variant="secondary" onClick={() => handleViewInAwsCloudFormation()} id={UI_IDS.DBP_REDIRECT_TO_CF}>
                                             {GENERAL.SAVE_FORM_AS_CLOUD}
                                         </Button>
                                     </div>

@@ -57,13 +57,15 @@ import {
     MULTI_AZ,
     TAGS,
     DEPLOYMENT_ENVIRONMENT,
-    ENCRYPTION_KEY
+    ENCRYPTION_KEY,
+    KEY_LABEL_MAP
 } from './consts';
 
 const logger = getLogger();
 
 type ValidationResponse = {
     key?: string;
+    label?: string;
     status?: string;
     message?: string;
     allowedValues?: any;
@@ -102,12 +104,13 @@ async function validateParams(
     params: Params,
     oldParams: Params,
     schemaParams: any
-): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
+): Promise<{ error: ValidationResponse; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
     const validatedParams: Params = {};
     // const promises = [];
-    const errors: Array<ValidationResponse> = [];
+    let error: ValidationResponse = {};
+
     for (const reqParam of schemaParams) {
         // if (reqParam.required !== false) {
         const keys = Object.keys(reqParam);
@@ -121,8 +124,9 @@ async function validateParams(
                     delete params[currKey];
                     delete oldParams[currKey];
                     delete validatedParams[currKey];
-                    errors.push(resp as ValidationResponse);
-                    return { errors, params: validatedParams };
+                    error = resp as ValidationResponse;
+                    error.label = KEY_LABEL_MAP[currKey as keyof typeof KEY_LABEL_MAP];
+                    return { error, params: validatedParams };
                 }
 
                 if (resp?.value !== null && resp?.value !== undefined) {
@@ -134,7 +138,7 @@ async function validateParams(
             }
         }
     }
-    return { errors, params: validatedParams };
+    return { error, params: validatedParams };
 }
 
 function wrapContext(question: string) {

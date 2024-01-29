@@ -28,7 +28,7 @@ type messageType = {
     intent?: any;
     type?: string;
     active?: boolean;
-    errors?: any;
+    error?: any;
     confirmData?: any;
     default?: string;
     disable?: boolean;
@@ -46,37 +46,33 @@ type MessagePropType = {
 };
 
 const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplying, activeField }: MessagePropType) => {
-    const key = 'errors';
+    const key = 'error';
     const isUserInputRequired = msgObj[key];
-    const fieldsArr = msgObj[key] || [];
+    const fieldObj = msgObj[key] || {};
     const [paramObj, setParamObj] = useState({});
     const [errorFields, setErrorFields] = useState<string[]>([]);
     const isLastMessage = idx === messages.length - 1;
     const dispatch = useDispatch();
 
     //@ts-ignore
-    const isContinueDisabled = useMemo(() => {
-        return Object.keys(paramObj).length !== fieldsArr.length || errorFields.length > 0;
-    }, [paramObj, fieldsArr, errorFields]);
-
-    const item = fieldsArr[0];
+    const item = fieldObj;
 
     useEffect(() => {
-        if (fieldsArr?.length) {
-            if (fieldsArr[0]?.type === 'text') {
-                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldsArr[0].key }));
-            } else if (fieldsArr[0]?.type === 'password') {
-                dispatch(setExpectingResponse({ type: 'password', fieldName: fieldsArr[0].key }));
-            } else if (fieldsArr[0]?.type === 'number') {
-                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldsArr[0].key }));
+        if (Object.keys(fieldObj)?.length) {
+            if (fieldObj?.type === 'text') {
+                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldObj.key }));
+            } else if (fieldObj?.type === 'password') {
+                dispatch(setExpectingResponse({ type: 'password', fieldName: fieldObj.key }));
+            } else if (fieldObj?.type === 'number') {
+                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldObj.key }));
             } else {
                 dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
             }
         }
-    }, [fieldsArr]);
+    }, [fieldObj]);
 
     const ValidationCriteria = () => {
-        const selectKey = fieldsArr[0]?.key;
+        const selectKey = fieldObj?.key;
         if (selectKey === 'fsxUsername') {
             return (
                 <Typography variant="Regular_13" className={styles.infoMsg}>
@@ -230,7 +226,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                             msgObj.sender === 'bot' ? styles['bot-icon'] : styles['user-icon']
                         }`}
                     >
-                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon"/>}
+                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon" />}
                     </div>
                     {isUserInputRequired ? (
                         msgObj.active ? (
@@ -262,6 +258,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                                 activeField={activeField}
                                                 handleSelectButtonClicked={handleSelectButtonClicked}
                                                 link={item.link}
+                                                label={item.label}
                                             />
                                         </div>
                                     ) : (
@@ -271,7 +268,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                             }`}
                                         >
-                                            {`${fieldsArr[0].message}`}
+                                            {`${fieldObj.message}`}
                                             <ValidationCriteria />
                                         </Typography>
                                     )}
@@ -301,7 +298,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                     msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                 }`}
                             >
-                                {`${fieldsArr[0].message}`}
+                                {`${fieldObj.message}`}
                                 <ValidationCriteria />
                             </Typography>
                         )
@@ -322,7 +319,18 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                             }`}
                         >
-                            {`${msgObj.msg}`}
+                            <div className={styles.textDiv}>
+                                {`${msgObj.msg}`}
+                                {msgObj?.link && (
+                                    <Button
+                                        Component="button"
+                                        variant="text"
+                                        onClick={() => msgObj?.link?.onLinkClick()}
+                                    >
+                                        {msgObj?.link?.linkText}
+                                    </Button>
+                                )}
+                            </div>
                             <ValidationCriteria />
                         </Typography>
                     )}

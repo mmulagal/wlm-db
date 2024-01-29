@@ -30,7 +30,7 @@ type messageType = {
     intent?: any;
     type?: string;
     active?: boolean;
-    errors?: any;
+    error?: any;
 };
 
 type ChatBoxPropTypes = {
