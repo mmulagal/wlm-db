@@ -73,7 +73,7 @@ import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { Button, Typography, useDialog } from '@netapp/design-system';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
@@ -242,6 +242,7 @@ const Chatbot = () => {
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
                                     navigate('../job-monitor');
+                                    dispatch(clearNotifications());
                                 }}
                             >
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
