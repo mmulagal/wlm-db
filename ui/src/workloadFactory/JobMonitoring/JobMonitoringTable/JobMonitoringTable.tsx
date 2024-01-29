@@ -223,7 +223,11 @@ const JobMonitoringTable = () => {
             Header: 'Status',
             accessor: 'status',
             width: '160px',
-            filterOptions: 'auto',
+            filterOptions: [
+                {value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING},
+                {value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED},
+                {value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED}
+            ],
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.statusCol}>
