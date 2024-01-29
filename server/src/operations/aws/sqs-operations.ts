@@ -95,7 +95,7 @@ async function getMatchingMasterJob(accountId: string, stackName: string) {
         return masterJob;
     }
     const MASTER_JOB_NAME_PATTERN =
-        /(.*)-([TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment].*)/;
+        /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
     const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
     if (matchingMasterJob) {
         let [, masterJobName] = matchingMasterJob;
