@@ -59,6 +59,9 @@ const JobMonitoringApi = () => {
             let mergedList = [...oldList, ...newList]
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
+            if (!jmJobsList?.nextToken) {
+                setSkipApiCall(true);
+            }
         }
     }, [jmJobsList, jmJobsListLoading]);
 
