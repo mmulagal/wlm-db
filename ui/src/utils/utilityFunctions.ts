@@ -975,6 +975,10 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
             if (key && key !== '') {
                 if (key === 'startTime' || key === 'endTime') {
                     result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
+                } else if (key === 'name' && item[key]) {
+                    result += item[key].split(';href')[0] + ',';
+                } else if (key === 'status' && item[key]) {
+                    result += jobMonitoringStatusMapping(item[key]) + ',';
                 } else {
                     if (item[key]) {
                         result += item[key] + ',';
