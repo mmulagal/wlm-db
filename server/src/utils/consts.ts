@@ -559,7 +559,7 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
 
     topicArn: 'NotificationARN',
     enableCloudWatch: 'EnableCloudWatchLogFeature',
-    metadataParam: 'MetadataParam'
+    metrics: 'Metrics'
 };
 
 const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -627,7 +627,7 @@ const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
 const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
-const TEMPLATE_METADATA_PARAM = 'MetadataParam';
+const TEMPLATE_METRICS = 'Metrics';
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -1171,7 +1171,7 @@ export {
     IAM_PASSROLE_CONDITION,
     IAM_EC2_SERVICE,
     KMS_KEY_ALIAS,
-    TEMPLATE_METADATA_PARAM,
+    TEMPLATE_METRICS,
     TRIGGERED_FROM,
     DEPLOYED_FROM,
     INSTANCE_TYPE,

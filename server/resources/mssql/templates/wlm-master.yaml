@@ -281,7 +281,7 @@ Parameters:
   
   {{WlmdbAwsAccountId}}
   
-  {{MetadataParam}}
+  {{Metrics}}
        
 Conditions:
   UseAWSDirectoryServiceEE:
@@ -473,7 +473,7 @@ Resources:
             - 'Standalone'
       FileSystemType: 'FSx for ONTAP'
       DatabaseType: 'Microsoft SQL server'
-      MetadataParam: !Ref MetadataParam
+      Metrics: !Ref Metrics
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -926,7 +926,7 @@ Resources:
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
-      MetadataParam: !Ref MetadataParam
+      Metrics: !Ref Metrics
 
       FSxFileSystemId:
           !If
