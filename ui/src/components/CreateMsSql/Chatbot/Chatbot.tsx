@@ -855,7 +855,7 @@ const Chatbot = () => {
                 ...updatedMessages[updatedMessages.length - 1],
                 error: null,
                 msg:
-                    updatedMessages[updatedMessages.length - 1]?.error?.[0]?.message ||
+                    updatedMessages[updatedMessages.length - 1]?.error?.message ||
                     updatedMessages[updatedMessages.length - 1].msg
             };
         }
