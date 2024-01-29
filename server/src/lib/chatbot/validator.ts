@@ -585,7 +585,7 @@ function validateDbSize(size: number, key: string) {
             key,
             status: 'error',
             message:
-                'Enter a data drive size\nSpecify the SQL data drive size only. The provisioning for long drive, tempdb and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration.',
+                'Enter a data drive size\nSpecify the SQL data drive size only in GiB. The provisioning for log drive, tempdb and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration.',
             type: 'number'
         };
     }
