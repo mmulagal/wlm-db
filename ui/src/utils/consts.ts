@@ -232,3 +232,16 @@ export const ADV_CREATE_SUGGESTION_BUBBLES = [
 ];
 
 export const JOBS_REPORT = 'jobs_report_';
+
+export const UI_IDS = {
+    WIZARD_REDIRECT_TO_CF: 'wizard-redirect-to-cf',
+    DBP_REDIRECT_TO_CF: 'dbp-redirect-to-cf',
+    WIZARD_CODEBOX_COPY: 'wizard-codebox-copy',
+    DBP_CODEBOX_COPY: 'dbp-codebox-copy',
+    WIZARD_CODEBOX_REST_API: 'wizard-codebox-rest-api',
+    DBP_CODEBOX_REST_API: 'dbp-codebox-rest-api',
+    WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
+    DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
+    WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
+    DBP_CODEBOX_CF: 'dbp-codebox-cf'
+}

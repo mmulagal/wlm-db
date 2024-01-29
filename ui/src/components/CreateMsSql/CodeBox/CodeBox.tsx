@@ -18,7 +18,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, UI_IDS } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -400,6 +400,16 @@ const CodeBox = () => {
         }
     };
 
+    const setCssId = () => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            return UI_IDS.WIZARD_CODEBOX_CF;
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            return UI_IDS.WIZARD_CODEBOX_AWS_CLI;
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            return UI_IDS.WIZARD_CODEBOX_REST_API;
+        }
+    };
+
     //Logic for Scroll space ends here
 
     return (
@@ -449,6 +459,7 @@ const CodeBox = () => {
                 </div> */}
                 <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                     <SelectField
+                        id={setCssId()}
                         isClearable={false}
                         value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
                         onChange={(selectedOptions: any): void => {
@@ -497,7 +508,7 @@ const CodeBox = () => {
                                     children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                     container={
                                         <CopyToClipboard text={copyResponseData()}>
-                                            <div className={styles.menuItem}>
+                                            <div className={styles.menuItem} id={UI_IDS.WIZARD_CODEBOX_COPY}>
                                                 <Copy />
                                             </div>
                                         </CopyToClipboard>
@@ -514,7 +525,7 @@ const CodeBox = () => {
 
                 {/* Cloud formation button */}
                 <div className={styles.cloudFormationButtonContainer}>
-                    <Button variant="secondary" onClick={() => handleRedirectToCF()}>
+                    <Button variant="secondary" onClick={() => handleRedirectToCF()} id={UI_IDS.WIZARD_REDIRECT_TO_CF}>
                         {GENERAL.SAVE_FORM_AS_CLOUD}
                     </Button>
                 </div>
