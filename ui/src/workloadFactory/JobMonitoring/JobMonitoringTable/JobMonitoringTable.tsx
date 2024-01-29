@@ -146,7 +146,6 @@ const JobMonitoringTable = () => {
             dispatch(setDownloadJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
             if (jmJobsList && !jmJobsList?.nextToken) {
-                setSkipApiCall(false);
                 // Download logic
                 downloadJMTable(mergedList);
                 dispatch(clearNotifications());
