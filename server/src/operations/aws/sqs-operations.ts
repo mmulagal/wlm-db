@@ -90,7 +90,7 @@ async function getMatchingMasterStackDeployment(stackName: string) {
 }
 
 async function getMatchingMasterJob(accountId: string, stackName: string) {
-    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', (stackName += ';href:'));
+    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', `${stackName};href:`);
     if (masterJob) {
         return masterJob;
     }
