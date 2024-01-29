@@ -132,7 +132,11 @@ const JobMonitoringTable = () => {
         const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
         const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
         const result = '';
-        const csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
+        let csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
+        // remove #
+        if (csv) {
+            csv = csv.replace('#', '');
+        }
         downloadCsv(csv);
         dispatch(setDownloadJobsLoading(false));
     };
