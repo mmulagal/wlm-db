@@ -4,7 +4,8 @@ import {
     DescribeSecurityGroupsRequest,
     Tag,
     DescribeNetworkInterfacesCommandInput,
-    DescribeTagsCommandInput
+    DescribeTagsCommandInput,
+    DescribeVpcEndpointsCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
 import { AWSQueryFields, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
@@ -18,7 +19,8 @@ import {
     describeInstanceTypes,
     describeNetworkInterfaces,
     createTag,
-    describeTags
+    describeTags,
+    describeEndpoints
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
@@ -466,9 +468,32 @@ async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) 
     }
 }
 
-// async function getVpcEndpoints(credentialsId: string, region: string, vpcId: string) {
-//     logger.info('Get vpc endpoints ', credentialsId, region, vpcId);
-// }
+async function getVpcEndpoints(credentialsId: string, region: string, vpcId: string) {
+    logger.info('Get vpc endpoints ', credentialsId, region, vpcId);
+
+    const input: DescribeVpcEndpointsCommandInput = {
+        Filters: [
+            {
+                Name: 'vpc-id',
+                Values: [vpcId]
+            },
+            {
+                Name: 'service-name',
+                Values: [
+                    `com.amazonaws.${region}.s3`,
+                    `com.amazonaws.${region}.cloudformation`,
+                    `com.amazonaws.${region}.ssm`
+                ]
+            }
+        ]
+    };
+    const response = await describeEndpoints(credentialsId, region, input);
+
+    logger.debug('Get vpc endpoints response:', response);
+
+    return response;
+}
+
 export {
     getVpcsList,
     getAmiList,
@@ -478,5 +503,6 @@ export {
     getSecurityGroupsList,
     getNetworkInterfacesList,
     tagEc2Resource,
-    getCostAllocationTagEC2Resource
+    getCostAllocationTagEC2Resource,
+    getVpcEndpoints
 };
