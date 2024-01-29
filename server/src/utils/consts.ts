@@ -957,6 +957,8 @@ const SQL_HOST_NAME = 'sql-host-name';
 
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
+const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1176,5 +1178,6 @@ export {
     SQL_VERSION,
     DATABASE_SIZE,
     SQL_HOST_NAME,
-    JOBS_DEFAULT_TIME_RANGE
+    JOBS_DEFAULT_TIME_RANGE,
+    CF_STACK_RESOURCE_TYPE
 };
