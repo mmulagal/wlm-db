@@ -163,7 +163,7 @@ export const adPassVal = (password: string) => {
 };
 
 export const fsxPassVal = (password: string) => {
-    if (password.length) {
+    if (password?.length) {
         const state = store.getState();
         if (state.auth.isDemoMode) {
             return '';
