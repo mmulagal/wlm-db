@@ -19,7 +19,8 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
+    subJobDescriptions
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -34,6 +35,9 @@ import {
 } from './job-monitoring-mockdata';
 
 const logger = getLogger();
+
+const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
+const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -389,6 +393,28 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
     return [windowsVersion, sqlVersion, sqlVersionType];
 }
 
+function getValueWithMatchingString(str: string, stackSqlDeploymentType: string | undefined) {
+    if (str.includes('ValidationStack')) {
+        const match = str.match(subJobRegex);
+        str = match ? match[1] : '';
+        str = stackSqlDeploymentType === 'FCI' ? str.concat('-fci') : str.concat('-standalone');
+        return subJobDescriptions[str];
+    }
+    if (subJobNames.some(subJobName => str.indexOf(subJobName) !== -1)) {
+        const match = str.match(subJobRegex);
+        str = match ? match[1] : '';
+        return subJobDescriptions[str];
+    }
+
+    let result = '';
+    Object.keys(subJobDescriptions).forEach(key => {
+        if (str.includes(key)) {
+            result = subJobDescriptions[key];
+        }
+    });
+    return result;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -411,5 +437,6 @@ export {
     isActiveInstance,
     checkAccount,
     createJobMockData,
-    calculateSQLandWindowsVersion
+    calculateSQLandWindowsVersion,
+    getValueWithMatchingString
 };

@@ -4,6 +4,10 @@ import { join } from 'path';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 
+type SubJobDescriptions = {
+    [key: string]: string;
+};
+
 // General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
@@ -957,6 +961,48 @@ const SQL_HOST_NAME = 'sql-host-name';
 
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
+const subJobDescriptions: SubJobDescriptions = {
+    SQLStandaloneStack: 'SQL Standalone instance with recommended best practices',
+    SQLServerStack: 'SQL Failover Cluster instance with recommended best practices',
+    NewFSxStack: 'New FSx for ONTAP filesystem for SQL workload',
+    ExistingFSxStack: 'Storage Virtual Machine for SQL workload in given FSx for ONTAP filesystem',
+    'ValidationStack1-standalone': 'Subnet Validation for deployment',
+    'ValidationStack1-fci': 'Primary Subnet Validation for SQL FCI deployment',
+    ValidationStack2: 'Standby Subnet Validation for SQL FCI deployment',
+    'SqlNode(AWS::EC2::Instance)': 'Configuring SQL standalone on EC2 instance',
+    'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for EC2 instance',
+    'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating Security Group for SQL workloads',
+    'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)':
+        'Attaching Instance Profile to EC2 instances for SQL node(s)',
+    'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling Instance Meta Data Service v1 to use more secure v2',
+    'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating Volume to host tempDB',
+    'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)': 'Creating Volume to host witness disk for Windows Cluster',
+    'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating Volume to host data files',
+    'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating Volume to host log files',
+    'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+        'Creating dedicated Storage Virtual Machine(SVM) for database workload',
+    'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating new FSx for ONTAP filesystem',
+    'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating Security Group for FSxN',
+    'ValidationNode1(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)':
+        'Halting current step until validation completes',
+    'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating Security Group for validation instance',
+    'ValidationInstanceProfile(AWS::IAM::InstanceProfile)': 'Attaching Instance Profile to validation instance',
+    'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps',
+    'SqlFSxInstanceMAD1(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on primary node',
+    'SqlFSxInstanceMAD2(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on standby node',
+    'NetworkInterface2(AWS::EC2::NetworkInterface)': 'Creating network interfaces for EC2 instance in standby subnet',
+    'NetworkInterface1(AWS::EC2::NetworkInterface)': 'Creating network interfaces for EC2 instance in primary subnet',
+    'ValidationNode2(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)':
+        'Halting current step until validation completes',
+    'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps'
+};
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1176,5 +1222,6 @@ export {
     SQL_VERSION,
     DATABASE_SIZE,
     SQL_HOST_NAME,
-    JOBS_DEFAULT_TIME_RANGE
+    JOBS_DEFAULT_TIME_RANGE,
+    subJobDescriptions
 };

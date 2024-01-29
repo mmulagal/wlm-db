@@ -1,7 +1,6 @@
 import ms from 'ms';
 import { isEmpty } from 'lodash-es';
 import config from 'config';
-import { randomUUID } from 'crypto';
 import { Message, ReceiveMessageCommandInput } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, job } from '@prisma/client';
 import { inspect } from 'util';
@@ -22,7 +21,13 @@ import {
     DEPLOYMENT_JOBS_FAILED_STATUS,
     WLMDB_COST_ALLOCATION_TAG
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject, deployedStackUrl, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
+import {
+    checkAndRetrieveJsonObject,
+    deployedStackUrl,
+    derivePropertiesFromARN,
+    getQueueUrl,
+    getValueWithMatchingString
+} from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -211,9 +216,9 @@ async function createOrUpdateChildJobs(
     jobStatus: JOBSTATUS,
     timestamp: number,
     resourceStatusReason: string,
-    physicalResourceId: string,
     logicalResourceId: string,
     checkEventsOrder: boolean = false,
+    stackSqlDeploymentType: string | undefined,
     stackName?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
@@ -250,7 +255,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: physicalResourceId ? `Creating resource ${physicalResourceId}` : '',
+                description: getValueWithMatchingString(childJobName, stackSqlDeploymentType),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -660,7 +665,6 @@ async function processCloudFormationMessages() {
                             const {
                                 StackId: stackId,
                                 StackName: stackName,
-                                PhysicalResourceId: physicalResourceId,
                                 LogicalResourceId: logicalResourceId,
                                 ResourceType: resourceType,
                                 Timestamp: timestamp,
@@ -707,8 +711,9 @@ async function processCloudFormationMessages() {
                                             jobStatus,
                                             messageTimestamp,
                                             resourceStatusReason,
-                                            physicalResourceId,
-                                            logicalResourceId
+                                            logicalResourceId,
+                                            false,
+                                            stackSqlDeploymentType
                                         );
                                     }
                                     /**
@@ -851,9 +856,9 @@ async function processCloudFormationMessages() {
                                             jobStatus,
                                             messageTimestamp,
                                             resourceStatusReason,
-                                            physicalResourceId,
                                             logicalResourceId,
                                             true,
+                                            stackSqlDeploymentType,
                                             stackName
                                         );
                                     }
@@ -900,8 +905,7 @@ function createStackAck(message: { StackId: string; RequestId: string; LogicalRe
         Status: status,
         StackId,
         RequestId,
-        LogicalResourceId,
-        PhysicalResourceId: randomUUID()
+        LogicalResourceId
     };
 }
 // used for both stack Delete and Update events
@@ -910,17 +914,15 @@ function modifyStackAck(
         StackId: string;
         RequestId: string;
         LogicalResourceId: string;
-        PhysicalResourceId: string;
     },
     status: string
 ) {
-    const { StackId, RequestId, LogicalResourceId, PhysicalResourceId } = message;
+    const { StackId, RequestId, LogicalResourceId } = message;
     return {
         Status: status,
         StackId,
         RequestId,
-        LogicalResourceId,
-        PhysicalResourceId
+        LogicalResourceId
     };
 }
 export { processCloudFormationMessages };
