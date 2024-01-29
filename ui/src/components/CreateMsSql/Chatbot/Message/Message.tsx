@@ -230,7 +230,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                             msgObj.sender === 'bot' ? styles['bot-icon'] : styles['user-icon']
                         }`}
                     >
-                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon"/>}
+                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon" />}
                     </div>
                     {isUserInputRequired ? (
                         msgObj.active ? (
@@ -322,7 +322,18 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                             }`}
                         >
-                            {`${msgObj.msg}`}
+                            <div className={styles.textDiv}>
+                                {`${msgObj.msg}`}
+                                {msgObj?.link && (
+                                    <Button
+                                        Component="button"
+                                        variant="text"
+                                        onClick={() => msgObj?.link?.onLinkClick()}
+                                    >
+                                        {msgObj?.link?.linkText}
+                                    </Button>
+                                )}
+                            </div>
                             <ValidationCriteria />
                         </Typography>
                     )}
