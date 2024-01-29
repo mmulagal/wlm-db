@@ -40,7 +40,8 @@ import {
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
     WF,
-    SSM_COMMAND_CACHE_TYPE
+    SSM_COMMAND_CACHE_TYPE,
+    ServerState
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
@@ -400,7 +401,6 @@ async function getServerSummary(resourceId: string) {
         serverDetailsInfo,
         severEditionInfo,
         connectionsInfo,
-        stateInfo,
         isClusteredInfo,
         nodeInfo,
         clusterNodesInfo,
@@ -411,7 +411,6 @@ async function getServerSummary(resourceId: string) {
             SERVER_VERSION_DETAILS,
             SERVER_EDITION,
             NUMBER_OF_CONNECTIONS,
-            SERVER_STATE,
             IS_SERVER_CLUSTERED,
             SERVER_NODE,
             CLUSTER_NODES,
@@ -435,12 +434,12 @@ async function getServerSummary(resourceId: string) {
     const serverDetails = serverDetailsInfo ? serverDetailsInfo?.replaceAll('\r\n', '') : '';
     const [{ ServerEdition }] = severEditionInfo ? sqlResponseParsing(severEditionInfo) : '';
     const serverInfo = serverDetails?.split('\t');
-    const serverStatus = stateInfo ? stateInfo.replace(/[\r\n.]/g, '') : '';
     const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
     let [{ activeNode }] = nodeInfo ? sqlResponseParsing(nodeInfo) : '';
     const [{ isClustered }] = isClusteredInfo ? sqlResponseParsing(isClusteredInfo) : '';
     const [{ serverName: clusterName }] = serverNameInfo ? sqlResponseParsing(serverNameInfo!) : '';
     const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
+    const serverStatus = serverDetails ? ServerState.UP : ServerState.DOWN;
 
     let standbyNode: string = '';
     if (isClustered && clusterNodesInfo) {
