@@ -43,7 +43,6 @@ import {
 import getLogger from '../utils/logger';
 import {
     getServerIOLatency,
-    getServerState,
     getNativeSQLProtection,
     getDatabasesCount,
     getServerSummary,
@@ -589,7 +588,6 @@ async function getDatabaseHostsSummary(
                     resourceId
                 );
 
-                let serverStatus: string = ServerState.DOWN;
                 let dbCount;
                 let topologyData: TopologyResponseType;
                 let performanceData: PerformanceResponseType | undefined;
@@ -599,36 +597,32 @@ async function getDatabaseHostsSummary(
                 const activeNodeId = activeNodeInstanceId;
                 const standbyNodeId = standbyNodeInstanceId;
 
-                [
-                    serverStatus,
-                    dbCount,
-                    topologyData,
-                    performanceData,
-                    storageData,
-                    protectionData,
-                    usageEstimationData
-                ] = await Promise.all(
-                    [
-                        ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
-                        ...(isSSMConnected
-                            ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
-                            : [Promise.resolve()]),
-                        getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
-                        ...(isSSMConnected && getPerformance ? [getServerIOLatency(resourceId)] : [Promise.resolve()]), // Fetch io latency data
-                        ...(isSSMConnected && getStorageSavings
-                            ? [getStorageData(resourceDetail)]
-                            : [Promise.resolve()]), // Fetch storage savings data
-                        ...(isSSMConnected && getProtection
-                            ? [getProtectionStatus(resourceDetail)]
-                            : [Promise.resolve()]), // Fetch protection status
-                        ...(getUsageEstimation ? [getBillingOrPriceEstimation(resourceDetail)] : [Promise.resolve()]) // Fetch billing or pricing estimate data
-                    ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
-                );
+                [dbCount, topologyData, performanceData, storageData, protectionData, usageEstimationData] =
+                    await Promise.all(
+                        [
+                            ...(isSSMConnected
+                                ? [getDatabasesCount(credentialsId, region!, activeNodeId, standbyNodeId)]
+                                : [Promise.resolve()]),
+                            getTopology(accountId, region!, resourceId, resourceDetail, additionalFields), // Fetch topology data
+                            ...(isSSMConnected && getPerformance
+                                ? [getServerIOLatency(resourceId)]
+                                : [Promise.resolve()]), // Fetch io latency data
+                            ...(isSSMConnected && getStorageSavings
+                                ? [getStorageData(resourceDetail)]
+                                : [Promise.resolve()]), // Fetch storage savings data
+                            ...(isSSMConnected && getProtection
+                                ? [getProtectionStatus(resourceDetail)]
+                                : [Promise.resolve()]), // Fetch protection status
+                            ...(getUsageEstimation
+                                ? [getBillingOrPriceEstimation(resourceDetail)]
+                                : [Promise.resolve()]) // Fetch billing or pricing estimate data
+                        ].map(p => p.catch(error => logger.error(`Error while fetching data: ${error}.`)))
+                    );
 
                 databaseHosts.push({
                     id: resourceId,
                     name: resourceName || '',
-                    status: serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN,
+                    status: dbCount ? ServerState.UP : ServerState.DOWN,
                     databaseCount: dbCount?.totalCount || 0,
                     topology: topologyData!,
                     ...(performanceData && { performance: performanceData }),
@@ -710,7 +704,6 @@ async function getDatabaseHostSummary(
         );
 
         const errormessages: { [index: string]: string } = {};
-        let serverStatus: string = ServerState.DOWN;
         let dbCount;
         let serverMetadata: DatabaseServerMetadataResponseType;
         let topologyData: TopologyResponseType;
@@ -722,7 +715,6 @@ async function getDatabaseHostSummary(
         let cpuUtilizationData: UtilizationResponseType | undefined;
 
         [
-            serverStatus,
             dbCount,
             serverMetadata,
             topologyData,
@@ -734,7 +726,6 @@ async function getDatabaseHostSummary(
             cpuUtilizationData
         ] = await Promise.all(
             [
-                ...(isSSMConnected ? [getServerState(resourceId)] : [Promise.resolve()]), // Fetch server status
                 ...(isSSMConnected
                     ? [getDatabasesCount(credentialsId, region!, activeNodeInstanceId, standbyNodeInstanceId)]
                     : [Promise.resolve()]),
@@ -777,7 +768,7 @@ async function getDatabaseHostSummary(
         }
         databaseHostDetails.id = resourceId;
         databaseHostDetails.name = resourceName || '';
-        databaseHostDetails.status = serverStatus?.toLowerCase() === 'running' ? ServerState.UP : ServerState.DOWN;
+        databaseHostDetails.status = serverMetadata ? ServerState.UP : ServerState.DOWN;
         databaseHostDetails.databaseCount = dbCount?.totalCount || 0;
         databaseHostDetails.databaseServer = serverMetadata;
         databaseHostDetails.topology = topologyData!;
