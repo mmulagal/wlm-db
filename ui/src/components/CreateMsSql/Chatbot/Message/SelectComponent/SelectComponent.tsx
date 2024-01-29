@@ -16,6 +16,7 @@ type selectComponentPropType = {
     activeField?: any;
     handleSelectButtonClicked: (paramObj: any, sender?: string) => void;
     link?: any;
+    label?: string;
 };
 
 const delay = () => {
@@ -35,7 +36,8 @@ const SelectComponent = ({
     allowCreate = false,
     activeField,
     handleSelectButtonClicked,
-    link
+    link,
+    label
 }: selectComponentPropType) => {
     const [selected, setSelected] = useState('');
     const [optionsToShow, setOptionsToShow] = useState<any>([]);
@@ -66,7 +68,7 @@ const SelectComponent = ({
                     [selectKey]: {
                         label: `We will use ${
                             options[0].label || options[0].value
-                        } ${selectKey}, this is the one we found!`,
+                        } as ${label}, this is the one we found!`,
                         value: options[0].value
                     }
                 },
