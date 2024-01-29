@@ -224,7 +224,7 @@ async function createOrUpdateChildJobs(
     resourceStatusReason: string,
     logicalResourceId: string,
     checkEventsOrder: boolean = false,
-    stackSqlDeploymentType: string | undefined,
+    stackSqlDeploymentType: string,
     stackName?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
@@ -261,7 +261,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: getValueWithMatchingString(childJobName, stackSqlDeploymentType),
+                description: getValueWithMatchingString(childJobName, stackSqlDeploymentType!),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -721,7 +721,7 @@ async function processCloudFormationMessages() {
                                             resourceStatusReason,
                                             logicalResourceId,
                                             false,
-                                            stackSqlDeploymentType
+                                            stackSqlDeploymentType!
                                         );
                                     }
                                     /**
@@ -866,7 +866,7 @@ async function processCloudFormationMessages() {
                                             resourceStatusReason,
                                             logicalResourceId,
                                             true,
-                                            stackSqlDeploymentType,
+                                            stackSqlDeploymentType!,
                                             stackName
                                         );
                                     }

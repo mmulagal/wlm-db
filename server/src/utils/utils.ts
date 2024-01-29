@@ -393,7 +393,7 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
     return [windowsVersion, sqlVersion, sqlVersionType];
 }
 
-function getValueWithMatchingString(str: string, stackSqlDeploymentType: string | undefined) {
+function getValueWithMatchingString(str: string, stackSqlDeploymentType: string) {
     if (str.includes('ValidationStack')) {
         const match = str.match(subJobRegex);
         str = match ? match[1] : '';
