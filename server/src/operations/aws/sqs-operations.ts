@@ -489,13 +489,13 @@ async function processCloudFormationMessages() {
                                                             );
                                                         } else {
                                                             logger.error(
-                                                                'Failed to register FSX Ontap credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
                                                                 { encryptedFsxPassword, decryptedPassword }
                                                             );
                                                         }
                                                     } else {
                                                         logger.error(
-                                                            'Failed to register FSX Ontap credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
+                                                            'Failed to register FSx for ONTAP credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
                                                         );
                                                     }
 

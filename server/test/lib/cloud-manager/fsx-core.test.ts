@@ -6,12 +6,12 @@ import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/cloud-manager/fsx-core-scope';
 
 describe('FSX core lib', () => {
-    it('List FSX ontap credentials', async () => {
+    it('List FSx for ONTAP credentials', async () => {
         const response = await listFsxOntapCredentials(ACCOUNT_ID, 'fs-0f32f6c69fb7e40ac');
         expect(response.credentials).toBeDefined();
     });
 
-    it('Register FSX ontap credentials', async () => {
+    it('Register FSx for ONTAP credentials', async () => {
         const response = await registerFsxOntapCredentials(
             ACCOUNT_ID,
             CREDENTIALS_ID,
