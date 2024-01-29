@@ -228,9 +228,9 @@ const JobMonitoringTable = () => {
             accessor: 'status',
             width: '160px',
             filterOptions: [
-                {value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING},
-                {value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED},
-                {value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED}
+                { value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING },
+                { value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED },
+                { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED }
             ],
             renderCell: (cellData: any, rowData: any) => {
                 return (
@@ -268,8 +268,8 @@ const JobMonitoringTable = () => {
             renderCell: (cellData: any) => {
                 // This is to accomadate the hyperlink in job name for only deployment cases.
                 // For other job hyperlink is not required and it will display the job name as is
-                const jobNameRegex = /(Microsoft SQL server deployment with stack) (WLMDB-[a-zA-Z]+-\d+)/;
-                const hrefRegex = /;href:(.+)/;
+                const jobNameRegex = /(Microsoft SQL server deployment with stack) (.*?);/;
+                const hrefRegex = /href:(.+)/;
 
                 const jobNameMatch = cellData.match(jobNameRegex);
                 const hrefMatch = cellData.match(hrefRegex);
@@ -279,7 +279,7 @@ const JobMonitoringTable = () => {
 
                     return (
                         <div className={CommonStyles.wrapTextIn2Line} title={jobName}>
-                            {jobNameMatch[1] + ' '}
+                            {jobNameMatch[1]}
                             <Button Component="button" variant="link" onClick={() => handleRedirectToCF(href)}>
                                 {jobNameMatch[2]}
                             </Button>
