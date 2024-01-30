@@ -1,6 +1,7 @@
 import ms from 'ms';
 import { isEmpty } from 'lodash-es';
 import config from 'config';
+import { randomUUID } from 'crypto';
 import { Message, ReceiveMessageCommandInput } from '@aws-sdk/client-sqs';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, job } from '@prisma/client';
 import { inspect } from 'util';
@@ -913,7 +914,8 @@ function createStackAck(message: { StackId: string; RequestId: string; LogicalRe
         Status: status,
         StackId,
         RequestId,
-        LogicalResourceId
+        LogicalResourceId,
+        PhysicalResourceId: randomUUID()
     };
 }
 // used for both stack Delete and Update events
@@ -922,15 +924,17 @@ function modifyStackAck(
         StackId: string;
         RequestId: string;
         LogicalResourceId: string;
+        PhysicalResourceId: string;
     },
     status: string
 ) {
-    const { StackId, RequestId, LogicalResourceId } = message;
+    const { StackId, RequestId, LogicalResourceId, PhysicalResourceId } = message;
     return {
         Status: status,
         StackId,
         RequestId,
-        LogicalResourceId
+        LogicalResourceId,
+        PhysicalResourceId
     };
 }
 export { processCloudFormationMessages };
