@@ -255,7 +255,7 @@ async function listEvents(accountId?: string, deploymentName?: string, eventName
                 time: 'desc'
             },
             {
-                event_id: 'desc'
+                event_id: 'asc'
             }
         ]
     });
