@@ -212,7 +212,7 @@ const JobMonitoringTable = () => {
             id: '2',
             Header: 'Type',
             accessor: 'type',
-            width: '160px',
+            width: '158px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 if (cellData) {
@@ -226,7 +226,7 @@ const JobMonitoringTable = () => {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '160px',
+            width: '158px',
             filterOptions: [
                 {value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING},
                 {value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED},
@@ -257,19 +257,19 @@ const JobMonitoringTable = () => {
             Header: 'Resource name',
             accessor: 'resourceName',
             isSortable: true,
-            width: '168px'
+            width: '167px'
         },
         {
             id: '5',
             Header: 'Job name',
             accessor: 'name',
             isSortable: true,
-            width: '340px',
+            width: '355px',
             renderCell: (cellData: any) => {
                 // This is to accomadate the hyperlink in job name for only deployment cases.
                 // For other job hyperlink is not required and it will display the job name as is
-                const jobNameRegex = /(Microsoft SQL server deployment with stack) (WLMDB-[a-zA-Z]+-\d+)/;
-                const hrefRegex = /;href:(.+)/;
+                const jobNameRegex = /(Microsoft SQL server deployment with stack) (.*?);/;
+                const hrefRegex = /href:(.+)/;
 
                 const jobNameMatch = cellData.match(jobNameRegex);
                 const hrefMatch = cellData.match(hrefRegex);
@@ -279,7 +279,7 @@ const JobMonitoringTable = () => {
 
                     return (
                         <div className={CommonStyles.wrapTextIn2Line} title={jobName}>
-                            {jobNameMatch[1] + ' '}
+                            {jobNameMatch[1]}
                             <Button Component="button" variant="link" onClick={() => handleRedirectToCF(href)}>
                                 {jobNameMatch[2]}
                             </Button>
@@ -328,7 +328,7 @@ const JobMonitoringTable = () => {
             id: '8',
             Header: '',
             accessor: '',
-            width: '42px'
+            width: '32px'
         }
     ];
 

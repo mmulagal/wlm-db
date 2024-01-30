@@ -224,7 +224,7 @@ const PreviewDefault = () => {
                             <Typography variant="Regular_14">
                                 {GENERAL.PREVIEW_DEFAULT_TEXT}{' '}
                                 <Button Component="button" onClick={handleConfig} variant="text">
-                                    {SELECT_CONFIG.STANDARD_CREATE}
+                                    {SELECT_CONFIG.ADVANCED_CREATE}
                                 </Button>
                                 .
                             </Typography>
