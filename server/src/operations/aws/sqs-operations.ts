@@ -802,10 +802,9 @@ async function processCloudFormationMessages() {
                                             const subJobs =
                                                 (await listJobs(accountId, masterJob.id, undefined, undefined)) || [];
                                             const subJobStatus = subJobs.map(subJob => subJob.status);
-                                            const masterJobStatus =
-                                                JOBSTATUS.IN_PROGRESS in subJobStatus
-                                                    ? JOBSTATUS.IN_PROGRESS
-                                                    : jobStatus;
+                                            const masterJobStatus = subJobStatus.includes(JOBSTATUS.IN_PROGRESS)
+                                                ? JOBSTATUS.IN_PROGRESS
+                                                : jobStatus;
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 String(databaseType),
