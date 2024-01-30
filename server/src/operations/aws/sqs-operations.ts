@@ -341,7 +341,7 @@ async function processCloudFormationMessages() {
                                         DatabaseType: trackdatabaseType,
                                         ResourceName: trackresourceName,
                                         FileSystemType: trackfileSystemType,
-                                        MetadataParam: trackMetadataParam
+                                        Metrics: trackMetrics
                                     } = resourceProperties;
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
@@ -377,7 +377,7 @@ async function processCloudFormationMessages() {
                                                         databaseType: trackdatabaseType,
                                                         resourceName: trackresourceName,
                                                         fileSystemType: trackfileSystemType,
-                                                        metadataParam: trackMetadataParam
+                                                        Metrics: trackMetrics
                                                     }
                                                 });
 

@@ -364,8 +364,8 @@ const PARAMETERS = [
         noEcho: true
     },
     {
-        name: 'MetadataParam',
-        description: 'Metadata param used for internal audit( DO NOT EDIT) ',
+        name: 'Metrics',
+        description: 'Metrics used for internal audit( DO NOT EDIT) ',
         type: 'CommaDelimitedList',
         noEcho: true
     }

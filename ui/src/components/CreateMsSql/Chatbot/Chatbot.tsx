@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
 import {
     setCurrentIntent,
+    setIsWizardTouched,
     setLatestIntentMsg,
     setLoadConfigClicked,
     setMessages,
@@ -310,6 +311,16 @@ const Chatbot = () => {
                         if (stackName && !warning) {
                             // If stackname is present than goes to fullPermissionFlow
                             fullPermissionFlow(stackName, url);
+                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            let defaultObj: any = {};
+                            Object.keys(defaultParams).map((key: string) => {
+                                defaultObj[key] = null;
+                            });
+                            mapParamsToPayload(defaultObj);
+                            dispatch(setCurrentIntent(''));
+                            dispatch(setIsWizardTouched(false));
+                            dispatch(setMessages([]));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         } else if (url) {
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
