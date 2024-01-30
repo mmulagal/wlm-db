@@ -11,7 +11,6 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-const _ = require('lodash');
 
 const StorageCapacity = () => {
     const dispatch = useDispatch();
