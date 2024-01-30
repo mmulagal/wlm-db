@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
 import {
     setCurrentIntent,
+    setIsWizardTouched,
     setLatestIntentMsg,
     setLoadConfigClicked,
     setMessages,
@@ -144,6 +145,21 @@ const Chatbot = () => {
     });
 
     useEffect(() => {
+        if (isPayloadReady) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Deploy', value: 'deploy' }],
+                    onBubbleClick: (label?: string, value?: string) => {
+                        if (value === 'deploy') {
+                            handleCreate();
+                        }
+                    }
+                })
+            );
+        }
+    }, [isPayloadReady]);
+
+    useEffect(() => {
         if (loadConfigClicked) {
             setIsBotReplying(true);
             sendMsgToBot({
@@ -169,16 +185,6 @@ const Chatbot = () => {
                             } else {
                                 setPayloadContent(intent.validatedJson);
                                 mapParamsToPayload(intent.params);
-                                dispatch(
-                                    setSuggestionBubbles({
-                                        list: [{ label: 'Deploy', value: 'deploy' }],
-                                        onBubbleClick: (label?: string, value?: string) => {
-                                            if (value === 'deploy') {
-                                                handleCreate();
-                                            }
-                                        }
-                                    })
-                                );
                             }
                             setIsPayloadReady(intent.complete);
                         }
@@ -305,6 +311,16 @@ const Chatbot = () => {
                         if (stackName && !warning) {
                             // If stackname is present than goes to fullPermissionFlow
                             fullPermissionFlow(stackName, url);
+                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            let defaultObj: any = {};
+                            Object.keys(defaultParams).map((key: string) => {
+                                defaultObj[key] = null;
+                            });
+                            mapParamsToPayload(defaultObj);
+                            dispatch(setCurrentIntent(''));
+                            dispatch(setIsWizardTouched(false));
+                            dispatch(setMessages([]));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         } else if (url) {
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
@@ -702,16 +718,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -781,16 +787,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }

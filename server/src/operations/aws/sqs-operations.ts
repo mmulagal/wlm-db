@@ -341,7 +341,7 @@ async function processCloudFormationMessages() {
                                         DatabaseType: trackdatabaseType,
                                         ResourceName: trackresourceName,
                                         FileSystemType: trackfileSystemType,
-                                        MetadataParam: trackMetadataParam
+                                        Metrics: trackMetrics
                                     } = resourceProperties;
 
                                     logger.debug('>>JWT TOKEN', jwtToken);
@@ -377,7 +377,7 @@ async function processCloudFormationMessages() {
                                                         databaseType: trackdatabaseType,
                                                         resourceName: trackresourceName,
                                                         fileSystemType: trackfileSystemType,
-                                                        metadataParam: trackMetadataParam
+                                                        Metrics: trackMetrics
                                                     }
                                                 });
 
@@ -489,13 +489,13 @@ async function processCloudFormationMessages() {
                                                             );
                                                         } else {
                                                             logger.error(
-                                                                'Failed to register FSX Ontap credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
                                                                 { encryptedFsxPassword, decryptedPassword }
                                                             );
                                                         }
                                                     } else {
                                                         logger.error(
-                                                            'Failed to register FSX Ontap credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
+                                                            'Failed to register FSx for ONTAP credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
                                                         );
                                                     }
 
@@ -579,19 +579,36 @@ async function processCloudFormationMessages() {
                                                 masterStackDeployment.deployment_status !==
                                                     DEPLOYMENT_STATUS.CREATE_FAILED
                                             ) {
-                                                await updateDeployment(accountId, masterStackDeployment.id, {
-                                                    deploymentStatus: DEPLOYMENT_STATUS.CREATE_FAILED,
-                                                    endTime: Date.now()
-                                                });
+                                                // If parent stack is not already marked CREATE_FAILED, it could be that
+                                                // user has initiated stack deletion
+                                                if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
+                                                    await updateDeployment(accountId, masterStackDeployment.id, {
+                                                        deploymentStatus: DEPLOYMENT_STATUS.DELETE_COMPLETE,
+                                                        endTime: Date.now()
+                                                    });
 
-                                                // Update master job with failed status
-                                                await modifyMasterJobStatus(
-                                                    accountId,
-                                                    trackdatabaseType,
-                                                    stackName,
-                                                    JOBSTATUS.FAILED,
-                                                    messageTimestamp
-                                                );
+                                                    // Update master job with failed status
+                                                    await modifyMasterJobStatus(
+                                                        accountId,
+                                                        trackdatabaseType,
+                                                        stackName,
+                                                        JOBSTATUS.COMPLETED,
+                                                        messageTimestamp
+                                                    );
+                                                } else {
+                                                    await updateDeployment(accountId, masterStackDeployment.id, {
+                                                        deploymentStatus: DEPLOYMENT_STATUS.DELETE_IN_PROGRESS
+                                                    });
+
+                                                    // Update master job with failed status
+                                                    await modifyMasterJobStatus(
+                                                        accountId,
+                                                        trackdatabaseType,
+                                                        stackName,
+                                                        JOBSTATUS.IN_PROGRESS,
+                                                        messageTimestamp
+                                                    );
+                                                }
 
                                                 // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
                                                 // const notificationData = {
