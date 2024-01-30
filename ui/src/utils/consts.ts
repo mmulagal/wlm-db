@@ -215,10 +215,13 @@ export const AWS_CLI_HIGHLIGHT_STRINGS = [
 export const CREATE_DATABASE_YAML = 'Create_Database';
 
 export const CHATBOT_WELCOME_CARDS = [
-    'Help me deploy Microsoft SQL Server on FSx for ONTAP.',
-    'What are the key features of Amazon FSx for NetApp ONTAP for databases?',
-    'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?',
-    'What is the FSx for ONTAP best practice for Microsoft SQL Server?'
+    { label: 'Help me deploy Microsoft SQL Server on FSx for ONTAP.' },
+    { label: 'What are the key features of Amazon FSx for NetApp ONTAP for databases?' },
+    { label: 'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?' },
+    {
+        label: 'What is the FSx for ONTAP best practice for Microsoft SQL Server?',
+        value: 'What are some best practices for using FSx for ONTAP with Microsoft SQL Server?'
+    }
 ];
 
 export const CHATBOT_SUGGESTION_BUBBLES = [
@@ -244,4 +247,4 @@ export const UI_IDS = {
     DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
     WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
     DBP_CODEBOX_CF: 'dbp-codebox-cf'
-}
+};
