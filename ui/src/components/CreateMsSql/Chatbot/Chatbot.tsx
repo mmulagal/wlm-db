@@ -71,12 +71,14 @@ import {
 import MssqlApis from '../MSSqlServer/MssqlApis';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
-import { setIsLoading, setPermissionWarning } from '../../../store/mssql/msSqlActionSlice';
+import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
 import { Button, Typography, useDialog } from '@netapp/design-system';
-import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
+import ViewDialog from '../../../common/ViewDialog/ViewDialog';
+import { PERMISSIONS } from '../../../utils/permissions';
 const _ = require('lodash');
 
 type optionsType = {
@@ -92,7 +94,7 @@ type messageType = {
     intent?: any;
     type?: string;
     active?: boolean;
-    errors?: any;
+    error?: any;
 };
 
 const Chatbot = () => {
@@ -142,6 +144,21 @@ const Chatbot = () => {
     });
 
     useEffect(() => {
+        if (isPayloadReady) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Deploy', value: 'deploy' }],
+                    onBubbleClick: (label?: string, value?: string) => {
+                        if (value === 'deploy') {
+                            handleCreate();
+                        }
+                    }
+                })
+            );
+        }
+    }, [isPayloadReady]);
+
+    useEffect(() => {
         if (loadConfigClicked) {
             setIsBotReplying(true);
             sendMsgToBot({
@@ -158,7 +175,7 @@ const Chatbot = () => {
             })
                 .then((res: any) => {
                     if (res.data) {
-                        const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                        const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                         if (intent) {
                             dispatch(setCurrentIntent(intent));
                             if (!intent.complete) {
@@ -167,16 +184,6 @@ const Chatbot = () => {
                             } else {
                                 setPayloadContent(intent.validatedJson);
                                 mapParamsToPayload(intent.params);
-                                dispatch(
-                                    setSuggestionBubbles({
-                                        list: [{ label: 'Deploy', value: 'deploy' }],
-                                        onBubbleClick: (label?: string, value?: string) => {
-                                            if (value === 'deploy') {
-                                                handleCreate();
-                                            }
-                                        }
-                                    })
-                                );
                             }
                             setIsPayloadReady(intent.complete);
                         }
@@ -191,7 +198,7 @@ const Chatbot = () => {
                                 intent: intent,
                                 type: type,
                                 active: true,
-                                errors: errors,
+                                error: error,
                                 status: status
                             }
                         ];
@@ -240,6 +247,7 @@ const Chatbot = () => {
                                 onClick={() => {
                                     clearTimeout(notificationMsg);
                                     navigate('../job-monitor');
+                                    dispatch(clearNotifications());
                                 }}
                             >
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
@@ -304,7 +312,33 @@ const Chatbot = () => {
                             fullPermissionFlow(stackName, url);
                         } else if (url) {
                             // If url comes it means it has view permissions so it will open AWS account accordion
-                            dispatch(setPermissionWarning(true));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                            dispatch(
+                                setMessages([
+                                    ...messages,
+                                    {
+                                        sender: 'bot',
+                                        msg: GENERAL.CREATE_PERMISSION_ERROR,
+                                        link: {
+                                            linkText: GENERAL.REQUIRED_PERMISSIONS,
+                                            onLinkClick: () => {
+                                                setDialog(
+                                                    <DialogComponent
+                                                        header={GENERAL.REQUIRED_OPERATE_PERMISSIONS}
+                                                        content={
+                                                            <ViewDialog
+                                                                data={JSON.stringify(PERMISSIONS.operate, null, 2)}
+                                                            />
+                                                        }
+                                                        primaryButton={GENERAL.CLOSE}
+                                                        callback={() => {}}
+                                                    />
+                                                );
+                                            }
+                                        }
+                                    }
+                                ])
+                            );
                         }
                     }
                 })
@@ -631,7 +665,7 @@ const Chatbot = () => {
         let updatedMessages = msgs ? [...msgs] : [];
         if (add) {
             let preResponseMsg = msgs || [];
-            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].errors) {
+            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].error) {
                 const lastMsg = preResponseMsg[preResponseMsg.length - 1];
                 preResponseMsg = [
                     ...preResponseMsg.slice(0, preResponseMsg.length - 1),
@@ -664,7 +698,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -673,16 +707,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -698,7 +722,7 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors,
+                            error: error,
                             status: status
                         }
                     ];
@@ -743,7 +767,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -752,16 +776,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -776,7 +790,7 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors,
+                            error: error,
                             status: status
                         }
                     ];
@@ -824,9 +838,9 @@ const Chatbot = () => {
         if (updatedMessages.length) {
             updatedMessages[updatedMessages.length - 1] = {
                 ...updatedMessages[updatedMessages.length - 1],
-                errors: null,
+                error: null,
                 msg:
-                    updatedMessages[updatedMessages.length - 1]?.errors?.[0]?.message ||
+                    updatedMessages[updatedMessages.length - 1]?.error?.message ||
                     updatedMessages[updatedMessages.length - 1].msg
             };
         }

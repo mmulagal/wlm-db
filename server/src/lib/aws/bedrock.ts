@@ -26,8 +26,8 @@ async function sendPrompt(prompt: string) {
         body: JSON.stringify({
             prompt,
             max_tokens_to_sample: 1500,
-            temperature: 1,
-            top_k: 250,
+            temperature: 0, // Tunes the degree of randomness in generation. Lower temperatures mean less random generations.
+            top_k: 0, // Can be used to reduce repetitiveness of generated tokens. The higher the value, the stronger a penalty is applied to previously present tokens, proportional to how many times they have already appeared in the prompt or prior generation
             top_p: 0.999,
             stop_sequences: ['\n\nHuman:'],
             anthropic_version: 'bedrock-2023-05-31'

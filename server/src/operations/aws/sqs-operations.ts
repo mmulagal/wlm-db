@@ -90,12 +90,12 @@ async function getMatchingMasterStackDeployment(stackName: string) {
 }
 
 async function getMatchingMasterJob(accountId: string, stackName: string) {
-    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', (stackName += ';href:'));
+    let [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', `${stackName};href:`);
     if (masterJob) {
         return masterJob;
     }
     const MASTER_JOB_NAME_PATTERN =
-        /(.*)-([TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment].*)/;
+        /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
     const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
     if (matchingMasterJob) {
         let [, masterJobName] = matchingMasterJob;
@@ -489,13 +489,13 @@ async function processCloudFormationMessages() {
                                                             );
                                                         } else {
                                                             logger.error(
-                                                                'Failed to register FSX Ontap credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
                                                                 { encryptedFsxPassword, decryptedPassword }
                                                             );
                                                         }
                                                     } else {
                                                         logger.error(
-                                                            'Failed to register FSX Ontap credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
+                                                            'Failed to register FSx for ONTAP credentials with FSX core module as no credentials found in Cloud Formation custom resource notification'
                                                         );
                                                     }
 

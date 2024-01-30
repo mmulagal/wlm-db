@@ -18,7 +18,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx Windows",
+                "fileSystemType": "FSx for Windows",
                 "fileSystemId": "fsx-id-1",
                 "vpcId": "vpc1",
                 "ec2Details": [
@@ -61,7 +61,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP",
+                "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-2",
                 "vpcId": "vpc1",
                 "ec2Details": [
@@ -190,7 +190,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx ONTAP",
+                "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-5",
                 "ec2Details": [
                     {
@@ -274,7 +274,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx Windows",
+                "fileSystemType": "FSx for Windows",
                 "fileSystemId": "fsx-id-7",
                 "ec2Details": [
                     {
@@ -316,7 +316,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP",
+                "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-8",
                 "ec2Details": [
                     {
@@ -358,7 +358,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP",
+                "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-1",
                 "ec2Details": [
                     {
@@ -400,7 +400,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP",
+                "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-2",
                 "ec2Details": [
                     {
@@ -442,7 +442,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx Windows",
+                "fileSystemType": "FSx for Windows",
                 "fileSystemId": "fsx-id-3",
                 "ec2Details": [
                     {
@@ -484,7 +484,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx Windows",
+                "fileSystemType": "FSx for Windows",
                 "fileSystemId": "fsx-id-4",
                 "ec2Details": [
                     {
@@ -568,7 +568,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP",
+                "fileSystemType": "FSx for ONTAP",
                 "fileSystemId": "fsx-id-6",
                 "ec2Details": [
                     {
@@ -610,7 +610,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx Windows",
+                "fileSystemType": "FSx for Windows",
                 "fileSystemId": "fsx-id-7",
                 "ec2Details": [
                     {

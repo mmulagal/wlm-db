@@ -17,7 +17,7 @@ async function registerFsxOntapCredentials(
     fsxId: string,
     fsxPassword: string
 ) {
-    logger.info('Registering FSX ONTAP credentials ', { accountId, credentialsId, region, fsxId, fsxPassword });
+    logger.info('Registering FSx for ONTAP credentials ', { accountId, credentialsId, region, fsxId, fsxPassword });
 
     const { token } = await getWfServiceToken();
 
@@ -46,7 +46,7 @@ interface listCredentialsResponse {
     };
 }
 async function listFsxOntapCredentials(accountId: string, fsxId: string) {
-    logger.info('Listing FSX ONTAP credentials ', { accountId, fsxId });
+    logger.info('Listing FSx for ONTAP credentials ', { accountId, fsxId });
 
     const { token } = await getWfServiceToken();
 

@@ -105,7 +105,7 @@ export function createJsonTranslator<T extends object>(
             `\`\`\`\n${validator.schema}\`\`\`\n` +
             // `The following is a user request:\n` +
             // `"""\n${request}\n"""\n` +
-            'translate the user requests/response into a JSON object with 2 spaces of indentation and no properties with the value undefined:\n'
+            'translate the user requests/response into a JSON object with 2 spaces of indentation and no properties with the value undefined:\n dont pre populate any parameter values'
         );
     }
 

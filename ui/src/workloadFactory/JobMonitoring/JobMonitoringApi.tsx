@@ -22,16 +22,19 @@ const JobMonitoringApi = () => {
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
 
+    const [skipJobListApiCall, setSkipJobListApiCall] = useState(true);
     const [skipApiCall, setSkipApiCall] = useState(true);
 
     useEffect(() => {
         setSkipApiCall(true);
+        setSkipJobListApiCall(true);
         setTimeout(() => {
             if (timeInterval && fromTime && toTime) {
                 dispatch(setJobsListLoading(false));
                 dispatch(setJobsList([]));
                 setTime({startTime: fromTime, endTime: toTime});
                 setSkipApiCall(false);
+                setSkipJobListApiCall(false);
             }
         }, 0);
     }, [fromTime]);
@@ -39,7 +42,7 @@ const JobMonitoringApi = () => {
     const {
         data: jmJobsList,
         isFetching: jmJobsListLoading,
-    } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+    } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipJobListApiCall});
 
     const {
         data: jmJobsSummary,
@@ -59,6 +62,9 @@ const JobMonitoringApi = () => {
             let mergedList = [...oldList, ...newList]
             dispatch(setJobsList(mergedList));
             setJobsCursor(jmJobsList?.nextToken || null);
+            if (!jmJobsList?.nextToken) {
+                setSkipJobListApiCall(true);
+            }
         }
     }, [jmJobsList, jmJobsListLoading]);
 
@@ -80,7 +86,6 @@ const JobMonitoringApi = () => {
             dispatch(setJobsSummaryTimeline(data));
         }
     }, [jobsSummaryTimeline, jobsSummaryTimelineLoading]);
-
 }
 
 export default JobMonitoringApi;

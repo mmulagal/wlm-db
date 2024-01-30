@@ -1,4 +1,4 @@
-import { Button, Popover, Table, TableTopBar, Typography, useTable } from '@netapp/design-system';
+import { Button, Popover, Table, TableTopBar, Typography, useDialog, useTable } from '@netapp/design-system';
 import styles from './JobMonitoringTable.module.scss';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
@@ -30,8 +30,12 @@ import {
 import { useEffect, useState } from 'react';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useGetFullJobsListQuery, useLazyGetSubTaskListQuery } from '../../../utils/apiService';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
 
 const JobMonitoringTable = () => {
+    const { setDialog } = useDialog();
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+
     const dispatch = useDispatch();
     const jobsListLoading = useAppSelector(state => state.jobMonitoring.jobsListLoading);
     const jobsList = useAppSelector(state => state.jobMonitoring.jobsList);
@@ -52,6 +56,25 @@ const JobMonitoringTable = () => {
 
     // to get sub jobs data
     const [subTaskListApi] = useLazyGetSubTaskListQuery();
+
+    const openDemoInfoDialog = () => {
+        setDialog(
+            <DialogComponent
+                header={GENERAL.DEMO_TITLE}
+                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
+                primaryButton={GENERAL.CONTINUE}
+                callback={() => {}}
+            />
+        );
+    };
+
+    const handleRedirectToCF = (href: string) => {
+        if (isDemoMode) {
+            openDemoInfoDialog();
+        } else {
+            window.open(href, '_blank', 'noopener');
+        }
+    };
 
     const getSubJobsData = (jobId: string) => {
         dispatch(setSubJobsDataLoading(true));
@@ -109,7 +132,11 @@ const JobMonitoringTable = () => {
         const keys = JM_DOWNLOAD.MAIN_JOBS_KEYS;
         const headers = JM_DOWNLOAD.MAIN_JOBS_CSV_HEADERS;
         const result = '';
-        const csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
+        let csv = createJobMonitorCSV(dataList, keys, headers, result, 0);
+        // remove #
+        if (csv) {
+            csv = csv.replace('#', '');
+        }
         downloadCsv(csv);
         dispatch(setDownloadJobsLoading(false));
     };
@@ -200,7 +227,11 @@ const JobMonitoringTable = () => {
             Header: 'Status',
             accessor: 'status',
             width: '160px',
-            filterOptions: 'auto',
+            filterOptions: [
+                { value: JOB_MONITORING_STATUS.IN_PROGRESS, label: GENERAL.JM_RUNNING },
+                { value: JOB_MONITORING_STATUS.COMPLETED, label: GENERAL.JM_COMPLETED },
+                { value: JOB_MONITORING_STATUS.FAILED, label: GENERAL.JM_FAILED }
+            ],
             renderCell: (cellData: any, rowData: any) => {
                 return (
                     <div className={styles.statusCol}>
@@ -237,8 +268,8 @@ const JobMonitoringTable = () => {
             renderCell: (cellData: any) => {
                 // This is to accomadate the hyperlink in job name for only deployment cases.
                 // For other job hyperlink is not required and it will display the job name as is
-                const jobNameRegex = /(Microsoft SQL server deployment with stack) (WLMDB-[a-zA-Z]+-\d+)/;
-                const hrefRegex = /;href:(.+)/;
+                const jobNameRegex = /(Microsoft SQL server deployment with stack) (.*?);/;
+                const hrefRegex = /href:(.+)/;
 
                 const jobNameMatch = cellData.match(jobNameRegex);
                 const hrefMatch = cellData.match(hrefRegex);
@@ -248,12 +279,8 @@ const JobMonitoringTable = () => {
 
                     return (
                         <div className={CommonStyles.wrapTextIn2Line} title={jobName}>
-                            {jobNameMatch[1] + ' '}
-                            <Button
-                                Component="button"
-                                variant="link"
-                                onClick={() => window.open(href, '_blank', 'noopener')}
-                            >
+                            {jobNameMatch[1]}
+                            <Button Component="button" variant="link" onClick={() => handleRedirectToCF(href)}>
                                 {jobNameMatch[2]}
                             </Button>
                         </div>

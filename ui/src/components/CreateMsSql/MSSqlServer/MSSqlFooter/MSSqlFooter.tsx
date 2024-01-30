@@ -1,6 +1,6 @@
 import { Button, useDialog, Typography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { FORM_TO_WLF_NAVIGATE, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
 import { setIsLoading, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -65,7 +65,8 @@ const MSSqlFooter = () => {
                         <>
                             <Button Component="button" variant="text" onClick={() => {
                                     clearTimeout(notificationMsg);
-                                    navigate('../job-monitor')
+                                    navigate('../job-monitor');
+                                    dispatch(clearNotifications());
                                 }}>
                                 {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
                             </Button>
