@@ -27,7 +27,7 @@ import {
     deployedStackUrl,
     derivePropertiesFromARN,
     getQueueUrl,
-    getValueWithMatchingString
+    getDescriptionForMatchingName
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -261,7 +261,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: getValueWithMatchingString(childJobName, stackSqlDeploymentType!),
+                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!),
                 start_time: new Date(timestamp)
             }
         ]);

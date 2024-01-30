@@ -394,7 +394,9 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
     return [windowsVersion, sqlVersion, sqlVersionType];
 }
 
-function getValueWithMatchingString(jobName: string, stackSqlDeploymentType: string) {
+// Return job decription for corresponding Job name
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
+    logger.info('Return job decription for job name:', jobName);
     if (jobName.includes('ValidationStack')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
@@ -407,13 +409,13 @@ function getValueWithMatchingString(jobName: string, stackSqlDeploymentType: str
         return subJobDescriptions[jobName];
     }
 
-    let result = '';
+    let jobDescription = '';
     Object.keys(subJobDescriptions).forEach(key => {
         if (jobName.includes(key)) {
-            result = subJobDescriptions[key];
+            jobDescription = subJobDescriptions[key];
         }
     });
-    return result;
+    return jobDescription;
 }
 
 export {
@@ -439,5 +441,5 @@ export {
     checkAccount,
     createJobMockData,
     calculateSQLandWindowsVersion,
-    getValueWithMatchingString
+    getDescriptionForMatchingName
 };
