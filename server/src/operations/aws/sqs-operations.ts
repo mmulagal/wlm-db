@@ -23,7 +23,13 @@ import {
     WLMDB_COST_ALLOCATION_TAG,
     CF_STACK_RESOURCE_TYPE
 } from '../../utils/consts';
-import { checkAndRetrieveJsonObject, deployedStackUrl, derivePropertiesFromARN, getQueueUrl } from '../../utils/utils';
+import {
+    checkAndRetrieveJsonObject,
+    deployedStackUrl,
+    derivePropertiesFromARN,
+    getQueueUrl,
+    getDescriptionForMatchingName
+} from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
 import {
@@ -217,9 +223,9 @@ async function createOrUpdateChildJobs(
     jobStatus: JOBSTATUS,
     timestamp: number,
     resourceStatusReason: string,
-    physicalResourceId: string,
     logicalResourceId: string,
     checkEventsOrder: boolean = false,
+    stackSqlDeploymentType: string,
     stackName?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
@@ -256,7 +262,7 @@ async function createOrUpdateChildJobs(
                 resource_name: parentJob.resource_name,
                 name: childJobName,
                 parent_job_id: parentJob.id,
-                description: physicalResourceId ? `Creating resource ${physicalResourceId}` : '',
+                description: getDescriptionForMatchingName(childJobName, stackSqlDeploymentType!),
                 start_time: new Date(timestamp)
             }
         ]);
@@ -684,7 +690,6 @@ async function processCloudFormationMessages() {
                             const {
                                 StackId: stackId,
                                 StackName: stackName,
-                                PhysicalResourceId: physicalResourceId,
                                 LogicalResourceId: logicalResourceId,
                                 ResourceType: resourceType,
                                 Timestamp: timestamp,
@@ -732,8 +737,9 @@ async function processCloudFormationMessages() {
                                             jobStatus,
                                             messageTimestamp,
                                             resourceStatusReason,
-                                            physicalResourceId,
-                                            logicalResourceId
+                                            logicalResourceId,
+                                            false,
+                                            stackSqlDeploymentType!
                                         );
                                     }
                                     /**
@@ -882,9 +888,9 @@ async function processCloudFormationMessages() {
                                             jobStatus,
                                             messageTimestamp,
                                             resourceStatusReason,
-                                            physicalResourceId,
                                             logicalResourceId,
                                             true,
+                                            stackSqlDeploymentType!,
                                             stackName
                                         );
                                     }

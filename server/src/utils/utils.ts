@@ -19,7 +19,9 @@ import {
     STANDALONE,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
-    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
+    subJobDescriptions,
+    FCI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -34,6 +36,9 @@ import {
 } from './job-monitoring-mockdata';
 
 const logger = getLogger();
+
+const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
+const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -389,6 +394,30 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
     return [windowsVersion, sqlVersion, sqlVersionType];
 }
 
+// Return job decription for corresponding Job name
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
+    logger.info('Return job decription for job name:', jobName);
+    if (jobName.includes('ValidationStack')) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        jobName = stackSqlDeploymentType === FCI ? jobName.concat('-fci') : jobName.concat('-standalone');
+        return subJobDescriptions[jobName];
+    }
+    if (subJobNames.some(subJobName => jobName.indexOf(subJobName) !== -1)) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        return subJobDescriptions[jobName];
+    }
+
+    let jobDescription = '';
+    Object.keys(subJobDescriptions).forEach(key => {
+        if (jobName.includes(key)) {
+            jobDescription = subJobDescriptions[key];
+        }
+    });
+    return jobDescription;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -411,5 +440,6 @@ export {
     isActiveInstance,
     checkAccount,
     createJobMockData,
-    calculateSQLandWindowsVersion
+    calculateSQLandWindowsVersion,
+    getDescriptionForMatchingName
 };
