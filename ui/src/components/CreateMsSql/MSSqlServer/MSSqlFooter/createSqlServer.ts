@@ -76,7 +76,7 @@ const createMssqlPayload = (state: any) => {
     const fsxVolThroughput = (() => {
         const value = state.mssqlForm.throughput?.value || '128';
         const value1 = value.split(' ');
-        if (value1.length === 2) {
+        if (value1?.length === 2) {
             if (value1[1] === 'GBps') {
                 return value1[0] * 1000;
             } else {
@@ -234,7 +234,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         //Check for DB Name - InvalidName
         const input = state.mssqlForm.dbName;
         const dataBaseNameValue =
-            input.length > 15 || !/^[a-zA-Z0-9]/.test(input.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
+            (input && input.length > 15) || !/^[a-zA-Z0-9]/.test(input?.charAt(0)) || !/^[a-zA-Z0-9/-]+$/.test(input);
         const isDBValueValid = dataBaseNameValue ? true : false;
         if (dataBaseNameValue) {
             dispatch(setDBNameValue(false));
