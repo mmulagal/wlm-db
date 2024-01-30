@@ -21,7 +21,7 @@ import {
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     subJobDescriptions,
-    FCI
+    SqlServerDeploymentModel
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -397,10 +397,13 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
 // Return job decription for corresponding Job name
 function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
     logger.info('Return job decription for job name:', jobName);
-    if (jobName.includes('ValidationStack')) {
+    if (jobName.includes('ValidationStack1')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
-        jobName = stackSqlDeploymentType === FCI ? jobName.concat('-fci') : jobName.concat('-standalone');
+        jobName =
+            stackSqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
+                ? jobName.concat('-fci')
+                : jobName.concat('-standalone');
         return subJobDescriptions[jobName];
     }
     if (subJobNames.some(subJobName => jobName.indexOf(subJobName) !== -1)) {
