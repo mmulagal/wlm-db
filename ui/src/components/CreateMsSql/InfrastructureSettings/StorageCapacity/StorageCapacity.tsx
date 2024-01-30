@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AccordionCard, AccordionCardContent, TextField, Typography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -10,9 +10,13 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setStorageCapacity, setStorageUnit } from '../../../../store/mssql/mssqlFormSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+const _ = require('lodash');
 
 const StorageCapacity = () => {
     const dispatch = useDispatch();
+    const [inputText, setInputText] = useState<any>(null);
+    const [textSearch, setTextSearch] = useSearchDebounce();
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
@@ -57,16 +61,21 @@ const StorageCapacity = () => {
         // if value is not blank, then test the regex
 
         if (e.target.value === '' || re.test(e.target.value)) {
+            setInputText(e.target.value)
+            setTextSearch(e.target.value);
             // setInput(e.target.value);
-            dispatch(setStorageCapacity(e.target.value));
             dispatch(setIsWizardTouched(true));
         }
     };
 
+    useEffect(() => {
+        dispatch(setStorageCapacity(textSearch));
+    }, [textSearch]);
+
     const checkError = () => {
         if (
-            (selectedUnit?.label === 'TiB' && (Number(inputCapacity) > 130 || Number(inputCapacity) < 1)) ||
-            (selectedUnit?.label === 'GiB' && (Number(inputCapacity) > 133120 || Number(inputCapacity) < 120))
+            (selectedUnit?.label === 'TiB' && (Number(inputText) > 130 || Number(inputText) < 1)) ||
+            (selectedUnit?.label === 'GiB' && (Number(inputText) > 133120 || Number(inputText) < 120))
         ) {
             return GENERAL.ERROR_CAPACITY;
         }
@@ -96,7 +105,7 @@ const StorageCapacity = () => {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     handleChange(e);
                                 }}
-                                value={inputCapacity}
+                                value={inputText}
                                 className={styles.textfield}
                                 error={checkError()}
                             />
