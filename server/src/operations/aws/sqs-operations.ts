@@ -799,11 +799,17 @@ async function processCloudFormationMessages() {
 
                                         // Update master job for retry scenarios
                                         if (masterJob) {
+                                            const subJobs =
+                                                (await listJobs(accountId, masterJob.id, undefined, undefined)) || [];
+                                            const subJobStatus = subJobs.map(subJob => subJob.status);
+                                            const masterJobStatus = subJobStatus.includes(JOBSTATUS.IN_PROGRESS)
+                                                ? JOBSTATUS.IN_PROGRESS
+                                                : jobStatus;
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 String(databaseType),
                                                 stackName,
-                                                jobStatus,
+                                                masterJobStatus,
                                                 messageTimestamp,
                                                 masterJob,
                                                 resourceStatusReason
