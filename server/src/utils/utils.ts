@@ -20,7 +20,8 @@ import {
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
     FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
-    subJobDescriptions
+    subJobDescriptions,
+    FCI
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -393,22 +394,22 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
     return [windowsVersion, sqlVersion, sqlVersionType];
 }
 
-function getValueWithMatchingString(str: string, stackSqlDeploymentType: string) {
-    if (str.includes('ValidationStack')) {
-        const match = str.match(subJobRegex);
-        str = match ? match[1] : '';
-        str = stackSqlDeploymentType === 'FCI' ? str.concat('-fci') : str.concat('-standalone');
-        return subJobDescriptions[str];
+function getValueWithMatchingString(jobName: string, stackSqlDeploymentType: string) {
+    if (jobName.includes('ValidationStack')) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        jobName = stackSqlDeploymentType === FCI ? jobName.concat('-fci') : jobName.concat('-standalone');
+        return subJobDescriptions[jobName];
     }
-    if (subJobNames.some(subJobName => str.indexOf(subJobName) !== -1)) {
-        const match = str.match(subJobRegex);
-        str = match ? match[1] : '';
-        return subJobDescriptions[str];
+    if (subJobNames.some(subJobName => jobName.indexOf(subJobName) !== -1)) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        return subJobDescriptions[jobName];
     }
 
     let result = '';
     Object.keys(subJobDescriptions).forEach(key => {
-        if (str.includes(key)) {
+        if (jobName.includes(key)) {
             result = subJobDescriptions[key];
         }
     });
