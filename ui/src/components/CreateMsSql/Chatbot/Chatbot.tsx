@@ -144,6 +144,21 @@ const Chatbot = () => {
     });
 
     useEffect(() => {
+        if (isPayloadReady) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Deploy', value: 'deploy' }],
+                    onBubbleClick: (label?: string, value?: string) => {
+                        if (value === 'deploy') {
+                            handleCreate();
+                        }
+                    }
+                })
+            );
+        }
+    }, [isPayloadReady]);
+
+    useEffect(() => {
         if (loadConfigClicked) {
             setIsBotReplying(true);
             sendMsgToBot({
@@ -169,16 +184,6 @@ const Chatbot = () => {
                             } else {
                                 setPayloadContent(intent.validatedJson);
                                 mapParamsToPayload(intent.params);
-                                dispatch(
-                                    setSuggestionBubbles({
-                                        list: [{ label: 'Deploy', value: 'deploy' }],
-                                        onBubbleClick: (label?: string, value?: string) => {
-                                            if (value === 'deploy') {
-                                                handleCreate();
-                                            }
-                                        }
-                                    })
-                                );
                             }
                             setIsPayloadReady(intent.complete);
                         }
@@ -702,16 +707,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
@@ -781,16 +776,6 @@ const Chatbot = () => {
                         } else {
                             setPayloadContent(intent.validatedJson);
                             mapParamsToPayload(intent.params);
-                            dispatch(
-                                setSuggestionBubbles({
-                                    list: [{ label: 'Deploy', value: 'deploy' }],
-                                    onBubbleClick: (label?: string, value?: string) => {
-                                        if (value === 'deploy') {
-                                            handleCreate();
-                                        }
-                                    }
-                                })
-                            );
                         }
                         setIsPayloadReady(intent.complete);
                     }
