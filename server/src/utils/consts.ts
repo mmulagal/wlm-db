@@ -4,6 +4,10 @@ import { join } from 'path';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 
+type SubJobDescriptions = {
+    [key: string]: string;
+};
+
 // General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
@@ -957,6 +961,49 @@ const SQL_HOST_NAME = 'sql-host-name';
 
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
+const subJobDescriptions: SubJobDescriptions = {
+    SQLStandaloneStack: 'Deploying an SQL Server standalone instance with recommended best practices',
+    SQLServerStack: 'Deploying an SQL Server FCI with recommended best practices',
+    NewFSxStack: 'Deploying new FSx for ONTAP file system for SQL Server workload',
+    ExistingFSxStack:
+        'Deploying a storage virtual machine for the SQL Server workload on the FSx for ONTAP file system',
+    'ValidationStack1-standalone': 'Subnet Validation for deployment',
+    'ValidationStack1-fci': 'Primary subnet validation for SQL Server FCI deployment',
+    ValidationStack2: 'Standby subnet validation for SQL Server FCI deployment',
+    'SqlNode(AWS::EC2::Instance)': 'Configuring SQL Server standalone on an EC2 instance',
+    'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
+    'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for SQL Server workloads',
+    'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)':
+        'Attaching an instance profile to EC2 instances for SQL Server nodes',
+    'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
+    'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
+    'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
+        'Creating a volume to host witness disk for Windows Cluster',
+    'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
+    'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
+    'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+        'Creating a dedicated storage virtual machine (SVM) for the database workload',
+    'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
+    'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
+    'ValidationNode1(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+    'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
+    'ValidationInstanceProfile(AWS::IAM::InstanceProfile)': 'Attaching an instance profile to the validation instance',
+    'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps',
+    'SqlFSxInstanceMAD1(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on primary node',
+    'SqlFSxInstanceMAD2(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on standby node',
+    'NetworkInterface2(AWS::EC2::NetworkInterface)':
+        'Creating network interfaces for the EC2 instance in standby subnet',
+    'NetworkInterface1(AWS::EC2::NetworkInterface)':
+        'Creating network interfaces for the EC2 instance in primary subnet',
+    'ValidationNode2(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+    'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps'
+};
 const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
 
 export {
@@ -1179,5 +1226,6 @@ export {
     DATABASE_SIZE,
     SQL_HOST_NAME,
     JOBS_DEFAULT_TIME_RANGE,
+    subJobDescriptions,
     CF_STACK_RESOURCE_TYPE
 };

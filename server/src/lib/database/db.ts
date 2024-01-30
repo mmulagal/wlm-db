@@ -253,9 +253,6 @@ async function listEvents(accountId?: string, deploymentName?: string, eventName
         orderBy: [
             {
                 time: 'desc'
-            },
-            {
-                event_id: 'asc'
             }
         ]
     });
