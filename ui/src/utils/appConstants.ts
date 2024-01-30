@@ -383,7 +383,7 @@ export const GENERAL = {
     NOT_PROTECTED: 'Not protected',
     PROTECTION_TOOLTIP: [' out of ', ' databases are protected'],
     AWS_BACKUP: 'AWS backup',
-    FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
+    FSX_ONTAP_SNAPSHOTS: 'FSx for ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
     DEPLOY_NEW_DATABASE: 'Deploy',
@@ -399,7 +399,7 @@ export const GENERAL = {
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
     DB_SS_TT_1:
         'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Snapshots and thin Clones. ',
-    DB_SS_TT_2: 'Calculation is based on unique FSx ONTAP instance',
+    DB_SS_TT_2: 'Calculation is based on unique FSx for ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated Cost',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',

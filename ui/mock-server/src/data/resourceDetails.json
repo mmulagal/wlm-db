@@ -21,7 +21,7 @@
         "region": "ap-southeast-1",
         "serverType": "MSSQL",
         "serverInstallationMode": "FCI",
-        "fileSystemType": "FSx ONTAP",
+        "fileSystemType": "FSx for ONTAP",
         "fileSystemId": "fs-0d5efc3057c4f12cb",
         "fileSystemName": "DBSFSX",
         "fileSystemStatus": "Available",
