@@ -56,29 +56,29 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         {
             id: '1',
             Header: 'Name',
-            accessor: 'name',
+            accessor: 'description',
             isSortable: true,
-            width: '230px',
+            width: '676px',
             isSticky: true,
             renderCell: (cellData: any) => {
                 return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
             }
         },
-        {
-            id: '2',
-            Header: 'Description',
-            accessor: 'description',
-            isSortable: true,
-            width: '498px',
-            renderCell: (cellData: any) => {
-                return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
-            }
-        },
+        // {
+        //     id: '2',
+        //     Header: 'Description',
+        //     accessor: 'description',
+        //     isSortable: true,
+        //     width: '498px',
+        //     renderCell: (cellData: any) => {
+        //         return <div className={CommonStyles.wrapTextIn2Line} title={cellData}>{cellData}</div>;
+        //     }
+        // },
         {
             id: '3',
             Header: 'Status',
             accessor: 'status',
-            width: '180px',
+            width: '230px',
             isSortable: true,
             renderCell: (cellData: any, rowData: any) => {
                 return (
