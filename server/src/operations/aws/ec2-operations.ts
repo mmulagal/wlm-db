@@ -474,5 +474,6 @@ export {
     getSecurityGroupsList,
     getNetworkInterfacesList,
     tagEc2Resource,
-    getCostAllocationTagEC2Resource
+    getCostAllocationTagEC2Resource,
+    VPC
 };

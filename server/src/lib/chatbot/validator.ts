@@ -1,7 +1,7 @@
 import { isEmpty, uniqBy } from 'lodash-es';
 import randomize from 'randomatic';
 import { getAdsList } from '../../operations/aws/directory-service-operations';
-import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
+import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList, VPC } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
 import getLogger from '../../utils/logger';
 import {
@@ -141,6 +141,7 @@ async function validateRegion(credentialsId: string, value: string, key: string)
 
 async function validateVpcId(
     credentialsId: string,
+    sqlDeploymentMode: string,
     region: string,
     vpcId: string,
     az1: string,
@@ -151,9 +152,20 @@ async function validateVpcId(
 ) {
     logger.debug('Validate VpcConfig', { credentialsId, region, vpcId, az1, az2, key });
 
-    const { vpcs } = await getVpcsList(credentialsId, region, 'subnet');
+    let { vpcs } = await getVpcsList(credentialsId, region, 'subnet');
 
     const allowedVpcs = vpcs?.map(vpc => ({ label: vpc.name || vpc.id, value: vpc.id }));
+
+    if (sqlDeploymentMode === FCI) {
+        vpcs = filterValidVpcs(vpcs);
+        if (vpcs.length === 0) {
+            return {
+                key,
+                status: 'error',
+                allowedValues: []
+            };
+        }
+    }
 
     const errorObj = {
         key,
@@ -714,6 +726,24 @@ function validateDeploymentEnv(key: string, value: string) {
         ],
         type: 'card'
     };
+}
+
+function filterValidVpcs(vpcs: Array<VPC>) {
+    logger.debug('FILTER VPCS>>>', vpcs);
+    return vpcs.filter(vpc => {
+        const azs = uniqBy(vpc.subnets, 'availabilityZone');
+        if (azs.length <= 1) {
+            return false;
+        }
+
+        const routeTables = uniqBy(vpc.subnets, 'routeTableId');
+
+        if (routeTables.length <= 1) {
+            return false;
+        }
+
+        return true;
+    });
 }
 
 export {
