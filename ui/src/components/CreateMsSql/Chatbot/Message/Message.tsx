@@ -115,11 +115,18 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                     <div className={styles.list}>
                         <div className={styles.bulletContainer}>
                             <Bullet />
-                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP3}</div>
+                            <div className={styles.textWidth}>
+                                {GENERAL.USERNAME_TOOLTIP3}
+                                <span className={styles.highlightText}>{GENERAL.USERNAME_EXAMPLE}</span>
+                            </div>
                         </div>
                         <div className={styles.bulletContainer}>
                             <Bullet />
                             <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP4}</div>
                         </div>
                         <div className={styles.bulletContainer}>
                             <Bullet />

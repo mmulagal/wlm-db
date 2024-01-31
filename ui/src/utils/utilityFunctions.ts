@@ -744,7 +744,7 @@ export const validateChatbotField = (fieldName: string, value: any) => {
         case 'fsxPassword':
             return fsxPassVal(val) || '';
         case 'serviceAccountName':
-            return isValidUserName(val) || '';
+            return isValidUserName(val) || (val && val.length && val.length > 20 && GENERAL.PASSWORD_ERROR_CHECK) || '';
         case 'serviceAccountPassword':
             return dbPassVal(val) || '';
         case 'databaseSize':
