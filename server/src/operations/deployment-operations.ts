@@ -355,7 +355,11 @@ async function getCloudformationTemplate(
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
-        urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
+        if (e.ParameterKey === TEMPLATE_FSX_PASSWORD && e.ParameterValue) {
+            urlParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(e.ParameterValue)}`;
+        } else {
+            urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
+        }
     });
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
@@ -542,7 +546,7 @@ async function createCloudFormationTemplateForUserDeployment(
     if (fsxConfiguration.fsxPassword) {
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
         if (encryptedFsxPassword) {
-            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
         }
     }
 
