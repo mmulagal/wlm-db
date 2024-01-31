@@ -1,32 +1,32 @@
 const PARAMETERS = [
     {
         name: 'DeploymentMode',
-        description: 'File system deployment mode',
+        description: 'Deployment mode for the FSx for ONTAP file system',
         type: 'String',
         default: 'MULTI_AZ_1',
         allowedValues: ['SINGLE_AZ_1', 'MULTI_AZ_1']
     },
     {
         name: 'SQLDeploymentMode',
-        description: 'SQL server deployment mode',
+        description: 'SQL Server deployment mode',
         type: 'String',
         default: 'fci',
         allowedValues: ['fci', 'standalone']
     },
     {
         name: 'CfDeployRoleName',
-        description: 'Cloud formation deployment role name',
+        description: 'CloudFormation deployment role name',
         type: 'String'
     },
     {
         name: 'UniqueID',
-        description: 'Automation Execution Unique ID',
+        description: 'Automation execution unique ID',
         type: 'String'
     },
     {
         name: 'ADScenarioType',
         description:
-            'Select the type of AD DS deployment to use: AWS Directory Service for Microsoft AD or managing your own Amazon EC2 AD instances.',
+            'Select the type of Active Directory Domain Services deployment to use: AWS Directory Service for Microsoft AD or management of your own Amazon EC2 AD instances.',
         type: 'String',
         allowedValues: ['AWS_MANAGED_AD', 'USER_MANAGED_AD']
     },
@@ -39,7 +39,7 @@ const PARAMETERS = [
     {
         name: 'DomainAdminUser',
         description:
-            'User name for the account that will be added as Domain Administrator. This is separate from the default "Administrator" account. Note: This user will always default to "Admin" when using AWS Directory Service regardless of the value provided.',
+            'User name for the account that will be added as Domain Administrator. This is separate from the  "default Windows Administrator" account. Note: This user will always default to "Admin" when using AWS Directory Service regardless of the value provided.',
         type: 'String',
         minLength: 5,
         maxLength: 20,
@@ -54,7 +54,7 @@ const PARAMETERS = [
     },
     {
         name: 'DomainDNSName',
-        description: 'Fully qualified domain name (FQDN) of the forest root domain e.g. example.com',
+        description: 'Fully qualified domain name (FQDN) of the forest root domain. For example, example.com',
         type: 'String',
         minLength: 2,
         maxLength: 255,
@@ -90,7 +90,7 @@ const PARAMETERS = [
     },
     {
         name: 'MSSQLMediaBucketName',
-        description: 'S3 bucket name for MSSQL assets.',
+        description: 'S3 bucket name for SQL Server resources.',
         type: 'String',
         default: 'LaunchWizard-sqlha'
     },
@@ -153,13 +153,15 @@ const PARAMETERS = [
     },
     {
         name: 'PrivateSubnet1ID',
-        description: 'ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)',
+        description:
+            'ID of the private subnet 2 in Availability Zone 2 for the SQL Server (for example, subnet-a0246dcd).',
         type: 'AWS::EC2::Subnet::Id',
         minLength: 1
     },
     {
         name: 'PrivateSubnet2ID',
-        description: 'ID of private subnet 2 in Availability Zone 2 for the Workload (e.g., subnet-a0246dcd)',
+        description:
+            'ID of the private subnet 2 in Availability Zone 2 for the SQL Server (for example, subnet-a0246dcd). This field is required for SQL Server failover instances, but not required for standalone instances.',
         type: 'String'
     },
     {
@@ -193,64 +195,64 @@ const PARAMETERS = [
     },
     {
         name: 'FSxStorageCapacity',
-        description: 'Storage capacity of the file system. Minimum 1024 GiB, maximum 192 TiB.',
+        description: 'Storage capacity of the file system. The minimum is 1024 GiB. The maximum is 192 TiB.',
         type: 'Number',
         minValue: 1024,
         maxValue: 196608
     },
     {
         name: 'FSxDataVolumeSize',
-        description: 'Size of the data volume, in megabytes (MiB).',
+        description: 'The size of the data volume in megabytes (MiB).',
         type: 'Number'
     },
     {
         name: 'FSxDataVolumeName',
-        description: 'FSx data volume name',
+        description: 'The name of the volume for SQL Server data',
         type: 'String',
         minLength: 1
     },
     {
         name: 'FSxLogVolumeName',
-        description: 'FSx log volume name',
+        description: 'SQL log volume name',
         type: 'String',
         minLength: 1
     },
     {
         name: 'FSxLogVolumeSize',
-        description: 'Size of the log volume, in megabytes (MiB).',
+        description: 'The size of the log volume in megabytes (MiB).',
         type: 'Number'
     },
     {
         name: 'FSxTempDbVolumeName',
-        description: 'FSx TempDB volume name',
+        description: 'The name of the volume for the tempdb system database.',
         type: 'String',
         minLength: 1
     },
     {
         name: 'FSxTempDbVolumeSize',
-        description: 'Size of the TempDB volume, in megabytes (MiB).',
+        description: 'The size of the tempdb volume in megabytes (MiB).',
         type: 'Number'
     },
     {
         name: 'FSxQuorumVolumeName',
-        description: 'FSx cluster quorum volume name',
+        description: 'The name of the volume for cluster quorum.',
         type: 'String',
         default: 'wlmdb-quorum'
     },
     {
         name: 'FSxQuorumVolumeSize',
-        description: 'Size of the cluster quorum volume, in megabytes (MiB).',
+        description: 'The size of the cluster quorum volume in megabytes (MiB).',
         type: 'Number',
         default: 100
     },
     {
         name: 'FSxDataLunSize',
-        description: 'Size of the SQL data lun, in megabytes (MiB)',
+        description: 'The size of the SQL Server data LUN in megabytes (MiB).',
         type: 'Number'
     },
     {
         name: 'FSxAdminUsername',
-        description: 'FSxN username',
+        description: 'The user name for the FSx for ONTAP file system.',
         type: 'String',
         minLength: 1
     },
@@ -263,24 +265,24 @@ const PARAMETERS = [
     },
     {
         name: 'FSxSvmName',
-        description: 'FSx SVM Name',
+        description: 'The name for the FSx for ONTAP file system.',
         type: 'String',
         minLength: 1,
         maxLength: 47
     },
     {
         name: 'FSxFileSystemName',
-        description: 'Fsx Filesystem name ',
+        description: 'The name for the FSx for ONTAP file system.',
         type: 'String'
     },
     {
         name: 'FSxFileSystemId',
-        description: 'Fsx Filesystem ID ',
+        description: 'The ID of the FSx for ONTAP file system.',
         type: 'String'
     },
     {
         name: 'FSxDiskIops',
-        description: 'The total number of SSD IOPS provisioned for the file system.  Maximum 80,000 IOPS.',
+        description: 'The total number of SSD IOPS provisioned for the file system. The maximum is 80,000 IOPS.',
         type: 'Number',
         default: 3,
         minValue: 3,
@@ -288,7 +290,7 @@ const PARAMETERS = [
     },
     {
         name: 'FSxVolumeThroughputCapacity',
-        description: 'Throughput capacity of FSx volume',
+        description: 'Throughput capacity for the FSx for ONTAP volume.',
         type: 'Number',
         default: 128,
         allowedValues: [128, 256, 512, 1024, 2048]
@@ -353,7 +355,8 @@ const PARAMETERS = [
     },
     {
         name: 'EncryptedFsxPassword',
-        description: 'Encrypted value of fsx password entered by user in DB deployment wizard (DO NOT EDIT)',
+        description:
+            'Encrypted value of FSx for ONTAP password entered in the database deployment wizard (DO NOT EDIT)',
         type: 'String',
         noEcho: true
     },
