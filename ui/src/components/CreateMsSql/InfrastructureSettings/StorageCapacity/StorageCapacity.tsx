@@ -14,7 +14,7 @@ import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 const StorageCapacity = () => {
     const dispatch = useDispatch();
-    const [inputText, setInputText] = useState<any>(null);
+    const [inputText, setInputText] = useState<any>('1024');
     const [textSearch, setTextSearch] = useSearchDebounce(1000);
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
@@ -37,6 +37,7 @@ const StorageCapacity = () => {
         if (!isLoadConfig) {
             dispatch(setStorageUnit(generateUnitsForStorage[1]));
             if (!inputCapacity) {
+                setTextSearch('1024');
                 dispatch(setStorageCapacity('1024'));
             }
         }
