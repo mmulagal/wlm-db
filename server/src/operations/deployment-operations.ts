@@ -424,7 +424,9 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            response.missingPermissions = MISSING_PERMISSIONS(permissions);
+            const errMsg = MISSING_PERMISSIONS(permissions);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
             return response;
         }
         metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
@@ -458,7 +460,9 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            response.missingPermissions = MISSING_PERMISSIONS(err?.message);
+            const errMsg = MISSING_PERMISSIONS(err?.message);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
             return response;
         }
         throw createError(
