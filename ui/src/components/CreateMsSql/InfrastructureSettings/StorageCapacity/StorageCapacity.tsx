@@ -15,7 +15,7 @@ import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 const StorageCapacity = () => {
     const dispatch = useDispatch();
     const [inputText, setInputText] = useState<any>(null);
-    const [textSearch, setTextSearch] = useSearchDebounce();
+    const [textSearch, setTextSearch] = useSearchDebounce(1000);
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
