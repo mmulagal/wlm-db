@@ -17,9 +17,9 @@ const DatabaseName = () => {
     const dispatch = useDispatch();
 
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
-    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
-    const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction.dbNameSelected);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const isCreateHit = useAppSelector(state => state.msSqlAction?.isCreateHit);
+    const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction?.dbNameSelected);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [databaseName, setDatabaseName] = useState(selectedDBName ? selectedDBName : generateRandomDBName());
 

@@ -40,11 +40,11 @@ describe('Database name accordion test', () => {
     };
 
     it('Render database name', () => {
-        (useStateMock as any).mockImplementationOnce(() => ['sqldatabase_1', setState]);
+        (useStateMock as any).mockImplementationOnce(() => ['sqldatabase', setState]);
         const { container } = wrapper();
         expect(DatabaseName).toBeDefined();
         expect(container).toHaveTextContent('Database name');
-        expect(container).toHaveTextContent('sqldatabase_1');
+        expect(container).toHaveTextContent('sqldatabase');
     });
 
     it('Render invalid database name', () => {

@@ -1,6 +1,6 @@
 import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
+import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
 import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
