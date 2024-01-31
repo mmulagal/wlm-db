@@ -9,7 +9,12 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
-import { cfDownloadName, generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
+import {
+    cfDownloadName,
+    generateOptionType,
+    getCredDetails,
+    handleDownloadYAML
+} from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -524,11 +529,19 @@ const CodeBox = () => {
                 </div>
 
                 {/* Cloud formation button */}
-                <div className={styles.cloudFormationButtonContainer}>
-                    <Button variant="secondary" onClick={() => handleRedirectToCF()} id={UI_IDS.WIZARD_REDIRECT_TO_CF}>
-                        {GENERAL.SAVE_FORM_AS_CLOUD}
-                    </Button>
-                </div>
+                {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                    !isRightPanelTemplateLoading &&
+                    rightPanelTemplateResponse?.template && (
+                        <div className={styles.cloudFormationButtonContainer}>
+                            <Button
+                                variant="secondary"
+                                onClick={() => handleRedirectToCF()}
+                                id={UI_IDS.WIZARD_REDIRECT_TO_CF}
+                            >
+                                {GENERAL.SAVE_FORM_AS_CLOUD}
+                            </Button>
+                        </div>
+                    )}
 
                 <div
                     className={
