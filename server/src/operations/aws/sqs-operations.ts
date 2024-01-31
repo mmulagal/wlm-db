@@ -476,21 +476,29 @@ async function processCloudFormationMessages() {
                                                             credentials_id: deploymentCredentialId,
                                                             region: deploymentRegion
                                                         } = masterStackDeployment;
-                                                        const decryptedPassword = await decryptString(
-                                                            encryptedFsxPassword
-                                                        );
-                                                        if (decryptedPassword) {
-                                                            await registerFsxOntapCredentials(
-                                                                accountId,
-                                                                deploymentCredentialId,
-                                                                deploymentRegion,
-                                                                fsxId,
-                                                                decryptedPassword
+                                                        try {
+                                                            const decryptedPassword = await decryptString(
+                                                                encryptedFsxPassword
                                                             );
-                                                        } else {
+
+                                                            if (decryptedPassword) {
+                                                                await registerFsxOntapCredentials(
+                                                                    accountId,
+                                                                    deploymentCredentialId,
+                                                                    deploymentRegion,
+                                                                    fsxId,
+                                                                    decryptedPassword
+                                                                );
+                                                            } else {
+                                                                logger.error(
+                                                                    'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
+                                                                    { encryptedFsxPassword, decryptedPassword }
+                                                                );
+                                                            }
+                                                        } catch (error) {
                                                             logger.error(
                                                                 'Failed to register FSx for ONTAP credentials with FSX core module. Could not decrypt the credentials from custom resource notification',
-                                                                { encryptedFsxPassword, decryptedPassword }
+                                                                { encryptedFsxPassword }
                                                             );
                                                         }
                                                     } else {
