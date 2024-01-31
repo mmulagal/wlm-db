@@ -355,7 +355,9 @@ async function getCloudformationTemplate(
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
-        urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
+        urlParams += `&param_${e.ParameterKey}=${
+            e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
+        }`;
     });
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
@@ -422,7 +424,9 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            response.missingPermissions = MISSING_PERMISSIONS(permissions);
+            const errMsg = MISSING_PERMISSIONS(permissions);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
             return response;
         }
         metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
@@ -456,7 +460,9 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            response.missingPermissions = MISSING_PERMISSIONS(err?.message);
+            const errMsg = MISSING_PERMISSIONS(err?.message);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
             return response;
         }
         throw createError(
@@ -542,7 +548,7 @@ async function createCloudFormationTemplateForUserDeployment(
     if (fsxConfiguration.fsxPassword) {
         const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
         if (encryptedFsxPassword) {
-            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
         }
     }
 
