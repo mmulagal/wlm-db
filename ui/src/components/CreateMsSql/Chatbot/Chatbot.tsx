@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
 import {
     setCurrentIntent,
+    setExpectingResponse,
     setIsWizardTouched,
     setLatestIntentMsg,
     setLoadConfigClicked,
@@ -152,6 +153,7 @@ const Chatbot = () => {
                     onBubbleClick: (label?: string, value?: string) => {
                         if (value === 'deploy') {
                             handleCreate();
+                            dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
                         }
                     }
                 })

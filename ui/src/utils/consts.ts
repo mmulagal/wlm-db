@@ -230,8 +230,8 @@ export const CHATBOT_SUGGESTION_BUBBLES = [
 ];
 
 export const ADV_CREATE_SUGGESTION_BUBBLES = [
-    { label: 'Yes, I would like to deploy an Easy flow via chat', value: 'resume' },
-    { label: 'No, I want to explore the chat', value: 'explore' }
+    { label: 'Yes, I would like to continue with deployment', value: 'resume' },
+    { label: "No, I'd like to start a new conversation", value: 'explore' }
 ];
 
 export const JOBS_REPORT = 'jobs_report_';

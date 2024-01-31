@@ -253,7 +253,9 @@ export const GENERAL = {
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
     USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
-    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example: "John Doe"',
+    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example:',
+    USERNAME_EXAMPLE: '"John Doe"',
+    USERNAME_TOOLTIP4: 'The user name must contain at most 20 alphanumeric characters.',
 
     PASSWORD_MIN_LENGTH_8: 'Password must be atleast 8 characters long',
     PASSWORD_CRED_1:
@@ -576,7 +578,7 @@ export const CHATBOT = {
         RESUME_DEPLOYMENT_MSG:
             'Hi, we see that you already initiated values for deployment. How would you like to proceed?',
         ADVANCED_CREATE_MSG:
-            'Deployment via chatbot is supported only for Easy Create flow, Would you like to deploy with an Easy flow?',
+            'Deployment via chatbot is supported only with the easy create option, which provides some predefined configuration settings based on recommended best practices. Would you like to continue?',
         START_NEW_CHAT: 'Start new chat'
     },
     HEADER: {
