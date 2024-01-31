@@ -309,9 +309,7 @@ async function createJobMockData(
     resourceName: string,
     stackName: string,
     sqlDeploymentMode: string,
-    fsxFileSystemId: string | undefined,
-    cloudProviderId: string,
-    region: string
+    fsxFileSystemId: string | undefined
 ) {
     logger.info('Generate mock data for job table', accountId, resourceName, stackName);
     accountId = checkAccount(accountId);
@@ -327,51 +325,23 @@ async function createJobMockData(
 
     data.push(
         ...masterStackData(accountId, resourceName, stackName, masterStackId),
-        ...fsxStackData(
-            accountId,
-            resourceName,
-            stackName,
-            fsxStackId,
-            masterStackId,
-            cloudProviderId,
-            fsxType,
-            region
-        ),
+        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType),
         ...validationStack1Data(
             accountId,
             resourceName,
             stackName,
             validationStack1Id,
             masterStackId,
-            cloudProviderId,
-            region
+            sqlDeploymentMode
         )
     );
     if (sqlDeploymentMode.toLowerCase() === 'fci') {
         data.push(
-            ...sqlFciServerStackData(accountId, resourceName, stackName, serverStackId, masterStackId),
-            ...validationStack2Data(
-                accountId,
-                resourceName,
-                stackName,
-                validationStack2Id,
-                masterStackId,
-                cloudProviderId,
-                region
-            )
+            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId),
+            ...validationStack2Data(accountId, resourceName, stackName, validationStack2Id, masterStackId)
         );
     } else {
-        data.push(
-            ...sqlStandaloneStackData(
-                accountId,
-                resourceName,
-                stackName,
-                serverStackId,
-                masterStackId,
-                cloudProviderId,
-                region
-            )
-        );
+        data.push(...sqlStandaloneStackData(accountId, resourceName, stackName, serverStackId, masterStackId));
     }
     return data;
 }

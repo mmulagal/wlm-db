@@ -849,15 +849,7 @@ async function createDeploymentMockDataInDB(
         metadata
     });
 
-    const data = await createJobMockData(
-        accountId,
-        resourceName,
-        stackName,
-        sqlDeploymentMode,
-        fsxFileSystemId,
-        cloudProviderId,
-        region
-    );
+    const data = await createJobMockData(accountId, resourceName, stackName, sqlDeploymentMode, fsxFileSystemId);
     await createJobs(accountId, data);
 }
 
