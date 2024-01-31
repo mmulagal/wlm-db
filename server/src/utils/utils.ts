@@ -397,6 +397,8 @@ function calculateSQLandWindowsVersion(sqlAmiName: string) {
 // Return job decription for corresponding Job name
 function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
     logger.info('Return job decription for job name:', jobName);
+    // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
+    // Diffrentiating between the deployment type to provide appropriate description.
     if (jobName.includes('ValidationStack1')) {
         const match = jobName.match(subJobRegex);
         jobName = match ? match[1] : '';
