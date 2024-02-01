@@ -16,7 +16,11 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedCredentials } from '../../../../store/mssql/mssqlFormSlice';
-import { setCreatePressed, setDeployRedirectToCfLink, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
+import {
+    setCreatePressed,
+    setDeployRedirectToCfLink,
+    setPermissionWarning
+} from '../../../../store/mssql/msSqlActionSlice';
 import { CREDENTIAL_PROD_LINK, CREDENTIAL_STAGE_LINK, PRODUCTION } from '../../../../utils/consts';
 
 import styles from './AwsAccount.module.scss';
@@ -26,6 +30,7 @@ import ViewDialog from '../../../../common/ViewDialog/ViewDialog';
 import { ReactComponent as ErrorIcon } from '../../../../assets/error-icon.svg';
 import { PERMISSIONS } from '../../../../utils/permissions';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import MissingPermissionsMsg from './MissingPermissionsMsg';
 
 const AwsAccount = () => {
     const { setDialog } = useDialog();
@@ -41,8 +46,6 @@ const AwsAccount = () => {
     const isWorkloadFactoryStatus = useAppSelector(state => state.auth.isWorkloadFactory);
     const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
     const permissionWarning = useAppSelector(state => state.msSqlAction.permissionWarning);
-    const deployRedirectToCfLink = useAppSelector(state => state.msSqlAction.deployRedirectToCfLink);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     // To check whether account present or not
     const [noAccount, setNoAccount] = useState(true);
@@ -188,25 +191,6 @@ const AwsAccount = () => {
         );
     };
 
-    const openDemoInfoDialog = () => {
-        setDialog(
-            <DialogComponent
-                header={GENERAL.DEMO_TITLE}
-                content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
-                primaryButton={GENERAL.CONTINUE}
-                callback={() => {}}
-            />
-        );
-    };
-
-    const redirectToCf = () => {
-        if (isDemoMode) {
-            openDemoInfoDialog();
-        } else {
-            window.open(deployRedirectToCfLink, '_blank', 'noopener');
-        }
-    }
-
     return (
         <div className={styles['aws-account']}>
             <AccordionCard
@@ -338,23 +322,7 @@ const AwsAccount = () => {
                                         <div className={styles.noaccount_options}>
                                             <Typography variant="Semibold_14">{GENERAL.ERROR}</Typography>
                                             <Typography variant="Regular_14" className={styles.noteText}>
-                                                {GENERAL.CREATE_PERMISSION_ERROR[0]}
-                                                {deployRedirectToCfLink || isDemoMode ? <Button
-                                                    Component="button"
-                                                    variant="link"
-                                                    className={CommonStyles.buttonClass}
-                                                    onClick={() => redirectToCf()}
-                                                >
-                                                    {GENERAL.CREATE_PERMISSION_ERROR[1]}
-                                                </Button> : GENERAL.CREATE_PERMISSION_ERROR[1]}
-                                                {GENERAL.CREATE_PERMISSION_ERROR[2]}
-                                                <Button
-                                                    Component="button"
-                                                    variant="text"
-                                                    onClick={() => openDialog('operate')}
-                                                >
-                                                    {GENERAL.REQUIRED_PERMISSIONS}
-                                                </Button>
+                                                <MissingPermissionsMsg />
                                             </Typography>
                                         </div>
                                     </div>
