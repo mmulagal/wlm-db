@@ -14,13 +14,14 @@ import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 
 const StorageCapacity = () => {
     const dispatch = useDispatch();
-    const [inputText, setInputText] = useState<any>('1024');
-    const [textSearch, setTextSearch] = useSearchDebounce(1000);
 
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const { movingFromChatbot } = useAppSelector(state => state.chatbot);
+
+    const [inputText, setInputText] = useState<any>(inputCapacity);
+    const [textSearch, setTextSearch] = useSearchDebounce(1000);
 
     const units = ['TiB', 'GiB'];
 
@@ -38,11 +39,17 @@ const StorageCapacity = () => {
         if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setStorageUnit(generateUnitsForStorage[1]));
             if (!inputCapacity) {
-                setTextSearch('1024');
-                dispatch(setStorageCapacity('1024'));
+                setInputText('1024');
             }
         }
+        
     }, [generateUnitsForStorage]);
+
+    useEffect(() => {
+        if (inputCapacity) {
+            setInputText(inputCapacity);
+        }
+    }, [inputCapacity]);
 
     //Set the Header text here
     const setHeader = () => {
@@ -51,7 +58,7 @@ const StorageCapacity = () => {
         }
         return (
             <Typography variant="Regular_14">
-                {inputCapacity} {selectedUnit?.label}
+                {inputText} {selectedUnit?.label}
             </Typography>
         );
     };
@@ -63,11 +70,13 @@ const StorageCapacity = () => {
 
         if (e.target.value === '' || re.test(e.target.value)) {
             setInputText(e.target.value);
-            setTextSearch(e.target.value);
-            // setInput(e.target.value);
             dispatch(setIsWizardTouched(true));
         }
     };
+
+    useEffect(() => {
+        setTextSearch(inputText);
+    }, [inputText]);
 
     useEffect(() => {
         dispatch(setStorageCapacity(textSearch));
