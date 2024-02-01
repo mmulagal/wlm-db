@@ -62,12 +62,22 @@ async function queryBot(query: string, oldParams?: { [x: string]: any }) {
             }
             default: {
                 if (response.success === false) {
-                    const invalidResponse =
+                    const invalidJson =
                         response?.message?.includes('Response is not JSON') ||
                         response?.message?.includes('JSON validation failed');
+
+                    let message = 'Sorry! I could not understand your request';
+                    if (invalidJson) {
+                        const responseIndex = response?.message.indexOf('response');
+
+                        const startInd = response.message.indexOf('"', responseIndex + 9);
+                        const endInd = response.message.lastIndexOf('"');
+                        message = response.message.slice(startInd + 1, endInd);
+                    }
+
                     return {
-                        message: invalidResponse ? 'Sorry! I could not understand your request' : response.message,
-                        status: 'error'
+                        message,
+                        ...(!invalidJson && { status: 'error' })
                     };
                 }
                 throw new Error('Intent did not match');
