@@ -22,7 +22,8 @@ const initialState: any = {
     },
     isRecommendedInstance: null, // To load default instance type on recommended templates load
     refetchJobSummaryApi: false,
-    permissionWarning: false
+    permissionWarning: false,
+    deployRedirectToCfLink: null // This link is when user has less permissions
 };
 
 const msSqlActionSlice = createSlice({
@@ -93,6 +94,9 @@ const msSqlActionSlice = createSlice({
         },
         setPermissionWarning(state, action: PayloadAction<any>) {
             state.permissionWarning = action.payload;
+        },
+        setDeployRedirectToCfLink(state, action: PayloadAction<any>) {
+            state.deployRedirectToCfLink = action.payload;
         }
     }
 });
@@ -117,6 +121,7 @@ export const {
     setRefetchApiCountLoading,
     setIsRecommendedInstance,
     setRefetchJobSummaryApi,
-    setPermissionWarning
+    setPermissionWarning,
+    setDeployRedirectToCfLink
 } = msSqlActionSlice.actions;
 export default msSqlActionSlice;

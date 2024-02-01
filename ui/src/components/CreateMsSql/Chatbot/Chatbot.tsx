@@ -331,7 +331,7 @@ const Chatbot = () => {
                                     ...messages,
                                     {
                                         sender: 'bot',
-                                        msg: GENERAL.CREATE_PERMISSION_ERROR,
+                                        msg: GENERAL.CREATE_PERMISSION_ERROR_CHATBOT,
                                         link: {
                                             linkText: GENERAL.REQUIRED_PERMISSIONS,
                                             onLinkClick: () => {
