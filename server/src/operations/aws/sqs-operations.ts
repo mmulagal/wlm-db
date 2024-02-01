@@ -134,7 +134,7 @@ async function handleResourceAssociation(
     });
 
     try {
-        const { source } = await lookupCredentials(credentialsId);
+        const { source } = await lookupCredentials(credentialsId, accountId);
         if (source === WF) {
             const resourcesToAssociate = [
                 {
