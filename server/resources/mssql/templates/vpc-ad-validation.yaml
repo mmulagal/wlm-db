@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template creates AWS resources for validating Active Directory credentials
-    under the provided VPC. You will be billed for the AWS resources used if you create
-    a stack from this template.
+            under the provided VPC. You will be billed for the AWS resources used if you create
+            a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
@@ -38,27 +38,27 @@ Metadata:
                   - ParentStackName
         ParameterLabels:
             UniqueID:
-                default: unique ID for your resource tags
+                default: Unique ID for your resource tags
             AMI:
                 default: AMI ID of the validation node
             DomainAdminSecretName:
-                default: Domain Admin Password Secret String Name
+                default: Domain Admin password secret string name
             DomainAdminUser:
-                default: Domain Admin User Name
+                default: Domain Admin user name
             DomainDNSName:
-                default: Domain DNS Name
+                default: Domain DNS name
             DNSIpAddresses:
-                default: AD DNS Server1 IP address
+                default: AD DNS server1 IP address
             KeyPairName:
-                default: Key Pair Name
+                default: Key pair Name
             SubnetID:
                 default: Subnet ID
             PurposeTag:
-                default: Tag Your Instances with Purpose
+                default: Tag your instances with purpose
             AssetsBucketName:
-                default: Launch Wizard S3 Bucket Name
+                default: Launch Wizard S3 bucket name
             AssetsS3KeyPrefix:
-                default: Launch Wizard S3 Key Prefix
+                default: Launch Wizard S3 key prefix
             VPCID:
                 default: VPC ID
             Ec2RoleName:
@@ -68,32 +68,32 @@ Metadata:
             EnableCloudWatchLogFeature:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
-                default: Stack name for parent cloud formation stack
+                default: Stack name for parent cloudFormation stack
             PerformFSxCheck:
-                default: Boolean to check whether to validate FSx credentials and reachability from subnet
+                default: Boolean to check whether to validate FSx for ONTAP credentials and reachability from subnet
             FSxFileSystemId:
-                default: FSx Filesystem ID
+                default: FSx for ONTAP Filesystem ID
             FSxAdministratorPasswordSecret:
-                default: Secret String for FSx user account
+                default: Secret String for FSx for ONTAP user account
 Parameters:
     UniqueID:
         Default: UID123
-        Description: Automation Execution Unique ID.
+        Description: Automation execution unique ID.
         Type: String
     AMI:
         Type: String
         Default: ami-061d37dd032d5c737
     DomainAdminSecretName:
-        Description: Domain Admin Password Secret String Name
+        Description: Secret string name for the domain admin password.
         Type: String
     DomainAdminUser:
         Description: User name for the account that will be used as Domain Administrator.
-            This is separate from the default "Administrator" account
+            This is separate from the default "Administrator" account.
         MaxLength: '20'
         MinLength: '5'
         Type: String
     DomainDNSName:
-        Description: Fully qualified domain name (FQDN) e.g. example.com
+        Description: Fully qualified domain name (FQDN). For example, example.com
         MaxLength: '255'
         MinLength: '2'
         Type: String
@@ -106,7 +106,8 @@ Parameters:
             after it launches
         Type: AWS::EC2::KeyPair::KeyName
     SubnetID:
-        Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+        Description: ID of private subnet in an Availability Zone 1 for the Workload (For example,
+            subnet-a0246dcd)
         Type: AWS::EC2::Subnet::Id
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
@@ -118,7 +119,7 @@ Parameters:
         Description: S3 region code.
         Type: String
     VPCID:
-        Description: ID of the VPC (e.g., vpc-0343606e)
+        Description: ID of the VPC (for example, vpc-0343606e)
         Type: AWS::EC2::VPC::Id
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
@@ -129,27 +130,27 @@ Parameters:
             - 'true'
             - 'false'
         Default: 'false'
-        Description: If Cloudwatch logging is enabled
+        Description: If AWS CloudWatch logging is enabled.
         Type: String
     EnableCloudWatchLogFeature:
         Default: false
-        Description: Enable Logs
+        Description: Enable AWS CloudWatch logging
         Type: String
     ParentStackName:
-        Description: Stack name for parent cloud formation stack
+        Description: Stack name for the parent CloudFormation stack.
         Type: String
     PerformFSxCheck:
         AllowedValues:
             - 'true'
             - 'false'
         Default: 'false'
-        Description: Boolean to check whether to validate FSx credentials and reachability from subnet
+        Description: A boolean to check whether to validate FSx for ONTAP credentials and reachability from the subnet.
         Type: String
     FSxFileSystemId:
-        Description: FSx Filesystem ID
+        Description: ID for the FSx for ONTAP file system.
         Type: String
     FSxAdministratorPasswordSecret:
-        Description: Secret String for FSx user account
+        Description: Secret string for the FSx for ONTAP user account.
         Type: String
 Conditions:
     isGovRegion: !Or
