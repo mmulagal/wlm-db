@@ -1,7 +1,6 @@
 import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { AWS_RESOURCES_ACTION_MAP } from '../../utils/consts';
 import getPermissionsList from '../../lib/aws/iam';
 
 const logger = getLogger();
@@ -23,10 +22,10 @@ export default async function getMissingPermissionsList(
         PolicySourceArn: roleArn,
         ...(resourceArn && { ResourceArns: resourceArn }), // A list of ARNs of Amazon Web Services resources to include in the simulation. If this parameter is not provided, then the value defaults to * (all resources)
         ...(conditionMap && { ContextEntries: conditionMap }), // this needs to be provided when the resource is allowed with the condition in iam policy
-        ActionNames: Object.keys(actionMap)
-            .filter(key => !skipResources?.includes(key))
-            .map(key => actionMap[key as keyof typeof AWS_RESOURCES_ACTION_MAP])
-            .flat(),
+        ActionNames: Object.entries(actionMap)
+            .filter(([key]) => !skipResources?.includes(key))
+            .map(([, value]) => value)
+            .flat() as string[],
         MaxItems: 500
     };
 
