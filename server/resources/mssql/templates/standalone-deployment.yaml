@@ -1,7 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This workload template deploys a SQL Standalone instance using FSxN in an existing VPC.
-    **WARNING** This template creates EC2 instances and related resources. You will
-    be billed for the AWS resources used if you create a stack from this template.
+Description: This template deploys a SQL Server standalone instance using FSx for NetApp ONTAP in an existing VPC. 
+This template creates EC2 instances and the required resources. You will be billed for AWS resources if you create a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
@@ -60,49 +59,49 @@ Metadata:
             KeyPairName:
                 default: Key Pair Name for the EC2 instance
             PrivateSubnetID:
-                default: Private Subnet  ID for the SQL node for existing VPC e.g subnet-000dc866d93550eb0
+                default: Private Subnet ID for the SQL node for existing VPC. For example, subnet-000dc866d93550eb0
             RouteTableId:
                 default: Route Table ID of private subnet
             AssetsBucketName:
                 default: S3 Bucket Name hosting WLMDB Assets.
             AssetsS3RegionCode:
-                default: S3 bucket region for the bucket hosting WLMDB Assets e.g s3.us-east-1
+                default: S3 bucket region for the bucket hosting WLMDB Assets. For example, s3.us-east-1
             AssetsS3KeyPrefix:
                 default: S3 Key Prefix for WLMDB assets
             AMIID:
-                default: AMI ID of the AMI used to launch Instances
+                default: ID of the AMI used to launch Instances
             VPCID:
-                default: VPC ID if the instances are launched in an existing VPC e.g vpc-04e3ac96d2f5ac570
+                default: VPC ID if the instances are launched in an existing VPC. For example, vpc-04e3ac96d2f5ac570
             VPCCIDR:
                 default: VPCCIDR for instances launched in existing VPC. Also used for setting
-                    up security groups. e.g 10.0.0.8/16
+                    up security groups. For example, 10.0.0.8/16
             WorkloadInstanceType:
-                default: Workload Servers Instance Type for SQL EC2 Instances e.g r4.xlarge
+                default: Workload Servers Instance Type for SQL EC2 Instances. For example, r4.xlarge
             DomainAdminSecretName:
                 default: Domain Admin Secret Name for the Domain Admin user in Secrets Manager
-                    e.g 'LaunchWizard-Admin'
+                   . For example, 'LaunchWizard-Admin'
             SQLServiceAccountSecret:
-                default: Secret Name for the SQL Admin user in Secrets Manager e.g 'LaunchWizard-Admin'
+                default: Secret Name for the SQL Admin user in Secrets Manager. For example, 'LaunchWizard-Admin'
             DomainAdminUser:
-                default: Domain Admin User Name e.g Administrator
+                default: Domain Admin User Name. For example, Administrator
             DomainDNSName:
-                default: Domain DNS Name e.g example.com
+                default: Domain DNS Name. For example, example.com
             DomainMemberSGID:
-                default: Security Group ID for AD Domain Members e.g sg-0b7b0431023b4208a
+                default: Security Group ID for AD Domain Members. For example, sg-0b7b0431023b4208a
             SqlFSxServerNetBIOSName:
-                default: Server NetBIOS Name e.g SQLFSX01
+                default: Server NetBIOS Name. For example, SQLFSX01
             FileShareVolumeSize:
-                default: FSx capacity in GB e.g 1024
+                default: FSx for ONTAP capacity in GB. For example, 1024
             FileShareThroughputCapacity:
-                default: Data throughput capacity (MB/s) e.g 16 MBps
+                default: Data throughput capacity (MB/s). For example, 16 MBps
             ADDnsIpAddresses:
-                default: Comma Seperated List of DNS addresses for existing AD e.g 10.0.0.10,10.0.16.10
+                default: Comma seperated list of DNS addresses for existing AD. For example, 10.0.0.10,10.0.16.10
             SQLStorageVMName:
                 default: SQL Storage VM Name for ONTAP
             ONTAPSecurityGroupID:
                 default: Security Group ID for FSxN
             FSxDataLunSize:
-                default: Projected SQL Data size
+                default: Estimated SQL Data size
             SQLigroupname:
                 default: SQL igroup name
             FSxDataVolumeName:
@@ -110,7 +109,7 @@ Metadata:
             FSxLogVolumeName:
                 default: SQL log volume name
             FSxTempDbVolumeName:
-                default: SQL tempDb volume name
+                default: SQL tempdb volume name
             FsxAdminPassword:
                 default: Secret name for FSxN Admin password in Secrets Manager
             FSxFileSystemId:
@@ -122,12 +121,12 @@ Metadata:
             EnableCloudWatchLogFeature:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
-                default: Stack name for parent cloud formation stack
+                default: Stack name for parent CloudFormation stack
             SqlServerName:
                 default: SQL Server Name
 Parameters:
     ParentStackName:
-        Description: Stack name for parent cloud formation stack
+        Description: Stack name for the parent CloudFormation stack.
         Type: String
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
@@ -135,7 +134,7 @@ Parameters:
         Type: String
     EnableCloudWatchLogFeature:
         Default: false
-        Description: Enable Logs
+        Description: Enable AWS CloudWatch logging
         Type: String
     LogGroupName:
         Default: SQLDLOG
@@ -143,22 +142,22 @@ Parameters:
         Type: String
     UniqueID:
         Default: SQL123
-        Description: Automation Execution Unique Id.
+        Description: Automation execution unique ID.
         Type: String
     AMIID:
-        Description: AMI ID of the AMI to use
+        Description: ID of the AMI to use
         Type: String
         Default: ami-06c634c2148dc0856
     BYOLAMI:
         Default: 'false'
-        Description: Whether the AMI is LI or BYOL
+        Description: Whether the AMI is license included or bring your own license.
         Type: String
     KeyPairName:
         Description: Name of an existing EC2 key pair. All instances will launch with
             this key pair.
         Type: AWS::EC2::KeyPair::KeyName
     PrivateSubnetID:
-        Description: ID of private subnet in an Availability Zone 1 for the Workload (e.g.,
+        Description: ID of private subnet in an Availability Zone 1 for the Workload (For example,
             subnet-a0246dcd)
         Type: String
     AssetsBucketName:
@@ -182,7 +181,7 @@ Parameters:
     VPCCIDR:
         AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
         ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
-        Description: CIDR Block for the VPC
+        Description: CIDR block for the VPC
         Type: String
     SqlFSxServerNetBIOSName:
         AllowedPattern: '[a-zA-Z0-9\-]+'
@@ -192,10 +191,10 @@ Parameters:
         MinLength: '1'
         Type: String
     DomainAdminSecretName:
-        Description: arn for the secret for domain admin.
+        Description: ARN for the secret for domain admin.
         Type: String
     SQLServiceAccountSecret:
-        Description: arn for the secret for sql service account.
+        Description: ARN for the secret for sql service account.
         Type: String
     DomainAdminUser:
         AllowedPattern: ([a-zA-Z0-9]+(\.|_|-|@)*)+
@@ -206,82 +205,81 @@ Parameters:
         MinLength: '5'
         Type: String
     DomainDNSName:
-        AllowedPattern: '[a-zA-Z0-9\-]+\..+'
-        Description: Fully qualified domain name (FQDN) e.g. example.com
+        AllowedPattern: '[a-zA-Z0-9\-]+\.+'
+        Description: Fully qualified domain name (FQDN). For example, example.com
         MaxLength: '255'
         MinLength: '2'
         Type: String
     ADDnsIpAddresses:
-        Description: DNS IP addresses. Comma-separated.
+        Description: A comma separated list of DNS IP addresses.
         MaxLength: '255'
         MinLength: '2'
         Type: String
     DomainMemberSGID:
-        Description: ID of the Domain Member Security Group (e.g., sg-9cb7d0e5)
+        Description: ID of the domain member security group (for example, sg-9cb7d0e5)
         Type: String
     WorkloadInstanceType:
         Default: r5.large
-        Description: Type of EC2 instance for the Workload instances
+        Description: EC2 instance type for the workload instances.
         Type: String
     MSSQLMediaBucketName:
-        Description: The S3 bucket name wherefrom MSSQL media can be downloaded. This
-            string can include numbers, lowercase letters, uppercase letters, and hyphens
-            (-). It cannot start or end with a hyphen (-).
+        Description: The S3 bucket name from where the SQL Server media can be downloaded. 
+        This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). 
+        It cannot start or end with a hyphen (-).
         Type: String
     MSSQLMediaPathKey:
         Default: launchwizardscripts/sqlmedia/sqlserver.iso
-        Description: The S3 bucket key wherefrom MSSQL media can be downloaded. This string
-            can include numbers, lowercase letters, uppercase letters, hyphens (-), and
-            forward slash (/).
+        Description: The S3 bucket key from where the SQL Server media can be downloaded. 
+        This string can include numbers, lowercase letters, uppercase letters, hyphens (-), and a forward slash (/).
         Type: String
     SQLAdminAccounts:
         Default: sqlsa
-        Description: User name to be used as MSSQL DB Service Account Administrator. It
-            could be AD domain admin, other local or domain users.
+        Description: User name for the SQL Server DB service account administrator. 
+        It can be the AD domain admin or other local or domain users.
         MaxLength: '25'
         MinLength: '5'
         Type: String
     NumberOfNodes:
         Default: '1'
-        Description: Enter the number of SQLServer nodes to create
+        Description: The number of SQL Server nodes to create.
         Type: String
     RouteTableId:
-        Description: Comma seperated list of all route table ids' for SQL subnets.
+        Description: Comma separated list of all route table IDs for SQL Server subnets.
         Type: String
     SQLSvmName:
-        Description: SQL Storage Machine Virtual Name
+        Description: Name of the storage virtual machine (SVM) that will host the SQL Server workload.
         Type: String
         Default: SQLVM
     SQLigroupname:
-        Description: SQL igroupname
+        Description: igroup name for the SQL Server.
         Type: String
         Default: SQLIQN
     FSxDataVolumeName:
-        Description: SQL data volume name
+        Description: The name of the volume for SQL Server data.
         Type: String
         Default: SQLData
     FSxLogVolumeName:
-        Description: SQL Log volume name
+        Description: The name of the volume for the SQL Server log.
         Type: String
         Default: SQLLog
     FSxTempDbVolumeName:
-        Description: SQL TempDb volume name
+        Description: The name of the volume for the tempdb system database.
         Type: String
         Default: SQLTempDb
     FSxDataLunSize:
-        Description: SQL data LUN size for ONTAP(in GB)
+        Description: The size of the LUN for SQL data, in GB.
         Type: String
     ONTAPSecurityGroupID:
-        Description: ONTAP Security Group ID
+        Description: ID of the FSx for ONTAP security group.
         Type: String
     FSxFileSystemId:
-        Description: FSx Filesystem ID
+        Description: ID for the FSx for ONTAP file system.
         Type: String
     FsxAdminPassword:
-        Description: Secret arn for Fsx Admin Password
+        Description: Secret ARN for the FSx for ONTAP admin password.
         Type: String
     SqlServerName:
-        Description: SQL Server Name
+        Description: Name for the SQL Server.
         Type: String
 Conditions:
     ADSGNotSelected: !Equals
