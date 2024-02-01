@@ -29,6 +29,7 @@ const MSSqlFooter = () => {
         const payload = handleCreateSQLServer(state, dispatch);
         if (payload) {
             dispatch(setIsLoading(true));
+            dispatch(setDeployRedirectToCfLink(null));
             deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
