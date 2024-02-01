@@ -1,7 +1,7 @@
 import { isEmpty, uniqBy } from 'lodash-es';
 import randomize from 'randomatic';
 import { getAdsList } from '../../operations/aws/directory-service-operations';
-import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList, VPC } from '../../operations/aws/ec2-operations';
+import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
 import getLogger from '../../utils/logger';
 import {
@@ -38,6 +38,7 @@ import {
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
+import { VPC } from '../../utils/common-types';
 
 const logger = getLogger();
 

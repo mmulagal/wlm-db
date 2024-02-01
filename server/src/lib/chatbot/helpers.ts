@@ -148,8 +148,8 @@ async function validateParams(
     }
 
     if (error.allowedValues?.length === 0 && !backtraceMessage) {
+        const { key } = error;
         for (const obj of CHATBOT_UI_PARAMS_FSX) {
-            const { key } = error;
             if (obj.hasOwnProperty(key as string)) {
                 const { dependsOn } = obj[key as keyof typeof obj] as any;
                 if (dependsOn) {
