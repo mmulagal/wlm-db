@@ -3,7 +3,7 @@ import styles from './CreateMsSqlLayout.module.scss';
 import DeploymentTabs from './DeploymentTabs/DeploymentTabs';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import Chatbot from '../Chatbot/Chatbot';
-import { setIsShow } from '../../../store/chatbot/chatbotSlice';
+import { setIsShow, setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import { useDispatch } from 'react-redux';
 
 type CreateMsSqlLayoutProps = {
@@ -22,7 +22,15 @@ const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutPro
         <div className={styles['create-mssql-layout']}>
             <DeploymentTabs
                 selectedTab={selectedTab}
-                onTabChange={(tab: 'wizard' | 'chatbot') => setSelectedTab(tab)}
+                onTabChange={(tab: 'wizard' | 'chatbot') => {
+                    if (tab === 'wizard' && selectedTab === 'chatbot') {
+                        dispatch(setMovingFromChatbot(true));
+                        setTimeout(() => {
+                            dispatch(setMovingFromChatbot(false));
+                        }, 1000);
+                    }
+                    setSelectedTab(tab);
+                }}
             />
             {selectedTab === 'wizard' ? <MSSqlServer /> : <Chatbot />}
         </div>

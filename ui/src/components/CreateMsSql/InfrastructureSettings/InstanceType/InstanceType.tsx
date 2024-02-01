@@ -22,6 +22,7 @@ const InstanceType = () => {
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const isRecommendedInstance = useAppSelector(state => state.msSqlAction.isRecommendedInstance);
 
     //Function to generate the options for Select Field
@@ -61,7 +62,7 @@ const InstanceType = () => {
         if (isRecommendedInstance && instanceTypeData && instanceTypeData?.instanceTypes) {
             dispatch(setInstanceType(isRecommendedInstance));
             dispatch(setIsRecommendedInstance(null));
-        } else if (!isLoadConfig && !isRecommendedInstance) {
+        } else if (!isLoadConfig && !isRecommendedInstance && !movingFromChatbot) {
             dispatch(setInstanceType(generateInstances[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

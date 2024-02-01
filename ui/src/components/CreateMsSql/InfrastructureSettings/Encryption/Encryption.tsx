@@ -25,6 +25,7 @@ const Encryption = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const accountSelected = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionType);
     const anotherAccArn = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionArn);
@@ -33,7 +34,7 @@ const Encryption = () => {
 
     // To select aws/fsx row if present
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setEncryptionRow(kmsData?.filter(key => key?.default)));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps

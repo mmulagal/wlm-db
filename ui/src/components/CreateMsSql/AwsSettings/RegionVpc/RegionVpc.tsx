@@ -43,6 +43,7 @@ const RegionVpc = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
@@ -58,7 +59,7 @@ const RegionVpc = () => {
 
     //Update selected region in form data store
     useEffect(() => {
-        if (!isLoadConfig && !selectedRegionData) {
+        if (!isLoadConfig && !selectedRegionData && !movingFromChatbot) {
             dispatch(setSelectedRegionData(generateRegionsData[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,7 +129,7 @@ const RegionVpc = () => {
 
     //Update selected VPC in form data store
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedVPC(null));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
