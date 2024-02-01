@@ -155,8 +155,6 @@ async function validateVpcId(
 
     let { vpcs } = await getVpcsList(credentialsId, region, 'subnet');
 
-    const allowedVpcs = vpcs?.map(vpc => ({ label: vpc.name || vpc.id, value: vpc.id }));
-
     if (sqlDeploymentMode === FCI) {
         vpcs = filterValidVpcs(vpcs);
         if (vpcs.length === 0) {
@@ -167,6 +165,8 @@ async function validateVpcId(
             };
         }
     }
+
+    const allowedVpcs = vpcs?.map(vpc => ({ label: vpc.name || vpc.id, value: vpc.id }));
 
     const errorObj = {
         key,
