@@ -424,7 +424,7 @@ async function deployStackOrCreateTemplateURL(
                 metrics,
                 tags
             );
-            const errMsg = MISSING_PERMISSIONS(permissions);
+            const errMsg = MISSING_PERMISSIONS([...permissions, ...strictPermissions, ...strictConditionPermissions]);
             response.missingPermissions = errMsg;
             logger.info(errMsg);
             return response;
