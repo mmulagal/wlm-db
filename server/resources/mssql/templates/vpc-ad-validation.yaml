@@ -38,27 +38,27 @@ Metadata:
                   - ParentStackName
         ParameterLabels:
             UniqueID:
-                default: Unique ID for your resource tags
+                default: unique ID for your resource tags
             AMI:
                 default: AMI ID of the validation node
             DomainAdminSecretName:
-                default: Domain Admin password secret string name
+                default: Domain Admin Password Secret String Name
             DomainAdminUser:
-                default: Domain Admin user name
+                default: Domain Admin User Name
             DomainDNSName:
-                default: Domain DNS name
+                default: Domain DNS Name
             DNSIpAddresses:
-                default: AD DNS server1 IP address
+                default: AD DNS Server1 IP address
             KeyPairName:
-                default: Key pair Name
+                default: Key Pair Name
             SubnetID:
                 default: Subnet ID
             PurposeTag:
-                default: Tag your instances with purpose
+                default: Tag Your Instances with Purpose
             AssetsBucketName:
-                default: Launch Wizard S3 bucket name
+                default: Launch Wizard S3 Bucket Name
             AssetsS3KeyPrefix:
-                default: Launch Wizard S3 key prefix
+                default: Launch Wizard S3 Key Prefix
             VPCID:
                 default: VPC ID
             Ec2RoleName:
@@ -68,32 +68,32 @@ Metadata:
             EnableCloudWatchLogFeature:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
-                default: Stack name for parent cloudFormation stack
+                default: Stack name for parent cloud formation stack
             PerformFSxCheck:
-                default: Boolean to check whether to validate FSx for ONTAP credentials and reachability from subnet
+                default: Boolean to check whether to validate FSx credentials and reachability from subnet
             FSxFileSystemId:
-                default: FSx for ONTAP Filesystem ID
+                default: FSx Filesystem ID
             FSxAdministratorPasswordSecret:
-                default: Secret String for FSx for ONTAP user account
+                default: Secret String for FSx user account
 Parameters:
     UniqueID:
         Default: UID123
-        Description: Automation execution unique ID.
+        Description: Automation Execution Unique ID.
         Type: String
     AMI:
         Type: String
         Default: ami-061d37dd032d5c737
     DomainAdminSecretName:
-        Description: Secret string name for the domain admin password.
+        Description: Domain Admin Password Secret String Name
         Type: String
     DomainAdminUser:
         Description: User name for the account that will be used as Domain Administrator.
-            This is separate from the default "Administrator" account.
+            This is separate from the default "Administrator" account
         MaxLength: '20'
         MinLength: '5'
         Type: String
     DomainDNSName:
-        Description: Fully qualified domain name (FQDN). For example, example.com
+        Description: Fully qualified domain name (FQDN) e.g. example.com
         MaxLength: '255'
         MinLength: '2'
         Type: String
@@ -106,8 +106,7 @@ Parameters:
             after it launches
         Type: AWS::EC2::KeyPair::KeyName
     SubnetID:
-        Description: ID of private subnet in an Availability Zone 1 for the Workload (For example,
-            subnet-a0246dcd)
+        Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
         Type: AWS::EC2::Subnet::Id
     AssetsBucketName:
         Description: S3 bucket name for WLMDB assets.
@@ -119,7 +118,7 @@ Parameters:
         Description: S3 region code.
         Type: String
     VPCID:
-        Description: ID of the VPC (for example, vpc-0343606e)
+        Description: ID of the VPC (e.g., vpc-0343606e)
         Type: AWS::EC2::VPC::Id
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard
@@ -130,27 +129,27 @@ Parameters:
             - 'true'
             - 'false'
         Default: 'false'
-        Description: If AWS CloudWatch logging is enabled.
+        Description: If Cloudwatch logging is enabled
         Type: String
     EnableCloudWatchLogFeature:
         Default: false
-        Description: Enable AWS CloudWatch logging
+        Description: Enable Logs
         Type: String
     ParentStackName:
-        Description: Stack name for the parent CloudFormation stack.
+        Description: Stack name for parent cloud formation stack
         Type: String
     PerformFSxCheck:
         AllowedValues:
             - 'true'
             - 'false'
         Default: 'false'
-        Description: A boolean to check whether to validate FSx for ONTAP credentials and reachability from the subnet.
+        Description: Boolean to check whether to validate FSx credentials and reachability from subnet
         Type: String
     FSxFileSystemId:
-        Description: ID for the FSx for ONTAP file system.
+        Description: FSx Filesystem ID
         Type: String
     FSxAdministratorPasswordSecret:
-        Description: Secret string for the FSx for ONTAP user account.
+        Description: Secret String for FSx user account
         Type: String
 Conditions:
     isGovRegion: !Or
