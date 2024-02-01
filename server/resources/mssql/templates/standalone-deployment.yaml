@@ -205,7 +205,7 @@ Parameters:
         MinLength: '5'
         Type: String
     DomainDNSName:
-        AllowedPattern: '[a-zA-Z0-9\-]+\.+'
+        AllowedPattern: '[a-zA-Z0-9\-]+\..+'
         Description: Fully qualified domain name (FQDN). For example, example.com
         MaxLength: '255'
         MinLength: '2'
