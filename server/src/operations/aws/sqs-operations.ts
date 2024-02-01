@@ -7,7 +7,7 @@ import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, JOBSTATUS, JOBTYPE, job } from '@p
 import { inspect } from 'util';
 import { JSONObject } from '@fastify/swagger';
 import { sendCfnResponse } from '../../lib/aws/cloud-formation';
-import { deleteMessage, getQueueAttribute, receiveMessage } from '../../lib/aws/sqs';
+import { deleteMessage, receiveMessage } from '../../lib/aws/sqs';
 import {
     CF_CUSTOM_RESOURCE_CODES,
     CF_NOTIFICATION,
@@ -310,18 +310,9 @@ async function processCloudFormationMessages() {
         const queueUrl = awsAccountId ? getQueueUrl(awsAccountId, WLMDB) : '';
 
         try {
-            const queueAttributes = await getQueueAttribute(DEFAULT_AWS_REGION, {
-                QueueUrl: queueUrl,
-                AttributeNames: ['All']
-            });
-            logger.info(`Queue attributes: ${JSON.stringify(queueAttributes)}`);
-        } catch (e) {
-            logger.error(`Queue attributes error: ${e}`);
-        }
-        try {
             const sqsMessages = await getSqsMessages(DEFAULT_AWS_REGION, queueUrl);
-            logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
             if (!isEmpty(sqsMessages)) {
+                logger.info(`>>>SQS MESSAGES @ ${Date.now()}`, { sqsMessages }); // TODO : REMOVE ME, i print a lot of logs
                 await Promise.all(
                     sqsMessages.map(async sqsMessage => {
                         const {
