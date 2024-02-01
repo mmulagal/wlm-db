@@ -56,9 +56,9 @@ Metadata:
             PurposeTag:
                 default: Tag your instances with purpose
             AssetsBucketName:
-                default: Launch wizard S3 bucket name
+                default: Launch Wizard S3 bucket name
             AssetsS3KeyPrefix:
-                default: Launch wizard S3 key prefix
+                default: Launch Wizard S3 key prefix
             VPCID:
                 default: VPC ID
             Ec2RoleName:

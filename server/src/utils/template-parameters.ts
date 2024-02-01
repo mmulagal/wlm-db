@@ -154,7 +154,7 @@ const PARAMETERS = [
     {
         name: 'PrivateSubnet1ID',
         description:
-            'ID of the private subnet 2 in Availability Zone 2 for the SQL Server (for example, subnet-a0246dcd).',
+            'ID of the private subnet 1 in Availability Zone 1 for the SQL Server (for example, subnet-a0246dcd).',
         type: 'AWS::EC2::Subnet::Id',
         minLength: 1
     },
@@ -265,7 +265,7 @@ const PARAMETERS = [
     },
     {
         name: 'FSxSvmName',
-        description: 'The name for the FSx for ONTAP file system.',
+        description: 'The name for the FSx for ONTAP storage virtual machine (SVM).',
         type: 'String',
         minLength: 1,
         maxLength: 47

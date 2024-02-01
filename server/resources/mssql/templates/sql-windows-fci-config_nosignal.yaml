@@ -71,7 +71,7 @@ Metadata:
             RouteTable1Id:
                 default: ID of the route table for private subnet 1.
             RouteTable2Id:
-                default: Route Table ID of private subnet 2
+                default: ID of the route table for private subnet 2.
             AssetsBucketName:
                 default: S3 Bucket Name hosting WLMDB Assets. e.g LaunchWizard-Assets.
             AssetsS3RegionCode:
@@ -103,7 +103,7 @@ Metadata:
             SqlFSxServerNetBIOSName2:
                 default: Server2 NetBIOS Name e.g SQLFSX02
             FileShareVolumeSize:
-                default: FSx for ONTAP capacity in GB e.g 1024
+                default: FSx for ONTAP capacity in GiB e.g 1024
             FileShareThroughputCapacity:
                 default: Data throughput capacity (MB/s) e.g 16 MBps
             ADDnsIpAddresses:
@@ -123,7 +123,7 @@ Metadata:
             FSxLogVolumeName:
                 default: SQL log volume name
             FSxTempDbVolumeName:
-                default: SQL tempDb volume name
+                default: SQL tempdb volume name
             FsxAdminPassword:
                 default: Secret name for FSxN Admin password in Secrets Manager
             FSxFileSystemId:
@@ -135,10 +135,10 @@ Metadata:
             EnableCloudWatchLogFeature:
                 default: (optional) Enable monitoring by CloudWatch Logging
             ParentStackName:
-                default: Stack name for the parent CloudFormation stack
+                default: Name of the parent CloudFormation stack
 Parameters:
     ParentStackName:
-        Description: Stack name for the parent CloudFormation stack
+        Description: Name of the parent CloudFormation stack
         Type: String
     Ec2RoleName:
         Default: AmazonEC2RoleForLaunchWizard

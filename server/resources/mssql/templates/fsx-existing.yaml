@@ -36,7 +36,7 @@ Metadata:
             FSxTempDbVolumeName:
                 default: tempdb volume name
             FSxTempDbVolumeSize:
-                default: tempDB volume size
+                default: tempdb volume size
             FSxClusterQuorumVolumeName:
                 default: Cluster quorum volume name
             FSxClusterQuorumVolumeSize:

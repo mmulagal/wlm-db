@@ -1,8 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template deploys an SQL Server standalone instance using FSx for NetApp ONTAP in an existing VPC. 
+Description: This template deploys a SQL Server standalone instance using FSx for NetApp ONTAP in an existing VPC. 
 This template creates EC2 instances and the required resources. You will be billed for AWS resources if you create a stack from this template.
-This template deploys an SQL Server standalone instance using FSx for NetApp ONTAP in an existing VPC. This template creates EC2 instances and the required resources. 
-You will be billed for AWS resources if you create a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
@@ -111,7 +109,7 @@ Metadata:
             FSxLogVolumeName:
                 default: SQL log volume name
             FSxTempDbVolumeName:
-                default: SQL tempDb volume name
+                default: SQL tempdb volume name
             FsxAdminPassword:
                 default: Secret name for FSxN Admin password in Secrets Manager
             FSxFileSystemId:
