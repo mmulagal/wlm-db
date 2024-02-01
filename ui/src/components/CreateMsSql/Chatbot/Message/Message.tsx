@@ -80,6 +80,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                         <Bullet />
                         <Typography className={styles.infoMsg} variant="Regular_13">
                             {GENERAL.USERNAME_TOOLTIP3}
+                            <span className={styles.highlightText}>{GENERAL.USERNAME_EXAMPLE}</span>
                         </Typography>
                     </div>
                 </Typography>
@@ -201,6 +202,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                         <Bullet />
                         <Typography className={styles.infoMsg} variant="Regular_13">
                             {GENERAL.USERNAME_TOOLTIP3}
+                            <span className={styles.highlightText}>{GENERAL.USERNAME_EXAMPLE}</span>
                         </Typography>
                     </div>
                 </Typography>
