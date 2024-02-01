@@ -27,8 +27,8 @@ import {
     checkAndRetrieveJsonObject,
     deployedStackUrl,
     derivePropertiesFromARN,
-    getQueueUrl,
-    getDescriptionForMatchingName
+    getDescriptionForMatchingName,
+    getQueueUrl
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -54,6 +54,9 @@ import { createJobs, listJobs } from '../../lib/database/job';
 import { updateJobDetails } from '../database/job-operations';
 
 const logger = getLogger();
+
+const MASTER_STACK_NAME_PATTERN =
+    /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
 
 async function getSqsMessages(region: string, queueUrl: string) {
     logger.info('Get SQS messages', { region, queueUrl });
@@ -86,13 +89,13 @@ async function getSqsMessages(region: string, queueUrl: string) {
 }
 
 async function getMatchingMasterStackDeployment(stackName: string) {
-    const MASTER_STACK_NAME_PATTERN = /WLMDB-(.+[a-zA-Z])-(\d{13})/;
     const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
     if (matchingMasterStack) {
-        const [masterStackName] = matchingMasterStack;
+        const [, masterStackName] = matchingMasterStack;
         const [masterStackDeployment] = await getDeployments(undefined, undefined, masterStackName);
         return masterStackDeployment;
     }
+    logger.info('No matching master stack found for stack ', stackName);
 }
 
 async function getMatchingMasterJob(accountId: string, stackName: string) {
@@ -100,15 +103,14 @@ async function getMatchingMasterJob(accountId: string, stackName: string) {
     if (masterJob) {
         return masterJob;
     }
-    const MASTER_JOB_NAME_PATTERN =
-        /(.*)-(?=TrackStackDeployment|ValidationStack1|ValidationStack2|NewFSxStack|ExistingFSxStack|SQLServerStack|SQLStandaloneStack|PostStackDeployment.*)/;
-    const matchingMasterJob = stackName.match(MASTER_JOB_NAME_PATTERN);
+    const matchingMasterJob = stackName.match(MASTER_STACK_NAME_PATTERN);
     if (matchingMasterJob) {
         let [, masterJobName] = matchingMasterJob;
         masterJobName += ';href:';
         [masterJob] = await listJobs(accountId, undefined, 'start_time', 'desc', masterJobName);
         return masterJob;
     }
+    logger.info('No matching master job found for stack ', stackName);
 }
 async function handleResourceAssociation(
     accountId: string,
