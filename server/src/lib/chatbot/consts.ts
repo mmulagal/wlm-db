@@ -99,12 +99,14 @@ const CHATBOT_UI_PARAMS_FSX = [
 
     {
         [PRIVATE_SUBNET_1]: {
-            required: true
+            required: true,
+            dependsOn: AZ_1
         }
     },
     {
         [ROUTE_TABLE_1]: {
-            required: true
+            required: true,
+            dependsOn: PRIVATE_SUBNET_1
         }
     },
     {
@@ -115,12 +117,14 @@ const CHATBOT_UI_PARAMS_FSX = [
     },
     {
         [PRIVATE_SUBNET_2]: {
-            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: AZ_2
         }
     },
     {
         [ROUTE_TABLE_2]: {
-            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: PRIVATE_SUBNET_2
         }
     },
     {
@@ -289,6 +293,13 @@ const KEY_LABEL_MAP = {
     [TAGS]: 'tags'
 };
 
+const BACKTRACE_MESSAGES = {
+    [VPC_ID]:
+        'We could not found any VPC that supports FCI deployment, please select a different region that has valid VPC',
+    [AZ_1]: 'The VPC that you selected does not contain required availability zones, please select a different VPC',
+    [AZ_2]: 'The VPC that you selected does not contain required availability zones, please select a different VPC'
+};
+
 export {
     MODEL,
     SERVICE,
@@ -347,5 +358,6 @@ export {
     SINGLE_AZ_SMALL,
     M5_XL,
     ENCRYPTION_KEY,
-    THROUGHPUT
+    THROUGHPUT,
+    BACKTRACE_MESSAGES
 };

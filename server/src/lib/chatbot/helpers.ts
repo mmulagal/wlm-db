@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import {
     validateDbSize,
     validateDomain,
@@ -58,7 +59,9 @@ import {
     TAGS,
     DEPLOYMENT_ENVIRONMENT,
     ENCRYPTION_KEY,
-    KEY_LABEL_MAP
+    KEY_LABEL_MAP,
+    CHATBOT_UI_PARAMS_FSX,
+    BACKTRACE_MESSAGES
 } from './consts';
 
 const logger = getLogger();
@@ -103,7 +106,8 @@ interface Params {
 async function validateParams(
     params: Params,
     oldParams: Params,
-    schemaParams: any
+    schemaParams: any,
+    backtraceMessage: string = ''
 ): Promise<{ error: ValidationResponse; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
@@ -126,7 +130,7 @@ async function validateParams(
                     delete validatedParams[currKey];
                     error = resp as ValidationResponse;
                     error.label = KEY_LABEL_MAP[currKey as keyof typeof KEY_LABEL_MAP];
-                    return { error, params: validatedParams };
+                    break;
                 }
 
                 if (resp?.value !== null && resp?.value !== undefined) {
@@ -137,7 +141,34 @@ async function validateParams(
                 }
             }
         }
+
+        if (!isEmpty(error)) {
+            break;
+        }
     }
+
+    if (error.allowedValues?.length === 0 && !backtraceMessage) {
+        const { key } = error;
+        for (const obj of CHATBOT_UI_PARAMS_FSX) {
+            if (obj.hasOwnProperty(key as string)) {
+                const { dependsOn } = obj[key as keyof typeof obj] as any;
+                if (dependsOn) {
+                    delete params[dependsOn];
+                    return validateParams(
+                        params,
+                        oldParams,
+                        schemaParams,
+                        BACKTRACE_MESSAGES[key as keyof typeof BACKTRACE_MESSAGES] || ''
+                    );
+                }
+            }
+        }
+    }
+
+    if (backtraceMessage) {
+        error.message = backtraceMessage;
+    }
+
     return { error, params: validatedParams };
 }
 
@@ -184,6 +215,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
             case ROUTE_TABLE_2: {
                 response = await validateVpcId(
                     params[CREDENTIALS_ID],
+                    params[SQL_DEPLOYMENT_MODE],
                     params[REGION],
                     params[VPC_ID],
                     params[AZ_1],
