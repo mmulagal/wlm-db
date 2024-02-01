@@ -40,10 +40,6 @@ const StorageCapacity = () => {
             dispatch(setStorageUnit(generateUnitsForStorage[1]));
             if (!inputCapacity) {
                 setInputText('1024');
-                // setTextSearch('1024');
-                // dispatch(setStorageCapacity('1024'));
-            } else {
-                setInputText(inputCapacity);
             }
         }
         
@@ -74,8 +70,6 @@ const StorageCapacity = () => {
 
         if (e.target.value === '' || re.test(e.target.value)) {
             setInputText(e.target.value);
-            setTextSearch(e.target.value);
-            // setInput(e.target.value);
             dispatch(setIsWizardTouched(true));
         }
     };
