@@ -94,6 +94,10 @@ export const GENERAL = {
     ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
     CREATE_PERMISSION_ERROR:
+        ['Workload Factory is unable to validate sufficient permissions. Redirect to ',
+        'AWS CloudFormation',
+        ' to complete this task. Ensure that you have the CloudFormation '],
+    CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [

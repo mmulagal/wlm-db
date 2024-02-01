@@ -2,7 +2,7 @@ import { Button, useDialog, Typography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { FORM_TO_WLF_NAVIGATE, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
-import { setIsLoading, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
+import { setDeployRedirectToCfLink, setIsLoading, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
@@ -41,6 +41,7 @@ const MSSqlFooter = () => {
                         } else if (url) {
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setPermissionWarning(true));
+                            dispatch(setDeployRedirectToCfLink(url));
                         }
                     }
                 })
