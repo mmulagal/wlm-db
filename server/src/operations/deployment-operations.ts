@@ -330,20 +330,21 @@ async function getCloudformationTemplate(
         masterTemplateContents = await response.Body?.transformToString();
     }
     // Generate parameters list for cli command
+    const specialCharacters = ['!', '&'];
     let cliParams: string = '';
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 fsxConfiguration.fsxPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 sqlConfiguration.serviceAccountPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 adConfiguration.domainPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
