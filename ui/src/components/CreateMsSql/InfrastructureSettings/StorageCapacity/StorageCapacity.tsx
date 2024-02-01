@@ -20,6 +20,7 @@ const StorageCapacity = () => {
     const inputCapacity = useAppSelector((state: any) => state.mssqlForm.storageCapacity.capacity);
     const selectedUnit = useAppSelector((state: any) => state.mssqlForm.storageCapacity.unit);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const units = ['TiB', 'GiB'];
 
@@ -34,7 +35,7 @@ const StorageCapacity = () => {
     }, []);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setStorageUnit(generateUnitsForStorage[1]));
             if (!inputCapacity) {
                 setTextSearch('1024');
@@ -61,7 +62,7 @@ const StorageCapacity = () => {
         // if value is not blank, then test the regex
 
         if (e.target.value === '' || re.test(e.target.value)) {
-            setInputText(e.target.value)
+            setInputText(e.target.value);
             setTextSearch(e.target.value);
             // setInput(e.target.value);
             dispatch(setIsWizardTouched(true));

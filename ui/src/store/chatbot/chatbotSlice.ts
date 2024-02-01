@@ -18,7 +18,8 @@ const initialState: ChatbotEntities = {
         fieldName: ''
     },
     latestIntentMsg: '',
-    resumeCount: 0
+    resumeCount: 0,
+    movingFromChatbot: false
 };
 
 const chatbotSlice = createSlice({
@@ -57,6 +58,9 @@ const chatbotSlice = createSlice({
         },
         setResumeCount: (state, action: PayloadAction<any>) => {
             state.resumeCount = action.payload;
+        },
+        setMovingFromChatbot: (state, action: PayloadAction<any>) => {
+            state.movingFromChatbot = action.payload;
         }
     }
 });
@@ -72,6 +76,7 @@ export const {
     setSuggestionBubbles,
     setExpectingResponse,
     setLatestIntentMsg,
-    setResumeCount
+    setResumeCount,
+    setMovingFromChatbot
 } = chatbotSlice.actions;
 export default chatbotSlice;

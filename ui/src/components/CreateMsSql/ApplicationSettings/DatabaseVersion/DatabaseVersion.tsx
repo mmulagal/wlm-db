@@ -16,6 +16,7 @@ const DatabaseVersion = () => {
     // Getting selected DB version
     const getDBVersion = useAppSelector(state => state.mssqlForm.dbVersion);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const versions = [
         { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
@@ -36,7 +37,7 @@ const DatabaseVersion = () => {
     }, []);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setDBVersion(generateDbVersions[0]));
         }
     }, [dispatch, generateDbVersions]);

@@ -18,6 +18,7 @@ const SimpleNotificationService = () => {
     const selectedState = useAppSelector(state => state.mssqlForm.simpleNotification.snsState);
     const selectedARNValue = useAppSelector(state => state.mssqlForm.simpleNotification.snsARN);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     //Set the Header text here
     const setHeader = () => {
@@ -54,7 +55,7 @@ const SimpleNotificationService = () => {
 
     //Update selected SNS Topic in form data store
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSNSARN(null));
         }
     }, [dispatch, generateArn]);
