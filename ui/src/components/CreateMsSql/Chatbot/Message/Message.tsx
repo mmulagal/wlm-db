@@ -1,15 +1,13 @@
-import InputComponent from './InputComponent/InputComponent';
 import SelectComponent from './SelectComponent/SelectComponent';
 import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.svg';
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
 import { GENERAL } from '../../../../utils/appConstants';
-import { openCredentialTab } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
 import CardComponent from './CardComponent/CardComponent';
@@ -33,6 +31,7 @@ type messageType = {
     default?: string;
     disable?: boolean;
     link?: any;
+    customComponent?: any;
 };
 
 type MessagePropType = {
@@ -339,6 +338,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                         {msgObj?.link?.linkText}
                                     </Button>
                                 )}
+                                {msgObj?.customComponent}
                             </div>
                             <ValidationCriteria />
                         </Typography>

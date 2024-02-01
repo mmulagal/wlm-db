@@ -73,14 +73,12 @@ import {
 import MssqlApis from '../MSSqlServer/MssqlApis';
 import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
 import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
-import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { Button, Typography, useDialog } from '@netapp/design-system';
+import { setDeployRedirectToCfLink, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { Button } from '@netapp/design-system';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
-import ViewDialog from '../../../common/ViewDialog/ViewDialog';
-import { PERMISSIONS } from '../../../utils/permissions';
+import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
 const _ = require('lodash');
 
 type optionsType = {
@@ -111,7 +109,6 @@ const Chatbot = () => {
     const [activeField, setActiveField] = useState<any>('');
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { setDialog } = useDialog();
 
     const [sendMsgToBot] = useSendMsgMutation();
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
@@ -303,6 +300,7 @@ const Chatbot = () => {
         const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
         if (payload) {
             dispatch(setIsLoading(true));
+            dispatch(setDeployRedirectToCfLink(null));
             deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
@@ -324,6 +322,7 @@ const Chatbot = () => {
                             dispatch(setMessages([]));
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                         } else if (url) {
+                            dispatch(setDeployRedirectToCfLink(url));
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
                             dispatch(
@@ -331,24 +330,8 @@ const Chatbot = () => {
                                     ...messages,
                                     {
                                         sender: 'bot',
-                                        msg: GENERAL.CREATE_PERMISSION_ERROR_CHATBOT,
-                                        link: {
-                                            linkText: GENERAL.REQUIRED_PERMISSIONS,
-                                            onLinkClick: () => {
-                                                setDialog(
-                                                    <DialogComponent
-                                                        header={GENERAL.REQUIRED_OPERATE_PERMISSIONS}
-                                                        content={
-                                                            <ViewDialog
-                                                                data={JSON.stringify(PERMISSIONS.operate, null, 2)}
-                                                            />
-                                                        }
-                                                        primaryButton={GENERAL.CLOSE}
-                                                        callback={() => {}}
-                                                    />
-                                                );
-                                            }
-                                        }
+                                        msg: '',
+                                        customComponent: <MissingPermissionsMsg />
                                     }
                                 ])
                             );
