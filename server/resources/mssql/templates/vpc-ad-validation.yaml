@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template creates AWS resources for validating Active Directory credentials
-    under the provided VPC. You will be billed for the AWS resources used if you create
-    a stack from this template.
+            under the provided VPC. You will be billed for the AWS resources used if you create
+            a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:

@@ -1,9 +1,8 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description:
-  This template deploys Windows SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
-  This template creates an Amazon EC2 Windows instance and related resources.
-  You will be billed for the AWS resources used if you create a stack from this template.
+Description: This template deploys Windows SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
+            This template creates an Amazon EC2 Windows instance and related resources.
+            You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
