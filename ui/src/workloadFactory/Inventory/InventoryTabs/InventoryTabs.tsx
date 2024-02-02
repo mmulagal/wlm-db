@@ -30,28 +30,28 @@ const InventoryTabs = () => {
             <div className={selectedTab === 'Managed Hosts' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
                 <Typography
                     variant="Semibold_14"
-                    className={styles.headerPart1}
+                    className={selectedTab === 'Managed Hosts' ? `${styles.headerPart1} ${styles.activeText}` : `${styles.headerPart1}`}
                     onClick={() => handleClick('Managed Hosts')}
                 >
-                    Managed Hosts
+                    Managed hosts (24)
                 </Typography>
             </div>
             <div className={selectedTab === 'Unmanaged Hosts' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
                 <Typography
                     variant="Semibold_14"
-                    className={styles.headerPart2}
+                    className={selectedTab === 'Unmanaged Hosts' ? `${styles.headerPart2} ${styles.activeText}` : `${styles.headerPart2}`}
                     onClick={() => handleClick('Unmanaged Hosts')}
                 >
-                    Unmanaged Hosts
+                    Unmanaged hosts (8)
                 </Typography>
             </div>
             <div className={selectedTab === 'Undetected Hosts' ? `${styles.headers} ${styles.active}` : `${styles.headers}`}>
                 <Typography
                     variant="Semibold_14"
-                    className={styles.headerPart3}
+                    className={selectedTab === 'Undetected Hosts' ? `${styles.headerPart3} ${styles.activeText}` : `${styles.headerPart3}`}
                     onClick={() => handleClick('Undetected Hosts')}
                 >
-                    Undetected Hosts
+                    Undetected hosts (8)
                 </Typography>
             </div>
             

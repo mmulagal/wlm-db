@@ -1,6 +1,9 @@
 import { useAppSelector } from '../../store/storeHooks';
 import styles from './Inventory.module.scss';
 import InventoryTabs from './InventoryTabs/InventoryTabs';
+import ManagedHosts from './ManagedHosts/ManagedHosts';
+import UndetectedHosts from './UndetectedHosts/UndetectedHosts';
+import UnmanagedHosts from './UnmanagedHosts/UnmanagedHosts';
 
 const Inventory = () => {
 
@@ -11,9 +14,9 @@ const Inventory = () => {
             <div className={styles.tabs}>
                 <InventoryTabs />
             </div>
-            {selectedInventoryTab === 'Managed Hosts' && <div>Managed Hosts</div>}
-            {selectedInventoryTab === 'Unmanaged Hosts' && <div>Unmanaged Hosts</div>}
-            {selectedInventoryTab === 'Undetected Hosts' && <div>Undetected Hosts</div>}
+            {selectedInventoryTab === 'Managed Hosts' && <ManagedHosts />}
+            {selectedInventoryTab === 'Unmanaged Hosts' && <UnmanagedHosts />}
+            {selectedInventoryTab === 'Undetected Hosts' && <UndetectedHosts />}
         </div>
     );
 };

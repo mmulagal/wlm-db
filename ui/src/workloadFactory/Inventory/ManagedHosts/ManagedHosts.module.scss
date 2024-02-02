@@ -1,0 +1,111 @@
+.managedHosts {
+    display: flex;
+    gap: 24px;
+    padding: 0 120px;
+    
+
+    .jobMenuPopover {
+        width: fit-content;
+        margin-left: -12px;
+    }
+
+    .table {
+        width: 1607px;
+    }
+
+    .tableScroll {
+        [class*='Table-module_scroll'] {
+            width: 1808px !important;
+        }
+    }
+
+    .colText {
+        display: flex;
+        gap: 8px;
+    }
+
+    .protection {
+        display: flex;
+        gap: 17px;
+    }
+
+    .cost {
+        display: flex;
+        gap: 16px;
+
+        .tooltipClass {
+            [class*='TooltipInfo-module_tooltip-base'] {
+                max-width: 462px !important;
+                padding: 16px 24px;
+                box-shadow: 2px 2px 6px 0px var(--border);
+            }
+        }
+    }
+
+    .statusIcon {
+        width: 10px;
+        height: 10px;
+        align-self: center;
+        &.circle {
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        &.up {
+            background-color: var(--green-60);
+        }
+        &.down {
+            background-color: var(--orange-60);
+        }
+        &.initializing {
+            background-color: var(--cyan-30);
+        }
+        &.failed {
+            background-color: var(--red-30);
+        }
+    }
+
+    .protectionTooltip {
+        width: 184px;
+        gap: 8px;
+        .textHeight {
+            line-height: 28px;
+        }
+    }
+
+    .costContainer {
+        width: 332px;
+        gap: 8px;
+        .costContainerHeader {
+            gap: 48px;
+            display: flex;
+            justify-content: space-between;
+            height: 36px;
+            padding: 8px 0px 0px 8px;
+        }
+
+        .middleContainer {
+            margin-top: 1px;
+            background-color: var(--loader-skeleton-bg);
+            height: 36px;
+            display: flex;
+            gap: 48px;
+        }
+
+        .middle {
+            width: 159px;
+            padding: 6px 0 0 24px;
+        }
+
+        .lastContainer {
+            height: 36px;
+            margin-top: 8px;
+            background-color: var(--table-header-background);
+            display: flex;
+            gap: 20px;
+
+            .totalCost {
+                padding: 6px 0 0 24px;
+            }
+        }
+    }
+}
