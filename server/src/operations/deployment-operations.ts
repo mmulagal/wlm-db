@@ -753,45 +753,49 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
     logger.info('check all missing permissions', credentialsId, region);
     // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
     const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
-    const { permissions: strictPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
-    );
-    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-        undefined,
-        [
-            {
-                // ContextEntry
-                ContextKeyName: EC2_TAG_CONDITION,
-                ContextKeyValues: [
-                    // ContextKeyValueListType
-                    WLMDB_RESOURCE_TAG_VALUE
-                ],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: IAM_LINKEDROLE_CONDITION,
-                ContextKeyValues: [IAM_EC2_SERVICE],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: IAM_PASSROLE_CONDITION,
-                ContextKeyValues: [IAM_EC2_SERVICE],
-                ContextKeyType: 'string'
-            }
-        ]
-    );
-    return { permissions, strictPermissions, strictConditionPermissions };
+    try {
+        const { permissions: strictPermissions } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            AWS_RESOURCES_STRICT_ACTION_MAP,
+            [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
+        );
+        const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+            undefined,
+            [
+                {
+                    // ContextEntry
+                    ContextKeyName: EC2_TAG_CONDITION,
+                    ContextKeyValues: [
+                        // ContextKeyValueListType
+                        WLMDB_RESOURCE_TAG_VALUE
+                    ],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: FSX_TAG_CONDITION,
+                    ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: IAM_LINKEDROLE_CONDITION,
+                    ContextKeyValues: [IAM_EC2_SERVICE],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: IAM_PASSROLE_CONDITION,
+                    ContextKeyValues: [IAM_EC2_SERVICE],
+                    ContextKeyType: 'string'
+                }
+            ]
+        );
+        return { permissions, strictPermissions, strictConditionPermissions };
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
+    }
 }
 
 async function createDeploymentMockDataInDB(
