@@ -65,7 +65,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action:
         } else {
             api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: errorMsg }));
         }
-        api.dispatch(setShowRetry(true));
+        //api.dispatch(setShowRetry(true));
     }
 
     return next(action);

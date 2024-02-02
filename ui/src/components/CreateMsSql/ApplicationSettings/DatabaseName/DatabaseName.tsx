@@ -43,12 +43,13 @@ const DatabaseName = () => {
         if (isDemoMode) {
             return '';
         }
-        const firstChar = databaseName.charAt(0);
+        const firstChar = databaseName && databaseName.charAt(0);
         // Check if the instance name is 16 characters or less in length
 
-        if (databaseName.length === 0) {
+        if (!databaseName || databaseName.length === 0) {
             return GENERAL.ACTION_REQUIRED;
         } else if (
+            databaseName &&
             databaseName.length > 0 &&
             (databaseName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(databaseName))
         ) {
