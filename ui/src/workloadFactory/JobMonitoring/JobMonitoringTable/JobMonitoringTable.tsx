@@ -365,6 +365,7 @@ const JobMonitoringTable = () => {
 
     useEffect(() => {
         collapseAllRows(tableProps?.updateRowState, tableProps?.rowsState);
+        tableProps?.pagination?.gotoPage(0);
     }, [timeInterval]);
 
     const downloadJobMonitoring = () => {
