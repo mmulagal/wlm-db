@@ -232,7 +232,8 @@ async function createOrUpdateChildJobs(
     logicalResourceId: string,
     checkEventsOrder: boolean = false,
     stackSqlDeploymentType: string,
-    stackName?: string
+    stackName?: string,
+    resourceStatus?: string
 ) {
     // DBS-1775 Parent job is failed but tasks and subjobs shows in progress
     /** Messages in the queue are unordered. For resources that are created within milliseconds, messages
@@ -276,29 +277,33 @@ async function createOrUpdateChildJobs(
         (childJob && parentJob.name !== `Deploying ${logicalResourceId}`) ||
         (childJob && childJobName === childJob.name)
     ) {
-        try {
-            logger.info('Update child job:', {
-                parentJobId: parentJob.id,
-                parentJobName: parentJob.name,
-                childJobId: childJob.id,
-                childJobName: childJob.name,
-                jobStatus
-            });
-            const response = await updateJobDetails(accountId, childJob.id, {
-                status: jobStatus,
-                error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
-                endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
-            });
-            logger.debug('Update child job response:', response);
-        } catch (error) {
-            logger.error('Error while updating child job with status:', {
-                parentJobId: parentJob.id,
-                parentJobName: parentJob.name,
-                childJobId: childJob.id,
-                childJobName,
-                jobStatus,
-                error
-            });
+        // https://jira.ngage.netapp.com/browse/DBS-1942
+        // If nested job is marked failed and stack is rolled back or deleted, dont change the state
+        if (!resourceStatus?.includes('DELETE') && childJob.status !== JOBSTATUS.FAILED) {
+            try {
+                logger.info('Update child job:', {
+                    parentJobId: parentJob.id,
+                    parentJobName: parentJob.name,
+                    childJobId: childJob.id,
+                    childJobName: childJob.name,
+                    jobStatus
+                });
+                const response = await updateJobDetails(accountId, childJob.id, {
+                    status: jobStatus,
+                    error: jobStatus === JOBSTATUS.FAILED ? resourceStatusReason : undefined,
+                    endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined
+                });
+                logger.debug('Update child job response:', response);
+            } catch (error) {
+                logger.error('Error while updating child job with status:', {
+                    parentJobId: parentJob.id,
+                    parentJobName: parentJob.name,
+                    childJobId: childJob.id,
+                    childJobName,
+                    jobStatus,
+                    error
+                });
+            }
         }
     }
 }
@@ -598,9 +603,9 @@ async function processCloudFormationMessages() {
                                                     logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE
                                                         ? JOBSTATUS.COMPLETED
                                                         : JOBSTATUS.IN_PROGRESS;
-                                                const masterJobName = `${trackSqlDeploymentType} deployment with stack ${stackName}`;
+                                                const masterJobName = `${trackdatabaseType} deployment with stack ${stackName}`;
                                                 const masterJob = await getMatchingMasterJob(accountId, masterJobName);
-                                                if (masterJob) {
+                                                if (masterJob && masterJob.status !== JOBSTATUS.FAILED) {
                                                     const subJobs = await listJobs(
                                                         accountId,
                                                         masterJob.id,
@@ -610,16 +615,15 @@ async function processCloudFormationMessages() {
                                                     if (isEmpty(subJobs)) {
                                                         masterJobStatus = JOBSTATUS.FAILED;
                                                     }
+                                                    // Update master job with failed status
+                                                    await modifyMasterJobStatus(
+                                                        accountId,
+                                                        trackdatabaseType,
+                                                        stackName,
+                                                        masterJobStatus,
+                                                        messageTimestamp
+                                                    );
                                                 }
-
-                                                // Update master job with failed status
-                                                await modifyMasterJobStatus(
-                                                    accountId,
-                                                    trackdatabaseType,
-                                                    stackName,
-                                                    masterJobStatus,
-                                                    messageTimestamp
-                                                );
 
                                                 if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
@@ -743,8 +747,12 @@ async function processCloudFormationMessages() {
                                     const masterJob = await getMatchingMasterJob(accountId, masterJobName);
                                     if (!masterJob) {
                                         logger.error('No entry found in database for job with name', masterJobName);
-                                    } else if (resourceType === CF_STACK_RESOURCE_TYPE) {
+                                    } else if (
+                                        resourceType === CF_STACK_RESOURCE_TYPE ||
+                                        resourceStatus === DEPLOYMENT_STATUS.CREATE_FAILED
+                                    ) {
                                         // For level 3 (resource) messages, level 2 (nested stack) jobs should not be updated
+                                        // If level 3 is CREATE_FAILED, then mark level 2 as FAILED
                                         const level2JobName = `Deploying ${stackName}`;
                                         await createOrUpdateChildJobs(
                                             accountId,
@@ -755,7 +763,8 @@ async function processCloudFormationMessages() {
                                             resourceStatusReason,
                                             logicalResourceId,
                                             false,
-                                            stackSqlDeploymentType!
+                                            stackSqlDeploymentType!,
+                                            resourceStatus
                                         );
                                     }
                                     /**
@@ -819,8 +828,13 @@ async function processCloudFormationMessages() {
                                             );
                                         }
 
-                                        // Update master job for retry scenarios
-                                        if (masterJob) {
+                                        // https://jira.ngage.netapp.com/browse/DBS-1942
+                                        // If master job is marked failed and stack is rolled back or deleted, dont change the state
+                                        if (
+                                            masterJob &&
+                                            !resourceStatus?.includes('DELETE') &&
+                                            masterJob.status !== JOBSTATUS.FAILED
+                                        ) {
                                             const subJobs =
                                                 (await listJobs(accountId, masterJob.id, undefined, undefined)) || [];
                                             const subJobStatus = subJobs.map(subJob => subJob.status);
@@ -854,8 +868,13 @@ async function processCloudFormationMessages() {
                                             );
                                         }
 
-                                        // Update master job for retry scenarios
-                                        if (masterJob) {
+                                        // https://jira.ngage.netapp.com/browse/DBS-1942
+                                        // If master job is marked failed and stack is rolled back or deleted, dont change the state
+                                        if (
+                                            masterJob &&
+                                            !resourceStatus?.includes('DELETE') &&
+                                            masterJob.status !== JOBSTATUS.FAILED
+                                        ) {
                                             await modifyMasterJobStatus(
                                                 accountId,
                                                 String(databaseType),
@@ -907,7 +926,8 @@ async function processCloudFormationMessages() {
                                             logicalResourceId,
                                             true,
                                             stackSqlDeploymentType!,
-                                            stackName
+                                            stackName,
+                                            resourceStatus
                                         );
                                     }
                                 }
