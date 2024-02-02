@@ -142,9 +142,13 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics }
     ];
     if (fsxConfiguration.fsxPassword) {
-        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        if (encryptedFsxPassword) {
-            templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
 
@@ -547,9 +551,13 @@ async function createCloudFormationTemplateForUserDeployment(
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
-        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        if (encryptedFsxPassword) {
-            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
 
@@ -745,45 +753,49 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
     logger.info('check all missing permissions', credentialsId, region);
     // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
     const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
-    const { permissions: strictPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
-    );
-    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-        undefined,
-        [
-            {
-                // ContextEntry
-                ContextKeyName: EC2_TAG_CONDITION,
-                ContextKeyValues: [
-                    // ContextKeyValueListType
-                    WLMDB_RESOURCE_TAG_VALUE
-                ],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: IAM_LINKEDROLE_CONDITION,
-                ContextKeyValues: [IAM_EC2_SERVICE],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: IAM_PASSROLE_CONDITION,
-                ContextKeyValues: [IAM_EC2_SERVICE],
-                ContextKeyType: 'string'
-            }
-        ]
-    );
-    return { permissions, strictPermissions, strictConditionPermissions };
+    try {
+        const { permissions: strictPermissions } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            AWS_RESOURCES_STRICT_ACTION_MAP,
+            [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
+        );
+        const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+            undefined,
+            [
+                {
+                    // ContextEntry
+                    ContextKeyName: EC2_TAG_CONDITION,
+                    ContextKeyValues: [
+                        // ContextKeyValueListType
+                        WLMDB_RESOURCE_TAG_VALUE
+                    ],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: FSX_TAG_CONDITION,
+                    ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: IAM_LINKEDROLE_CONDITION,
+                    ContextKeyValues: [IAM_EC2_SERVICE],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: IAM_PASSROLE_CONDITION,
+                    ContextKeyValues: [IAM_EC2_SERVICE],
+                    ContextKeyType: 'string'
+                }
+            ]
+        );
+        return { permissions, strictPermissions, strictConditionPermissions };
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
+    }
 }
 
 async function createDeploymentMockDataInDB(
