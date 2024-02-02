@@ -43,17 +43,17 @@ export default function errorHandler(error: any, request: FastifyRequest, reply:
     } else if (isTimeoutError(error)) {
         reply.gatewayTimeout();
     } else if (error instanceof PrismaClientValidationError) {
-        logger.error('Error of type PrismaClientValidationError occured', error);
+        logger.error('Error of type PrismaClientValidationError occurred', error);
         reply
             .status(500)
             .send({ message: 'The request to update database failed due to bad request.Please contact support' });
     } else if (error instanceof PrismaClientInitializationError) {
-        logger.error('Error of type PrismaClientInitializationError occured', error);
+        logger.error('Error of type PrismaClientInitializationError occurred', error);
         reply
             .status(500)
             .send({ message: 'We are unable to establish connection with database. Please contact support' });
     } else if (error instanceof PrismaClientKnownRequestError) {
-        logger.error('Error of type PrismaClientKnownRequestError occured', error);
+        logger.error('Error of type PrismaClientKnownRequestError occurred', error);
         reply.status(500).send({
             message: `An error occurred in DB query engine.${
                 error?.meta?.cause

@@ -278,7 +278,7 @@ const KEY_LABEL_MAP = {
     [DOMAIN_USERNAME]: 'Enter a user name for Active Directory', // extra value needed for suggesstion
     [DOMAIN_PASS]: 'Enter a password for Active Directory',
     [FSX_USERNAME]: 'Enter a user name for the file system', // suggestion
-    [FSX_PASS]: 'Enter a password for the user', // suggestion
+    [FSX_PASS]: 'Enter a password for the file system user', // suggestion
     [SERVICE_ACCOUNT_NAME]: 'Enter a user name for the database credentials',
     [SERVICE_ACCOUNT_PASS]: 'Enter a password for database credentials.',
     [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
