@@ -8,6 +8,7 @@ import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
+import Inventory from '../../Inventory/Inventory';
 
 const HeaderComponent = () => {
     const [selectedTab, setSelectedTab] = useState('Dashboard');
@@ -163,6 +164,7 @@ const HeaderComponent = () => {
                 </div>
             </div>
             {selectedTab === 'Dashboard' && <DatabaseHomePage />}
+            {selectedTab === 'Inventory' && <Inventory />}
             {selectedTab === 'Job monitoring' && <JobMonitoring />}
         </div>
     );
