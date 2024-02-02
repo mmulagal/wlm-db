@@ -1,0 +1,48 @@
+.inventoryTabs {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    margin-left: 120px;
+    width: 1607px;
+    height: 56px;
+    border-bottom: 1px solid #a7a7a7;
+    background-color: var(--Light-Background-content-background);
+    display: flex;
+
+    .headers {
+        padding-top: 16px;
+        background-color: var(--Light-Background-content-background, #FFF);
+    }
+
+    .headerPart1 {
+        color: var(--text-primary);
+        width: 160px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .headerPart2 {
+        color: var(--text-primary);
+        width: 191px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .headerPart3 {
+        color: var(--text-primary);
+        width: 222px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .active {
+        border-bottom: 1px solid var(--blue-70);
+        color: var(--blue-70);
+    }
+}
+
+.inventoryTabDynamicWidth {
+    width: 84%;
+}
