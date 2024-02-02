@@ -644,7 +644,7 @@ const Chatbot = () => {
                     break;
                 case 'enableCloudWatch':
                     if (mssqlFormData.cloudWatch !== value) {
-                        dispatch(setCloudWatch(value || null));
+                        dispatch(setCloudWatch(value || true));
                     }
                     break;
                 case 'tags':
