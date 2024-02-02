@@ -973,15 +973,19 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         keys.map((key: string) => {
             //Goes Through Each Object value
             if (key && key !== '') {
+                let value = item[key] ? String(item[key]): '';
+                if (value && value.includes(',')){
+                    value = '"' + value + '"'
+                }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
-                } else if (key === 'name' && item[key]) {
-                    result += item[key].split(';href')[0] + ',';
-                } else if (key === 'status' && item[key]) {
-                    result += jobMonitoringStatusMapping(item[key]) + ',';
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                } else if (key === 'name' && value) {
+                    result += value.split(';href')[0] + ',';
+                } else if (key === 'status' && value) {
+                    result += jobMonitoringStatusMapping(value) + ',';
                 } else {
-                    if (item[key]) {
-                        result += item[key] + ',';
+                    if (value) {
+                        result += value + ',';
                     } else {
                         result += ' ,';
                     }
