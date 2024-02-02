@@ -79,6 +79,7 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { useNavigate } from 'react-router-dom';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
+import store from '../../../store/store';
 const _ = require('lodash');
 
 type optionsType = {
@@ -295,6 +296,7 @@ const Chatbot = () => {
     };
 
     const handleCreate = () => {
+        const state = store.getState();
         const payload = handleCreateSQLServer(state, dispatch);
         const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
         const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
@@ -644,7 +646,7 @@ const Chatbot = () => {
                     break;
                 case 'enableCloudWatch':
                     if (mssqlFormData.cloudWatch !== value) {
-                        dispatch(setCloudWatch(value || null));
+                        dispatch(setCloudWatch(value || true));
                     }
                     break;
                 case 'tags':

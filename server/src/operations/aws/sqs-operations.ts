@@ -213,7 +213,7 @@ async function modifyMasterJobStatus(
         }
     }
 
-    logger.info('Update job to status:', masterJob?.id, masterJobName, jobStatus);
+    logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
     const response = await updateJobDetails(accountId, masterJob.id, {
         status: jobStatus,
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
@@ -615,7 +615,7 @@ async function processCloudFormationMessages() {
                                                     if (isEmpty(subJobs)) {
                                                         masterJobStatus = JOBSTATUS.FAILED;
                                                     }
-
+                                                    // Update master job with failed status
                                                     await modifyMasterJobStatus(
                                                         accountId,
                                                         trackdatabaseType,
