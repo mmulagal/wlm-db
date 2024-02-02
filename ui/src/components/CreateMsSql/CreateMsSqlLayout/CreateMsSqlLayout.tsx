@@ -5,6 +5,8 @@ import MSSqlServer from '../MSSqlServer/MSSqlServer';
 import Chatbot from '../Chatbot/Chatbot';
 import { setIsShow, setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 import { useDispatch } from 'react-redux';
+import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
+import { SELECT_CONFIG } from '../../../utils/appConstants';
 
 type CreateMsSqlLayoutProps = {
     selectedTab: 'chatbot' | 'wizard';
@@ -25,9 +27,10 @@ const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutPro
                 onTabChange={(tab: 'wizard' | 'chatbot') => {
                     if (tab === 'wizard' && selectedTab === 'chatbot') {
                         dispatch(setMovingFromChatbot(true));
+                        dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
                         setTimeout(() => {
                             dispatch(setMovingFromChatbot(false));
-                        }, 1000);
+                        }, 2000);
                     }
                     setSelectedTab(tab);
                 }}

@@ -883,7 +883,7 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.activeDirectory?.scenarioType) {
         params.adScenarioType = payload.activeDirectory.scenarioType;
     }
-    params.enableCloudWatch = payload.cloudWatch || false;
+    params.enableCloudWatch = true;
     return params;
 };
 
@@ -974,9 +974,9 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         keys.map((key: string) => {
             //Goes Through Each Object value
             if (key && key !== '') {
-                let value = item[key] ? String(item[key]): '';
-                if (value && value.includes(',')){
-                    value = '"' + value + '"'
+                let value = item[key] ? String(item[key]) : '';
+                if (value && value.includes(',')) {
+                    value = '"' + value + '"';
                 }
                 if (key === 'startTime' || key === 'endTime') {
                     result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
