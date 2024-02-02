@@ -7,6 +7,7 @@ import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
 import { generateOptionType } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
+import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 
 const HeaderComponent = () => {
     const [selectedTab, setSelectedTab] = useState('Dashboard');
@@ -31,6 +32,29 @@ const HeaderComponent = () => {
         }
     ];
 
+    const regionData = [
+        {
+            regionCode: 'us-east-1',
+            regionName: 'US East (N. Virginia)'
+        },
+        {
+            regionCode: 'us-east-2',
+            regionName: 'US East (Ohio)'
+        },
+        {
+            regionCode: 'us-west-1',
+            regionName: 'US West (N. California)'
+        },
+        {
+            regionCode: 'us-west-2',
+            regionName: 'US West (Oregon)'
+        },
+        {
+            regionCode: 'eu-west-1',
+            regionName: 'Europe (Ireland)'
+        }
+    ];
+
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
@@ -42,6 +66,17 @@ const HeaderComponent = () => {
         });
         return options;
     }, [credentialData]);
+
+    const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        regionData?.map((val, idx: number) => {
+            const regionValue = val.regionName;
+            const label2 = val.regionCode;
+            const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
+            options.push(option);
+        });
+        return options;
+    }, [regionData]);
     return (
         <div className={styles.headerComponent}>
             <div className={styles.firstSection}>
@@ -56,11 +91,34 @@ const HeaderComponent = () => {
                                 isClearable={false}
                                 defaultValue={selectedCredential ? [selectedCredential] : [generateAWSAccounts[0]]}
                                 onChange={(selectedOptions: any): void => {}}
-                                placeholder="Select a VPC"
+                                placeholder="Select a Credential"
                                 isSearchable={generateAWSAccounts.length > 5}
                                 options={generateAWSAccounts}
                                 variant="two-lines"
                             />
+                        </div>
+
+                        <div className={styles.secondSelect}>
+                            <SelectField
+                                isClearable={false}
+                                defaultValue={selectedCredential ? [selectedCredential] : [generateAWSAccounts[0]]}
+                                onChange={(selectedOptions: any): void => {}}
+                                placeholder="Select a Region"
+                                isSearchable={generateRegionsData.length > 5}
+                                options={generateRegionsData}
+                                variant="two-lines"
+                            />
+                        </div>
+
+                        <div className={styles.separator} />
+
+                        <div className={styles.refresh}>
+                            <div className={styles.refreshIcon}>
+                                <RefreshIcon />
+                            </div>
+                            <Typography className={styles.date} variant="Regular_14">
+                                January 30, 2024, 00:00:00
+                            </Typography>
                         </div>
                     </div>
                 </div>
