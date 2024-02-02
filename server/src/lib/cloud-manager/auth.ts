@@ -74,7 +74,7 @@ async function getWfServiceToken(): Promise<{ token: string; expiresIn: number }
         }
         return response;
     } catch (err) {
-        throw createError(500, `Error occured while getting WF service token, ${err}`);
+        throw createError(500, `Error occurred while getting WF service token, ${err}`);
     } finally {
         deleteFromCache(REQUEST_IN_PROGRESS_TYPE, WF_TOKEN);
     }
@@ -122,7 +122,7 @@ async function getBxpServiceToken(): Promise<{ token: string; expiresIn: number 
         }
         return response;
     } catch (err) {
-        throw createError(500, `Error occured while getting BXP service token, ${err}`);
+        throw createError(500, `Error occurred while getting BXP service token, ${err}`);
     } finally {
         deleteFromCache(REQUEST_IN_PROGRESS_TYPE, BXP_TOKEN);
     }
