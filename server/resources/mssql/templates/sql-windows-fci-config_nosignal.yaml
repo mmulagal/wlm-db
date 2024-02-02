@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This template deploys SQL Server failover cluster instances using NetApp FSx for ONTAP in an existing VPC.
-This template creates EC2 instances and related resources. 
-You will be billed for the AWS resources used if you create a stack from this template.
+            This template creates EC2 instances and related resources. 
+            You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
@@ -123,7 +123,7 @@ Metadata:
             FSxLogVolumeName:
                 default: SQL log volume name
             FSxTempDbVolumeName:
-                default: SQL tempdb volume name
+                default: SQL tempDb volume name
             FsxAdminPassword:
                 default: Secret name for FSxN Admin password in Secrets Manager
             FSxFileSystemId:
@@ -260,13 +260,13 @@ Parameters:
     MSSQLMediaBucketName:
         Default: LaunchWizard-sqlha
         Description:  The S3 bucket name from where SQL Server media can be downloaded. 
-        This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). 
-        It cannot start or end with a hyphen (-).
+                    This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). 
+                    It cannot start or end with a hyphen (-).
         Type: String
     MSSQLMediaPathKey:
         Default: launchwizardscripts/sqlmedia/sqlserver.iso
         Description: User name for the service account administrator on the SQL Server. 
-        It can be the Active Directory domain admin or other local or domain users.
+                    It can be the Active Directory domain admin or other local or domain users.
         Type: String
     SQLAdminAccounts:
         Default: sqlsa
@@ -499,27 +499,27 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: { { ScriptVerifySignature } }
+                            source: {{ ScriptVerifySignature }}
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: { { ScriptUnzipArchive } }
+                            source: {{ ScriptUnzipArchive }}
                         C:\cfn\scripts\common.zip:
-                            source: { { ScriptCommon } }
+                            source: {{ ScriptCommon }}
                         C:\cfn\scripts\sqlfci.zip:
-                            source: { { ScriptSQLFCI } }
+                            source: {{ ScriptSQLFCI }}
                         C:\cfn\scripts\sqlontap.zip:
-                            source: { { ScriptSQLONTAP } }
+                            source: {{ ScriptSQLONTAP }}
                         C:\cfn\DSC.zip:
-                            source: { { DSC } }
+                            source: {{ DSC }}
                         C:\cfn\Installer\powershell.zip:
-                            source: { { PowerShell } }
+                            source: {{ PowerShell }}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: { { AmazonLaunchWizardForCFN } }
+                            source: {{ AmazonLaunchWizardForCFN }}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: { { AmazonLaunchWizardForSSM } }
+                            source: {{ AmazonLaunchWizardForSSM }}
                         C:\cfn\modules\AmznFailoverCluster.zip:
-                            source: { { AmazonFailoverCluster } }
+                            source: {{ AmazonFailoverCluster }}
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: { { Sqlspcu } }
+                            source: {{ Sqlspcu }}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:
@@ -1044,27 +1044,27 @@ Resources:
                 FetchResources:
                     files:
                         C:\cfn\scripts\Verify-Signature.ps1:
-                            source: { { ScriptVerifySignature } }
+                            source: {{ ScriptVerifySignature }}
                         C:\cfn\scripts\Unzip-Archive.ps1:
-                            source: { { ScriptUnzipArchive } }
+                            source: {{ ScriptUnzipArchive }}
                         C:\cfn\scripts\common.zip:
-                            source: { { ScriptCommon } }
+                            source: {{ ScriptCommon }}
                         C:\cfn\scripts\sqlfci.zip:
-                            source: { { ScriptSQLFCI } }
+                            source: {{ ScriptSQLFCI }}
                         C:\cfn\scripts\sqlontap.zip:
-                            source: { { ScriptSQLONTAP } }
+                            source: {{ ScriptSQLONTAP }}
                         C:\cfn\DSC.zip:
-                            source: { { DSC } }
+                            source: {{ DSC }}
                         C:\cfn\Installer\powershell.zip:
-                            source: { { PowerShell } }
+                            source: {{ PowerShell }}
                         C:\cfn\modules\AWSLaunchWizardForCFN.zip:
-                            source: { { AmazonLaunchWizardForCFN } }
+                            source: {{ AmazonLaunchWizardForCFN }}
                         C:\cfn\modules\AWSLaunchWizardForSSM.zip:
-                            source: { { AmazonLaunchWizardForSSM } }
+                            source: {{ AmazonLaunchWizardForSSM }}
                         C:\cfn\modules\AmznFailoverCluster.zip:
-                            source: { { AmazonFailoverCluster } }
+                            source: {{ AmazonFailoverCluster }}
                         C:\cfn\Installer\sqlspcu.zip:
-                            source: { { Sqlspcu } }
+                            source: {{ Sqlspcu }}
                 ScriptSignatureVerificationandExtract:
                     commands:
                         b-unpack-common-scripts:

@@ -619,7 +619,7 @@ const Chatbot = () => {
                     if (mssqlFormData?.securityGroup?.sgValue !== value) {
                         const selectedVpcId = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id;
                         if (selectedVpcId) {
-                            const selectedVpcData = mssqlData?.getVPCList?.vpcData.vpcs?.filter(
+                            const selectedVpcData = mssqlData?.getVPCList?.vpcData?.vpcs?.filter(
                                 pervpc => pervpc?.id === selectedVpcId
                             )[0];
                             const selectedSg: any = selectedVpcData?.securityGroups?.filter(
@@ -997,7 +997,7 @@ const Chatbot = () => {
                             dispatch(
                                 setSuggestionBubbles({
                                     list: CHATBOT_WELCOME_CARDS.map(item => {
-                                        return { label: item, value: item };
+                                        return { label: item.label, value: item.value || item.label };
                                     }),
                                     onBubbleClick: async (label?: string, value?: string) => {
                                         dispatch(

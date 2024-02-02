@@ -514,11 +514,14 @@ async function validatePricingRegionParameters(
         await describeRegions(regionsInput, credentialsId);
     } catch (error) {
         logger.error('Failed to describe regions:', JSON.stringify(error));
-        const { Code, message, $metadata } = error as { Code: string; message: string; $metadata: unknown };
-        const { httpStatusCode } = $metadata as { httpStatusCode: number };
 
-        if (Code === INVALID_PARAMETER_VALUE) {
-            throw createError(httpStatusCode, message);
+        if (error?.hasOwnProperty('$metadata')) {
+            const { Code, message, $metadata } = error as { Code: string; message: string; $metadata: unknown };
+            const { httpStatusCode } = $metadata as { httpStatusCode: number };
+
+            if (Code === INVALID_PARAMETER_VALUE) {
+                throw createError(httpStatusCode, message);
+            }
         }
         throw error;
     }

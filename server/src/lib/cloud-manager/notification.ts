@@ -20,7 +20,7 @@ export default async function sendNotification(requestBody: any) {
                 json: requestBody
             });
         } catch (err) {
-            throw createError(500, `Error occured while sending notification, ${err}`);
+            throw createError(500, `Error occurred while sending notification, ${err}`);
         }
     }
 }
