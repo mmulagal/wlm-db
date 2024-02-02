@@ -997,7 +997,7 @@ const Chatbot = () => {
                             dispatch(
                                 setSuggestionBubbles({
                                     list: CHATBOT_WELCOME_CARDS.map(item => {
-                                        return { label: item, value: item };
+                                        return { label: item.label, value: item.value || item.label };
                                     }),
                                     onBubbleClick: async (label?: string, value?: string) => {
                                         dispatch(

@@ -177,7 +177,7 @@ const ChatBox = ({
                             dispatch(
                                 setSuggestionBubbles({
                                     list: CHATBOT_WELCOME_CARDS.map(item => {
-                                        return { label: item, value: item };
+                                        return { label: item.label, value: item.value || item.label };
                                     }),
                                     onBubbleClick: (label?: string, value?: string) => {
                                         sendMsg(label);
