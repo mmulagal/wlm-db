@@ -28,33 +28,7 @@ const TopBarButton = () => {
             {/* <div className={styles.refreshIcon} onClick={() => {refreshPage()}}>
                 <RefreshIcon />                      
             </div> */}
-            <div className={styles.firstRow}>
-                <div className={styles.firstButton}>
-                    <Monitoring />
-                    <Button
-                        variant="text"
-                        onClick={() => {
-                            navigate('../job-monitor');
-                        }}
-                    >
-                        {GENERAL.JOB_MONITORING}
-                    </Button>
-                </div>
-
-                <div className={styles.firstButton}>
-                    <Policy />
-                    <Button
-                        variant="text"
-                        isDisabled
-                        title="Coming soon"
-                        onClick={() => {
-                            navigate('../job-monitor');
-                        }}
-                    >
-                        {GENERAL.POLICY_MANAGEMENT}
-                    </Button>
-                </div>
-            </div>
+            <div className={styles.firstRow}></div>
             <div className={styles.secondColumn}>
                 <Button
                     variant="primary"

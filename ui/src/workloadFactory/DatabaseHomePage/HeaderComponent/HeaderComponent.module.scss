@@ -1,0 +1,81 @@
+.headerComponent {
+    .firstSection {
+        height: 126px;
+        width: 100%;
+        background-color: var(--content-background);
+
+        .firstRow {
+            padding: 32px 40px 0 48px;
+            display: flex;
+            justify-content: space-between;
+            .heading {
+                line-height: unset !important;
+                height: 36px;
+            }
+
+            .rightPart {
+                .firstSelect {
+                    width: 240px;
+                }
+                [class*='Select-module_base'] {
+                    margin-bottom: 0 !important;
+                }
+                [class*='design-system-select__control'] {
+                    border: none !important;
+                    border-bottom: 1px solid var(--field-border) !important;
+                    border-radius: 0 !important;
+                }
+
+                [class*='design-system-select__control--menu-is-open'] {
+                    outline: none;
+                }
+
+                [class*='design-system-select__control']:hover {
+                    outline: none !important;
+                }
+
+                [class*='design-system-select__menu'] {
+                    z-index: 3 !important;
+                }
+            }
+        }
+
+        .secondRow {
+            margin-top: 24px;
+            padding-left: 48px;
+            .overviewTabs {
+                display: flex;
+                gap: 40px;
+
+                .headerPart1 {
+                    width: 91px;
+                    display: flex;
+                    justify-content: center;
+                    height: 34px;
+                    cursor: pointer;
+                }
+
+                .headerPart2 {
+                    width: 82px;
+                    display: flex;
+                    justify-content: center;
+                    height: 34px;
+                    cursor: pointer;
+                }
+
+                .headerPart3 {
+                    width: 101px;
+                    display: flex;
+                    justify-content: center;
+                    height: 34px;
+                    cursor: pointer;
+                }
+
+                .active {
+                    border-bottom: 2px solid var(--blue-70);
+                    color: var(--blue-70);
+                }
+            }
+        }
+    }
+}

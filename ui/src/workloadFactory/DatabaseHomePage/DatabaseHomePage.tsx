@@ -52,12 +52,6 @@ const DatabaseHomePage = () => {
         statusChk && (
             <div className={styles.databaseHome}>
                 <div className={styles.leftSide}>
-                    <div className={styles.topContainer}>
-                        <Typography variant="Regular_24" className={styles.heading}>
-                            {GENERAL.DATABASES}
-                        </Typography>
-                    </div>
-
                     <div className={styles.buttonsContainer}>
                         <TopBarButton />
                     </div>
