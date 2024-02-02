@@ -93,10 +93,11 @@ export const GENERAL = {
     STEP_TWO: 'Option 2:',
     ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
-    CREATE_PERMISSION_ERROR:
-        ['Workload Factory is unable to validate sufficient permissions. Redirect to ',
+    CREATE_PERMISSION_ERROR: [
+        'Workload Factory is unable to validate sufficient permissions. Redirect to ',
         'AWS CloudFormation',
-        ' to complete this task. Ensure that you have the CloudFormation '],
+        ' to complete this task. Ensure that you have the CloudFormation '
+    ],
     CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
@@ -258,7 +259,7 @@ export const GENERAL = {
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
     USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example:',
-    USERNAME_EXAMPLE: '"John Doe"',
+    USERNAME_EXAMPLE: '"johnDoe"',
     USERNAME_TOOLTIP4: 'The user name must contain at most 20 alphanumeric characters.',
 
     PASSWORD_MIN_LENGTH_8: 'Password must be atleast 8 characters long',
