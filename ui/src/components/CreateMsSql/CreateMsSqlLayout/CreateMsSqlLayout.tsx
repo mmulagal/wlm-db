@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import styles from './CreateMsSqlLayout.module.scss';
 import DeploymentTabs from './DeploymentTabs/DeploymentTabs';
 import MSSqlServer from '../MSSqlServer/MSSqlServer';
@@ -28,9 +28,6 @@ const CreateMsSqlLayout = ({ selectedTab, setSelectedTab }: CreateMsSqlLayoutPro
                     if (tab === 'wizard' && selectedTab === 'chatbot') {
                         dispatch(setMovingFromChatbot(true));
                         dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
-                        setTimeout(() => {
-                            dispatch(setMovingFromChatbot(false));
-                        }, 2000);
                     }
                     setSelectedTab(tab);
                 }}
