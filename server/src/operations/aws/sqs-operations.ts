@@ -661,6 +661,15 @@ async function processCloudFormationMessages() {
                                                 endTime: Date.now()
                                             });
 
+                                            // Update master job with failed status
+                                            await modifyMasterJobStatus(
+                                                accountId,
+                                                trackdatabaseType,
+                                                stackName,
+                                                JOBSTATUS.FAILED,
+                                                messageTimestamp
+                                            );
+
                                             // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
                                             // const notificationData = {
                                             //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
