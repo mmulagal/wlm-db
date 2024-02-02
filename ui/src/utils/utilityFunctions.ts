@@ -855,7 +855,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         params.fsxPassword = payload.fsxN.fsxNPassword;
     }
     if (payload?.throughput?.value) {
-        params.fsxVolThroughput = payload.throughput.value.split(' ')[0];
+        const throughputVal = payload.throughput.value.split(' ')[0];
+        params.fsxVolThroughput = throughputVal ? parseInt(throughputVal) : '';
     }
     if (payload?.securityGroup?.selectedExistingSecurityGroup?.value) {
         params.ontapSgGroupId = payload.securityGroup.selectedExistingSecurityGroup.value;
