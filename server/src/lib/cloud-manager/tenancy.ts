@@ -57,7 +57,7 @@ async function registerServiceResource(resource: ServiceResourceRequest) {
             json: resource
         });
     } catch (err) {
-        throw createError(500, `Error occured while register service resource, ${err}`);
+        throw createError(500, `Error occurred while register service resource, ${err}`);
     }
 }
 
@@ -90,7 +90,7 @@ async function getTenancyResourcesByType(resourceType: string) {
                 }[]
             >();
     } catch (err) {
-        throw createError(500, `Error occured while getting resoureces, ${err}`);
+        throw createError(500, `Error occurred while getting resoureces, ${err}`);
     }
 }
 
@@ -127,7 +127,7 @@ async function removeResource(resourceIdentifier: string) {
             }
         );
     } catch (err) {
-        throw createError(500, `Error occured while deleting resoureces, ${err}`);
+        throw createError(500, `Error occurred while deleting resoureces, ${err}`);
     }
 }
 
