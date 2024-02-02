@@ -213,7 +213,7 @@ async function modifyMasterJobStatus(
         }
     }
 
-    logger.info('Update job to status failed:', masterJob?.id, masterJobName);
+    logger.info('Update job to status :', masterJob?.id, masterJobName, jobStatus);
     const response = await updateJobDetails(accountId, masterJob.id, {
         status: jobStatus,
         endTime: jobStatus !== JOBSTATUS.IN_PROGRESS ? new Date(timestamp).valueOf() : undefined,
@@ -592,33 +592,44 @@ async function processCloudFormationMessages() {
                                             ) {
                                                 // If parent stack is not already marked CREATE_FAILED, it could be that
                                                 // user has initiated stack deletion
+
+                                                // DBS-1929 : Job monitoring says "COMPLETE", eventough the STACK is failed and rolledback
+                                                let masterJobStatus: JOBSTATUS =
+                                                    logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE
+                                                        ? JOBSTATUS.COMPLETED
+                                                        : JOBSTATUS.IN_PROGRESS;
+                                                const masterJobName = `${trackSqlDeploymentType} deployment with stack ${stackName}`;
+                                                const masterJob = await getMatchingMasterJob(accountId, masterJobName);
+                                                if (masterJob) {
+                                                    const subJobs = await listJobs(
+                                                        accountId,
+                                                        masterJob.id,
+                                                        undefined,
+                                                        undefined
+                                                    );
+                                                    if (isEmpty(subJobs)) {
+                                                        masterJobStatus = JOBSTATUS.FAILED;
+                                                    }
+                                                }
+
+                                                // Update master job with failed status
+                                                await modifyMasterJobStatus(
+                                                    accountId,
+                                                    trackdatabaseType,
+                                                    stackName,
+                                                    masterJobStatus,
+                                                    messageTimestamp
+                                                );
+
                                                 if (logicalResourceId === TRACK_STATUS_CUSTOM_RESOURCE) {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.DELETE_COMPLETE,
                                                         endTime: Date.now()
                                                     });
-
-                                                    // Update master job with failed status
-                                                    await modifyMasterJobStatus(
-                                                        accountId,
-                                                        trackdatabaseType,
-                                                        stackName,
-                                                        JOBSTATUS.COMPLETED,
-                                                        messageTimestamp
-                                                    );
                                                 } else {
                                                     await updateDeployment(accountId, masterStackDeployment.id, {
                                                         deploymentStatus: DEPLOYMENT_STATUS.DELETE_IN_PROGRESS
                                                     });
-
-                                                    // Update master job with failed status
-                                                    await modifyMasterJobStatus(
-                                                        accountId,
-                                                        trackdatabaseType,
-                                                        stackName,
-                                                        JOBSTATUS.IN_PROGRESS,
-                                                        messageTimestamp
-                                                    );
                                                 }
 
                                                 // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
