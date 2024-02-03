@@ -89,14 +89,14 @@ async function getSqsMessages(region: string, queueUrl: string) {
 }
 
 async function getMatchingMasterStackDeployment(stackName: string) {
-    let [masterStackDeployment] = await getDeployments(undefined, undefined, stackName);
-    if (masterStackDeployment) {
-        return masterStackDeployment;
-    }
     const matchingMasterStack = stackName.match(MASTER_STACK_NAME_PATTERN);
     if (matchingMasterStack) {
         const [, masterStackName] = matchingMasterStack;
-        [masterStackDeployment] = await getDeployments(undefined, undefined, masterStackName);
+        const [masterStackDeployment] = await getDeployments(undefined, undefined, masterStackName);
+        return masterStackDeployment;
+    }
+    const [masterStackDeployment] = await getDeployments(undefined, undefined, stackName);
+    if (masterStackDeployment) {
         return masterStackDeployment;
     }
     logger.info('No matching master stack found for stack ', stackName);
