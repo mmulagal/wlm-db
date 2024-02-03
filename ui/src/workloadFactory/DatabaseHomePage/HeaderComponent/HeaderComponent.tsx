@@ -1,22 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
 import { SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { generateOptionType, getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import Inventory from '../../Inventory/Inventory';
+import { useDispatch } from 'react-redux';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 
 const HeaderComponent = () => {
+    const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState('Dashboard');
+    const [currentTime, setCurrentTime] = useState('');
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
+        dispatch(setSelectedHeaderTab(value));
     };
+
+    useEffect(() => {
+        setCurrentTime(getCurrentDateTime());
+    }, []);
 
     const credentialData = [
         {
@@ -78,6 +87,10 @@ const HeaderComponent = () => {
         });
         return options;
     }, [regionData]);
+
+    const refreshPage = () => {
+        setCurrentTime(getCurrentDateTime());
+    };
     return (
         <div className={styles.headerComponent}>
             <div className={styles.firstSection}>
@@ -114,11 +127,11 @@ const HeaderComponent = () => {
                         <div className={styles.separator} />
 
                         <div className={styles.refresh}>
-                            <div className={styles.refreshIcon}>
+                            <div className={styles.refreshIcon} onClick={refreshPage}>
                                 <RefreshIcon />
                             </div>
                             <Typography className={styles.date} variant="Regular_14">
-                                January 30, 2024, 00:00:00
+                                {currentTime}
                             </Typography>
                         </div>
                     </div>
