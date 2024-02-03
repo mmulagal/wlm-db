@@ -855,7 +855,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         params.fsxPassword = payload.fsxN.fsxNPassword;
     }
     if (payload?.throughput?.value) {
-        params.fsxVolThroughput = payload.throughput.value.split(' ')[0];
+        const throughputVal = payload.throughput.value.split(' ')[0];
+        params.fsxVolThroughput = throughputVal ? parseInt(throughputVal) : '';
     }
     if (payload?.securityGroup?.selectedExistingSecurityGroup?.value) {
         params.ontapSgGroupId = payload.securityGroup.selectedExistingSecurityGroup.value;
@@ -882,7 +883,7 @@ export const getChatbotParamsFromPayload = (payload: any) => {
     if (payload?.activeDirectory?.scenarioType) {
         params.adScenarioType = payload.activeDirectory.scenarioType;
     }
-    params.enableCloudWatch = payload.cloudWatch || false;
+    params.enableCloudWatch = true;
     return params;
 };
 
@@ -973,15 +974,19 @@ export const createJobMonitorCSV = (array: any, keys: any, headers: any, result:
         keys.map((key: string) => {
             //Goes Through Each Object value
             if (key && key !== '') {
+                let value = item[key] ? String(item[key]) : '';
+                if (value && value.includes(',')) {
+                    value = '"' + value + '"';
+                }
                 if (key === 'startTime' || key === 'endTime') {
-                    result += item[key] ? formatDateWithTime(item[key]).replace(',', '') + ',' : 'N/A,';
-                } else if (key === 'name' && item[key]) {
-                    result += item[key].split(';href')[0] + ',';
-                } else if (key === 'status' && item[key]) {
-                    result += jobMonitoringStatusMapping(item[key]) + ',';
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                } else if (key === 'name' && value) {
+                    result += value.split(';href')[0] + ',';
+                } else if (key === 'status' && value) {
+                    result += jobMonitoringStatusMapping(value) + ',';
                 } else {
-                    if (item[key]) {
-                        result += item[key] + ',';
+                    if (value) {
+                        result += value + ',';
                     } else {
                         result += ' ,';
                     }

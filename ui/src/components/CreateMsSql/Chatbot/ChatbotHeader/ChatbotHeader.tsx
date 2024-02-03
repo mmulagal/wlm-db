@@ -10,6 +10,7 @@ import {
     setSuggestionBubbles
 } from '../../../../store/chatbot/chatbotSlice';
 import { getChatbotParamsFromPayload } from '../../../../utils/utilityFunctions';
+import { setCloudWatch } from '../../../../store/mssql/mssqlFormSlice';
 
 type ChatbotHeaderPropTypes = {
     mapParamsToPayload: (paramObj: any) => void;
@@ -26,6 +27,7 @@ const ChatbotHeader = ({ mapParamsToPayload }: ChatbotHeaderPropTypes) => {
             defaultObj[key] = null;
         });
         mapParamsToPayload(defaultObj);
+        dispatch(setCloudWatch(true));
         dispatch(setCurrentIntent(''));
         dispatch(setIsWizardTouched(false));
         dispatch(setMessages([]));
