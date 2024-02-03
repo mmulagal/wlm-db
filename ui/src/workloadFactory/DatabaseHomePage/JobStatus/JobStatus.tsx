@@ -1,14 +1,16 @@
 import { FlashingDotsLoader, Typography } from '@netapp/design-system';
-import { useNavigate } from 'react-router-dom';
 import styles from './JobStatus.module.scss';
 import JobDoughnutChart from './JobDoughnut/JobDoughnutChart';
 import { ReactComponent as JM_ARROW } from '../../../assets/ic_arrow_right_JM.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import { useDispatch } from 'react-redux';
 
 const JobStatus = () => {
     const { jobsSummaryData, jobsSummaryLoading } = useAppSelector(state => state.databaseHome.getJobsSummary);
-    const navigate = useNavigate();
+
+    const dispatch = useDispatch();
 
     return (
         <div className={styles.jobStatus}>
@@ -23,7 +25,7 @@ const JobStatus = () => {
                     <div
                         className={styles.buttonContainer}
                         onClick={() => {
-                            navigate('../job-monitor');
+                            dispatch(setSelectedHeaderTab('Job monitoring'));
                         }}
                     >
                         <Typography variant="Regular_14" style={{ lineHeight: 'unset' }} className={styles.buttonStyle}>

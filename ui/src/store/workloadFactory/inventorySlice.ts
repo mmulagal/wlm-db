@@ -2,7 +2,6 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 const initialInventoryState: any = {
     selectedInventoryTab: 'Managed Hosts',
-
     selectedHeaderTab: 'Dashboard'
 };
 

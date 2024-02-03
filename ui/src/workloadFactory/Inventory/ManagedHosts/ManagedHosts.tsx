@@ -23,13 +23,14 @@ import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 import DatabaseHosts from '../databaseHosts.json';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const databaseJobsData: any[] = [];
-    const databaseHostsList : any[] = DatabaseHosts?.items;
+    const databaseHostsList: any[] = DatabaseHosts?.items;
 
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
@@ -128,17 +129,17 @@ const ManagedHosts = () => {
                                     setOpenedRow(null);
 
                                     if (menuId === 'viewOverview') {
+                                        dispatch(setSelectedHeaderTab('Overview'));
                                         dispatch(selectedTabSelection('Overview'));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
-                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'viewDatabaseList') {
+                                        dispatch(setSelectedHeaderTab('Overview'));
                                         dispatch(selectedTabSelection('Database list'));
                                         dispatch(updateResourceId(rowData.id));
                                         dispatch(resetWorkloadFactoryResourceData());
-                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'remove') {
@@ -232,17 +233,17 @@ const ManagedHosts = () => {
                     protectedChk = true;
                 }
 
-                let protectionDbCount = 0
+                let protectionDbCount = 0;
                 let protectionPercent = 0;
-                if (
-                    protectionData?.isAwsBackUpEnabled ||
-                    protectionData?.isFsxOntapSnapshotsEnabled
-                ) {
+                if (protectionData?.isAwsBackUpEnabled || protectionData?.isFsxOntapSnapshotsEnabled) {
                     protectionDbCount = totalDbCount;
                     protectionPercent = 100;
                 } else if (protectionData?.isSqlNativeEnabled) {
                     protectionDbCount = protectionData?.protectedDatabases || 0;
-                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 0;
+                    protectionPercent =
+                        totalDbCount > 0 && protectionDbCount <= totalDbCount
+                            ? (protectionDbCount / totalDbCount) * 100
+                            : 0;
                 }
 
                 return (
@@ -251,12 +252,17 @@ const ManagedHosts = () => {
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
                                     <Typography variant="Regular_14">
-                                        {protectedChk ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
+                                        {protectedChk
+                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
+                                            : GENERAL.NOT_PROTECTED}
                                     </Typography>
                                 </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionDbCount + GENERAL.PROTECTION_TOOLTIP[0] + totalDbCount + GENERAL.PROTECTION_TOOLTIP[1]}
+                                        {protectionDbCount +
+                                            GENERAL.PROTECTION_TOOLTIP[0] +
+                                            totalDbCount +
+                                            GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
                             </div>
@@ -391,7 +397,7 @@ const ManagedHosts = () => {
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
-        isLazyLoading: false,
+        isLazyLoading: false
         // selectionType: SELECTION_TYPE.MULTIPLE,
     });
 
