@@ -12,7 +12,11 @@ type SC = {
 const SquareComponent = ({ value, color, text, boldValue }: SC) => {
     return (
         <div className={styles.container}>
-            {!boldValue && <Typography variant="Regular_14">{value}</Typography>}
+            {!boldValue && (
+                <Typography className={styles.valueText} variant="Regular_14">
+                    {value}
+                </Typography>
+            )}
             {boldValue && <Typography variant="Semibold_14">{value}</Typography>}
             <div className={styles.bottomRow}>
                 <div className={styles.square} style={{ backgroundColor: color }} />

@@ -35,7 +35,7 @@ const JobMonitoring = () => {
 
     const setTimeRange = (selectedTime: string) => {
         let days = 1;
-        if(selectedTime === 'Last 7 days') {
+        if (selectedTime === 'Last 7 days') {
             days = 7;
         } else if (selectedTime === 'Last 14 days') {
             days = 14;
@@ -61,7 +61,7 @@ const JobMonitoring = () => {
 
     return (
         <div className={styles.jobMonitoring}>
-            <div className={styles.breadCrumb}>
+            {/* <div className={styles.breadCrumb}>
                 <BreadCrumbs
                     items={[
                         {
@@ -76,12 +76,13 @@ const JobMonitoring = () => {
                         }
                     ]}
                 />
-            </div>
+            </div> */}
 
             <div className={styles.headingContainer}>
-                <Typography variant="Regular_24" className={styles.heading}>
+                {/* <Typography variant="Regular_24" className={styles.heading}>
                     {GENERAL.JOB_MONITORING}
-                </Typography>
+                </Typography> */}
+                <div />
 
                 <div className={styles.selectContainer}>
                     <SelectField
