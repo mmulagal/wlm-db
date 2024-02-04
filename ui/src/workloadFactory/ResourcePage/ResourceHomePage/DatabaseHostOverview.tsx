@@ -17,6 +17,7 @@ import {
 } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../../utils/appConstants';
 import { resetDBHomePageState } from '../../../utils/utilityFunctions';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
@@ -71,10 +72,10 @@ const DatabaseHostOverview = () => {
                 <BreadCrumbs
                     items={[
                         {
-                            title: GENERAL.DATABASES,
+                            title: 'Inventory managed hosts',
                             onClick: () => {
                                 resetDBHomePageState(dispatch);
-                                navigate('../databases');
+                                dispatch(setSelectedHeaderTab('Inventory'));
                             }
                         },
                         {

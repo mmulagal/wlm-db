@@ -2,7 +2,9 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 const initialInventoryState: any = {
     selectedInventoryTab: 'Managed Hosts',
-    selectedHeaderTab: 'Dashboard'
+    selectedHeaderTab: 'Dashboard',
+    detectManageUserName: '',
+    detectManagePassword: ''
 };
 
 const inventorySlice = createSlice({
@@ -15,10 +17,17 @@ const inventorySlice = createSlice({
 
         setSelectedHeaderTab: (state, action: PayloadAction<any>) => {
             state.selectedHeaderTab = action.payload;
+        },
+        setDetectManageUserName: (state, action: PayloadAction<any>) => {
+            state.detectManageUserName = action.payload;
+        },
+        setDetectManagePassword: (state, action: PayloadAction<any>) => {
+            state.detectManagePassword = action.payload;
         }
     }
 });
 
-export const { setSelectedInventoryTab, setSelectedHeaderTab } = inventorySlice.actions;
+export const { setSelectedInventoryTab, setSelectedHeaderTab, setDetectManageUserName, setDetectManagePassword } =
+    inventorySlice.actions;
 
 export default inventorySlice;
