@@ -247,15 +247,17 @@ const MSSQL_ENV_PRE_CONFIG = {
         [WL_INSTANCE_TYPE]: M5_2XL,
         [FSX_DEPLOYMENT_MODE]: MULTI_AZ,
         [DB_SIZE]: 500,
-        [SQL_DEPLOYMENT_MODE]: FCI
+        [SQL_DEPLOYMENT_MODE]: FCI,
+        [ENABLE_CLOUD_WATCH]: true
     },
     [DEV]: {
         [WL_INSTANCE_TYPE]: M5_XL,
         [FSX_DEPLOYMENT_MODE]: SINGLE_AZ,
         [DB_SIZE]: 100,
-        [SQL_DEPLOYMENT_MODE]: STANDALONE
+        [SQL_DEPLOYMENT_MODE]: STANDALONE,
+        [ENABLE_CLOUD_WATCH]: true
     },
-    [CUSTOM]: {}
+    [CUSTOM]: { [ENABLE_CLOUD_WATCH]: true }
 };
 
 const KEY_LABEL_MAP = {

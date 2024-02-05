@@ -1,5 +1,30 @@
 .undetectedHosts {
-    display: flex;
-    gap: 24px;
     margin: 0 120px;
+    .table {
+        width: 1607px;
+
+        .detectManage {
+            width: 192px;
+            height: 32px;
+            border-radius: 32px;
+            border: 1px solid var(--Light-Buttons-button-secondary, #0067c5);
+            cursor: pointer;
+
+            .textStyle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 2px;
+                color: var(--Light-Buttons-button-secondary, #0067c5);
+            }
+        }
+
+        .detectManage:hover {
+            border: 1px solid var(--Light-Buttons-button-secondary-hover, #1e4a93);
+
+            .textStyle {
+                color: var(--Light-Buttons-button-secondary-hover, #1e4a93);
+            }
+        }
+    }
 }

@@ -1,22 +1,34 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
 import { SelectField, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
-import { generateOptionType } from '../../../utils/utilityFunctions';
+import { generateOptionType, getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import Inventory from '../../Inventory/Inventory';
+import { useDispatch } from 'react-redux';
+import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
+import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 
 const HeaderComponent = () => {
+    const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState('Dashboard');
+    const [currentTime, setCurrentTime] = useState('');
     const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
+    const menuSelected = useAppSelector(state => state.inventory.menuSelected);
+    const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
+        dispatch(setSelectedHeaderTab(value));
     };
+
+    useEffect(() => {
+        setCurrentTime(getCurrentDateTime());
+    }, []);
 
     const credentialData = [
         {
@@ -78,6 +90,10 @@ const HeaderComponent = () => {
         });
         return options;
     }, [regionData]);
+
+    const refreshPage = () => {
+        setCurrentTime(getCurrentDateTime());
+    };
     return (
         <div className={styles.headerComponent}>
             <div className={styles.firstSection}>
@@ -114,22 +130,26 @@ const HeaderComponent = () => {
                         <div className={styles.separator} />
 
                         <div className={styles.refresh}>
-                            <div className={styles.refreshIcon}>
+                            <div className={styles.refreshIcon} onClick={refreshPage}>
                                 <RefreshIcon />
                             </div>
                             <Typography className={styles.date} variant="Regular_14">
-                                January 30, 2024, 00:00:00
+                                {currentTime}
                             </Typography>
                         </div>
                     </div>
                 </div>
 
                 <div className={styles.secondRow}>
-                    <div className={selectedTab === 'Dashboard' ? `${styles.overviewTabs}` : `${styles.overviewTabs}`}>
+                    <div
+                        className={
+                            selectedHeaderTab === 'Dashboard' ? `${styles.overviewTabs}` : `${styles.overviewTabs}`
+                        }
+                    >
                         <Typography
                             variant="Regular_14"
                             className={
-                                selectedTab === 'Dashboard'
+                                selectedHeaderTab === 'Dashboard'
                                     ? `${styles.headerPart1} ${styles.active}`
                                     : `${styles.headerPart1}`
                             }
@@ -140,7 +160,7 @@ const HeaderComponent = () => {
                         <Typography
                             variant="Regular_14"
                             className={
-                                selectedTab === 'Inventory'
+                                selectedHeaderTab === 'Inventory' || selectedHeaderTab === 'Overview'
                                     ? `${styles.headerPart2} ${styles.active}`
                                     : `${styles.headerPart2}`
                             }
@@ -152,7 +172,7 @@ const HeaderComponent = () => {
                         <Typography
                             variant="Regular_14"
                             className={
-                                selectedTab === 'Job monitoring'
+                                selectedHeaderTab === 'Job monitoring'
                                     ? `${styles.headerPart3} ${styles.active}`
                                     : `${styles.headerPart3}`
                             }
@@ -163,9 +183,10 @@ const HeaderComponent = () => {
                     </div>
                 </div>
             </div>
-            {selectedTab === 'Dashboard' && <DatabaseHomePage />}
-            {selectedTab === 'Inventory' && <Inventory />}
-            {selectedTab === 'Job monitoring' && <JobMonitoring />}
+            {selectedHeaderTab === 'Dashboard' && <DatabaseHomePage />}
+            {selectedHeaderTab === 'Inventory' && <Inventory />}
+            {selectedHeaderTab === 'Job monitoring' && <JobMonitoring />}
+            {selectedHeaderTab === 'Overview' && <DatabaseHostOverview />}
         </div>
     );
 };
