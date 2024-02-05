@@ -2,7 +2,6 @@
     display: flex;
     gap: 24px;
     padding: 0 120px;
-    
 
     .jobMenuPopover {
         width: fit-content;
@@ -13,11 +12,11 @@
         width: 1607px;
     }
 
-    .tableScroll {
-        [class*='Table-module_scroll'] {
-            width: 1808px !important;
-        }
-    }
+    // .tableScroll {
+    //     [class*='Table-module_scroll'] {
+    //         width: 1808px !important;
+    //     }
+    // }
 
     .colText {
         display: flex;

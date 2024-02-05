@@ -17,7 +17,11 @@ import {
     addDatabaseJobs,
     selectedTabSelection
 } from '../../../store/workloadFactory/databaseHomeSlice';
-import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
+import {
+    databaseTableSort,
+    formatFractionalNumber,
+    initialColStateManagedHosts
+} from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
@@ -105,60 +109,6 @@ const ManagedHosts = () => {
         );
     };
 
-    const lastColDetails = () => {
-        return {
-            id: '12',
-            Header: '',
-            accessor: '',
-            renderCell: (cellData: any, rowData: any) => {
-                return (
-                    <div className={styles.jobMenuPopover}>
-                        <MenuPopover
-                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems(rowData)}
-                            toggleMenu={(toggleType: string, menuId: string) => {
-                                if (toggleType === 'close') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-                                } else if (toggleType === 'open') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(rowData.id);
-                                    menuOpenedRowDetail.current = rowData.id;
-                                } else if (toggleType === 'selectedOption') {
-                                    menuOpenedRowDetail.current = null;
-                                    setOpenedRow(null);
-
-                                    if (menuId === 'viewOverview') {
-                                        dispatch(setSelectedHeaderTab('Overview'));
-                                        dispatch(selectedTabSelection('Overview'));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(resetWorkloadFactoryResourceData());
-                                    }
-
-                                    if (menuId === 'viewDatabaseList') {
-                                        dispatch(setSelectedHeaderTab('Overview'));
-                                        dispatch(selectedTabSelection('Database list'));
-                                        dispatch(updateResourceId(rowData.id));
-                                        dispatch(resetWorkloadFactoryResourceData());
-                                    }
-
-                                    if (menuId === 'remove') {
-                                        handleRemoveDialog(rowData);
-                                    }
-                                }
-                            }}
-                            CustomMenu={undefined}
-                            disabledText={undefined}
-                        />
-                    </div>
-                );
-            },
-            showHide: true,
-            width: '56px',
-            isSticky: true
-        };
-    };
-
     const notAvailable = () => {
         return (
             <Typography variant="Regular_13" className={styles.colText}>
@@ -209,7 +159,7 @@ const ManagedHosts = () => {
             id: '2',
             Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
             accessor: 'topology.fileSystemType',
-            width: '184px',
+            width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
@@ -220,7 +170,7 @@ const ManagedHosts = () => {
             Header: GENERAL.DB_HOST_PROTECTION,
             accessor: 'protectionText',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
                 const totalDbCount = rowData?.databaseCount || 0;
@@ -276,7 +226,7 @@ const ManagedHosts = () => {
             id: '4',
             Header: GENERAL.DB_HOST_PERFORMANCE,
             accessor: 'performanceText',
-            width: '184px',
+            width: '212px',
             filterOptions: 'auto',
             renderCell: (cellData: any) => {
                 return (
@@ -296,7 +246,7 @@ const ManagedHosts = () => {
             Header: GENERAL.DB_HOST_STORAGE_SAVINGS,
             accessor: 'storageSavingsText',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: any) => {
                 return (
                     <>
@@ -315,7 +265,7 @@ const ManagedHosts = () => {
             Header: GENERAL.DB_HOST_ESTIMATED_COST,
             accessor: 'totalCost',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: any, rowData: any) => {
                 const costData = rowData?.estimatedUsageCost;
                 const totalCost = costData?.compute + costData?.storage + costData?.connectivity + costData?.others;
@@ -342,7 +292,7 @@ const ManagedHosts = () => {
             Header: 'Allocated Capacity',
             accessor: 'topology.allocatedCapacity',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -352,7 +302,7 @@ const ManagedHosts = () => {
             Header: 'Instance name',
             accessor: 'topology.istanceName',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -362,7 +312,7 @@ const ManagedHosts = () => {
             Header: 'VPC',
             accessor: 'topology.vpc',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -372,7 +322,7 @@ const ManagedHosts = () => {
             Header: 'Availability',
             accessor: 'topology.availability',
             isSortable: true,
-            width: '184px',
+            width: '212px',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
@@ -382,12 +332,11 @@ const ManagedHosts = () => {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
             accessor: 'topology.serverInstallationMode',
             isSortable: true,
-            width: '204px',
+            width: '212px',
             renderCell: (cellData: string) => {
                 return cellData || GENERAL.NOT_AVAILABLE;
             }
-        },
-        lastColDetails()
+        }
     ];
 
     const tableProps = useTable({
@@ -397,6 +346,53 @@ const ManagedHosts = () => {
         pageSize: pageSize,
         selectionType: 'none',
         isHorizontalScroll: true,
+        isManagedColumns: true,
+        manageColumnsProps: {
+            renderCell: (cellData: any, rowData: any) => {
+                return (
+                    <div className={styles.jobMenuPopover}>
+                        <MenuPopover
+                            isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
+                            menuItems={menuItems(rowData)}
+                            toggleMenu={(toggleType: string, menuId: string) => {
+                                if (toggleType === 'close') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+                                } else if (toggleType === 'open') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(rowData.id);
+                                    menuOpenedRowDetail.current = rowData.id;
+                                } else if (toggleType === 'selectedOption') {
+                                    menuOpenedRowDetail.current = null;
+                                    setOpenedRow(null);
+
+                                    if (menuId === 'viewOverview') {
+                                        dispatch(setSelectedHeaderTab('Overview'));
+                                        dispatch(selectedTabSelection('Overview'));
+                                        dispatch(updateResourceId(rowData.id));
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                    }
+
+                                    if (menuId === 'viewDatabaseList') {
+                                        dispatch(setSelectedHeaderTab('Overview'));
+                                        dispatch(selectedTabSelection('Database list'));
+                                        dispatch(updateResourceId(rowData.id));
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                    }
+
+                                    if (menuId === 'remove') {
+                                        handleRemoveDialog(rowData);
+                                    }
+                                }
+                            }}
+                            CustomMenu={undefined}
+                            disabledText={undefined}
+                        />
+                    </div>
+                );
+            }
+        },
+        initialColumnState: initialColStateManagedHosts,
         isLazyLoading: false
         // selectionType: SELECTION_TYPE.MULTIPLE,
     });
