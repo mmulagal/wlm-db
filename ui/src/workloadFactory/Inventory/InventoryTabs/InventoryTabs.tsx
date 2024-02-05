@@ -67,7 +67,7 @@ const InventoryTabs = () => {
                     }
                     onClick={() => handleClick('Undetected Hosts')}
                 >
-                    Undetected hosts (8)
+                    Unidentifiable hosts (8)
                 </Typography>
             </div>
         </div>

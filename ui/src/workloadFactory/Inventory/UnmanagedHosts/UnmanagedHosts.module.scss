@@ -4,29 +4,36 @@
     padding: 0 120px;
 
     .manageHostCol {
-        display: flex;
         width: 182px;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .manageHostButton {
-        display: flex;
-        padding: 4px 16px;
-        justify-content: center;
-        flex: 1 0 0;
+        height: 32px;
         border-radius: 32px;
         border: 1px solid var(--blue-70);
+        cursor: pointer;
 
-        .manageColText {
+        .textStyle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2px;
             color: var(--blue-70);
         }
 
         .loading {
+            display: flex;
             justify-content: center;
+            align-items: center;
             width: 20px;
             height: 20px;
-            margin-top: 5px;
+            margin-top:5px;
+            margin-left: 40%;
+        }
+    }
+
+    .manageHostCol:hover {
+        border: 1px solid var(--blue-80);
+
+        .textStyle {
+            color: var(--blue-80);
         }
     }
 
