@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux';
 import {
     databaseTableSort,
     formatFractionalNumber,
+    formatSizeOnePrecision,
     initialColStateManagedHosts
 } from '../../../utils/utilityFunctions';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
@@ -36,25 +37,25 @@ const UnmanagedHosts = () => {
         );
     };
 
-    const manageHost = (loadId: string) => {
-        if (!manageLoading[loadId]) {
-            manageLoading[loadId] = true;
+    const manageHost = (manageRow: any) => {
+        if (!manageLoading[manageRow?.id]) {
+            manageLoading[manageRow?.id] = true;
         }
         setManageLoading(manageLoading);
         setTimeout(() => {
-            stopLoading(loadId);
+            stopLoading(manageRow);
         }, 3000);
     };
 
-    const stopLoading = (loadId: string) => {
-        if (manageLoading[loadId]) {
-            manageLoading[loadId] = false;
+    const stopLoading = (manageRow: any) => {
+        if (manageLoading[manageRow?.id]) {
+            manageLoading[manageRow?.id] = false;
         }
         setManageLoading(manageLoading);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
-                message: 'Host <Host name> successfully moved to managed hosts tab'
+                message: `Host "${manageRow?.name}" successfully moved to managed hosts tab`
             })
         );
     };
@@ -142,13 +143,6 @@ const UnmanagedHosts = () => {
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
-                                <div className={styles.protection}>
-                                    <Typography variant="Regular_14">
-                                        {protectedChk
-                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
-                                            : GENERAL.NOT_PROTECTED}
-                                    </Typography>
-                                </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
                                         {protectionDbCount +
@@ -157,6 +151,13 @@ const UnmanagedHosts = () => {
                                             GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
+                                <div className={styles.protection}>
+                                    <Typography variant="Regular_14">
+                                        {protectedChk
+                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
+                                            : GENERAL.NOT_PROTECTED}
+                                    </Typography>
+                                </div>
                             </div>
                         )}
                         {!protectionData && notAvailable()}
@@ -232,31 +233,52 @@ const UnmanagedHosts = () => {
         {
             id: '7',
             Header: 'Allocated Capacity',
-            accessor: 'topology.allocatedCapacity',
+            accessor: 'allocatedCapacity',
             isSortable: true,
             width: '194px',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return cellData ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE;
             }
         },
         {
             id: '8',
             Header: 'Instance name',
-            accessor: 'topology.istanceName',
+            accessor: 'topology.ec2Details',
             isSortable: true,
             width: '235px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: any) => {
+                const instance = cellData ? cellData[0] : null;
+                return (
+                    <>
+                        {instance && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>ID: {instance?.id}</TooltipInfo>
+                                <Typography variant="Regular_14">{instance?.name}</Typography>
+                            </div>
+                        )}
+                        {!instance && notAvailable()}
+                    </>
+                );
             }
         },
         {
             id: '9',
             Header: 'VPC',
-            accessor: 'topology.vpc',
+            accessor: 'topology.vpcId',
             isSortable: true,
             width: '235px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: any) => {
+                return (
+                    <>
+                        {cellData && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData}</Typography>
+                            </div>
+                        )}
+                        {!cellData && notAvailable()}
+                    </>
+                );
             }
         },
         {
@@ -265,8 +287,18 @@ const UnmanagedHosts = () => {
             accessor: 'topology.availability',
             isSortable: true,
             width: '235px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: any) => {
+                return (
+                    <>
+                        {cellData && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.type}</Typography>
+                            </div>
+                        )}
+                        {!cellData && notAvailable()}
+                    </>
+                );
             }
         },
         {
@@ -293,21 +325,15 @@ const UnmanagedHosts = () => {
             width: '182px',
             renderCell: (cellData: any, rowData: any) => {
                 return (
-                    <div className={styles.manageHostCol}>
-                        <Button
-                            variant={'secondary'}
-                            className={styles.manageHostButton}
-                            onClick={() => manageHost(rowData?.id)}
-                        >
-                            {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
-                                <Spinner className={styles.loading} />
-                            )}
-                            {(!(rowData?.id in manageLoading) || !manageLoading[rowData?.id]) && (
-                                <Typography variant="Regular_14" className={styles.manageColText}>
-                                    Manage host
-                                </Typography>
-                            )}
-                        </Button>
+                    <div className={styles.manageHostCol} onClick={() => manageHost(rowData)}>
+                        {rowData?.id in manageLoading && manageLoading[rowData?.id] && (
+                            <Spinner className={styles.loading} />
+                        )}
+                        {!manageLoading[rowData?.id] && (
+                            <Typography variant="Regular_14" className={styles.textStyle}>
+                                Manage host
+                            </Typography>
+                        )}
                     </div>
                 );
             }
@@ -334,13 +360,13 @@ const UnmanagedHosts = () => {
             <div className={styles.unmanagedHosts}>
                 <div
                     //  @ts-ignore
-                    className={databaseHostsList?.length ? `${styles.table} ${styles.tableScroll}` : `${styles.table}`}
+                    className={styles.table}
                 >
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}
-                        pluralTitle={GENERAL.DATABASE_HOSTS}
-                        singularTitle={GENERAL.DATABASE_HOST}
+                        pluralTitle="Unmanaged hosts"
+                        singularTitle="Unmanaged host"
                     />
                     <Table
                         {...tableComponentProps}

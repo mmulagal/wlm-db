@@ -20,6 +20,7 @@ import {
 import {
     databaseTableSort,
     formatFractionalNumber,
+    formatSizeOnePrecision,
     initialColStateManagedHosts
 } from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
@@ -204,13 +205,6 @@ const ManagedHosts = () => {
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
-                                <div className={styles.protection}>
-                                    <Typography variant="Regular_14">
-                                        {protectedChk
-                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
-                                            : GENERAL.NOT_PROTECTED}
-                                    </Typography>
-                                </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
                                         {protectionDbCount +
@@ -219,6 +213,13 @@ const ManagedHosts = () => {
                                             GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
+                                <div className={styles.protection}>
+                                    <Typography variant="Regular_14">
+                                        {protectedChk
+                                            ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION
+                                            : GENERAL.NOT_PROTECTED}
+                                    </Typography>
+                                </div>
                             </div>
                         )}
                         {!protectionData && notAvailable()}
@@ -294,31 +295,52 @@ const ManagedHosts = () => {
         {
             id: '7',
             Header: 'Allocated Capacity',
-            accessor: 'topology.allocatedCapacity',
+            accessor: 'allocatedCapacity',
             isSortable: true,
             width: '212px',
             renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+                return cellData ? formatSizeOnePrecision(cellData) : GENERAL.NOT_AVAILABLE;
             }
         },
         {
             id: '8',
             Header: 'Instance name',
-            accessor: 'topology.istanceName',
+            accessor: 'topology.ec2Details',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: any) => {
+                const instance = cellData ? cellData[0] : null;
+                return (
+                    <>
+                        {instance && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>ID: {instance?.id}</TooltipInfo>
+                                <Typography variant="Regular_14">{instance?.name}</Typography>
+                            </div>
+                        )}
+                        {!instance && notAvailable()}
+                    </>
+                );
             }
         },
         {
             id: '9',
             Header: 'VPC',
-            accessor: 'topology.vpc',
+            accessor: 'topology.vpcId',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: any) => {
+                return (
+                    <>
+                        {cellData && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData}</Typography>
+                            </div>
+                        )}
+                        {!cellData && notAvailable()}
+                    </>
+                );
             }
         },
         {
@@ -327,8 +349,18 @@ const ManagedHosts = () => {
             accessor: 'topology.availability',
             isSortable: true,
             width: '212px',
-            renderCell: (cellData: string) => {
-                return cellData || GENERAL.NOT_AVAILABLE;
+            renderCell: (cellData: any) => {
+                return (
+                    <>
+                        {cellData && (
+                            <div className={styles.colText}>
+                                <TooltipInfo onVisibleChange={function noRefCheck() {}}>{cellData?.azList}</TooltipInfo>
+                                <Typography variant="Regular_14">{cellData?.type}</Typography>
+                            </div>
+                        )}
+                        {!cellData && notAvailable()}
+                    </>
+                );
             }
         },
         {
@@ -418,13 +450,13 @@ const ManagedHosts = () => {
             <div className={styles.managedHosts}>
                 <div
                     //  @ts-ignore
-                    className={databaseHostsList?.length ? `${styles.table} ${styles.tableScroll}` : `${styles.table}`}
+                    className={styles.table}
                 >
                     <TableTopBar
                         //@ts-ignore
                         tableProps={tableProps}
-                        pluralTitle={GENERAL.DATABASE_HOSTS}
-                        singularTitle={GENERAL.DATABASE_HOST}
+                        pluralTitle="Managed hosts"
+                        singularTitle="Managed host"
                     />
                     <Table
                         {...tableComponentProps}
