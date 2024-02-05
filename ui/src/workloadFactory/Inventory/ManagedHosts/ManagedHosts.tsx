@@ -23,7 +23,7 @@ import {
     formatSizeOnePrecision,
     initialColStateManagedHosts
 } from '../../../utils/utilityFunctions';
-import { useNavigate } from 'react-router-dom';
+import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
@@ -57,13 +57,15 @@ const ManagedHosts = () => {
             },
             {
                 id: 'viewDatabaseList',
-                displayName: 'View database list',
+                displayName: 'View databases list',
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
                 id: 'observe',
                 displayName: 'Observe',
-                disabled: true
+                disabled: true,
+                tagAdded: true,
+                tag: <ComingSoon />
             }
             // {
             //     id: 'remove',
