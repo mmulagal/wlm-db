@@ -35,7 +35,7 @@ const InventoryHeaderSection = () => {
 
                 <div className={styles.secondPart}>
                     <Typography variant="Semibold_16" className={styles.heading}>
-                        Hosts distribution
+                        Database hosts distribution
                     </Typography>
 
                     <div className={styles.valueArea}>
@@ -53,7 +53,7 @@ const InventoryHeaderSection = () => {
 
                 <div className={styles.secondPart}>
                     <Typography variant="Semibold_16" className={styles.heading}>
-                        Detected host distribution
+                        Detected database hosts distribution
                     </Typography>
 
                     <div className={styles.valueArea}>

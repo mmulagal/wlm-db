@@ -54,7 +54,7 @@ const InventoryChart = () => {
                 <Typography variant="Regular_32" style={{ lineHeight: 'unset' }}>
                     20
                 </Typography>
-                <Typography variant="Regular_14">Hosts</Typography>
+                <Typography variant="Regular_14">Database hosts</Typography>
             </div>
             <canvas ref={ref} id="chart-area" width={196} height={196}></canvas>
         </div>
