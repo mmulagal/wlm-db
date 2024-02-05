@@ -26,15 +26,14 @@ import { useNavigate } from 'react-router-dom';
 import { updateResourceId } from '../../../store/authSlice';
 import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
-import DatabaseHosts from '../databaseHosts.json';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 
 const ManagedHosts = () => {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
-    const databaseJobsData: any[] = [];
-    const databaseHostsList: any[] = DatabaseHosts?.items;
+    const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
+    const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
+    const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
 
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
@@ -61,10 +60,15 @@ const ManagedHosts = () => {
                 disabled: row?.status === STATUS_CONST.UP ? false : true
             },
             {
-                id: 'remove',
-                displayName: 'Remove',
-                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+                id: 'observe',
+                displayName: 'Observe',
+                disabled: true
             }
+            // {
+            //     id: 'remove',
+            //     displayName: 'Remove',
+            //     disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+            // }
         ];
     };
 
@@ -85,7 +89,7 @@ const ManagedHosts = () => {
             removeDatabaseHosts(id).then((data: any) => {
                 if (!data?.error) {
                     dispatch(setRefetchJobSummaryApi(true));
-                    const newList = databaseHostsList?.filter((val: any) => val?.id !== id);
+                    const newList = databaseHostsData?.filter((val: any) => val?.id !== id);
                     dispatch(addDatabaseHosts({ databaseHostsData: newList, databaseHostsLoading: false, undefined }));
                 }
             });
@@ -393,8 +397,7 @@ const ManagedHosts = () => {
             }
         },
         initialColumnState: initialColStateManagedHosts,
-        isLazyLoading: false
-        // selectionType: SELECTION_TYPE.MULTIPLE,
+        isLazyLoading: databaseHostsLoading || databaseJobsLoading
     });
 
     useEffect(() => {
