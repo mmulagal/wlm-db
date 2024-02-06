@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import {
     validateDbSize,
     validateDomain,
@@ -14,7 +15,9 @@ import {
     checkFsxType,
     validateFsx,
     validateCloudWatch,
-    validateTags
+    validateTags,
+    validateDeploymentEnv,
+    validateAdScenarioType
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -53,17 +56,24 @@ import {
     ROUTE_TABLE_2,
     SQL_SERVER_NAME,
     MULTI_AZ,
-    TAGS
+    TAGS,
+    DEPLOYMENT_ENVIRONMENT,
+    ENCRYPTION_KEY,
+    KEY_LABEL_MAP,
+    CHATBOT_UI_PARAMS_FSX,
+    BACKTRACE_MESSAGES
 } from './consts';
 
 const logger = getLogger();
 
 type ValidationResponse = {
     key?: string;
+    label?: string;
     status?: string;
     message?: string;
     allowedValues?: any;
     value?: any;
+    data?: any;
 };
 
 function findChangedKeys(params: Params, oldParams: Params) {
@@ -96,34 +106,70 @@ interface Params {
 async function validateParams(
     params: Params,
     oldParams: Params,
-    schemaParams: any
-): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
+    schemaParams: any,
+    backtraceMessage: string = ''
+): Promise<{ error: ValidationResponse; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
-    let validatedParams: Params = {};
-    const promises = [];
-    const errors: Array<ValidationResponse> = [];
-    for (const reqParam of schemaParams) {
-        if (reqParam.required !== false) {
-            const keys = Object.keys(reqParam);
-            for (const key of keys) {
-                logger.debug('KEY>>>', key, reqParam[key]);
+    const validatedParams: Params = {};
+    // const promises = [];
+    let error: ValidationResponse = {};
 
-                if (Array.isArray(reqParam[key])) {
-                    const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    logger.debug('Response from Recursive Call>>>', recursiveValidationResponse);
-                    validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
-                    if (recursiveValidationResponse?.errors?.length) {
-                        return { errors: recursiveValidationResponse.errors, params: validatedParams };
-                    }
-                } else if (checkIfRequired(reqParam[key].required, params)) {
-                    promises.push(validate(key, params, oldParams, errors, validatedParams));
+    for (const reqParam of schemaParams) {
+        // if (reqParam.required !== false) {
+        const keys = Object.keys(reqParam);
+        for (const key of keys) {
+            logger.debug('KEY>>>', key, reqParam[key]);
+
+            if (checkIfRequired(reqParam[key].required, params)) {
+                const resp = await validate(key, params, oldParams);
+                if ((resp as ValidationResponse)?.status === 'error') {
+                    const currKey = resp.key as string;
+                    delete params[currKey];
+                    delete oldParams[currKey];
+                    delete validatedParams[currKey];
+                    error = resp as ValidationResponse;
+                    error.label = KEY_LABEL_MAP[currKey as keyof typeof KEY_LABEL_MAP];
+                    break;
+                }
+
+                if (resp?.value !== null && resp?.value !== undefined) {
+                    const currKey = resp.key as string;
+                    validatedParams[currKey] = resp.value;
+                    params[currKey] = resp.value;
+                    oldParams[currKey] = resp.value;
+                }
+            }
+        }
+
+        if (!isEmpty(error)) {
+            break;
+        }
+    }
+
+    if (error.allowedValues?.length === 0 && !backtraceMessage) {
+        const { key } = error;
+        for (const obj of CHATBOT_UI_PARAMS_FSX) {
+            if (obj.hasOwnProperty(key as string)) {
+                const { dependsOn } = obj[key as keyof typeof obj] as any;
+                if (dependsOn) {
+                    delete params[dependsOn];
+                    return validateParams(
+                        params,
+                        oldParams,
+                        schemaParams,
+                        BACKTRACE_MESSAGES[key as keyof typeof BACKTRACE_MESSAGES] || ''
+                    );
                 }
             }
         }
     }
-    await Promise.all(promises);
-    return { errors, params: validatedParams };
+
+    if (backtraceMessage) {
+        error.message = backtraceMessage;
+    }
+
+    return { error, params: validatedParams };
 }
 
 function wrapContext(question: string) {
@@ -145,16 +191,10 @@ function checkIfRequired(required: boolean | { key: string; value: string; opera
     return !!required;
 }
 
-async function validate(
-    key: string,
-    params: Params,
-    oldParams: Params,
-    errors: Array<ValidationResponse>,
-    validatedParams: Params
-) {
+async function validate(key: string, params: Params, oldParams: Params) {
     const shouldSkip = params?.[key] && oldParams?.[key] && oldParams[key] === params[key];
     logger.debug('skip check', shouldSkip);
-    let response;
+    let response: ValidationResponse = { key, value: params[key] };
     if (!shouldSkip) {
         switch (key) {
             case CREDENTIALS_ID: {
@@ -175,6 +215,7 @@ async function validate(
             case ROUTE_TABLE_2: {
                 response = await validateVpcId(
                     params[CREDENTIALS_ID],
+                    params[SQL_DEPLOYMENT_MODE],
                     params[REGION],
                     params[VPC_ID],
                     params[AZ_1],
@@ -197,7 +238,10 @@ async function validate(
                 response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
-            case AD_SCENARIO_TYPE:
+            case AD_SCENARIO_TYPE: {
+                response = validateAdScenarioType(params[key], key);
+                break;
+            }
             case DNS_IP:
             case DOMAIN_DNS: {
                 response = await validateDomain(
@@ -205,6 +249,7 @@ async function validate(
                     params[REGION],
                     params[DOMAIN_DNS],
                     params[DNS_IP],
+                    params[AD_SCENARIO_TYPE],
                     key
                 );
                 break;
@@ -224,7 +269,7 @@ async function validate(
                 break;
             }
             case FSX_DEPLOYMENT_MODE: {
-                response = { value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
+                response = { key, value: params[SQL_DEPLOYMENT_MODE] === STANDALONE ? SINGLE_AZ : MULTI_AZ };
                 break;
             }
             case DB_SIZE: {
@@ -236,7 +281,7 @@ async function validate(
                 break;
             }
             case FSX_IOPS: {
-                response = { value: 3 * params[DB_SIZE] };
+                response = { key, value: 3 * params[DB_SIZE] };
                 break;
             }
             case ONTAP_SG_ID: {
@@ -265,23 +310,25 @@ async function validate(
                 response = await validateTags(key, params[key]);
                 break;
             }
+            case DEPLOYMENT_ENVIRONMENT: {
+                response = validateDeploymentEnv(key, params[key]);
+                break;
+            }
+            case ENCRYPTION_KEY: {
+                response = await validateFsx(
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[VPC_ID],
+                    params[FSX_FILE_SYSTEM_ID],
+                    key
+                );
+                break;
+            }
             default:
         }
-    } else {
-        validatedParams[key] = params[key];
-    }
-    if ((response as ValidationResponse)?.status === 'error') {
-        delete params[key];
-        delete oldParams[key];
-        delete validatedParams[key];
-        errors.push(response as ValidationResponse);
     }
 
-    if (response?.value !== null && response?.value !== undefined) {
-        validatedParams[key] = response?.value;
-        params[key] = response?.value;
-        oldParams[key] = response?.value;
-    }
+    return response;
 }
 
 export { validateParams, resetNextParamsOnUpdate, wrapContext, findChangedKeys };

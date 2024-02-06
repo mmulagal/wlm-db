@@ -24,8 +24,8 @@ model deployment {
   deployment_status         DEPLOYMENT_STATUS
   deployment_model          DEPLOYMENT_MODEL?
   deployment_status_reason  String?           @db.Text
-  start_time                DateTime          @db.DateTime(0)
-  end_time                  DateTime?         @db.DateTime(0)
+  start_time                DateTime          @db.DateTime(3)
+  end_time                  DateTime?         @db.DateTime(3)
   data                      Json?             @default("{}")
   event                    event[]
 
@@ -43,7 +43,7 @@ model event {
   event_status        DEPLOYMENT_STATUS
   event_status_reason String?           @db.Text
   resource_type       String?           @db.VarChar(255)
-  time                DateTime          @db.DateTime(0)
+  time                DateTime          @db.DateTime(3)
   data                Json?             @default("{}")
   deployment          deployment        @relation(fields: [account_id, deployment_id], references: [account_id, deployment_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_wlmdb_event_deployment_id")
 
@@ -75,13 +75,45 @@ model config {
   account_id    String   @db.VarChar(30)
   name          String   @db.VarChar(255)
   user          String   @db.VarChar(255)
-  creation_time DateTime @db.DateTime(0)
+  creation_time DateTime @db.DateTime(3)
   data          Json?    @default("{}")
-  modified_time DateTime? @updatedAt @db.DateTime(0)
+  modified_time DateTime? @updatedAt @db.DateTime(3)
 
   @@index([account_id], map: "k_wlmdb_config_account_id")
   @@unique([account_id, name, user], name: "uk_wlmdb_config_account_id_name_user", map: "uk_wlmdb_config_account_id_name_user")
 
+}
+
+model job {
+  id                        String    @id @default(uuid())@db.VarChar(40)
+  account_id                String    @db.VarChar(30)
+  type                      JOBTYPE
+  status                    JOBSTATUS
+  resource_name             String    @db.VarChar(255)
+  name                      String    @db.VarChar(255)
+  description               String?   @db.VarChar(255)
+  error                     String?   @db.Text
+  start_time                DateTime  @db.DateTime(3)
+  end_time                  DateTime? @db.DateTime(3)
+  parent_job_id             String?   @db.VarChar(40)
+  initiator                 String    @db.VarChar(80)@default("SYSTEM")
+  last_update_time          DateTime? @updatedAt @db.DateTime(3)
+
+  @@index([account_id], map: "k_wlmdb_job_account_id")
+  @@index([parent_job_id], map: "k_wlmdb_job_parent_job_id")
+  @@index([start_time], map: "k_wlmdb_job_start_time")
+  @@unique([account_id, name, resource_name, initiator, start_time], name: "uk_wlmdb_config_uniqueJob")
+
+}
+
+enum JOBSTATUS {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum JOBTYPE {
+  DEPLOYMENT
 }
 
 enum DEPLOYMENT_STATUS {

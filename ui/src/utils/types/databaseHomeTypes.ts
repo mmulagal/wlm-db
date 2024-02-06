@@ -36,6 +36,7 @@ export interface DatabaseHostItem {
         storage: number;
         connectivity: number;
         others: number;
+        estimationType: string;
     };
     totalCost?: string;
 }
@@ -70,13 +71,13 @@ export interface DatabaseJobsItem {
 }
 
 export interface JobsSummaryRes {
-    success: number;
-    failed: number;
-    initializing: number;
+    completed?: number;
+    failed?: number;
+    inProgress?: number;
     totalJobs?: number;
-    successPercent?: number;
+    completedPercent?: number;
     failedPercent?: number;
-    initializingPercent?: number;
+    inProgressPercent?: number;
 }
 
 export interface StatusRes {
@@ -118,6 +119,7 @@ export interface AggregatedCostsRes {
     computeCostPercent: number;
     connectivityCostPercent: number;
     otherCostPercent: number;
+    requireBillingPerm: boolean;
 }
 
 export interface DatabaseHostsEntities {

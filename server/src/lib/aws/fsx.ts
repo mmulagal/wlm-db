@@ -10,7 +10,14 @@ import {
     DescribeFileSystemsCommandInput,
     DescribeFileSystemsCommandOutput,
     ListTagsForResourceCommand,
-    ListTagsForResourceCommandOutput
+    ListTagsForResourceCommandOutput,
+    TagResourceCommand,
+    TagResourceCommandOutput,
+    Tag,
+    ListTagsForResourceCommandInput,
+    DescribeVolumesCommandInput,
+    DescribeStorageVirtualMachinesCommandInput,
+    DescribeBackupsCommandInput
 } from '@aws-sdk/client-fsx';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -18,12 +25,12 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
-async function getFSxClient(credentialsId: string, region: string) {
+async function getFSxClient(credentialsId: string, region: string, accountId?: string) {
     logger.debug('Getting FSx client:', { credentialsId, region });
 
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
 
     return new FSxClient({ credentials, region });
@@ -68,7 +75,7 @@ async function describeFSxVolumes(
     fsxFsId: string
 ): Promise<DescribeVolumesCommandOutput> {
     logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
-    const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+    const input: DescribeVolumesCommandInput = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
 
     const client = await getFSxClient(credentialsId, region);
 
@@ -80,7 +87,9 @@ async function describeFSxVolumes(
 
 async function describeFSxStorageVirtualMachines(credentialsId: string, region: string, fsxFsId: string) {
     logger.info('Describe Amazon FSx for NetApp ONTAP volumes:', { credentialsId, region, fsxFsId });
-    const input = { Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }] };
+    const input: DescribeStorageVirtualMachinesCommandInput = {
+        Filters: [{ Name: 'file-system-id', Values: [fsxFsId] }]
+    };
 
     const client = await getFSxClient(credentialsId, region);
     const response = await client.send(new DescribeStorageVirtualMachinesCommand(input));
@@ -96,7 +105,7 @@ async function describeFSxBackups(
 ): Promise<DescribeBackupsCommandOutput> {
     logger.info('Describe Amazon FSx backups:', { credentialsId, region, volumeIds });
 
-    const input = {
+    const input: DescribeBackupsCommandInput = {
         Filters: [{ Name: 'volume-id', Values: volumeIds }]
     };
 
@@ -112,19 +121,41 @@ async function describeFSxBackups(
 async function listResourceTags(
     credentialsId: string,
     region: string,
-    resourceArn: string
-): Promise<ListTagsForResourceCommandOutput> {
-    logger.info('List all the resource tags by arn:', { credentialsId, region, resourceArn });
+    input: ListTagsForResourceCommandInput
+): Promise<ListTagsForResourceCommandOutput | undefined> {
+    logger.info('List all the resource tags by arn:', { credentialsId, region, input });
 
-    const client = await getFSxClient(credentialsId, region);
+    try {
+        const client = await getFSxClient(credentialsId, region);
 
-    const command = new ListTagsForResourceCommand({ ResourceARN: resourceArn });
+        const command = new ListTagsForResourceCommand(input);
 
-    const response = await client.send(command);
+        const response = await client.send(command);
 
-    logger.debug('List Amazon FSx resource tags:', response);
+        logger.debug('List Amazon FSx resource tags:', response);
 
-    return response;
+        return response;
+    } catch (error) {
+        logger.error('Error getting fsx tags', error);
+    }
+}
+
+async function createTag(credentialsId: string, region: string, accountId: string, fsxArn: string, tags: Tag[]) {
+    logger.info('Adding tags to resource', credentialsId, region, accountId, fsxArn, tags);
+
+    try {
+        const client = await getFSxClient(credentialsId, region, accountId);
+
+        const params = {
+            ResourceARN: fsxArn,
+            Tags: tags
+        };
+        const command = new TagResourceCommand(params);
+        const response: TagResourceCommandOutput = await client.send(command);
+        logger.info('Resource tagged successfully:', response);
+    } catch (error) {
+        logger.error('Error tagging resource:', error);
+    }
 }
 
 export {
@@ -133,5 +164,6 @@ export {
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
     describeFSxN,
-    listResourceTags
+    listResourceTags,
+    createTag
 };

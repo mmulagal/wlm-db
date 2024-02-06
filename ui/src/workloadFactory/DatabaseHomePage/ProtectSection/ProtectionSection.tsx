@@ -7,7 +7,7 @@ import { GENERAL } from '../../../utils/appConstants';
 
 const ProtectionSection = () => {
     const hostData = useAppSelector(state => state.databaseHome.aggregatedProtectionDbCount);
-    
+
     const { databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
 
@@ -22,7 +22,9 @@ const ProtectionSection = () => {
             </div>
 
             <div className={styles.secondContainer}>
-                <MultiRingDoughnut />
+                <MultiRingDoughnut
+                    hostData={hostData}
+                />
 
                 <div className={styles.secondLevel}>
                     <div className={styles.headerPart}>

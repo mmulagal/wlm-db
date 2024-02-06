@@ -5,6 +5,7 @@ import { ReactComponent as Failure } from '../../../../assets/error-icon.svg';
 import styles from './DatabaseHostTile.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { formatSize } from '../../../../utils/utilityFunctions';
+import { GENERAL } from '../../../../utils/appConstants';
 
 const DatabaseHostTile = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
@@ -19,7 +20,7 @@ const DatabaseHostTile = () => {
                         <Typography variant="Semibold_14">{resourceDetails.name}</Typography>
                     )}
 
-                    <Typography variant="Regular_14">Host name</Typography>
+                    <Typography variant="Regular_14">{GENERAL.HOST_NAME}</Typography>
                 </div>
             </div>
 
@@ -30,11 +31,11 @@ const DatabaseHostTile = () => {
                     <FlashingDotsLoader className={styles.loaderHeight} />
                 ) : (
                     <div className={styles.firstSection}>
-                        {resourceDetails.status === 'UP' ? <Success /> : <Failure />}
+                        {resourceDetails.status === 'Up' ? <Success /> : <Failure />}
                         <Typography variant="Semibold_14">{resourceDetails.status}</Typography>
                     </div>
                 )}
-                <Typography variant="Regular_14">Status</Typography>
+                <Typography variant="Regular_14">{GENERAL.STATUS}</Typography>
             </div>
 
             <div className={styles.dbHostSeparator} />
@@ -47,7 +48,7 @@ const DatabaseHostTile = () => {
                         <Typography variant="Semibold_14">{resourceDetails.databaseCount}</Typography>
                     )}
                 </div>
-                <Typography variant="Regular_14">Number of databases</Typography>
+                <Typography variant="Regular_14">{GENERAL.NO_OF_DBS}</Typography>
             </div>
 
             <div className={styles.dbHostSeparator} />
@@ -61,7 +62,7 @@ const DatabaseHostTile = () => {
                     )}
                 </div>
 
-                <Typography variant="Regular_14">Total used capacity</Typography>
+                <Typography variant="Regular_14">{GENERAL.TOTAL_USED_CAPACITY}</Typography>
             </div>
 
             <div className={styles.dbHostSeparator} />
@@ -75,7 +76,7 @@ const DatabaseHostTile = () => {
                     )}
                 </div>
 
-                <Typography variant="Regular_14">Total allocated capacity</Typography>
+                <Typography variant="Regular_14">{GENERAL.TOTAL_ALLOCATED_CAPACITY}</Typography>
             </div>
         </div>
     );

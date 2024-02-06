@@ -1,42 +1,48 @@
 export interface WorkloadFactoryResourceEntities {
     resourceLoading: boolean;
     resourceDetails: WorkloadFactoryResourceDetails;
+    databaseListLoading: boolean;
+    databaseList: WorkloadFactoryDatabaseItem[];
 }
 
 export interface WorkloadFactoryResourceDetails {
     id: string;
     name: string;
-    status: 'UP' | 'DOWN';
+    status: string;
     databaseCount: number;
-    operatingSystem: string;
-    serverEdition: string;
-    serverVersion: string;
-    clusterName: string;
-    activeConnections: number;
-    creationDate: number;
+    databaseServer: {
+        operatingSystem: string;
+        serverEdition: string;
+        serverVersion: string;
+        nodeNames: Array<string>;
+        activeConnections: number;
+        creationDate: string;
+        clusterName: string;
+        activeNode: string;
+    };
     topology: {
         awsAccount: string;
         region: string;
         serverType: string;
         serverInstallationMode: string;
+        fileSystemName: string;
+        fileSystemDeploymentMode: string;
         fileSystemType: string;
-        fsxFilesystemId: string;
+        fileSystemId: string;
         fileSystemStatus: string;
         fileSystemStorageCapacity: string;
         fileSystemThroughputCapacity: string;
         vpcId: string;
         keyPairName: string;
-        ec2Details: [
-            {
-                id: string;
-                name: string;
-                instanceType: string;
-                ebsVolumeId: string;
-                vpcID: string;
-                availabilityZone: string;
-                subnetId: string;
-            }
-        ];
+        ec2Details: Array<{
+            id: string;
+            name: string;
+            instanceType: string;
+            ebsVolumeId: string;
+            vpcID: string;
+            availabilityZone: string;
+            subnetId: string;
+        }>;
         activeDirectoryDetails: {
             name: string;
             address: string;
@@ -50,21 +56,23 @@ export interface WorkloadFactoryResourceDetails {
     };
 
     performance: {
-        latency: {
-            current: number;
-            assessment: string;
-            read: number;
-            write: number;
-        };
-        iops: {
-            current: number;
-            read: number;
-            write: number;
-        };
-        throughput: {
-            current: number;
-            read: number;
-            write: number;
+        rwMetrics: {
+            latency: {
+                current: number;
+                assessment: string;
+                read: number;
+                write: number;
+            };
+            iops: {
+                current: number;
+                read: number;
+                write: number;
+            };
+            throughput: {
+                current: number;
+                read: number;
+                write: number;
+            };
         };
     };
 
@@ -101,5 +109,19 @@ export interface WorkloadFactoryResourceDetails {
             total: string;
             remaining: string;
         };
+    };
+}
+
+export interface WorkloadFactoryDatabaseItem {
+    id: string;
+    name: string;
+    status: string;
+    size: number;
+    type: string;
+    isProtected: boolean;
+    protection?: {
+        isAwsBackUpEnabled: boolean;
+        isFsxOntapSnapshotsEnabled: boolean;
+        isSqlNativeEnabled: boolean;
     };
 }

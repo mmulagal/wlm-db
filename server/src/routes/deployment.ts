@@ -1,19 +1,19 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import {
-    createCloudFormationTemplateForUserDeployment,
-    deployCloudFormationTemplate,
+    deployStackOrCreateTemplateURL,
     deploymentStatus,
     deploymentStatusByName,
     getCloudformationTemplate
 } from '../operations/deployment-operations';
 import {
     CloudFormationTemplateSchema,
-    CreateCloudFormationTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
-    DeployTemplateSchema
+    DeployTemplateSchema,
+    DeploymentSummaryListSchema
 } from './schemas/deployment-schemas';
+import { getDeploymentJobsSummary } from '../operations/jobs-operations';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_STATIC_TEMPLATE_PREFIX_PATH = '/v1/cloudformation/template';
@@ -23,42 +23,11 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
 
     server
         .post(
-            `${API_PREFIX_PATH}/cloudformation/url`,
-            { schema: CreateCloudFormationTemplateSchema },
-            async (request, reply) => {
-                const {
-                    params: { credentialsId, region },
-                    body: {
-                        networkConfiguration,
-                        ec2Configuration,
-                        adConfiguration,
-                        fsxConfiguration,
-                        sqlConfiguration,
-                        topicArn,
-                        enableCloudWatch,
-                        tags
-                    }
-                } = request;
-                const response = await createCloudFormationTemplateForUserDeployment(
-                    credentialsId,
-                    region,
-                    networkConfiguration,
-                    ec2Configuration,
-                    adConfiguration,
-                    fsxConfiguration,
-                    sqlConfiguration,
-                    topicArn,
-                    enableCloudWatch,
-                    tags
-                );
-                return reply.send(response);
-            }
-        )
-        .post(
             `${API_STATIC_TEMPLATE_PREFIX_PATH}`,
             { schema: CloudFormationTemplateSchema },
             async (request, reply) => {
                 const {
+                    headers: { 'triggered-from': triggeredFrom },
                     body: {
                         networkConfiguration,
                         ec2Configuration,
@@ -80,6 +49,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
+                    triggeredFrom,
                     tags,
                     credentialsId,
                     region
@@ -87,9 +57,10 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .post(`${API_PREFIX_PATH}/cloudformation/stack`, { schema: DeployTemplateSchema }, async (request, reply) => {
+        .post(`${API_PREFIX_PATH}/cloudformation/deploy`, { schema: DeployTemplateSchema }, async (request, reply) => {
             const {
                 params: { credentialsId, region },
+                headers: { 'triggered-from': triggeredFrom },
                 body: {
                     networkConfiguration,
                     ec2Configuration,
@@ -101,7 +72,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     tags
                 }
             } = request;
-            const response = await deployCloudFormationTemplate(
+            const response = await deployStackOrCreateTemplateURL(
                 credentialsId,
                 region,
                 networkConfiguration,
@@ -111,6 +82,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
+                triggeredFrom,
                 tags
             );
             return reply.code(202).send(response);
@@ -136,5 +108,13 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 const response = await deploymentStatusByName(accountId, stackName);
                 return reply.send(response);
             }
-        );
+        )
+        .get('/v1/deployments', { schema: DeploymentSummaryListSchema }, async (request, reply) => {
+            const {
+                params: { accountId },
+                query: { statuses, nextToken }
+            } = request;
+            const response = await getDeploymentJobsSummary(accountId, statuses, nextToken);
+            return reply.send(response!);
+        });
 }

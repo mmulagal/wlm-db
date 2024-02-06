@@ -15,7 +15,7 @@ import {
     ACCOUNT_ID,
     API_PATH_HEALTH,
     API_TITLE,
-    AUDIT_EXCLUDE_LIST,
+    // AUDIT_EXCLUDE_LIST,
     HEADERS,
     REQUEST_ID,
     USER_TOKEN,
@@ -38,18 +38,19 @@ import pricingRoutes from './routes/pricing';
 import databaseHostsRoutes from './routes/database-hosts';
 import deploymentJobsRoutes from './routes/jobs';
 import serviceStatusRoutes from './routes/service-status';
-import {
-    createAuditGroup,
-    updateAuditGroup,
-    updateAuditGroupResponse
-} from './operations/cloud-manager/audit-operations';
-import { checkAndCreateBucketLifecycleConfiguration } from './operations/aws/s3-operations';
+// import {
+//     createAuditGroup,
+//     updateAuditGroup,
+//     updateAuditGroupResponse
+// } from './operations/cloud-manager/audit-operations';
 import deploymentRoutes from './routes/deployment';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
 import { execute, initializeDatabase } from './utils/prisma-utils';
 import chatbotRoutes from './routes/chatbot';
+import purgeOlderJobs from './operations/cron-operations';
+import { isActiveInstance } from './utils/utils';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -148,10 +149,15 @@ const app = fastify({
             instance.addHook(
                 'onRequest',
                 async (request: FastifyRequest<{ Headers: Headers; Params: Params }>, reply: FastifyReply) => {
+                    // Return not found if the route is invalid
+                    if (request.is404) {
+                        reply.notFound();
+                    }
                     const {
                         headers: { authorization },
                         params: { accountId }
                     } = request;
+
                     logger.debug('Incoming request headers', request.headers);
                     if (authorization) {
                         try {
@@ -193,29 +199,41 @@ const app = fastify({
             reply: FastifyReply,
             done
         ) => {
-            getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
-                const {
-                    url,
-                    headers: {
-                        authorization,
-                        [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
-                        [HEADERS.X_NETAPP_REFERER]: xNetappReferer
-                    },
-                    params: { accountId },
-                    id: requestId
-                } = request;
-                logger.debug(url, reply);
-                setAsyncLocalStorageResource(REQUEST_ID, requestId);
-                setAsyncLocalStorageResource(USER_TOKEN, authorization);
-                setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
-                setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
-                setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
-                const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-                if (!requestUrl) {
-                    createAuditGroup(request, reply);
-                }
+            // If the route is invalid, don't call the below functions
+            if (!request.is404) {
+                getLocalStorage().run(new Map(getLocalStorage().getStore()), async () => {
+                    const {
+                        method,
+                        url,
+                        headers: {
+                            authorization,
+                            [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
+                            [HEADERS.X_NETAPP_REFERER]: xNetappReferer
+                        },
+                        params: { accountId },
+                        id: requestId
+                    } = request;
+                    logger.debug(url, reply);
+                    setAsyncLocalStorageResource(REQUEST_ID, requestId);
+                    setAsyncLocalStorageResource(USER_TOKEN, authorization);
+                    setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                    setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
+                    setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
+
+                    if (!url.includes(API_PATH_HEALTH)) {
+                        accessLogger.info(`[${method}] [${url}]`);
+                    }
+
+                    // Don't update audit record until BXP integration decision is made.
+                    // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+                    // if (!requestUrl) {
+                    //     createAuditGroup(request, reply);
+                    // }
+                    done();
+                });
+            } else {
                 done();
-            });
+            }
         }
     )
     .addHook('onResponse', (request, reply, done) => {
@@ -227,17 +245,22 @@ const app = fastify({
     .setErrorHandler((error, request, reply) => errorHandler(error, request, reply))
     .addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
         reply.header(HEADERS.NETAPP_WLMSQL_REQUEST_ID, request.id);
-        const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
-        if (!requestUrl && reply.statusCode !== 202) {
-            updateAuditGroup(request, reply, payload);
-        } else if (request.url.includes('cloudformation/stack')) {
-            updateAuditGroupResponse(request, payload);
-        }
+
+        // Don't update audit record until BXP integration decision is made.
+        // const requestUrl = AUDIT_EXCLUDE_LIST.some(element => request.url.includes(element));
+        // // Don't update audit record on invalid route
+        // if (!request.is404) {
+        //     if (!requestUrl && reply.statusCode !== 202) {
+        //         updateAuditGroup(request, reply, payload);
+        //     } else if (request.url.includes('cloudformation/stack')) {
+        //         updateAuditGroupResponse(request, payload);
+        //     }
+        // }
         return payload;
     });
 
 // Blocking for simulator
-if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && isActiveInstance()) {
     try {
         await createAndSubscribeToSnsTopicInAllRegions();
         processCloudFormationMessages();
@@ -248,15 +271,20 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator') {
 
 try {
     initializeDatabase();
-    await execute('node_modules/prisma/build/index.js migrate deploy');
+    if (isActiveInstance()) {
+        await execute('node_modules/prisma/build/index.js migrate deploy');
+    }
 } catch (error) {
     logger.error('Failed to initialize database', error);
 }
 
+// Initialize cron jobs
 try {
-    await checkAndCreateBucketLifecycleConfiguration();
+    if (isActiveInstance()) {
+        purgeOlderJobs();
+    }
 } catch (error) {
-    logger.error('Failed to check and create S3 bucket lifecycle');
+    logger.error('Failed to initialize cron jobs', error);
 }
 
 app.listen({ port, host }, err => {

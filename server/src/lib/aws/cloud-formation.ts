@@ -4,7 +4,8 @@ import {
     StackStatus,
     CreateStackCommand,
     CreateStackInput,
-    Parameter
+    Parameter,
+    ListStacksCommandInput
 } from '@aws-sdk/client-cloudformation';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { CAPABILITY_IAM, CAPABILITY_NAMED_IAM, MASTER_STACK_TIMEOUT_MINUTES } from '../../utils/consts';
@@ -23,11 +24,11 @@ async function getCloudformationClient(credentialsId: string, region: string) {
     return new CloudFormationClient({ region, credentials: { accessKeyId, secretAccessKey, sessionToken } });
 }
 
-async function listStacks(credentialsId: string, region: string, stackStatusFilter?: (StackStatus | string)[]) {
+async function listStacks(credentialsId: string, region: string, stackStatusFilter?: StackStatus[]) {
     logger.info(`List cloudformation stacks in region ${region} with credentials ${credentialsId}.`);
-
+    const input: ListStacksCommandInput = { StackStatusFilter: stackStatusFilter };
     const cloudformationClient = await getCloudformationClient(credentialsId, region);
-    const resp = await cloudformationClient.send(new ListStacksCommand({ StackStatusFilter: stackStatusFilter }));
+    const resp = await cloudformationClient.send(new ListStacksCommand(input));
     logger.debug('Stacks response', resp);
 
     return resp;

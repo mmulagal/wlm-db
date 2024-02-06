@@ -12,11 +12,14 @@ import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
     isAWSBackupEnabled,
-    getMappedOntapVolumes
+    getMappedOntapVolumes,
+    tagFsxResource
 } from '../../../src/operations/aws/fsx-operations';
-import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_VPC_ID, ACCOUNT_ID } from '../../utils/consts';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
+const credentialsId = `${faker.string.alpha(20)}`;
+const awsAccountId = `${faker.string.alpha(8)}`;
 
 describe('Testcases for Amazon FSx resources operations', () => {
     it('List FSx filesystems and volume details', async () => {
@@ -67,5 +70,13 @@ describe('Testcases for Amazon FSx resources operations', () => {
             }
         );
         expect(response).toBeDefined();
+    });
+
+    it('Tag Ec2 instance', async () => {
+        await expect(
+            tagFsxResource(credentialsId, DEFAULT_AWS_REGION, awsAccountId, ACCOUNT_ID, FSX_FILESYSTEM_ID, [
+                { Key: 'key', Value: 'value' }
+            ])
+        ).resolves.not.toThrow();
     });
 });

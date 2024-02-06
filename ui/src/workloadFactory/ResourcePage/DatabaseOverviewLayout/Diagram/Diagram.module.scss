@@ -18,6 +18,10 @@
         justify-content: center;
         margin-top: 40px;
     }
+
+    .disabledColor {
+        color: var(--text-disabled);
+    }
 }
 
 .hideDiagram {

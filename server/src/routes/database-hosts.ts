@@ -1,19 +1,47 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
-import getDatabaseHostsSummary from '../operations/database-hosts-operations';
-import DatabaseHostsSummarySchema from './schemas/database-hosts-schemas';
+import { getDatabaseHostsSummary, getDatabaseHostSummary, getDatabases } from '../operations/database-hosts-operations';
+import {
+    DatabaseHostDetailsSchema,
+    DatabasesListSchema,
+    DatabaseHostsSummarySchema
+} from './schemas/database-hosts-schemas';
 
 const DATABASE_HOSTS_API_PATH: string = '/v1/database-hosts';
 
 export default function databaseHostsRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-    server.get(`${DATABASE_HOSTS_API_PATH}`, { schema: DatabaseHostsSummarySchema }, async (request, reply) => {
-        const {
-            params: { accountId },
-            query: { fields }
-        } = request;
-        const response = await getDatabaseHostsSummary(accountId, fields);
-        return reply.send(response);
-    });
+    server
+        .get(`${DATABASE_HOSTS_API_PATH}`, { schema: DatabaseHostsSummarySchema }, async (request, reply) => {
+            const {
+                params: { accountId },
+                query: { fields, nextToken }
+            } = request;
+            const response = await getDatabaseHostsSummary(accountId, fields, nextToken);
+            return reply.send(response);
+        })
+        .get(
+            `${DATABASE_HOSTS_API_PATH}/:databaseHostId`,
+            { schema: DatabaseHostDetailsSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId },
+                    query: { fields }
+                } = request;
+                const response = await getDatabaseHostSummary(accountId, databaseHostId, fields);
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${DATABASE_HOSTS_API_PATH}/:databaseHostId/databases`,
+            { schema: DatabasesListSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId }
+                } = request;
+                const response = await getDatabases(accountId, databaseHostId);
+                return reply.send(response);
+            }
+        );
 }

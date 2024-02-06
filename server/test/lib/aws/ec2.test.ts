@@ -9,7 +9,8 @@ import {
     describeInstanceTypes,
     describeRouteTable,
     describeInstance,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    createTag
 } from '../../../src/lib/aws/ec2';
 import { SQL_AMI_NAMES, DEFAULT_AWS_REGION } from '../../../src/utils/consts';
 
@@ -31,10 +32,12 @@ import ec2instanceTypes from '../../simulator/responses/aws/ec2-instance-types.j
 import ec2Instances from '../../simulator/responses/aws/describe-instance.json';
 import instanceTypeOfferings from '../../simulator/responses/aws/describe-instance-type-offerings.json';
 import describeInstanceTypeOfferingsInvalidParameters from '../../simulator/responses/aws/describe-instance-type-offerings-invalid-parameters.json';
-
-import { DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const REGION = DEFAULT_AWS_REGION;
+
+const ec2Id = faker.string.alphanumeric(8);
+const tag = [{ Key: 'key', Value: 'value' }];
 
 describe('EC2 Lib', () => {
     const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
@@ -139,5 +142,10 @@ describe('EC2 Lib', () => {
             const { message } = error as { message: string };
             expect(message).toEqual(describeInstanceTypeOfferingsInvalidParameters.message);
         }
+    });
+
+    it('Create tag for given resource', async () => {
+        const credentialsId = `${faker.string.alpha(20)}`;
+        await expect(createTag(credentialsId, REGION, ACCOUNT_ID, [ec2Id], tag)).resolves.not.toThrow();
     });
 });

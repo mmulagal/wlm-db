@@ -2,8 +2,6 @@ import { Table, TableTopBar, TooltipInfo, Typography, useDialog, useTable } from
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import styles from './DatabaseTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
-import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
-import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import MenuPopover from '../../../common/MenuPopover/MenuPopover';
 import { useEffect, useRef, useState } from 'react';
@@ -22,6 +20,7 @@ import {
 import { databaseTableSort, formatFractionalNumber } from '../../../utils/utilityFunctions';
 import { useNavigate } from 'react-router-dom';
 import { updateResourceId } from '../../../store/authSlice';
+import { resetWorkloadFactoryResourceData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 
 const DatabaseTable = () => {
     const dispatch = useDispatch();
@@ -30,6 +29,7 @@ const DatabaseTable = () => {
     const { databaseHostsData, databaseHostsLoading } = useAppSelector(state => state.databaseHome.getDatabaseHosts);
     const { databaseJobsData, databaseJobsLoading } = useAppSelector(state => state.databaseHome.getDatabaseJobs);
     const databaseHostsList = useAppSelector(state => state.databaseHome.databaseHostsList);
+    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
 
     const [menuOpenedRow, setOpenedRow] = useState(null);
     const menuOpenedRowDetail: any = useRef(null);
@@ -41,49 +41,24 @@ const DatabaseTable = () => {
     const [resetPage, setResetPage] = useState(false);
     const [pageSize, setPageSize] = useState(25);
 
-    const menuItems = [
-        {
-            id: 'viewOverview',
-            displayName: 'View host overview'
-        },
-        {
-            id: 'viewDatabaseList',
-            displayName: 'View database list'
-        },
-        // {
-        //     id: 'clone',
-        //     displayName: 'Clone',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'migrate',
-        //     displayName: 'Migrate',
-        //     disabled: true
-        // },
-        // {
-        //     id: 'protect',
-        //     displayName: 'Protect',
-        //     disabled: true
-        // },
-        {
-            id: 'remove',
-            displayName: 'Remove'
-        }
-    ];
-
-    const protectionTooltipText = (data: any) => {
-        return (
-            <div className={styles.protectionTooltip}>
-                <Typography variant="Semibold_13" className={styles.textHeight}>
-                    {GENERAL.PROTECTED_BY}:
-                </Typography>
-                {data.map((val: any, index: number) => (
-                    <Typography key={index} variant="Regular_13" className={styles.textHeight}>
-                        {val}
-                    </Typography>
-                ))}
-            </div>
-        );
+    const menuItems = (row: any) => {
+        return [
+            {
+                id: 'viewOverview',
+                displayName: 'View host overview',
+                disabled: row?.status === STATUS_CONST.UP ? false : true
+            },
+            {
+                id: 'viewDatabaseList',
+                displayName: 'View database list',
+                disabled: row?.status === STATUS_CONST.UP ? false : true
+            },
+            {
+                id: 'remove',
+                displayName: 'Remove',
+                disabled: row?.status === STATUS_CONST.DOWN || isDemoMode ? false : true
+            }
+        ];
     };
 
     // To delete MSSQL Resources
@@ -137,7 +112,7 @@ const DatabaseTable = () => {
                     <div className={styles.jobMenuPopover}>
                         <MenuPopover
                             isMenuOpen={menuOpenedRowDetail.current === rowData.id || menuOpenedRow === rowData.id}
-                            menuItems={menuItems}
+                            menuItems={menuItems(rowData)}
                             toggleMenu={(toggleType: string, menuId: string) => {
                                 if (toggleType === 'close') {
                                     menuOpenedRowDetail.current = null;
@@ -153,17 +128,15 @@ const DatabaseTable = () => {
                                     if (menuId === 'viewOverview') {
                                         dispatch(selectedTabSelection('Overview'));
                                         dispatch(updateResourceId(rowData.id));
-                                        navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
-                                        );
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'viewDatabaseList') {
                                         dispatch(selectedTabSelection('Database list'));
                                         dispatch(updateResourceId(rowData.id));
-                                        navigate(
-                                            '../add-working-environment/database-services/mssql/database-overview'
-                                        );
+                                        dispatch(resetWorkloadFactoryResourceData());
+                                        navigate('../database-overview');
                                     }
 
                                     if (menuId === 'remove') {
@@ -239,6 +212,7 @@ const DatabaseTable = () => {
             filterOptions: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 const protectionData = rowData?.protection;
+                const totalDbCount = rowData?.databaseCount || 0;
                 let protectedChk = false;
                 if (
                     protectionData?.isAwsBackUpEnabled ||
@@ -247,44 +221,32 @@ const DatabaseTable = () => {
                 ) {
                     protectedChk = true;
                 }
-                let protectedByList = [];
-                if (protectionData?.isFsxOntapSnapshotsEnabled) {
-                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+
+                let protectionDbCount = 0
+                let protectionPercent = 0;
+                if (
+                    protectionData?.isAwsBackUpEnabled ||
+                    protectionData?.isFsxOntapSnapshotsEnabled
+                ) {
+                    protectionDbCount = totalDbCount;
+                    protectionPercent = 100;
+                } else if (protectionData?.isSqlNativeEnabled) {
+                    protectionDbCount = protectionData?.protectedDatabases || 0;
+                    protectionPercent = (totalDbCount > 0 && protectionDbCount <= totalDbCount) ? (protectionDbCount/totalDbCount) * 100 : 0;
                 }
-                if (protectionData?.isAwsBackUpEnabled) {
-                    protectedByList.push(GENERAL.AWS_BACKUP);
-                }
-                if (protectionData?.isSqlNativeEnabled) {
-                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
-                }
+
                 return (
                     <>
                         {protectionData && (
                             <div className={styles.colText}>
                                 <div className={styles.protection}>
-                                    {protectedChk && (
-                                        <ProtectedIcon
-                                            style={{
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--green-60)'
-                                            }}
-                                        />
-                                    )}
-                                    {!protectedChk && (
-                                        <NotProtectedIcon
-                                            style={{
-                                                //@ts-ignore
-                                                '--icon-primary-color': 'var(--grey-45)'
-                                            }}
-                                        />
-                                    )}
                                     <Typography variant="Regular_14">
-                                        {protectedChk ? GENERAL.PROTECTED : GENERAL.NOT_PROTECTED}
+                                        {protectedChk ? formatFractionalNumber(protectionPercent) + '% ' + GENERAL.PROTECTION : GENERAL.NOT_PROTECTED}
                                     </Typography>
                                 </div>
                                 {protectedChk && (
                                     <TooltipInfo onVisibleChange={function noRefCheck() {}}>
-                                        {protectionTooltipText(protectedByList)}
+                                        {protectionDbCount + GENERAL.PROTECTION_TOOLTIP[0] + totalDbCount + GENERAL.PROTECTION_TOOLTIP[1]}
                                     </TooltipInfo>
                                 )}
                             </div>

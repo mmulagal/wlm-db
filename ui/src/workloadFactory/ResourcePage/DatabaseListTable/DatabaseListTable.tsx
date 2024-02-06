@@ -1,133 +1,153 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, Typography, TooltipInfo } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { ReactComponent as ProtectedIcon } from '@netapp/icons/ic_protected.svg';
+import { ReactComponent as NotProtectedIcon } from '@netapp/icons/ic_unprotected.svg';
 
 import styles from './DatabaseListTable.module.scss';
+import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
+import { useAppSelector } from '../../../store/storeHooks';
+import { formatSize } from '../../../utils/utilityFunctions';
+import { GENERAL } from '../../../utils/appConstants';
 
 const DatabaseListTable = () => {
-    const data: any = [
-        {
-            databaseName: 'Database name 1',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '1',
-            protection: 'Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 2',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '2',
-            protection: 'Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 3',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '3',
-            protection: 'Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 4',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '4',
-            protection: 'Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 5',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '5',
-            protection: 'Not Protected',
-            type: 'User Database'
-        },
-        {
-            databaseName: 'Database name 6',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '6',
-            protection: 'Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 7',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '7',
-            protection: 'Protected',
-            type: 'User Database'
-        },
-        {
-            databaseName: 'Database name 11',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '8',
-            protection: 'Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 8',
-            status: 'On',
-            size: '1.125 TiB',
-            id: '9',
-            protection: 'Not Protected',
-            type: 'System Database'
-        },
-        {
-            databaseName: 'Database name 9',
-            status: 'Off',
-            size: '1.125 TiB',
-            id: '10',
-            protection: 'Not protected',
-            type: 'User Database'
-        }
-    ];
+    const data: WorkloadFactoryDatabaseItem[] = useAppSelector(state => state.workloadFactoryResource.databaseList);
+    const databaseListLoading = useAppSelector(state => state.workloadFactoryResource.databaseListLoading);
+
+    const protectionTooltipText = (data: any) => {
+        return (
+            <div className={styles.protectionTooltip}>
+                <Typography variant="Semibold_13" className={styles.textHeight}>
+                    {GENERAL.PROTECTED_BY}:
+                </Typography>
+                {data.map((val: any, index: number) => (
+                    <Typography key={index} variant="Regular_13" className={styles.textHeight}>
+                        {val}
+                    </Typography>
+                ))}
+            </div>
+        );
+    };
+
+    const notAvailable = () => {
+        return (
+            <Typography variant="Regular_13" className={styles.colText}>
+                {GENERAL.NOT_AVAILABLE}
+            </Typography>
+        );
+    };
 
     const EncryptionColDefs: ColumnProps[] = [
         {
-            Header: 'Database name',
-            accessor: 'databaseName',
+            Header: GENERAL.DATABASE_NAME,
+            accessor: 'name',
             isSortable: true,
             id: '1',
-            width: '311px'
+            width: '19.3%'
         },
         {
-            Header: 'Status',
+            Header: GENERAL.STATUS,
             accessor: 'status',
             filterOptions: 'auto',
             id: '2',
-            width: '180px'
+            width: '11.2%',
+            renderCell: (cellData: any) => {
+                return (
+                    <div className={styles.statusCell}>
+                        <div
+                            className={`${styles.statusIcon} ${
+                                cellData === 'ONLINE' ? styles.onIcon : cellData === 'OFFLINE' ? styles.offIcon : ''
+                            }`}
+                        ></div>
+                        <Typography variant="Regular_14">{cellData}</Typography>
+                    </div>
+                );
+            }
         },
         {
-            Header: 'Size',
+            Header: GENERAL.SIZE,
             accessor: 'size',
             isSortable: true,
             id: '3',
-            width: '240px'
+            width: '15%',
+            renderCell: (cellData: any) => {
+                return formatSize(cellData);
+            }
         },
         {
-            Header: 'Protection',
-            accessor: 'protection',
+            Header: GENERAL.DB_HOST_PROTECTION,
+            accessor: 'isProtected',
             filterOptions: 'auto',
             id: '4',
-            width: '240px'
+            width: '15%',
+            renderCell: (cellData: any, rowData: any) => {
+                const protectionData = rowData?.protection;
+                let protectedChk = false;
+                if (
+                    protectionData?.isAwsBackUpEnabled ||
+                    protectionData?.isFsxOntapSnapshotsEnabled ||
+                    protectionData?.isSqlNativeEnabled
+                ) {
+                    protectedChk = true;
+                }
+                let protectedByList = [];
+                if (protectionData?.isFsxOntapSnapshotsEnabled) {
+                    protectedByList.push(GENERAL.FSX_ONTAP_SNAPSHOTS);
+                }
+                if (protectionData?.isAwsBackUpEnabled) {
+                    protectedByList.push(GENERAL.AWS_BACKUP);
+                }
+                if (protectionData?.isSqlNativeEnabled) {
+                    protectedByList.push(GENERAL.SQL_SERVER_BACKUP);
+                }
+                return (
+                    <>
+                        {protectionData && (
+                            <div className={styles.colText}>
+                                <div className={styles.protection}>
+                                    {protectedChk && (
+                                        <ProtectedIcon
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--green-60)'
+                                            }}
+                                        />
+                                    )}
+                                    {!protectedChk && (
+                                        <NotProtectedIcon
+                                            style={{
+                                                //@ts-ignore
+                                                '--icon-primary-color': 'var(--grey-45)'
+                                            }}
+                                        />
+                                    )}
+                                    <Typography variant="Regular_14">
+                                        {protectedChk ? GENERAL.PROTECTED : GENERAL.NOT_PROTECTED}
+                                    </Typography>
+                                </div>
+                                {protectedChk && (
+                                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>
+                                        {protectionTooltipText(protectedByList)}
+                                    </TooltipInfo>
+                                )}
+                            </div>
+                        )}
+                        {!protectionData && notAvailable()}
+                    </>
+                );
+            }
         },
         {
-            Header: 'Type',
+            Header: GENERAL.DB_HOST_TYPE,
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',
-            width: '240px'
+            width: '15%'
         },
         {
             Header: '',
             accessor: '',
             id: '6',
-            width: '398px'
+            width: '24.6%'
         }
     ];
 
@@ -139,7 +159,8 @@ const DatabaseListTable = () => {
         isSorting: false,
         columns: EncryptionColDefs,
         rows: data,
-        pageSize: 10
+        pageSize: 50,
+        isLazyLoading: databaseListLoading
     });
     return (
         <div className={styles.databaseListTable}>

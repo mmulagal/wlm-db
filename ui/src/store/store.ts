@@ -5,6 +5,7 @@ import {
     chatbotApi,
     configApi,
     databaseHomeApi,
+    jobMonitoringApi,
     resourceApi,
     workloadFactoryResourceApi
 } from '../utils/apiService';
@@ -19,6 +20,7 @@ import databaseHomeSlice from './workloadFactory/databaseHomeSlice';
 import previewPanelSlice from './previewPanel/previewPanelSlice';
 import chatbotSlice, { setShowRetry } from './chatbot/chatbotSlice';
 import workloadFactoryResourceSlice from './workloadFactory/workloadFactoryResourceSlice';
+import jobMonitoringSlice from './workloadFactory/jobMonitoringSlice';
 
 const rootReducer = combineReducers({
     [notificationSlice.name]: notificationSlice.reducer,
@@ -36,10 +38,12 @@ const rootReducer = combineReducers({
     [previewPanelSlice.name]: previewPanelSlice.reducer,
     [chatbotSlice.name]: chatbotSlice.reducer,
     [workloadFactoryResourceSlice.name]: workloadFactoryResourceSlice.reducer,
-    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer
+    [workloadFactoryResourceApi.reducerPath]: workloadFactoryResourceApi.reducer,
+    [jobMonitoringApi.reducerPath]: jobMonitoringApi.reducer,
+    [jobMonitoringSlice.name]: jobMonitoringSlice.reducer
 });
 
-const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action => {
+const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => (action: any) => {
     // RTK Query uses `createAsyncThunk` from redux-toolkit under the hood, so we're able to utilize these matchers
     if (isRejectedWithValue(action) && !action.meta.arg.originalArgs.selfErrorHandling) {
         let errorMsg = action.payload.error || action.payload.data?.message || action.payload.data?.responseMessage;
@@ -61,7 +65,7 @@ const rtkQueryErrorLogger: Middleware = (api: MiddlewareAPI) => next => action =
         } else {
             api.dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.ERROR, message: errorMsg }));
         }
-        api.dispatch(setShowRetry(true));
+        //api.dispatch(setShowRetry(true));
     }
 
     return next(action);
@@ -77,6 +81,7 @@ const store = configureStore({
             .concat(databaseHomeApi.middleware)
             .concat(chatbotApi.middleware)
             .concat(workloadFactoryResourceApi.middleware)
+            .concat(jobMonitoringApi.middleware)
             .concat(rtkQueryErrorLogger)
 });
 

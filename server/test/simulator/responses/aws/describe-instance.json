@@ -190,6 +190,197 @@
             "OwnerId": "464262061435",
             "RequesterId": "422253915474",
             "ReservationId": "r-0f987a91e4ba851c4"
+        },
+        {
+            "Groups": [],
+            "Instances": [
+                {
+                    "AmiLaunchIndex": 0,
+                    "ImageId": "ami-09f1eff904348827a",
+                    "InstanceId": "i-006dfc78111ef264e",
+                    "InstanceType": "m5.xlarge",
+                    "KeyName": "test_key",
+                    "LaunchTime": "2023-11-15T02:37:37+00:00",
+                    "Monitoring": {
+                        "State": "disabled"
+                    },
+                    "Placement": {
+                        "AvailabilityZone": "ap-southeast-1d",
+                        "GroupName": "",
+                        "Tenancy": "default"
+                    },
+                    "Platform": "windows",
+                    "PrivateDnsName": "ip-172-31-44-223.ap-southeast-1.compute.internal",
+                    "PrivateIpAddress": "172.32.44.223",
+                    "ProductCodes": [],
+                    "PublicDnsName": "ec2-13-213-163-236.ap-southeast-1.compute.amazonaws.com",
+                    "PublicIpAddress": "13.212.164.236",
+                    "State": {
+                        "Code": 16,
+                        "Name": "running"
+                    },
+                    "StateTransitionReason": "",
+                    "SubnetId": "subnet-adda86fb",
+                    "VpcId": "vpc-84b3ade6",
+                    "Architecture": "x86_64",
+                    "BlockDeviceMappings": [
+                        {
+                            "DeviceName": "/dev/sda1",
+                            "Ebs": {
+                                "AttachTime": "2023-11-13T09:33:46+00:00",
+                                "DeleteOnTermination": true,
+                                "Status": "attached",
+                                "VolumeId": "vol-03a71f23f5a2f64f1"
+                            }
+                        }
+                    ],
+                    "ClientToken": "WLMDB-SqlNo-8BITSX0GO8LV",
+                    "EbsOptimized": false,
+                    "EnaSupport": true,
+                    "Hypervisor": "xen",
+                    "IamInstanceProfile": {
+                        "Arn": "arn:aws:iam::464262061435:instance-profile/WLMDB-SqlStandaloneStack-1699866938490-SQLStandaloneStack-XWN0QT1EX8D6-LaunchWizardSqlFSxProfile-CAZwdPbRkzUD",
+                        "Id": "AIPAWYGBM3V53EQ7DT5PN"
+                    },
+                    "NetworkInterfaces": [
+                        {
+                            "Association": {
+                                "IpOwnerId": "amazon",
+                                "PublicDnsName": "ec2-13-212-163-236.ap-southeast-1.compute.amazonaws.com",
+                                "PublicIp": "13.212.163.236"
+                            },
+                            "Attachment": {
+                                "AttachTime": "2023-11-13T09:33:45+00:00",
+                                "AttachmentId": "eni-attach-0bcbe3cd4bee7e13d",
+                                "DeleteOnTermination": false,
+                                "DeviceIndex": 0,
+                                "Status": "attached",
+                                "NetworkCardIndex": 0
+                            },
+                            "Description": "",
+                            "Groups": [
+                                {
+                                    "GroupName": "WLMDB-SqlStandaloneStack-1699866938690-SQLStandaloneStack-XWN0QT1EX8D6-WorkloadSecurityGroup-1NMR1XU3GLQ3V",
+                                    "GroupId": "sg-069a3ce9eea72449a"
+                                },
+                                {
+                                    "GroupName": "default",
+                                    "GroupId": "sg-3924c15c"
+                                },
+                                {
+                                    "GroupName": "WLMDB-SqlFciStack-1699516302180-NewFSxStack-OTKRSW0471M7-ONTAPSecurityGroup-DKF5DPTSE5CU",
+                                    "GroupId": "sg-0f3389e227db7234e"
+                                },
+                                {
+                                    "GroupName": "d-9667612aec_controllers",
+                                    "GroupId": "sg-03a639a938e7d4111"
+                                }
+                            ],
+                            "Ipv6Addresses": [],
+                            "MacAddress": "0a:49:94:9b:b2:ea",
+                            "NetworkInterfaceId": "eni-0ea24de238f256a32",
+                            "OwnerId": "464262061435",
+                            "PrivateDnsName": "ip-172-31-44-223.ap-southeast-1.compute.internal",
+                            "PrivateIpAddress": "172.32.44.223",
+                            "PrivateIpAddresses": [
+                                {
+                                    "Association": {
+                                        "IpOwnerId": "amazon",
+                                        "PublicDnsName": "ec2-13-212-163-236.ap-southeast-1.compute.amazonaws.com",
+                                        "PublicIp": "13.212.163.236"
+                                    },
+                                    "Primary": true,
+                                    "PrivateDnsName": "ip-172-31-44-223.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "172.31.44.223"
+                                },
+                                {
+                                    "Primary": false,
+                                    "PrivateDnsName": "ip-172-31-41-223.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "172.31.41.223"
+                                },
+                                {
+                                    "Primary": false,
+                                    "PrivateDnsName": "ip-172-31-34-26.ap-southeast-1.compute.internal",
+                                    "PrivateIpAddress": "172.31.34.26"
+                                }
+                            ],
+                            "SourceDestCheck": true,
+                            "Status": "in-use",
+                            "SubnetId": "subnet-adda86eb",
+                            "VpcId": "vpc-84b3ade6",
+                            "InterfaceType": "interface"
+                        }
+                    ],
+                    "RootDeviceName": "/dev/sda1",
+                    "RootDeviceType": "ebs",
+                    "SecurityGroups": [
+                        {
+                            "GroupName": "WLMDB-SqlStandaloneStack-1699866938490-SQLStandaloneStack-XWN0QT1EX8D6-WorkloadSecurityGroup-1NMR1XU3GLQ3V",
+                            "GroupId": "sg-069a3ce9eea72449a"
+                        },
+                        {
+                            "GroupName": "default",
+                            "GroupId": "sg-3924c15c"
+                        },
+                        {
+                            "GroupName": "WLMDB-SqlFciStack-1699516302180-NewFSxStack-OTKRSW0471M7-ONTAPSecurityGroup-DKF5DPTSE5CU",
+                            "GroupId": "sg-0f3389e227db7234e"
+                        },
+                        {
+                            "GroupName": "d-9667612aec_controllers",
+                            "GroupId": "sg-03a639a938e7d4111"
+                        }
+                    ],
+                    "SourceDestCheck": true,
+                    "Tags": [
+                        {
+                            "Key": "KeepMe",
+                            "Value": "2"
+                        },
+                        {
+                            "Key": "Name",
+                            "Value": "sqlnode-88918"
+                        }
+                    ],
+                    "VirtualizationType": "hvm",
+                    "CpuOptions": {
+                        "CoreCount": 2,
+                        "ThreadsPerCore": 2
+                    },
+                    "CapacityReservationSpecification": {
+                        "CapacityReservationPreference": "open"
+                    },
+                    "HibernationOptions": {
+                        "Configured": false
+                    },
+                    "MetadataOptions": {
+                        "State": "applied",
+                        "HttpTokens": "optional",
+                        "HttpPutResponseHopLimit": 1,
+                        "HttpEndpoint": "enabled",
+                        "HttpProtocolIpv6": "disabled",
+                        "InstanceMetadataTags": "disabled"
+                    },
+                    "EnclaveOptions": {
+                        "Enabled": false
+                    },
+                    "PlatformDetails": "Windows with SQL Server Standard",
+                    "UsageOperation": "RunInstances:0006",
+                    "UsageOperationUpdateTime": "2023-11-13T09:33:45+00:00",
+                    "PrivateDnsNameOptions": {
+                        "HostnameType": "ip-name",
+                        "EnableResourceNameDnsARecord": false,
+                        "EnableResourceNameDnsAAAARecord": false
+                    },
+                    "MaintenanceOptions": {
+                        "AutoRecovery": "default"
+                    },
+                    "CurrentInstanceBootMode": "legacy-bios"
+                }
+            ],
+            "OwnerId": "464262061435",
+            "RequesterId": "422253915474",
+            "ReservationId": "r-0f987a91e4ba851c4"
         }
     ]
 }

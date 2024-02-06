@@ -2,6 +2,7 @@ import { FlashingDotsLoader, Typography } from '@netapp/design-system';
 import styles from './DBDistributionSection.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { formatSize } from '../../../utils/utilityFunctions';
+import { GENERAL } from '../../../utils/appConstants';
 
 const DBDistributionSection = () => {
     const { resourceLoading, resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
@@ -11,7 +12,7 @@ const DBDistributionSection = () => {
         <div className={styles.dbDistribution}>
             <div className={styles.headSection}>
                 <Typography variant="Regular_16" className={styles.title}>
-                    Resources utilization
+                    {GENERAL.RESOURCE_UTILIZATION}
                 </Typography>
                 {resourceLoading && <FlashingDotsLoader />}
             </div>
@@ -39,7 +40,7 @@ const DBDistributionSection = () => {
                         </div>
                         {/* Ends here */}
 
-                        <Typography variant="Regular_14">Storage</Typography>
+                        <Typography variant="Regular_14">{GENERAL.STORAGE}</Typography>
                     </div>
 
                     <div className={styles.firstBar}>
@@ -63,7 +64,7 @@ const DBDistributionSection = () => {
                         </div>
                         {/* Ends here */}
 
-                        <Typography variant="Regular_14">Memory</Typography>
+                        <Typography variant="Regular_14">{GENERAL.MEMORY}</Typography>
                     </div>
 
                     <div className={styles.firstBar}>
@@ -87,30 +88,30 @@ const DBDistributionSection = () => {
                         </div>
                         {/* Ends here */}
 
-                        <Typography variant="Regular_14">CPU</Typography>
+                        <Typography variant="Regular_14">{GENERAL.CPU}</Typography>
                     </div>
                 </div>
 
                 <div className={styles.textContainer}>
                     <div className={styles.headerPart}>
-                        <Typography variant="Semibold_14">Resources distribution</Typography>
+                        <Typography variant="Semibold_14">{GENERAL.RESOURCES_DISTRIBUTION}</Typography>
                     </div>
 
                     <div className={styles.separatorProtection} />
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">{`Used ${formatSize(
+                            <Typography variant="Semibold_14">{`${formatSize(
                                 parseInt(disk?.used) || 0
-                            )}`}</Typography>
+                            )} used`}</Typography>
                             <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">{`Allocated ${formatSize(
+                            <Typography variant="Regular_14">{`${formatSize(
                                 parseInt(disk?.total) || 0
-                            )}`}</Typography>
+                            )} allocated`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                            <Typography variant="Regular_14">Storage</Typography>
+                            <Typography variant="Regular_14">{GENERAL.STORAGE}</Typography>
                         </div>
                     </div>
 
@@ -118,17 +119,17 @@ const DBDistributionSection = () => {
 
                     <div className={styles.usedAllocatedSection}>
                         <div className={styles.firstRow}>
-                            <Typography variant="Semibold_14">{`Used ${formatSize(
+                            <Typography variant="Semibold_14">{`${formatSize(
                                 parseInt(memory?.used) || 0
-                            )}`}</Typography>
+                            )} used`}</Typography>
                             <div className={styles.smallSeparator} />
-                            <Typography variant="Regular_14">{`Allocated ${formatSize(
+                            <Typography variant="Regular_14">{`${formatSize(
                                 parseInt(memory?.total) || 0
-                            )}`}</Typography>
+                            )} allocated`}</Typography>
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
-                            <Typography variant="Regular_14">Memory</Typography>
+                            <Typography variant="Regular_14">{GENERAL.MEMORY}</Typography>
                         </div>
                     </div>
 
@@ -140,7 +141,7 @@ const DBDistributionSection = () => {
                         </div>
                         <div className={styles.secondRow}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-1)' }} />
-                            <Typography variant="Regular_14">CPU</Typography>
+                            <Typography variant="Regular_14">{GENERAL.CPU}</Typography>
                         </div>
                     </div>
 

@@ -4,6 +4,10 @@ import { join } from 'path';
 import moment from 'moment';
 import { DEPLOYMENT_STATUS } from '@prisma/client';
 
+type SubJobDescriptions = {
+    [key: string]: string;
+};
+
 // General
 const APP_NAME = 'Workload Manager for DB';
 const API_TITLE = 'Workload Manager for DB API';
@@ -67,8 +71,8 @@ const API_PATH_HEALTH: string = '/health';
 const CLOUD_MANAGER_SERVER_ADDRESS = config.get<string>('urls.cloud-manager');
 
 // Audit
-const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt'];
-const DEFAULT_AWS_REGION = 'us-east-1';
+const AUDIT_EXCLUDE_LIST = ['/batch', '/prompt', '/pricing'];
+const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 
@@ -123,6 +127,7 @@ enum RouteTags {
     GENERIC = 'Generic',
     SYSTEM = 'System',
     DEPLOYMENT = 'Deployment',
+    JOB_MONITORING = 'Job Monitoring',
     WORKING_ENVIRONMENT = 'Working Environment',
     DATABASE = 'Database',
     BATCH = 'Batch',
@@ -272,7 +277,8 @@ const SERVER_TYPE_MAPPING = new Map<string, string>([[RESOURCESTYPE.MSSQL, 'Micr
 
 enum FileSystemTypes {
     EBS = 'EBS',
-    FSXONTAP = 'FSx ONTAP'
+    FSXONTAP = 'FSx for ONTAP',
+    FSXWINDOWS = 'FSx for Windows'
 }
 
 const SECRETS_MANAGER = 'secretsmanager';
@@ -309,7 +315,7 @@ const LOGS_ACTION_NAMES = [
 ].map(action => `${LOGS}:${action}`);
 
 const PRICING = 'pricing';
-const PRICING_ACTION_NAMES = ['GetProducts'].map(action => `${PRICING}:${action}`);
+// const PRICING_ACTION_NAMES = ['GetProducts'].map(action => `${PRICING}:${action}`);
 const BILLING = 'billing';
 
 const EC2 = 'ec2';
@@ -343,14 +349,12 @@ const IAM_ACTION_NAMES = [
     'AddRoleToInstanceProfile',
     'CreateInstanceProfile',
     'CreateRole',
-    'CreateServiceLinkedRole',
     'DeleteInstanceProfile',
     'GetPolicy',
     'GetPolicyVersion',
     'GetRole',
     'GetRolePolicy',
     'GetUser',
-    'PassRole',
     'PutRolePolicy',
     'RemoveRoleFromInstanceProfile',
     'SimulatePrincipalPolicy'
@@ -421,17 +425,18 @@ const EC2_STRICT_CONDITION_ACTION_NAMES = [
     'RevokeSecurityGroupEgress',
     'RevokeSecurityGroupIngress',
     'StartInstances',
-    'StopInstances',
-    'TerminateInstances'
+    'StopInstances'
 ].map(action => `${EC2}:${action}`);
 
 const FSX_STRICT_CONDITION_ACTION_NAMES = ['TagResource'].map(action => `${FSX}:${action}`);
+
+const IAM_STRICT_CONDITION_ACTION_NAMES = ['CreateServiceLinkedRole', 'PassRole'].map(action => `${IAM}:${action}`);
 
 const AWS_RESOURCES_ACTION_MAP = {
     [SECRETS_MANAGER]: SECRECTS_MANAGER_ACTION_NAMES,
     [SSM]: SSM_ACTION_NAMES,
     [LOGS]: LOGS_ACTION_NAMES,
-    [PRICING]: PRICING_ACTION_NAMES,
+    // [PRICING]: PRICING_ACTION_NAMES,
     [KMS]: KMS_ACTION_NAMES,
     [DS]: DS_ACTION_NAMES,
     [EC2_MESSAGES]: EC2_MESSAGES_ACTION_NAMES,
@@ -451,7 +456,8 @@ const AWS_RESOURCES_STRICT_ACTION_MAP = {
 
 const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
     [EC2]: EC2_STRICT_CONDITION_ACTION_NAMES,
-    [FSX]: FSX_STRICT_CONDITION_ACTION_NAMES
+    [FSX]: FSX_STRICT_CONDITION_ACTION_NAMES,
+    [IAM]: IAM_STRICT_CONDITION_ACTION_NAMES
 };
 
 const SECRET_MANAGER_ARN = 'arn:aws:secretsmanager:*:*:secret:wlmdb*';
@@ -460,6 +466,9 @@ const LOG_GROUP_ARN = 'arn:aws:logs:*:*:log-group:WLMDB*';
 const EC2_TAG_CONDITION = 'ec2:ResourceTag/aws:cloudformation:stack-name';
 const FSX_TAG_CONDITION = 'aws:ResourceTag/aws:cloudformation:stack-name';
 const WLMDB_RESOURCE_TAG_VALUE = 'WLMDB*';
+const IAM_LINKEDROLE_CONDITION = 'iam:AWSServiceName';
+const IAM_PASSROLE_CONDITION = 'iam:PassedToService';
+const IAM_EC2_SERVICE = 'ec2.amazonaws.com';
 
 // List of AWS regions - taken from https://www.aws-services.info/regions.html
 const AWS_REGIONS = new Map<string, string>([
@@ -504,7 +513,7 @@ const WLMDB = 'wlmdb';
 const BUCKET_NAME = process.env.WLMDB_BUCKET_NAME || config.get<string>('templates.bucket');
 const ASSETS_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('templates.region');
 const BUCKET_PREFIX = 'templates';
-const EC2_ROLE_NAME = 'Ec2RoleName';
+const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
@@ -553,7 +562,8 @@ const TEMPLATE_CONFIGURATION_MAPPING: Record<string, string> = {
     keyPairName: 'KeyPairName',
 
     topicArn: 'NotificationARN',
-    enableCloudWatch: 'EnableCloudWatchLogFeature'
+    enableCloudWatch: 'EnableCloudWatchLogFeature',
+    metrics: 'Metrics'
 };
 
 const TEMPLATE_OPTIONAL_PARAMETERS: Record<string, string> = {
@@ -579,10 +589,16 @@ const MISSING_PERMISSIONS = (permissions: Array<string>) =>
 
 const CF_QUOTA_REACHED = `Cloud Formation for stacks has reached or about to reach region quota. Around ${STACKS_DEPLOYED} may be deployed as part of deployment.`;
 const STANDALONE_NETWORK_VIOLATION_MESSAGE =
-    'For standalone deployment, privateSubnet1Id and routeTable1Id cannot be empty.';
+    'For standalone deployment, private subnet 1 Id and route table 1 Id cannot be empty.';
+
+const FCI_NETWORK_EMPTY_VIOLATION_MESSAGE =
+    'For FCI deployment, private subnet 1 Id, route table 1 Id, private subnet 2 Id and route table 2 Id cannot be empty.';
+
+const FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE =
+    'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
 
 const FCI_NETWORK_VIOLATION_MESSAGE =
-    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.AWS FSx requires route tables to be different for subnets in Multi-zone deployment.';
+    'For fci deployment, privateSubnet1Id, routeTable1Id, privateSubnet2Id and routeTable2Id cannot be empty.The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.';
 
 const STACK_NOT_FOUND = (stack: string) => `Cloud Formation stack ${stack} not found.`;
 const CONFIG_NOT_FOUND = (configId: string) => `Saved config ${configId} not found.`;
@@ -614,6 +630,8 @@ const TEMPLATE_CREDENTIALS_ID = 'RoleCredentialsId';
 const TEMPLATE_ACCOUNT_ID = 'AccountId';
 const TEMPLATE_SNS_SERVICE_TOKEN = 'SnsServiceToken';
 const TEMPLATE_WLMDB_AWS_ACCOUT_ID = 'WlmdbAwsAccountId';
+const TEMPLATE_FSX_PASSWORD = 'EncryptedFsxPassword';
+const TEMPLATE_METRICS = 'Metrics';
 
 const SQL_RESOURCE_ASSETS = [
     {
@@ -715,6 +733,10 @@ const SQL_RESOURCE_ASSETS = [
     {
         name: 'ScriptAdValidation',
         url: 'validation/Validate-Credentials.ps1'
+    },
+    {
+        name: 'ScriptFSxValidation',
+        url: 'validation/Validate-FsxConnectivity.ps1'
     }
 ];
 
@@ -844,6 +866,8 @@ const BXP_USER_CRED_TYPE = 'BXP_USER_CRED';
 const WF_SVC_TOKEN_TYPE = 'WF_SVC_TOKEN';
 const BXP_SVC_TOKEN_TYPE = 'BXP_SVC_TOKEN';
 const SSM_COMMAND_CACHE_TYPE = 'SSM_COMMAND';
+const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
+const AWS_PRICING_TYPE = 'AWS_PRICING';
 
 const ADMIN_ROLE = 'Role-1';
 const USER_ROLE = 'Role-2';
@@ -851,7 +875,8 @@ enum DatabaseHostsQueryFields {
     PERFORMANCE = 'performance',
     PROTECTION = 'protection',
     STORAGE = 'storage',
-    USAGE_ESTIMATION = 'usageEstimation'
+    USAGE_ESTIMATION = 'usageEstimation',
+    RESOURCE_UTILIZATION = 'resourceUtilization'
 }
 
 enum ServerState {
@@ -905,6 +930,84 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
 const SQS_MSG_RETENTION = '7200'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
+const MSSQL_SYSTEM_DATABASES = [
+    'master',
+    'mastlog',
+    'tempdb',
+    'tempdev',
+    'templog',
+    'modeldev',
+    'model',
+    'modellog',
+    'msdbdata',
+    'msdblog',
+    'msdb'
+];
+
+const MSSQL_DATABASE_TYPES = {
+    SYSTEM: 'System Database',
+    USER: 'User Database'
+};
+
+const WF_TOKEN = 'WF_TOKEN';
+const BXP_TOKEN = 'BXP_TOKEN';
+
+const KMS_KEY_ALIAS = process.env.KEY_ALIAS;
+// Metrics data const
+const TRIGGERED_FROM = 'triggered-from';
+const DEPLOYED_FROM = 'deployed-from';
+const INSTANCE_TYPE = 'instance-type';
+const SQL_VERSION = 'sql-version';
+const DATABASE_SIZE = 'database-size';
+const SQL_HOST_NAME = 'sql-host-name';
+
+const JOBS_DEFAULT_TIME_RANGE = '30d';
+
+const subJobDescriptions: SubJobDescriptions = {
+    SQLStandaloneStack: 'Deploying an SQL Server standalone instance with recommended best practices',
+    SQLServerStack: 'Deploying an SQL Server FCI with recommended best practices',
+    NewFSxStack: 'Deploying new FSx for ONTAP file system for SQL Server workload',
+    ExistingFSxStack:
+        'Deploying a storage virtual machine for the SQL Server workload on the FSx for ONTAP file system',
+    'ValidationStack1-standalone': 'Subnet Validation for deployment',
+    'ValidationStack1-fci': 'Primary subnet validation for SQL Server FCI deployment',
+    ValidationStack2: 'Standby subnet validation for SQL Server FCI deployment',
+    'SqlNode(AWS::EC2::Instance)': 'Configuring SQL Server standalone on an EC2 instance',
+    'NetworkInterface(AWS::EC2::NetworkInterface)': 'Creating network interfaces for the EC2 instance',
+    'WorkloadSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for SQL Server workloads',
+    'LaunchWizardSqlFSxProfile(AWS::IAM::InstanceProfile)':
+        'Attaching an instance profile to EC2 instances for SQL Server nodes',
+    'DisableIMDSv1(AWS::EC2::LaunchTemplate)': 'Disabling instance metadata service v1 to use more secure v2',
+    'FSxTempDbVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host tempdb',
+    'FSxClusterQuorumVolumeConfiguration(AWS::FSx::Volume)':
+        'Creating a volume to host witness disk for Windows Cluster',
+    'FSxDataVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host data files',
+    'FSxLogVolumeConfiguration(AWS::FSx::Volume)': 'Creating a volume to host log files',
+    'FSxSvmConfiguration(AWS::FSx::StorageVirtualMachine)':
+        'Creating a dedicated storage virtual machine (SVM) for the database workload',
+    'FSxFileSystemConfiguration(AWS::FSx::FileSystem)': 'Creating a new FSx for ONTAP file system',
+    'ONTAPSecurityGroup(AWS::EC2::SecurityGroup)': 'Creating a security group for FSx for ONTAP',
+    'ValidationNode1(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode1WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+    'DomainMemberSG(AWS::EC2::SecurityGroup)': 'Creating a security group for the validation instance',
+    'ValidationInstanceProfile(AWS::IAM::InstanceProfile)': 'Attaching an instance profile to the validation instance',
+    'ValidationNode1WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps',
+    'SqlFSxInstanceMAD1(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on primary node',
+    'SqlFSxInstanceMAD2(AWS::EC2::Instance)': 'Configuring Windows Cluster and SQL FCI instance on standby node',
+    'NetworkInterface2(AWS::EC2::NetworkInterface)':
+        'Creating network interfaces for the EC2 instance in standby subnet',
+    'NetworkInterface1(AWS::EC2::NetworkInterface)':
+        'Creating network interfaces for the EC2 instance in primary subnet',
+    'ValidationNode2(AWS::EC2::Instance)':
+        'Validating outbound connection to deployment resources in Amazon S3, Active Directory, and FSx for ONTAP',
+    'ValidationNode2WaitCondition(AWS::CloudFormation::WaitCondition)': 'Waiting for validation completion',
+    'ValidationNode2WaitHandler(AWS::CloudFormation::WaitConditionHandle)':
+        'Signaling wait condition to resume next steps'
+};
+const CF_STACK_RESOURCE_TYPE = 'AWS::CloudFormation::Stack';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -972,7 +1075,7 @@ export {
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     MASTER_TEMPLATE_URL,
-    EC2_ROLE_NAME,
+    CF_DEPLOY_ROLE_NAME,
     MISSING_PERMISSIONS,
     CF_QUOTA_REACHED,
     DISABLE_ROLLBACK,
@@ -1022,6 +1125,7 @@ export {
     TEMPLATE_ACCOUNT_ID,
     TEMPLATE_SNS_SERVICE_TOKEN,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
+    TEMPLATE_FSX_PASSWORD,
     CF_NOTIFICATION,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
     ERROR_CODE_SQS_INVALID_TOKEN,
@@ -1085,11 +1189,14 @@ export {
     NOT_AVAILABLE,
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     DEPLOYMENT_JOBS_FAILED_STATUS,
     DEPLOYMENT_JOBS_LIST_FILTER,
     DATABASE_TYPE,
     SSM_COMMAND_CACHE_TYPE,
+    REQUEST_IN_PROGRESS_TYPE,
     CONFIG_NOT_FOUND,
     DOMAIN_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
@@ -1102,8 +1209,27 @@ export {
     INVALID_PARAMETER_VALUE,
     LOG_GROUP_ARN,
     WLMDB_RESOURCE_TAG_VALUE,
+    MSSQL_SYSTEM_DATABASES,
+    MSSQL_DATABASE_TYPES,
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
     PRICING,
-    SQS_MSG_RETENTION
+    SQS_MSG_RETENTION,
+    WF_TOKEN,
+    BXP_TOKEN,
+    IAM_LINKEDROLE_CONDITION,
+    IAM_PASSROLE_CONDITION,
+    IAM_EC2_SERVICE,
+    KMS_KEY_ALIAS,
+    TEMPLATE_METRICS,
+    TRIGGERED_FROM,
+    DEPLOYED_FROM,
+    INSTANCE_TYPE,
+    SQL_VERSION,
+    DATABASE_SIZE,
+    SQL_HOST_NAME,
+    JOBS_DEFAULT_TIME_RANGE,
+    subJobDescriptions,
+    CF_STACK_RESOURCE_TYPE,
+    AWS_PRICING_TYPE
 };

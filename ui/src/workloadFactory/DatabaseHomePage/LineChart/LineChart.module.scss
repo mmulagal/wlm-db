@@ -1,6 +1,13 @@
 .lineChart {
-    width: 336px;
-    height: 131px;
+    width: 711px;
+    height: 188px;
+    position: relative;
+
+    .noData {
+        position: absolute;
+        left: 50%;
+        top: 20%;
+    }
 
     .text {
         position: relative;

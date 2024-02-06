@@ -1,0 +1,89 @@
+.jobDistribution {
+    height: 312px;
+    background-color: var(--content-background);
+    box-shadow: 2px 2px 6px var(--grey-15);
+
+    .headSection {
+        display: flex;
+        height: 72px;
+        padding: 12px 40px;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .status {
+        display: flex;
+        gap: 24px;
+    }
+
+    .mainSection {
+        padding: 32px 0 32px 40px;
+        display: flex;
+        align-items: center;
+        gap: 42px;
+
+        [class*='JobDoughnutchart_jobChart'] {
+            margin-top: 0;
+        }
+
+        .rightSection {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .jobSeparator {
+            width: 240px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .firstPart {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+
+            .square {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        .rowData {
+            display: flex;
+            justify-content: space-between;
+            width: 240px;
+            margin: 12px 0;
+        }
+
+        .flexRightSection {
+            display: flex;
+
+            align-items: center;
+            .valueContainer {
+                display: flex;
+                flex-direction: column;
+
+                .setLineHeight {
+                    line-height: 42px !important;
+                }
+            }
+
+            .jobDistributionSeparator {
+                height: 56px;
+                border-right: 1px solid var(--border);
+                position: relative;
+                top: 4px;
+                margin: 0 32px;
+            }
+        }
+    }
+}
+
+.minWidthClass {
+    width: 551px;
+}
+
+.maxWidthClass {
+    width: 790px;
+}

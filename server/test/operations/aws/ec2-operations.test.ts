@@ -4,7 +4,8 @@ import {
     getVpcsList,
     getInstanceTypes,
     getKeyPairsList,
-    getWindowsServerBaseAmi
+    getWindowsServerBaseAmi,
+    tagEc2Resource
 } from '../../../src/operations/aws/ec2-operations';
 import '../../simulator/scopes/cloud-manager/cloud-manager-credentials-scope';
 import '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
@@ -13,10 +14,12 @@ import '../../simulator/scopes/cloud-manager/workload-factory-auth-scope';
 import '../../simulator/scopes/aws/ec2-scope';
 import '../../simulator/scopes/opentelemetry-scope';
 import { DEFAULT_AWS_REGION } from '../../../src/utils/consts';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_TYPE, ACCOUNT_ID } from '../../utils/consts';
 
 const WINDOWS = 'windows';
 const SQL = 'sql';
+const credentialsId = `${faker.string.alpha(20)}`;
+const ec2Id = `i-${faker.string.alpha(8)}`;
 
 describe('EC2 Operations', () => {
     it('list of EC2 AMIs', async () => {
@@ -26,13 +29,11 @@ describe('EC2 Operations', () => {
     });
 
     it('list of vpc', async () => {
-        const credentialsId = `${faker.string.alpha(20)}`;
         const resp = await getVpcsList(credentialsId, DEFAULT_AWS_REGION);
         expect(resp).toBeDefined();
     });
 
     it('should return a lsist EC2 instance types forn specific region', async () => {
-        const credentialsId = `${faker.string.alpha(20)}`;
         const resp = await getInstanceTypes(credentialsId, 'us-east-1');
         expect(resp.instanceTypes).toBeDefined();
     });
@@ -45,5 +46,11 @@ describe('EC2 Operations', () => {
     it('Get Windows Server ImageId in a region', async () => {
         const response = await getWindowsServerBaseAmi(DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION);
         expect(response).toBeDefined();
+    });
+
+    it('Tag Ec2 instance', async () => {
+        await expect(
+            tagEc2Resource(credentialsId, DEFAULT_AWS_REGION, ACCOUNT_ID, [ec2Id], [{ Key: 'key', Value: 'value' }])
+        ).resolves.not.toThrow();
     });
 });

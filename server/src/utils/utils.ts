@@ -4,7 +4,7 @@
  */
 import { attempt, trimEnd, trimStart } from 'lodash-es';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import crypto, { randomUUID } from 'crypto';
 import { getAsyncLocalStorageResource } from './async-local-storage';
 
 import {
@@ -16,13 +16,29 @@ import {
     FSX_SSD_MAX_SIZE,
     FCI_STACKNAME,
     STANDALONE_STACKNAME,
-    STANDALONE
+    STANDALONE,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_EMPTY_VIOLATION_MESSAGE,
+    FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE,
+    subJobDescriptions,
+    SqlServerDeploymentModel
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
 import { CFNetworkConfigurationType } from '../routes/types/deployment.types';
+import {
+    fsxStackData,
+    masterStackData,
+    sqlFciServerStackData,
+    sqlStandaloneStackData,
+    validationStack1Data,
+    validationStack2Data
+} from './job-monitoring-mockdata';
 
 const logger = getLogger();
+
+const subJobRegex = /-([^-\s]+)-[^-\s]+$/;
+const subJobNames = ['SQLStandaloneStack', 'SQLServerStack', 'NewFSxStack', 'ExistingFSxStack'];
 
 function filterSqlAmis(osVersion?: string, dbVersion?: string, dbEdition?: string) {
     logger.debug({ osVersion, dbEdition, dbVersion });
@@ -129,19 +145,40 @@ function getSubjectFromBearerToken() {
 }
 
 function isNetworkConfigurationViolated(networkConfiguration: CFNetworkConfigurationType, deploymentMode: string) {
+    const noViolation = { isViolated: false };
+
     if (deploymentMode === STANDALONE) {
-        return !networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id;
+        if (!networkConfiguration.privateSubnet1Id || !networkConfiguration.routeTable1Id) {
+            return {
+                isViolated: true,
+                violationMessage: STANDALONE_NETWORK_VIOLATION_MESSAGE
+            };
+        }
+        return noViolation;
     }
-    const isViolated =
+    if (
         !networkConfiguration.privateSubnet1Id ||
         !networkConfiguration.privateSubnet2Id ||
         !networkConfiguration.routeTable1Id ||
-        !networkConfiguration.routeTable2Id;
-    // In simulator route table 1 and route table 2 id will be always same, so we cant check that condition
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        return isViolated;
+        !networkConfiguration.routeTable2Id
+    ) {
+        return {
+            isViolated: true,
+            violationMessage: FCI_NETWORK_EMPTY_VIOLATION_MESSAGE
+        };
     }
-    return isViolated || networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id;
+
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        return noViolation;
+    }
+
+    if (networkConfiguration.routeTable1Id === networkConfiguration.routeTable2Id) {
+        return {
+            isViolated: true,
+            violationMessage: FCI_NETWORK_ROUTE_TABLE_VIOLATION_MESSAGE
+        };
+    }
+    return noViolation;
 }
 
 function checkAndRetrieveJsonObject(str: string | undefined) {
@@ -169,10 +206,6 @@ function getSnsArn(accountId: string, region: string, snsName: string) {
 
 function getFsxArn(awsAccountId: string, region: string, fsxId: string) {
     return `arn:aws:fsx:${region}:${awsAccountId}:file-system/${fsxId}`;
-}
-
-function getEc2Arn(awsAccountId: string, region: string, ec2Id: string) {
-    return `arn:aws:ec2:${region}:${awsAccountId}:instance/${ec2Id}`;
 }
 
 function getQueueUrl(accountId: string, queueName: string) {
@@ -224,6 +257,142 @@ function sizeInGigaBytes(size: number, currentUnit: string = 'MB') {
     }
 }
 
+/**
+ *
+ * @param fn - function that returns a boolean when the response is correct
+ * @param delay - interval after which the function should be invoked
+ * @param maxDelay - total delay or timeout, if the function is not resolved within this time, we consider it a failure
+ * @returns Promise that can be awaited
+ */
+
+function waitForResolution(fn: () => boolean, delay: number, maxDelay: number) {
+    return Promise.race([
+        sleep(maxDelay),
+        new Promise(res => {
+            const interval = setInterval(async () => {
+                const result = fn();
+                if (result) {
+                    clearInterval(interval);
+                    return res(true);
+                }
+            }, delay);
+        })
+    ]);
+}
+
+const deployedStackUrl = (region: string, stackId: string) =>
+    `https://console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/stackinfo?stackId=${stackId}`;
+
+function generateRandomIP(): string {
+    const randomOctet = () => Math.floor(Math.random() * 256);
+    const ip = `${randomOctet()}.${randomOctet()}.${randomOctet()}.${randomOctet()}`;
+    return ip;
+}
+
+function isActiveInstance() {
+    return !process.env.hasOwnProperty('isActive') || process.env.isActive === 'true';
+}
+
+// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
+// So while saving & retrieving we have to maintain the same in demo mode
+function checkAccount(accountId: string) {
+    logger.info('checking account id', accountId);
+    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
+        const userId = getSubjectFromBearerToken();
+        return userId ? `${accountId}_${userId}` : accountId;
+    }
+    return accountId;
+}
+
+async function createJobMockData(
+    accountId: string,
+    resourceName: string,
+    stackName: string,
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined
+) {
+    logger.info('Generate mock data for job table', accountId, resourceName, stackName);
+    accountId = checkAccount(accountId);
+    const masterStackId = randomUUID();
+    const serverStackId = randomUUID();
+    const fsxStackId = randomUUID();
+    const validationStack1Id = randomUUID();
+    const validationStack2Id = randomUUID();
+
+    const data: any[] = [];
+
+    const fsxType = fsxFileSystemId ? 'ExistingFSxStack' : 'NewFSxStack';
+
+    data.push(
+        ...masterStackData(accountId, resourceName, stackName, masterStackId),
+        ...fsxStackData(accountId, resourceName, stackName, fsxStackId, masterStackId, fsxType),
+        ...validationStack1Data(
+            accountId,
+            resourceName,
+            stackName,
+            validationStack1Id,
+            masterStackId,
+            sqlDeploymentMode
+        )
+    );
+    if (sqlDeploymentMode.toLowerCase() === 'fci') {
+        data.push(
+            ...sqlFciServerStackData(accountId, resourceName, serverStackId, masterStackId),
+            ...validationStack2Data(accountId, resourceName, stackName, validationStack2Id, masterStackId)
+        );
+    } else {
+        data.push(...sqlStandaloneStackData(accountId, resourceName, stackName, serverStackId, masterStackId));
+    }
+    return data;
+}
+function calculateSQLandWindowsVersion(sqlAmiName: string) {
+    logger.info('Calculate sql and windows version from the sql AMI name', sqlAmiName);
+
+    // Regex Pattern
+    const windowsVersionPattern = /Windows_Server-(\d+)/;
+    const sqlVersionPattern = /SQL_(\d+)_([^+]+)/;
+
+    // Extract Windows Version
+    const windowsVersionMatch = sqlAmiName.match(windowsVersionPattern);
+    const windowsVersion = windowsVersionMatch ? windowsVersionMatch[1] : '';
+
+    // Extract SQL version and SQL version type
+    const sqlVersionMatch = sqlAmiName.match(sqlVersionPattern);
+    const sqlVersion = sqlVersionMatch ? sqlVersionMatch[1] : '';
+    const sqlVersionType = sqlVersionMatch ? sqlVersionMatch[2] : '';
+
+    return [windowsVersion, sqlVersion, sqlVersionType];
+}
+
+// Return job decription for corresponding Job name
+function getDescriptionForMatchingName(jobName: string, stackSqlDeploymentType: string) {
+    logger.info('Return job decription for job name:', jobName);
+    // ValidationStack1 is the only common stack between FCI and Standalone Deployment that has different description.
+    // Diffrentiating between the deployment type to provide appropriate description.
+    if (jobName.includes('ValidationStack1')) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        jobName =
+            stackSqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT
+                ? jobName.concat('-fci')
+                : jobName.concat('-standalone');
+        return subJobDescriptions[jobName];
+    }
+    if (subJobNames.some(subJobName => jobName.indexOf(subJobName) !== -1)) {
+        const match = jobName.match(subJobRegex);
+        jobName = match ? match[1] : '';
+        return subJobDescriptions[jobName];
+    }
+
+    let jobDescription = '';
+    Object.keys(subJobDescriptions).forEach(key => {
+        if (jobName.includes(key)) {
+            jobDescription = subJobDescriptions[key];
+        }
+    });
+    return jobDescription;
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -237,8 +406,15 @@ export {
     sleep,
     getSnsArn,
     getFsxArn,
-    getEc2Arn,
     generateHash,
     calculateFsxStorageCapacity,
-    sizeInGigaBytes
+    sizeInGigaBytes,
+    waitForResolution,
+    deployedStackUrl,
+    generateRandomIP,
+    isActiveInstance,
+    checkAccount,
+    createJobMockData,
+    calculateSQLandWindowsVersion,
+    getDescriptionForMatchingName
 };

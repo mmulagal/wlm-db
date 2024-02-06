@@ -42,7 +42,8 @@ const SQLConfiguration = Type.Object({
     sqlAmiId: Type.String(),
     serviceAccountName: Type.String(),
     serviceAccountPassword: Type.String(),
-    sqlServerName: Type.String()
+    sqlServerName: Type.String(),
+    sqlAmiName: Type.String()
 });
 
 // Cloud formation template creation Request and Response
@@ -53,7 +54,7 @@ const CloudFormationTemplateRequestBody = Type.Object({
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
     topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -64,6 +65,13 @@ const CloudFormationTemplateRequestBody = Type.Object({
     )
 });
 
+const CloudFormationTemplateHeader = Type.Object({
+    'triggered-from': Type.String({
+        enum: ['wizard-advanced', 'wizard-quick', 'chatbot', 'rest-api'],
+        default: 'rest-api'
+    })
+});
+
 // Cloud formation template, yaml and cli creation
 const CloudFormationStaticTemplateRequestBody = Type.Object({
     networkConfiguration: CFNetworkConfiguration,
@@ -72,7 +80,7 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     fsxConfiguration: FSXConfiguration,
     sqlConfiguration: SQLConfiguration,
     topicArn: Type.Optional(Type.String()),
-    enableCloudWatch: Type.Optional(Type.Boolean({ default: false })),
+    enableCloudWatch: Type.Optional(Type.Boolean({ default: true })),
     tags: Type.Optional(
         Type.Array(
             Type.Object({
@@ -85,9 +93,10 @@ const CloudFormationStaticTemplateRequestBody = Type.Object({
     region: Type.Optional(Type.String())
 });
 
-const CloudFormationTemplateResponse = Type.Object({
-    cloudFormationUrl: Type.String(),
-    warningMessage: Type.Optional(Type.String())
+const CloudFormationDeploymentResponse = Type.Object({
+    cloudFormationUrl: Type.Optional(Type.String()),
+    cloudFormationStackId: Type.Optional(Type.String()),
+    missingPermissions: Type.Optional(Type.String())
 });
 
 const CloudFormationStaticTemplateResponse = Type.Object({
@@ -113,6 +122,32 @@ const DeploymentStatusObjectParams = Type.Object({
     region: Type.String({ minLength: 1 }),
     stackName: Type.String({ minLength: 1 })
 });
+
+const DeploymentSummaryQueryString = Type.Object({
+    statuses: Type.Optional(Type.String()),
+    nextToken: Type.Optional(Type.String())
+});
+
+const DeploymentJobsSummaryResponse = Type.Object({
+    id: Type.String(),
+    deploymentId: Type.String(),
+    deploymentName: Type.String(),
+    name: Type.Optional(Type.String()),
+    status: Type.String(),
+    metadata: Type.Object({
+        region: Type.Optional(Type.String()),
+        serverType: Type.Optional(Type.String()),
+        serverInstallationMode: Type.Optional(Type.String()),
+        fileSystemType: Type.Optional(Type.String())
+    })
+});
+
+const DeploymentSummaryListResponse = Type.Object({
+    count: Type.Number(),
+    items: Type.Array(DeploymentJobsSummaryResponse),
+    nextToken: Type.Optional(Type.String())
+});
+
 type DeploymentStatusObjectParamsType = Static<typeof DeploymentStatusObjectParams>;
 
 const DeploymentStatusListResponse = Type.Array(DeploymentStatusResponse);
@@ -124,19 +159,18 @@ type EC2ConfigurationType = Static<typeof EC2Configuration>;
 type ADConfigurationType = Static<typeof ADConfiguration>;
 type FSXConfigurationType = Static<typeof FSXConfiguration>;
 type SQLConfigurationType = Static<typeof SQLConfiguration>;
-type CloudFormationTemplateResponseType = Static<typeof CloudFormationTemplateResponse>;
 type CloudFormationStaticTemplateResponseType = Static<typeof CloudFormationStaticTemplateResponse>;
+type CloudFormationDeploymentResponseType = Static<typeof CloudFormationDeploymentResponse>;
 
 export {
     CloudFormationTemplateRequestBody,
-    CloudFormationTemplateResponse,
     CFNetworkConfigurationType,
     EC2ConfigurationType,
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
     DeployTemplateResponse,
-    CloudFormationTemplateResponseType,
+    CloudFormationDeploymentResponseType,
     DeploymentStatusResponse,
     DeploymentStatusListResponse,
     DeploymentStatusListResponseType,
@@ -145,5 +179,9 @@ export {
     DeploymentStatusObjectParamsType,
     CloudFormationStaticTemplateResponse,
     CloudFormationStaticTemplateResponseType,
-    CloudFormationStaticTemplateRequestBody
+    CloudFormationStaticTemplateRequestBody,
+    CloudFormationDeploymentResponse,
+    DeploymentSummaryQueryString,
+    DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 };

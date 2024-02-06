@@ -1,0 +1,83 @@
+.jobMonitoring {
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--main-background);
+    overflow-y: auto;
+    .breadCrumb {
+        margin-top: 16px;
+        margin-left: 40px;
+    }
+
+    .headingContainer {
+        display: flex;
+        width: 1612px;
+        justify-content: space-between;
+        margin-top: 38px;
+        margin-left: 120px;
+        margin-right: 40px;
+        .heading {
+            line-height: unset;
+        }
+
+        .selectContainer {
+            width: 168px;
+            --menu-max-height: 280px;
+        }
+    }
+
+    .chartContainer {
+        margin-left: 120px;
+        display: flex;
+        gap: 27px;
+        width: 1612px;
+    }
+
+    .overtimeJobs {
+        width: 790px;
+        height: 312px;
+        background-color: var(--content-background);
+        box-shadow: 2px 2px 6px var(--grey-15);
+
+        .headSection {
+            display: flex;
+            height: 72px;
+            padding: 12px 40px;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            border-bottom: 1px solid #e0e0e0;
+
+            .title {
+                display: flex;
+                gap: 24px;
+            }
+        }
+
+        .mainSection {
+            margin-top: 32px;
+            margin-left: 40px;
+        }
+    }
+
+    .tableSection {
+        margin-top: 40px;
+        margin-left: 120px;
+        display: flex;
+        width: 1063px;
+    }
+}
+
+@media screen and (max-width: 1520px) {
+    .jobMonitoring {
+        .headingContainer {
+            width: 1124px;
+        }
+        .overtimeJobs {
+            width: 550px;
+
+            [class*='lineChart'] {
+                width: 470px;
+            }
+        }
+    }
+}

@@ -25,23 +25,31 @@ import {
     DescribeNetworkInterfacesCommand,
     DescribeInstancesCommand,
     DescribeInstancesCommandInput,
-    DescribeInstanceTypeOfferingsCommand
+    DescribeInstanceTypeOfferingsCommand,
+    CreateTagsCommand,
+    CreateTagsCommandOutput,
+    Tag,
+    DescribeInstancesCommandOutput,
+    DescribeTagsCommandInput,
+    DescribeTagsCommand,
+    DescribeInstanceTypeOfferingsCommandInput,
+    LocationType
 } from '@aws-sdk/client-ec2';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import { DEFAULT_AWS_REGION, HttpErrorCodes } from '../../utils/consts';
 
 const logger = getLogger();
-async function getEC2Client(region: string, credentialsId?: string) {
+
+async function getEC2Client(region: string, credentialsId?: string, accountId?: string) {
     logger.debug('Getting EC2 client:', region, credentialsId);
     if (!credentialsId) {
         return new EC2Client({ region });
     }
     const {
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
-    } = await getCredentialsDetails(credentialsId);
+    } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
-
     return new EC2Client({ credentials, region });
 }
 
@@ -97,7 +105,7 @@ async function describeInstance(
     credentialsId: string,
     region: string,
     params: DescribeInstancesCommandInput
-): Promise<DescribeImagesCommandOutput> {
+): Promise<DescribeInstancesCommandOutput> {
     logger.info('Describe EC2 instance', { credentialsId, region, params });
 
     const client = await getEC2Client(region, credentialsId);
@@ -213,9 +221,9 @@ async function describeNetworkInterfaces(
 async function describeInstanceTypeOfferings(credentialsId: string, region: string, instanceType: string) {
     logger.info('Describe EC2 instance offerings:', { region, instanceType });
 
-    const input = {
+    const input: DescribeInstanceTypeOfferingsCommandInput = {
         DryRun: false,
-        LocationType: 'region',
+        LocationType: LocationType.region,
         Filters: [
             {
                 Name: 'location',
@@ -246,6 +254,36 @@ async function describeInstanceTypeOfferings(credentialsId: string, region: stri
     return response;
 }
 
+async function createTag(credentialsId: string, region: string, accountId: string, resourceId: string[], tags: Tag[]) {
+    logger.info('Adding tags to resource', credentialsId, region, accountId, resourceId, tags);
+    try {
+        const client = await getEC2Client(region, credentialsId, accountId);
+        const ec2Params = {
+            Resources: resourceId,
+            Tags: tags
+        };
+
+        const command = new CreateTagsCommand(ec2Params);
+        const response: CreateTagsCommandOutput = await client.send(command);
+        logger.info('Resource tagged successfully:', response);
+    } catch (error) {
+        logger.error('Error tagging resource:', error);
+    }
+}
+
+async function describeTags(credentialsId: string, region: string, input: DescribeTagsCommandInput) {
+    logger.info('Describe Tags command ', credentialsId, region, input);
+
+    try {
+        const client = await getEC2Client(region, credentialsId);
+        const command = new DescribeTagsCommand(input);
+        const response = await client.send(command);
+        return response;
+    } catch (error) {
+        logger.error('Describe Tags command failed with the error', error);
+    }
+}
+
 export {
     getEC2Client,
     describeVpc,
@@ -258,5 +296,7 @@ export {
     describeRouteTable,
     describeKeyPairs,
     describeNetworkInterfaces,
-    describeInstanceTypeOfferings
+    describeInstanceTypeOfferings,
+    createTag,
+    describeTags
 };

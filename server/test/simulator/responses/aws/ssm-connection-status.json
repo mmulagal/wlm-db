@@ -1,0 +1,10 @@
+{
+    "$metadata": {
+        "httpStatusCode": 200,
+        "requestId": "ab896318-2714-4bb7-b9d8-519afe012072",
+        "attempts": 1,
+        "totalRetryDelay": 0
+    },
+    "Status": "connected",
+    "Target": "i-07e76a4b916548dc0"
+}

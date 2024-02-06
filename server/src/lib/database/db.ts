@@ -2,7 +2,7 @@ import { DEPLOYMENT_STATUS, DEPLOYMENT_MODEL } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
-import { getSubjectFromBearerToken } from '../../utils/utils';
+import { checkAccount } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -240,6 +240,24 @@ async function createEvent(params: Event) {
     });
 }
 
+async function listEvents(accountId?: string, deploymentName?: string, eventName?: string) {
+    logger.info('Listing events for a deployment', { accountId, deploymentName });
+
+    accountId = accountId ? checkAccount(accountId) : '';
+    return prisma.client.event.findMany({
+        where: {
+            ...(accountId && { account_id: accountId }),
+            ...(deploymentName && { deployment_name: deploymentName }),
+            ...(eventName && { event_id: { contains: eventName } })
+        },
+        orderBy: [
+            {
+                time: 'desc'
+            }
+        ]
+    });
+}
+
 async function deleteDeployment(accountId: string, deploymentId: string) {
     logger.info('Deleting deployment', { accountId, deploymentId });
     accountId = checkAccount(accountId);
@@ -251,7 +269,13 @@ async function deleteDeployment(accountId: string, deploymentId: string) {
     });
 }
 
-async function listResources(accountId: string, resourceId?: string, resourceType?: string) {
+async function listResources(
+    accountId: string,
+    resourceId?: string,
+    resourceType?: string,
+    pageSize?: number,
+    nextToken?: string
+) {
     logger.info('Listing resources', { accountId, resourceId, resourceType });
     accountId = checkAccount(accountId);
     return prisma.client.resource.findMany({
@@ -260,7 +284,14 @@ async function listResources(accountId: string, resourceId?: string, resourceTyp
             ...(resourceId && { resource_id: resourceId }),
             ...(resourceType && { resource_type: resourceType })
         },
-        take: 100
+        orderBy: {
+            id: 'asc'
+        },
+        ...(pageSize && { take: pageSize }),
+        ...(nextToken && {
+            cursor: { id: nextToken },
+            skip: 1
+        })
     });
 }
 
@@ -428,17 +459,6 @@ async function deleteDeploymentJobById(accountId: string, jobId: string) {
     });
 }
 
-// To differentiate the users in the DEMO Mode, we are keeping accountId as accountId_UserId in the database
-// So while saving & retrieving we have to maintain the same in demo mode
-function checkAccount(accountId: string) {
-    logger.info('checking account id', accountId);
-    if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
-        const userId = getSubjectFromBearerToken();
-        return userId ? `${accountId}_${userId}` : accountId;
-    }
-    return accountId;
-}
-
 export {
     Resource,
     listDeployments,
@@ -456,5 +476,7 @@ export {
     deleteConfig,
     listRelationshipsResources,
     deploymentJobsCount,
-    deleteDeploymentJobById
+    deleteDeploymentJobById,
+    checkAccount,
+    listEvents
 };

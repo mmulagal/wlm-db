@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
+import { Filter, FilterType, GetProductsCommandInput, GetProductsCommandOutput } from '@aws-sdk/client-pricing';
 import { LazyJsonString } from '@smithy/smithy-client';
 import { compact, isEmpty } from 'lodash-es';
 import { PricingServiceRequestType, PricingServiceResponseType } from '../../routes/types/pricing.types';
@@ -50,12 +50,6 @@ interface Product {
     terms: Terms;
 }
 
-interface Filter {
-    Type: string;
-    Field: string;
-    Value: string;
-}
-
 interface ProductInput {
     name: string;
     input: GetProductsCommandInput;
@@ -73,8 +67,6 @@ const AWS_PRICING_FORMAT_VERSION = {
     FormatVersion: 'aws_v1'
 };
 
-const AWS_PRICING_FILTER_TERM_MATCH = 'TERM_MATCH';
-
 const fsxService = {
     ServiceCode: 'AmazonFSx'
 };
@@ -84,13 +76,13 @@ const ec2Service = {
 };
 
 const storageProductFamily: Filter = {
-    Type: AWS_PRICING_FILTER_TERM_MATCH,
+    Type: FilterType.TERM_MATCH,
     Field: 'productFamily',
     Value: 'Storage'
 };
 
 const readWriteRequestProductFamily: Filter = {
-    Type: AWS_PRICING_FILTER_TERM_MATCH,
+    Type: FilterType.TERM_MATCH,
     Field: 'productFamily',
     Value: 'Request'
 };
@@ -105,7 +97,7 @@ function getRegionCodeFilter(region?: string): Filter {
     logger.debug('Getting region code', { region });
 
     return {
-        Type: AWS_PRICING_FILTER_TERM_MATCH,
+        Type: FilterType.TERM_MATCH,
         Field: 'regionCode',
         Value: region || DEFAULT_AWS_REGION
     };
@@ -117,7 +109,7 @@ function getDeploymentOption(deploymentOption?: string): Filter {
     const deploymentString: string = deploymentOption === SINGLE_AZ ? 'Single-AZ_2N' : 'Multi-AZ';
 
     return {
-        Type: AWS_PRICING_FILTER_TERM_MATCH,
+        Type: FilterType.TERM_MATCH,
         Field: 'deploymentOption',
         Value: deploymentString
     };
@@ -129,7 +121,7 @@ function getSqlSoftwareEdition(sqlSoftwareType: string): Filter {
     const edition = SQL_SOFTWARE_TYPES.get(sqlSoftwareType?.toLocaleLowerCase()) || SQL_SOFTWARE_TYPES.get('standard');
 
     return {
-        Type: AWS_PRICING_FILTER_TERM_MATCH,
+        Type: FilterType.TERM_MATCH,
         Field: 'preInstalledSw',
         Value: edition!
     };
@@ -145,27 +137,27 @@ function getEc2InstaceInput(compute: PricingServiceRequestType['compute']): Prod
                 getRegionCodeFilter(compute.regionCode),
                 getSqlSoftwareEdition(compute.sqlSoftwareType),
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'productFamily',
                     Value: 'Compute Instance'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'instanceType',
                     Value: compute.instanceType
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'operatingSystem',
                     Value: 'windows'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'tenancy',
                     Value: 'Shared' // default Shared for now
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'CapacityStatus',
                     Value: 'Used' // On-demand
                 }
@@ -186,12 +178,12 @@ function getEc2StorageInput(compute: PricingServiceRequestType['compute']): Prod
                 getRegionCodeFilter(compute.regionCode),
                 storageProductFamily,
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'volumeType',
                     Value: 'General Purpose'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'volumeApiName',
                     Value: 'gp2'
                 }
@@ -213,12 +205,12 @@ function getFSxNStorageInput(storage: PricingServiceRequestType['storage']): Pro
                 getDeploymentOption(storage?.deploymentOption),
                 storageProductFamily,
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
                     Value: 'ONTAP'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'StorageType',
                     Value: 'SSD'
                 }
@@ -239,12 +231,12 @@ function getFSxNThroughputInput(storage: PricingServiceRequestType['storage']): 
                 getRegionCodeFilter(storage?.regionCode),
                 getDeploymentOption(storage?.deploymentOption),
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'productFamily',
                     Value: 'Provisioned Throughput'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
                     Value: 'ONTAP'
                 }
@@ -265,12 +257,12 @@ function getFSxNIopsInput(storage: PricingServiceRequestType['storage']): Produc
                 getRegionCodeFilter(storage?.regionCode),
                 getDeploymentOption(storage?.deploymentOption),
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'productFamily',
                     Value: 'Provisioned IOPS'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
                     Value: 'ONTAP'
                 }
@@ -292,12 +284,12 @@ function getFSxNReadRequestsInput(storage: PricingServiceRequestType['storage'])
                 getDeploymentOption(storage?.deploymentOption),
                 readWriteRequestProductFamily,
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
                     Value: 'ONTAP'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'requestType',
                     Value: 'Read'
                 }
@@ -319,12 +311,12 @@ function getFSxNWriteRequestsInput(storage: PricingServiceRequestType['storage']
                 getDeploymentOption(storage?.deploymentOption),
                 readWriteRequestProductFamily,
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'fileSystemType',
                     Value: 'ONTAP'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'requestType',
                     Value: 'Write'
                 }
@@ -346,12 +338,12 @@ function getVpcInput(vpcInfo: PricingServiceRequestType['vpc']): ProductInput {
             Filters: [
                 getRegionCodeFilter(vpcInfo?.regionCode),
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'group',
                     Value: 'AWSClientVPN'
                 },
                 {
-                    Type: AWS_PRICING_FILTER_TERM_MATCH,
+                    Type: FilterType.TERM_MATCH,
                     Field: 'operation',
                     Value: 'ClientVPNConnections'
                 }
@@ -522,11 +514,14 @@ async function validatePricingRegionParameters(
         await describeRegions(regionsInput, credentialsId);
     } catch (error) {
         logger.error('Failed to describe regions:', JSON.stringify(error));
-        const { Code, message, $metadata } = error as { Code: string; message: string; $metadata: unknown };
-        const { httpStatusCode } = $metadata as { httpStatusCode: number };
 
-        if (Code === INVALID_PARAMETER_VALUE) {
-            throw createError(httpStatusCode, message);
+        if (error?.hasOwnProperty('$metadata')) {
+            const { Code, message, $metadata } = error as { Code: string; message: string; $metadata: unknown };
+            const { httpStatusCode } = $metadata as { httpStatusCode: number };
+
+            if (Code === INVALID_PARAMETER_VALUE) {
+                throw createError(httpStatusCode, message);
+            }
         }
         throw error;
     }
@@ -552,7 +547,7 @@ async function calculatePrice(
         inputList.map(
             async ({ name, input }): Promise<ProductOutput> => ({
                 name,
-                output: await getProducts(credentialsId, input)
+                output: await getProducts(input)
             })
         )
     );

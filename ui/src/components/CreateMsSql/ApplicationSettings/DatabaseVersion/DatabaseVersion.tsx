@@ -8,6 +8,7 @@ import { generateOptionType } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setDBVersion } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseVersion = () => {
     const dispatch = useDispatch();
@@ -15,6 +16,7 @@ const DatabaseVersion = () => {
     // Getting selected DB version
     const getDBVersion = useAppSelector(state => state.mssqlForm.dbVersion);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const versions = [
         { label: GENERAL.SQL_SERVER_2016, value: GENERAL.SQL_SERVER_2016_VERSION },
@@ -35,7 +37,7 @@ const DatabaseVersion = () => {
     }, []);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setDBVersion(generateDbVersions[0]));
         }
     }, [dispatch, generateDbVersions]);
@@ -60,6 +62,7 @@ const DatabaseVersion = () => {
                                 defaultValue={getDBVersion ? [getDBVersion] : [generateDbVersions[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setDBVersion(selectedOptions));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateDbVersions.length > 5}
                                 options={generateDbVersions}

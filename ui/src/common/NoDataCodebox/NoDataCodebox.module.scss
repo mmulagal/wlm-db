@@ -1,0 +1,9 @@
+.nodataCodeBox {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    align-items: center;
+    position: relative;
+    top: 28vh;
+    color: var(--white) !important;
+}

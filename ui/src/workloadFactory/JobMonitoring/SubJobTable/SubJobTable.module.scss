@@ -1,0 +1,95 @@
+.subJobTable {
+    display: flex;
+
+    .extraDiv {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+    }
+
+    .extraDiv2 {
+        width: 56px;
+        position: sticky;
+        left: 4px;
+        z-index: 2;
+        background-color: var(--content-background);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .table {
+        display: flex;
+        padding: 40px 56px 40px 0;
+        flex-direction: column;
+        align-items: flex-start;
+        align-self: stretch;
+        z-index: 1 !important;
+
+        [class*='Table-module_horizontal-scroll'] {
+            visibility: hidden;
+        }
+
+        [class*='Table-module_row'] {
+            span {
+                background-color: var(--main-background) !important;
+            }
+        }
+    }
+
+    .statusbar {
+        // width: 3px;
+        // margin-left: 0px;
+        height: inherit;
+
+        &.completed {
+            border-left: 4px solid var(--success);
+        }
+        &.failed {
+            border-left: 4px solid var(--error);
+        }
+        &.running,
+        &.in_progress {
+            border-left: 4px solid var(--cyan-60);
+        }
+    }
+
+    .arrow {
+        align-items: center;
+        svg {
+            &.arrow-down {
+                transform: rotate(90deg);
+                -webkit-transform: rotate(90deg);
+            }
+        }
+    }
+
+    .statusCol {
+        display: flex;
+        gap: 16px;
+        .statusIcon {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    .loadingTable {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        height: 240px;
+        width: -webkit-fill-available;
+        justify-content: center;
+
+        svg {
+            path {
+                fill: var(--grey-65);
+            }
+        }
+    }
+
+    [class*='SubJobTable_table'] {
+        [class*='Table-module_cell'] {
+            background-color: var(--main-background) !important;
+        }
+    }
+}

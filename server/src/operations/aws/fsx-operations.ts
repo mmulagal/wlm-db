@@ -1,14 +1,15 @@
 import Promise from 'bluebird';
 import { Static } from '@fastify/type-provider-typebox';
 import { DescribeNetworkInterfacesRequest } from '@aws-sdk/client-ec2';
-import { Tag, Volume } from '@aws-sdk/client-fsx';
+import { ListTagsForResourceCommandInput, Tag, Volume } from '@aws-sdk/client-fsx';
 import { attempt, isEmpty } from 'lodash-es';
 import {
     describeFSxFileSystems,
     describeFSxVolumes,
     describeFSxStorageVirtualMachines,
     describeFSxBackups,
-    listResourceTags
+    listResourceTags,
+    createTag
 } from '../../lib/aws/fsx';
 import getLogger from '../../utils/logger';
 import { FSxFileSystemSchema } from '../../routes/types/aws.types';
@@ -21,8 +22,9 @@ import {
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
 import { callSsmExecution } from '../workloads/mssql/mssql-operations';
-import { Metadata } from '../../utils/common-types';
+import { Metadata, ResourceDetails } from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
+import { getFsxArn } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -124,7 +126,7 @@ async function getFSXDetails(credentialsId: string, region: string, fileSys: any
  * and also available from the given VPC.
  */
 async function getFSxFileSystemsList(credentialsId: string, region: string, vpcId: string) {
-    logger.info('List FSx ONTAP of type SSD', { credentialsId, region, vpcId });
+    logger.info('List FSx for ONTAP of type SSD', { credentialsId, region, vpcId });
 
     let allFSxFilesystems = await describeFSxFileSystems(credentialsId, region);
 
@@ -315,22 +317,27 @@ async function getDataVolumes(credentialsId: string, region: string, fileSystemI
     const { Volumes: volumes } = await describeFSxVolumes(credentialsId, region, fileSystemId);
 
     const dataVolumes: Volume[] = [];
-    for (const volume of volumes!) {
-        let tags;
-        if (volume?.Tags) {
-            tags = volume.Tags;
-        } else {
-            ({ Tags: tags } = await listResourceTags(credentialsId, region, volume.ResourceARN!));
-        }
+    await Promise.all(
+        (volumes || []).map(async volume => {
+            let tags;
+            if (volume?.Tags) {
+                tags = volume.Tags;
+            } else {
+                const input: ListTagsForResourceCommandInput = {
+                    ResourceARN: volume.ResourceARN!
+                };
+                ({ Tags: tags } = (await listResourceTags(credentialsId, region, input)) || {});
+            }
 
-        const isValidDataTag = tags?.some(
-            ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
-        );
+            const isValidDataTag = tags?.some(
+                ({ Key, Value }: Tag) => Key?.includes(logicalIdTag) && Value === dataTagValue
+            );
 
-        if (isValidDataTag) {
-            dataVolumes.push(volume);
-        }
-    }
+            if (isValidDataTag) {
+                dataVolumes.push(volume);
+            }
+        })
+    );
 
     const filteredVolumes = dataVolumes?.map(({ OntapConfiguration: { UUID = '' } = {} }) => UUID);
 
@@ -388,10 +395,42 @@ async function getMappedOntapVolumes(credentialsId: string, region: string, file
     }
 }
 
+async function tagFsxResource(
+    credentialsId: string,
+    region: string,
+    awsAccountId: string,
+    accountId: string,
+    fsxId: string,
+    tags: Tag[]
+) {
+    logger.info('Adding tag to Fsx resource', credentialsId, region, awsAccountId, accountId, fsxId);
+    const fsxArn = getFsxArn(awsAccountId, region, fsxId);
+    createTag(credentialsId, region, accountId, fsxArn, tags);
+}
+async function getCostAllocationTagFsxResource(resourceDetail: ResourceDetails) {
+    logger.info('Get Fsx Resources which has cost allocation tag attached');
+    const { region, co_relation_id: fileSystemId, cloud_provider_account_id: awsAccountId, metadata } = resourceDetail;
+    const { credentialsId } = metadata as {
+        credentialsId: string;
+    };
+    try {
+        const resourceArn = getFsxArn(awsAccountId!, region!, fileSystemId!);
+        const input: ListTagsForResourceCommandInput = {
+            ResourceARN: resourceArn
+        };
+        const response = await listResourceTags(credentialsId, region!, input);
+        return response;
+    } catch (error) {
+        logger.error(`Get fsx resources with cost allocation tag failed for filesystem ${fileSystemId} `, error);
+    }
+}
+
 export {
     getFSxFileSystemsList,
     isAWSBackupEnabled,
     getOntapVolumesSnapshotCount,
     getStorageDataUsingSSM,
-    getMappedOntapVolumes
+    getMappedOntapVolumes,
+    tagFsxResource,
+    getCostAllocationTagFsxResource
 };

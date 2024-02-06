@@ -1,6 +1,7 @@
 import { Result, success, error } from './result';
 import { LanguageModel } from './model';
 import { JsonValidator, createJsonValidator } from './validate';
+import { wrapContext } from '../chatbot/helpers';
 
 /**
  * Represents an object that can translate natural language requests in JSON objects of the given type.
@@ -32,7 +33,7 @@ export interface JsonTranslator<T extends object> {
      * @param request The natural language request.
      * @returns A prompt that combines the request with the schema and type name of the underlying validator.
      */
-    createRequestPrompt(request?: string): string;
+    createRequestPrompt(): string;
     /**
      * Creates a repair prompt to append to an original prompt/response in order to repair a JSON object that
      * failed to validate. This function is called by `completeAndValidate` when `attemptRepair` is true and the
@@ -103,17 +104,15 @@ export function createJsonTranslator<T extends object>(
         return (
             `You are a service that translates user requests into JSON objects of type "${validator.typeName}" according to the following TypeScript definitions:\n` +
             `\`\`\`\n${validator.schema}\`\`\`\n` +
-            // `The following is a user request:\n` +
-            // `"""\n${request}\n"""\n` +
-            'translate the user requests/response into a JSON object with 2 spaces of indentation and no properties with the value undefined:\n'
+            'translate the user requests/response into a JSON object with 2 spaces of indentation and no properties with the value undefined:\n do not pre populate any parameter values on your own if not specified in the user request\n '
         );
     }
 
     function createRepairPrompt(validationError: string) {
-        return (
+        return wrapContext(
             'The JSON object is invalid for the following reason:\n' +
-            `"""\n${validationError}\n"""\n` +
-            'The following is a revised JSON object:\n'
+                `"""\n${validationError}\n"""\n` +
+                'Please provide the revised JSON object:\n'
         );
     }
 
@@ -123,7 +122,6 @@ export function createJsonTranslator<T extends object>(
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const response = await model.complete(request);
-            // console.log('RESP>>>', response);
             if (!response.success) {
                 return response;
             }

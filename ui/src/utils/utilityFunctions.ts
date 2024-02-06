@@ -4,11 +4,19 @@ import numeral from 'numeral';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
+    COSTING_TYPES,
+    CREATE_DATABASE_YAML,
+    CREDENTIAL_PROD_LINK,
+    CREDENTIAL_STAGE_LINK,
     DB_HOME_DATA_TYPE,
     DEFAULT_MASTER_KEY,
     DISABLED_STATE,
     ENABLED_STATE,
+    JM_DOWNLOAD,
+    JOBS_REPORT,
+    JOB_MONITORING_STATUS,
     PENDING_DELETION,
+    PRODUCTION,
     RECOMMENDED_TEMPLATES,
     REGIONS_CODE_LIST,
     SQL_DATABASE,
@@ -18,6 +26,9 @@ import {
 import { AvailabilityZonesObj, KmsKeys, Regions, Subnets, TagObj } from './types/mssqlTypes';
 import store from '../store/store';
 import { DatabaseHostItem, DatabaseJobsItem, JobsSummaryRes } from './types/databaseHomeTypes';
+import { WorkloadFactoryDatabaseItem, WorkloadFactoryResourceDetails } from './types/workloadFactoryResourceTypes';
+import { databaseHomeApi } from './apiService';
+import { addInitialData, initialDBHomepageState } from '../store/workloadFactory/databaseHomeSlice';
 const moment = require('moment');
 
 // Extended to store data that requires for another API input or post request
@@ -122,7 +133,7 @@ export const formatVpcSubnetsData = (data: { subnets: Subnets[] }) => {
 };
 
 export const dbPassVal = (password: string) => {
-    if (password.length) {
+    if (password?.length) {
         const state = store.getState();
         const userName = state.mssqlForm.dbCredentials.name;
         if (state.auth.isDemoMode) {
@@ -146,13 +157,13 @@ export const dbPassVal = (password: string) => {
 };
 
 export const adPassVal = (password: string) => {
-    if (password.length && password.length < 8) {
+    if (password?.length && password.length < 8) {
         return GENERAL.PASSWORD_MIN_LENGTH_8;
     }
 };
 
 export const fsxPassVal = (password: string) => {
-    if (password.length) {
+    if (password?.length) {
         const state = store.getState();
         if (state.auth.isDemoMode) {
             return '';
@@ -268,6 +279,7 @@ export const regionsSort = (regions: Array<Regions>) => {
 
 export const isValidUserName = (userName: string) => {
     if (
+        userName &&
         userName.length &&
         (userName.length < 5 ||
             !/^[a-zA-Z0-9]+$/.test(userName) ||
@@ -400,13 +412,16 @@ export const jobStatusPercent = (data: JobsSummaryRes) => {
     if (!data) {
         return null;
     }
-    const totalJobs = (data?.failed || 0) + (data?.initializing || 0) + (data?.success || 0);
+    const completed = data?.completed || 0;
+    const failed = data?.failed || 0;
+    const inProgress = data?.inProgress || 0;
+    const totalJobs = failed + inProgress + completed;
     const newData = {
         ...data,
         totalJobs: totalJobs,
-        successPercent: data?.success ? (data.success / totalJobs) * 100 : 0,
-        failedPercent: data?.failed ? (data.failed / totalJobs) * 100 : 0,
-        initializingPercent: data?.initializing ? (data.initializing / totalJobs) * 100 : 0
+        completedPercent: completed ? (completed / totalJobs) * 100 : 0,
+        failedPercent: failed ? (failed / totalJobs) * 100 : 0,
+        inProgressPercent: inProgress ? (inProgress / totalJobs) * 100 : 0
     };
     return newData;
 };
@@ -440,14 +455,14 @@ export const getHostStatusCount = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrProtection = (data: DatabaseHostItem[]) => {
+export const getAggrProtection = (data: DatabaseHostItem[] | WorkloadFactoryDatabaseItem[]) => {
     let protectedDb = 0;
     let unprotectedDb = 0;
     let awsBackupDb = 0;
     let fsxOntapSnapshotsDb = 0;
     let sqlServerBackupDb = 0;
 
-    data?.map(val => {
+    data?.map((val: any) => {
         if (
             val?.protection?.isAwsBackUpEnabled ||
             val?.protection?.isFsxOntapSnapshotsEnabled ||
@@ -455,7 +470,10 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
         ) {
             protectedDb += 1;
         } else if (
-            (val?.status === STATUS_CONST.DOWN || val?.status === STATUS_CONST.UP) &&
+            (val?.status === STATUS_CONST.DOWN ||
+                val?.status === STATUS_CONST.UP ||
+                val?.status === 'ONLINE' ||
+                val?.status === 'OFFLINE') &&
             !val?.protection?.isAwsBackUpEnabled &&
             !val?.protection?.isFsxOntapSnapshotsEnabled &&
             !val?.protection?.isSqlNativeEnabled
@@ -486,7 +504,7 @@ export const getAggrProtection = (data: DatabaseHostItem[]) => {
     };
 };
 
-export const getAggrStorageSavings = (data: any) => {
+export const getAggrStorageSavings = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let totalConsume = 0;
     let storageSavings = 0;
 
@@ -508,7 +526,7 @@ export const getAggrStorageSavings = (data: any) => {
     };
 };
 
-export const getAggrCost = (data: any) => {
+export const getAggrCost = (data: DatabaseHostItem[] | WorkloadFactoryResourceDetails[]) => {
     let storageCost = 0;
     let computeCost = 0;
     let connectivityCost = 0;
@@ -516,6 +534,8 @@ export const getAggrCost = (data: any) => {
 
     let storageList: (string | undefined)[] = [];
     let vpcList: (string | undefined)[] = [];
+    let requireBillingPerm = false;
+    let noDeploymentChk = true;
 
     data?.map((val: any) => {
         if (val?.estimatedUsageCost?.compute) {
@@ -549,6 +569,17 @@ export const getAggrCost = (data: any) => {
         if (val?.estimatedUsageCost?.others) {
             otherCost += val.estimatedUsageCost.others;
         }
+
+        if (val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING) {
+            requireBillingPerm = true;
+        }
+
+        if (
+            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.PRICING ||
+            val?.estimatedUsageCost?.estimationType === COSTING_TYPES.BILLING
+        ) {
+            noDeploymentChk = false;
+        }
     });
 
     const totalCost = storageCost + computeCost + connectivityCost + otherCost;
@@ -562,7 +593,8 @@ export const getAggrCost = (data: any) => {
         storageCostPercent: formatFractionalNumber((storageCost / totalCost) * 100),
         computeCostPercent: formatFractionalNumber((computeCost / totalCost) * 100),
         connectivityCostPercent: formatFractionalNumber((connectivityCost / totalCost) * 100),
-        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100)
+        otherCostPercent: formatFractionalNumber((otherCost / totalCost) * 100),
+        requireBillingPerm: requireBillingPerm || noDeploymentChk
     };
 };
 
@@ -706,12 +738,13 @@ export const getCredDetails = (data: any) => {
     return result;
 };
 
-export const validateChatbotField = (fieldName: string, val: any) => {
+export const validateChatbotField = (fieldName: string, value: any) => {
+    const val = value.replace(/^"(.+(?="$))"$/, '$1');
     switch (fieldName) {
         case 'fsxPassword':
             return fsxPassVal(val) || '';
         case 'serviceAccountName':
-            return isValidUserName(val) || '';
+            return isValidUserName(val) || (val && val.length && val.length > 20 && GENERAL.PASSWORD_ERROR_CHECK) || '';
         case 'serviceAccountPassword':
             return dbPassVal(val) || '';
         case 'databaseSize':
@@ -822,7 +855,8 @@ export const getChatbotParamsFromPayload = (payload: any) => {
         params.fsxPassword = payload.fsxN.fsxNPassword;
     }
     if (payload?.throughput?.value) {
-        params.fsxVolThroughput = payload.throughput.value.split(' ')[0];
+        const throughputVal = payload.throughput.value.split(' ')[0];
+        params.fsxVolThroughput = throughputVal ? parseInt(throughputVal) : '';
     }
     if (payload?.securityGroup?.selectedExistingSecurityGroup?.value) {
         params.ontapSgGroupId = payload.securityGroup.selectedExistingSecurityGroup.value;
@@ -846,6 +880,267 @@ export const getChatbotParamsFromPayload = (payload: any) => {
             params.tags = tags;
         }
     }
-    params.enableCloudWatch = payload.cloudWatch || false;
+    if (payload?.activeDirectory?.scenarioType) {
+        params.adScenarioType = payload.activeDirectory.scenarioType;
+    }
+    params.enableCloudWatch = true;
     return params;
+};
+
+export const openCredentialTab = () => {
+    const state = store.getState();
+    const isWorkloadFactoryStatus = state.auth.isWorkloadFactory;
+    let url;
+    if (isWorkloadFactoryStatus) {
+        url = process.env.REACT_APP_CREDENTIAL_WF_LINK;
+    } else {
+        url = process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? CREDENTIAL_PROD_LINK : CREDENTIAL_STAGE_LINK;
+    }
+    window.open(url, '_blank', 'noopener');
+};
+
+function getLastXDays(val: number) {
+    let dates = [];
+    for (let i = 0; i < val; i++) {
+        let date = new Date();
+
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+    }
+    return dates;
+}
+
+// Getting the last 7 days
+export const lastSevenDays = getLastXDays(7).reverse();
+
+// Getting the last 14 days
+export const last14Days = getLastXDays(14).reverse();
+
+function get30Days() {
+    let dates = [];
+    for (let i = 0; i < 30; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        dates.push(date);
+    }
+    return dates;
+}
+
+export const last30Days = get30Days().reverse();
+
+export const resetDBHomePageState = (dispatch: any) => {
+    dispatch(databaseHomeApi.util.resetApiState());
+    dispatch(addInitialData(initialDBHomepageState));
+};
+
+export const jobMonitoringStatusMapping = (val: string) => {
+    let statusValue = val;
+    if (val === JOB_MONITORING_STATUS.COMPLETED) {
+        statusValue = GENERAL.JM_COMPLETED;
+    } else if (val === JOB_MONITORING_STATUS.FAILED) {
+        statusValue = GENERAL.JM_FAILED;
+    } else if (val === JOB_MONITORING_STATUS.IN_PROGRESS) {
+        statusValue = GENERAL.JM_RUNNING;
+    }
+    return statusValue;
+};
+
+export const downloadCsv = (data: any) => {
+    const csv = 'data:text/csv;charset=utf-8,' + data;
+    const excel = encodeURI(csv); //Links to CSV
+
+    const link = document.createElement('a');
+    link.setAttribute('href', excel); //Links to CSV File
+    const dateStr = Date.now().toString();
+    link.setAttribute('download', JOBS_REPORT + moment(new Date(parseInt(dateStr))).format('DD_MM_YYYY'));
+    link.click();
+};
+
+export const addBlankCell = (level: number, result: any) => {
+    for (var i: number = 0; i < level; i++) {
+        result += ',';
+    }
+    return result;
+};
+
+export const createJobMonitorCSV = (array: any, keys: any, headers: any, result: string, level: number) => {
+    result = addBlankCell(level, result);
+    result += headers;
+    result += '\n'; //New Row
+
+    array.map((item: any) => {
+        //Goes Through Each Array Object
+        result = addBlankCell(level, result);
+        keys.map((key: string) => {
+            //Goes Through Each Object value
+            if (key && key !== '') {
+                let value = item[key] ? String(item[key]) : '';
+                if (value && value.includes(',')) {
+                    value = '"' + value + '"';
+                }
+                if (key === 'startTime' || key === 'endTime') {
+                    result += value ? formatDateWithTime(value).replace(',', '') + ',' : 'N/A,';
+                } else if (key === 'name' && value) {
+                    result += value.split(';href')[0] + ',';
+                } else if (key === 'status' && value) {
+                    result += jobMonitoringStatusMapping(value) + ',';
+                } else {
+                    if (value) {
+                        result += value + ',';
+                    } else {
+                        result += ' ,';
+                    }
+                }
+            }
+        });
+        result += '\n'; //Creates New Row
+        if (item?.subJobs) {
+            result = createJobMonitorCSV(
+                item?.subJobs,
+                JM_DOWNLOAD.SUB_JOBS_KEYS,
+                JM_DOWNLOAD.SUB_JOBS_CSV_HEADERS,
+                result,
+                level + 1
+            );
+        }
+    });
+    if (level === 1) {
+        result += '\n'; //New Row
+    }
+    return result;
+};
+
+export const cfDownloadName = (name: string) => {
+    return CREATE_DATABASE_YAML + '_' + name + '_' + Date.now();
+};
+
+export const getShiftedHoursList = (baseList: Array<String | number>) => {
+    let hr = moment().hour();
+    // if time is 2 PM than it will be used as 14 but when time is 2:30 than it will be in 18
+    const min = moment().minute();
+    if (min > 0) {
+        hr += 1;
+    }
+    const shift = (Math.ceil(hr / 4) + 1) % baseList.length;
+    return [...baseList.slice(shift), ...baseList.slice(0, shift)];
+};
+
+export const groupByTime = (days: number, data: any, baseList: Array<number>) => {
+    const dayGrouping: any = {};
+    if (days === 1) {
+        // grouping for lats 24 hours
+        data.map((perObj: any) => {
+            if (perObj?.timeInterval || perObj?.timeInterval === 0) {
+                let hr = perObj?.timeInterval;
+                const min = perObj?.minutes;
+                if (min > 0) {
+                    hr += 1;
+                }
+                const index = Math.ceil(hr / 4) % baseList.length;
+                const newTimeInterval = baseList[index];
+                if (newTimeInterval in dayGrouping) {
+                    dayGrouping[newTimeInterval] = {
+                        completed: dayGrouping[newTimeInterval]?.completed + (perObj?.completed || 0),
+                        failed: dayGrouping[newTimeInterval]?.failed + (perObj?.failed || 0)
+                    };
+                } else {
+                    dayGrouping[newTimeInterval] = {
+                        completed: perObj?.completed || 0,
+                        failed: perObj?.failed || 0
+                    };
+                }
+            }
+        });
+    } else {
+        // Grouping for days
+        data.map((perObj: any) => {
+            if (perObj?.timeInterval) {
+                if (perObj?.timeInterval in dayGrouping) {
+                    dayGrouping[perObj?.timeInterval] = {
+                        completed: dayGrouping[perObj?.timeInterval]?.completed + (perObj?.completed || 0),
+                        failed: dayGrouping[perObj?.timeInterval]?.failed + (perObj?.failed || 0)
+                    };
+                } else {
+                    dayGrouping[perObj?.timeInterval] = {
+                        completed: perObj?.completed || 0,
+                        failed: perObj?.failed || 0
+                    };
+                }
+            }
+        });
+    }
+    return dayGrouping;
+};
+
+export const groupByJobSummaryTimeline = (data: any, days: number) => {
+    const groupedData: any = { time: [], completed: [], failed: [] };
+    if (!data || data?.length === 0) {
+        return groupedData;
+    }
+
+    // Using endTime calculate hr or day
+    if (days === 1) {
+        data = data.map((e: any) => ({
+            ...e,
+            timeInterval: new Date(e.endTime).getHours(),
+            minutes: new Date(e.endTime).getMinutes()
+        }));
+    } else {
+        data = data.map((e: any) => ({ ...e, timeInterval: new Date(e.endTime).getDate() }));
+    }
+
+    // Used only in case of last 24 hours
+    const baseList = [0, 4, 8, 12, 16, 20];
+
+    // calculate daysList that is projected as x-axis also
+    let lastDaysList: any[] = [];
+    let daysList: any[] = [];
+    if (days === 1) {
+        daysList = getShiftedHoursList(baseList);
+    } else {
+        if (days === 7) {
+            lastDaysList = lastSevenDays;
+        } else if (days === 14) {
+            lastDaysList = last14Days;
+        } else if (days === 30) {
+            lastDaysList = last30Days;
+        }
+        daysList = lastDaysList.map(date => {
+            const day = date.getDate();
+            return `${day}`;
+        });
+    }
+
+    // Group data by time used in x-axis line chart
+    const dayGrouping = groupByTime(days, data, baseList);
+
+    daysList.map(day => {
+        groupedData['time'].push(day);
+        groupedData['completed'].push(day in dayGrouping ? dayGrouping[day]?.completed : 0);
+        groupedData['failed'].push(day in dayGrouping ? dayGrouping[day]?.failed : 0);
+    });
+
+    return groupedData;
+};
+
+export const collapseAllRows = (updateRowState: any, rowState: any) => {
+    for (const rowId in rowState) {
+        if (rowState[rowId]?.isExpanded) {
+            updateRowState(rowId)({
+                isExpanded: !rowState[rowId]?.isExpanded
+            });
+        }
+    }
+};
+
+export const expandTableRow = (
+    updateRowState: (arg0: any) => { (arg0: { isExpanded: boolean }): void; new (): any },
+    rowData: { id: any },
+    currentRowState: { isExpanded: any },
+    rowState: any
+) => {
+    collapseAllRows(updateRowState, rowState);
+    updateRowState(rowData.id)({
+        isExpanded: !currentRowState?.isExpanded
+    });
 };

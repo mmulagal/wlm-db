@@ -2,13 +2,15 @@ import { RouteTags } from '../../utils/consts';
 import { AwsParamsWithRegion } from '../types/aws.types';
 import {
     CloudFormationTemplateRequestBody,
-    CloudFormationTemplateResponse,
-    DeployTemplateResponse,
+    CloudFormationDeploymentResponse,
     DeploymentStatusListResponse,
     DeploymentStatusResponse,
     DeploymentStatusObjectParams,
     CloudFormationStaticTemplateRequestBody,
-    CloudFormationStaticTemplateResponse
+    CloudFormationStaticTemplateResponse,
+    DeploymentSummaryQueryString,
+    DeploymentSummaryListResponse,
+    CloudFormationTemplateHeader
 } from '../types/deployment.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -18,22 +20,12 @@ const baseRequest = {
     params: AwsParamsWithRegion
 };
 
-// Create CloudFormation template for user deployment Schema
-const CreateCloudFormationTemplateSchema = {
-    ...baseRequest,
-    summary: 'Create CloudFormation template URL',
-    description: 'Create CloudFormation template in a region for existing VPC',
-    body: CloudFormationTemplateRequestBody,
-    response: {
-        200: CloudFormationTemplateResponse
-    }
-};
-
 // CloudFormation template
 const CloudFormationTemplateSchema = {
     tags: [RouteTags.DEPLOYMENT],
     params: AccountIdParams,
     summary: 'Create CloudFormation template',
+    headers: CloudFormationTemplateHeader,
     description: 'Create CloudFormation template in URL, YAML and CLI format for user deployment',
     body: CloudFormationStaticTemplateRequestBody,
     response: {
@@ -41,14 +33,26 @@ const CloudFormationTemplateSchema = {
     }
 };
 
-// Create CloudFormation template for user deployment Schema
+const DeploymentSummaryListSchema = {
+    tags: [RouteTags.DEPLOYMENT],
+    params: AccountIdParams,
+    summary: 'Get deployment jobs summary',
+    description: 'API to get deployment jobs summary for given deployment status types',
+    querystring: DeploymentSummaryQueryString,
+    response: {
+        200: DeploymentSummaryListResponse
+    }
+};
+
+// Create CloudFormation template or Deploy Schema
 const DeployTemplateSchema = {
     ...baseRequest,
+    headers: CloudFormationTemplateHeader,
     summary: 'Deploy CloudFormation template',
     description: 'Deploy CloudFormation template to provision SQL FCI',
     body: CloudFormationTemplateRequestBody,
     response: {
-        200: DeployTemplateResponse
+        200: CloudFormationDeploymentResponse
     }
 };
 
@@ -74,9 +78,9 @@ const DeploymentStatusSchema = {
 };
 
 export {
-    CreateCloudFormationTemplateSchema,
     DeployTemplateSchema,
     DeploymentStatusListSchema,
     DeploymentStatusSchema,
-    CloudFormationTemplateSchema
+    CloudFormationTemplateSchema,
+    DeploymentSummaryListSchema
 };

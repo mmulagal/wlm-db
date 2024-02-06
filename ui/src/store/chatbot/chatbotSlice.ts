@@ -7,7 +7,19 @@ const initialState: ChatbotEntities = {
     isShow: false,
     isReceivingMsg: false,
     loadConfigClicked: false,
-    showRetry: false
+    showRetry: false,
+    isWizardTouched: false,
+    suggestionBubbles: {
+        list: [],
+        onBubbleClick: () => {}
+    },
+    expectingResponse: {
+        type: 'none',
+        fieldName: ''
+    },
+    latestIntentMsg: '',
+    resumeCount: 0,
+    movingFromChatbot: false
 };
 
 const chatbotSlice = createSlice({
@@ -31,10 +43,40 @@ const chatbotSlice = createSlice({
         },
         setShowRetry: (state, action: PayloadAction<any>) => {
             state.showRetry = action.payload;
+        },
+        setIsWizardTouched: (state, action: PayloadAction<any>) => {
+            state.isWizardTouched = action.payload;
+        },
+        setSuggestionBubbles: (state, action: PayloadAction<any>) => {
+            state.suggestionBubbles = action.payload;
+        },
+        setExpectingResponse: (state, action: PayloadAction<any>) => {
+            state.expectingResponse = action.payload;
+        },
+        setLatestIntentMsg: (state, action: PayloadAction<any>) => {
+            state.latestIntentMsg = action.payload;
+        },
+        setResumeCount: (state, action: PayloadAction<any>) => {
+            state.resumeCount = action.payload;
+        },
+        setMovingFromChatbot: (state, action: PayloadAction<any>) => {
+            state.movingFromChatbot = action.payload;
         }
     }
 });
 
-export const { setMessages, setCurrentIntent, setIsShow, setIsReceivingMsg, setLoadConfigClicked, setShowRetry } =
-    chatbotSlice.actions;
+export const {
+    setMessages,
+    setCurrentIntent,
+    setIsShow,
+    setIsReceivingMsg,
+    setLoadConfigClicked,
+    setShowRetry,
+    setIsWizardTouched,
+    setSuggestionBubbles,
+    setExpectingResponse,
+    setLatestIntentMsg,
+    setResumeCount,
+    setMovingFromChatbot
+} = chatbotSlice.actions;
 export default chatbotSlice;

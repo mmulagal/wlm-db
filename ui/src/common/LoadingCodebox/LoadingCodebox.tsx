@@ -8,8 +8,8 @@ type textType = {
 const LoadingCodeBox = ({ text }: textType) => {
     return (
         <Typography variant="Regular_14" className={styles.loadingCodeBox}>
-            <div>{text}</div>
             <FlashingDotsLoader />
+            <div>{text}</div>
         </Typography>
     );
 };

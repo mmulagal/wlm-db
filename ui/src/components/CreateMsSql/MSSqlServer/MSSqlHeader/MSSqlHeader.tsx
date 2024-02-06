@@ -114,12 +114,12 @@ const MSSqlHeader = () => {
             style={{ width: '100vw' }}
         >
             <div className={styles['header-button']}>
-                {isConfig && !isWorkloadFactory && (
+                {isConfig && (
                     <Button Component="button" onClick={handleLoadConfiguration} variant="text">
                         {SELECT_CONFIG.LOAD_CONFIG}
                     </Button>
                 )}
-                {!isConfig && !isWorkloadFactory && (
+                {!isConfig && (
                     <Button
                         Component="button"
                         variant="text"
@@ -129,25 +129,22 @@ const MSSqlHeader = () => {
                         {SELECT_CONFIG.LOAD_CONFIG}
                     </Button>
                 )}
-                {!isWorkloadFactory && (
-                    <>
-                        <div className={styles.separator}></div>
-                        {configData?.length >= MAX_SAVED_CONFIG && (
-                            <Popover
-                                popoverClass={styles['popover']}
-                                children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
-                                trigger="hover"
-                                container={
-                                    <Button Component="button" variant="text" isDisabled={true}>
-                                        {SELECT_CONFIG.SAVE_CONFIG}
-                                    </Button>
-                                }
-                            />
-                        )}
-                    </>
+
+                <div className={styles.separator}></div>
+                {configData?.length >= MAX_SAVED_CONFIG && (
+                    <Popover
+                        popoverClass={styles['popover']}
+                        children={SELECT_CONFIG.MAX_CONFIG_LIMIT}
+                        trigger="hover"
+                        container={
+                            <Button Component="button" variant="text" isDisabled={true}>
+                                {SELECT_CONFIG.SAVE_CONFIG}
+                            </Button>
+                        }
+                    />
                 )}
 
-                {(!configData || configData?.length < MAX_SAVED_CONFIG) && !isWorkloadFactory && (
+                {(!configData || configData?.length < MAX_SAVED_CONFIG) && (
                     <Button Component="button" onClick={() => handleSaveConfig(FROM_DIALOG.SAVE_CONFIG)} variant="text">
                         {SELECT_CONFIG.SAVE_CONFIG}
                     </Button>

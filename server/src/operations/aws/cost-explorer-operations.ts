@@ -1,9 +1,14 @@
-import { GetCostAndUsageCommandInput, GetCostAndUsageCommandOutput } from '@aws-sdk/client-cost-explorer';
+import {
+    GetCostAndUsageCommandInput,
+    GetCostAndUsageCommandOutput,
+    GetTagsCommandInput
+} from '@aws-sdk/client-cost-explorer';
 import moment from 'moment';
 import { UsageCostResponseType } from '../../routes/types/database-hosts.types';
-import { getCostAndUsage } from '../../lib/aws/cost-explorer';
+import { getCostAndUsage, getTagsfromCostExplorer } from '../../lib/aws/cost-explorer';
 import getLogger from '../../utils/logger';
 import { BILLING, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
+import { ResourceDetails } from '../../utils/common-types';
 
 const logger = getLogger();
 async function calculateBilling(
@@ -154,4 +159,28 @@ function calculateCostfromCostExplorerResponse(costExplorerResponse: GetCostAndU
     return response;
 }
 
-export { calculateBilling, getCostExplorerTimeRange };
+async function getCostAllocationTags(resourceDetail: ResourceDetails) {
+    logger.info(' Get cost allocation tag at account level');
+
+    const { region, metadata } = resourceDetail;
+    const { credentialsId } = metadata as {
+        credentialsId: string;
+    };
+    try {
+        const [startTimeFormat, currenTimeFormat] = getCostExplorerTimeRange();
+        const input: GetTagsCommandInput = {
+            TimePeriod: {
+                Start: startTimeFormat,
+                End: currenTimeFormat
+            }
+        };
+        const tagsResponse = await getTagsfromCostExplorer(region!, input, credentialsId);
+        logger.info('Cost allocation tag response', tagsResponse);
+        return tagsResponse;
+    } catch (error) {
+        logger.error('Error while retrieving cost allocation tag');
+        throw error;
+    }
+}
+
+export { calculateBilling, getCostExplorerTimeRange, getCostAllocationTags };

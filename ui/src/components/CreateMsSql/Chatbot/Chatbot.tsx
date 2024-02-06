@@ -13,8 +13,18 @@ import styles from './Chatbot.module.scss';
 import ChatBox from './ChatBox/Chatbox';
 import { setPanelData, setPanelType, setShowPreviewPanel } from '../../../store/previewPanel/previewPanelSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
-import { useSendMsgMutation } from '../../../utils/apiService';
-import { setCurrentIntent, setLoadConfigClicked, setMessages, setShowRetry } from '../../../store/chatbot/chatbotSlice';
+import { useDeploySqlTemplateMutation, useSendMsgMutation } from '../../../utils/apiService';
+import {
+    setCurrentIntent,
+    setExpectingResponse,
+    setIsWizardTouched,
+    setLatestIntentMsg,
+    setLoadConfigClicked,
+    setMessages,
+    setResumeCount,
+    setShowRetry,
+    setSuggestionBubbles
+} from '../../../store/chatbot/chatbotSlice';
 import {
     initialMssqlState,
     setCloudWatch,
@@ -50,8 +60,26 @@ import {
     setThroughputValue
 } from '../../../store/mssql/mssqlFormSlice';
 import { CHATBOT_FIELD_MAPPING, GENERAL } from '../../../utils/appConstants';
-import { AWS_MANAGED_AD, SQL_DEPLOYMENT_MODE, USER_MANAGED_AD } from '../../../utils/consts';
+import {
+    AWS_MANAGED_AD,
+    CHATBOT_WELCOME_CARDS,
+    FORM_TO_WLF_NAVIGATE,
+    PRODUCTION,
+    SQL_DEPLOYMENT_MODE,
+    TIMELINE_PROD_LINK,
+    TIMELINE_STAGE_LINK,
+    USER_MANAGED_AD
+} from '../../../utils/consts';
 import MssqlApis from '../MSSqlServer/MssqlApis';
+import ChatbotHeader from './ChatbotHeader/ChatbotHeader';
+import { handleCreateSQLServer } from '../MSSqlServer/MSSqlFooter/createSqlServer';
+import { setDeployRedirectToCfLink, setIsLoading } from '../../../store/mssql/msSqlActionSlice';
+import { Button } from '@netapp/design-system';
+import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
+import { useNavigate } from 'react-router-dom';
+import { navigateToCanvas } from '../../../utils/appConfig';
+import MissingPermissionsMsg from '../AwsSettings/AwsAccount/MissingPermissionsMsg';
+import store from '../../../store/store';
 const _ = require('lodash');
 
 type optionsType = {
@@ -67,24 +95,24 @@ type messageType = {
     intent?: any;
     type?: string;
     active?: boolean;
-    errors?: any;
+    error?: any;
 };
 
 const Chatbot = () => {
-    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry } = useAppSelector(
-        state => state.chatbot
-    );
+    const { messages, currentIntent, isReceivingMsg, loadConfigClicked, showRetry, latestIntentMsg, resumeCount } =
+        useAppSelector(state => state.chatbot);
     const mssqlFormData = useAppSelector(state => state.mssqlForm);
     const mssqlData = useAppSelector(state => state.mssql);
-    //const [messages, setMessages] = useState<messageType[] | null>([{ sender: 'bot', msg: 'Hi! How can I help you?' }]);
+    const state = useAppSelector(state => state);
     const [isBotReplying, setIsBotReplying] = useState(false);
-    //const [currentIntent, setCurrentIntent] = useState<any>('');
     const [isPayloadReady, setIsPayloadReady] = useState(false);
     const [payloadContent, setPayloadContent] = useState<any>('');
     const [activeField, setActiveField] = useState<any>('');
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const [sendMsgToBot] = useSendMsgMutation();
+    const [deploySqlTemplate] = useDeploySqlTemplateMutation();
 
     MssqlApis();
 
@@ -116,12 +144,31 @@ const Chatbot = () => {
     });
 
     useEffect(() => {
+        if (isPayloadReady) {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Deploy', value: 'deploy' }],
+                    onBubbleClick: (label?: string, value?: string) => {
+                        if (value === 'deploy') {
+                            handleCreate();
+                            dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
+                        }
+                    }
+                })
+            );
+        }
+    }, [isPayloadReady]);
+
+    useEffect(() => {
         if (loadConfigClicked) {
             setIsBotReplying(true);
             sendMsgToBot({
                 payload: {
                     prompt: wrapContext(
-                        `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`
+                        `DeployMsSql with params: ${JSON.stringify({
+                            ...getChatbotParamsFromPayload(mssqlFormData),
+                            deploymentEnvironment: 'CUSTOM'
+                        })}`
                     ),
                     intent: 'DeployMsSql',
                     params: getChatbotParamsFromPayload(mssqlFormData)
@@ -129,7 +176,7 @@ const Chatbot = () => {
             })
                 .then((res: any) => {
                     if (res.data) {
-                        const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                        const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                         if (intent) {
                             dispatch(setCurrentIntent(intent));
                             if (!intent.complete) {
@@ -152,7 +199,7 @@ const Chatbot = () => {
                                 intent: intent,
                                 type: type,
                                 active: true,
-                                errors: errors,
+                                error: error,
                                 status: status
                             }
                         ];
@@ -180,6 +227,124 @@ const Chatbot = () => {
             };
         }
     }, [loadConfigClicked]);
+
+    const fullPermissionFlow = (stackName: string, stackUrl: string) => {
+        let notificationMsg: string | number | NodeJS.Timeout | undefined;
+        // Just show notification in case of full permission and redirect to Homepage after 3 sec
+        const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
+        if (stackName && stackName.includes('/')) {
+            stackName = stackName.split('/')[1];
+        }
+        let message;
+        if (isWorkloadFactoryStatus) {
+            message = (
+                <>
+                    {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
+                    {
+                        <>
+                            <Button
+                                Component="button"
+                                variant="text"
+                                onClick={() => {
+                                    clearTimeout(notificationMsg);
+                                    navigate('../job-monitor');
+                                    dispatch(clearNotifications());
+                                }}
+                            >
+                                {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
+                            </Button>
+                        </>
+                    }
+                    {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
+                </>
+            );
+        } else {
+            const timelineUrl =
+                process.env.REACT_APP_ENVIRONMENT === PRODUCTION ? TIMELINE_PROD_LINK : TIMELINE_STAGE_LINK;
+            message = (
+                <>
+                    {GENERAL.CREATE_INFO_MESSAGE[0]}
+                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE[1] + stackName : ''}
+                    {stackName && stackUrl && (
+                        <>
+                            {GENERAL.CREATE_INFO_MESSAGE[1]}
+                            <Button
+                                Component="button"
+                                variant="link"
+                                onClick={() => window.open(stackUrl, '_blank', 'noopener')}
+                            >
+                                {stackName}
+                            </Button>
+                        </>
+                    )}
+                    {GENERAL.CREATE_INFO_MESSAGE[2]}
+                    <Button
+                        Component="button"
+                        variant="text"
+                        onClick={() => window.open(timelineUrl, '_blank', 'noopener')}
+                    >
+                        {GENERAL.CREATE_INFO_MESSAGE[3]}
+                    </Button>
+                    {GENERAL.CREATE_INFO_MESSAGE[4]}
+                </>
+            );
+        }
+        dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
+        notificationMsg = setTimeout(() => {
+            isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
+        }, 3000);
+    };
+
+    const handleCreate = () => {
+        const state = store.getState();
+        const payload = handleCreateSQLServer(state, dispatch);
+        const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
+        const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
+        if (payload) {
+            dispatch(setIsLoading(true));
+            dispatch(setDeployRedirectToCfLink(null));
+            deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
+                .then((data: any) => {
+                    dispatch(setIsLoading(false));
+                    if (!data?.error) {
+                        let stackName = data?.data?.cloudFormationStackId;
+                        const url = data?.data?.cloudFormationUrl;
+                        const warning = data?.data?.warningMessage;
+                        if (stackName && !warning) {
+                            // If stackname is present than goes to fullPermissionFlow
+                            fullPermissionFlow(stackName, url);
+                            let defaultParams = getChatbotParamsFromPayload(mssqlFormData);
+                            let defaultObj: any = {};
+                            Object.keys(defaultParams).map((key: string) => {
+                                defaultObj[key] = null;
+                            });
+                            mapParamsToPayload(defaultObj);
+                            dispatch(setCurrentIntent(''));
+                            dispatch(setIsWizardTouched(false));
+                            dispatch(setMessages([]));
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                        } else if (url) {
+                            dispatch(setDeployRedirectToCfLink(url));
+                            // If url comes it means it has view permissions so it will open AWS account accordion
+                            dispatch(setSuggestionBubbles({ list: [], onBubbleClick: () => {} }));
+                            dispatch(
+                                setMessages([
+                                    ...messages,
+                                    {
+                                        sender: 'bot',
+                                        msg: '',
+                                        customComponent: <MissingPermissionsMsg />
+                                    }
+                                ])
+                            );
+                        }
+                    }
+                })
+                .catch((error: any) => {
+                    dispatch(setIsLoading(false));
+                });
+        }
+    };
 
     const mapParamsToPayload = (params: any) => {
         Object.keys(params).map(key => {
@@ -259,7 +424,7 @@ const Chatbot = () => {
                         const zones = azData ? Object.keys(azData) : [];
                         const selectedAzNode1 = zones.filter(val => val === value)[0];
                         const subnetsList: Array<string> = [];
-                        azData[selectedAzNode1]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                        azData?.[selectedAzNode1]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
                         const data: any = {
                             availabilityZone: selectedAzNode1,
                             subnets: subnetsList
@@ -285,7 +450,7 @@ const Chatbot = () => {
                         const zones = azData ? Object.keys(azData) : [];
                         const selectedAzNode2 = zones.filter(val => val === value)[0];
                         const subnetsList: Array<string> = [];
-                        azData[selectedAzNode2]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
+                        azData?.[selectedAzNode2]?.map((per: any) => (per?.id ? subnetsList.push(per.id) : ''));
                         const data: any = {
                             availabilityZone: selectedAzNode2,
                             subnets: subnetsList
@@ -424,7 +589,7 @@ const Chatbot = () => {
                     }
                     break;
                 case 'fsxUsername':
-                    if (mssqlFormData?.fsxN?.fsxNNewUserName !== value) {
+                    if (mssqlFormData?.fsxN?.fsxNNewUserName) {
                         dispatch(setFsxNExistingUserName(value || null));
                     }
                     break;
@@ -456,7 +621,7 @@ const Chatbot = () => {
                     if (mssqlFormData?.securityGroup?.sgValue !== value) {
                         const selectedVpcId = mssqlFormData?.regionAndVpc?.selectedVPC?.data?.id;
                         if (selectedVpcId) {
-                            const selectedVpcData = mssqlData?.getVPCList?.vpcData.vpcs?.filter(
+                            const selectedVpcData = mssqlData?.getVPCList?.vpcData?.vpcs?.filter(
                                 pervpc => pervpc?.id === selectedVpcId
                             )[0];
                             const selectedSg: any = selectedVpcData?.securityGroups?.filter(
@@ -481,7 +646,7 @@ const Chatbot = () => {
                     break;
                 case 'enableCloudWatch':
                     if (mssqlFormData.cloudWatch !== value) {
-                        dispatch(setCloudWatch(value || null));
+                        dispatch(setCloudWatch(value || true));
                     }
                     break;
                 case 'tags':
@@ -498,7 +663,7 @@ const Chatbot = () => {
         let updatedMessages = msgs ? [...msgs] : [];
         if (add) {
             let preResponseMsg = msgs || [];
-            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].errors) {
+            if (preResponseMsg.length && preResponseMsg[preResponseMsg.length - 1].error) {
                 const lastMsg = preResponseMsg[preResponseMsg.length - 1];
                 preResponseMsg = [
                     ...preResponseMsg.slice(0, preResponseMsg.length - 1),
@@ -531,7 +696,7 @@ const Chatbot = () => {
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -555,7 +720,7 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors,
+                            error: error,
                             status: status
                         }
                     ];
@@ -565,6 +730,8 @@ const Chatbot = () => {
                             ...updatedMessages[updatedMessages.length - 3],
                             active: false
                         };
+                    } else {
+                        dispatch(setResumeCount(0));
                     }
 
                     dispatch(setMessages(updatedMessages));
@@ -581,23 +748,24 @@ const Chatbot = () => {
         setIsBotReplying(true);
         dispatch(setShowPreviewPanel(true));
         dispatch(setPanelType('chatbot'));
-        // handleSendMsg(
-        //     `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`,
-        //     false,
-        //     messages
-        // );
         sendMsgToBot({
             payload: {
                 prompt: wrapContext(
-                    `DeployMsSql with params: ${JSON.stringify(getChatbotParamsFromPayload(mssqlFormData))}`
+                    `DeployMsSql with params: ${JSON.stringify({
+                        ...getChatbotParamsFromPayload(mssqlFormData),
+                        deploymentEnvironment: 'CUSTOM'
+                    })}`
                 ),
                 intent: 'DeployMsSql',
-                params: getChatbotParamsFromPayload(mssqlFormData)
+                params: {
+                    ...getChatbotParamsFromPayload(mssqlFormData),
+                    deploymentEnvironment: 'CUSTOM'
+                }
             }
         })
             .then((res: any) => {
                 if (res.data) {
-                    const { message, key, allowedValues, allowCreate, intent, type, errors, status } = res.data;
+                    const { message, key, allowedValues, allowCreate, intent, type, error, status } = res.data;
                     if (intent) {
                         dispatch(setCurrentIntent(intent));
                         if (!intent.complete) {
@@ -620,7 +788,7 @@ const Chatbot = () => {
                             intent: intent,
                             type: type,
                             active: true,
-                            errors: errors,
+                            error: error,
                             status: status
                         }
                     ];
@@ -647,48 +815,6 @@ const Chatbot = () => {
     };
 
     useEffect(() => {
-        setIsBotReplying(true);
-        setTimeout(() => {
-            dispatch(
-                setMessages([
-                    ...messages,
-                    {
-                        sender: 'bot',
-                        type: 'confirm',
-                        active: true,
-                        msg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
-                        confirmData: {
-                            confirmMsg: `Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?`,
-                            confirmBtnTxt: 'Continue',
-                            cancelBtnTxt: 'Discard',
-                            onConfirm: async () => {
-                                dispatch(
-                                    setMessages([
-                                        {
-                                            sender: 'bot',
-                                            msg: 'Do you wish to continue creating new Microsoft SQL server with existing values in the codebox?'
-                                        },
-                                        {
-                                            sender: 'user',
-                                            msg: 'Continue'
-                                        }
-                                    ])
-                                );
-                                setContext();
-                            },
-                            onCancel: () => {
-                                dispatch(setMessages([]));
-                                dispatch(setMssqlForm(initialMssqlState));
-                            }
-                        }
-                    }
-                ])
-            );
-            setIsBotReplying(false);
-        }, 5000);
-    }, []);
-
-    useEffect(() => {
         dispatch(
             setPanelData({
                 heading: currentIntent?.type === 'DeployMsSql' ? 'Deployment of MS SQL' : '',
@@ -705,32 +831,26 @@ const Chatbot = () => {
         }
     };
 
-    const handleSelectButtonClicked = async (paramObj: any) => {
+    const handleSelectButtonClicked = async (paramObj: any, sender: string = 'user') => {
         const updatedMessages = messages ? [...messages] : [];
         if (updatedMessages.length) {
             updatedMessages[updatedMessages.length - 1] = {
                 ...updatedMessages[updatedMessages.length - 1],
-                errors: null,
-                msg: `Provide value${Object.keys(paramObj).length > 1 ? 's' : ''} for ${Object.keys(paramObj)
-                    .map(item => CHATBOT_FIELD_MAPPING[item] || item)
-                    .join(', ')}`
+                error: null,
+                msg:
+                    updatedMessages[updatedMessages.length - 1]?.error?.message ||
+                    updatedMessages[updatedMessages.length - 1].msg
             };
         }
         updatedMessages.push({
-            sender: 'user',
-            msg: Object.keys(paramObj)
-                .map(
-                    (key: string) =>
-                        `Selected ${CHATBOT_FIELD_MAPPING[key] || key}: ${
-                            key.toLowerCase().includes('password') ? '********' : paramObj[key].label
-                        }`
-                )
-                .join('\n')
+            sender: sender,
+            msg: paramObj[Object.keys(paramObj)[0]].label
         });
         dispatch(setMessages(updatedMessages));
         const msgToBot = Object.keys(paramObj)
             .map(key => `Use ${key} as ${typeof paramObj[key] === 'object' ? paramObj[key].value : paramObj[key]}`)
             .join(', ');
+        dispatch(setLatestIntentMsg(msgToBot));
         await handleSendMsg(msgToBot, false, updatedMessages);
     };
 
@@ -757,7 +877,7 @@ const Chatbot = () => {
                   return { ...msg, active: idx < messages.length - 1 ? false : msg.active };
               })
             : null;
-        if ((lastMsg && lastMsg.status === 'error') || showRetry) {
+        if (showRetry) {
             const existingMessages = updatedMsgs ? updatedMsgs : [];
             if (showRetry) {
                 setIsBotReplying(false);
@@ -821,32 +941,91 @@ const Chatbot = () => {
             !lastMsg.intent &&
             currentIntent &&
             currentIntent.type === 'DeployMsSql' &&
-            lastMsg.type !== 'confirm'
+            lastMsg.type !== 'confirm' &&
+            !(lastMsg?.status === 'error') &&
+            resumeCount < 3
         ) {
-            const existingMessages = updatedMsgs ? updatedMsgs : [];
-            return [
-                ...existingMessages,
-                {
-                    sender: 'bot',
-                    type: 'confirm',
-                    active: true,
-                    msg: 'Deployment of MS SQL is in progress. Do you want to continue?',
-                    confirmData: {
-                        confirmMsg: 'Deployment of MS SQL is in progress. Do you want to continue?',
-                        confirmBtnTxt: 'Continue',
-                        cancelBtnTxt: 'Discard',
-                        onConfirm: (messages: messageType[]) => {
-                            const botMsgs = messages.filter(item => item.sender === 'bot');
-                            const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
-                            const updatedMsgs = [...messages];
-                            dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
-                        },
-                        onCancel: () => {
-                            dispatch(setCurrentIntent(''));
+            dispatch(
+                setSuggestionBubbles({
+                    list: [{ label: 'Resume deployment', value: 'resume' }],
+                    onBubbleClick: async (label?: string, value?: string) => {
+                        if (value === 'resume') {
+                            await sendMsg(latestIntentMsg, false);
+                        }
+                        dispatch(
+                            setSuggestionBubbles({
+                                list: [],
+                                onBubbleClick: () => {}
+                            })
+                        );
+                    }
+                })
+            );
+            dispatch(setResumeCount(resumeCount + 1));
+            return updatedMsgs;
+            // const existingMessages = updatedMsgs ? updatedMsgs : [];
+            // return [
+            //     ...existingMessages,
+            //     {
+            //         sender: 'bot',
+            //         type: 'confirm',
+            //         active: true,
+            //         msg: 'Deployment of MS SQL is in progress. Do you want to continue?',
+            //         confirmData: {
+            //             confirmMsg: 'Deployment of MS SQL is in progress. Do you want to continue?',
+            //             confirmBtnTxt: 'Continue',
+            //             cancelBtnTxt: 'Discard',
+            //             onConfirm: (messages: messageType[]) => {
+            // const botMsgs = messages.filter(item => item.sender === 'bot');
+            // const lastIntentMsg = botMsgs.filter(msg => msg.intent).reverse()?.[0] || {};
+            // const updatedMsgs = [...messages];
+            // dispatch(setMessages([...updatedMsgs, { ...lastIntentMsg, active: true }]));
+            //             },
+            //             onCancel: () => {
+            //                 dispatch(setCurrentIntent(''));
+            //             }
+            //         }
+            //     }
+            // ];
+        } else if (lastMsg?.status === 'error') {
+            dispatch(
+                setSuggestionBubbles({
+                    list: [
+                        { label: 'Please give me examples for a valid request', value: 'suggestions' },
+                        { label: 'Resume deployment', value: 'resume' }
+                    ],
+                    onBubbleClick: async (label?: string, value?: string) => {
+                        if (value === 'suggestions') {
+                            dispatch(
+                                setSuggestionBubbles({
+                                    list: CHATBOT_WELCOME_CARDS.map(item => {
+                                        return { label: item.label, value: item.value || item.label };
+                                    }),
+                                    onBubbleClick: async (label?: string, value?: string) => {
+                                        dispatch(
+                                            setSuggestionBubbles({
+                                                list: [],
+                                                onBubbleClick: () => {}
+                                            })
+                                        );
+                                        await sendMsg(value);
+                                    }
+                                })
+                            );
+                        }
+                        if (value === 'resume') {
+                            await sendMsg(latestIntentMsg, false);
+                            dispatch(
+                                setSuggestionBubbles({
+                                    list: [],
+                                    onBubbleClick: () => {}
+                                })
+                            );
                         }
                     }
-                }
-            ];
+                })
+            );
+            return updatedMsgs;
         } else {
             return updatedMsgs;
         }
@@ -854,15 +1033,19 @@ const Chatbot = () => {
 
     return (
         <div className={styles['chatbot']}>
-            {/* <Header /> */}
             <div className={styles['page-content']}>
+                <ChatbotHeader mapParamsToPayload={mapParamsToPayload} />
                 <ChatBox
                     isBotReplying={isBotReplying || isReceivingMsg}
-                    handleSelectButtonClicked={(paramObj: any) => handleSelectButtonClicked(paramObj)}
+                    handleSelectButtonClicked={(paramObj: any, sender?: string) =>
+                        handleSelectButtonClicked(paramObj, sender)
+                    }
                     sendMsg={sendMsg}
                     messagesToShow={messagesToShow ? messagesToShow : []}
                     messages={messages ? messages : []}
                     activeField={activeField}
+                    setContext={setContext}
+                    mapParamsToPayload={mapParamsToPayload}
                 />
             </div>
         </div>

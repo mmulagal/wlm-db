@@ -3,22 +3,31 @@
     "name": "nvirginia29s",
     "status": "UP",
     "databaseCount": 10,
-    "operatingSystem": "Windows server 2019",
-    "serverEdition": "Standard",
-    "serverVersion": "SQL2022",
-    "clusterName": "cluster-name-1",
-    "activeConnections": 2,
-    "creationDate": 1693284194,
+    "databaseServer": {
+        "operatingSystem": "Windows Server 2016",
+        "serverEdition": "Standard",
+        "serverVersion": "SQL2022",
+        "clusterName": "cluster-name-1",
+        "activeNode": "SQLNODE1-39362",
+        "nodeNames": [
+            "SQLNODE1-39362",
+            "SQLNODE2-39362"
+        ],
+        "activeConnections": 2,
+        "creationDate": "1703055345698"
+    },
     "topology": {
         "awsAccount": "aws-acc-1",
         "region": "ap-southeast-1",
         "serverType": "MSSQL",
         "serverInstallationMode": "FCI",
-        "fileSystemType": "FSx ONTAP",
-        "fsxFilesystemId": "fs-0d5efc3057c4f12cb",
+        "fileSystemType": "FSx for ONTAP",
+        "fileSystemId": "fs-0d5efc3057c4f12cb",
+        "fileSystemName": "DBSFSX",
         "fileSystemStatus": "Available",
-        "fileSystemStorageCapacity": "1025 GiB",
-        "fileSystemThroughputCapacity": "128MB/s",
+        "fileSystemDeploymentMode": "MULTI_AZ_1",
+        "fileSystemStorageCapacity": 1025,
+        "fileSystemThroughputCapacity": 128,
         "vpcId": "vpc-id-1",
         "keyPairName": "OCCM",
         "ec2Details": [
@@ -45,21 +54,23 @@
     },
 
     "performance": {
-        "latency": {
-            "current": 100,
-            "assessment": "MEDIUM",
-            "read": 50,
-            "write": 250
-        },
-        "iops": {
-            "current": 128,
-            "read": 112,
-            "write": 202
-        },
-        "throughput": {
-            "current": 128,
-            "read": 168,
-            "write": 92
+        "rwMetrics": {
+            "latency": {
+                "current": 100,
+                "assessment": "MEDIUM",
+                "read": 50,
+                "write": 250
+            },
+            "iops": {
+                "current": 128,
+                "read": 112,
+                "write": 202
+            },
+            "throughput": {
+                "current": 128,
+                "read": 168,
+                "write": 92
+            }
         }
     },
 
@@ -74,7 +85,8 @@
         "compute": 1552,
         "storage": 600,
         "connectivity": 380,
-        "others": 572
+        "others": 572,
+        "estimationType": "pricing"
     },
 
     "resourceUtilization": {

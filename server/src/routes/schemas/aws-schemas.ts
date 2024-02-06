@@ -95,7 +95,7 @@ const GetFSxFileSystemsSchema = {
 };
 
 // GET Kms Keys List Schema
-const GetKmsKeysListSchema = {
+const GetFsxKmsKeysListSchema = {
     ...baseRequest,
     summary: 'List KMS keys',
     description: 'List KMS Keys in the given AWS region',
@@ -118,7 +118,7 @@ export {
     GetAdsSchema,
     GetSnsTopicsSchema,
     GetFSxRegionsSchema,
-    GetKmsKeysListSchema,
+    GetFsxKmsKeysListSchema,
     GetInstanceTypesSchema,
     GetKeyPairsSchema,
     GetFSxFileSystemsSchema

@@ -2,7 +2,10 @@ import { RouteTags } from '../../utils/consts';
 import {
     DatabaseHostObjectParams,
     DatabaseHostQueryString,
-    DatabaseHostSummaryListResponse
+    DatabaseHostSummaryListResponse,
+    DatabaseHostSummaryParams,
+    DatabaseHostSummaryResponse,
+    DatabasesListResponse
 } from '../types/database-hosts.types';
 import { AccountIdParams } from '../types/generic.types';
 
@@ -24,4 +27,29 @@ const DatabaseHostsSummarySchema = {
     }
 };
 
-export default DatabaseHostsSummarySchema;
+// Get Database host summary details
+const DatabaseHostDetailsSchema = {
+    ...baseRequest,
+    summary: 'Fetch database server details ',
+    description:
+        'Fetch database server resource (memory, cpu, disk) comsumption, metadata about installation (server details, network, active directory), storage savings, usage cost and databases in the server.',
+    params: DatabaseHostSummaryParams,
+    querystring: DatabaseHostQueryString,
+    response: {
+        200: DatabaseHostSummaryResponse
+    }
+};
+
+// Get databases in a database server
+const DatabasesListSchema = {
+    ...baseRequest,
+    summary: 'Fetch details about databases in a server ',
+    description:
+        'Fetch details about databases in a server - name, protection status, availability status, size and type of database',
+    params: DatabaseHostSummaryParams,
+    response: {
+        200: DatabasesListResponse
+    }
+};
+
+export { DatabaseHostsSummarySchema, DatabaseHostDetailsSchema, DatabasesListSchema };

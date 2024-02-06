@@ -1,5 +1,6 @@
 FROM node:alpine3.18
 
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
 RUN mkdir -p /log
 # Create a new user "netappuser" with UID 1000 and group name "netappgroup"
 RUN addgroup -S netappgroup && adduser -S -G netappgroup -u 1001 netappuser
@@ -32,6 +33,9 @@ COPY prisma ./prisma/
 COPY patches ./patches/
 
 RUN npm ci --omit=dev
+
+# prisma generate command after every change to Prisma schema to update the generated Prisma Client code.
+RUN npx prisma generate
 
 # build mode - development or production
 ARG ARG_WLMDB_BUILD_MODE

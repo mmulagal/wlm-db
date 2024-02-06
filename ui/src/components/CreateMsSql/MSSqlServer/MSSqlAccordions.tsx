@@ -28,28 +28,45 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import MssqlApis from './MssqlApis';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import CloudWatch from '../InfrastructureSettings/CloudWatch/CloudWatch';
-import ViewAPIRequest from './ViewAPIRequest/ViewAPIRequest';
 import EstimatedCost from '../Cost/EstimatedCost';
-import { useAppSelector } from '../../../store/storeHooks';
+import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import PreviewDefault from '../Cost/PreviewDefault/PreviewDefault';
+import { createMssqlPayload } from './MSSqlFooter/createSqlServer';
+import ViewDialog from '../../../common/ViewDialog/ViewDialog';
+import { useEffect, useState } from 'react';
+import { setMovingFromChatbot } from '../../../store/chatbot/chatbotSlice';
 
 const MSSqlAccordions = () => {
     const { setDialog } = useDialog();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { vpcLoading } = useAppSelector(state => state.mssql.getVPCList);
+    const [isVpcLoadingStarted, setIsVpcLoadingStarted] = useState(false);
+    const state = useAppSelector(state => state);
+    const dispatch = useAppDispatch();
 
     MssqlApis();
 
     const handleViewAPIRequest = () => {
+        const data = JSON.stringify(createMssqlPayload(state), null, 2);
         setDialog(
             <DialogComponent
                 header={GENERAL.API_REQUEST}
-                content={<ViewAPIRequest />}
+                content={<ViewDialog data={data} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
             />
         );
     };
+
+    useEffect(() => {
+        if (vpcLoading) {
+            setIsVpcLoadingStarted(true);
+        } else if (isVpcLoadingStarted && !vpcLoading) {
+            dispatch(setMovingFromChatbot(false));
+            setIsVpcLoadingStarted(false);
+        }
+    }, [vpcLoading]);
 
     return (
         <div className={`${styles['aws-settings']} ${CommonStyles['accordion-group']}`}>

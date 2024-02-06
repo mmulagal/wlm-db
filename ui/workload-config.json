@@ -4,7 +4,7 @@
     "to": "/databases",
     "hasMenuItem": true,
     "hasPolicies": true,
-    "apiDocUrl": "/wlmdb/documentation/json",
+    "apiDocUrl": "<%=process.env.SWAGGER%>",
     "stageIntegrations": [
         {
             "path": "/marketing",

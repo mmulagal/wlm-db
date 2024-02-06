@@ -62,7 +62,7 @@ async function getTenancyResource(resourceType: string, resourceId: string) {
     logger.info('Fetching tenancy resource ', resourceType, resourceId);
 
     const resourceDetails = (await getTenancyResourcesByType(resourceType)).find(
-        resource => resource.resourceIdentifier === resourceId
+        (resource: { resourceIdentifier: string }) => resource.resourceIdentifier === resourceId
     );
 
     const details: ServiceResourceResponse = {

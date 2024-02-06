@@ -12,7 +12,6 @@ const logger = getLogger();
 
 async function getCostExplorerClient(region: string, credentialsId?: string) {
     logger.debug('Getting cost explorer  client:', region, credentialsId);
-
     try {
         const {
             credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
@@ -39,7 +38,7 @@ async function getCostAndUsage(region: string, input: GetCostAndUsageCommandInpu
 }
 
 async function getTagsfromCostExplorer(region: string, input: GetTagsCommandInput, credentialsId?: string) {
-    logger.info('Get cost allocation tag :', region, credentialsId, input);
+    logger.info('Get cost allocation tag at account level :', region, credentialsId, input);
     try {
         const client = await getCostExplorerClient(region, credentialsId);
         const command = new GetTagsCommand(input);

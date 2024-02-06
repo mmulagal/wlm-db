@@ -1,8 +1,11 @@
 import styles from './EstimatedCost.module.scss';
-import { FlashingDotsLoader, Typography } from '@netapp/design-system';
+import { Button, FlashingDotsLoader, TooltipInfo, Typography, useDialog } from '@netapp/design-system';
 import SquareComponent from '../SquareComponent/SquareComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import EstimatedCostDialogContent from './EstimatedCostDialogContent/EstimatedCostDialogContent';
+import { useEffect, useState } from 'react';
 
 type EstimatedCostProps = {
     hostData: any;
@@ -11,12 +14,52 @@ type EstimatedCostProps = {
 };
 
 const EstimatedCost = ({ hostData, hostsLoading, jobsLoading }: EstimatedCostProps) => {
+    const { setDialog } = useDialog();
+
+    const [linkChk, setLinkChk] = useState(true);
+
+    useEffect(() => {
+        if(hostData) {
+            setLinkChk(hostData?.requireBillingPerm || false);
+        }
+    }, [hostData]);
+    
+    const ToolTipContainer = () => {
+        return (
+            <div className={styles.tooltipContainerClass}>
+                <Typography variant="Regular_13">{GENERAL.ESTIMATED_COST_TOOLTIP}</Typography>
+                {linkChk && 
+                    <Button variant="text" onClick={() => costDialog()}>
+                        {GENERAL.LEARN_HOW_ESTIMATED_COST}
+                    </Button>
+                }
+            </div>
+        );
+    };
+
+    const costDialog = () => {
+        setDialog(
+            <DialogComponent
+                header="Improve cost accuracy"
+                content={<EstimatedCostDialogContent />}
+                primaryButton={GENERAL.CLOSE}
+                callback={() => {}}
+            />
+        );
+    };
     return (
         <div className={styles.estimatedCost}>
             <div className={styles.headSection}>
-                <Typography variant="Regular_16" className={styles.title}>
-                    {GENERAL.ESTIMATED_MONTHLY_COST}
-                </Typography>
+                <div className={styles.tooltipSection}>
+                    <Typography variant="Regular_16" className={styles.title}>
+                        {GENERAL.ESTIMATED_MONTHLY_COST}
+                    </Typography>
+                    <TooltipInfo interactive={true} delayHide={200} trigger="hover" placement="bottom-end">
+                        <Typography variant="Regular_13" className={styles.textWidth}>
+                            {ToolTipContainer()}
+                        </Typography>
+                    </TooltipInfo>
+                </div>
 
                 {hostsLoading || jobsLoading ? (
                     <FlashingDotsLoader />

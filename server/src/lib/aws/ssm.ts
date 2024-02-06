@@ -6,7 +6,10 @@ import {
     GetCommandInvocationCommandOutput,
     GetCommandInvocationCommand,
     paginateGetParametersByPath,
-    GetParametersByPathCommandInput
+    GetParametersByPathCommandInput,
+    GetConnectionStatusCommandInput,
+    GetConnectionStatusCommand,
+    GetConnectionStatusCommandOutput
 } from '@aws-sdk/client-ssm';
 
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
@@ -74,4 +77,13 @@ async function describeFSxOntapRegions(credentialsId: string) {
     return fsxRegionParameters;
 }
 
-export { getSSMClient, sendSSMCommand, getCommandInvocation, describeFSxOntapRegions };
+async function getConnectionStatus(credentialsId: string, region: string, params: GetConnectionStatusCommandInput) {
+    logger.info('Getting command invocation details for command', params);
+
+    const ssmClient = await getSSMClient(credentialsId, region);
+    const response: GetConnectionStatusCommandOutput = await ssmClient.send(new GetConnectionStatusCommand(params));
+    logger.info('SSM Command response', response);
+    return response;
+}
+
+export { getSSMClient, sendSSMCommand, getCommandInvocation, describeFSxOntapRegions, getConnectionStatus };

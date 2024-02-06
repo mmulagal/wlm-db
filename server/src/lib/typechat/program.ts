@@ -204,7 +204,7 @@ function createProgramTranslator(model: LanguageModel, schema: string): JsonTran
     translator.createRepairPrompt = createRepairPrompt;
     return translator;
 
-    function createRequestPrompt(request: string) {
+    function createRequestPrompt(request?: string) {
         return (
             // `I am giving you a few details about some function definitions in TypeScript to keep it with you` +
             'You are a service that is able to translate the user requests and response represented as JSON using the following TypeScript definitions:\n' +

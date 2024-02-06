@@ -6,7 +6,9 @@ import {
     SSM_COMMAND_CACHE_TYPE,
     WF_USER_CRED_TYPE,
     WF_SVC_TOKEN_TYPE,
-    BXP_SVC_TOKEN_TYPE
+    BXP_SVC_TOKEN_TYPE,
+    REQUEST_IN_PROGRESS_TYPE,
+    AWS_PRICING_TYPE
 } from './consts.js';
 import getLogger from './logger.js';
 
@@ -40,6 +42,16 @@ const SSM_COMMAND_CACHE = new LRUCache({
     ttl: ms('60m')
 });
 
+const REQUEST_IN_PROGRESS_CACHE = new LRUCache({
+    max: 100,
+    ttl: ms('30s')
+});
+
+const AWS_PRICING_CACHE = new LRUCache({
+    max: 1000,
+    ttl: ms('10d')
+});
+
 function getCacheByType(type: string) {
     logger.debug('Getting cache by type:', type);
 
@@ -56,13 +68,17 @@ function getCacheByType(type: string) {
             return BXP_SVC_TOKEN_CACHE;
         case SSM_COMMAND_CACHE_TYPE:
             return SSM_COMMAND_CACHE;
+        case REQUEST_IN_PROGRESS_TYPE:
+            return REQUEST_IN_PROGRESS_CACHE;
+        case AWS_PRICING_TYPE:
+            return AWS_PRICING_CACHE;
         default:
             logger.error('Could not found compatible cache');
     }
 }
 
 function writeToCache(type: string, key: string, data: any, ttl?: number | string) {
-    logger.debug('Writing to cache:', { key, data });
+    logger.info('Writing to cache:', { key, data });
 
     const cache = getCacheByType(type);
 
@@ -74,7 +90,7 @@ function writeToCache(type: string, key: string, data: any, ttl?: number | strin
 }
 
 function readFromCacheByKey(type: string, key: string) {
-    logger.debug('Reading from cache by key:', key);
+    logger.info('Reading from cache by key:', key);
 
     const cache = getCacheByType(type);
 
@@ -82,7 +98,7 @@ function readFromCacheByKey(type: string, key: string) {
 }
 
 function hasCache(type: string, key: string) {
-    logger.debug('Has cache', { key });
+    logger.info('Has cache', { key });
 
     const cache = getCacheByType(type);
 
@@ -92,4 +108,12 @@ function hasCache(type: string, key: string) {
     return response;
 }
 
-export { writeToCache, readFromCacheByKey, hasCache };
+function deleteFromCache(type: string, key: string) {
+    logger.info('Delete cache', { key });
+
+    const cache = getCacheByType(type);
+
+    cache?.delete(key);
+}
+
+export { writeToCache, readFromCacheByKey, hasCache, deleteFromCache };

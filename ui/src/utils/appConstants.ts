@@ -1,9 +1,11 @@
 export const SELECT_CONFIG = {
     STANDARD_CREATE: `Standard create`,
     EASY_CREATE: `Easy create`,
+    ADVANCED_CREATE: 'Advanced create',
+    QUICK_CREATE: 'Quick create',
     STANDARD_CREATE_CONTENT: `You set all of the configuration options, including availability, security, backups, and maintenance.`,
     EASY_CREATE_CONTENT:
-        'Use a recommended best-practice configuration. You can change most configuration options after you create the database.',
+        'Use a recommended best-practice configuration. You can change most configuration options after you create an FSx for ONTAP file system.',
     COMING_SOON: 'Coming soon',
     CREATE: 'Create',
     CANCEL: 'Cancel',
@@ -26,6 +28,7 @@ export const SELECT_CONFIG = {
 
 export const GENERAL = {
     LOADING_DATA: 'Loading data',
+    ACTIVE_NODE: 'Active node',
     ESTIMATED_COST_HEADER: 'The estimated cost will appear after you complete this form',
     COST_ERROR: 'Error while fetching cost information',
     AWS_CREDENTIALS: 'AWS credentials',
@@ -70,7 +73,7 @@ export const GENERAL = {
     DELETE_CONFIG_NOTIFICATION: 'Configuration deleted successfully.',
     SAVE_CONFIG_CONTENT:
         'You can save this Microsoft SQL Server configuration and load the configuration later for a future Microsoft SQL Server deployment.',
-    RENAME_CONFIG_CONTENT: ['Enter a new name to ', ' configuration'],
+    RENAME_CONFIG_CONTENT: ['Enter a new name for the ', ' configuration'],
     RENAME_CONFIG_NOTIFICATION: 'Configuration name changed successfully.',
     CONFIG_NAME: 'Configuration name',
     LOAD: 'Load',
@@ -80,38 +83,66 @@ export const GENERAL = {
     RENAME: 'Rename',
     DELETE: 'Delete',
     API_REQUEST: 'API request',
+    REQUIRED_PERMISSIONS: 'required permissions.',
+    REQUIRED_VIEW_PERMISSIONS: 'Required permissions',
+    REQUIRED_OPERATE_PERMISSIONS: 'Required permissions',
     CANCEL: 'Cancel',
+    CONTINUE: 'Continue',
     DEFAULT_AWS_ACCOUNT_SUB_TEXT: 'No AWS credentials are available to create this configuration.',
-    STEP_ONE: 'Step 1:',
-    STEP_TWO: 'Step 2:',
-    NAVIGATE_TO: 'Go to the',
-    STEP_TWO_TEXT: 'Add the credentials required for deployment:',
+    STEP_ONE: 'Option 1:',
+    STEP_TWO: 'Option 2:',
+    ERROR: 'Error:',
+    NO_CRED: 'No Credentials.',
+    CREATE_PERMISSION_ERROR: [
+        'Workload Factory is unable to validate sufficient permissions. Redirect to ',
+        'AWS CloudFormation',
+        ' to complete this task. Ensure that you have the CloudFormation '
+    ],
+    CREATE_PERMISSION_ERROR_CHATBOT:
+        'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
+    NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
+    STEP_TWO_TEXT: [
+        'Continue without credentials and create AWS resources using the Codebox on the right.',
+        'Ensure that you have the required permissions to complete this task within AWS CloudFormation.',
+        'View the required permissions.'
+    ],
     OPTION_ONE: 'To generate a CloudFormation stack for deployment from AWS, minimum permissions are required.',
     OPTION_TWO: 'To deploy the configuration from BlueXP, full permissions are required.',
     OPTION_TWO_WF: 'To deploy the configuration from Workload factory, full permissions are required.',
     FOR_MORE_INFO: 'Learn more about the',
+    HOW_TO_ADD_AWS_CRED: 'Learn how to add AWS credentials.',
     AWS_ACCOUNT_SUB_TEXT:
         'Select credentials that grant BlueXP the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
     AWS_ACCOUNT_SUB_TEXT_WF:
         'Select credentials that grant Workload factory the permissions required to deploy and manage Microsoft SQL server and FSx for ONTAP.',
+    AWS_ACCOUNT_SUB_TEXT_AUTOMATE:
+        'Use BlueXP in automate mode by selecting credentials that grant BlueXP the AWS permissions required to deploy and manage resources in your AWS account.',
+    AWS_ACCOUNT_SUB_TEXT_READ:
+        'Use BlueXP in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
+    AWS_ACCOUNT_SUB_TEXT_WF_AUTOMATE:
+        'Use Workload Factory in automate mode by selecting credentials that grant Workload Factory the AWS permissions required to deploy and manage resources in your AWS account.',
+    AWS_ACCOUNT_SUB_TEXT_WF_READ:
+        'Use Workload Factory in read mode by selecting AWS credentials that provide the read permissions required to generate a CloudFormation template. You can then use the template from the AWS CloudFormation console to provision stacks.',
     AWS_ACCOUNT_DEFAULT_LIST_TWO:
         'If you prefer not to enter your account credentials, continue to fill the form below, and we will produce the applicable CloudFormation code that you can copy and operate by yourself.',
     AWS_DEFAULT_LIST_FIRST:
         "page and add the credentials that you'd like to use, so we could create the DB for you. Deployment will take about 2 hours.",
     GO_TO_THE: 'Go to the',
     REQUIRED_PERMISSION_LINK: 'required permissions and how to add AWS credentials',
-    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'required permissions',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS: 'View required permissions.',
+    REQUIRED_PERMISSION_LINK_ACCOUNTS2: 'View the required permissions.',
     MS_SQL_REQUIRED: 'Microsoft SQL on FSxN for ONTAP required permissions',
-    CREDENTIALS: 'Credentials page.',
+    CREDENTIALS: 'Credentials page',
     CREDENTIAL: 'Credentials.',
     CREDENTIAL_WITHOUT_DOT: 'Credentials',
-    ADD_NEW_CREDENTIALS: 'To add a new credentials, visit',
+    ADD_NEW_CREDENTIALS: 'To add a new credentials, go to the ',
     MULTI_AZ_CHECK_MESSAGE:
         'The selected VPC is not optimized. You should choose a VPC with subnets in 2 availability zones so that each cluster node will be in a dedicated availability zone.',
     QUERY_ERROR: 'Query error',
     PERMISSION_REQUIRED: 'Permissions required',
     CLOUDFORMATION_TEMPLATE_URL: ['CloudFormation template ', 'URL'],
-    SAME_ROUTE_SUBNET_ERROR: 'AWS FSx requires route tables to be different for subnets in multi-zone deployment.',
+    SAME_ROUTE_SUBNET_ERROR:
+        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
     //Constants for Security group
     USE_AN_EXISTING_SECURITY: 'Use an existing security group',
     GENERATED_SECURITY_GROUP: 'Create a new security group',
@@ -227,6 +258,9 @@ export const GENERAL = {
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
     USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
+    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example:',
+    USERNAME_EXAMPLE: '"johnDoe"',
+    USERNAME_TOOLTIP4: 'The user name must contain at most 20 alphanumeric characters.',
 
     PASSWORD_MIN_LENGTH_8: 'Password must be atleast 8 characters long',
     PASSWORD_CRED_1:
@@ -271,9 +305,9 @@ export const GENERAL = {
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
     CREATE_INFO_MESSAGE_WLM: [
-        'Microsoft SQL Server and FSxN for ONTAP deployment ',
-        'with stack name ',
-        ' has been triggered. Estimated time: Up to 2 hours.'
+        'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. Track progress using ',
+        'Job monitoring',
+        '. Estimated time: Up to 2 hours.'
     ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
@@ -326,6 +360,7 @@ export const GENERAL = {
     DEFAULT: 'Default',
     CONFIGURATION: 'Configuration',
     PD_DISABLED: 'Disabled',
+    ENABLED: 'Enabled',
     YES: 'Yes',
     PD_AUTO_CREATE: 'Automatically create based on user selection',
     NO: 'No',
@@ -353,8 +388,9 @@ export const GENERAL = {
     HOSTS: 'Hosts',
     PROTECTED: 'Protected',
     NOT_PROTECTED: 'Not protected',
+    PROTECTION_TOOLTIP: [' out of ', ' databases are protected'],
     AWS_BACKUP: 'AWS backup',
-    FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
+    FSX_ONTAP_SNAPSHOTS: 'FSx for ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
     DEPLOY_NEW_DATABASE: 'Deploy',
@@ -369,21 +405,23 @@ export const GENERAL = {
     DB_HOST_PERFORMANCE: 'Performance',
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
     DB_SS_TT_1:
-        'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Clone etc. ',
-    DB_SS_TT_2: 'Calculation is based on unique FSx ONTAP instance',
+        'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Snapshots and thin Clones. ',
+    DB_SS_TT_2: 'Calculation is based on unique FSx for ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated Cost',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
     DB_HOST_REGION: 'Region',
-    DB_HOST_FILE_SYSTEM_TYPE: 'File system type',
+    DB_HOST_FILE_SYSTEM_TYPE: 'Storage type',
     // Job Status constants
     JOB_STATUS: 'Job status',
-    JOB_STATUS_DAYS: 'Last 90 days',
-    JOB_STATUS_SUCCESS: 'Success',
+    JOB_STATUS_DAYS: '(Last 30 days)',
+    VIEW_JOB_MONITORING: 'View job monitoring',
+    JOB_STATUS_COMPLETED: 'Completed',
     JOB_STATUS_FAILED: 'Failed',
-    JOB_STATUS_INITIALIZING: 'In Progress',
+    JOB_STATUS_RUNNING: 'Running',
     JOB_STATUS_JOBS: ' Jobs',
     JOBS_DISTRIBUTION: 'Jobs distribution',
+    JOB_DISTRIBUTION: 'Job distribution',
     // Database Host constants
     DATABASE_HOST_STATUS: 'Database host status',
     DB_HOST_UP: 'Up',
@@ -396,10 +434,82 @@ export const GENERAL = {
     DB_HOST_UNPROTECTED: 'Unprotected',
     PROTECTED_DB_DISTRIBUTION: 'Protected database distribution',
     SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    PROTECTION_DATABASES: 'DB',
-    PROTECTION: 'Protection',
+    PROTECTION_DATABASES: 'Hosts',
+    PROTECTION: 'protection',
     NUMBER_OF_EXECUTION: 'Number of Execution',
-    TERRAFORM: 'Terraform'
+    TERRAFORM: 'Terraform',
+    READ: 'Read',
+    WRITE: 'Write',
+    STORAGE_PERFORMANCE: 'Storage performance',
+    LATENCY: 'Latency',
+    IOPS: 'IOPS',
+    DOMAIN_NAME_INFO: 'Domain name:',
+    DNS_ADDRESS_INFO: 'DNS address:',
+    RESOURCE_UTILIZATION: 'Resource utilization',
+    MEMORY: 'Memory',
+    RESOURCES_DISTRIBUTION: 'Resource distribution',
+    CPU: 'CPU',
+    AWS_ACC_INFO: 'AWS account:',
+    REGION_INFO: 'Region:',
+    AZ_INFO_1: 'Availability Zone 1:',
+    SUBNET_INFO_1: 'Subnet 1:',
+    AZ_INFO_2: 'Availability Zone 2:',
+    SUBNET_INFO_2: 'Subnet 2:',
+    DEPLOYMENT_MODEL_INFO: 'Deployment model:',
+    OS_INFO: 'Operating system:',
+    EDITION_INFO: 'Edition:',
+    VERSION_INFO: 'Version:',
+    CLUSTER_NAME_INFO: 'Cluster name:',
+    NODE_NAMES: 'Node names:',
+    STATUS_INFO: 'Status:',
+    CONNECTIONS_INFO: 'Connections:',
+    DATE_CREATED: 'Date Created:',
+    DB_INSTANCE_TYPE: 'DB Instance type:',
+    FILE_SYS_NAME: 'File system name:',
+    FILE_SYS_ID: 'File system ID:',
+    FILE_SYS_TYPE: 'File system type:',
+    FILE_SYS_STATUS: 'File system status:',
+    STORAGE_CAPACITY_INFO: 'Storage capacity:',
+    FILE_SYS_DP_TYPE: 'File system deployment type:',
+    FSX_THROUGHPUT_TYPE: 'FSx Throughput capacity:',
+    KEY_PAIR_NAME_INFO: 'Key pair name:',
+    VPC_INFO: 'VPC:',
+    TOPOLOGY: 'Topology',
+    STATUS: 'Status',
+    HOST_NAME: 'Host name',
+    NO_OF_DBS: 'Number of databases',
+    TOTAL_USED_CAPACITY: 'Total used capacity',
+    TOTAL_ALLOCATED_CAPACITY: 'Total allocated capacity',
+    ESTIMATED_COST_TOOLTIP:
+        "Cost estimation provides an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.",
+    LEARN_HOW_ESTIMATED_COST: 'Learn how to improve cost accuracy',
+    EC_HEADER: 'For more accurate results based on AWS billing and cost management, follow these steps:',
+    STEP1: 'Step 1:',
+    STEP1TEXT: 'Grant AWS billing and cost management data permissions.',
+    STEP1POINT1: 'Sign in to the AWS Management Console and open the IAM service.',
+    STEP1POINT2: 'Edit the policy for role and add AWS billing and cost management data permissions.',
+    STEP1POINT3: 'User should quickly get the minimal needed billing permissions with an option to Copy.',
+    STEP2: 'Step 2:',
+    STEP2TEXT: 'Ensure the payer account activates the cost allocation tag.',
+    STEP2POINT1: 'Open the AWS Billing and Cost Management console.',
+    STEP2POINT2: 'In the navigation pane, choose ',
+    STEP2POINT2CONTINUE: 'Cost allocation tags',
+    STEP2POINT4: 'Select',
+    STEP2POINT4ACTIVATE: 'Activate.',
+    JOBS_STATUS_OVER_TIME: 'Jobs status over time',
+    JOB_MONITORING: 'Job monitoring',
+    POLICY_MANAGEMENT: 'Policy management',
+    //Job Monitoring constants
+    JM_COMPLETED: 'Completed',
+    JM_IN_PROGRESS: 'In Progress',
+    JM_FAILED: 'Failed',
+    NO_DATA: 'No data',
+    JM_RUNNING: 'Running',
+    JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
+    JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
+    DEMO_TITLE: 'Redirect to CloudFormation',
+    DEMO_CONTENT:
+        'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation.'
 };
 
 export const CODE_VIEWER = {
@@ -410,21 +520,21 @@ export const CODE_VIEWER = {
     DOWNLOAD_YAML: 'Download YAML file ',
     RECOMMENDED_DEV: 'Dev/Test',
     RECOMMENDED_PROD: 'Production',
-    NO_DATA_MSG: 'No data found',
+    NO_DATA_MSG: 'No data',
     LOADING_CLOUD_FORMATION: 'Loading CloudFormation code',
     LOADING_REST_API: 'Loading REST API code',
     LOADING_AWS_CLI: 'Loading AWS CLI code',
     CODEBOX: 'Codebox',
     EXPAND: 'Expand',
     COLLAPSE: 'Collapse',
-    RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL server deployment'],
+    RECOMMENDED_TEMPLATES_HEADING: ['Recommended Templates - ', 'Microsoft SQL Server deployment'],
     MY_TEMPLATES: 'My Templates',
     COPY: 'Copy',
     COPIED_TO_CLIPBOARD: 'Copied to clipboard',
-    SIDEBAR_LOAD_WIZARD: 'Load Wizard',
-    MENU_LOAD_WIZARD: 'Load (Wizard)',
+    SIDEBAR_LOAD_WIZARD: 'Load wizard',
+    MENU_LOAD_WIZARD: 'Load wizard',
     SHOW_CODE_AS: 'Show code as:',
-    VIEW_CODE: 'View Code',
+    VIEW_CODE: 'View code',
     RENAME: 'Rename',
     DELETE: 'Delete',
     CREATION_DATE: 'Creation date:',
@@ -463,4 +573,20 @@ export const CHATBOT_FIELD_MAPPING: any = {
     ontapSgGroupId: 'ontap security group id',
     fsxType: 'fsx type',
     fsxFileSystemId: 'fsx file system id'
+};
+
+export const CHATBOT = {
+    WELCOME_PAGE: {
+        DB_WORKLOAD_EXPERT: 'Database workload expert',
+        WELCOME_MSG:
+            "Hello! I'm your virtual assistant for database lifecycle management. I can help you learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation.",
+        RESUME_DEPLOYMENT_MSG:
+            'Hi, we see that you already initiated values for deployment. How would you like to proceed?',
+        ADVANCED_CREATE_MSG:
+            'Deployment via chatbot is supported only with the easy create option, which provides some predefined configuration settings based on recommended best practices. Would you like to continue?',
+        START_NEW_CHAT: 'Start new chat'
+    },
+    HEADER: {
+        PREVIEW: 'Preview'
+    }
 };

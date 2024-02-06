@@ -10,7 +10,8 @@ import {
     deleteConfig,
     createEvent,
     listRelationshipsResources,
-    updateConfig
+    updateConfig,
+    listEvents
 } from '../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -117,5 +118,34 @@ describe('List deployments', () => {
         expect(respWithId[0].resource_id).toEqual('i-1a2b3c4d5e');
         expect(respWithId[0].co_relation_id).toEqual('fsx-1234');
         await deleteResource(ACCOUNT_ID, resp[0].resource_id);
+    });
+
+    it('should return a list of events', async () => {
+        await createDeployment(ACCOUNT_ID, {
+            deploymentId:
+                'arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de',
+            deploymentName: 'TESTSTACK',
+            cloudProviderAccountId: '464262061435',
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            deploymentStatus: 'CREATE_IN_PROGRESS',
+            deploymentModel: 'FCI',
+            startTime: new Date('2023-08-21T11:10:35.875Z').valueOf(),
+            region: 'us-east-1'
+        });
+
+        await createEvent({
+            eventId: 'test-event',
+            accountId: ACCOUNT_ID,
+            deploymentId:
+                'arn:aws:cloudformation:ap-southeast-1:464262061435:stack/TESTSTACK/43d5b7a0-4013-11ee-b15b-0a0b1574b4de',
+            deploymentName: 'TESTSTACK',
+            eventStatus: 'CREATE_IN_PROGRESS',
+            eventStatusReason: '',
+            resourceType: 'CloudFormation:Stack',
+            time: Date.now()
+        });
+        const resp = await listEvents(ACCOUNT_ID, 'TESTSTACK', 'test-event');
+        expect(resp[0].account_id).toEqual(ACCOUNT_ID);
+        await deleteDeployment(ACCOUNT_ID, resp[0].deployment_id);
     });
 });

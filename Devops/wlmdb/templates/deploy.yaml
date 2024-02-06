@@ -45,6 +45,8 @@ spec:
         envFrom:
         - configMapRef:
             name: wlmdb-config
+        - configMapRef:
+            name: dr-status
         env:
           {{ if .Values.global.NFSlogs }}
           - name: POD_NAME
@@ -52,6 +54,11 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: metadata.name
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
           {{ end }}
         readinessProbe:
           httpGet:
@@ -74,7 +81,7 @@ spec:
         {{ if .Values.global.NFSlogs }}
         volumeMounts:
           - mountPath: "/log"
-            subPathExpr: $(POD_NAME)
+            subPathExpr: $(NODE_NAME)/$(POD_NAME)
             name: logs-disk
         {{ end }}
         resources:

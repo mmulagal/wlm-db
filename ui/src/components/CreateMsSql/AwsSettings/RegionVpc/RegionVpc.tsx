@@ -23,6 +23,7 @@ import { setSelectedRegionData, setSelectedVPC } from '../../../../store/mssql/m
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDispatch } from 'react-redux';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const RegionVpc = () => {
     const dispatch = useDispatch();
@@ -42,6 +43,7 @@ const RegionVpc = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const deploymentModel = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     //Function to generate the options for Select Field
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
@@ -57,7 +59,7 @@ const RegionVpc = () => {
 
     //Update selected region in form data store
     useEffect(() => {
-        if (!isLoadConfig && !selectedRegionData) {
+        if (!isLoadConfig && !selectedRegionData && !movingFromChatbot) {
             dispatch(setSelectedRegionData(generateRegionsData[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,7 +129,7 @@ const RegionVpc = () => {
 
     //Update selected VPC in form data store
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedVPC(null));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,6 +176,7 @@ const RegionVpc = () => {
                             onChange={(selectedOptions: any): void => {
                                 dispatch(setSelectedRegionData(selectedOptions));
                                 dispatch(setSelectedVPC(null));
+                                dispatch(setIsWizardTouched(true));
                             }}
                             isSearchable={generateRegionsData.length > 5}
                             options={generateRegionsData}
@@ -226,6 +229,7 @@ const RegionVpc = () => {
                                     value={selectedVPCData ? selectedVPCData : null}
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedVPC(selectedOptions));
+                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     placeholder="Select a VPC"
                                     isSearchable={generateVPCOptions.length > 5}

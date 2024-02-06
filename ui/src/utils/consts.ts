@@ -133,7 +133,15 @@ export const STATUS_CONST = {
     UP: 'Up',
     DOWN: 'Down',
     INITIALIZING: 'Initializing',
-    FAILED: 'Failed'
+    FAILED: 'Failed',
+    IN_PROGRESS: 'In Progress',
+    COMPLETED: 'Completed'
+};
+
+export const JOB_MONITORING_STATUS = {
+    FAILED: 'FAILED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED'
 };
 
 export const MAX_SAVED_CONFIG = 100;
@@ -156,7 +164,7 @@ export const CURL_REQ_TEMPLATE = (
     token: string,
     payload: any
 ) => `
-curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/stack' \\
+curl --location --request POST '${baseUrl}/credentials/${credentialId}/regions/${region}/cloudformation/deploy' \\
 --header 'Authorization: Bearer ${token}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${payload}'
@@ -179,5 +187,64 @@ export const DB_HOME_DATA_TYPE = {
 export const CODEBOX_REST_RES = {
     API: 'api',
     VIEW: 'view',
-    COPY: 'copy'
+    COPY: 'copy',
+    ORIGINAL_DATA: 'Original Data'
+};
+
+export const COSTING_TYPES = {
+    BILLING: 'billing',
+    PRICING: 'pricing'
+};
+
+export const JM_DOWNLOAD = {
+    MAIN_JOBS_KEYS: ['id', 'type', 'status', 'resourceName', 'name', 'startTime', 'endTime'],
+    MAIN_JOBS_CSV_HEADERS: 'Job ID,Type,Status,Resource name,Job name,Start time,End time',
+    SUB_JOBS_KEYS: ['description', 'status', 'startTime', 'endTime'],
+    SUB_JOBS_CSV_HEADERS: 'Name,Status,Start time,End time'
+};
+
+export const AWS_CLI_HIGHLIGHT_STRINGS = [
+    'ParameterKey=',
+    'ParameterValue=',
+    '--stack-name',
+    '--template-url',
+    '--region',
+    '--parameters'
+];
+
+export const CREATE_DATABASE_YAML = 'Create_Database';
+
+export const CHATBOT_WELCOME_CARDS = [
+    { label: 'Help me deploy Microsoft SQL Server on FSx for ONTAP.' },
+    { label: 'What are the key features of Amazon FSx for NetApp ONTAP for databases?' },
+    { label: 'What are the key benefits of Amazon FSx for NetApp ONTAP for databases?' },
+    {
+        label: 'What is the FSx for ONTAP best practice for Microsoft SQL Server?',
+        value: 'What are some best practices for using FSx for ONTAP with Microsoft SQL Server?'
+    }
+];
+
+export const CHATBOT_SUGGESTION_BUBBLES = [
+    { label: 'Resume the current deployment', value: 'resume' },
+    { label: 'Start a new deployment', value: 'start' }
+];
+
+export const ADV_CREATE_SUGGESTION_BUBBLES = [
+    { label: 'Yes, I would like to continue with deployment', value: 'resume' },
+    { label: "No, I'd like to start a new conversation", value: 'explore' }
+];
+
+export const JOBS_REPORT = 'jobs_report_';
+
+export const UI_IDS = {
+    WIZARD_REDIRECT_TO_CF: 'wizard-redirect-to-cf',
+    DBP_REDIRECT_TO_CF: 'dbp-redirect-to-cf',
+    WIZARD_CODEBOX_COPY: 'wizard-codebox-copy',
+    DBP_CODEBOX_COPY: 'dbp-codebox-copy',
+    WIZARD_CODEBOX_REST_API: 'wizard-codebox-rest-api',
+    DBP_CODEBOX_REST_API: 'dbp-codebox-rest-api',
+    WIZARD_CODEBOX_AWS_CLI: 'wizard-codebox-aws-cli',
+    DBP_CODEBOX_AWS_CLI: 'dbp-codebox-aws-cli',
+    WIZARD_CODEBOX_CF: 'wizard-codebox-cf',
+    DBP_CODEBOX_CF: 'dbp-codebox-cf'
 };

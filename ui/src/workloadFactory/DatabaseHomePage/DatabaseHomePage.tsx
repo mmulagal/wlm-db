@@ -56,9 +56,10 @@ const DatabaseHomePage = () => {
                         <Typography variant="Regular_24" className={styles.heading}>
                             {GENERAL.DATABASES}
                         </Typography>
-                        <div>
-                            <TopBarButton />
-                        </div>
+                    </div>
+
+                    <div className={styles.buttonsContainer}>
+                        <TopBarButton />
                     </div>
 
                     <div className={styles.secondLevelContainer}>

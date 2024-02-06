@@ -1,10 +1,11 @@
+type DeployMsSqlType = 'DeployMsSql';
 // User Intent from the query/request
 type Intent = {
-    intent: FunctionToRun | QueryResponse;
+    intent: FunctionToRun | Query;
 };
-// Use this type for the query that doesn't match any other types
-type QueryResponse = {
-    type: 'QueryResponse';
+// If the user if asking a query, give a proper reply
+type Query = {
+    type: 'Query';
     response: string; // The response from the chatbot
 };
 
@@ -12,18 +13,19 @@ type FunctionToRun = DeployMsSql;
 
 // Parameters for MS SQL Deployment, use undefined as default value
 type DeployMsSqlParams = {
+    deploymentEnvironment?: string;
     credentialsId?: string;
-    fsxType?: string;
-    region?: string; // region name or code as provided by the user
     sqlDeploymentMode?: string;
-    vpcId?: string; // VPC id for the instance
-    vpcCidr?: string; // VPC CIDR block
-    availabilityZone1?: string; // Availability Zone 1
-    privateSubnet1Id?: string; // Private Subnet 1 Id
-    availabilityZone2?: string; // Availability Zone 2
-    privateSubnet2Id?: string; // Private Subnet 2 Id
+    region?: string;
+    vpcId?: string;
+    vpcCidr?: string;
+    availabilityZone1?: string;
+    privateSubnet1Id?: string;
+    availabilityZone2?: string;
+    privateSubnet2Id?: string;
     routeTable1Id?: string;
     routeTable2Id?: string;
+    fsxType?: string;
     workloadInstanceType?: string;
     keyPairName?: string;
     adScenarioType?: string;
@@ -51,7 +53,7 @@ type DeployMsSqlParams = {
 
 // Deploy MS SQL
 type DeployMsSql = {
-    type: 'DeployMsSql';
+    type: DeployMsSqlType;
     params: DeployMsSqlParams;
 };
 

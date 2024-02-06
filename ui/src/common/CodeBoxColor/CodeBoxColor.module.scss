@@ -1,6 +1,22 @@
 .codeBox {
     margin-top: 20px;
 
+    .highlightWord {
+        color: var(--red-20);
+    }
+
+    .commaColor {
+        color: var(--white);
+    }
+
+    .infoColor {
+        color: var(--blue-40);
+    }
+
+    .boolColor {
+        color: var(--orange-15);
+    }
+
     .tokenStyle {
         background-color: var(--grey-30);
         color: var(--grey-55);
@@ -8,7 +24,7 @@
 
     .marginFIfteen {
         margin-left: 15px;
-        color: var(--blue-40);
+        color: var(--blue-30);
     }
 
     .marginThirty {
@@ -22,11 +38,11 @@
 
     .startArray {
         margin-left: 15px;
-        color: var(--blue-40);
+        color: var(--blue-30);
     }
 
     .blue50Color {
-        color: var(--blue-40);
+        color: var(--blue-30);
     }
 
     .green40Color {

@@ -13,10 +13,10 @@ const Confirmation = ({ confirmText, confirmButtonText, cancelButtonText, onConf
         <div className={styles['confirmation-container']}>
             <div className={styles['confirmation-text']}>{confirmText}</div>
             <div className={styles['buttons-container']}>
-                <button className={styles['discard-button']} onClick={onCancel}>
+                <button className={styles['discard-button']} onClick={onCancel} id="chatbot-discard">
                     {cancelButtonText}
                 </button>
-                <button className={styles['select-chosen-button']} onClick={onConfirm}>
+                <button className={styles['select-chosen-button']} onClick={onConfirm} id="chatbot-confirm">
                     {confirmButtonText}
                 </button>
             </div>

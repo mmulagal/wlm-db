@@ -27,6 +27,11 @@
         width: 1063px;
     }
 
+    .buttonsContainer {
+        margin-left: 120px;
+        margin-top: 20px;
+    }
+
     .thirdLevelContainer {
         display: flex;
         gap: 24px;
@@ -71,6 +76,18 @@
 
     ::-webkit-scrollbar {
         height: 6px;
+        width: 0px;
+    }
+}
+
+@media screen and (min-width: 1351px) and (max-width: 1576px) {
+    .leftSide {
+        width: 53vw !important;
+    }
+}
+@media screen and (min-width: 1576px) and (max-width: 1720px) {
+    .leftSide {
+        width: 61vw !important;
     }
 }
 

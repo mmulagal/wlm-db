@@ -1,5 +1,5 @@
 import { ReactComponent as WizardIcon } from '../../../../assets/wizard-icon.svg';
-import { ReactComponent as ChatbotIcon } from '../../../../assets/chatbot-icon.svg';
+import { ReactComponent as ChatbotIcon } from '../../../../assets/chatbot-tab-icon.svg';
 import { Typography } from '@netapp/design-system';
 
 import styles from './DeploymentTabs.module.scss';
@@ -28,10 +28,11 @@ const DeploymentTabs = ({ selectedTab, onTabChange }: DeploymentTabsProps) => {
                     selectedTab === 'chatbot' ? styles['selected-tab'] : styles['non-selected-tab']
                 }`}
                 onClick={() => onTabChange('chatbot')}
+                id="chatbot-tab"
             >
                 <ChatbotIcon />
                 <Typography variant="Semibold_16" color={selectedTab === 'chatbot' ? '#0067c5' : '#404040'}>
-                    Chatbot
+                    Database chatbot
                 </Typography>
             </div>
         </div>

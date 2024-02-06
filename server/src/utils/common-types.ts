@@ -1,8 +1,15 @@
 interface Metadata {
     credentialsId: string;
     activeNodeInstanceId: string;
-    standbyNodeInstanceId: string;
-    fsxSecret: string;
+    activeNodeInstanceName?: string;
+    standbyNodeInstanceId?: string;
+    standbyNodeInstanceName?: string;
+    sqlDeploymentType?: string;
+    fileSystemType?: string;
+    fsxSecret?: string;
+    activeDirectoryName?: string;
+    activeDirectoryAddress?: string;
+    creationDate?: string;
 }
 
 interface ResourceDetails {
@@ -36,4 +43,48 @@ interface DeploymentDetails {
     data: unknown;
 }
 
-export { Metadata, ResourceDetails, DeploymentDetails };
+interface NetworkViolation {
+    isViolated: boolean;
+    violationMessage?: string;
+}
+
+interface Subnet {
+    id?: string;
+    name?: string;
+    state?: string;
+    vpcId?: string;
+    tags?: Array<{ Key?: string; Value?: string }>;
+    cidrBlock?: string;
+    availabilityZone?: string;
+    availableIps?: number;
+    routeTableId?: string;
+}
+interface SecurityGroup {
+    id?: string;
+    description?: string;
+    vpcId?: string;
+    ipPermissions?: any;
+    name?: string;
+    securityGroupName?: string;
+}
+interface VPC {
+    id?: string;
+    state?: string;
+    cidrBlock?: any;
+    tags?: Array<{ Key?: string; Value?: string }>;
+    isDefault?: boolean;
+    subnets?: Array<Subnet>;
+    securityGroups?: Array<SecurityGroup>;
+    name?: string;
+}
+
+interface NetworkInterface {
+    id?: string;
+    description?: string;
+    vpcId?: string;
+    subnetId?: string;
+    securityGroups?: Array<string>;
+    availabilityZone?: string;
+}
+
+export { Metadata, ResourceDetails, DeploymentDetails, NetworkViolation, SecurityGroup, Subnet, VPC, NetworkInterface };

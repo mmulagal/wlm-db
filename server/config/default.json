@@ -54,6 +54,25 @@
         "vcpu-filter": ["2", "4", "8", "16", "32", "64", "72"]
     },
     "ssm": {
-        "poll-interval": "1s"
+        "poll-interval": "1s",
+        "execution-timeout": "45"
+    },
+    "auth": {
+        "wlmdb": {
+            "timeout": "10s",
+            "interval": "500ms"
+        },
+        "bluexp": {
+            "timeout": "10s",
+            "interval": "500ms"
+        }
+    },
+    "db": {
+        "jobs": {
+            "purge": {
+                "interval": "24h",
+                "older-than": "90d"
+            }
+        }
     }
 }

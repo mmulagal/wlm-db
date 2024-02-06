@@ -54,6 +54,12 @@
 .heading {
     width: 160px;
 }
+.valueCSS {
+    max-width: 210px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 @media screen and (max-width: 1350px) {
     .accordion-group {
@@ -65,4 +71,24 @@
     .accordion-group {
         width: 1128px;
     }
+}
+
+.popover {
+    display: flex;
+    max-width: 400px;
+    padding: 8px 12px;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 4px;
+    background-color: var(--content-background);
+    box-shadow: 4px 4px 12px 0px var(--grey-15);
+}
+
+.wrapTextIn2Line {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 24px;
 }

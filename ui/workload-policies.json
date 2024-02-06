@@ -1,4 +1,5 @@
 {
+    "_comment": "If any change in operate and view permission than that has to be updated in src/utils/permissions.ts file also.",
     "operate": {
         "Version": "2012-10-17",
         "Statement": [
@@ -43,8 +44,7 @@
                     "ec2:RevokeSecurityGroupEgress",
                     "ec2:RevokeSecurityGroupIngress",
                     "ec2:StartInstances",
-                    "ec2:StopInstances",
-                    "ec2:TerminateInstances"
+                    "ec2:StopInstances"
                 ],
                 "Resource": "*",
                 "Condition": {
@@ -56,9 +56,7 @@
             {
                 "Sid": "FSxNGroup",
                 "Effect": "Allow",
-                "Action": [
-                    "fsx:TagResource"
-                ],
+                "Action": ["fsx:TagResource"],
                 "Resource": "*",
                 "Condition": {
                     "StringLike": {
@@ -105,7 +103,6 @@
                     "logs:ListLogDeliveries",
                     "logs:PutLogEvents",
                     "logs:TagResource",
-                    "pricing:GetProducts",
                     "secretsmanager:CreateSecret",
                     "secretsmanager:GetSecretValue",
                     "secretsmanager:ListSecrets",
@@ -147,19 +144,39 @@
                     "iam:AddRoleToInstanceProfile",
                     "iam:CreateInstanceProfile",
                     "iam:CreateRole",
-                    "iam:CreateServiceLinkedRole",
                     "iam:DeleteInstanceProfile",
                     "iam:GetPolicy",
                     "iam:GetPolicyVersion",
                     "iam:GetRole",
                     "iam:GetRolePolicy",
                     "iam:GetUser",
-                    "iam:PassRole",
                     "iam:PutRolePolicy",
                     "iam:RemoveRoleFromInstanceProfile",
                     "iam:SimulatePrincipalPolicy"
                 ],
                 "Resource": "*"
+            },
+            {
+                "Sid": "IAMGroup1",
+                "Effect": "Allow",
+                "Action": "iam:CreateServiceLinkedRole",
+                "Resource": "*",
+                "Condition": {
+                    "StringLike": {
+                        "iam:AWSServiceName": "ec2.amazonaws.com"
+                    }
+                }
+            },
+            {
+                "Sid": "IAMGroup2",
+                "Effect": "Allow",
+                "Action": "iam:PassRole",
+                "Resource": "*",
+                "Condition": {
+                    "StringEquals": {
+                        "iam:PassedToService": "ec2.amazonaws.com"
+                    }
+                }
             }
         ]
     },
@@ -167,27 +184,12 @@
         "Version": "2012-10-17",
         "Statement": [
             {
-                "Sid": "SecretManagerListStatement",
+                "Sid": "CommonGroup",
                 "Effect": "Allow",
                 "Action": [
-                    "secretsmanager:GetSecretValue"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "SNSListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "sns:ListTopics"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "EC2BackendListStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "secretsmanager:GetSecretValue",
+                    "sns:ListTopics",
+                    "ec2:DescribeInstances",
                     "ec2:DescribeVpcs",
                     "ec2:DescribeSubnets",
                     "ec2:DescribeSecurityGroups",
@@ -197,96 +199,24 @@
                     "ec2:DescribeKeyPairs",
                     "ec2:DescribeNetworkInterfaces",
                     "ec2:DescribeInstanceTypes",
-                    "ec2:DescribeInstanceTypeOfferings"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "KMSListStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "ec2:DescribeInstanceTypeOfferings",
                     "kms:ListAliases",
                     "kms:ListKeys",
-                    "kms:DescribeKey"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "CloudFormationListStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "cloudformation:ListStacks"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "DirectoryServiceStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ds:DescribeDirectories"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "FSXListStatement",
-                "Effect": "Allow",
-                "Action": [
+                    "kms:DescribeKey",
+                    "cloudformation:ListStacks",
+                    "ds:DescribeDirectories",
                     "fsx:DescribeVolumes",
                     "fsx:DescribeBackups",
                     "fsx:DescribeStorageVirtualMachines",
-                    "fsx:DescribeFileSystems"
+                    "fsx:DescribeFileSystems",
+                    "servicequotas:ListServiceQuotas",
+                    "ssm:GetParametersByPath",
+                    "ssm:GetCommandInvocation",
+                    "ssm:SendCommand",
+                    "ssm:GetConnectionStatus",
+                    "fsx:ListTagsForResource"
                 ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "QuotaStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "servicequotas:ListServiceQuotas"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "PricingStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "pricing:GetProducts"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "IAMStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "iam:SimulatePrincipalPolicy"
-                ],
-                "Resource": [
-                    "*"
-                ]
-            },
-            {
-                "Sid": "SSMStatement",
-                "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParametersByPath"
-                ],
-                "Resource": [
-                    "*"
-                ]
+                "Resource": ["*"]
             }
         ]
     }

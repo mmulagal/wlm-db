@@ -11,14 +11,15 @@ import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { generateRandomDBName } from '../../../../utils/utilityFunctions';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const DatabaseName = () => {
     const dispatch = useDispatch();
 
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
-    const isCreateHit = useAppSelector(state => state.msSqlAction.isCreateHit);
-    const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction.dbNameSelected);
-    const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const isCreateHit = useAppSelector(state => state.msSqlAction?.isCreateHit);
+    const isDBClusterNameFilled = useAppSelector(state => state.msSqlAction?.dbNameSelected);
+    const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const [databaseName, setDatabaseName] = useState(selectedDBName ? selectedDBName : generateRandomDBName());
 
@@ -35,19 +36,20 @@ const DatabaseName = () => {
                 databasenameRef?.current?.focus();
             }, 60);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [!isDBClusterNameFilled, isCreateHit]);
 
     function isValidDBName() {
-        if(isDemoMode){
+        if (isDemoMode) {
             return '';
         }
-        const firstChar = databaseName.charAt(0);
+        const firstChar = databaseName && databaseName.charAt(0);
         // Check if the instance name is 16 characters or less in length
 
-        if (databaseName.length === 0) {
+        if (!databaseName || databaseName.length === 0) {
             return GENERAL.ACTION_REQUIRED;
         } else if (
+            databaseName &&
             databaseName.length > 0 &&
             (databaseName.length > 15 || !/^[a-zA-Z0-9]/.test(firstChar) || !/^[a-zA-Z0-9/-]+$/.test(databaseName))
         ) {
@@ -58,8 +60,7 @@ const DatabaseName = () => {
     const setHeader = () => {
         if (!databaseName) {
             return <ActionRequired error={!isDBClusterNameFilled ? true : false} />;
-        } 
-        else if (isValidDBName()) {
+        } else if (isValidDBName()) {
             return <AccordionError />;
         } else {
             return <Typography variant="Regular_14">{databaseName}</Typography>;
@@ -98,8 +99,9 @@ const DatabaseName = () => {
                                 }
                                 label={GENERAL.DATABASE_INSTANCE_NAME}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setDatabaseName(e.target.value)
+                                    setDatabaseName(e.target.value);
                                     dispatch(setDBName(e.target.value));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 error={useDelayedError(isValidDBName())}
                                 value={databaseName}

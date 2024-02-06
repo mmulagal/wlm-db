@@ -10,6 +10,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 import { setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const InstanceType = () => {
     const dispatch = useDispatch();
@@ -21,6 +22,7 @@ const InstanceType = () => {
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const isRecommendedInstance = useAppSelector(state => state.msSqlAction.isRecommendedInstance);
 
     //Function to generate the options for Select Field
@@ -41,15 +43,15 @@ const InstanceType = () => {
                 label2 += val?.iopsInMbps + 'Mbps';
             }
             const option = generateOptionType(value, value, label2, false, '', val);
-            if(value === DEAFULT_INSTANCE_VALUE){
+            if (value === DEAFULT_INSTANCE_VALUE) {
                 default_instance_item = option;
-            } else if(!archVal || (archVal && val?.architecture && (val.architecture).includes(archVal))){
+            } else if (!archVal || (archVal && val?.architecture && val.architecture.includes(archVal))) {
                 options.push(option);
             }
         });
-        
+
         options = sortListOfDict(options, 'value');
-        if(default_instance_item){
+        if (default_instance_item) {
             options.unshift(default_instance_item);
         }
         return options;
@@ -57,10 +59,10 @@ const InstanceType = () => {
 
     useEffect(() => {
         // If isRecommendedInstance is present that set that value as default. This case is when we load recommended templates.
-        if(isRecommendedInstance && instanceTypeData && instanceTypeData?.instanceTypes) {
+        if (isRecommendedInstance && instanceTypeData && instanceTypeData?.instanceTypes) {
             dispatch(setInstanceType(isRecommendedInstance));
             dispatch(setIsRecommendedInstance(null));
-        } else if (!isLoadConfig && !isRecommendedInstance) {
+        } else if (!isLoadConfig && !isRecommendedInstance && !movingFromChatbot) {
             dispatch(setInstanceType(generateInstances[0]));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -96,6 +98,7 @@ const InstanceType = () => {
                                 defaultValue={selectedInstanceType ? [selectedInstanceType] : [generateInstances[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setInstanceType(selectedOptions));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateInstances.length > 5}
                                 options={generateInstances}

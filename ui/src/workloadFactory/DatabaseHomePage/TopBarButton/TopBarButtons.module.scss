@@ -1,8 +1,24 @@
 .topBarButtons {
     display: flex;
-    gap: 16px;
+    justify-content: space-between;
+    width: 1063px;
+    .firstRow {
+        display: flex;
+        gap: 24px;
+
+        .firstButton {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    }
+
+    .secondColumn {
+        display: flex;
+        gap: 24px;
+    }
     button {
-        --button-min-width: 120px;
+        --button-min-width: 160px;
         --button-height: 32px;
         span {
             text-transform: none !important;

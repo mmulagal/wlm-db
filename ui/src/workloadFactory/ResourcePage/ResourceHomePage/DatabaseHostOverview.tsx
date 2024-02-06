@@ -9,25 +9,35 @@ import styles from './DatabaseHostOverview.module.scss';
 import { useGetDatabaseListQuery, useGetResourceDetailsQuery } from '../../../utils/apiService';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { setResourceDetails, setResourceLoading } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import {
+    setDatabaseList,
+    setDatabaseListLoading,
+    setResourceDetails,
+    setResourceLoading
+} from '../../../store/workloadFactory/workloadFactoryResourceSlice';
+import { GENERAL } from '../../../utils/appConstants';
+import { resetDBHomePageState } from '../../../utils/utilityFunctions';
 
 const DatabaseHostOverview = () => {
     const selectedTab = useAppSelector(state => state.databaseHome.selectedTab);
     const resourceId = useAppSelector(state => state.auth.resourceId);
+    const stateResourceDetails = useAppSelector(state => state.workloadFactoryResource.resourceDetails);
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const {
         data: resourceDetails,
         isLoading: resourceLoading,
-        refetch: resourceRefetch
+        refetch: resourceRefetch,
+        isFetching: resourceFetching
     } = useGetResourceDetailsQuery(resourceId);
 
-    // const {
-    //     data: databaseList,
-    //     isLoading: databaseListLoading,
-    //     refetch: databaseListRefetch
-    // } = useGetDatabaseListQuery(resourceId);
+    const {
+        data: databaseList,
+        isLoading: databaseListLoading,
+        refetch: databaseListRefetch,
+        isFetching: databaseListFetching
+    } = useGetDatabaseListQuery(resourceId);
 
     useEffect(() => {
         dispatch(setResourceLoading(resourceLoading));
@@ -36,7 +46,24 @@ const DatabaseHostOverview = () => {
         }
     }, [resourceLoading, resourceDetails, dispatch]);
 
-    //useEffect(() => {}, [databaseListLoading, resourceDetails]);
+    useEffect(() => {
+        dispatch(setDatabaseListLoading(databaseListLoading));
+        if (databaseList?.items) {
+            dispatch(setDatabaseList(databaseList.items));
+        }
+    }, [databaseListLoading, databaseList, dispatch]);
+
+    useEffect(() => {
+        if (!stateResourceDetails?.id) {
+            resourceRefetch();
+            databaseListRefetch();
+        }
+    }, [stateResourceDetails, resourceRefetch, databaseListRefetch]);
+
+    useEffect(() => {
+        dispatch(setResourceLoading(resourceFetching));
+        dispatch(setDatabaseListLoading(databaseListFetching));
+    }, [resourceFetching, databaseListFetching, dispatch]);
 
     return (
         <div className={styles.resourcePage}>
@@ -44,13 +71,14 @@ const DatabaseHostOverview = () => {
                 <BreadCrumbs
                     items={[
                         {
-                            title: 'Databases',
+                            title: GENERAL.DATABASES,
                             onClick: () => {
-                                navigate('databases');
+                                resetDBHomePageState(dispatch);
+                                navigate('../databases');
                             }
                         },
                         {
-                            title: 'Database host name'
+                            title: resourceDetails?.name
                         }
                     ]}
                 />

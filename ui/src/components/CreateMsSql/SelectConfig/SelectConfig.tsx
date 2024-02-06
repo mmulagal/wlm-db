@@ -1,6 +1,6 @@
-import { ReactComponent as StandardCreate } from '../../../assets/standard-create.svg';
+import { ReactComponent as StandardCreate } from '../../../assets/Advanced create.svg';
 import { ReactComponent as BlueTick } from '../../../assets/blue-tick.svg';
-import { ReactComponent as EasyCreate } from '../../../assets/easy-create.svg';
+import { ReactComponent as EasyCreate } from '../../../assets/Quick create.svg';
 
 import styles from './SelectConfig.module.scss';
 
@@ -10,6 +10,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../../../store/storeHooks';
 import { setSelectConfig } from '../../../store/mssql/mssqlFormSlice';
 import { Typography } from '@netapp/design-system';
+import { setIsWizardTouched } from '../../../store/chatbot/chatbotSlice';
 const SelectConfig = () => {
     const dispatch = useDispatch();
     const selectedConfig = useAppSelector(state => state.mssqlForm.selectConfig);
@@ -18,18 +19,21 @@ const SelectConfig = () => {
         <div className={styles['select-config']}>
             {/* Easy create section from here */}
             <div
-                id="easy-create"
+                id="quick-create"
                 className={
                     selectedConfig === SELECT_CONFIG.EASY_CREATE
                         ? `${styles['easy-create']} ${styles['add-border']}`
                         : styles['easy-create']
                 }
-                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE))}
+                onClick={() => {
+                    dispatch(setSelectConfig(SELECT_CONFIG.EASY_CREATE));
+                    dispatch(setIsWizardTouched(true));
+                }}
             >
                 <div className={styles.level}>
                     <EasyCreate />
                     <div className={styles['easy-create-content']}>
-                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.EASY_CREATE}</div>
+                        <div className={styles['easy-create-heading']}>{SELECT_CONFIG.QUICK_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['easy-create-content-text']}>
                             {SELECT_CONFIG.EASY_CREATE_CONTENT}
                         </Typography>
@@ -47,17 +51,21 @@ const SelectConfig = () => {
             </div>
             {/* Standard create section here */}
             <div
+                id="advanced-create"
                 className={
                     selectedConfig === SELECT_CONFIG.STANDARD_CREATE
                         ? `${styles['standard-create']} ${styles['add-border']}`
                         : styles['standard-create']
                 }
-                onClick={() => dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE))}
+                onClick={() => {
+                    dispatch(setSelectConfig(SELECT_CONFIG.STANDARD_CREATE));
+                    dispatch(setIsWizardTouched(true));
+                }}
             >
                 <div className={styles.level}>
                     <StandardCreate />
                     <div className={styles['standard-create-content']}>
-                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.STANDARD_CREATE}</div>
+                        <div className={styles['standard-create-heading']}>{SELECT_CONFIG.ADVANCED_CREATE}</div>
                         <Typography variant="Regular_13" className={styles['standard-create-content-text']}>
                             {SELECT_CONFIG.STANDARD_CREATE_CONTENT}
                         </Typography>

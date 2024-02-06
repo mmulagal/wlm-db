@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { AccordionCard, AccordionCardContent, RadioButton, TextField, Typography, Popover } from '@netapp/design-system';
+import {
+    AccordionCard,
+    AccordionCardContent,
+    RadioButton,
+    TextField,
+    Typography,
+    Popover
+} from '@netapp/design-system';
 import { GENERAL } from '../../../../utils/appConstants';
 import styles from './Encryption.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -8,6 +15,7 @@ import { useDispatch } from 'react-redux';
 import { setEncryptionARN, setEncryptionRow, setEncryptionType } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { selectFsxKmsKey } from '../../MSSqlServer/MSSqlUtils';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const Encryption = () => {
     const dispatch = useDispatch();
@@ -17,6 +25,7 @@ const Encryption = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const accountSelected = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionType);
     const anotherAccArn = useAppSelector((state: any) => state.mssqlForm.encryption.encryptionArn);
@@ -25,7 +34,7 @@ const Encryption = () => {
 
     // To select aws/fsx row if present
     useEffect(() => {
-        if(!isLoadConfig){
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setEncryptionRow(kmsData?.filter(key => key?.default)));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -43,7 +52,7 @@ const Encryption = () => {
 
     //Set the Header text here
     const setHeader = () => {
-        if(isDisable){
+        if (isDisable) {
             return (
                 <Popover
                     popoverClass={styles['popover']}
@@ -94,6 +103,7 @@ const Encryption = () => {
                                 isChecked={accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT}
                                 onChange={() => {
                                     dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT}
                                 className=""
@@ -102,6 +112,7 @@ const Encryption = () => {
                                 isChecked={accountSelected === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT}
                                 onChange={() => {
                                     dispatch(setEncryptionType(GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT}
                                 className=""
@@ -120,6 +131,7 @@ const Encryption = () => {
                                     label={GENERAL.ENCRYPTION_TEXT_FIELD}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                         dispatch(setEncryptionARN(e.target.value));
+                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     value={anotherAccArn}
                                     className={styles.textField}

@@ -7,12 +7,14 @@ import {
     GetCommandInvocationCommand,
     SendCommandCommand,
     SSMClient,
-    GetParametersByPathCommand
+    GetParametersByPathCommand,
+    GetConnectionStatusCommand
 } from '@aws-sdk/client-ssm';
 import { mockClient } from 'aws-sdk-client-mock';
 import listSendCommandCommandResponse from '../../responses/aws/ssm-sendcommands-response.json';
 import getCommandInvocationResponse from '../../responses/aws/ssm-getCommand-invocation.json';
 import listFsxOntapRegionsResponse from '../../responses/aws/list-fsx-ontap-regions.json';
+import getConnectionStatusResponse from '../../responses/aws/ssm-connection-status.json';
 
 const ssmMock = mockClient(SSMClient);
 
@@ -31,11 +33,30 @@ const dbCountParams = {
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT COUNT(DISTINCT d.database_id) AS totalCount FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)), databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2)) FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id FOR JSON PATH"'
     ]
 };
-const dbSummaryParams = {
+const dbSummaryParams1 = {
     commands: [
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 0 rows fetch next 75 rows only FOR JSON PATH"'
     ]
 };
+
+const dbSummaryParams2 = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 75 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+
+const dbSummaryParams3 = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 150 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+
+const dbSummaryParams4 = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT databaseId = d.database_id,\n            databaseName = d.name,\n            creationDate = d.create_date,\n            databaseStatus = d.state_desc,\n            databaseSize = t.databaseSize\n            FROM ( SELECT database_id, logSize = CAST(SUM(CASE WHEN [type] = 1 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            rowSize = CAST(SUM(CASE WHEN [type] = 0 THEN size END) * 8. * 1024 AS DECIMAL(18,2)),\n            databaseSize = CAST(SUM(size) * 8. * 1024 AS DECIMAL(18,2))\n            FROM sys.master_files GROUP BY database_id ) t JOIN sys.databases d ON d.database_id = t.database_id order by name\n            offset 225 rows fetch next 75 rows only FOR JSON PATH"'
+    ]
+};
+
 const noOfConnParams = {
     commands: [
         'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT COUNT(1) AS numberOfConnections FROM sys.dm_exec_sessions WHERE host_process_id is NOT NULL FOR JSON PATH"'
@@ -114,6 +135,12 @@ const nativeSqlBackupParams = {
     ]
 };
 
+const nativeSqlBackupDatabasesParams = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; SELECT\n    DISTINCT backupset.database_name as backedupDatabases\n    FROM msdb.dbo.backupset AS backupset\n    INNER JOIN msdb.dbo.backupmediafamily AS backupmedia\n    ON backupset.media_set_id = backupmedia.media_set_id\n    WHERE backupmedia.device_type = 2\n    AND backupset.type = \'D\' FOR JSON PATH\n"'
+    ]
+};
+
 const getOntapSnapshotCountParams = {
     commands: [
         "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName WLMDB-SqlStandaloneStack-1699407080711-fsx -FSxID fs-03773e21b2f0e39b4 -FSxRegion us-east-1 -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'uuid=939a4ec9-7c14-11ee-b185-8329e8fcbf44' -OntapResourceQuery 'fields=snapshot_count'"
@@ -131,6 +158,24 @@ const getStorageParams = {
         "C:\\SSM\\OntapRestGet.ps1 -FSxSecretName undefined -FSxID test-fsx2345 -FSxRegion test-region -OntapResourceEndpoint 'storage/volumes' -OntapResourceFilter 'tiering.object_tags=\"wlmDeploymentId=undefined\"' -OntapResourceQuery 'fields=efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used'"
     ]
 };
+
+const getPerformanceMetrics = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query "SET NOCOUNT ON; DECLARE @SQLRestartDateTime Datetime\n    DECLARE @TimeInSeconds Float\n    SELECT @SQLRestartDateTime = create_date FROM sys.databases WHERE database_id = 2\n    SET @TimeInSeconds = Datediff(s,@SQLRestartDateTime,GetDate())\n    SELECT   ROUND(CAST(SUM(num_of_reads) AS FLOAT)/@TimeInSeconds,2) AS READ_IOPS\n        , ROUND(CAST(SUM(num_of_writes) AS FLOAT)/@TimeInSeconds,2) AS WRITE_IOPS\n        , ROUND(CAST(SUM(num_of_bytes_read) AS FLOAT)/@TimeInSeconds/1000000,3) AS READ_THROUGHPUT\n        , ROUND(CAST(SUM(num_of_bytes_written) AS FLOAT)/@TimeInSeconds/1000000,3) AS WRITE_THROUGHPUT\n        , CASE WHEN SUM(num_of_reads) = 0 THEN 0 ELSE ROUND((SUM(io_stall_read_ms) / SUM(num_of_reads)), 2) END AS READ_LATENCY\n        , CASE WHEN SUM(num_of_writes) = 0 THEN 0 ELSE ROUND((SUM(io_stall_write_ms) / SUM(num_of_writes)), 2) END AS WRITE_LATENCY\n    FROM sys.dm_io_virtual_file_stats(null,null)  FOR JSON PATH"'
+    ]
+};
+
+const getServerInstallDate = {
+    commands: [
+        "C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query \"SET NOCOUNT ON; SELECT create_date AS creationDate FROM sys.server_principals WITH (NOLOCK) WHERE name = N'NT AUTHORITY\\SYSTEM' OR name = N'NT AUTHORITY\\NETWORK SERVICE' FOR JSON PATH\""
+    ]
+};
+const getServerEdition = {
+    commands: [
+        'C:\\SSM\\ExecuteQueryFromSSM.ps1 -Query " SET NOCOUNT ON; SELECT SERVERPROPERTY(\'Edition\') AS ServerEdition FOR JSON PATH"'
+    ]
+};
+
 ssmMock
     .on(SendCommandCommand)
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
@@ -140,8 +185,14 @@ ssmMock
     .resolves(listSendCommandCommandResponse.resourceCommandResponse)
     .on(SendCommandCommand, { Parameters: dbCountParams })
     .resolves(listSendCommandCommandResponse.dbCountCommandResponse)
-    .on(SendCommandCommand, { Parameters: dbSummaryParams })
-    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams1 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse1)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams2 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse2)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams3 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse3)
+    .on(SendCommandCommand, { Parameters: dbSummaryParams4 })
+    .resolves(listSendCommandCommandResponse.dbSummaryCommandResponse4)
     .on(SendCommandCommand, { Parameters: noOfConnParams })
     .resolves(listSendCommandCommandResponse.noOfConnCommandResponse)
     .on(SendCommandCommand, { Parameters: serClusterParams })
@@ -172,18 +223,32 @@ ssmMock
     .resolves(listSendCommandCommandResponse.serverIoLatencyCommandResponse)
     .on(SendCommandCommand, { Parameters: nativeSqlBackupParams })
     .resolves(listSendCommandCommandResponse.nativeSqlBackupCommandResponse)
+    .on(SendCommandCommand, { Parameters: nativeSqlBackupDatabasesParams })
+    .resolves(listSendCommandCommandResponse.nativeSqlBackupDatabasesCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapSnapshotCountParams })
     .resolves(listSendCommandCommandResponse.getOntapSnapshotCommandResponse)
     .on(SendCommandCommand, { Parameters: getOntapMappedVolumesParams })
     .resolves(listSendCommandCommandResponse.getOntapMappedVolumesCommandResponse)
     .on(SendCommandCommand, { Parameters: getStorageParams })
-    .resolves(listSendCommandCommandResponse.storageCommandResponse);
+    .resolves(listSendCommandCommandResponse.storageCommandResponse)
+    .on(SendCommandCommand, { Parameters: getPerformanceMetrics })
+    .resolves(listSendCommandCommandResponse.getPerformancemetricsCommandResponse)
+    .on(SendCommandCommand, { Parameters: getServerInstallDate })
+    .resolves(listSendCommandCommandResponse.getServerInstallDateCommandResponse)
+    .on(SendCommandCommand, { Parameters: getServerEdition })
+    .resolves(listSendCommandCommandResponse.getServerEdition);
 
 ssmMock
     .on(GetCommandInvocationCommand)
     .resolves(getCommandInvocationResponse.resourceInvocationResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary' })
-    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary1' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse1)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary2' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse2)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary3' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse3)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbSummary4' })
+    .resolves(getCommandInvocationResponse.dbSummaryInvocationResponse4)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-dbCount' })
     .resolves(getCommandInvocationResponse.dbCountInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-tablesCount' })
@@ -216,11 +281,20 @@ ssmMock
     .resolves(getCommandInvocationResponse.serverIoLatencyInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-nativeSqlBackup' })
     .resolves(getCommandInvocationResponse.nativeSqlBackupInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-nativeSqlBackupDatabases' })
+    .resolves(getCommandInvocationResponse.nativeSqlBackupDatabasesInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapSnapshotCount' })
     .resolves(getCommandInvocationResponse.ontapSnapshotCountInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ontapMappedVolumes' })
     .resolves(getCommandInvocationResponse.ontapMappedVolumesInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-storageSummary' })
-    .resolves(getCommandInvocationResponse.storageInvocationResponse);
+    .resolves(getCommandInvocationResponse.storageInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-performanceMetrics' })
+    .resolves(getCommandInvocationResponse.performanceInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-installDate' })
+    .resolves(getCommandInvocationResponse.serverInstallDateInvocationResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-ServerEdition' })
+    .resolves(getCommandInvocationResponse.serverEditionResponse);
 
 ssmMock.on(GetParametersByPathCommand).resolves(listFsxOntapRegionsResponse);
+ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);

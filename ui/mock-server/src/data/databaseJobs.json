@@ -10,7 +10,7 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "Standalone",
-                "fileSystemType": "FSx Windows"
+                "fileSystemType": "FSx for Windows"
             }
         },
         { 
@@ -22,19 +22,19 @@
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         },
         { 
             "id": "resource-id-failed1",
             "name": "Database hostname Failed1",
-            "status": "Failed",
+            "status": "Initializing",
             "metadata": 
             {
                 "region": "US East (N.Virginia)",
                 "serverType": "Microsoft SQL Server",
                 "serverInstallationMode": "FCI",
-                "fileSystemType": "FSx ONTAP"
+                "fileSystemType": "FSx for ONTAP"
             }
         }
     ],

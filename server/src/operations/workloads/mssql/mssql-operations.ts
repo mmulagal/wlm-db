@@ -2,6 +2,7 @@ import Promise from 'bluebird';
 import createError from 'http-errors';
 import { attempt, isEmpty } from 'lodash-es';
 import { resource } from '@prisma/client';
+import config from 'config';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, PSSCRIPT, DB_ROWS_COUNT, SSM_QUERY_CONCURRENCY_LIMIT } from './const';
 import {
     CPU_UTILISATION,
@@ -21,9 +22,13 @@ import {
     TABLES_COUNT_QUERY,
     TABLES_QUERY,
     SERVER_IO_LATENCY,
-    NATIVE_SQL_BACKUPS
+    NATIVE_SQL_BACKUPS,
+    SERVER_INSTALL_DATE,
+    PERFORMANCE_METRICS,
+    SQL_BACKUPS,
+    SERVER_EDITION
 } from './queries';
-import { executeSSMDocument } from '../../aws/ssm-operations';
+import { executeSSMDocument, isSSMConnectionSuccessful } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import { UtilisationResponseBodyInterface } from '../../../routes/types/database.types';
 import {
@@ -34,7 +39,9 @@ import {
     CloudProviders,
     ACCOUNT_ID,
     RESOURCE_RETRIVAL_ERROR,
-    WF
+    WF,
+    SSM_COMMAND_CACHE_TYPE,
+    ServerState
 } from '../../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../../utils/async-local-storage';
 import { createResource, deleteResource, listRelationshipsResources } from '../../../lib/database/db';
@@ -42,6 +49,7 @@ import { generateHash } from '../../../utils/utils';
 import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { lookupCredentials } from '../../cloud-manager/credentials-operations';
 import { getResources } from '../../database/database-operations';
+import { deleteFromCache, hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache';
 
 const logger = getLogger();
 
@@ -87,7 +95,8 @@ async function callSsmExecution(
     commands: Array<string>,
     activeNodeInstanceId: string,
     standbyNodeInstanceId?: string,
-    accountId?: string
+    accountId?: string,
+    cacheData: boolean = true
 ) {
     logger.info(
         'Calling SSM command execution',
@@ -97,11 +106,43 @@ async function callSsmExecution(
         activeNodeInstanceId,
         standbyNodeInstanceId
     );
+
+    // Check SSM Connection status
+    const isSSMConnected = await isSSMConnectionSuccessful(
+        credentialsId,
+        region!,
+        activeNodeInstanceId,
+        standbyNodeInstanceId
+    );
+
+    const cacheHashKey = standbyNodeInstanceId
+        ? generateHash(activeNodeInstanceId + standbyNodeInstanceId + commands)
+        : generateHash(activeNodeInstanceId + commands);
+
+    if (!isSSMConnected) {
+        let errorMessage = `SSM connection to node ${activeNodeInstanceId} is not successful.`;
+        if (standbyNodeInstanceId) {
+            errorMessage = `SSM connection to active node ${activeNodeInstanceId} and standby node ${standbyNodeInstanceId} is not successful.`;
+        }
+        if (hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+            logger.info('Deleting from cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
+            deleteFromCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey);
+        }
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errorMessage}`);
+    }
+
+    if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
+        logger.info('Reading from cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
+        return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as string;
+    }
+
     let response;
     const defaultParams = {
         DocumentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
         Documentversion: '1',
         Parameters: {
+            // DBS-1449 - Adding execution timeout in sec
+            executionTimeout: [config.get<string>('ssm.execution-timeout')],
             commands
         }
     };
@@ -144,7 +185,12 @@ async function callSsmExecution(
             `Query Execution failed on both nodes. Error:${response?.StandardErrorContent}`
         );
     }
-    return response?.StandardOutputContent;
+    const output = response?.StandardOutputContent;
+    if (cacheData) {
+        logger.info('Writing to cache', activeNodeInstanceId, standbyNodeInstanceId, cacheHashKey);
+        writeToCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey, output, '600s');
+    }
+    return output;
 }
 
 async function getDatabasesCount(
@@ -234,9 +280,19 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
                 region,
                 diskUtilizationCommand,
                 activeNodeInstanceId,
-                standbyNodeInstanceId!
+                standbyNodeInstanceId!,
+                undefined,
+                false
             ),
-            callSsmExecution(credentialsId, region, dbSizecommand, activeNodeInstanceId, standbyNodeInstanceId!)
+            callSsmExecution(
+                credentialsId,
+                region,
+                dbSizecommand,
+                activeNodeInstanceId,
+                standbyNodeInstanceId!,
+                undefined,
+                false
+            )
         ]);
 
         const [sizeValue] = size ? sqlResponseParsing(size) : [];
@@ -249,16 +305,30 @@ async function getResourceUtilisation(resourceId: string, metricType: string) {
         };
         return diskUtilization;
     }
-    const response = await callSsmExecution(
-        credentialsId,
-        region,
-        commands,
-        activeNodeInstanceId,
-        standbyNodeInstanceId!
-    );
-    logger.debug('Fetching  utilization', response);
-    if (response) {
+
+    try {
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            commands,
+            activeNodeInstanceId,
+            standbyNodeInstanceId!,
+            undefined,
+            false
+        );
+        logger.debug('Utilization response', metricType, response);
+        if (!response) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                ` ${metricType} utilization data response is empty.`
+            );
+        }
         return sqlResponseParsing(response)[0];
+    } catch (error) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while fetching ${metricType} utilization: ${activeNodeInstanceId} ${standbyNodeInstanceId}. Error: ${error}`
+        );
     }
 }
 
@@ -327,62 +397,77 @@ async function getServerSummary(resourceId: string) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get server summary');
     }
 
-    const [serverDetailsInfo, connectionsInfo, stateInfo, isClusteredInfo, nodeInfo, clusterNodesInfo, serverNameInfo] =
-        await Promise.all(
-            [
-                SERVER_VERSION_DETAILS,
-                NUMBER_OF_CONNECTIONS,
-                SERVER_STATE,
-                IS_SERVER_CLUSTERED,
-                SERVER_NODE,
-                CLUSTER_NODES,
-                SERVER_NAME
-            ].map(query =>
-                callSsmExecution(
-                    credentialsId,
-                    region,
-                    [`${PSSCRIPT} -Query "${query}"`],
-                    activeNodeInstanceId,
-                    standbyNodeInstanceId!
+    const [
+        serverDetailsInfo,
+        severEditionInfo,
+        connectionsInfo,
+        isClusteredInfo,
+        nodeInfo,
+        clusterNodesInfo,
+        serverNameInfo,
+        serverInstallDate
+    ] = await Promise.all(
+        [
+            SERVER_VERSION_DETAILS,
+            SERVER_EDITION,
+            NUMBER_OF_CONNECTIONS,
+            IS_SERVER_CLUSTERED,
+            SERVER_NODE,
+            CLUSTER_NODES,
+            SERVER_NAME,
+            SERVER_INSTALL_DATE
+        ].map(query =>
+            callSsmExecution(
+                credentialsId,
+                region,
+                [`${PSSCRIPT} -Query "${query}"`],
+                activeNodeInstanceId,
+                standbyNodeInstanceId!
+            ).catch(error =>
+                logger.error(
+                    `Error while executing query: ${activeNodeInstanceId} ${standbyNodeInstanceId} ${query} Error: ${error}`
                 )
             )
-        );
+        )
+    );
 
-    if (serverDetailsInfo && connectionsInfo && stateInfo && isClusteredInfo && nodeInfo) {
-        const serverDetails = serverDetailsInfo?.replaceAll('\r\n', '');
-        const serverInfo = serverDetails?.split('\t');
-        const [serverVersion] = serverInfo[0].match(/\d+\.\d+\.\d+\.\d+/) || '';
-        const serverStatus = stateInfo.replace(/[\r\n.]/g, '');
-        const [{ numberOfConnections: activeConnections }] = sqlResponseParsing(connectionsInfo);
-        let [{ activeNode }] = sqlResponseParsing(nodeInfo);
-        const [{ isClustered }] = sqlResponseParsing(isClusteredInfo);
-        const [{ serverName: clusterName }] = sqlResponseParsing(serverNameInfo!);
+    const serverDetails = serverDetailsInfo ? serverDetailsInfo?.replaceAll('\r\n', '') : '';
+    const [{ ServerEdition }] = severEditionInfo ? sqlResponseParsing(severEditionInfo) : '';
+    const serverInfo = serverDetails?.split('\t');
+    const [{ numberOfConnections: activeConnections }] = connectionsInfo ? sqlResponseParsing(connectionsInfo) : '';
+    let [{ activeNode }] = nodeInfo ? sqlResponseParsing(nodeInfo) : '';
+    const [{ isClustered }] = isClusteredInfo ? sqlResponseParsing(isClusteredInfo) : '';
+    const [{ serverName: clusterName }] = serverNameInfo ? sqlResponseParsing(serverNameInfo!) : '';
+    const [{ creationDate }] = serverInstallDate ? sqlResponseParsing(serverInstallDate!) : '';
+    const serverStatus = serverDetails ? ServerState.UP : ServerState.DOWN;
 
-        let standbyNode: string = '';
-        if (isClustered && clusterNodesInfo) {
-            const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
+    let standbyNode: string = '';
+    if (isClustered && clusterNodesInfo) {
+        const [node1, node2] = sqlResponseParsing(clusterNodesInfo);
 
-            if (node1?.is_current_owner) {
-                activeNode = node1?.NodeName;
-                standbyNode = node2?.NodeName;
-            } else {
-                activeNode = node2?.NodeName;
-                standbyNode = node1?.NodeName;
-            }
+        if (node1?.is_current_owner) {
+            activeNode = node1?.NodeName;
+            standbyNode = node2?.NodeName;
+        } else {
+            activeNode = node2?.NodeName;
+            standbyNode = node1?.NodeName;
         }
-
-        return {
-            serverId: resourceId,
-            serverVersion,
-            serverEdition: serverInfo[0].substring(0, serverInfo[0].indexOf(' - ')).trim(),
-            serverEngine: serverInfo[3].substring(0, serverInfo[3].indexOf(' on ')).trim(),
-            serverStatus,
-            activeConnections,
-            deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
-            activeNode,
-            ...(isClustered ? { standbyNode, clusterName } : {})
-        };
     }
+
+    return {
+        serverId: resourceId,
+        serverVersion: serverInfo[0].substring(0, serverInfo[0].indexOf('(')).trim(),
+        serverEdition: `SQL Server ${ServerEdition?.split(':')?.[0] || 'Standard Edition'}`,
+        serverEngine: '', // sending empty string to support blueXP endpoint
+        serverStatus,
+        activeConnections,
+        deploymentModel: isClustered ? SqlServerDeploymentModel.SQL_FCI : SqlServerDeploymentModel.SQL_STANDALONE,
+        activeNode,
+        ...(isClustered ? { standbyNode, clusterName } : {}),
+        operatingSystem: serverDetails.match('Windows Server \\d+')?.[0] || '',
+        creationDate,
+        nodeNames: standbyNode ? [activeNode!, standbyNode!] : [activeNode!]
+    };
 }
 
 async function getSqlServerDetails(
@@ -535,7 +620,9 @@ async function getServerIOLatency(resourceId: string) {
         region,
         commands,
         activeNodeInstanceId,
-        standbyNodeInstanceId!
+        standbyNodeInstanceId!,
+        undefined,
+        false
     );
 
     logger.debug('SQL server IO latency response', response);
@@ -579,7 +666,6 @@ async function getNativeSQLProtection(resourceId: string) {
         if (!credentialsId || !region || !activeNodeInstanceId) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
         }
-
         const response = await callSsmExecution(
             credentialsId,
             region,
@@ -592,8 +678,70 @@ async function getNativeSQLProtection(resourceId: string) {
         const parsedResponse = attempt(JSON.parse, cleanedResponse);
 
         logger.debug('SQL native protection status', parsedResponse);
-
         return parsedResponse instanceof Error ? undefined : parsedResponse[0].backupCount;
+    } catch (err) {
+        logger.error('Error getting SQL native protection status', { err });
+    }
+}
+
+async function getPerformanceMetrics(resourceId: string) {
+    logger.info('Fetch SQL server performance metrics (latency, IOPS, throughput) for resource', resourceId);
+
+    const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(resourceId);
+
+    if (!credentialsId || !region || !activeNodeInstanceId) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+    }
+
+    const commands = [`${PSSCRIPT} -Query "${PERFORMANCE_METRICS}"`];
+    const response = await callSsmExecution(
+        credentialsId,
+        region,
+        commands,
+        activeNodeInstanceId,
+        standbyNodeInstanceId!,
+        undefined,
+        false
+    );
+
+    logger.debug('SQL server performance metrics (latency, IOPS, throughput) response', response);
+
+    if (response) {
+        const parsedResponse = sqlResponseParsing(response)[0];
+        logger.info(parsedResponse);
+        return {
+            latency: { read: parsedResponse.READ_LATENCY, write: parsedResponse.WRITE_LATENCY },
+            iops: { read: parsedResponse.READ_IOPS, write: parsedResponse.WRITE_IOPS },
+            throughput: { read: parsedResponse.READ_THROUGHPUT, write: parsedResponse.WRITE_THROUGHPUT }
+        };
+    }
+}
+
+async function getNativeSQLBackedupDatabases(resourceId: string) {
+    logger.info('Fetch SQL native protection status', { resourceId });
+
+    try {
+        const [credentialsId, region, activeNodeInstanceId, standbyNodeInstanceId] = await getResourceDetails(
+            resourceId
+        );
+
+        if (!credentialsId || !region || !activeNodeInstanceId) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, RESOURCE_RETRIVAL_ERROR);
+        }
+
+        const response = await callSsmExecution(
+            credentialsId,
+            region,
+            [`${PSSCRIPT} -Query "${SQL_BACKUPS}"`],
+            activeNodeInstanceId,
+            standbyNodeInstanceId!
+        );
+
+        const cleanedResponse = response?.replaceAll('\r\n', '');
+        const parsedResponse = attempt(JSON.parse, cleanedResponse);
+
+        logger.debug('SQL native protection status', parsedResponse);
+        return parsedResponse instanceof Error ? undefined : parsedResponse;
     } catch (err) {
         logger.error('Error getting SQL native protection status', { err });
     }
@@ -614,5 +762,7 @@ export {
     deleteResourceById,
     getServerIOLatency,
     getServerState,
-    getNativeSQLProtection
+    getNativeSQLProtection,
+    getPerformanceMetrics,
+    getNativeSQLBackedupDatabases
 };

@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedExistingSecurityGroup, setSelectedSecurityGroup } from '../../../../store/mssql/mssqlFormSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
+import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const SecurityGroup = () => {
     const dispatch = useDispatch();
@@ -19,6 +20,7 @@ const SecurityGroup = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const selectedSG = useAppSelector(state => state.mssqlForm.securityGroup?.selectedExistingSecurityGroup);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
@@ -34,25 +36,27 @@ const SecurityGroup = () => {
     const generateExistingSecurity = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
         const selectedVpcId = selectedVPCData?.data?.id;
-        if(selectedVpcId) {
-            vpcData?.vpcs?.filter((pervpc => pervpc?.id === selectedVpcId)).map(pervpc => {
-                pervpc.securityGroups?.map((val:any) => {
-                    const sgValue = val?.id;
-                    const sgLabel = val?.securityGroupName || val?.name || '-';
-                    const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
-                    options.push(option);
+        if (selectedVpcId) {
+            vpcData?.vpcs
+                ?.filter(pervpc => pervpc?.id === selectedVpcId)
+                .map(pervpc => {
+                    pervpc.securityGroups?.map((val: any) => {
+                        const sgValue = val?.id;
+                        const sgLabel = val?.securityGroupName || val?.name || '-';
+                        const option = generateOptionType(sgValue, sgValue, sgLabel, false, '');
+                        options.push(option);
+                    });
                 });
-            });
         }
         return options;
     }, [selectedVPCData, vpcData]);
 
     useEffect(() => {
-        if(!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
             dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingSecurity]);
 
     //Set the Header text here
@@ -96,6 +100,7 @@ const SecurityGroup = () => {
                                 onChange={() => {
                                     setSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY);
                                     dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.USE_AN_EXISTING_SECURITY}
                                 className=""
@@ -106,6 +111,7 @@ const SecurityGroup = () => {
                                     setSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP);
                                     dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
                                     dispatch(setSelectedExistingSecurityGroup(null));
+                                    dispatch(setIsWizardTouched(true));
                                 }}
                                 children={GENERAL.GENERATED_SECURITY_GROUP}
                                 className=""
@@ -123,6 +129,7 @@ const SecurityGroup = () => {
                                     }
                                     onChange={(selectedOptions: any): void => {
                                         dispatch(setSelectedExistingSecurityGroup(selectedOptions));
+                                        dispatch(setIsWizardTouched(true));
                                     }}
                                     isSearchable={generateExistingSecurity.length > 5}
                                     options={generateExistingSecurity}

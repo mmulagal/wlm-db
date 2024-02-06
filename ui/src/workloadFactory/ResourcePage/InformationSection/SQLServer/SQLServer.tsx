@@ -2,6 +2,9 @@ import { Typography } from '@netapp/design-system';
 import DbAccordion from '../../DatabaseOverviewLayout/DBAccordion/DBAccordion';
 import styles from './SQLServer.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { GENERAL } from '../../../../utils/appConstants';
+import moment from 'moment';
 
 type sqlServer = {
     handleToggle: any;
@@ -9,70 +12,140 @@ type sqlServer = {
 };
 
 const SQLServer = ({ handleToggle, openKey }: sqlServer) => {
+    const { resourceDetails } = useAppSelector(state => state.workloadFactoryResource);
     const contentArea = () => {
         return (
             <>
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Deployment model:
+                        {GENERAL.DEPLOYMENT_MODEL_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">Always On Failover</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={
+                            resourceDetails?.topology?.serverInstallationMode === 'Standalone'
+                                ? 'Standalone Instance'
+                                : 'Always On Failover Cluster Instance'
+                        }
+                    >
+                        {resourceDetails?.topology?.serverInstallationMode === 'Standalone'
+                            ? 'Standalone Instance'
+                            : 'Always On Failover Cluster Instance'}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Operating system:
+                        {GENERAL.OS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">Windows Server 2016</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.databaseServer?.operatingSystem || ''}
+                    >
+                        {resourceDetails?.databaseServer?.operatingSystem}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Edition:
+                        {GENERAL.EDITION_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">SQL Server Standard edition</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.databaseServer?.serverEdition || ''}
+                    >
+                        {resourceDetails?.databaseServer?.serverEdition}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Version:
+                        {GENERAL.VERSION_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">Microsoft SQL Server 2019</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.databaseServer?.serverVersion || ''}
+                    >
+                        {resourceDetails?.databaseServer?.serverVersion}
+                    </Typography>
+                </div>
+
+                {resourceDetails?.databaseServer?.clusterName && (
+                    <div className={commonStyles.row}>
+                        <Typography variant="Semibold_14" className={commonStyles.heading}>
+                            {GENERAL.CLUSTER_NAME_INFO}
+                        </Typography>
+                        <Typography
+                            variant="Regular_14"
+                            className={commonStyles.valueCSS}
+                            title={resourceDetails?.databaseServer?.clusterName || ''}
+                        >
+                            {resourceDetails?.databaseServer?.clusterName}
+                        </Typography>
+                    </div>
+                )}
+
+                <div className={commonStyles.row}>
+                    <Typography variant="Semibold_14" className={commonStyles.heading}>
+                        {GENERAL.NODE_NAMES}
+                    </Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.databaseServer?.nodeNames.join(', ') || ''}
+                    >
+                        {resourceDetails?.databaseServer?.nodeNames.join(', ')}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Cluster name:
+                        {GENERAL.ACTIVE_NODE}
                     </Typography>
-                    <Typography variant="Regular_14">sqldatabase-cluster</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails?.databaseServer?.activeNode || ''}
+                    >
+                        {resourceDetails?.databaseServer?.activeNode || ''}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Node names:
+                        {GENERAL.STATUS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">sqlnode1, sqlnode2</Typography>
+                    <Typography
+                        variant="Regular_14"
+                        className={commonStyles.valueCSS}
+                        title={resourceDetails.status || ''}
+                    >
+                        {resourceDetails.status}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Status:
+                        {GENERAL.CONNECTIONS_INFO}
                     </Typography>
-                    <Typography variant="Regular_14">Healthy</Typography>
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.activeConnections}
+                    </Typography>
                 </div>
 
                 <div className={commonStyles.row}>
                     <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Connections:
+                        {GENERAL.DATE_CREATED}
                     </Typography>
-                    <Typography variant="Regular_14">2</Typography>
-                </div>
-
-                <div className={commonStyles.row}>
-                    <Typography variant="Semibold_14" className={commonStyles.heading}>
-                        Date Created:
+                    <Typography variant="Regular_14" className={commonStyles.valueCSS}>
+                        {resourceDetails?.databaseServer?.creationDate
+                            ? moment(Number(resourceDetails?.databaseServer?.creationDate)).format('MMMM DD, YYYY, HH:mm:ss')
+                            : ''}
                     </Typography>
-                    <Typography variant="Regular_14">November 22, 2023, 00:00:00</Typography>
                 </div>
             </>
         );

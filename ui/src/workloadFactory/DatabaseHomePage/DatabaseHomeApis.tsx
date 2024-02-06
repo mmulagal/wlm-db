@@ -39,6 +39,13 @@ const DatabaseHomeApis = () => {
 
     // skipApiCall to skip APi call when isActive is not true
     const [skipApiCall, setSkipApiCall] = useState(true);
+    const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
+
+    useEffect(() => {
+        const toDate = Date.now();
+        const fromDate = toDate - 30 * (3600 * 1000 * 24);
+        setTime({startTime: fromDate, endTime: toDate});
+    }, []);
 
     const {
         data: statusData,
@@ -63,7 +70,7 @@ const DatabaseHomeApis = () => {
         isFetching: jobsSummaryLoading,
         isError: jobsSummaryError,
         refetch: jobsSummaryRefetch
-    } = useGetJobsSummaryQuery('', {skip: skipApiCall});
+    } = useGetJobsSummaryQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
 
     useEffect(() => {
         if(refetchJobSummaryApi) {
@@ -92,7 +99,7 @@ const DatabaseHomeApis = () => {
             let oldList = databaseHostsData || [];
             let newList = databaseHosts?.items || [];
             dispatch(addDatabaseHosts({databaseHostsData: [...oldList, ...newList], databaseHostsLoading, databaseHostsError}));
-                setHostCursor(databaseHosts?.nextToken);
+                setHostCursor(databaseHosts?.nextToken || null);
         }  
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseHosts, databaseHostsLoading, databaseHostsError]);
@@ -104,7 +111,7 @@ const DatabaseHomeApis = () => {
             let oldList = databaseJobsData || [];
             let newList = databaseJobs?.items || [];
             dispatch(addDatabaseJobs({databaseJobsData: [...oldList, ...newList], databaseJobsLoading, databaseJobsError}));
-                setJobsCursor(databaseJobs?.nextToken);
+                setJobsCursor(databaseJobs?.nextToken || null);
         }  
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [databaseJobs, databaseJobsLoading, databaseJobsError]);

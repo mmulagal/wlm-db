@@ -5,7 +5,7 @@
     top: 56px;
     right: 0;
     z-index: 2;
-    width: 33vw;
+    width: 638px;
     height: calc(100% - 56px);
     background-color: var(--grey-70);
 
@@ -16,6 +16,21 @@
 
     .awsCli {
         white-space: initial;
+    }
+
+    // .newClass {
+    //     span {
+    //         mark:nth-of-type(1),
+    //         mark:nth-of-type(2),
+    //         mark:nth-of-type(3) {
+    //             color: var(--red-20);
+    //         }
+    //     }
+    // }
+
+    .awsCliHighlightClass {
+        color: var(--blue-30);
+        background-color: transparent;
     }
 
     .topBar {
@@ -98,9 +113,135 @@
                 }
             }
         }
+
+        .inputBox {
+            width: 146px;
+
+            --menu-max-height: 245px;
+
+            // Select box CSS
+
+            [class*='Select-module_base'] {
+                margin-bottom: 0 !important;
+            }
+
+            [class*='design-system-select__single-value'] {
+                color: var(--white) !important;
+            }
+            [class*='design-system-select__menu'] {
+                box-shadow: none;
+                width: 240px;
+                right: 1px !important;
+            }
+
+            [class*='design-system-select__option'] {
+                background-color: var(--grey-70) !important;
+                color: var(--white) !important;
+            }
+
+            [class*='Select-module_multiselect-menu'] {
+                background-color: var(--grey-70) !important;
+            }
+            [class*='design-system-select__option--is-focused'] {
+                color: var(--blue-40) !important;
+                background-color: var(--grey-60);
+            }
+            [class*='design-system-select__control']:hover {
+                box-shadow: 0 1px 0 var(--header-netapp-text-hover);
+                border-bottom: 2px solid var(--field-border-selected) !important;
+
+                div {
+                    color: var(--header-netapp-text-hover);
+                }
+
+                svg {
+                    --icon-primary-color: var(--field-border-selected) !important;
+                }
+            }
+
+            [class*='design-system-select__control'] {
+                border-bottom: 2px solid var(--field-border) !important;
+                svg {
+                    --icon-primary-color: var(--field-icon) !important;
+                }
+            }
+        }
     }
+    .terraformContainer {
+        display: flex;
+        gap: 32px;
+        align-items: center;
+    }
+    .inputPart {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .cloudFormationButtonContainer {
+        height: 64px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--grey-65);
+        button {
+            --button-height: 32px !important;
+            background: none !important;
+            --button-min-width: 480px;
+            color: var(--blue-40);
+            border: 1px solid var(--blue-40) !important;
+
+            span {
+                text-transform: none !important;
+            }
+        }
+
+        button:hover {
+            color: var(--blue-30) !important;
+            border: 1px solid var(--blue-30) !important;
+            background-color: var(--grey-60) !important;
+        }
+    }
+
     .payloadContainer {
         padding: 0 40px 0 40px;
+
+        .actionPopOver {
+            width: 100px;
+            display: flex;
+            justify-content: flex-end;
+            // height: 20px;
+            .actions {
+                gap: 16px;
+                display: flex;
+            }
+            
+            .menuItemDisabled {
+                pointer-events: none;
+                svg {
+                    path {
+                        fill: var(--grey-25);
+                    }
+                }
+            }
+
+            .copy-popover {
+                width: 140px;
+                font-size: 13px;
+                line-height: 20px;
+                text-align: center;
+                padding: 2px 2px;
+                box-shadow: none;
+            }
+
+            svg {
+                cursor: pointer;
+                &:hover {
+                    fill: var(--text-primary);
+                }
+            }
+        }
+
         .payloadHeader {
             height: 48px;
             padding: 16px 24px 16px 40px;
@@ -111,107 +252,8 @@
             justify-content: space-between;
             width: 100%;
             position: relative;
-
-            .inputPart {
-                display: flex;
-                gap: 16px;
-                align-items: center;
-                position: absolute;
-                z-index: 1;
-
-                .terraformContainer {
-                    display: flex;
-                    gap: 40px;
-                }
-
-                .inputBox {
-                    width: 146px;
-                    margin-top: 35px;
-                    --menu-max-height: 245px;
-
-                    // Select box CSS
-
-                    [class*='design-system-select__single-value'] {
-                        color: var(--white);
-                    }
-                    [class*='design-system-select__menu'] {
-                        box-shadow: none;
-                        width: 240px;
-                    }
-
-                    [class*='design-system-select__option'] {
-                        background-color: var(--grey-70);
-                        color: var(--white);
-                    }
-
-                    [class*='Select-module_multiselect-menu'] {
-                        background-color: var(--grey-70);
-                    }
-                    [class*='design-system-select__option--is-focused'] {
-                        color: var(--blue-40);
-                        background-color: var(--grey-60);
-                    }
-                    [class*='design-system-select__control']:hover {
-                        box-shadow: 0 1px 0 var(--header-netapp-text-hover);
-                        border-bottom: 1px solid var(--blue-40);
-
-                        div {
-                            color: var(--header-netapp-text-hover);
-                        }
-
-                        svg {
-                            --icon-primary-color: var(--header-netapp-text-hover);
-                        }
-                    }
-
-                    [class*='design-system-select__control'] {
-                        border-bottom: 2px solid var(--content-background);
-                        svg {
-                            --icon-primary-color: var(--white);
-                        }
-                    }
-                }
-            }
-            .searchPart {
-                position: absolute;
-                z-index: 2;
-                right: 16px;
-                // width: 100%;
-                display: flex;
-                justify-content: flex-end;
-                .searchInput {
-                    // max-width: 200px;
-                    color: var(--white);
-                }
-
-                [class*='SearchInput-module_base'] {
-                    svg {
-                        --icon-primary-color: var(--white);
-                    }
-
-                    input {
-                        color: var(--white);
-                    }
-                }
-
-                [class*='SearchInput-module_opened'] {
-                    border-bottom: 2px solid var(--content-background);
-                    position: relative;
-                    top: -3px;
-
-                    width: calc(31vw - 90px);
-                    background-color: var(--grey-55);
-
-                    svg {
-                        --icon-primary-color: var(--white);
-                    }
-
-                    input {
-                        color: var(--white);
-                    }
-                }
-            }
         }
+
         .payloadBody {
             height: calc(100vh - 180px);
             background-color: var(--grey-65);
@@ -221,7 +263,7 @@
                 overflow-y: auto;
                 height: calc(100% - 72px);
                 width: calc(100% - 16px);
-                padding: 0 40px 0 30px;
+                padding: 0 0 0 30px;
                 white-space: nowrap;
 
                 // Disable copy from code box
@@ -230,7 +272,47 @@
                 -ms-user-select: none;
                 -o-user-select: none;
                 user-select: none;
+
+                .scrollLeft {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+
+                    .setHorizontalScroll {
+                        display: flex;
+                        height: calc(100% - 16px);
+                    }
+
+                    .setVerticalScroll {
+                        height: 16px;
+                        background: var(--grey-65);
+                        margin-bottom: 0;
+                    }
+
+                    .firstBlock {
+                        width: calc(100% - 16px);
+                        margin-right: 0;
+                    }
+
+                    .addMargin {
+                        position: relative;
+                        margin-right: 16px;
+                    }
+
+                    .addVerticalMargin {
+                        margin-bottom: 16px;
+                    }
+
+                    .empty {
+                        width: 16px;
+                        background: var(--grey-65);
+                    }
+                }
             }
+        }
+
+        .payloadBodyHeight {
+            height: calc(100vh - 244px);
         }
     }
 

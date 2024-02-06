@@ -1,0 +1,186 @@
+{
+    "count": 15,
+    "items": [
+        {
+            "id": "1",
+            "name": "database-1",
+            "status": "Up",
+            "size": 8388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "2",
+            "name": "database-2",
+            "status": "Up",
+            "size": 9388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "3",
+            "name": "database-3",
+            "status": "Up",
+            "size": 2388608,
+            "type": "User Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "4",
+            "name": "database-4",
+            "status": "Down",
+            "size": 18388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "5",
+            "name": "database-5",
+            "status": "Down",
+            "size": 5388608,
+            "type": "User Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "6",
+            "name": "database-6",
+            "status": "Up",
+            "size": 84388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "7",
+            "name": "database-7",
+            "status": "Up",
+            "size": 118388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "8",
+            "name": "database-8",
+            "status": "Up",
+            "size": 8388608,
+            "type": "User Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "9",
+            "name": "database-9",
+            "status": "Up",
+            "size": 28388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "10",
+            "name": "database-10",
+            "status": "Down",
+            "size": 38388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "11",
+            "name": "database-11",
+            "status": "Up",
+            "size": 83828608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "12",
+            "name": "database-12",
+            "status": "Up",
+            "size": 83828608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "13",
+            "name": "database-13",
+            "status": "Up",
+            "size": 83886408,
+            "type": "User Database",
+            "protection": {
+                "isAwsBackUpEnabled": false,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            }
+        },
+        {
+            "id": "14",
+            "name": "database-14",
+            "status": "Down",
+            "size": 8388608,
+            "type": "User Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": false,
+                "isSqlNativeEnabled": false
+            }
+        },
+        {
+            "id": "15",
+            "name": "database-15",
+            "status": "Up",
+            "size": 8388608,
+            "type": "System Database",
+            "protection": {
+                "isAwsBackUpEnabled": true,
+                "isFsxOntapSnapshotsEnabled": true,
+                "isSqlNativeEnabled": true
+            }
+        }
+    ],
+    "nextToken": "12345"
+}

@@ -3,10 +3,11 @@ import {
     DescribeSubnetsRequest,
     DescribeSecurityGroupsRequest,
     Tag,
-    DescribeNetworkInterfacesCommandInput
+    DescribeNetworkInterfacesCommandInput,
+    DescribeTagsCommandInput
 } from '@aws-sdk/client-ec2';
 import { Static } from '@fastify/type-provider-typebox';
-import { AWSQueryFields } from '../../utils/consts';
+import { AWSQueryFields, WLMDB_COST_ALLOCATION_TAG } from '../../utils/consts';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -15,52 +16,16 @@ import {
     describeRouteTable,
     describeKeyPairs,
     describeInstanceTypes,
-    describeNetworkInterfaces
+    describeNetworkInterfaces,
+    createTag,
+    describeTags
 } from '../../lib/aws/ec2';
 import getLogger from '../../utils/logger';
 import { KeyPairsSchema } from '../../routes/types/aws.types';
 import { filterSqlAmis } from '../../utils/utils';
+import { ResourceDetails, SecurityGroup, Subnet, VPC, NetworkInterface } from '../../utils/common-types';
 
 const logger = getLogger();
-
-interface VPC {
-    id?: string;
-    state?: string;
-    cidrBlock?: any;
-    tags?: Array<{ Key?: string; Value?: string }>;
-    isDefault?: boolean;
-    subnets?: Array<Subnet>;
-    securityGroups?: Array<SecurityGroup>;
-    name?: string;
-}
-interface Subnet {
-    id?: string;
-    name?: string;
-    state?: string;
-    vpcId?: string;
-    tags?: Array<{ Key?: string; Value?: string }>;
-    cidrBlock?: string;
-    availabilityZone?: string;
-    availableIps?: number;
-    routeTableId?: string;
-}
-interface SecurityGroup {
-    id?: string;
-    description?: string;
-    vpcId?: string;
-    ipPermissions?: any;
-    name?: string;
-    securityGroupName?: string;
-}
-
-interface NetworkInterface {
-    id?: string;
-    description?: string;
-    vpcId?: string;
-    subnetId?: string;
-    securityGroups?: Array<string>;
-    availabilityZone?: string;
-}
 
 type KeyPairType = Static<typeof KeyPairsSchema>;
 
@@ -415,6 +380,52 @@ async function getWindowsServerBaseAmi(credentialsId: string, region: string) {
 
     return filteredInstances.ImageId;
 }
+
+async function tagEc2Resource(credentialsId: string, region: string, accountId: string, ec2Id: string[], tags: Tag[]) {
+    logger.info('Adding tag to EC2 resource', credentialsId, region, accountId, ec2Id);
+    createTag(credentialsId, region, accountId, ec2Id, tags);
+}
+
+async function getCostAllocationTagEC2Resource(resourceDetail: ResourceDetails) {
+    logger.info('Get EC2 Resources which has cost allocation tag attached');
+    const { region, metadata } = resourceDetail;
+    const { credentialsId, activeNodeInstanceId, standbyNodeInstanceId } = metadata as {
+        credentialsId: string;
+        activeNodeInstanceId: string;
+        standbyNodeInstanceId: string;
+    };
+    const resourceIds = [activeNodeInstanceId];
+    if (standbyNodeInstanceId) {
+        resourceIds.push(standbyNodeInstanceId);
+    }
+    const input: DescribeTagsCommandInput = {
+        Filters: [
+            {
+                Name: 'resource-id',
+                Values: resourceIds
+            },
+            {
+                Name: 'resource-type',
+                Values: ['instance']
+            },
+            {
+                Name: 'key',
+                Values: [WLMDB_COST_ALLOCATION_TAG]
+            },
+            {
+                Name: 'value',
+                Values: resourceIds
+            }
+        ]
+    };
+    try {
+        const ec2Resources = await describeTags(credentialsId, region!, input);
+        logger.debug('EC2 Resources with cost allocation tag are ', ec2Resources);
+        return ec2Resources;
+    } catch (error) {
+        logger.error(`Get EC2 resources ${resourceIds} has failed with the error`, error);
+    }
+}
 export {
     getVpcsList,
     getAmiList,
@@ -422,5 +433,7 @@ export {
     getInstanceTypes,
     getWindowsServerBaseAmi,
     getSecurityGroupsList,
-    getNetworkInterfacesList
+    getNetworkInterfacesList,
+    tagEc2Resource,
+    getCostAllocationTagEC2Resource
 };

@@ -1,0 +1,125 @@
+.estimatedCostDialog {
+    // height: 392px;
+
+    .secondAccordion {
+        margin-top: 2px;
+    }
+
+    .bottomPart {
+        margin-top: 24px;
+    }
+    .accordionSectionEC {
+        margin-top: 24px;
+
+        .titleMainContent {
+            font-weight: 400;
+            margin-left: 12px;
+        }
+        [class*='AccordionCard-module_base'] {
+            background-color: var(--hover-background) !important;
+            box-shadow: none !important;
+        }
+
+        [class*='AccordionCard-module_header'] {
+            height: 56px !important;
+
+            grid-template-columns: max-content 1fr max-content max-content max-content !important;
+        }
+
+        [class*='AccordionCard-module_header']:hover {
+            div {
+                div {
+                    div {
+                        color: var(--text-title);
+                    }
+                }
+            }
+
+            button {
+                span {
+                    svg {
+                        path {
+                            fill: var(--text-title);
+                        }
+                    }
+                }
+            }
+        }
+
+        [class*='AccordionCard-module_title'] {
+            padding-right: 0 !important;
+        }
+
+        [class*='AccordionCard-module_animation'] {
+            box-shadow: none !important;
+            background-color: var(--hover-background) !important;
+            border-top: 1px solid var(--border);
+        }
+
+        .allContent {
+            padding-top: 24px;
+
+            .listItems {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 16px;
+
+                .numberDigit {
+                    font-size: 14px;
+                    font-weight: 590;
+                    width: 24px;
+                }
+
+                .separator {
+                    height: 13px;
+                    width: 1px;
+                    color: var(--text-primary);
+                }
+
+                .dialog-body {
+                    margin-top: 16px;
+                    margin-bottom: -16px;
+                    .code-box {
+                        width: 518px;
+                        background-color: var(--main-background);
+                        padding: 24px 16px 8px 32px;
+                        display: flex;
+                        position: relative;
+
+                        min-height: 184px;
+                        overflow-y: auto;
+
+                        .code {
+                            width: 100%;
+                            font-weight: 400;
+                            font-size: 14px;
+                            line-height: 24px;
+                            color: var(--text-primary);
+                        }
+
+                        .copy {
+                            width: 100px;
+                            display: flex;
+                            justify-content: flex-end;
+                            height: 20px;
+                            .copy-popover {
+                                width: 140px;
+                                font-size: 13px;
+                                line-height: 20px;
+                                text-align: center;
+                                padding: 2px 2px;
+                            }
+
+                            svg {
+                                cursor: pointer;
+                                &:hover {
+                                    fill: var(--icon-primary);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

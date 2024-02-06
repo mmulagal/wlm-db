@@ -1,4 +1,5 @@
 import { isEmpty, uniqBy } from 'lodash-es';
+import randomize from 'randomatic';
 import { getAdsList } from '../../operations/aws/directory-service-operations';
 import { getAmiList, getInstanceTypes, getKeyPairsList, getVpcsList } from '../../operations/aws/ec2-operations';
 import { getFSxOntapRegionsList } from '../../operations/aws/ssm-operations';
@@ -22,10 +23,22 @@ import {
     ROUTE_TABLE_2,
     STANDALONE,
     FCI,
-    FSX_USERNAME
+    FSX_USERNAME,
+    PROD,
+    DEV,
+    CUSTOM,
+    M5_2XL,
+    FCI_ABBREVIATION,
+    MULTI_AZ_SMALL,
+    SINGLE_AZ_SMALL,
+    M5_XL,
+    SQL_SERVER_NAME,
+    ENCRYPTION_KEY,
+    THROUGHPUT
 } from './consts';
 import { getCredentials } from '../../operations/cloud-manager/credentials-operations';
 import { getFSxFileSystemsList } from '../../operations/aws/fsx-operations';
+import { VPC } from '../../utils/common-types';
 
 const logger = getLogger();
 
@@ -34,54 +47,46 @@ async function validateCredentials(credentialsId: string, key: string) {
     const CREDENTIAL_PATH = '/credentials';
     const credentials = (await getCredentials('aws_assume_role')) || [];
 
+    const errorObj = {
+        key,
+        status: 'error',
+        link: {
+            text: 'Credentials',
+            path: CREDENTIAL_PATH,
+            description: 'To add a new credentials, visit'
+        },
+        allowedValues: credentials?.map(credential => ({
+            label: credential.name,
+            value: credential.credentialsId
+        })),
+        data: credentials
+    };
+
     if (isEmpty(credentials)) {
         return {
-            key,
-            status: 'error',
-            message: 'No credentials found, please add and try again',
-            allowedValues: [],
-            link: {
-                text: 'Credentials',
-                path: CREDENTIAL_PATH,
-                description: 'To add a new credentials, visit'
-            }
+            ...errorObj,
+            message: 'No credentials found, please add and try again'
         };
     }
 
     if (!credentialsId) {
         return {
-            key,
-            status: 'error',
-            link: {
-                text: 'Credentials',
-                path: CREDENTIAL_PATH,
-                description: 'To add a new credentials, visit'
-            },
-            message: 'Select a credential to proceed further',
-            allowedValues: credentials.map(credential => ({
-                label: credential.name,
-                value: credential.credentialsId
-            }))
+            ...errorObj,
+            message: 'Select AWS credentials to use for the deployment'
         };
     }
 
     const credentialsMatched = credentials?.find(reg => reg.credentialsId === credentialsId);
     if (!credentialsMatched) {
         return {
-            key,
-            status: 'error',
-            link: {
-                text: 'Credentials',
-                path: CREDENTIAL_PATH,
-                description: 'To add a new credentials, visit'
-            },
+            ...errorObj,
             message:
-                'The credential that you provided is not valid. Please select a set of credentials from the list below.',
-            allowedValues: credentials.map(cred => ({ label: cred.name, value: cred.credentialsId }))
+                'The credential that you provided is not valid. Please select a set of credentials from the list below.'
         };
     }
 
     return {
+        key,
         value: credentialsMatched.credentialsId
     };
 }
@@ -90,21 +95,24 @@ async function validateRegion(credentialsId: string, value: string, key: string)
     logger.debug('Validate Region', { credentialsId, value });
     const { regions } = (await getFSxOntapRegionsList(credentialsId)) || [];
 
+    const errorObj = {
+        key,
+        status: 'error',
+        allowedValues: regions.map(reg => ({ label: reg.regionName, value: reg.regionCode })),
+        data: regions
+    };
+
     if (isEmpty(regions)) {
         return {
-            key,
-            status: 'error',
-            message: 'No regions found, please try again',
-            allowedValues: []
+            ...errorObj,
+            message: 'No regions found, please try again'
         };
     }
 
     if (!value) {
         return {
-            key,
-            status: 'error',
-            message: 'Select an AWS region for the database.',
-            allowedValues: regions.map(reg => ({ label: reg.regionName, value: reg.regionCode }))
+            ...errorObj,
+            message: 'Select a region'
         };
     }
 
@@ -114,26 +122,27 @@ async function validateRegion(credentialsId: string, value: string, key: string)
     // // console.log(regionsMatched);
     if (regionsMatched.length !== 1) {
         return {
-            key,
-            status: 'error',
+            ...errorObj,
             message: `${
                 regionsMatched.length > 1
                     ? 'I found multiple regions that match what you provided.'
                     : 'The region that you provided is not valid.'
             } Please try again.`,
-            allowedValues: regionsMatched.length
-                ? regionsMatched.map(reg => ({ label: reg.regionName, value: reg.regionCode }))
-                : regions.map(reg => ({ label: reg.regionName, value: reg.regionCode }))
+            ...(regionsMatched.length && {
+                allowedValues: regionsMatched.map(reg => ({ label: reg.regionName, value: reg.regionCode }))
+            })
         };
     }
 
     return {
+        key,
         value: regionsMatched[0]?.regionCode
     };
 }
 
 async function validateVpcId(
     credentialsId: string,
+    sqlDeploymentMode: string,
     region: string,
     vpcId: string,
     az1: string,
@@ -144,33 +153,47 @@ async function validateVpcId(
 ) {
     logger.debug('Validate VpcConfig', { credentialsId, region, vpcId, az1, az2, key });
 
-    const { vpcs } = await getVpcsList(credentialsId, region, 'subnet');
+    let { vpcs } = await getVpcsList(credentialsId, region, 'subnet');
+
+    if (sqlDeploymentMode === FCI) {
+        vpcs = filterValidVpcs(vpcs);
+        if (vpcs.length === 0) {
+            return {
+                key,
+                status: 'error',
+                allowedValues: []
+            };
+        }
+    }
+
+    const allowedVpcs = vpcs?.map(vpc => ({ label: vpc.name || vpc.id, value: vpc.id }));
+
+    const errorObj = {
+        key,
+        status: 'error',
+        allowedValues: allowedVpcs,
+        data: vpcs
+    };
 
     if (isEmpty(vpcs)) {
         return {
-            key,
-            status: 'error',
-            message: 'No vpcs found, please try again',
-            allowedValues: []
+            ...errorObj,
+            message: 'No vpcs found, please try again'
         };
     }
 
     if (!vpcId) {
         return {
-            key,
-            status: 'error',
-            message: key === VPC_ID ? 'Select a VPC for the database.' : 'Select a VPC CIDR for the database.',
-            allowedValues: vpcs.map(vpc => ({ label: vpc.name || vpc.id, value: vpc.id }))
+            ...errorObj,
+            message: key === VPC_ID ? 'Select a VPC' : 'Select a VPC CIDR for the database.'
         };
     }
 
     const isValidVpc = vpcs?.find(vpc => vpc.id === vpcId);
     if (!isValidVpc) {
         return {
-            key,
-            status: 'error',
-            message: 'The VPC that you provided is not correct. Please choose a different VPC.',
-            allowedValues: vpcs.map(vpc => ({ label: vpc.name || vpc.id, value: vpc.id }))
+            ...errorObj,
+            message: 'The VPC that you provided is not correct. Please choose a different VPC.'
         };
     }
 
@@ -179,20 +202,21 @@ async function validateVpcId(
         'value'
     );
 
+    errorObj.allowedValues = azs;
+
     switch (key) {
         case VPC_ID:
-            return { value: isValidVpc.id };
+            return { key, value: isValidVpc.id };
         case VPC_CIDR:
             return {
+                key,
                 value: isValidVpc.cidrBlock?.[0].CidrBlock
             };
         case AZ_1: {
             if (!az1) {
                 return {
-                    key,
-                    status: 'error',
-                    message: 'Select an Availability Zone for the primary SQL node.',
-                    allowedValues: azs
+                    ...errorObj,
+                    message: 'Select an Availability Zone for the primary SQL node 1'
                 };
             }
             const subnets = vpcs?.map(vpc => vpc?.subnets);
@@ -200,25 +224,23 @@ async function validateVpcId(
             logger.debug('isValidAZ', isValidAZ);
             if (!isValidAZ) {
                 return {
-                    key,
-                    status: 'error',
+                    ...errorObj,
                     message:
-                        'The availability zone that you provided is not correct. Please choose a different availability zone.',
-                    allowedValues: azs
+                        'The availability zone that you provided is not correct. Please choose a different availability zone.'
                 };
             }
             return {
+                key,
                 value: az1
             };
         }
         case AZ_2: {
-            const azs2 = azs.filter(az => az.value !== az1);
+            errorObj.allowedValues = azs.filter(az => az.value !== az1);
+
             if (!az2) {
                 return {
-                    key,
-                    status: 'error',
-                    message: 'Select an Availability Zone for the secondary SQL node.',
-                    allowedValues: azs2
+                    ...errorObj,
+                    message: 'Select an Availability Zone for the primary SQL node 2'
                 };
             }
 
@@ -226,8 +248,7 @@ async function validateVpcId(
                 return {
                     key,
                     status: 'error',
-                    message: 'Please select a different availability zone for the secondary sql node',
-                    allowedValues: azs2
+                    message: 'Please select a different availability zone for the primary SQL node 2'
                 };
             }
             const subnets = vpcs?.map(vpc => vpc?.subnets);
@@ -238,33 +259,33 @@ async function validateVpcId(
                     key,
                     status: 'error',
                     message:
-                        'The availability zone that you provided is not valid. Please choose a valid availability zone.',
-                    allowedValues: azs2
+                        'The availability zone that you provided is not valid. Please choose a valid availability zone.'
                 };
             }
 
             return {
+                key,
                 value: az2
             };
         }
         case PRIVATE_SUBNET_1:
         case PRIVATE_SUBNET_2: {
+            errorObj.allowedValues = uniqBy(
+                isValidVpc.subnets
+                    ?.filter(({ availabilityZone }) =>
+                        key === PRIVATE_SUBNET_1 ? availabilityZone === az1 : availabilityZone === az2
+                    )
+                    ?.map(({ id, name }) => ({
+                        label: name,
+                        value: id
+                    })),
+                'value'
+            );
+
             if ((key === PRIVATE_SUBNET_1 && !subnet1) || (key === PRIVATE_SUBNET_2 && !subnet2)) {
                 return {
-                    key,
-                    status: 'error',
-                    message: `Select the ${key === PRIVATE_SUBNET_1 ? 'primary' : 'secondary'} subnet id`,
-                    allowedValues: uniqBy(
-                        isValidVpc.subnets
-                            ?.filter(({ availabilityZone }) =>
-                                key === PRIVATE_SUBNET_1 ? availabilityZone === az1 : availabilityZone === az2
-                            )
-                            ?.map(({ id, name }) => ({
-                                label: name,
-                                value: id
-                            })),
-                        'value'
-                    )
+                    ...errorObj,
+                    message: `Select a subnet for AZ ${key === PRIVATE_SUBNET_1 ? 'node 1' : 'node 2'}`
                 };
             }
 
@@ -276,29 +297,19 @@ async function validateVpcId(
 
             if (!isValidSubnet) {
                 return {
-                    key,
-                    status: 'error',
-                    message: 'The subnet that you provided is not valid, Please choose a valid subnet.',
-                    allowedValues: uniqBy(
-                        isValidVpc.subnets
-                            ?.filter(({ availabilityZone }) =>
-                                key === PRIVATE_SUBNET_1 ? availabilityZone === az1 : availabilityZone === az2
-                            )
-                            ?.map(({ id, name }) => ({
-                                label: name,
-                                value: id
-                            })),
-                        'value'
-                    )
+                    ...errorObj,
+                    message: 'The subnet that you provided is not valid, Please choose a valid subnet.'
                 };
             }
 
             return {
+                key,
                 value: key === PRIVATE_SUBNET_1 ? subnet1 : subnet2
             };
         }
         case ROUTE_TABLE_1: {
             return {
+                key,
                 value: isValidVpc.subnets?.find(({ id }) => id === subnet1)?.routeTableId
             };
         }
@@ -311,7 +322,7 @@ async function validateVpcId(
                     key: PRIVATE_SUBNET_2,
                     status: 'error',
                     message:
-                        'AWS FSx requires route tables to be different for subnets in multi-zone deployment. Select a different subnet for secondary node ',
+                        'The subnets in the selected Availability Zone are sharing the same route table. A multi-zone FSx for ONTAP deployment requires different route tables for each subnet. Modify the route table configuration or select a different subnet and try again.',
                     allowedValues: uniqBy(
                         isValidVpc.subnets
                             ?.filter(({ availabilityZone }) => availabilityZone === az2)
@@ -325,6 +336,7 @@ async function validateVpcId(
             }
 
             return {
+                key,
                 value: isValidVpc.subnets?.find(({ id }) => id === subnet2)?.routeTableId
             };
         }
@@ -337,12 +349,17 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
     logger.debug('Validate Key Name', { credentialsId, region, keyName });
     const { keyPairs: keys } = await getKeyPairsList(credentialsId, region);
 
+    const errorObj = {
+        key,
+        status: 'error',
+        allowedValues: keys?.map(({ name }) => ({ label: name, value: name })),
+        data: keys
+    };
+
     if (!keyName) {
         return {
-            key,
-            status: 'error',
-            message: 'Select a key pair so that you can securely connect to your EC2 instance.',
-            allowedValues: keys.map(({ name }) => ({ label: name, value: name }))
+            ...errorObj,
+            message: 'Select a key pair'
         };
     }
 
@@ -350,13 +367,12 @@ async function validateKeyName(credentialsId: string, region: string, keyName: s
 
     if (!isValidKey) {
         return {
-            key,
-            status: 'error',
-            message: 'The key pair that you provided is not valid. Please select a valid key pair.',
-            allowedValues: keys.map(({ name }) => ({ label: name, value: name }))
+            ...errorObj,
+            message: 'The key pair that you provided is not valid. Please select a valid key pair.'
         };
     }
     return {
+        key,
         value: isValidKey.name
     };
 }
@@ -377,44 +393,18 @@ async function validateImageId(credentialsId: string, region: string, imageId: s
             (name.includes('SQL_2016') || name.includes('SQL_2019') || name.includes('SQL_2022')) &&
             (name.includes('Enterprise') || name.includes('Standard'))
     );
-    if (!imageId) {
-        return {
-            key,
-            status: 'error',
-            message: 'Select an AWS AMI for the database.',
-            allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
-                label: name,
-                value: amiId,
-                metadata: {
-                    description
-                }
-            }))
-        };
-    }
 
-    const isValidAmi = filteredAmis?.find(ami => ami.imageId === imageId);
-    if (!isValidAmi) {
-        return {
-            key,
-            status: 'error',
-            message: 'The image id that you provided is not correct. Please select a valid image id.',
-            allowedValues: filteredAmis.map(({ name, imageId: amiId, description }) => ({
-                label: name,
-                value: amiId,
-                metadata: {
-                    description
-                }
-            }))
-        };
-    }
+    // setting up the first value from the array list as the default ami selected
     return {
-        value: isValidAmi.imageId
+        key,
+        value: filteredAmis[0]?.imageId
     };
 }
 
-async function validateAdScenarioType(type: string, key: string) {
+function validateAdScenarioType(type: string, key: string) {
     if (type === 'AWS_MANAGED_AD' || type === 'USER_MANAGED_AD') {
         return {
+            key,
             value: type
         };
     }
@@ -422,11 +412,10 @@ async function validateAdScenarioType(type: string, key: string) {
     return {
         key,
         status: 'error',
-        message:
-            'The active directory type that you provided is not correct. Please provide a valid active directory type',
+        message: 'Select a domain type',
         allowedValues: [
-            { label: 'AWS_MANAGED_AD', value: 'AWS_MANAGED_AD' },
-            { label: 'USER_MANAGED_AD', value: 'USER_MANAGED_AD' }
+            { label: 'Add new domain', value: USER_MANAGED_AD },
+            { label: 'Select an existing domain', value: AWS_MANAGED_AD }
         ]
     };
 }
@@ -434,31 +423,33 @@ async function validateAdScenarioType(type: string, key: string) {
 async function validateInstanceType(credentialsId: string, region: string, workloadInstanceType: string, key: string) {
     logger.debug('Validate Instance Type', { credentialsId, region, workloadInstanceType });
     const { instanceTypes } = await getInstanceTypes(credentialsId, region);
+
+    const errorObj = {
+        key,
+        status: 'error',
+        allowedValues: instanceTypes.map(({ instanceType }) => ({
+            label: instanceType,
+            value: instanceType
+        })),
+        data: instanceTypes
+    };
+
     if (!workloadInstanceType) {
         return {
-            key,
-            status: 'error',
-            message: 'Select an EC2 instance type.',
-            allowedValues: instanceTypes.map(({ instanceType }) => ({
-                label: instanceType,
-                value: instanceType
-            }))
+            ...errorObj,
+            message: 'Select an EC2 instance type.'
         };
     }
 
     const isValidType = instanceTypes?.find(({ instanceType }) => instanceType === workloadInstanceType);
     if (!isValidType) {
         return {
-            key,
-            status: 'error',
-            message: 'The instance type that you provided is not correct. Please select a valid EC2 instance type.',
-            allowedValues: instanceTypes.map(({ instanceType }) => ({
-                label: instanceType,
-                value: instanceType
-            }))
+            ...errorObj,
+            message: 'The instance type that you provided is not correct. Please select a valid EC2 instance type.'
         };
     }
     return {
+        key,
         value: isValidType.instanceType
     };
 }
@@ -466,34 +457,42 @@ async function validateInstanceType(credentialsId: string, region: string, workl
 async function validateFsx(credentialsId: string, region: string, vpcId: string, fsxId: string, key: string) {
     logger.info('Validate FSX', credentialsId, region, fsxId);
     const { filesystems } = await getFSxFileSystemsList(credentialsId, region, vpcId);
+    const errorObj = {
+        key,
+        status: 'error',
+        allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
+            label: `${name ? `${name} | ` : ''}${fileSystemId}`,
+            value: fileSystemId
+        })),
+        data: filesystems
+    };
     if (!fsxId) {
         return {
-            key,
-            status: 'error',
-            message: 'Select a FSxN name.',
-            allowedValues: filesystems.map(({ name, fileSystemId }) => ({
-                label: `${name ? `${name} | ` : ''}${fileSystemId}`,
-                value: fileSystemId
-            }))
+            ...errorObj,
+            message: 'Select a file system'
         };
     }
     const isValidFsx = filesystems?.find(filesystem => filesystem?.fileSystemId === fsxId);
     if (!isValidFsx) {
         return {
+            ...errorObj,
+            message: 'The fsx information that you provided is not correct. Please provide a valid fsx information.'
+        };
+    }
+
+    if (key === ENCRYPTION_KEY) {
+        return {
             key,
-            status: 'error',
-            message: 'The fsx information that you provided is not correct. Please provide a valid fsx information.',
-            allowedValues: filesystems?.map(({ name, fileSystemId }) => ({
-                label: name,
-                value: fileSystemId
-            }))
+            value: isValidFsx?.kmsKeyId
         };
     }
 
     return {
+        key,
         value: isValidFsx.fileSystemId
     };
 }
+
 async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
     logger.info(' Validate Cloud Watch', { enableCloudWatch, key });
     if (typeof enableCloudWatch !== 'boolean') {
@@ -508,6 +507,7 @@ async function validateCloudWatch(key: string, enableCloudWatch?: boolean) {
         };
     }
     return {
+        key,
         value: enableCloudWatch
     };
 }
@@ -523,6 +523,7 @@ async function validateTags(key: string, tags?: Array<{ key: string; value: stri
         };
     }
     return {
+        key,
         value: tags
     };
 }
@@ -532,37 +533,41 @@ async function validateDomain(
     region: string,
     domainDnsname: string,
     dnsIp: string,
+    adType: string,
     key: string
 ) {
-    logger.debug('Validate Domain DNS', { credentialsId, region, domainDnsname, key });
+    logger.debug('Validate Domain DNS', { credentialsId, region, domainDnsname, adType, key });
     const { directories } = await getAdsList(credentialsId, region);
-    if (!domainDnsname) {
+    if (!domainDnsname && adType === USER_MANAGED_AD) {
+        return { key, status: 'error', message: 'Enter a domain name', type: 'text' };
+    }
+    if (!domainDnsname && adType === AWS_MANAGED_AD) {
         return {
             key,
             status: 'error',
-            message: 'Select the domain DNS name.',
-            allowCreate: true,
+            message: 'Select a domain',
             allowedValues: uniqBy(
                 directories.map(({ domainName }) => ({
                     label: domainName,
                     value: domainName
                 })),
                 'value'
-            )
+            ),
+            data: directories
         };
     }
-    const errorResponse = { status: 'error', message: 'Enter the value of domain ip address', type: 'text' };
+    const errorResponse = { status: 'error', message: 'Enter the DNS IP address', type: 'text' };
     const isAWSManagedDomain = directories?.find(({ domainName }) => domainName === domainDnsname);
     switch (key) {
         case DOMAIN_DNS:
-            return { value: domainDnsname };
+            return { key, value: domainDnsname };
         case AD_SCENARIO_TYPE:
-            return { value: isAWSManagedDomain ? AWS_MANAGED_AD : USER_MANAGED_AD };
+            return { key, value: isAWSManagedDomain ? AWS_MANAGED_AD : USER_MANAGED_AD };
         case DNS_IP:
             return isAWSManagedDomain
-                ? { value: isAWSManagedDomain?.dnsIpAddress?.join(',') }
+                ? { key, value: isAWSManagedDomain?.dnsIpAddress?.join(',') }
                 : dnsIp
-                ? { value: dnsIp }
+                ? { key, value: dnsIp }
                 : { key, ...errorResponse };
         default:
             return {};
@@ -570,16 +575,20 @@ async function validateDomain(
 }
 
 function validateText(text: string, key: string, fsxType?: string) {
+    // setting default value for sqlServerName if not provided from ui
+    if (key === SQL_SERVER_NAME && !text) {
+        text = `sqldatabase${randomize('a0', 4)}`;
+    }
     if (!text) {
         return {
             key,
             status: 'error',
-            message: `Enter a value for ${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
+            message: `${KEY_LABEL_MAP[key as keyof typeof KEY_LABEL_MAP]}`,
             type: key.toLowerCase().includes('password') ? 'password' : 'text',
             ...(key === FSX_USERNAME && fsxType === NEW && { disable: true, default: 'fsxadmin' })
         };
     }
-    return { value: text };
+    return { key, value: text };
 }
 
 function validateDbSize(size: number, key: string) {
@@ -588,42 +597,21 @@ function validateDbSize(size: number, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Enter a value for data drive size(GiB) between 120 to 133120',
+            message:
+                'Enter a data drive size\nSpecify the SQL data drive size only in GiB. The provisioning for log drive, tempdb and other FSx for ONTAP file system volumes (including LUNs), will be performed according to NetApp best practices for SQL configuration.',
             type: 'number'
         };
     }
 
     return {
+        key,
         value: size
     };
 }
 
 function validateThroughPut(iops: number, key: string) {
     logger.debug('Validate ThroughPut', { iops });
-    const ThroughPut = [];
-    for (let i = 0; i <= 5; i++) {
-        ThroughPut.push({ label: `${128 * 2 ** i} Mbps`, value: 128 * 2 ** i });
-    }
-    if (!iops) {
-        return {
-            key,
-            status: 'error',
-            message: 'Select a throughput capacity.',
-            allowedValues: ThroughPut
-        };
-    }
-
-    const isValid = ThroughPut.find(({ value }) => value === iops);
-    if (!isValid) {
-        return {
-            key,
-            status: 'error',
-            message:
-                'The throughput capacity value that you provided is not correct. Please provide a valid throughput capacity.',
-            allowedValues: ThroughPut
-        };
-    }
-    return { value: isValid.value };
+    return { key, value: THROUGHPUT };
 }
 
 async function validateSecurityGroup(
@@ -639,31 +627,31 @@ async function validateSecurityGroup(
     const vpc = vpcs.find(({ id }) => id === vpcId);
     const secGrp = vpc?.securityGroups || [];
 
+    const errorObj = {
+        key,
+        status: 'error',
+        allowedValues: secGrp.map(({ id, securityGroupName }) => ({
+            label: securityGroupName,
+            value: id
+        }))
+    };
+
     if (!securityGroup) {
         return {
-            key,
-            status: 'error',
-            message: 'Select an AWS security group.',
-            allowedValues: secGrp.map(({ id, securityGroupName }) => ({
-                label: securityGroupName,
-                value: id
-            }))
+            ...errorObj,
+            message: 'Select an AWS security group.'
         };
     }
 
     const isValid = secGrp?.find(({ id }) => securityGroup === id);
     if (!isValid) {
         return {
-            key,
-            status: 'error',
-            message: 'The security group that you provided is not correct. Please provide a valid security group.',
-            allowedValues: secGrp.map(({ id, securityGroupName }) => ({
-                label: securityGroupName,
-                value: id
-            }))
+            ...errorObj,
+            message: 'The security group that you provided is not correct. Please provide a valid security group.'
         };
     }
     return {
+        key,
         value: isValid.id
     };
 }
@@ -674,14 +662,14 @@ async function validateSqlDeploymentType(deploymentType: string, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Select database deployment model.',
+            message: 'Select a database deployment model',
             allowedValues: [
                 { label: 'Single Instance', value: STANDALONE },
                 { label: 'Failover Cluster Instance (FCI)', value: FCI }
             ]
         };
     }
-    return { value: deploymentType };
+    return { key, value: deploymentType };
 }
 
 function checkFsxType(type: string, key: string) {
@@ -689,16 +677,74 @@ function checkFsxType(type: string, key: string) {
         return {
             key,
             status: 'error',
-            message: 'Select a FSx type.',
+            message: 'Select an FSx for ONTAP file system',
             allowedValues: [
-                { label: 'New', value: NEW },
-                { label: 'Existing', value: EXISTING }
+                { label: 'Create a new file system', value: NEW },
+                { label: 'Select an existing file system', value: EXISTING }
             ]
         };
     }
     return {
+        key,
         value: type.toUpperCase()
     };
+}
+
+function validateDeploymentEnv(key: string, value: string) {
+    if ([PROD, DEV, CUSTOM].includes(value)) {
+        return {
+            key,
+            value
+        };
+    }
+
+    return {
+        key,
+        status: 'error',
+        message: 'Select a configuration model',
+        allowedValues: [
+            {
+                label: 'Production model',
+                value: PROD,
+                data: [
+                    { label: 'SQL Deployment model', value: FCI_ABBREVIATION },
+                    { label: 'Deployment model', value: MULTI_AZ_SMALL },
+                    { label: 'Database size', value: '500 GiB' },
+                    { label: 'Instance type', value: M5_2XL }
+                ]
+            },
+            {
+                label: 'Dev/Test model',
+                value: DEV,
+                data: [
+                    { label: 'SQL Deployment model', value: 'Standalone' },
+                    { label: 'Deployment model', value: SINGLE_AZ_SMALL },
+                    { label: 'Database size', value: '100 GiB' },
+                    { label: 'Instance type', value: M5_XL }
+                ]
+            },
+            { label: 'Deploy on your own', value: CUSTOM }
+        ],
+        type: 'card'
+    };
+}
+
+function filterValidVpcs(vpcs: Array<VPC>) {
+    logger.debug('FILTER VPCS>>>', vpcs);
+    return vpcs.filter(vpc => {
+        const azs = uniqBy(vpc.subnets, 'availabilityZone');
+        if (azs.length <= 1) {
+            return false;
+        }
+
+        const routeTables = uniqBy(vpc.subnets, 'routeTableId');
+
+        if (routeTables.length <= 1) {
+            return false;
+        }
+
+        return true;
+    });
 }
 
 export {
@@ -718,5 +764,6 @@ export {
     checkFsxType,
     validateFsx,
     validateCloudWatch,
-    validateTags
+    validateTags,
+    validateDeploymentEnv
 };

@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import randomize from 'randomatic';
 import fs from 'fs';
 import path from 'path';
+import yaml from 'yaml';
 import { escapeRegExp } from 'lodash-es';
 import { Parameter } from '@aws-sdk/client-cloudformation';
 import { DEPLOYMENT_MODEL, DEPLOYMENT_STATUS } from '@prisma/client';
@@ -16,7 +17,7 @@ import {
     ADConfigurationType,
     FSXConfigurationType,
     SQLConfigurationType,
-    CloudFormationTemplateResponseType,
+    CloudFormationDeploymentResponseType,
     CloudFormationStaticTemplateResponseType
 } from '../routes/types/deployment.types';
 import {
@@ -30,7 +31,7 @@ import {
     WLM_ASSETS,
     VALIDATION_AMI,
     ASSETS_BUCKET_REGION,
-    EC2_ROLE_NAME,
+    CF_DEPLOY_ROLE_NAME,
     DatabaseTypes,
     ACCOUNT_ID,
     TEMPLATE_JWT_TOKEN,
@@ -40,10 +41,6 @@ import {
     TEMPLATE_OPTIONAL_PARAMETERS,
     TEMPLATE_WLMDB_AWS_ACCOUT_ID,
     TEMPLATE_ACCOUNT_ID,
-    SUCCESS,
-    ACTION_BUTTON_DASHBOARD,
-    STANDARD_DEPLOYMENT_ACTION,
-    SQL_DEPLOYMENET_INITIATED_SUBJECT,
     AWS_RESOURCES_ACTION_MAP,
     AWS_RESOURCES_STRICT_ACTION_MAP,
     SECRET_MANAGER_ARN,
@@ -56,32 +53,53 @@ import {
     SKIP_TEMPLATE_PASSWORD_PARAMETERS,
     CloudProviders,
     RESOURCESTYPE,
-    STANDALONE,
-    STANDALONE_NETWORK_VIOLATION_MESSAGE,
-    FCI_NETWORK_VIOLATION_MESSAGE,
     FileSystemTypes,
     DATABASE_TYPE,
     FSX_ADMIN_PASSWORD,
     SQL_SA_PASSWORD,
     DOMAIN_ADMIN_PASSWORD,
     LOG_GROUP_ARN,
-    WLMDB_RESOURCE_TAG_VALUE
+    WLMDB_RESOURCE_TAG_VALUE,
+    STANDALONE,
+    STANDALONE_NETWORK_VIOLATION_MESSAGE,
+    FCI_NETWORK_VIOLATION_MESSAGE,
+    IAM_LINKEDROLE_CONDITION,
+    IAM_EC2_SERVICE,
+    IAM_PASSROLE_CONDITION,
+    TEMPLATE_FSX_PASSWORD,
+    TEMPLATE_METRICS,
+    TRIGGERED_FROM,
+    DEPLOYED_FROM,
+    WLMDB,
+    AWSServiceNames,
+    INSTANCE_TYPE,
+    SQL_VERSION,
+    DATABASE_SIZE,
+    SQL_HOST_NAME
 } from '../utils/consts';
 import {
+    createJobMockData,
+    calculateSQLandWindowsVersion,
+    deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
+    generateRandomIP,
     isNetworkConfigurationViolated,
     sleep
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
 import { getWindowsServerBaseAmi } from './aws/ec2-operations';
-import { uploadTemplates } from './template-operations';
+import uploadTemplates from './template-operations';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { getAllDeploymentStatus, getDeploymentStatusByName } from './database/database-operations';
-import { handleNotification } from './cloud-manager/notification-operations';
+// import { handleNotification } from './cloud-manager/notification-operations';
 import { createDeployment, createResource } from '../lib/database/db';
+import { Metadata, NetworkViolation } from '../utils/common-types';
+import { encryptString } from './aws/kms-operations';
+import PARAMETERS from '../utils/template-parameters';
+import { createJobs } from '../lib/database/job';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -94,6 +112,7 @@ async function formatTemplateParameters(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string,
     enableCloudWatch: boolean,
+    metrics: string,
     credentialsId?: string,
     region?: string,
     skipPasswords?: boolean
@@ -112,16 +131,26 @@ async function formatTemplateParameters(
     const { token } = generateAuthToken({ user: 'SYSTEM@netapp.com' });
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
-
     const templateParams: Array<Parameter> = [
-        { ParameterKey: EC2_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
-        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
+        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics }
     ];
+    if (fsxConfiguration.fsxPassword) {
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
+        }
+    }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
@@ -173,6 +202,37 @@ async function formatTemplateParameters(
     return { stackName, templateParameters: templateParams };
 }
 
+async function formatTemplateParametersToCf(templateParameters: Parameter[]) {
+    logger.info('Add parameters to template in cloud formation format');
+    const parameters = {};
+    PARAMETERS.forEach(parameter => {
+        const { name, description, type, noEcho, minLength, maxLength, minValue, maxValue, allowedValues, pattern } =
+            parameter;
+        const paramValue = templateParameters.find(param => param.ParameterKey === name);
+        const paramData = {};
+        (paramData as { [index: string]: object })[name] = {
+            Description: description,
+            Type: type,
+            Default: paramValue && paramValue.ParameterValue !== '' ? paramValue.ParameterValue : parameter.default!,
+            NoEcho: noEcho!,
+            MinLength: minLength!,
+            MaxLength: maxLength!,
+            MinValue: minValue!,
+            MaxValue: maxValue!,
+            AllowedValues: allowedValues!,
+            AllowedPattern: pattern!
+        };
+
+        (parameters as { [index: string]: string })[name] = yaml.stringify(paramData, {
+            indent: 4,
+            collectionStyle: 'block'
+        });
+    });
+
+    logger.debug('Formatted cloud formation parameters', parameters);
+    return parameters;
+}
+
 async function getCloudformationTemplate(
     networkConfiguration: CFNetworkConfigurationType,
     ec2Configuration: EC2ConfigurationType,
@@ -181,6 +241,7 @@ async function getCloudformationTemplate(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    triggeredFrom: string,
     tags?: Array<{ key: string; value: string }>,
     credentialsId?: string,
     region?: string
@@ -193,8 +254,16 @@ async function getCloudformationTemplate(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
+        triggeredFrom,
         tags
     });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -204,6 +273,7 @@ async function getCloudformationTemplate(
         sqlConfiguration,
         topicArn,
         enableCloudWatch,
+        metrics,
         credentialsId,
         region,
         true
@@ -217,13 +287,17 @@ async function getCloudformationTemplate(
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
+        customMasterTemplatePath,
+        templateParamsInCfFormat
     );
 
     let masterTemplateContents;
@@ -260,20 +334,21 @@ async function getCloudformationTemplate(
         masterTemplateContents = await response.Body?.transformToString();
     }
     // Generate parameters list for cli command
+    const specialCharacters = ['!', '&'];
     let cliParams: string = '';
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 fsxConfiguration.fsxPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 sqlConfiguration.serviceAccountPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 adConfiguration.domainPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
@@ -285,7 +360,9 @@ async function getCloudformationTemplate(
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
-        urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
+        urlParams += `&param_${e.ParameterKey}=${
+            e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
+        }`;
     });
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
@@ -298,6 +375,108 @@ async function getCloudformationTemplate(
     };
 }
 
+async function deployStackOrCreateTemplateURL(
+    credentialsId: string,
+    region: string,
+    networkConfiguration: CFNetworkConfigurationType,
+    ec2Configuration: EC2ConfigurationType,
+    adConfiguration: ADConfigurationType,
+    fsxConfiguration: FSXConfigurationType,
+    sqlConfiguration: SQLConfigurationType,
+    topicArn: string = '',
+    enableCloudWatch: boolean = false,
+    triggeredFrom: string,
+    tags?: Array<{ key: string; value: string }>
+) {
+    logger.info('Deploy Stack or Create Template URL For user deployment', {
+        credentialsId,
+        region,
+        networkConfiguration,
+        ec2Configuration,
+        adConfiguration,
+        fsxConfiguration,
+        sqlConfiguration,
+        tags,
+        triggeredFrom
+    });
+
+    const { workloadInstanceType } = ec2Configuration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
+    const { databaseSize } = fsxConfiguration;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+
+    try {
+        const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
+            credentialsId,
+            region
+        );
+
+        // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
+        if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            const response = await createCloudFormationTemplateForUserDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                metrics,
+                tags
+            );
+            const errMsg = MISSING_PERMISSIONS([...permissions, ...strictPermissions, ...strictConditionPermissions]);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
+            return response;
+        }
+        metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
+        return await deployCloudFormationTemplate(
+            credentialsId,
+            region,
+            networkConfiguration,
+            ec2Configuration,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration,
+            topicArn,
+            enableCloudWatch,
+            metrics,
+            tags
+        );
+    } catch (err: any) {
+        // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
+        if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            const response = await createCloudFormationTemplateForUserDeployment(
+                credentialsId,
+                region,
+                networkConfiguration,
+                ec2Configuration,
+                adConfiguration,
+                fsxConfiguration,
+                sqlConfiguration,
+                topicArn,
+                enableCloudWatch,
+                metrics,
+                tags
+            );
+            const errMsg = MISSING_PERMISSIONS(err?.message);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
+            return response;
+        }
+        throw createError(
+            err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Error while deploying stack ${err}.`
+        );
+    }
+}
+
 async function createCloudFormationTemplateForUserDeployment(
     credentialsId: string,
     region: string,
@@ -308,8 +487,9 @@ async function createCloudFormationTemplateForUserDeployment(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    metrics: string,
     tags?: Array<{ key: string; value: string }>
-): Promise<CloudFormationTemplateResponseType> {
+): Promise<CloudFormationDeploymentResponseType> {
     logger.info('Create cloud formation template for user deployment', {
         credentialsId,
         region,
@@ -318,28 +498,28 @@ async function createCloudFormationTemplateForUserDeployment(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
+        metrics,
         tags
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
+    );
+
+    if (vpcValidationCheck.isViolated) {
+        let errorMessage;
+        if (vpcValidationCheck.violationMessage !== undefined) {
+            errorMessage = vpcValidationCheck.violationMessage;
+        } else if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
+            errorMessage = STANDALONE_NETWORK_VIOLATION_MESSAGE;
+        } else {
+            errorMessage = FCI_NETWORK_VIOLATION_MESSAGE;
         }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
+        logger.error('VPC validation error:', errorMessage);
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
-    // Commented as we have to enable this permission check if the user has SimulatePrincipalPolicy permission
-    // const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-    //     credentialsId,
-    //     region
-    // );
-
-    const errMsg = '';
-    // if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-    //     errMsg = `Required IAM permissions are not available to create the cloud formation template, ${permissions}`;
-    //     logger.error(errMsg);
-    // }
     const derivedParams = fsxConfiguration.fsxFileSystemId
         ? generateDeploymentParams(fsxConfiguration.databaseSize, true, sqlConfiguration.sqlDeploymentMode)
         : generateDeploymentParams(fsxConfiguration.databaseSize, false, sqlConfiguration.sqlDeploymentMode);
@@ -353,15 +533,6 @@ async function createCloudFormationTemplateForUserDeployment(
     const encodedSignedMasterTemplateURL = encodeURIComponent(signedMasterTemplateUrl);
     logger.info('Signed master url ', encodedSignedMasterTemplateURL);
 
-    // Generate Signed-url and upload to bucket
-    await uploadTemplates(
-        ASSETS_BUCKET_REGION,
-        DatabaseTypes.MS_SQL_SERVER,
-        derivedParams.StackName,
-        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
-    );
-
     const validationAmiImage = await getWindowsServerBaseAmi(credentialsId, region);
 
     const accountId = getAsyncLocalStorageResource<string>(ACCOUNT_ID);
@@ -369,11 +540,34 @@ async function createCloudFormationTemplateForUserDeployment(
 
     const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN as string) || {};
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${EC2_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    const templateParamsAsList: Array<Parameter> = [
+        { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
+        { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
+        { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
+        { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
+        { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token }
+    ];
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    if (fsxConfiguration.fsxPassword) {
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
+        }
+    }
 
     Object.entries(derivedParams).forEach(([key, value]) => {
         if (key !== 'StackName') {
             templateParams += `&param_${key}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: key,
+                ParameterValue: value.toString()
+            });
         }
     });
 
@@ -385,25 +579,47 @@ async function createCloudFormationTemplateForUserDeployment(
         ...ec2Configuration,
         ...fsxConfiguration,
         topicArn,
-        enableCloudWatch
+        enableCloudWatch,
+        metrics
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
         if (TEMPLATE_CONFIGURATION_MAPPING[key]) {
             value = SKIP_TEMPLATE_PASSWORD_PARAMETERS.includes(TEMPLATE_CONFIGURATION_MAPPING[key]) ? '' : value;
             templateParams += `&param_${TEMPLATE_CONFIGURATION_MAPPING[key]}=${value}`;
+            templateParamsAsList.push({
+                ParameterKey: TEMPLATE_CONFIGURATION_MAPPING[key],
+                ParameterValue: value.toString()
+            });
         }
     });
 
     Object.entries(WLM_ASSETS).forEach(([key, value]) => {
         templateParams += `&param_${key}=${value}`;
+        templateParamsAsList.push({
+            ParameterKey: key,
+            ParameterValue: value.toString()
+        });
     });
+
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParamsAsList);
+
+    // Generate Signed-url and upload to bucket
+    await uploadTemplates(
+        ASSETS_BUCKET_REGION,
+        DatabaseTypes.MS_SQL_SERVER,
+        derivedParams.StackName,
+        tags?.map(({ key, value }) => ({ Key: key, Value: value })),
+        customMasterTemplatePath,
+        templateParamsInCfFormat
+    );
 
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
-    return { cloudFormationUrl: signedTemplateURL, warningMessage: errMsg };
+    return { cloudFormationUrl: signedTemplateURL };
 }
 
 async function deployCloudFormationTemplate(
@@ -416,8 +632,9 @@ async function deployCloudFormationTemplate(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
+    metrics: string,
     tags?: Array<{ key: string; value: string }>
-): Promise<{ cloudFormationStackId: string }> {
+): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     logger.info('Deploy sql cloud formation template ', {
         credentialsId,
         region,
@@ -426,24 +643,18 @@ async function deployCloudFormationTemplate(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
-        tags
+        tags,
+        metrics
     });
 
-    const isViolated = isNetworkConfigurationViolated(networkConfiguration, sqlConfiguration.sqlDeploymentMode);
-    if (isViolated) {
-        if (sqlConfiguration.sqlDeploymentMode === STANDALONE) {
-            throw createError(HttpErrorCodes.VALIDATION_ERROR, STANDALONE_NETWORK_VIOLATION_MESSAGE);
-        }
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, FCI_NETWORK_VIOLATION_MESSAGE);
-    }
-
-    const { permissions, strictPermissions, strictConditionPermissions } = await checkAllMissingPermissions(
-        credentialsId,
-        region
+    const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
+        networkConfiguration,
+        sqlConfiguration.sqlDeploymentMode
     );
 
-    if (permissions?.length || strictPermissions?.length || strictConditionPermissions?.length) {
-        throw createError(HttpErrorCodes.VALIDATION_ERROR, MISSING_PERMISSIONS(permissions));
+    if (vpcValidationCheck.isViolated && vpcValidationCheck.violationMessage !== undefined) {
+        const errorMessage = vpcValidationCheck.violationMessage;
+        throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
 
     const cfStackQuotaReached = await isCfStackQuotaReached(credentialsId, region);
@@ -459,6 +670,7 @@ async function deployCloudFormationTemplate(
         sqlConfiguration,
         topicArn,
         enableCloudWatch,
+        metrics,
         credentialsId,
         region
     );
@@ -471,13 +683,17 @@ async function deployCloudFormationTemplate(
 
     logger.info('Signed master url ', signedMasterTemplateUrl);
 
+    // Add Parameter construct - description, type and others. Default is added if user has specified a value or a value specified by default
+    const templateParamsInCfFormat = await formatTemplateParametersToCf(templateParameters);
+
     // Generate Signed-url and upload to bucket
     await uploadTemplates(
         ASSETS_BUCKET_REGION,
         DatabaseTypes.MS_SQL_SERVER,
         stackName,
         tags?.map(({ key, value }) => ({ Key: key, Value: value })),
-        customMasterTemplatePath
+        customMasterTemplatePath,
+        templateParamsInCfFormat
     );
 
     const deployStackResponse = await createStack(
@@ -492,17 +708,19 @@ async function deployCloudFormationTemplate(
 
     logger.info(`Stack ${stackName} response ${deployStackResponse}`);
 
-    const notificationData = {
-        notificationAction: STANDARD_DEPLOYMENT_ACTION,
-        subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
-        uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
-        actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
-        redirectURL: '/',
-        label: ACTION_BUTTON_DASHBOARD,
-        priority: SUCCESS
-    };
-    await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
+    // commented for now until we fix the queue issue of getting triggered multiple times for the same stack status
+    // const notificationData = {
+    //     notificationAction: STANDARD_DEPLOYMENT_ACTION,
+    //     subject: SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    //     uiNotificationDescription: `Microsoft SQL Server and FSxN for ONTAP deployment with stack name ${stackName} has been initiated`,
+    //     actionLabel: SQL_DEPLOYMENET_INITIATED_SUBJECT,
+    //     redirectURL: '/',
+    //     label: ACTION_BUTTON_DASHBOARD,
+    //     priority: SUCCESS
+    // };
+    // await handleNotification(notificationData, { uiNotification: true, emailNotification: true });
 
+    const cfUrl = deployedStackUrl(region, deployStackResponse.StackId!);
     if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator') {
         const accountId: string = getAsyncLocalStorageResource(ACCOUNT_ID);
         const stackId = deployStackResponse.StackId || '';
@@ -512,10 +730,11 @@ async function deployCloudFormationTemplate(
             stackName,
             region,
             credentialsId,
-            sqlConfiguration?.sqlDeploymentMode
+            sqlConfiguration?.sqlDeploymentMode,
+            fsxConfiguration?.fsxFileSystemId
         );
     }
-    return { cloudFormationStackId: deployStackResponse.StackId! };
+    return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
 }
 
 async function deploymentStatus(accountId: string) {
@@ -534,35 +753,49 @@ async function checkAllMissingPermissions(credentialsId: string, region: string)
     logger.info('check all missing permissions', credentialsId, region);
     // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
     const { permissions } = await getMissingPermissionsList(credentialsId, region, AWS_RESOURCES_ACTION_MAP);
-    const { permissions: strictPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_ACTION_MAP,
-        [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
-    );
-    const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
-        credentialsId,
-        region,
-        AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-        undefined,
-        [
-            {
-                // ContextEntry
-                ContextKeyName: EC2_TAG_CONDITION,
-                ContextKeyValues: [
-                    // ContextKeyValueListType
-                    WLMDB_RESOURCE_TAG_VALUE
-                ],
-                ContextKeyType: 'string'
-            },
-            {
-                ContextKeyName: FSX_TAG_CONDITION,
-                ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
-                ContextKeyType: 'string'
-            }
-        ]
-    );
-    return { permissions, strictPermissions, strictConditionPermissions };
+    try {
+        const { permissions: strictPermissions } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            AWS_RESOURCES_STRICT_ACTION_MAP,
+            [SECRET_MANAGER_ARN, CLOUD_FORMATION_ARN, LOG_GROUP_ARN]
+        );
+        const { permissions: strictConditionPermissions } = await getMissingPermissionsList(
+            credentialsId,
+            region,
+            AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
+            undefined,
+            [
+                {
+                    // ContextEntry
+                    ContextKeyName: EC2_TAG_CONDITION,
+                    ContextKeyValues: [
+                        // ContextKeyValueListType
+                        WLMDB_RESOURCE_TAG_VALUE
+                    ],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: FSX_TAG_CONDITION,
+                    ContextKeyValues: [WLMDB_RESOURCE_TAG_VALUE],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: IAM_LINKEDROLE_CONDITION,
+                    ContextKeyValues: [IAM_EC2_SERVICE],
+                    ContextKeyType: 'string'
+                },
+                {
+                    ContextKeyName: IAM_PASSROLE_CONDITION,
+                    ContextKeyValues: [IAM_EC2_SERVICE],
+                    ContextKeyType: 'string'
+                }
+            ]
+        );
+        return { permissions, strictPermissions, strictConditionPermissions };
+    } catch (error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
+    }
 }
 
 async function createDeploymentMockDataInDB(
@@ -571,15 +804,17 @@ async function createDeploymentMockDataInDB(
     stackName: string,
     region: string,
     credentialId: string,
-    sqlDeploymentMode: string
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined
 ) {
-    logger.info('create deployment mock data in database', {
+    logger.info('create deployment, resource and job table mock data in database', {
         accountId,
         stackId,
         stackName,
         region,
         credentialId,
-        sqlDeploymentMode
+        sqlDeploymentMode,
+        fsxFileSystemId
     });
 
     const cloudProviderId = randomize('0', 8);
@@ -606,7 +841,22 @@ async function createDeploymentMockDataInDB(
             fileSystemType: FileSystemTypes.FSXONTAP
         }
     });
+    const metadata: Metadata = {
+        credentialsId: credentialId,
+        sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
+        fileSystemType: FileSystemTypes.FSXONTAP,
+        activeNodeInstanceId: `i-${randomize('A0', 17)}`,
+        activeNodeInstanceName: `sqlnode1-${randomize('0', 5)}`,
+        creationDate: new Date().getTime().toString(),
+        activeDirectoryName: 'wlm.com',
+        activeDirectoryAddress: generateRandomIP()
+    };
 
+    if (sqlDeploymentMode === 'FCI') {
+        metadata.standbyNodeInstanceId = `i-${randomize('A0', 17)}`;
+        metadata.standbyNodeInstanceName = `sqlnode2-${randomize('0', 5)}`;
+        metadata.activeDirectoryAddress = `${generateRandomIP()}, ${generateRandomIP()}`;
+    }
     await createResource(accountId, {
         resourceId: randomUUID(),
         resourceName,
@@ -615,14 +865,11 @@ async function createDeploymentMockDataInDB(
         resourceType: RESOURCESTYPE.MSSQL,
         coRelationId: `fs-${randomize('A0', 17)}`,
         region,
-        metadata: {
-            credentialsId: credentialId,
-            sqlDeploymentType: sqlDeploymentMode as DEPLOYMENT_MODEL,
-            fileSystemType: FileSystemTypes.FSXONTAP,
-            activeNodeInstanceId: `i-${randomize('A0', 17)}`,
-            activeNodeInstanceName: `sqlnode-${randomize('0', 5)}`
-        }
+        metadata
     });
+
+    const data = await createJobMockData(accountId, resourceName, stackName, sqlDeploymentMode, fsxFileSystemId);
+    await createJobs(accountId, data);
 }
 
 export {
@@ -630,5 +877,6 @@ export {
     deployCloudFormationTemplate,
     deploymentStatus,
     deploymentStatusByName,
-    getCloudformationTemplate
+    getCloudformationTemplate,
+    deployStackOrCreateTemplateURL
 };

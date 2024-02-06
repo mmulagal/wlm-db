@@ -3,7 +3,7 @@
     top: 0;
     right: 0;
     z-index: 2;
-    width: 33vw;
+    width: 638px;
     height: 100%;
     background-color: var(--grey-70);
     transition: right 0.3s rase-in-out;
@@ -66,6 +66,16 @@
             'Segoe UI Emoji';
     }
 
+    // .newClass {
+    //     span {
+    //         mark:nth-of-type(1),
+    //         mark:nth-of-type(2),
+    //         mark:nth-of-type(3) {
+    //             color: var(--red-20);
+    //         }
+    //     }
+    // }
+
     .color {
         color: var(--blue-40);
     }
@@ -104,10 +114,13 @@
     .openView {
         display: flex;
         gap: 40px;
+        height: calc(100vh - 63px);
+        overflow-x: auto;
+        overflow-y: hidden;
 
         .leftSideView {
-            width: 33%;
-            // width: 638px;
+            min-width: 638px;
+
             margin-top: 40px;
             max-height: 89vh;
             overflow-y: auto;
@@ -121,7 +134,7 @@
                 // width: 1090px;
                 display: flex;
                 justify-content: space-between;
-                padding: 3px 24px 16px 0;
+                padding: 3px 0 16px 0;
 
                 .rightSideHeading {
                     color: var(--white);
@@ -134,72 +147,64 @@
                 .rightSideHeadingDisabled {
                     color: var(--grey-25);
                 }
+            }
+        }
 
-                .menuContainer {
-                    display: flex;
-                    gap: 32px;
-                    align-items: center;
+        .terraformContainer {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
 
-                    .menuItem {
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        cursor: pointer;
+        .inputBox {
+            width: 146px;
+            // margin-top: 35px;
+            --menu-max-height: 245px;
 
-                        svg {
-                            path {
-                                fill: var(--blue-40);
-                            }
-                        }
-                    }
+            // Select box CSS
 
-                    .menuItemDisabled {
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        pointer-events: none;
+            [class*='Select-module_base'] {
+                margin-bottom: 0;
+            }
 
-                        svg {
-                            path {
-                                fill: var(--grey-25);
-                            }
-                        }
-                    }
+            [class*='design-system-select__single-value'] {
+                color: var(--white) !important;
+            }
+            [class*='design-system-select__menu'] {
+                box-shadow: none;
+                width: 240px;
+                right: 1px !important;
+            }
 
-                    .sideBarMenuPopover {
-                        [class*='MenuPopover_menuIcon'] {
-                            color: var(--blue-40);
-                        }
-                        [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
-                            border: 1.5px solid var(--blue-40);
-                        }
+            [class*='design-system-select__option'] {
+                background-color: var(--grey-70);
+                color: var(--white);
+            }
 
-                        [class*='MenuPopover_menuIcon']:hover {
-                            border: 1.5px solid var(--blue-40);
-                        }
-                    }
+            [class*='Select-module_multiselect-menu'] {
+                background-color: var(--grey-70);
+            }
+            [class*='design-system-select__option--is-focused'] {
+                color: var(--blue-40);
+                background-color: var(--grey-60);
+            }
+            [class*='design-system-select__control']:hover {
+                box-shadow: 0 1px 0 var(--header-netapp-text-hover);
+                border-bottom: 2px solid var(--field-border-selected) !important;
 
-                    .copy {
-                        width: 100px;
-                        display: flex;
-                        justify-content: flex-end;
-                        // height: 20px;
-                        .copy-popover {
-                            width: 140px;
-                            font-size: 13px;
-                            line-height: 20px;
-                            text-align: center;
-                            padding: 2px 2px;
-                            box-shadow: none;
-                        }
+                div {
+                    color: var(--header-netapp-text-hover);
+                }
 
-                        svg {
-                            cursor: pointer;
-                            &:hover {
-                                fill: var(--text-primary);
-                            }
-                        }
-                    }
+                svg {
+                    --icon-primary-color: var(--field-border-selected) !important;
+                }
+            }
+
+            [class*='design-system-select__control'] {
+                border-bottom: 2px solid var(--field-border) !important;
+                svg {
+                    --icon-primary-color: var(--field-icon) !important;
                 }
             }
         }
@@ -218,59 +223,108 @@
                 display: flex;
                 gap: 16px;
                 align-items: center;
+            }
 
-                .terraformContainer {
+            .menuContainer {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+
+                .menuItem {
                     display: flex;
-                    gap: 40px;
+                    align-items: center;
+                    gap: 8px;
+                    cursor: pointer;
+
+                    // svg {
+                    //     path {
+                    //         fill: var(--blue-40);
+                    //     }
+                    // }
                 }
 
-                .inputBox {
-                    width: 146px;
-                    margin-top: 35px;
-                    --menu-max-height: 245px;
+                .menuItemDisabled {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    pointer-events: none;
 
-                    // Select box CSS
-
-                    [class*='design-system-select__single-value'] {
-                        color: var(--white);
+                    svg {
+                        path {
+                            fill: var(--grey-25);
+                        }
                     }
-                    [class*='design-system-select__menu'] {
+                }
+
+                .sideBarMenuPopover {
+                    width: 24px;
+                    height: 24px;
+                    background-color: #858c95;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    [class*='MenuPopover_menuIcon'] {
+                        color: var(--white);
+                        border-radius: 0;
+                        border: none;
+                    }
+                    [class*='MenuPopover_menuIcon__sC4Ef MenuPopover_selected'] {
+                        border: none;
+                        border-radius: 0;
+                    }
+
+                    [class*='MenuPopover_menuIcon']:hover {
+                        border: none;
+                        border-radius: 0;
+                    }
+                }
+
+                .copy {
+                    width: 100px;
+                    display: flex;
+                    justify-content: flex-end;
+                    // height: 20px;
+                    .copy-popover {
+                        width: 140px;
+                        font-size: 13px;
+                        line-height: 20px;
+                        text-align: center;
+                        padding: 2px 2px;
                         box-shadow: none;
-                        width: 240px;
                     }
 
-                    [class*='design-system-select__option'] {
-                        background-color: var(--grey-70);
-                        color: var(--white);
-                    }
-
-                    [class*='Select-module_multiselect-menu'] {
-                        background-color: var(--grey-70);
-                    }
-                    [class*='design-system-select__option--is-focused'] {
-                        color: var(--blue-40);
-                        background-color: var(--grey-60);
-                    }
-                    [class*='design-system-select__control']:hover {
-                        box-shadow: 0 1px 0 var(--header-netapp-text-hover);
-                        border-bottom: 1px solid var(--blue-40);
-
-                        div {
-                            color: var(--header-netapp-text-hover);
-                        }
-
-                        svg {
-                            --icon-primary-color: var(--header-netapp-text-hover);
-                        }
-                    }
-
-                    [class*='design-system-select__control'] {
-                        border-bottom: 2px solid var(--content-background);
-                        svg {
-                            --icon-primary-color: var(--white);
+                    svg {
+                        cursor: pointer;
+                        &:hover {
+                            fill: var(--text-primary);
                         }
                     }
                 }
+            }
+        }
+
+        .cloudFormationButtonContainer {
+            height: 64px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--grey-65);
+            button {
+                height: 32px;
+                background: none !important;
+                --button-min-width: 480px;
+                color: var(--blue-40);
+                border: 1px solid var(--blue-40) !important;
+
+                span {
+                    text-transform: none !important;
+                }
+            }
+
+            button:hover {
+                color: var(--blue-30) !important;
+                border: 1px solid var(--blue-30) !important;
+                background-color: var(--grey-60) !important;
             }
         }
 
@@ -283,6 +337,11 @@
             padding: 10px 32px 0 40px;
 
             .scrollContainer {
+                &::-webkit-scrollbar {
+                    width: 4px;
+                    height: 4px;
+                    background-color: #858c95;
+                }
                 overflow-y: auto;
                 height: calc(100% - 16px);
                 width: calc(100% + 16px);
@@ -324,11 +383,16 @@
                 }
             }
         }
+
+        .thirdBarHeight {
+            max-height: calc(87vh - 174px);
+            height: calc(87vh - 174px);
+        }
     }
 
     ::-webkit-scrollbar {
         width: 4px;
-        height: 4px;
+        height: 6px;
         background-color: #858c95;
     }
 
@@ -336,7 +400,7 @@
         border-radius: 4px;
         background-color: #858c95;
         width: 4px;
-        height: 4px;
+        height: 6px;
         -webkit-box-shadow: inset 0 0 6px var(--grey-25);
         box-shadow: inset 0 0 6px var(--grey-25);
     }
@@ -350,6 +414,11 @@
 
     .highlightClass {
         background-color: var(--grey-30);
+    }
+
+    .awsCliHighlightClass {
+        color: var(--blue-30);
+        background-color: transparent;
     }
 
     [class*='SearchInput-module_base'] {
