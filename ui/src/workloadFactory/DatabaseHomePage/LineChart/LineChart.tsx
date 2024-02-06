@@ -3,7 +3,7 @@ import { Chart, registerables } from 'chart.js';
 import { Typography } from '@netapp/design-system';
 import { ReactComponent as NoData } from '../../../assets/empty table message.svg';
 import styles from './LineChart.module.scss';
-import { last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
+import { getShiftedHoursList, last14Days, last30Days, lastSevenDays } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 const moment = require('moment');
 
@@ -40,21 +40,8 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
     });
 
     const formattedLast24Hour = () => {
-        const dateStr = Date.now().toString();
-        let hr = moment(new Date(parseInt(dateStr))).format('HH');
-        if (hr > 0 && hr <= 4) {
-            return ['08:00', '12:00', '16:00', '20:00', '00:00', '04:00'];
-        } else if (hr > 4 && hr <= 8) {
-            return ['12:00', '16:00', '20:00', '00:00', '04:00', '08:00'];
-        } else if (hr > 8 && hr <= 12) {
-            return ['16:00', '20:00', '00:00', '04:00', '08:00', '12:00'];
-        } else if (hr > 12 && hr <= 16) {
-            return ['20:00', '00:00', '04:00', '08:00', '12:00', '16:00'];
-        } else if (hr > 16 && hr <= 20) {
-            return ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
-        } else if (hr > 20 && hr <= 24) {
-            return ['04:00', '08:00', '12:00', '16:00', '20:00', '00:00'];
-        }
+        const baseList = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+        return getShiftedHoursList(baseList);
     };
 
     useEffect(() => {
@@ -102,6 +89,36 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
         const constructDataFailed = () => {
             return timelineData?.failed;
+        };
+
+        const setMaxGraceValue = () => {
+            if (
+                timelineData?.completed &&
+                timelineData?.completed.length &&
+                timelineData?.failed &&
+                timelineData?.failed.length
+            ) {
+                const combinedArr = [...timelineData?.completed, ...timelineData?.failed];
+                const maxVal = Math.max(...combinedArr);
+                switch (true) {
+                    case maxVal === 1:
+                    case maxVal === 3:
+                    case maxVal === 7:
+                    case maxVal === 6:
+                        return 1;
+                    case maxVal === 2:
+                    case maxVal === 5:
+                        return 2;
+                    case maxVal === 4:
+                        return 4;
+                    case maxVal < 100:
+                        return 10;
+                    default:
+                        return 100;
+                }
+            } else {
+                return 1;
+            }
         };
         //@ts-ignore
         var mayBarChart = new Chart(ctx, {
@@ -186,9 +203,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
                     y: {
                         //display: false,
                         beginAtZero: true,
-                        grace: 5,
+                        grace: setMaxGraceValue(),
+
                         ticks: {
-                            color: isDarkTheme ? '#fff' : '#404040'
+                            color: isDarkTheme ? '#fff' : '#404040',
+
+                            maxTicksLimit: 5
                         }
                         // stacked: true
                     }
@@ -207,11 +227,12 @@ const LineChart = ({ startColor, endColor, selectedTimeFrame, timelineData }: co
 
     return (
         <div className={styles.lineChart}>
-            {!timelineData || timelineData?.completed?.length === 0 &&  
-                <div className={styles.noData}>
-                    <NoData />
-                </div>
-            }
+            {!timelineData ||
+                (timelineData?.completed?.length === 0 && (
+                    <div className={styles.noData}>
+                        <NoData />
+                    </div>
+                ))}
             <canvas ref={chartRef} width={336} height={131}></canvas>
 
             {/* <Typography variant="Semibold_14" className={styles.text}>

@@ -1,6 +1,6 @@
 import styles from './CodeBox.module.scss';
 import { ReactComponent as VectorIcon } from '../../../assets/vector-icon.svg';
-import { ReactComponent as Copy } from '../../../assets/copyBlackBackground ❇️.svg';
+import { ReactComponent as Copy } from '../../../assets/copyBlackBackground.svg';
 import { ReactComponent as Download } from '../../../assets/downloadBlackBackground.svg';
 
 import { Typography, useDialog, Popover, Button } from '@netapp/design-system';
@@ -9,7 +9,12 @@ import { CODE_VIEWER, GENERAL } from '../../../utils/appConstants';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import HighlighterWord from '../../../workloadFactory/DatabaseHomePage/Highlighter/Highlighter';
 import { TemplateRes } from '../../../utils/types/databaseHomeTypes';
-import { cfDownloadName, generateOptionType, getCredDetails, handleDownloadYAML } from '../../../utils/utilityFunctions';
+import {
+    cfDownloadName,
+    generateOptionType,
+    getCredDetails,
+    handleDownloadYAML
+} from '../../../utils/utilityFunctions';
 import { ReactComponent as ComingSoon } from '../../../assets/ComingSoon.svg';
 //@ts-ignore
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -18,7 +23,7 @@ import { resetChecksAfterLoad } from '../Configuration/LoadConfiguration';
 import { useDispatch } from 'react-redux';
 import { getBaseUrl, useGetTemplatesMutation } from '../../../utils/apiService';
 import { setIsLoading } from '../../../store/mssql/msSqlActionSlice';
-import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE } from '../../../utils/consts';
+import { AWS_CLI_HIGHLIGHT_STRINGS, CRED_PLACEHOLDERS, CURL_REQ_TEMPLATE, UI_IDS } from '../../../utils/consts';
 
 import { createMssqlPayload } from '../MSSqlServer/MSSqlFooter/createSqlServer';
 //@ts-ignore
@@ -400,6 +405,16 @@ const CodeBox = () => {
         }
     };
 
+    const setCssId = () => {
+        if (dropDownValue === CODE_VIEWER.CLOUDFORMATION) {
+            return UI_IDS.WIZARD_CODEBOX_CF;
+        } else if (dropDownValue === CODE_VIEWER.AWS_CLI) {
+            return UI_IDS.WIZARD_CODEBOX_AWS_CLI;
+        } else if (dropDownValue === CODE_VIEWER.REST_API) {
+            return UI_IDS.WIZARD_CODEBOX_REST_API;
+        }
+    };
+
     //Logic for Scroll space ends here
 
     return (
@@ -449,6 +464,7 @@ const CodeBox = () => {
                 </div> */}
                 <div className={styles.inputBox} style={{ color: 'var(--white)' }}>
                     <SelectField
+                        id={setCssId()}
                         isClearable={false}
                         value={generateOptionType(dropDownValue, dropDownValue, '', false, '')}
                         onChange={(selectedOptions: any): void => {
@@ -497,7 +513,7 @@ const CodeBox = () => {
                                     children={CODE_VIEWER.COPIED_TO_CLIPBOARD}
                                     container={
                                         <CopyToClipboard text={copyResponseData()}>
-                                            <div className={styles.menuItem}>
+                                            <div className={styles.menuItem} id={UI_IDS.WIZARD_CODEBOX_COPY}>
                                                 <Copy />
                                             </div>
                                         </CopyToClipboard>
@@ -513,11 +529,19 @@ const CodeBox = () => {
                 </div>
 
                 {/* Cloud formation button */}
-                <div className={styles.cloudFormationButtonContainer}>
-                    <Button variant="secondary" onClick={() => handleRedirectToCF()}>
-                        {GENERAL.SAVE_FORM_AS_CLOUD}
-                    </Button>
-                </div>
+                {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                    !isRightPanelTemplateLoading &&
+                    rightPanelTemplateResponse?.template && (
+                        <div className={styles.cloudFormationButtonContainer}>
+                            <Button
+                                variant="secondary"
+                                onClick={() => handleRedirectToCF()}
+                                id={UI_IDS.WIZARD_REDIRECT_TO_CF}
+                            >
+                                {GENERAL.SAVE_FORM_AS_CLOUD}
+                            </Button>
+                        </div>
+                    )}
 
                 <div
                     className={

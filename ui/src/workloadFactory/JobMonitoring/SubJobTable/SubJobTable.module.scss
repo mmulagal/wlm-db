@@ -27,6 +27,12 @@
         [class*='Table-module_horizontal-scroll'] {
             visibility: hidden;
         }
+
+        [class*='Table-module_row'] {
+            span {
+                background-color: var(--main-background) !important;
+            }
+        }
     }
 
     .statusbar {
@@ -81,7 +87,9 @@
         }
     }
 
-    [class*='Table-module_cell'] {
-        background-color: var(--main-background) !important;
+    [class*='SubJobTable_table'] {
+        [class*='Table-module_cell'] {
+            background-color: var(--main-background) !important;
+        }
     }
 }

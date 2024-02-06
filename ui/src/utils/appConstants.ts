@@ -93,7 +93,12 @@ export const GENERAL = {
     STEP_TWO: 'Option 2:',
     ERROR: 'Error:',
     NO_CRED: 'No Credentials.',
-    CREATE_PERMISSION_ERROR:
+    CREATE_PERMISSION_ERROR: [
+        'Workload Factory is unable to validate sufficient permissions. Redirect to ',
+        'AWS CloudFormation',
+        ' to complete this task. Ensure that you have the CloudFormation '
+    ],
+    CREATE_PERMISSION_ERROR_CHATBOT:
         'Workload Factory is unable to validate sufficient permissions. Redirect to AWS CloudFormation through the Codebox on the right to complete this task. Ensure that you have the CloudFormation ',
     NAVIGATE_TO: ['Go to the', ' and add the required credentials.'],
     STEP_TWO_TEXT: [
@@ -253,6 +258,9 @@ export const GENERAL = {
         'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
     USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
+    USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example:',
+    USERNAME_EXAMPLE: '"johnDoe"',
+    USERNAME_TOOLTIP4: 'The user name must contain at most 20 alphanumeric characters.',
 
     PASSWORD_MIN_LENGTH_8: 'Password must be atleast 8 characters long',
     PASSWORD_CRED_1:
@@ -297,9 +305,9 @@ export const GENERAL = {
         '. Estimated time: Up to 2 hours. We will notify you as soon as the deployment is completed.'
     ],
     CREATE_INFO_MESSAGE_WLM: [
-        'Microsoft SQL Server and FSxN for ONTAP deployment ',
-        'with stack name ',
-        ' has been triggered. Estimated time: Up to 2 hours.'
+        'Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. Track progress using ',
+        'Job monitoring',
+        '. Estimated time: Up to 2 hours.'
     ],
     IP_DOMAIN: 'SQL Server IP address or domain name',
     AUTHENTICATION_TYPE: 'Authentication type',
@@ -352,6 +360,7 @@ export const GENERAL = {
     DEFAULT: 'Default',
     CONFIGURATION: 'Configuration',
     PD_DISABLED: 'Disabled',
+    ENABLED: 'Enabled',
     YES: 'Yes',
     PD_AUTO_CREATE: 'Automatically create based on user selection',
     NO: 'No',
@@ -381,7 +390,7 @@ export const GENERAL = {
     NOT_PROTECTED: 'Not protected',
     PROTECTION_TOOLTIP: [' out of ', ' databases are protected'],
     AWS_BACKUP: 'AWS backup',
-    FSX_ONTAP_SNAPSHOTS: 'FSx ONTAP Snapshots',
+    FSX_ONTAP_SNAPSHOTS: 'FSx for ONTAP Snapshots',
     SQL_SERVER_BACKUP: 'Native SQL server backup',
     PROTECTED_BY: 'Protected By',
     DEPLOY_NEW_DATABASE: 'Deploy',
@@ -397,7 +406,7 @@ export const GENERAL = {
     DB_HOST_STORAGE_SAVINGS: 'Storage savings',
     DB_SS_TT_1:
         'Shows cumulative storage savings across Primary storage achieved as a result of Dedupe, Compression, Snapshots and thin Clones. ',
-    DB_SS_TT_2: 'Calculation is based on unique FSx ONTAP instance',
+    DB_SS_TT_2: 'Calculation is based on unique FSx for ONTAP instance',
     DB_HOST_ESTIMATED_COST: 'Estimated Cost',
     DB_HOST_TYPE: 'Type',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',
@@ -407,9 +416,9 @@ export const GENERAL = {
     JOB_STATUS: 'Job status',
     JOB_STATUS_DAYS: '(Last 30 days)',
     VIEW_JOB_MONITORING: 'View job monitoring',
-    JOB_STATUS_SUCCESS: 'Success',
+    JOB_STATUS_COMPLETED: 'Completed',
     JOB_STATUS_FAILED: 'Failed',
-    JOB_STATUS_INITIALIZING: 'In Progress',
+    JOB_STATUS_RUNNING: 'Running',
     JOB_STATUS_JOBS: ' Jobs',
     JOBS_DISTRIBUTION: 'Jobs distribution',
     JOB_DISTRIBUTION: 'Job distribution',
@@ -498,7 +507,7 @@ export const GENERAL = {
     JM_RUNNING: 'Running',
     JM_DOWNLOAD_PROGRESS: 'Download jobs table is in progress',
     JM_DOWNLOAD_SUCCESS: 'Jobs table downloaded successfully',
-    DEMO_TITLE: 'This is a Demo account',
+    DEMO_TITLE: 'Redirect to CloudFormation',
     DEMO_CONTENT:
         'This is a Demo account. In every other account you may have, you will be redirected to AWS CloudFormation service to complete the operation.'
 };
@@ -568,9 +577,14 @@ export const CHATBOT_FIELD_MAPPING: any = {
 
 export const CHATBOT = {
     WELCOME_PAGE: {
-        DB_WORKLOAD_EXPERT: 'Database Workload expert',
+        DB_WORKLOAD_EXPERT: 'Database workload expert',
         WELCOME_MSG:
-            "Hello! I'm your virtual assistant for database lifecycle management. Use it to learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation."
+            "Hello! I'm your virtual assistant for database lifecycle management. I can help you learn, deploy, and understand operations according to best practices. Enter a prompt or choose a suggestion to start a conversation.",
+        RESUME_DEPLOYMENT_MSG:
+            'Hi, we see that you already initiated values for deployment. How would you like to proceed?',
+        ADVANCED_CREATE_MSG:
+            'Deployment via chatbot is supported only with the easy create option, which provides some predefined configuration settings based on recommended best practices. Would you like to continue?',
+        START_NEW_CHAT: 'Start new chat'
     },
     HEADER: {
         PREVIEW: 'Preview'

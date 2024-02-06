@@ -72,11 +72,20 @@ const EstimatedCost = () => {
     };
 
     useEffect(() => {
+        let validDisk = false;
+        if (diskSize && diskSizeUnit && 
+            (
+                (diskSizeUnit === 'TiB' && Number(diskSize) <= 130 && Number(diskSize) >= 1) ||
+                (diskSizeUnit === 'GiB' && Number(diskSize) <= 133120 && Number(diskSize) >= 120)
+            )
+        ) {
+            validDisk = true;
+        }
         if (
             regionValue &&
             instanceTypeName &&
             sqlSoftwareTypeValue &&
-            diskSize &&
+            validDisk &&
             (iopsValueType !== GENERAL.USER_PROVISIONED ||
                 (iopsValueType === GENERAL.USER_PROVISIONED &&
                     (iopsValue === '' || (Number(iopsValue) >= 3072 && Number(iopsValue) <= 160000))))

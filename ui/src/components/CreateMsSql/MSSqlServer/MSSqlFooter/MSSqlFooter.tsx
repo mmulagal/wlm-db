@@ -1,18 +1,20 @@
 import { Button, useDialog, Typography } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { FORM_TO_WLF_NAVIGATE, PRODUCTION, TIMELINE_PROD_LINK, TIMELINE_STAGE_LINK } from '../../../../utils/consts';
-import { setIsLoading, setPermissionWarning } from '../../../../store/mssql/msSqlActionSlice';
+import {
+    setDeployRedirectToCfLink,
+    setIsLoading,
+    setPermissionWarning
+} from '../../../../store/mssql/msSqlActionSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDeploySqlTemplateMutation } from '../../../../utils/apiService';
 import { navigateToCanvas } from '../../../../utils/appConfig';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { useNavigate } from 'react-router-dom';
 import { handleCreateSQLServer } from './createSqlServer';
-import DialogComponent from '../../../../common/Dialog/DialogComponent';
 
 const MSSqlFooter = () => {
-    const { setDialog } = useDialog();
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -20,7 +22,6 @@ const MSSqlFooter = () => {
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
     const isWorkloadFactoryStatus = state.auth?.isWorkloadFactory;
-    const isDemoMode = state.auth?.isDemoMode;
 
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
 
@@ -28,6 +29,7 @@ const MSSqlFooter = () => {
         const payload = handleCreateSQLServer(state, dispatch);
         if (payload) {
             dispatch(setIsLoading(true));
+            dispatch(setDeployRedirectToCfLink(null));
             deploySqlTemplate({ credentialId: selectedCredId, region: selectedRegionCode, payload: payload })
                 .then((data: any) => {
                     dispatch(setIsLoading(false));
@@ -41,6 +43,7 @@ const MSSqlFooter = () => {
                         } else if (url) {
                             // If url comes it means it has view permissions so it will open AWS account accordion
                             dispatch(setPermissionWarning(true));
+                            dispatch(setDeployRedirectToCfLink(url));
                         }
                     }
                 })
@@ -50,22 +53,8 @@ const MSSqlFooter = () => {
         }
     };
 
-    const openDemoInfoDialog = (stackUrl: string) => {
-        if (isDemoMode) {
-            setDialog(
-                <DialogComponent
-                    header={GENERAL.DEMO_TITLE}
-                    content={<Typography variant="Regular_14">{`${GENERAL.DEMO_CONTENT}`}</Typography>}
-                    primaryButton={GENERAL.CONTINUE}
-                    callback={() => {}}
-                />
-            );
-        } else {
-            window.open(stackUrl, '_blank', 'noopener');
-        }
-    };
-
     const fullPermissionFlow = (stackName: string, stackUrl: string) => {
+        let notificationMsg: string | number | NodeJS.Timeout | undefined;
         // Just show notification in case of full permission and redirect to Homepage after 3 sec
         if (stackName && stackName.includes('/')) {
             stackName = stackName.split('/')[1];
@@ -75,15 +64,21 @@ const MSSqlFooter = () => {
             message = (
                 <>
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
-                    {stackName && !stackUrl ? GENERAL.CREATE_INFO_MESSAGE_WLM[1] + stackName : ''}
-                    {stackName && stackUrl && (
+                    {
                         <>
-                            {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
-                            <Button Component="button" variant="link" onClick={() => openDemoInfoDialog(stackUrl)}>
-                                {stackName}
+                            <Button
+                                Component="button"
+                                variant="text"
+                                onClick={() => {
+                                    clearTimeout(notificationMsg);
+                                    navigate('../job-monitor');
+                                    dispatch(clearNotifications());
+                                }}
+                            >
+                                {GENERAL.CREATE_INFO_MESSAGE_WLM[1]}
                             </Button>
                         </>
-                    )}
+                    }
                     {GENERAL.CREATE_INFO_MESSAGE_WLM[2]}
                 </>
             );
@@ -119,7 +114,7 @@ const MSSqlFooter = () => {
             );
         }
         dispatch(addNotification({ notificationType: NOTIFICATION_TYPES.INFO, message: message }));
-        setTimeout(() => {
+        notificationMsg = setTimeout(() => {
             isWorkloadFactoryStatus ? navigate(FORM_TO_WLF_NAVIGATE) : navigateToCanvas('/');
         }, 3000);
     };

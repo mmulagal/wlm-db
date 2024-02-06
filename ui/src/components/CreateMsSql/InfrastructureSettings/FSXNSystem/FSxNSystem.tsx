@@ -49,6 +49,7 @@ const FSxNSystem = () => {
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const deploymentMode = useAppSelector(state => state.mssqlForm.dbDeploymentModel);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const [password, setPassword] = useState('');
 
@@ -123,7 +124,7 @@ const FSxNSystem = () => {
     }, [fsxnData, selectedZone1, selectedZone2, deploymentMode]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setExistingFsxnName(generateExistingFsx[0]));
             dispatch(setFsxNExistingUserName(FSXADMIN));
         }

@@ -14,4 +14,7 @@ export interface ChatbotEntities {
         type: 'none' | 'text' | 'password' | 'number';
         fieldName: string;
     };
+    latestIntentMsg: string;
+    resumeCount: number;
+    movingFromChatbot: boolean;
 }

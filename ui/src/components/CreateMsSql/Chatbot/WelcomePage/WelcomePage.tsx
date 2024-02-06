@@ -4,12 +4,24 @@ import { ReactComponent as BedrockPoweredIcon } from '../../../../assets/bedrock
 import styles from './WelcomePage.module.scss';
 import { CHATBOT_WELCOME_CARDS } from '../../../../utils/consts';
 import { CHATBOT } from '../../../../utils/appConstants';
+import { useDispatch } from 'react-redux';
+import { setLatestIntentMsg, setMessages } from '../../../../store/chatbot/chatbotSlice';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 type WelcomePagePropTypes = {
-    handleSendMsg: (msg: string | undefined) => void;
+    handleSendMsg: (msg: string | undefined, add?: boolean, updatedMessages?: any) => void;
 };
 
 const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
+    const dispatch = useDispatch();
+    const messages = useAppSelector(state => state.chatbot.messages);
+
+    const askSuggested = (suggestionObj: any) => {
+        const updatedMessages = [...messages, { sender: 'user', msg: suggestionObj.label }];
+        handleSendMsg(suggestionObj.value || suggestionObj.label, false, updatedMessages);
+        dispatch(setMessages(updatedMessages));
+    };
+
     return (
         <div className={styles['welcome-image-container']}>
             <BedrockPoweredIcon />
@@ -21,26 +33,41 @@ const WelcomePage = ({ handleSendMsg }: WelcomePagePropTypes) => {
             </div>
             <div className={styles['welcome-cards-container']}>
                 <div className={styles['card-row']}>
-                    <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[0])}>
+                    <div
+                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        onClick={() => {
+                            askSuggested(CHATBOT_WELCOME_CARDS[0]);
+                            dispatch(setLatestIntentMsg(CHATBOT_WELCOME_CARDS[0].label));
+                        }}
+                    >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
-                            {CHATBOT_WELCOME_CARDS[0]}
+                            {CHATBOT_WELCOME_CARDS[0].label}
                         </Typography>
                     </div>
-                    <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[1])}>
+                    <div
+                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        onClick={() => askSuggested(CHATBOT_WELCOME_CARDS[1])}
+                    >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
-                            {CHATBOT_WELCOME_CARDS[1]}
+                            {CHATBOT_WELCOME_CARDS[1].label}
                         </Typography>
                     </div>
                 </div>
                 <div className={styles['card-row']}>
-                    <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[2])}>
+                    <div
+                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        onClick={() => askSuggested(CHATBOT_WELCOME_CARDS[2])}
+                    >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
-                            {CHATBOT_WELCOME_CARDS[2]}
+                            {CHATBOT_WELCOME_CARDS[2].label}
                         </Typography>
                     </div>
-                    <div className={styles['card']} onClick={() => handleSendMsg(CHATBOT_WELCOME_CARDS[3])}>
+                    <div
+                        className={`${'chatbot-select-msg'} ${styles['card']}`}
+                        onClick={() => askSuggested(CHATBOT_WELCOME_CARDS[3])}
+                    >
                         <Typography variant="Regular_14" className={styles['chatbot-card-text']}>
-                            {CHATBOT_WELCOME_CARDS[3]}
+                            {CHATBOT_WELCOME_CARDS[3].label}
                         </Typography>
                     </div>
                 </div>

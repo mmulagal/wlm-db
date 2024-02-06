@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash-es';
 import {
     validateDbSize,
     validateDomain,
@@ -15,7 +16,8 @@ import {
     validateFsx,
     validateCloudWatch,
     validateTags,
-    validateDeploymentEnv
+    validateDeploymentEnv,
+    validateAdScenarioType
 } from './validator';
 import getLogger from '../../utils/logger';
 import {
@@ -55,13 +57,18 @@ import {
     SQL_SERVER_NAME,
     MULTI_AZ,
     TAGS,
-    DEPLOYMENT_ENVIRONMENT
+    DEPLOYMENT_ENVIRONMENT,
+    ENCRYPTION_KEY,
+    KEY_LABEL_MAP,
+    CHATBOT_UI_PARAMS_FSX,
+    BACKTRACE_MESSAGES
 } from './consts';
 
 const logger = getLogger();
 
 type ValidationResponse = {
     key?: string;
+    label?: string;
     status?: string;
     message?: string;
     allowedValues?: any;
@@ -99,50 +106,70 @@ interface Params {
 async function validateParams(
     params: Params,
     oldParams: Params,
-    schemaParams: any
-): Promise<{ errors: Array<ValidationResponse>; params: Params }> {
+    schemaParams: any,
+    backtraceMessage: string = ''
+): Promise<{ error: ValidationResponse; params: Params }> {
     // let errors: { [x: string]: any } = {};
     logger.info('Validate Params', { params, oldParams });
-    let validatedParams: Params = {};
-    const promises = [];
-    const errors: Array<ValidationResponse> = [];
-    for (const reqParam of schemaParams) {
-        if (reqParam.required !== false) {
-            const keys = Object.keys(reqParam);
-            for (const key of keys) {
-                logger.debug('KEY>>>', key, reqParam[key]);
+    const validatedParams: Params = {};
+    // const promises = [];
+    let error: ValidationResponse = {};
 
-                if (Array.isArray(reqParam[key])) {
-                    const recursiveValidationResponse = await validateParams(params, oldParams, reqParam[key]);
-                    logger.debug('Response from Recursive Call>>>', recursiveValidationResponse);
-                    validatedParams = { ...validatedParams, ...recursiveValidationResponse?.params };
-                    if (recursiveValidationResponse?.errors?.length) {
-                        return { errors: recursiveValidationResponse.errors, params: validatedParams };
-                    }
-                } else if (checkIfRequired(reqParam[key].required, params)) {
-                    promises.push(validate(key, params, oldParams));
+    for (const reqParam of schemaParams) {
+        // if (reqParam.required !== false) {
+        const keys = Object.keys(reqParam);
+        for (const key of keys) {
+            logger.debug('KEY>>>', key, reqParam[key]);
+
+            if (checkIfRequired(reqParam[key].required, params)) {
+                const resp = await validate(key, params, oldParams);
+                if ((resp as ValidationResponse)?.status === 'error') {
+                    const currKey = resp.key as string;
+                    delete params[currKey];
+                    delete oldParams[currKey];
+                    delete validatedParams[currKey];
+                    error = resp as ValidationResponse;
+                    error.label = KEY_LABEL_MAP[currKey as keyof typeof KEY_LABEL_MAP];
+                    break;
+                }
+
+                if (resp?.value !== null && resp?.value !== undefined) {
+                    const currKey = resp.key as string;
+                    validatedParams[currKey] = resp.value;
+                    params[currKey] = resp.value;
+                    oldParams[currKey] = resp.value;
+                }
+            }
+        }
+
+        if (!isEmpty(error)) {
+            break;
+        }
+    }
+
+    if (error.allowedValues?.length === 0 && !backtraceMessage) {
+        const { key } = error;
+        for (const obj of CHATBOT_UI_PARAMS_FSX) {
+            if (obj.hasOwnProperty(key as string)) {
+                const { dependsOn } = obj[key as keyof typeof obj] as any;
+                if (dependsOn) {
+                    delete params[dependsOn];
+                    return validateParams(
+                        params,
+                        oldParams,
+                        schemaParams,
+                        BACKTRACE_MESSAGES[key as keyof typeof BACKTRACE_MESSAGES] || ''
+                    );
                 }
             }
         }
     }
-    const responses = await Promise.all(promises);
-    responses.forEach(resp => {
-        if ((resp as ValidationResponse)?.status === 'error') {
-            const currKey = resp.key as string;
-            delete params[currKey];
-            delete oldParams[currKey];
-            delete validatedParams[currKey];
-            errors.push(resp as ValidationResponse);
-        }
 
-        if (resp?.value !== null && resp?.value !== undefined) {
-            const currKey = resp.key as string;
-            validatedParams[currKey] = resp.value;
-            params[currKey] = resp.value;
-            oldParams[currKey] = resp.value;
-        }
-    });
-    return { errors, params: validatedParams };
+    if (backtraceMessage) {
+        error.message = backtraceMessage;
+    }
+
+    return { error, params: validatedParams };
 }
 
 function wrapContext(question: string) {
@@ -188,6 +215,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
             case ROUTE_TABLE_2: {
                 response = await validateVpcId(
                     params[CREDENTIALS_ID],
+                    params[SQL_DEPLOYMENT_MODE],
                     params[REGION],
                     params[VPC_ID],
                     params[AZ_1],
@@ -210,7 +238,10 @@ async function validate(key: string, params: Params, oldParams: Params) {
                 response = await validateImageId(params[CREDENTIALS_ID], params[REGION], params[key], key);
                 break;
             }
-            case AD_SCENARIO_TYPE:
+            case AD_SCENARIO_TYPE: {
+                response = validateAdScenarioType(params[key], key);
+                break;
+            }
             case DNS_IP:
             case DOMAIN_DNS: {
                 response = await validateDomain(
@@ -218,6 +249,7 @@ async function validate(key: string, params: Params, oldParams: Params) {
                     params[REGION],
                     params[DOMAIN_DNS],
                     params[DNS_IP],
+                    params[AD_SCENARIO_TYPE],
                     key
                 );
                 break;
@@ -280,6 +312,16 @@ async function validate(key: string, params: Params, oldParams: Params) {
             }
             case DEPLOYMENT_ENVIRONMENT: {
                 response = validateDeploymentEnv(key, params[key]);
+                break;
+            }
+            case ENCRYPTION_KEY: {
+                response = await validateFsx(
+                    params[CREDENTIALS_ID],
+                    params[REGION],
+                    params[VPC_ID],
+                    params[FSX_FILE_SYSTEM_ID],
+                    key
+                );
                 break;
             }
             default:

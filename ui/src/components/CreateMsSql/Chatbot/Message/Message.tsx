@@ -1,17 +1,17 @@
-import InputComponent from './InputComponent/InputComponent';
 import SelectComponent from './SelectComponent/SelectComponent';
 import { ReactComponent as ChatBotIcon } from '../../../../assets/chatbot-icon.svg';
 import { ReactComponent as UserIcon } from '../../../../assets/user-icon.svg';
 import Confirmation from './ConfirmationComponent/Confirmation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Typography } from '@netapp/design-system';
 
 import styles from './Message.module.scss';
 import TagsComponent from './TagsComponent/TagsComponent';
 import { GENERAL } from '../../../../utils/appConstants';
-import { openCredentialTab } from '../../../../utils/utilityFunctions';
 import { useDispatch } from 'react-redux';
 import { setExpectingResponse } from '../../../../store/chatbot/chatbotSlice';
+import CardComponent from './CardComponent/CardComponent';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 
 type optionsType = {
     value?: string | number;
@@ -26,17 +26,18 @@ type messageType = {
     intent?: any;
     type?: string;
     active?: boolean;
-    errors?: any;
+    error?: any;
     confirmData?: any;
     default?: string;
     disable?: boolean;
     link?: any;
+    customComponent?: any;
 };
 
 type MessagePropType = {
     idx: number;
     msgObj: messageType;
-    handleSelectButtonClicked: (paramObj: any) => void;
+    handleSelectButtonClicked: (paramObj: any, sender?: string) => void;
     handleSendMsg: () => void;
     messages: messageType[];
     isBotReplying: boolean;
@@ -44,34 +45,182 @@ type MessagePropType = {
 };
 
 const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplying, activeField }: MessagePropType) => {
-    const key = 'errors';
+    const key = 'error';
     const isUserInputRequired = msgObj[key];
-    const fieldsArr = msgObj[key] || [];
+    const fieldObj = msgObj[key] || {};
     const [paramObj, setParamObj] = useState({});
     const [errorFields, setErrorFields] = useState<string[]>([]);
     const isLastMessage = idx === messages.length - 1;
     const dispatch = useDispatch();
 
     //@ts-ignore
-    const isContinueDisabled = useMemo(() => {
-        return Object.keys(paramObj).length !== fieldsArr.length || errorFields.length > 0;
-    }, [paramObj, fieldsArr, errorFields]);
-
-    const item = fieldsArr[0];
+    const item = fieldObj;
 
     useEffect(() => {
-        if (fieldsArr?.length) {
-            if (fieldsArr[0]?.type === 'text') {
-                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldsArr[0].key }));
-            } else if (fieldsArr[0]?.type === 'password') {
-                dispatch(setExpectingResponse({ type: 'password', fieldName: fieldsArr[0].key }));
-            } else if (fieldsArr[0]?.type === 'number') {
-                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldsArr[0].key }));
+        if (Object.keys(fieldObj)?.length) {
+            if (fieldObj?.type === 'text') {
+                dispatch(setExpectingResponse({ type: 'text', fieldName: fieldObj.key }));
+            } else if (fieldObj?.type === 'password') {
+                dispatch(setExpectingResponse({ type: 'password', fieldName: fieldObj.key }));
+            } else if (fieldObj?.type === 'number') {
+                dispatch(setExpectingResponse({ type: 'number', fieldName: fieldObj.key }));
             } else {
                 dispatch(setExpectingResponse({ type: 'none', fieldname: '' }));
             }
         }
-    }, [fieldsArr]);
+    }, [fieldObj]);
+
+    const ValidationCriteria = () => {
+        const selectKey = fieldObj?.key;
+        if (selectKey === 'fsxUsername') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.USERNAME_TOOLTIP3}
+                            <span className={styles.highlightText}>{GENERAL.USERNAME_EXAMPLE}</span>
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'fsxPassword') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_FSX_1}
+                        </Typography>
+                    </div>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_FSX_2}
+                        </Typography>
+                    </div>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_FSX_3}
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'serviceAccountName') {
+            return (
+                <div className={styles.userNameTooltip}>
+                    <div className={styles.list}>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>
+                                {GENERAL.USERNAME_TOOLTIP3}
+                                <span className={styles.highlightText}>{GENERAL.USERNAME_EXAMPLE}</span>
+                            </div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP1}</div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP4}</div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>{GENERAL.USERNAME_TOOLTIP2}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        if (selectKey === 'serviceAccountPassword') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.list}>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>
+                                <Typography className={styles.infoMsg} variant="Regular_14">
+                                    {GENERAL.PASSWORD_CRED_1}
+                                </Typography>
+                            </div>
+                        </div>
+                        <div className={styles.subList}>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_1}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_2}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_3}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <div className={styles.bulletContainer}>
+                                <Bullet />
+                                <div className={styles.textWidth}>
+                                    <Typography className={styles.infoMsg} variant="Regular_14">
+                                        {GENERAL.PASSWORD_CRED_LI_4}
+                                    </Typography>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.bulletContainer}>
+                            <Bullet />
+                            <div className={styles.textWidth}>
+                                <Typography className={styles.infoMsg} variant="Regular_14">
+                                    {GENERAL.PASSWORD_CRED_4}
+                                </Typography>
+                            </div>
+                        </div>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'domainUsername') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.USERNAME_TOOLTIP3}
+                            <span className={styles.highlightText}>{GENERAL.USERNAME_EXAMPLE}</span>
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        if (selectKey === 'domainPassword') {
+            return (
+                <Typography variant="Regular_13" className={styles.infoMsg}>
+                    <div className={styles.bulletContainer}>
+                        <Bullet />
+                        <Typography className={styles.infoMsg} variant="Regular_13">
+                            {GENERAL.PASSWORD_MIN_LENGTH_8}
+                        </Typography>
+                    </div>
+                </Typography>
+            );
+        }
+        return null;
+    };
 
     return (
         <>
@@ -85,13 +234,13 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                             msgObj.sender === 'bot' ? styles['bot-icon'] : styles['user-icon']
                         }`}
                     >
-                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon />}
+                        {msgObj.sender === 'bot' ? <ChatBotIcon /> : <UserIcon id="chatbot-user-icon" />}
                     </div>
                     {isUserInputRequired ? (
                         msgObj.active ? (
                             <div className={styles['msg-group-container']}>
                                 <>
-                                    {msgObj.active && item.allowedValues ? (
+                                    {msgObj.active && item.allowedValues && item.type !== 'card' ? (
                                         <div className={styles['select-container']}>
                                             <SelectComponent
                                                 options={
@@ -117,6 +266,7 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                                 activeField={activeField}
                                                 handleSelectButtonClicked={handleSelectButtonClicked}
                                                 link={item.link}
+                                                label={item.label}
                                             />
                                         </div>
                                     ) : (
@@ -126,7 +276,8 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                             }`}
                                         >
-                                            {`${fieldsArr[0].message}`}
+                                            {`${fieldObj.message}`}
+                                            <ValidationCriteria />
                                         </Typography>
                                     )}
                                     {msgObj.active && item.type === 'tags' && (
@@ -139,6 +290,13 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                             }}
                                         />
                                     )}
+                                    {msgObj.active && item.type === 'card' && (
+                                        <CardComponent
+                                            cardList={item.allowedValues}
+                                            handleSelectButtonClicked={handleSelectButtonClicked}
+                                            selectKey={item.key}
+                                        />
+                                    )}
                                 </>
                             </div>
                         ) : (
@@ -148,7 +306,8 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                     msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                                 }`}
                             >
-                                {`${fieldsArr[0].message}`}
+                                {`${fieldObj.message}`}
+                                <ValidationCriteria />
                             </Typography>
                         )
                     ) : msgObj.active && msgObj.type === 'confirm' ? (
@@ -168,7 +327,20 @@ const Message = ({ idx, msgObj, handleSelectButtonClicked, messages, isBotReplyi
                                 msgObj.sender === 'bot' ? styles['bot-text'] : styles['user-text']
                             }`}
                         >
-                            {`${msgObj.msg}`}
+                            <div className={styles.textDiv}>
+                                {`${msgObj.msg}`}
+                                {msgObj?.link && (
+                                    <Button
+                                        Component="button"
+                                        variant="text"
+                                        onClick={() => msgObj?.link?.onLinkClick()}
+                                    >
+                                        {msgObj?.link?.linkText}
+                                    </Button>
+                                )}
+                                {msgObj?.customComponent}
+                            </div>
+                            <ValidationCriteria />
                         </Typography>
                     )}
                 </div>

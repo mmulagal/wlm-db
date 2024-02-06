@@ -56,7 +56,7 @@ import {
     STANDALONE_NETWORK_VIOLATION_MESSAGE,
     FCI_NETWORK_VIOLATION_MESSAGE,
     TEMPLATE_FSX_PASSWORD,
-    TEMPLATE_METADATA_PARAM,
+    TEMPLATE_METRICS,
     TRIGGERED_FROM,
     DEPLOYED_FROM,
     WLMDB,
@@ -69,6 +69,8 @@ import {
     VIEW
 } from '../utils/consts';
 import {
+    createJobMockData,
+    calculateSQLandWindowsVersion,
     deployedStackUrl,
     derivePropertiesFromARN,
     generateDeploymentParams,
@@ -89,6 +91,7 @@ import { Metadata, NetworkViolation } from '../utils/common-types';
 import { encryptString } from './aws/kms-operations';
 import PARAMETERS from '../utils/template-parameters';
 import { getWlmdbPolicy, policyStatement } from '../lib/cloud-manager/wlmdb';
+import { createJobs } from '../lib/database/job';
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
@@ -101,7 +104,7 @@ async function formatTemplateParameters(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string,
     enableCloudWatch: boolean,
-    metadataParam: string,
+    metrics: string,
     credentialsId?: string,
     region?: string,
     skipPasswords?: boolean
@@ -128,12 +131,16 @@ async function formatTemplateParameters(
         { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
-        { ParameterKey: TEMPLATE_METADATA_PARAM, ParameterValue: metadataParam }
+        { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics }
     ];
     if (fsxConfiguration.fsxPassword) {
-        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        if (encryptedFsxPassword) {
-            templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams.push({ ParameterKey: TEMPLATE_FSX_PASSWORD, ParameterValue: encryptedFsxPassword });
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
 
@@ -244,9 +251,11 @@ async function getCloudformationTemplate(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlAmiId, sqlServerName } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
-    const metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlAmiId},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     const { stackName, templateParameters } = await formatTemplateParameters(
         networkConfiguration,
@@ -256,7 +265,7 @@ async function getCloudformationTemplate(
         sqlConfiguration,
         topicArn,
         enableCloudWatch,
-        metadataParam,
+        metrics,
         credentialsId,
         region,
         true
@@ -317,20 +326,21 @@ async function getCloudformationTemplate(
         masterTemplateContents = await response.Body?.transformToString();
     }
     // Generate parameters list for cli command
+    const specialCharacters = ['!', '&'];
     let cliParams: string = '';
     templateParameters.forEach(e => {
         if (e.ParameterKey === FSX_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 fsxConfiguration.fsxPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else if (e.ParameterKey === SQL_SA_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 sqlConfiguration.serviceAccountPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else if (e.ParameterKey === DOMAIN_ADMIN_PASSWORD) {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${escapeRegExp(
                 adConfiguration.domainPassword
-            ).replace('!', '\\!')}" `;
+            ).replace(new RegExp(`[${specialCharacters.join('')}]`, 'g'), '\\$&')}" `;
         } else {
             cliParams += `ParameterKey="${e.ParameterKey}",ParameterValue="${e.ParameterValue?.toString()}" `;
         }
@@ -342,7 +352,9 @@ async function getCloudformationTemplate(
     // Generate parameters list for quick create url command
     let urlParams: string = `stackName=${stackName}`;
     templateParameters.forEach(e => {
-        urlParams += `&param_${e.ParameterKey}=${e.ParameterValue}`;
+        urlParams += `&param_${e.ParameterKey}=${
+            e.ParameterValue ? encodeURIComponent(e.ParameterValue) : e.ParameterValue
+        }`;
     });
     const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
@@ -381,16 +393,18 @@ async function deployStackOrCreateTemplateURL(
     });
 
     const { workloadInstanceType } = ec2Configuration;
-    const { sqlAmiId, sqlServerName } = sqlConfiguration;
+    const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
-    let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlAmiId},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
+    const [sqlVersion] = calculateSQLandWindowsVersion(sqlAmiName);
+    // TODO we can make describe image aws sdk call for sqlAmiName instead of UI sending it in payload as it is error prone
+    let metrics = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
         const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length) {
-            metadataParam += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
@@ -401,13 +415,15 @@ async function deployStackOrCreateTemplateURL(
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
-                metadataParam,
+                metrics,
                 tags
             );
-            response.missingPermissions = MISSING_PERMISSIONS(permissions);
+            const errMsg = MISSING_PERMISSIONS([...permissions]);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
             return response;
         }
-        metadataParam += `,${DEPLOYED_FROM}:${WLMDB}`;
+        metrics += `,${DEPLOYED_FROM}:${WLMDB}`;
         return await deployCloudFormationTemplate(
             credentialsId,
             region,
@@ -418,13 +434,13 @@ async function deployStackOrCreateTemplateURL(
             sqlConfiguration,
             topicArn,
             enableCloudWatch,
-            metadataParam,
+            metrics,
             tags
         );
     } catch (err: any) {
         // missingPermissions throws exception if iam:SimulatePrincipalPolicy is not in permissions
         if (err?.message?.includes('iam:SimulatePrincipalPolicy')) {
-            metadataParam += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
+            metrics += `,${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION}`;
             const response = await createCloudFormationTemplateForUserDeployment(
                 credentialsId,
                 region,
@@ -435,10 +451,12 @@ async function deployStackOrCreateTemplateURL(
                 sqlConfiguration,
                 topicArn,
                 enableCloudWatch,
-                metadataParam,
+                metrics,
                 tags
             );
-            response.missingPermissions = MISSING_PERMISSIONS(err?.message);
+            const errMsg = MISSING_PERMISSIONS(err?.message);
+            response.missingPermissions = errMsg;
+            logger.info(errMsg);
             return response;
         }
         throw createError(
@@ -458,7 +476,7 @@ async function createCloudFormationTemplateForUserDeployment(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
-    metadataParam: string,
+    metrics: string,
     tags?: Array<{ key: string; value: string }>
 ): Promise<CloudFormationDeploymentResponseType> {
     logger.info('Create cloud formation template for user deployment', {
@@ -469,7 +487,7 @@ async function createCloudFormationTemplateForUserDeployment(
         adConfiguration,
         fsxConfiguration,
         sqlConfiguration,
-        metadataParam,
+        metrics,
         tags
     });
 
@@ -522,9 +540,13 @@ async function createCloudFormationTemplateForUserDeployment(
     ];
     let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
-        const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
-        if (encryptedFsxPassword) {
-            templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encryptedFsxPassword}`;
+        try {
+            const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
+            if (encryptedFsxPassword) {
+                templateParams += `&param_${TEMPLATE_FSX_PASSWORD}=${encodeURIComponent(encryptedFsxPassword)}`;
+            }
+        } catch (error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while encrypting password ${error}.`);
         }
     }
 
@@ -547,7 +569,7 @@ async function createCloudFormationTemplateForUserDeployment(
         ...fsxConfiguration,
         topicArn,
         enableCloudWatch,
-        metadataParam
+        metrics
     };
 
     Object.entries(clubbedParamList).forEach(([key, value]) => {
@@ -599,7 +621,7 @@ async function deployCloudFormationTemplate(
     sqlConfiguration: SQLConfigurationType,
     topicArn: string = '',
     enableCloudWatch: boolean = false,
-    metadataParam: string,
+    metrics: string,
     tags?: Array<{ key: string; value: string }>
 ): Promise<{ cloudFormationStackId: string; cloudFormationUrl: string }> {
     logger.info('Deploy sql cloud formation template ', {
@@ -611,7 +633,7 @@ async function deployCloudFormationTemplate(
         fsxConfiguration,
         sqlConfiguration,
         tags,
-        metadataParam
+        metrics
     });
 
     const vpcValidationCheck: NetworkViolation = isNetworkConfigurationViolated(
@@ -637,7 +659,7 @@ async function deployCloudFormationTemplate(
         sqlConfiguration,
         topicArn,
         enableCloudWatch,
-        metadataParam,
+        metrics,
         credentialsId,
         region
     );
@@ -697,7 +719,8 @@ async function deployCloudFormationTemplate(
             stackName,
             region,
             credentialsId,
-            sqlConfiguration?.sqlDeploymentMode
+            sqlConfiguration?.sqlDeploymentMode,
+            fsxConfiguration?.fsxFileSystemId
         );
     }
     return { cloudFormationStackId: deployStackResponse.StackId!, cloudFormationUrl: cfUrl };
@@ -771,15 +794,19 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     const missingPermissions: string[] = [];
     await Promise.all(
         policyResourceActions.map(async ({ resourceArn, resourceActions, resourceConditions }) => {
-            const { permissions } = await getMissingPermissionsList(
-                credentialsId,
-                region,
-                resourceActions,
-                resourceArn,
-                resourceConditions
-            );
-            if (permissions.length > 0) {
-                missingPermissions.push(...permissions);
+            try {
+                const { permissions } = await getMissingPermissionsList(
+                    credentialsId,
+                    region,
+                    resourceActions,
+                    resourceArn,
+                    resourceConditions
+                );
+                if (permissions.length > 0) {
+                    missingPermissions.push(...permissions);
+                }
+            } catch (error) {
+                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while checking permissions ${error}.`);
             }
         })
     );
@@ -793,15 +820,17 @@ async function createDeploymentMockDataInDB(
     stackName: string,
     region: string,
     credentialId: string,
-    sqlDeploymentMode: string
+    sqlDeploymentMode: string,
+    fsxFileSystemId: string | undefined
 ) {
-    logger.info('create deployment mock data in database', {
+    logger.info('create deployment, resource and job table mock data in database', {
         accountId,
         stackId,
         stackName,
         region,
         credentialId,
-        sqlDeploymentMode
+        sqlDeploymentMode,
+        fsxFileSystemId
     });
 
     const cloudProviderId = randomize('0', 8);
@@ -854,6 +883,9 @@ async function createDeploymentMockDataInDB(
         region,
         metadata
     });
+
+    const data = await createJobMockData(accountId, resourceName, stackName, sqlDeploymentMode, fsxFileSystemId);
+    await createJobs(accountId, data);
 }
 
 export {

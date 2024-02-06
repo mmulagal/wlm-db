@@ -1,7 +1,9 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import ms from 'ms';
 import getLogger from '../../utils/logger';
 import { prisma } from '../../utils/prisma-utils';
 import { checkAccount } from './db';
+import { JOBS_DEFAULT_TIME_RANGE } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -65,28 +67,35 @@ async function listJobs(
 
     accountId = checkAccount(accountId);
 
+    // Default time range is 30 days
+    startTime = startTime || Date.now() - ms(JOBS_DEFAULT_TIME_RANGE);
+    endTime = endTime || Date.now();
+
     return prisma.client.job.findMany({
         where: {
             account_id: accountId,
             parent_job_id: parentJobId,
             ...(type && { type: { in: type } }),
             ...(status && { status: { in: status } }),
-            ...(jobname && { name: jobname }),
-            ...(initiator && { initiator }),
-            ...(startTime !== undefined && {
-                start_time: {
-                    gte: new Date(startTime)
+            ...(jobname && {
+                name: {
+                    contains: jobname
                 }
             }),
-            ...(endTime !== undefined && {
-                start_time: {
-                    lte: new Date(endTime)
-                }
-            })
+            ...(initiator && { initiator }),
+            start_time: {
+                gte: new Date(startTime),
+                lte: new Date(endTime)
+            }
         },
-        orderBy: {
-            [sort]: `${sortOrder}`
-        },
+        orderBy: [
+            {
+                [sort]: `${sortOrder}`
+            },
+            {
+                id: 'desc'
+            }
+        ],
         take: pageSize,
         ...(nextToken && {
             skip: 1,
@@ -111,8 +120,6 @@ async function createJobs(accountId: string, jobs: readOnlyJob[]) {
     logger.info('Creating jobs', { accountId, jobs: jobs?.length });
 
     logger.debug('Bulk creating jobs', { jobs });
-
-    accountId = checkAccount(accountId);
 
     // createMany doesnt return the records created, but only the count, it suits our current requirement, in future if ther is an ask to return the created record Ids, refer to comments in https://github.com/prisma/prisma/issues/8131
     return prisma.client.job.createMany({
@@ -188,6 +195,8 @@ async function deleteOlderJobs(olderDate: number) {
 async function getJobCountByStatus(accountId: string, startTime: number, endTime: number) {
     logger.info('Getting Job Count By Status', { accountId, startTime, endTime });
 
+    accountId = checkAccount(accountId);
+
     return prisma.client.job.groupBy({
         where: {
             account_id: accountId,
@@ -204,6 +213,30 @@ async function getJobCountByStatus(accountId: string, startTime: number, endTime
     });
 }
 
+async function groupJobsByTimeAndStatus(accountId: string, startTime: number, endTime: number) {
+    logger.info('Group Jobs By Time And Status', { accountId, startTime, endTime });
+
+    accountId = checkAccount(accountId);
+
+    return prisma.client.job.groupBy({
+        where: {
+            account_id: accountId,
+            parent_job_id: null,
+            end_time: {
+                not: null
+            },
+            start_time: {
+                gte: new Date(startTime),
+                lte: new Date(endTime)
+            }
+        },
+        by: ['end_time', 'status'],
+        _count: {
+            _all: true
+        }
+    });
+}
+
 export {
     countParentJobs,
     listJobs,
@@ -213,5 +246,6 @@ export {
     deleteJobs,
     deleteJobsOfAccount,
     deleteOlderJobs,
-    getJobCountByStatus
+    getJobCountByStatus,
+    groupJobsByTimeAndStatus
 };

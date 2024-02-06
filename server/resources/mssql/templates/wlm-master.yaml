@@ -1,10 +1,8 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description:
-  This template deploys Windows SQL Server in chosen deployment model (Failover Cluster or Standalone). 
-  **WARNING** This template creates Amazon EC2 Windows instance and related
-  resources. You will be billed for the AWS resources used if you create a stack from
-  this template.
+Description: This template deploys Windows SQL Server in the chosen deployment model (failover cluster instances or a standalone instance). 
+            This template creates an Amazon EC2 Windows instance and related resources.
+            You will be billed for the AWS resources used if you create a stack from this template.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -35,7 +33,7 @@ Metadata:
           - DNSIpAddresses
           - DomainMemberSGID
       - Label:
-          default: Amazon FSx for ONTAP Volume Configuration
+          default: Amazon FSx for ONTAP configuration
         Parameters: 
           - DeploymentMode
           - FSxFileSystemName
@@ -93,61 +91,61 @@ Metadata:
       DeploymentMode:
         default: File system deployment mode
       ApplicationName:
-        default: Application Name
+        default: Application name
       CfDeployRoleName:
-        default: Cloud formation deployment role name
+        default: CloudFormation deployment role name
       UniqueID:
         default: Unique ID for WLMDB SQL resource group
       ADScenarioType:
-        default: AD Scenario Type
+        default: AD scenario type
       DNSIpAddresses:
-        default: DNS IP Addresses
+        default: DNS IP addresses
       DomainAdminUser:
-        default: Domain Admin User Name
+        default: Domain admin user name
       DomainAdminPassword:
-        default: Domain Admin Password
+        default: Domain admin password
       DomainDNSName:
-        default: Domain DNS Name
+        default: Domain DNS name
       SqlFSxWSFCName:
         default: Windows Server Failover Cluster name
       KeyPairName:
-        default: Key Pair Name
+        default: Key pair name
       AssetsBucketName:
-        default: WLMDB S3 Bucket Name
+        default: WLMDB S3 bucket name
       AssetsS3KeyPrefix:
-        default: WLMDB S3 Key Prefix
+        default: WLMDB S3 key prefix
       SQLAMIID:
-        default: SQL Server Version
+        default: SQL server version
       SQLServiceAccountName:
-        default: Service Account Name
+        default: Service account name
       SQLServiceAccountPassword:
-        default: Service Account Password
+        default: Service account password
       SQLigroupname:
-        default: SQL igroup Name
+        default: SQL igroup name
       SqlServerName:
-        default: SQL Server Name
+        default: SQL server name
       VPCName:
-        default: Name your VPC
+        default: Name of VPC
       VPCCIDR:
         default: VPC CIDR
       VPCID:
         default: VPC ID
       FSxStorageCapacity:
-        default: SSD storage capacity
+        default: FSx for ONTAP storage capacity
       PrivateSubnet1ID:
-        default: Private Subnet 1 ID for the first SQL node for existing VPC e.g subnet-000dc866d93550eb0
+        default: Private subnet ID for the first SQL node, for example, subnet-000dc866d93550eb0 
       PrivateSubnet2ID:
-        default: Private Subnet 2 ID for the second SQL node for existing VPC e.g subnet-000dc866d93550eb0
+        default: Private subnet ID for the second SQL node, for example, subnet-000dc866d93550eb0 
       RouteTable1Id:
-        default: Route Table ID of private subnet 1
+        default: ID of the route table for private subnet 1.
       RouteTable2Id:
-        default: Route Table ID of private subnet 2
+        default: ID of the route table for private subnet 2.
       WorkloadInstanceType:
-        default: Instance Type for Cluster Nodes
+        default: Instance type for cluster nodes
       NodeNetBIOSNames:
-        default: Cluster Nodes NetBIOS Names
+        default: NetBIOS names of cluster nodes
       ONTAPSecurityGroupID:
-        default: Security Group ID for FSxN
+        default: Security Group ID for FSx for ONTAP
       SQLSvmName:
         default: SVM for creating SQL volumes 
       FSxDiskIops:
@@ -157,12 +155,12 @@ Metadata:
       NotificationARN:
         default: (optional) Notification ARN
       ValidationAmi:
-       default: Validation node AMI image id
+       default: Validation node AMI image ID
       SQLDeploymentMode:
         default: SQL server deployment mode
 Parameters: 
   UniqueID:
-    Description: Automation Execution Unique ID.
+    Description: Automation execution unique ID.
     Type: String 
 
   {{DeploymentMode}}
@@ -281,13 +279,8 @@ Parameters:
   
   {{WlmdbAwsAccountId}}
   
-  {{MetadataParam}}
-   
-  MetadataParam:
-    Description: Metadata param used for internal audit( DO NOT EDIT) 
-    Type: CommaDelimitedList
-    NoEcho: true
-    
+  {{Metrics}}
+       
 Conditions:
   UseAWSDirectoryServiceEE:
     Fn::Equals:
@@ -478,7 +471,7 @@ Resources:
             - 'Standalone'
       FileSystemType: 'FSx for ONTAP'
       DatabaseType: 'Microsoft SQL server'
-      MetadataParam: !Ref MetadataParam
+      Metrics: !Ref Metrics
   ValidationStack1:
     Type: AWS::CloudFormation::Stack
     DependsOn:
@@ -931,6 +924,7 @@ Resources:
       FSxNSecret: !Sub ${AWS::StackName}-fsx
       SQLServiceAccountSecret: !Sub ${AWS::StackName}-sql
       DatabaseType: 'Microsoft SQL server'
+      Metrics: !Ref Metrics
 
       FSxFileSystemId:
           !If

@@ -10,8 +10,10 @@ export const initialJobMonitoringState: any = {
     downloadJobsList: [], // Jobs list including subtasks data
     jmJobsSummary: {}, // Job distribution count data
     jmJobsSummaryLoading: false, // Job summary API loading for job distribution
-    jobsSummaryTimeline: {},
-    jobsSummaryTimelineLoading: false
+    jobsSummaryTimeline: {}, // Line chart graph data
+    jobsSummaryTimelineLoading: false, // Line chart graph loading
+    subJobsData: {}, // This is to store sub jobs data which is expanded
+    subJobsDataLoading: false // This is to store sub jobs data loading for expanded row
 }
 
 const jobMonitoringSlice = createSlice({
@@ -51,6 +53,12 @@ const jobMonitoringSlice = createSlice({
         setJobsSummaryTimeline: (state, action: PayloadAction<any>) => {
             state.jobsSummaryTimeline = action.payload;
         },
+        setSubJobsData: (state, action: PayloadAction<any>) => {
+            state.subJobsData = action.payload;
+        },
+        setSubJobsDataLoading: (state, action: PayloadAction<any>) => {
+            state.subJobsDataLoading = action.payload;
+        },
         addInitialJMData: (state, action: PayloadAction<any>) => {
             return { ...state, ...action.payload };
         }
@@ -69,6 +77,8 @@ export const {
     setJmJobsSummary,
     setJobsSummaryTimelineLoading,
     setJobsSummaryTimeline,
+    setSubJobsData,
+    setSubJobsDataLoading,
     addInitialJMData
 } = jobMonitoringSlice.actions;
 

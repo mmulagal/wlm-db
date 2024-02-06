@@ -14,7 +14,20 @@
         }
 
         .topBarStyle {
-            z-index: 3 !important;
+            z-index: 2 !important;
+        }
+
+        [class*='Table-module_highlighted-row'] {
+            [class*='Table-module_high-row'] {
+                // background-color: transparent !important;
+                border-bottom: 1px solid var(--content-background) !important;
+                .statusbar {
+                    height: 74px;
+                }
+            }
+            span {
+                background-color: white !important;
+            }
         }
 
         [class*='Table-module_header-row'] {
@@ -65,7 +78,7 @@
     }
 
     .statusbar {
-        width: 3px;
+        width: 4px;
         margin-left: -24px;
         height: 64px;
 
@@ -101,7 +114,7 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1520px) {
+@media screen and (max-width: 1520px) {
     .jobMonitoringTable {
         .table {
             width: 1127px;

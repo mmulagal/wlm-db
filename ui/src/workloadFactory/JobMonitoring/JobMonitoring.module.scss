@@ -29,6 +29,7 @@
         margin-left: 120px;
         display: flex;
         gap: 27px;
+        width: 1612px;
     }
 
     .overtimeJobs {
@@ -66,7 +67,7 @@
     }
 }
 
-@media screen and (min-width: 1351px) and (max-width: 1520px) {
+@media screen and (max-width: 1520px) {
     .jobMonitoring {
         .headingContainer {
             width: 1124px;

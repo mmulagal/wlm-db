@@ -6,24 +6,24 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import { ReactComponent as ActionRequiredIcon } from '../../../../assets/action-required.svg';
 import { useDispatch } from 'react-redux';
-import { 
-    setCloudWatch, 
-    setDBName, 
-    setDBVersion, 
-    setSelectConfig, 
-    setSelectedDBDeploymentModel, 
-    setSelectedDBEdition, 
-    setSelectedOperatingSystem, 
-    setSNSARN, 
-    setSNSState, 
-    setTags 
+import {
+    setCloudWatch,
+    setDBName,
+    setDBVersion,
+    setSelectConfig,
+    setSelectedDBDeploymentModel,
+    setSelectedDBEdition,
+    setSelectedOperatingSystem,
+    setSNSARN,
+    setSNSState,
+    setTags
 } from '../../../../store/mssql/mssqlFormSlice';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { DEFAULT_MASTER_KEY, SQL_DEPLOYMENT_MODE } from '../../../../utils/consts';
-import { 
-    selectDefaultEncryption, 
-    selectDefaultInstanceType, 
+import {
+    selectDefaultEncryption,
+    selectDefaultInstanceType,
     selectDefaultLicense,
     selectDefaultSecurityGroup,
     selectFsxIops,
@@ -48,7 +48,6 @@ const PreviewDefault = () => {
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
     const encryptionType = useAppSelector(state => state.mssqlForm.encryption?.encryptionType);
     const encryptionArn = useAppSelector(state => state.mssqlForm.encryption?.encryptionArn);
-
 
     useEffect(() => {
         if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
@@ -84,16 +83,16 @@ const PreviewDefault = () => {
             dispatch(setTags([{ key: '', value: '' }]));
             dispatch(setSNSState(false));
             dispatch(setSNSARN(''));
-            dispatch(setCloudWatch(false));
+            dispatch(setCloudWatch(true));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);
 
     useEffect(() => {
         selectFsxThroughput(selectedFsxnType, selectedExistingFsxnName, '128 MBps', dispatch);
         selectFsxIops(selectedFsxnType, selectedExistingFsxnName, dispatch);
         selectFsxKmsKey(selectedFsxnType, selectedExistingFsxnName, dispatch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
 
     const data = [
@@ -135,18 +134,24 @@ const PreviewDefault = () => {
             editable: GENERAL.NO,
             id: '9'
         },
-        { accordionName: GENERAL.PROVISIONED_IOPS, defaultValue: iopsValue || GENERAL.AUTOMATIC, editable: GENERAL.YES, id: '10' },
+        {
+            accordionName: GENERAL.PROVISIONED_IOPS,
+            defaultValue: iopsValue || GENERAL.AUTOMATIC,
+            editable: GENERAL.YES,
+            id: '10'
+        },
         {
             accordionName: GENERAL.THROUGHPUT_CAPACITY,
             defaultValue: throughputValue?.value,
             editable: GENERAL.YES,
             id: '11'
         },
-        { 
-            accordionName: GENERAL.ENCRYPTION, 
-            defaultValue: encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT ? encryptionArn: DEFAULT_MASTER_KEY, 
-            editable: GENERAL.YES, 
-            id: '12' 
+        {
+            accordionName: GENERAL.ENCRYPTION,
+            defaultValue:
+                encryptionType === GENERAL.ENCRYPTION_SELECT_FROM_OTHER_ACCOUNT ? encryptionArn : DEFAULT_MASTER_KEY,
+            editable: GENERAL.YES,
+            id: '12'
         },
         { accordionName: GENERAL.TAGS, defaultValue: '0 tags', editable: GENERAL.YES, id: '13' },
         {
@@ -155,7 +160,7 @@ const PreviewDefault = () => {
             editable: 'N/A',
             id: '14'
         },
-        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.PD_DISABLED, editable: 'N/A', id: '15' }
+        { accordionName: GENERAL.CLOUD_WATCH_MONITORING, defaultValue: GENERAL.ENABLED, editable: 'N/A', id: '15' }
     ];
 
     const PreviewDefaultColDefs: ColumnProps[] = [
@@ -219,7 +224,7 @@ const PreviewDefault = () => {
                             <Typography variant="Regular_14">
                                 {GENERAL.PREVIEW_DEFAULT_TEXT}{' '}
                                 <Button Component="button" onClick={handleConfig} variant="text">
-                                    {SELECT_CONFIG.STANDARD_CREATE}
+                                    {SELECT_CONFIG.ADVANCED_CREATE}
                                 </Button>
                                 .
                             </Typography>

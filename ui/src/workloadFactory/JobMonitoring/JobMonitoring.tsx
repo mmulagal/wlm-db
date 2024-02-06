@@ -8,7 +8,7 @@ import BreadCrumbs from '../../common/BreadCrumbs/BreadCrumbs';
 import { GENERAL } from '../../utils/appConstants';
 import JobMonitoringTable from './JobMonitoringTable/JobMonitoringTable';
 import JobDistribution from './JobDistribution/JobDistribution';
-import { generateOptionType } from '../../utils/utilityFunctions';
+import { generateOptionType, resetDBHomePageState } from '../../utils/utilityFunctions';
 import JobMonitoringApi from './JobMonitoringApi';
 import { setFromTime, setTimeInterval, setToTime } from '../../store/workloadFactory/jobMonitoringSlice';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
@@ -67,6 +67,7 @@ const JobMonitoring = () => {
                         {
                             title: GENERAL.DATABASES,
                             onClick: () => {
+                                resetDBHomePageState(dispatch);
                                 navigate('../databases');
                             }
                         },

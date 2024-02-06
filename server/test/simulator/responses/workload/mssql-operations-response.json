@@ -1843,7 +1843,7 @@
         "serverVersion": "Microsoft SQL Server 2016",
         "serverEdition": "SQL Server Standard Edition",
         "serverEngine": "",
-        "serverStatus": "Running",
+        "serverStatus": "Up",
         "activeConnections": 8,
         "deploymentModel": "Always On Failover Cluster Instance",
         "clusterName": "EC2AMAZ-GAAT3OE\\DUMMY_SQL",

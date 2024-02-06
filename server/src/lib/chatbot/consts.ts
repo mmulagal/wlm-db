@@ -43,6 +43,7 @@ const AWS_MANAGED_AD = 'AWS_MANAGED_AD';
 const USER_MANAGED_AD = 'USER_MANAGED_AD';
 const SINGLE_AZ = 'SINGLE_AZ_1';
 const MULTI_AZ = 'MULTI_AZ_1';
+const ENCRYPTION_KEY = 'encryptionKey';
 
 const EQ = 'EQ';
 
@@ -58,250 +59,186 @@ const CUSTOM = 'CUSTOM';
 
 const M5_2XL = 'm5.2xlarge';
 const M5_XL = 'm5.xlarge';
+const THROUGHPUT = 128;
 
 const CHATBOT_UI_PARAMS_FSX = [
     {
-        credentialsConfig: [
-            {
-                [CREDENTIALS_ID]: {
-                    required: true
-                }
-            }
-        ]
+        [DEPLOYMENT_ENVIRONMENT]: {
+            required: true
+        }
     },
     {
-        environmentConfig: [
-            {
-                [DEPLOYMENT_ENVIRONMENT]: {
-                    required: true
-                }
-            }
-        ]
+        [CREDENTIALS_ID]: {
+            required: true
+        }
     },
     {
-        rootConfig: [
-            {
-                [REGION]: {
-                    required: true,
-                    dependsOn: CREDENTIALS_ID
-                }
-            },
-            {
-                [SQL_DEPLOYMENT_MODE]: {
-                    required: true,
-                    dependsOn: CREDENTIALS_ID
-                }
-            },
-            {
-                [FSX_TYPE]: {
-                    required: true,
-                    dependsOn: VPC_ID
-                }
-            }
-        ]
+        [SQL_DEPLOYMENT_MODE]: {
+            required: true,
+            dependsOn: DEPLOYMENT_ENVIRONMENT
+        }
     },
     {
-        vpcConfig: [
-            {
-                [VPC_ID]: {
-                    required: true,
-                    dependsOn: REGION
-                }
-            }
-        ]
+        [REGION]: {
+            required: true,
+            dependsOn: CREDENTIALS_ID
+        }
     },
     {
-        networkConfiguration: [
-            {
-                [AZ_1]: {
-                    required: true,
-                    dependsOn: VPC_ID
-                }
-            },
-            {
-                [AZ_2]: {
-                    required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
-                    dependsOn: VPC_ID
-                }
-            }
-        ]
+        [VPC_ID]: {
+            required: true,
+            dependsOn: REGION
+        }
     },
     {
-        subnetConfiguration: [
-            {
-                [PRIVATE_SUBNET_1]: {
-                    required: true
-                }
-            },
-            {
-                [PRIVATE_SUBNET_2]: {
-                    required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
-                }
-            }
-        ]
+        [AZ_1]: {
+            required: true,
+            dependsOn: VPC_ID
+        }
+    },
+
+    {
+        [PRIVATE_SUBNET_1]: {
+            required: true,
+            dependsOn: AZ_1
+        }
     },
     {
-        routeTableConfiguration: [
-            {
-                [ROUTE_TABLE_1]: {
-                    required: true
-                }
-            },
-            {
-                [ROUTE_TABLE_2]: {
-                    required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI }
-                }
-            }
-        ]
+        [ROUTE_TABLE_1]: {
+            required: true,
+            dependsOn: PRIVATE_SUBNET_1
+        }
     },
     {
-        ec2Configuration: [
-            {
-                [WL_INSTANCE_TYPE]: {
-                    required: true,
-                    dependsOn: REGION
-                }
-            },
-            {
-                [KEY_PAIR_NAME]: {
-                    required: true
-                }
-            }
-        ]
+        [AZ_2]: {
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: VPC_ID
+        }
     },
     {
-        adConfiguration: [
-            {
-                [DOMAIN_USERNAME]: {
-                    required: true
-                }
-            },
-            {
-                [DOMAIN_PASS]: {
-                    required: true
-                }
-            },
-            {
-                [DOMAIN_DNS]: {
-                    required: true
-                }
-            }
-        ]
+        [PRIVATE_SUBNET_2]: {
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: AZ_2
+        }
     },
     {
-        sqlConfiguration: [
-            {
-                [SQL_AMI]: {
-                    required: true
-                }
-            },
-            {
-                [SERVICE_ACCOUNT_NAME]: {
-                    required: true
-                }
-            },
-            {
-                [SERVICE_ACCOUNT_PASS]: {
-                    required: true
-                }
-            },
-            {
-                [SQL_SERVER_NAME]: {
-                    required: true
-                }
-            }
-        ]
+        [ROUTE_TABLE_2]: {
+            required: { key: SQL_DEPLOYMENT_MODE, operand: EQ, value: FCI },
+            dependsOn: PRIVATE_SUBNET_2
+        }
     },
     {
-        fsxConfiguration: [
-            {
-                [FSX_DEPLOYMENT_MODE]: {
-                    required: true,
-                    dependsOn: SQL_DEPLOYMENT_MODE
-                }
-            },
-            {
-                [FSX_FILE_SYSTEM_ID]: {
-                    required: { key: FSX_TYPE, operand: EQ, value: EXISTING },
-                    dependsOn: FSX_TYPE
-                }
-            },
-            {
-                [FSX_USERNAME]: {
-                    required: true,
-                    dependsOn: FSX_TYPE
-                }
-            },
-            {
-                [FSX_PASS]: {
-                    required: true,
-                    dependsOn: FSX_TYPE
-                }
-            },
-            {
-                [DB_SIZE]: {
-                    required: true
-                }
-            },
-            {
-                [FSX_VOL_THROUGHPUT]: {
-                    required: true
-                }
-            },
-            {
-                encryptionKey: {
-                    required: false
-                }
-            },
-            {
-                [ONTAP_SG_ID]: {
-                    required: true,
-                    dependsOn: VPC_ID
-                }
-            },
-            {
-                [ENABLE_CLOUD_WATCH]: {
-                    required: true
-                }
-            },
-            {
-                [TAGS]: {
-                    required: true
-                }
-            }
-        ]
+        [SERVICE_ACCOUNT_NAME]: {
+            required: true
+        }
     },
     {
-        derivedParams: [
-            {
-                [VPC_CIDR]: {
-                    required: true,
-                    dependsOn: VPC_ID,
-                    hidden: true
-                }
-            },
-            {
-                [AD_SCENARIO_TYPE]: {
-                    required: true,
-                    dependsOn: DOMAIN_DNS,
-                    hidden: true
-                }
-            },
-            {
-                [DNS_IP]: {
-                    required: true,
-                    dependsOn: DOMAIN_DNS,
-                    hidden: true
-                }
-            },
-            {
-                [FSX_IOPS]: {
-                    required: true,
-                    dependsOn: DB_SIZE,
-                    hidden: true
-                }
-            }
-        ]
+        [SERVICE_ACCOUNT_PASS]: {
+            required: true
+        }
+    },
+    {
+        [KEY_PAIR_NAME]: {
+            required: true
+        }
+    },
+    {
+        [AD_SCENARIO_TYPE]: {
+            required: true,
+            dependsOn: DOMAIN_DNS,
+            hidden: true
+        }
+    },
+    {
+        [DOMAIN_DNS]: {
+            required: true
+        }
+    },
+    {
+        [DNS_IP]: {
+            required: true,
+            dependsOn: DOMAIN_DNS,
+            hidden: true
+        }
+    },
+    {
+        [DOMAIN_USERNAME]: {
+            required: true
+        }
+    },
+    {
+        [DOMAIN_PASS]: {
+            required: true
+        }
+    },
+    {
+        [FSX_TYPE]: {
+            required: true,
+            dependsOn: VPC_ID
+        }
+    },
+    {
+        [FSX_FILE_SYSTEM_ID]: {
+            required: { key: FSX_TYPE, operand: EQ, value: EXISTING },
+            dependsOn: FSX_TYPE
+        }
+    },
+    {
+        [FSX_USERNAME]: {
+            required: true,
+            dependsOn: FSX_TYPE
+        }
+    },
+    {
+        [FSX_PASS]: {
+            required: true,
+            dependsOn: FSX_TYPE
+        }
+    },
+    {
+        [DB_SIZE]: {
+            required: true
+        }
+    },
+    {
+        [VPC_CIDR]: {
+            required: true,
+            dependsOn: VPC_ID,
+            hidden: true
+        }
+    },
+    {
+        [FSX_IOPS]: {
+            required: true,
+            dependsOn: DB_SIZE,
+            hidden: true
+        }
+    },
+    {
+        [SQL_AMI]: {
+            required: true
+        }
+    },
+    {
+        [SQL_SERVER_NAME]: {
+            required: true
+        }
+    },
+    {
+        [FSX_DEPLOYMENT_MODE]: {
+            required: true,
+            dependsOn: SQL_DEPLOYMENT_MODE
+        }
+    },
+    {
+        [FSX_VOL_THROUGHPUT]: {
+            required: true
+        }
+    },
+    {
+        [ENCRYPTION_KEY]: {
+            required: { key: FSX_TYPE, operand: EQ, value: EXISTING }
+        }
     }
 ];
 
@@ -310,15 +247,17 @@ const MSSQL_ENV_PRE_CONFIG = {
         [WL_INSTANCE_TYPE]: M5_2XL,
         [FSX_DEPLOYMENT_MODE]: MULTI_AZ,
         [DB_SIZE]: 500,
-        [SQL_DEPLOYMENT_MODE]: FCI
+        [SQL_DEPLOYMENT_MODE]: FCI,
+        [ENABLE_CLOUD_WATCH]: true
     },
     [DEV]: {
         [WL_INSTANCE_TYPE]: M5_XL,
         [FSX_DEPLOYMENT_MODE]: SINGLE_AZ,
         [DB_SIZE]: 100,
-        [SQL_DEPLOYMENT_MODE]: STANDALONE
+        [SQL_DEPLOYMENT_MODE]: STANDALONE,
+        [ENABLE_CLOUD_WATCH]: true
     },
-    [CUSTOM]: {}
+    [CUSTOM]: { [ENABLE_CLOUD_WATCH]: true }
 };
 
 const KEY_LABEL_MAP = {
@@ -336,24 +275,31 @@ const KEY_LABEL_MAP = {
     [KEY_PAIR_NAME]: 'key pair name',
     [SQL_AMI]: 'sql ami id',
     [AD_SCENARIO_TYPE]: 'active directory scenario type',
-    [DNS_IP]: 'dns ip address',
-    [DOMAIN_DNS]: 'domain dns name',
-    [DOMAIN_USERNAME]: 'domain user name',
-    [DOMAIN_PASS]: 'domain password',
-    [FSX_USERNAME]: 'fsx user name',
-    [FSX_PASS]: 'fsx password',
-    [SERVICE_ACCOUNT_NAME]: 'service account name',
-    [SERVICE_ACCOUNT_PASS]: 'service account password',
+    [DNS_IP]: 'Enter the DNS IP address',
+    [DOMAIN_DNS]: 'Enter a domain name',
+    [DOMAIN_USERNAME]: 'Enter a user name for Active Directory', // extra value needed for suggesstion
+    [DOMAIN_PASS]: 'Enter a password for Active Directory',
+    [FSX_USERNAME]: 'Enter a user name for the file system', // suggestion
+    [FSX_PASS]: 'Enter a password for the file system user', // suggestion
+    [SERVICE_ACCOUNT_NAME]: 'Enter a user name for the database credentials',
+    [SERVICE_ACCOUNT_PASS]: 'Enter a password for database credentials.',
     [FSX_DEPLOYMENT_MODE]: 'fsx deployment mode',
     [SQL_DEPLOYMENT_MODE]: 'sql deployment mode',
-    [DB_SIZE]: 'database size',
+    [DB_SIZE]: 'Enter a data drive size',
     [FSX_VOL_THROUGHPUT]: 'fsx volume throughput',
     [FSX_IOPS]: 'fsx IOPS',
     [ONTAP_SG_ID]: 'ontap security group id',
     [FSX_TYPE]: 'fsx type',
     [FSX_FILE_SYSTEM_ID]: 'fsx file system id',
-    [SQL_SERVER_NAME]: 'database cluster name',
+    [SQL_SERVER_NAME]: 'Enter a value for database cluster name',
     [TAGS]: 'tags'
+};
+
+const BACKTRACE_MESSAGES = {
+    [VPC_ID]:
+        'We could not found any VPC that supports FCI deployment, please select a different region that has valid VPC',
+    [AZ_1]: 'The VPC that you selected does not contain required availability zones, please select a different VPC',
+    [AZ_2]: 'The VPC that you selected does not contain required availability zones, please select a different VPC'
 };
 
 export {
@@ -412,5 +358,8 @@ export {
     FCI_ABBREVIATION,
     MULTI_AZ_SMALL,
     SINGLE_AZ_SMALL,
-    M5_XL
+    M5_XL,
+    ENCRYPTION_KEY,
+    THROUGHPUT,
+    BACKTRACE_MESSAGES
 };

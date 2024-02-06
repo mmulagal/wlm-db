@@ -49,7 +49,7 @@ const JobStatus = () => {
                     <div className={styles.rowData}>
                         <div className={styles.firstPart}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-4)' }} />
-                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_SUCCESS}</Typography>
+                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_COMPLETED}</Typography>
                         </div>
                         <Typography variant="Semibold_14">
                             {(jobsSummaryData?.completed || 0) + GENERAL.JOB_STATUS_JOBS}
@@ -61,7 +61,7 @@ const JobStatus = () => {
                     <div className={styles.rowData}>
                         <div className={styles.firstPart}>
                             <div className={styles.square} style={{ backgroundColor: 'var(--chart-3)' }} />
-                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_INITIALIZING}</Typography>
+                            <Typography variant="Regular_14">{GENERAL.JOB_STATUS_RUNNING}</Typography>
                         </div>
                         <Typography variant="Semibold_14">
                             {(jobsSummaryData?.inProgress || 0) + GENERAL.JOB_STATUS_JOBS}

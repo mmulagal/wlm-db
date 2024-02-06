@@ -20,6 +20,7 @@ const SecurityGroup = () => {
     const selectedVPCData = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedVPC);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const selectedSG = useAppSelector(state => state.mssqlForm.securityGroup?.selectedExistingSecurityGroup);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
 
@@ -51,7 +52,7 @@ const SecurityGroup = () => {
     }, [selectedVPCData, vpcData]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedSecurityGroup(GENERAL.USE_AN_EXISTING_SECURITY));
             dispatch(setSelectedExistingSecurityGroup(generateExistingSecurity[0]));
         }

@@ -29,6 +29,7 @@ const License = () => {
     const selectedLicenseId = useAppSelector(state => state.mssqlForm.license.selectedLicenseId);
     const selectedCustomAMI = useAppSelector(state => state.mssqlForm.license.selectedCustomAMI);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
+    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
 
     const isLicenseFilled = useAppSelector(state => state.msSqlAction.licenseIdSelected);
     const [licenseSelect, setLicenseSelect] = useState(licenseType);
@@ -64,7 +65,7 @@ const License = () => {
     }, [amiData]);
 
     useEffect(() => {
-        if (!isLoadConfig) {
+        if (!isLoadConfig && !movingFromChatbot) {
             dispatch(setSelectedLicenseId(generateAMIIdForLicense[0]));
         }
     }, [dispatch, generateAMIIdForLicense]);
