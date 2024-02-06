@@ -18,7 +18,7 @@ import {
     setHeaderSelectedRegion,
     setRefreshTime
 } from '../../../store/workloadFactory/headersSlice';
-import { jobMonitoringApi, workloadFactoryResourceApi } from '../../../utils/apiService';
+import { workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
 
 const HeaderComponent = () => {
@@ -35,9 +35,6 @@ const HeaderComponent = () => {
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
     const refreshTime = useAppSelector(state => state.headers.refreshTime);
-
-    const [selectedCred, setSelectedCred] = useState(headerSelectedCred);
-    const [selectedRegion, setSelectedRegion] = useState(headerSelectedRegion);
 
     const menuSelected = useAppSelector(state => state.inventory.menuSelected);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
@@ -68,7 +65,6 @@ const HeaderComponent = () => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedCred) {
-            setSelectedCred(options[0]);
             dispatch(setHeaderSelectedCred(options[0]));
         }
         return options;
@@ -83,7 +79,6 @@ const HeaderComponent = () => {
             options.push(option);
         });
         if (options.length > 0 && !headerSelectedRegion) {
-            setSelectedRegion(options[0]);
             dispatch(setHeaderSelectedRegion(options[0]));
         }
         return options;
@@ -130,9 +125,8 @@ const HeaderComponent = () => {
                                 <SelectField
                                     isLoading={credentialLoading}
                                     isClearable={false}
-                                    value={selectedCred ? [selectedCred] : [generateAWSAccounts[0]]}
+                                    value={headerSelectedCred ? [headerSelectedCred] : [generateAWSAccounts[0]]}
                                     onChange={(selectedOptions: any): void => {
-                                        setSelectedCred(selectedOptions);
                                         dispatch(setHeaderSelectedCred(selectedOptions));
                                     }}
                                     placeholder="Select a Credential"
@@ -146,9 +140,8 @@ const HeaderComponent = () => {
                                 <SelectField
                                     isLoading={regionsLoading}
                                     isClearable={false}
-                                    value={selectedRegion ? [selectedRegion] : [generateRegionsData[0]]}
+                                    value={headerSelectedRegion ? [headerSelectedRegion] : [generateRegionsData[0]]}
                                     onChange={(selectedOptions: any): void => {
-                                        setSelectedRegion(selectedOptions);
                                         dispatch(setHeaderSelectedRegion(selectedOptions));
                                     }}
                                     placeholder="Select a Region"
