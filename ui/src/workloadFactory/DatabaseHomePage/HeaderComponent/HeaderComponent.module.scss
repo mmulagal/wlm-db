@@ -20,16 +20,16 @@
                 .firstSelect {
                     width: 240px;
 
-                    // [class*='design-system-select__single-value'] {
-                    //     max-width: 200px !important;
-                    // }
+                    [class*='design-system-select__single-value'] {
+                        max-width: 200px !important;
+                    }
                 }
                 .secondSelect {
                     width: 240px;
 
-                    // [class*='design-system-select__single-value'] {
-                    //     max-width: 200px !important;
-                    // }
+                    [class*='design-system-select__single-value'] {
+                        max-width: 200px !important;
+                    }
                 }
 
                 .separator {
