@@ -64,7 +64,9 @@ import {
     INSTANCE_TYPE,
     SQL_VERSION,
     DATABASE_SIZE,
-    SQL_HOST_NAME
+    SQL_HOST_NAME,
+    OPERATE,
+    VIEW
 } from '../utils/consts';
 import {
     deployedStackUrl,
@@ -384,7 +386,7 @@ async function deployStackOrCreateTemplateURL(
     let metadataParam = `${TRIGGERED_FROM}:${triggeredFrom},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlAmiId},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
 
     try {
-        const { permissions } = await checkAllMissingPermissions(credentialsId, region, 'operate');
+        const { permissions } = await checkAllMissingPermissions(credentialsId, region, OPERATE);
 
         // if the simulatePrincipalPolicy is present, its operate user so can go through the deploying the stack if all other permissions are available
         if (permissions?.length) {
@@ -756,12 +758,12 @@ function prepareResourceActionMap(statements: [policyStatement]) {
     return resourcePolicyActions;
 }
 
-async function checkAllMissingPermissions(credentialsId: string, region: string, action: string = 'view') {
+async function checkAllMissingPermissions(credentialsId: string, region: string, action: string = VIEW) {
     logger.info('Check all missing permissions', { credentialsId, region, action });
     // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
     let policyResourceActions;
     const { operate, view } = await getWlmdbPolicy();
-    if (action === 'operate') {
+    if (action === OPERATE) {
         policyResourceActions = prepareResourceActionMap(operate.Statement);
     } else {
         policyResourceActions = prepareResourceActionMap(view.Statement);

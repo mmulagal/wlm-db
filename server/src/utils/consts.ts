@@ -955,6 +955,9 @@ const SQL_VERSION = 'sql-version';
 const DATABASE_SIZE = 'database-size';
 const SQL_HOST_NAME = 'sql-host-name';
 
+const OPERATE = 'operate';
+const VIEW = 'view';
+
 export {
     WLMDB,
     AWS_REGIONS,
@@ -1173,5 +1176,7 @@ export {
     INSTANCE_TYPE,
     SQL_VERSION,
     DATABASE_SIZE,
-    SQL_HOST_NAME
+    SQL_HOST_NAME,
+    OPERATE,
+    VIEW
 };
