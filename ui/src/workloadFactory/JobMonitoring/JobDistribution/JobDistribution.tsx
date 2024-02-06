@@ -3,10 +3,12 @@ import styles from './JobDistribution.module.scss';
 import JobDoughnutChart from '../../DatabaseHomePage/JobStatus/JobDoughnut/JobDoughnutChart';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
+import useResize from '../../../common/hooks/useResize';
 
 const JobDistribution = () => {
     const jobsSummaryData = useAppSelector(state => state.jobMonitoring.jmJobsSummary);
-    const jobsSummaryLoading  = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
+    const jobsSummaryLoading = useAppSelector(state => state.jobMonitoring.jmJobsSummaryLoading);
+    const windowSize = useResize();
     return (
         <div
             className={
@@ -23,8 +25,8 @@ const JobDistribution = () => {
             </div>
 
             <div className={styles.mainSection}>
-                <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading}/>
-                {window.innerWidth <= 1500 && (
+                <JobDoughnutChart jobsSummaryData={jobsSummaryData} jobsSummaryLoading={jobsSummaryLoading} />
+                {windowSize.width <= 1500 && (
                     <div className={styles.rightSection}>
                         <div className={styles.rowData} style={{ marginTop: '0' }}>
                             <Typography variant="Semibold_14">{GENERAL.JOBS_DISTRIBUTION}</Typography>
@@ -72,7 +74,7 @@ const JobDistribution = () => {
                     </div>
                 )}
 
-                {window.innerWidth >= 1500 && (
+                {windowSize.width >= 1500 && (
                     <div className={styles.flexRightSection}>
                         <div className={styles.valueContainer} style={{ width: '143px' }}>
                             <Typography variant="Regular_24" className={styles.setLineHeight}>
