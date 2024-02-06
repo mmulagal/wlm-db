@@ -714,6 +714,8 @@ async function deploymentStatusByName(accountId: string, deploymentName: string)
 }
 
 function prepareResourceActionMap(statements: [policyStatement]) {
+    logger.debug('Preparing resource action map', { statements });
+
     const resourcePolicyActions: {
         resourceArn: string[];
         resourceActions: string[];
@@ -731,7 +733,8 @@ function prepareResourceActionMap(statements: [policyStatement]) {
         if (!isEmpty(Condition)) {
             Object.entries(Condition).forEach(obj => {
                 const [key, value] = obj;
-                if (key.startsWith('String')) {
+                if (key === 'StringLike') {
+                    // TODO : revisit this implementation when the WLMDB policy has Conditions supporting Numeric/Boolean datatypes
                     Object.entries(value).forEach(([conditionKey, conditionValue]) =>
                         resourceConditions.push({
                             ContextKeyName: conditionKey,
@@ -754,7 +757,7 @@ function prepareResourceActionMap(statements: [policyStatement]) {
 }
 
 async function checkAllMissingPermissions(credentialsId: string, region: string, action: string = 'view') {
-    logger.info('check all missing permissions', credentialsId, region);
+    logger.info('Check all missing permissions', { credentialsId, region, action });
     // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
     let policyResourceActions;
     const { operate, view } = await getWlmdbPolicy();
@@ -763,7 +766,6 @@ async function checkAllMissingPermissions(credentialsId: string, region: string,
     } else {
         policyResourceActions = prepareResourceActionMap(view.Statement);
     }
-
     const missingPermissions: string[] = [];
     await Promise.all(
         policyResourceActions.map(async ({ resourceArn, resourceActions, resourceConditions }) => {

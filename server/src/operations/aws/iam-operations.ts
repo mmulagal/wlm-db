@@ -1,7 +1,7 @@
 import { ContextEntry, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import getPermissionsList from '../../lib/aws/iam';
+import simulatePrincipalPolicy from '../../lib/aws/iam';
 
 const logger = getLogger();
 
@@ -29,7 +29,7 @@ export default async function getMissingPermissionsList(
         MaxItems: 500
     };
 
-    const { EvaluationResults: results } = await getPermissionsList(credentialsId, region, command);
+    const { EvaluationResults: results } = await simulatePrincipalPolicy(credentialsId, region, command);
     const permissions =
         results
             ?.filter(({ EvalDecision }) => EvalDecision === 'implicitDeny')
