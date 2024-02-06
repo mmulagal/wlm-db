@@ -74,7 +74,7 @@ const DatabaseHostOverview = () => {
                         {
                             title: 'Inventory managed hosts',
                             onClick: () => {
-                                // resetDBHomePageState(dispatch);
+                                resetDBHomePageState(dispatch);
                                 dispatch(setSelectedHeaderTab('Inventory'));
                             }
                         },

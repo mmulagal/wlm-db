@@ -12,14 +12,57 @@ import Inventory from '../../Inventory/Inventory';
 import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
+import HeaderComponentApi from './HeaderComponentApis';
+import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState('Dashboard');
     const [currentTime, setCurrentTime] = useState('');
-    const { selectedCredential } = useAppSelector(state => state.mssqlForm.awsAccount);
+
+    const { credentialData, credentialLoading } = useAppSelector(state => state.headers.getCredentials);
+    const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
+    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+
+    const [selectedCred, setSelectedCred] = useState(headerSelectedCred);
+    const [selectedRegion, setSelectedRegion] = useState(headerSelectedRegion);
+
     const menuSelected = useAppSelector(state => state.inventory.menuSelected);
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
+
+    HeaderComponentApi();
+
+    //Function to generate the options for Select Field
+    const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        credentialData?.map((val: any, idx: number) => {
+            const credValue = val.name;
+            const label2 = `Account ID: ${val.providerAccountId}`;
+            const option = generateOptionType(credValue, credValue, label2, false, '', val);
+            options.push(option);
+        });
+        if (options.length > 0 && !headerSelectedCred) {
+            setSelectedCred(options[0]);
+            dispatch(setHeaderSelectedCred(options[0]));
+        };
+        return options;
+    }, [credentialData]);
+
+    const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
+        const options: optionType[] = [];
+        regionsData?.regions?.map((val:any, idx: number) => {
+            const regionValue = val.regionName;
+            const label2 = val.regionCode;
+            const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
+            options.push(option);
+        });
+        if (options.length > 0 && !headerSelectedRegion) {
+            setSelectedRegion(options[0]);
+            dispatch(setHeaderSelectedRegion(options[0]));
+        };
+        return options;
+    }, [regionsData]);
 
     const handleClick = (value: string) => {
         setSelectedTab(value);
@@ -30,70 +73,10 @@ const HeaderComponent = () => {
         setCurrentTime(getCurrentDateTime());
     }, []);
 
-    const credentialData = [
-        {
-            credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
-            name: 'mock-ui-creds-1',
-            arn: 'arn:aws:iam::464262061435:role/Fsx-role',
-            providerAccountId: '464262061435'
-        },
-        {
-            credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd6',
-            name: 'mock-ui-creds-2',
-            arn: 'arn:aws:iam::464262061436:role/Fsx-role',
-            providerAccountId: '464262061436'
-        }
-    ];
-
-    const regionData = [
-        {
-            regionCode: 'us-east-1',
-            regionName: 'US East (N. Virginia)'
-        },
-        {
-            regionCode: 'us-east-2',
-            regionName: 'US East (Ohio)'
-        },
-        {
-            regionCode: 'us-west-1',
-            regionName: 'US West (N. California)'
-        },
-        {
-            regionCode: 'us-west-2',
-            regionName: 'US West (Oregon)'
-        },
-        {
-            regionCode: 'eu-west-1',
-            regionName: 'Europe (Ireland)'
-        }
-    ];
-
-    //Function to generate the options for Select Field
-    const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
-        const options: optionType[] = [];
-        credentialData?.map((val, idx: number) => {
-            const credValue = val.name;
-            const label2 = `Account ID: ${val.providerAccountId}`;
-            const option = generateOptionType(credValue, credValue, label2, false, '', val);
-            options.push(option);
-        });
-        return options;
-    }, [credentialData]);
-
-    const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
-        const options: optionType[] = [];
-        regionData?.map((val, idx: number) => {
-            const regionValue = val.regionName;
-            const label2 = val.regionCode;
-            const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
-            options.push(option);
-        });
-        return options;
-    }, [regionData]);
-
     const refreshPage = () => {
         setCurrentTime(getCurrentDateTime());
     };
+
     return (
         <div className={styles.headerComponent}>
             <div className={styles.firstSection}>
@@ -105,9 +88,13 @@ const HeaderComponent = () => {
                     <div className={styles.rightPart}>
                         <div className={styles.firstSelect}>
                             <SelectField
+                                isLoading={credentialLoading}
                                 isClearable={false}
-                                defaultValue={selectedCredential ? [selectedCredential] : [generateAWSAccounts[0]]}
-                                onChange={(selectedOptions: any): void => {}}
+                                value={selectedCred ? [selectedCred] : [generateAWSAccounts[0]]}
+                                onChange={(selectedOptions: any): void => {
+                                    setSelectedCred(selectedOptions);
+                                    dispatch(setHeaderSelectedCred(selectedOptions));
+                                }}
                                 placeholder="Select a Credential"
                                 isSearchable={generateAWSAccounts.length > 5}
                                 options={generateAWSAccounts}
@@ -117,9 +104,13 @@ const HeaderComponent = () => {
 
                         <div className={styles.secondSelect}>
                             <SelectField
+                                isLoading={regionsLoading}
                                 isClearable={false}
-                                defaultValue={selectedCredential ? [selectedCredential] : [generateAWSAccounts[0]]}
-                                onChange={(selectedOptions: any): void => {}}
+                                value={selectedRegion ? [selectedRegion] : [generateRegionsData[0]]}
+                                onChange={(selectedOptions: any): void => {
+                                    setSelectedRegion(selectedOptions);
+                                    dispatch(setHeaderSelectedRegion(selectedOptions));
+                                }}
                                 placeholder="Select a Region"
                                 isSearchable={generateRegionsData.length > 5}
                                 options={generateRegionsData}

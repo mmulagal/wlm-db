@@ -1,5 +1,6 @@
 import { useAppSelector } from '../../store/storeHooks';
 import styles from './Inventory.module.scss';
+import InventoryApis from './InventoryApis';
 import InventoryHeaderSection from './InventoryHeaderSection/InventoryHeaderSection';
 import InventoryTabs from './InventoryTabs/InventoryTabs';
 import ManagedHosts from './ManagedHosts/ManagedHosts';
@@ -8,6 +9,8 @@ import UnmanagedHosts from './UnmanagedHosts/UnmanagedHosts';
 
 const Inventory = () => {
     const selectedInventoryTab = useAppSelector(state => state.inventory.selectedInventoryTab);
+
+    InventoryApis();
 
     return (
         <div className={styles.inventory}>
