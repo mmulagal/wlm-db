@@ -329,7 +329,7 @@ export const databaseHomeApi = createApi({
     endpoints: builder => {
         return {
             getDatabaseHosts: builder.query({
-                query: ({ nextToken = null }) => {
+                query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
                         return `database-hosts?fields=performance,storage,protection,usageEstimation&nextToken=${nextToken}`;
                     } else {
@@ -338,7 +338,7 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getDatabaseJobs: builder.query({
-                query: ({ nextToken = null }) => {
+                query: ({ credentialId, region, nextToken = null }) => {
                     if (nextToken) {
                         return `deployments?statuses=CREATE_IN_PROGRESS,UPDATE_IN_PROGRESS&nextToken=${nextToken}`;
                     } else {
@@ -347,7 +347,7 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getJobsSummary: builder.query({
-                query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({credentialId, region, startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -395,17 +395,23 @@ export const jobMonitoringApi = createApi({
         return {
             // getJobsList will just include first level jobs list info
             getJobsList: builder.query({
-                query: ({ nextToken = null, startTime, endTime }) => {
+                query: ({ credentialId, region, nextToken = null, startTime, endTime }) => {
                     let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url +=`&nextToken=${nextToken}`;
+                    }
+                    if (credentialId) {
+                        url +=`&credentialId=${credentialId}`;
+                    }
+                    if (region) {
+                        url +=`&region=${region}`;
                     }
                     return url;
                 }
             }),
             // getFullJobsList will include subtasks and task level data also
             getFullJobsList: builder.query({
-                query: ({ nextToken = null, startTime, endTime, includeSubJobs = false, type = null, status = null }) => {
+                query: ({ credentialId, region, nextToken = null, startTime, endTime, includeSubJobs = false, type = null, status = null }) => {
                     let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url +=`&nextToken=${nextToken}`;
@@ -428,10 +434,10 @@ export const jobMonitoringApi = createApi({
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({credentialId, region, startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({startTime, endTime}) => 
+                query: ({credentialId, region, startTime, endTime}) => 
                 `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
@@ -450,6 +456,21 @@ export const chatbotApi = createApi({
                     body: payload
                 })
             })
+        };
+    }
+});
+
+export const headersApi = createApi({
+    reducerPath: 'headersApi',
+    baseQuery: dynamicBaseQuery,
+    endpoints: builder => {
+        return {
+            getHeadersCredentials: builder.query({
+                query: ({ credentialsType }) => ({ url: `credentials/${credentialsType}` })
+            }),
+            getHeadersRegions: builder.query({
+                query: ({ credentialId }) => ({ url: `credentials/${credentialId}/fsx/regions` })
+            }),
         };
     }
 });
@@ -508,3 +529,8 @@ export const {
 } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;
+
+export const {
+    useGetHeadersCredentialsQuery,
+    useGetHeadersRegionsQuery
+} = headersApi;

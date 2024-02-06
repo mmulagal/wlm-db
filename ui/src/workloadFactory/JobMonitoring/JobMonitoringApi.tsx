@@ -18,6 +18,8 @@ const JobMonitoringApi = () => {
     const timeInterval = useAppSelector(state => state.jobMonitoring.timeInterval);
     const fromTime = useAppSelector(state => state.jobMonitoring.fromTime);
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
+    const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
+    const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
@@ -29,7 +31,7 @@ const JobMonitoringApi = () => {
         setSkipApiCall(true);
         setSkipJobListApiCall(true);
         setTimeout(() => {
-            if (timeInterval && fromTime && toTime) {
+            if (timeInterval && fromTime && toTime && headerSelectedCred && headerSelectedRegion) {
                 dispatch(setJobsListLoading(false));
                 dispatch(setJobsList([]));
                 setTime({startTime: fromTime, endTime: toTime});
@@ -37,22 +39,30 @@ const JobMonitoringApi = () => {
                 setSkipJobListApiCall(false);
             }
         }, 0);
-    }, [fromTime]);
+    }, [fromTime, headerSelectedCred, headerSelectedRegion]);
 
     const {
         data: jmJobsList,
         isFetching: jmJobsListLoading,
-    } = useGetJobsListQuery({nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, {skip: skipJobListApiCall});
+    } = useGetJobsListQuery(
+        {credentialId: headerSelectedCred?.data?.credentialsId, region: headerSelectedRegion?.label2, nextToken: jobsCursor, startTime: time?.startTime, endTime: time?.endTime}, 
+        {skip: skipJobListApiCall}
+        );
 
     const {
         data: jmJobsSummary,
         isFetching: jmJobsSummaryLoading,
-    } = useGetJobsSummaryDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+    } = useGetJobsSummaryDataQuery(
+        {credentialId: headerSelectedCred?.data?.credentialsId, region: headerSelectedRegion?.label2, startTime: time?.startTime, endTime: time?.endTime}, 
+        {skip: skipApiCall}
+        );
 
     const {
         data: jobsSummaryTimeline,
         isFetching: jobsSummaryTimelineLoading,
-    } = useGetJobsSummaryTimelineDataQuery({startTime: time?.startTime, endTime: time?.endTime}, {skip: skipApiCall});
+    } = useGetJobsSummaryTimelineDataQuery(
+        {credentialId: headerSelectedCred?.data?.credentialsId, region: headerSelectedRegion?.label2, startTime: time?.startTime, endTime: time?.endTime}, 
+        {skip: skipApiCall});
 
     useEffect(() => {
         dispatch(setJobsListLoading(jmJobsListLoading));
