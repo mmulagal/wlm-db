@@ -9,8 +9,7 @@ import {
     addDatabaseHosts, 
     addDatabaseHostsList, 
     addDatabaseJobs, 
-    addJobsSummary, 
-    addStatus
+    addJobsSummary
 } from "../../store/workloadFactory/databaseHomeSlice";
 import { 
     useGetDatabaseHostsQuery, 
@@ -50,12 +49,6 @@ const DatabaseHomeApis = () => {
     }, []);
 
     const {
-        data: statusData,
-        isFetching: statusLoading,
-        isError: statusError
-    } = useGetStatusQuery('');
-
-    const {
         data: databaseHosts,
         isFetching: databaseHostsLoading,
         isError: databaseHostsError
@@ -92,16 +85,11 @@ const DatabaseHomeApis = () => {
     }, [refetchJobSummaryApi])
 
     useEffect(() => {
-        if(statusError) {
-            dispatch(addStatus({undefined, statusLoading, statusError}));
-        } else {
-            dispatch(addStatus({statusData, statusLoading, statusError}));
-            if(statusData && statusData?.isActive && headerSelectedCred && headerSelectedRegion) {
-                setSkipApiCall(false);
-            }
+        if(headerSelectedCred && headerSelectedRegion) {
+            setSkipApiCall(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statusData, statusLoading, statusError, headerSelectedCred, headerSelectedRegion]);
+    }, [headerSelectedCred, headerSelectedRegion]);
 
     useEffect(() => {
         if(databaseHostsError) {
