@@ -22,7 +22,7 @@ const prepareHeaders = (
     const { getState, endpoint } = api;
     const { accessToken, workspaceId, isDemoMode, isWorkloadFactory } = (getState() as RootState).auth;
     const { selectConfig } = (getState() as RootState).mssqlForm;
-    const  isChatbot  = (getState() as RootState).chatbot.isShow;
+    const isChatbot = (getState() as RootState).chatbot.isShow;
     if (accessToken) {
         headers.set('authorization', accessToken);
     }
@@ -37,13 +37,10 @@ const prepareHeaders = (
     }
     if (endpoint === 'deploySqlTemplate' || endpoint === 'getTemplates') {
         headers.set(
-          'triggered-from',
-            isChatbot ? 'chatbot':(
-          selectConfig === SELECT_CONFIG.EASY_CREATE
-            ? 'wizard-quick'
-            : 'wizard-advanced')
+            'triggered-from',
+            isChatbot ? 'chatbot' : selectConfig === SELECT_CONFIG.EASY_CREATE ? 'wizard-quick' : 'wizard-advanced'
         );
-      }
+    }
     return headers;
 };
 
@@ -347,7 +344,8 @@ export const databaseHomeApi = createApi({
                 }
             }),
             getJobsSummary: builder.query({
-                query: ({credentialId, region, startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getTemplates: builder.mutation({
                 query: ({ payload }) => ({
@@ -395,26 +393,35 @@ export const jobMonitoringApi = createApi({
                 query: ({ credentialId, region, nextToken = null, startTime, endTime }) => {
                     let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
-                        url +=`&nextToken=${nextToken}`;
+                        url += `&nextToken=${nextToken}`;
                     }
                     return url;
                 }
             }),
             // getFullJobsList will include subtasks and task level data also
             getFullJobsList: builder.query({
-                query: ({ credentialId, region, nextToken = null, startTime, endTime, includeSubJobs = false, type = null, status = null }) => {
+                query: ({
+                    credentialId,
+                    region,
+                    nextToken = null,
+                    startTime,
+                    endTime,
+                    includeSubJobs = false,
+                    type = null,
+                    status = null
+                }) => {
                     let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
-                        url +=`&nextToken=${nextToken}`;
+                        url += `&nextToken=${nextToken}`;
                     }
                     if (includeSubJobs) {
-                        url +=`&includeSubJobs=${includeSubJobs}`;
+                        url += `&includeSubJobs=${includeSubJobs}`;
                     }
                     if (type) {
-                        url +=`&type=${type}`;
+                        url += `&type=${type}`;
                     }
                     if (status) {
-                        url +=`&status=${status}`;
+                        url += `&status=${status}`;
                     }
                     return url;
                 }
@@ -425,11 +432,12 @@ export const jobMonitoringApi = createApi({
                 })
             }),
             getJobsSummaryData: builder.query({
-                query: ({credentialId, region, startTime, endTime}) => `jobs/summary?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `jobs/summary?startTime=${startTime}&endTime=${endTime}`
             }),
             getJobsSummaryTimelineData: builder.query({
-                query: ({credentialId, region, startTime, endTime}) => 
-                `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+                query: ({ credentialId, region, startTime, endTime }) =>
+                    `jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
             })
         };
     }
@@ -464,7 +472,7 @@ export const headersApi = createApi({
             }),
             getStatus: builder.query({
                 query: () => `status`
-            }),
+            })
         };
     }
 });
@@ -513,18 +521,14 @@ export const {
 
 export const { useGetResourceDetailsQuery, useGetDatabaseListQuery } = workloadFactoryResourceApi;
 
-export const { 
-    useGetJobsListQuery, 
-    useGetFullJobsListQuery, 
+export const {
+    useGetJobsListQuery,
+    useGetFullJobsListQuery,
     useLazyGetSubTaskListQuery,
-    useGetJobsSummaryDataQuery, 
-    useGetJobsSummaryTimelineDataQuery 
+    useGetJobsSummaryDataQuery,
+    useGetJobsSummaryTimelineDataQuery
 } = jobMonitoringApi;
 
 export const { useSendMsgMutation } = chatbotApi;
 
-export const {
-    useGetHeadersCredentialsQuery,
-    useGetHeadersRegionsQuery,
-    useGetStatusQuery,
-} = headersApi;
+export const { useGetHeadersCredentialsQuery, useGetHeadersRegionsQuery, useGetStatusQuery } = headersApi;
