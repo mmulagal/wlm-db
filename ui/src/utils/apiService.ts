@@ -356,9 +356,6 @@ export const databaseHomeApi = createApi({
                     body: payload
                 })
             }),
-            getStatus: builder.query({
-                query: () => `status`
-            }),
             removeDatabaseJobs: builder.mutation({
                 async queryFn(id, queryApi: BaseQueryApi, extraOptions: any, baseQuery: any) {
                     return await handleRemoveWE(`jobs/jobId/${id}`, baseQuery, queryApi);
@@ -399,12 +396,6 @@ export const jobMonitoringApi = createApi({
                     let url = `jobs?startTime=${startTime}&endTime=${endTime}`;
                     if (nextToken) {
                         url +=`&nextToken=${nextToken}`;
-                    }
-                    if (credentialId) {
-                        url +=`&credentialId=${credentialId}`;
-                    }
-                    if (region) {
-                        url +=`&region=${region}`;
                     }
                     return url;
                 }
@@ -471,6 +462,9 @@ export const headersApi = createApi({
             getHeadersRegions: builder.query({
                 query: ({ credentialId }) => ({ url: `credentials/${credentialId}/fsx/regions` })
             }),
+            getStatus: builder.query({
+                query: () => `status`
+            }),
         };
     }
 });
@@ -514,7 +508,6 @@ export const {
     useGetDatabaseJobsQuery,
     useGetJobsSummaryQuery,
     useGetTemplatesMutation,
-    useGetStatusQuery,
     useRemoveDatabaseJobsMutation
 } = databaseHomeApi;
 
@@ -532,5 +525,6 @@ export const { useSendMsgMutation } = chatbotApi;
 
 export const {
     useGetHeadersCredentialsQuery,
-    useGetHeadersRegionsQuery
+    useGetHeadersRegionsQuery,
+    useGetStatusQuery,
 } = headersApi;

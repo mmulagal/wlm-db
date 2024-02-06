@@ -20,6 +20,7 @@ const JobMonitoringApi = () => {
     const toTime = useAppSelector(state => state.jobMonitoring.toTime);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [jobsCursor, setJobsCursor] = useState(null);
     const [time, setTime] = useState<{startTime: number, endTime: number} | null>(null);
@@ -39,7 +40,7 @@ const JobMonitoringApi = () => {
                 setSkipJobListApiCall(false);
             }
         }, 0);
-    }, [fromTime, headerSelectedCred, headerSelectedRegion]);
+    }, [fromTime, headerSelectedCred, headerSelectedRegion, refreshTime]);
 
     const {
         data: jmJobsList,

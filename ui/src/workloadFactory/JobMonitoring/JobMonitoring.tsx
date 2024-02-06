@@ -19,6 +19,7 @@ const JobMonitoring = () => {
 
     const timelineData = useAppSelector(state => state.jobMonitoring.jobsSummaryTimeline);
     const timelineLoading = useAppSelector(state => state.jobMonitoring.jobsSummaryTimelineLoading);
+    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [dropDownValue, setDropdownValue] = useState('Last 24 hours');
 
@@ -56,6 +57,10 @@ const JobMonitoring = () => {
     useEffect(() => {
         dispatchTimeInterval(1);
     }, []);
+
+    useEffect(() => {
+        dispatchTimeInterval(1);
+    }, [refreshTime]);
 
     JobMonitoringApi();
 

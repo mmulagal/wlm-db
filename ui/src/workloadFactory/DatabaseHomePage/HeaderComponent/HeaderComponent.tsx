@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './HeaderComponent.module.scss';
 import DatabaseHomePage from '../DatabaseHomePage';
-import { SelectField, Typography } from '@netapp/design-system';
+import { SelectField, Spinner, Typography } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
 import { GENERAL } from '../../../utils/appConstants';
 import JobMonitoring from '../../JobMonitoring/JobMonitoring';
-import { generateOptionType, getCurrentDateTime } from '../../../utils/utilityFunctions';
+import { generateOptionType, getCurrentDateTime, resetDBHomePageState } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import Inventory from '../../Inventory/Inventory';
@@ -13,10 +13,16 @@ import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
-import { setHeaderSelectedCred, setHeaderSelectedRegion } from '../../../store/workloadFactory/headersSlice';
+import { setHeaderSelectedCred, setHeaderSelectedRegion, setRefreshTime } from '../../../store/workloadFactory/headersSlice';
+import { jobMonitoringApi, workloadFactoryResourceApi } from '../../../utils/apiService';
+import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
 
 const HeaderComponent = () => {
     const dispatch = useDispatch();
+    const [statusChk, setStatusChk] = useState(false);
+
+    const { statusData, statusLoading } = useAppSelector(state => state.headers.getStatus);
+
     const [selectedTab, setSelectedTab] = useState('Dashboard');
     const [currentTime, setCurrentTime] = useState('');
 
@@ -24,6 +30,7 @@ const HeaderComponent = () => {
     const { regionsData, regionsLoading } = useAppSelector(state => state.headers.getRegions);
     const headerSelectedCred = useAppSelector(state => state.headers.headerSelectedCred);
     const headerSelectedRegion = useAppSelector(state => state.headers.headerSelectedRegion);
+    const refreshTime = useAppSelector(state => state.headers.refreshTime);
 
     const [selectedCred, setSelectedCred] = useState(headerSelectedCred);
     const [selectedRegion, setSelectedRegion] = useState(headerSelectedRegion);
@@ -32,6 +39,20 @@ const HeaderComponent = () => {
     const selectedHeaderTab = useAppSelector(state => state.inventory.selectedHeaderTab);
 
     HeaderComponentApi();
+
+    useEffect(() => {
+        if (statusData && statusData?.isActive) {
+            setStatusChk(true);
+        } else if (statusData && !statusData?.isActive) {
+            window.parent.postMessage(
+                { type: 'SERVICE:NAVIGATE', payload: { pathname: './marketing', replace: true } },
+                '*'
+            );
+        } else {
+            setStatusChk(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusData]);
 
     //Function to generate the options for Select Field
     const generateAWSAccounts = useMemo<optionType[]>((): optionType[] => {
@@ -70,14 +91,29 @@ const HeaderComponent = () => {
     };
 
     useEffect(() => {
-        setCurrentTime(getCurrentDateTime());
+        dispatch(setRefreshTime(getCurrentDateTime()));
     }, []);
 
     const refreshPage = () => {
-        setCurrentTime(getCurrentDateTime());
+        dispatch(setRefreshTime(getCurrentDateTime()));
+        if (selectedHeaderTab === 'Dashboard') {
+            resetDBHomePageState(dispatch);
+        } else if (selectedHeaderTab === 'Inventory') {
+            resetDBHomePageState(dispatch); // will add for inventory once API will be available
+        } else if (selectedHeaderTab === 'Overview') {
+            resetDBHomePageState(dispatch);
+            dispatch(workloadFactoryResourceApi.util.resetApiState());
+        } else if (selectedHeaderTab === 'Job monitoring') {
+            dispatch(setJobsList([]));
+        }
     };
 
-    return (
+    return statusLoading || !statusChk ? (
+            <div className={styles.loader}>
+                <Spinner isLarge />
+            </div>
+        ) : (
+            statusChk &&
         <div className={styles.headerComponent}>
             <div className={styles.firstSection}>
                 <div className={styles.firstRow}>
@@ -125,7 +161,7 @@ const HeaderComponent = () => {
                                 <RefreshIcon />
                             </div>
                             <Typography className={styles.date} variant="Regular_14">
-                                {currentTime}
+                                {refreshTime}
                             </Typography>
                         </div>
                     </div>
@@ -144,7 +180,10 @@ const HeaderComponent = () => {
                                     ? `${styles.headerPart1} ${styles.active}`
                                     : `${styles.headerPart1}`
                             }
-                            onClick={() => handleClick('Dashboard')}
+                            onClick={() => {
+                                handleClick('Dashboard');
+                                refreshPage();
+                            }}
                         >
                             Dashboard
                         </Typography>
@@ -155,7 +194,10 @@ const HeaderComponent = () => {
                                     ? `${styles.headerPart2} ${styles.active}`
                                     : `${styles.headerPart2}`
                             }
-                            onClick={() => handleClick('Inventory')}
+                            onClick={() => {
+                                handleClick('Inventory');
+                                refreshPage();
+                            }}
                         >
                             Inventory
                         </Typography>
@@ -167,7 +209,10 @@ const HeaderComponent = () => {
                                     ? `${styles.headerPart3} ${styles.active}`
                                     : `${styles.headerPart3}`
                             }
-                            onClick={() => handleClick('Job monitoring')}
+                            onClick={() => {
+                                handleClick('Job monitoring');
+                                refreshPage();
+                            }}
                         >
                             Job monitoring
                         </Typography>

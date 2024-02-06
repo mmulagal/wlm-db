@@ -139,11 +139,6 @@ export interface DatabaseHostsEntities {
         jobsSummaryLoading: false;
         jobsSummaryError: null;
     };
-    getStatus: {
-        statusData: StatusRes | null;
-        statusLoading: false;
-        statusError: null;
-    };
     databaseHostsList: null;
     aggregatedHostsCount: AggregatedHostsCountRes | null;
     aggregatedProtectionDbCount: AggregatedProtectionDbCountRes | null;
