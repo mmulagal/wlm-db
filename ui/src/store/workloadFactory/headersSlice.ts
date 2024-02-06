@@ -1,5 +1,5 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { HeaderTypeEntities } from "../../utils/types/headerTypes";
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { HeaderTypeEntities } from '../../utils/types/headerTypes';
 
 const initialHeaderState: HeaderTypeEntities = {
     headerSelectedCred: null,

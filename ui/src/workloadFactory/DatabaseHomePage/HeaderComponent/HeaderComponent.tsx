@@ -13,7 +13,11 @@ import { useDispatch } from 'react-redux';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventorySlice';
 import DatabaseHostOverview from '../../ResourcePage/ResourceHomePage/DatabaseHostOverview';
 import HeaderComponentApi from './HeaderComponentApis';
-import { setHeaderSelectedCred, setHeaderSelectedRegion, setRefreshTime } from '../../../store/workloadFactory/headersSlice';
+import {
+    setHeaderSelectedCred,
+    setHeaderSelectedRegion,
+    setRefreshTime
+} from '../../../store/workloadFactory/headersSlice';
 import { jobMonitoringApi, workloadFactoryResourceApi } from '../../../utils/apiService';
 import { setJobsList } from '../../../store/workloadFactory/jobMonitoringSlice';
 
@@ -66,13 +70,13 @@ const HeaderComponent = () => {
         if (options.length > 0 && !headerSelectedCred) {
             setSelectedCred(options[0]);
             dispatch(setHeaderSelectedCred(options[0]));
-        };
+        }
         return options;
     }, [credentialData]);
 
     const generateRegionsData = useMemo<optionType[]>((): optionType[] => {
         const options: optionType[] = [];
-        regionsData?.regions?.map((val:any, idx: number) => {
+        regionsData?.regions?.map((val: any, idx: number) => {
             const regionValue = val.regionName;
             const label2 = val.regionCode;
             const option = generateOptionType(regionValue, regionValue, label2, false, '', val);
@@ -81,7 +85,7 @@ const HeaderComponent = () => {
         if (options.length > 0 && !headerSelectedRegion) {
             setSelectedRegion(options[0]);
             dispatch(setHeaderSelectedRegion(options[0]));
-        };
+        }
         return options;
     }, [regionsData]);
 
@@ -109,121 +113,122 @@ const HeaderComponent = () => {
     };
 
     return statusLoading || !statusChk ? (
-            <div className={styles.loader}>
-                <Spinner isLarge />
-            </div>
-        ) : (
-            statusChk &&
-        <div className={styles.headerComponent}>
-            <div className={styles.firstSection}>
-                <div className={styles.firstRow}>
-                    <Typography variant="Regular_24" className={styles.heading}>
-                        {GENERAL.DATABASES}
-                    </Typography>
+        <div className={styles.loader}>
+            <Spinner isLarge />
+        </div>
+    ) : (
+        statusChk && (
+            <div className={styles.headerComponent}>
+                <div className={styles.firstSection}>
+                    <div className={styles.firstRow}>
+                        <Typography variant="Regular_24" className={styles.heading}>
+                            {GENERAL.DATABASES}
+                        </Typography>
 
-                    <div className={styles.rightPart}>
-                        <div className={styles.firstSelect}>
-                            <SelectField
-                                isLoading={credentialLoading}
-                                isClearable={false}
-                                value={selectedCred ? [selectedCred] : [generateAWSAccounts[0]]}
-                                onChange={(selectedOptions: any): void => {
-                                    setSelectedCred(selectedOptions);
-                                    dispatch(setHeaderSelectedCred(selectedOptions));
-                                }}
-                                placeholder="Select a Credential"
-                                isSearchable={generateAWSAccounts.length > 5}
-                                options={generateAWSAccounts}
-                                variant="two-lines"
-                            />
-                        </div>
-
-                        <div className={styles.secondSelect}>
-                            <SelectField
-                                isLoading={regionsLoading}
-                                isClearable={false}
-                                value={selectedRegion ? [selectedRegion] : [generateRegionsData[0]]}
-                                onChange={(selectedOptions: any): void => {
-                                    setSelectedRegion(selectedOptions);
-                                    dispatch(setHeaderSelectedRegion(selectedOptions));
-                                }}
-                                placeholder="Select a Region"
-                                isSearchable={generateRegionsData.length > 5}
-                                options={generateRegionsData}
-                                variant="two-lines"
-                            />
-                        </div>
-
-                        <div className={styles.separator} />
-
-                        <div className={styles.refresh}>
-                            <div className={styles.refreshIcon} onClick={refreshPage}>
-                                <RefreshIcon />
+                        <div className={styles.rightPart}>
+                            <div className={styles.firstSelect}>
+                                <SelectField
+                                    isLoading={credentialLoading}
+                                    isClearable={false}
+                                    value={selectedCred ? [selectedCred] : [generateAWSAccounts[0]]}
+                                    onChange={(selectedOptions: any): void => {
+                                        setSelectedCred(selectedOptions);
+                                        dispatch(setHeaderSelectedCred(selectedOptions));
+                                    }}
+                                    placeholder="Select a Credential"
+                                    isSearchable={generateAWSAccounts.length > 5}
+                                    options={generateAWSAccounts}
+                                    variant="two-lines"
+                                />
                             </div>
-                            <Typography className={styles.date} variant="Regular_14">
-                                {refreshTime}
+
+                            <div className={styles.secondSelect}>
+                                <SelectField
+                                    isLoading={regionsLoading}
+                                    isClearable={false}
+                                    value={selectedRegion ? [selectedRegion] : [generateRegionsData[0]]}
+                                    onChange={(selectedOptions: any): void => {
+                                        setSelectedRegion(selectedOptions);
+                                        dispatch(setHeaderSelectedRegion(selectedOptions));
+                                    }}
+                                    placeholder="Select a Region"
+                                    isSearchable={generateRegionsData.length > 5}
+                                    options={generateRegionsData}
+                                    variant="two-lines"
+                                />
+                            </div>
+
+                            <div className={styles.separator} />
+
+                            <div className={styles.refresh}>
+                                <div className={styles.refreshIcon} onClick={refreshPage}>
+                                    <RefreshIcon />
+                                </div>
+                                <Typography className={styles.date} variant="Regular_14">
+                                    {refreshTime}
+                                </Typography>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.secondRow}>
+                        <div
+                            className={
+                                selectedHeaderTab === 'Dashboard' ? `${styles.overviewTabs}` : `${styles.overviewTabs}`
+                            }
+                        >
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === 'Dashboard'
+                                        ? `${styles.headerPart1} ${styles.active}`
+                                        : `${styles.headerPart1}`
+                                }
+                                onClick={() => {
+                                    handleClick('Dashboard');
+                                    refreshPage();
+                                }}
+                            >
+                                Dashboard
+                            </Typography>
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === 'Inventory' || selectedHeaderTab === 'Overview'
+                                        ? `${styles.headerPart2} ${styles.active}`
+                                        : `${styles.headerPart2}`
+                                }
+                                onClick={() => {
+                                    handleClick('Inventory');
+                                    refreshPage();
+                                }}
+                            >
+                                Inventory
+                            </Typography>
+
+                            <Typography
+                                variant="Regular_14"
+                                className={
+                                    selectedHeaderTab === 'Job monitoring'
+                                        ? `${styles.headerPart3} ${styles.active}`
+                                        : `${styles.headerPart3}`
+                                }
+                                onClick={() => {
+                                    handleClick('Job monitoring');
+                                    refreshPage();
+                                }}
+                            >
+                                Job monitoring
                             </Typography>
                         </div>
                     </div>
                 </div>
-
-                <div className={styles.secondRow}>
-                    <div
-                        className={
-                            selectedHeaderTab === 'Dashboard' ? `${styles.overviewTabs}` : `${styles.overviewTabs}`
-                        }
-                    >
-                        <Typography
-                            variant="Regular_14"
-                            className={
-                                selectedHeaderTab === 'Dashboard'
-                                    ? `${styles.headerPart1} ${styles.active}`
-                                    : `${styles.headerPart1}`
-                            }
-                            onClick={() => {
-                                handleClick('Dashboard');
-                                refreshPage();
-                            }}
-                        >
-                            Dashboard
-                        </Typography>
-                        <Typography
-                            variant="Regular_14"
-                            className={
-                                selectedHeaderTab === 'Inventory' || selectedHeaderTab === 'Overview'
-                                    ? `${styles.headerPart2} ${styles.active}`
-                                    : `${styles.headerPart2}`
-                            }
-                            onClick={() => {
-                                handleClick('Inventory');
-                                refreshPage();
-                            }}
-                        >
-                            Inventory
-                        </Typography>
-
-                        <Typography
-                            variant="Regular_14"
-                            className={
-                                selectedHeaderTab === 'Job monitoring'
-                                    ? `${styles.headerPart3} ${styles.active}`
-                                    : `${styles.headerPart3}`
-                            }
-                            onClick={() => {
-                                handleClick('Job monitoring');
-                                refreshPage();
-                            }}
-                        >
-                            Job monitoring
-                        </Typography>
-                    </div>
-                </div>
+                {selectedHeaderTab === 'Dashboard' && <DatabaseHomePage />}
+                {selectedHeaderTab === 'Inventory' && <Inventory />}
+                {selectedHeaderTab === 'Job monitoring' && <JobMonitoring />}
+                {selectedHeaderTab === 'Overview' && <DatabaseHostOverview />}
             </div>
-            {selectedHeaderTab === 'Dashboard' && <DatabaseHomePage />}
-            {selectedHeaderTab === 'Inventory' && <Inventory />}
-            {selectedHeaderTab === 'Job monitoring' && <JobMonitoring />}
-            {selectedHeaderTab === 'Overview' && <DatabaseHostOverview />}
-        </div>
+        )
     );
 };
 

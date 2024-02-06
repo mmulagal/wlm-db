@@ -1,6 +1,5 @@
-import { StatusRes } from "./databaseHomeTypes";
-import { Credentials, Regions } from "./mssqlTypes";
-
+import { StatusRes } from './databaseHomeTypes';
+import { Credentials, Regions } from './mssqlTypes';
 
 export interface HeaderTypeEntities {
     headerSelectedCred: any;
