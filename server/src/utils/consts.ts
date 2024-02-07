@@ -961,6 +961,8 @@ const SQL_VERSION = 'sql-version';
 const DATABASE_SIZE = 'database-size';
 const SQL_HOST_NAME = 'sql-host-name';
 
+const OPERATE = 'operate';
+const VIEW = 'view';
 const JOBS_DEFAULT_TIME_RANGE = '30d';
 
 const subJobDescriptions: SubJobDescriptions = {
@@ -1228,6 +1230,8 @@ export {
     SQL_VERSION,
     DATABASE_SIZE,
     SQL_HOST_NAME,
+    OPERATE,
+    VIEW,
     JOBS_DEFAULT_TIME_RANGE,
     subJobDescriptions,
     CF_STACK_RESOURCE_TYPE,
