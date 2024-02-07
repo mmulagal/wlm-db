@@ -296,3 +296,5 @@ app.listen({ port, host }, err => {
     logger.info(`Server version: ${VERSION}, node-version: ${process.version}, mode: ${process.env.NODE_ENV}`);
     validateSchema();
 });
+
+export { app };
