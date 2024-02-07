@@ -81,12 +81,9 @@ const DatabaseHomeApis = () => {
         refetch: jobsSummaryRefetch
     } = useGetJobsSummaryQuery(
         {
-            credentialId: headerSelectedCred?.data?.credentialsId,
-            region: headerSelectedRegion?.label2,
             startTime: time?.startTime,
             endTime: time?.endTime
-        },
-        { skip: skipApiCall }
+        }
     );
 
     useEffect(() => {
