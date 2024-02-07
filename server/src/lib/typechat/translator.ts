@@ -104,7 +104,7 @@ export function createJsonTranslator<T extends object>(
         return (
             `You are a service that translates user requests into JSON objects of type "${validator.typeName}" according to the following TypeScript definitions:\n` +
             `\`\`\`\n${validator.schema}\`\`\`\n` +
-            'translate the user requests/response into a JSON object with 2 spaces of indentation and no properties with the value undefined:\n dont pre populate any parameter values\n '
+            'translate the user requests/response into a JSON object with 2 spaces of indentation and no properties with the value undefined:\n do not pre populate any parameter values on your own if not specified in the user request\n '
         );
     }
 
