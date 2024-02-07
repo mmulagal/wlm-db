@@ -929,6 +929,7 @@ const SQL_SOFTWARE_TYPES = new Map<string, string>([
 ]);
 const WLMDB_COST_ALLOCATION_TAG = 'wlmdb-cost-resource';
 
+const SQS_MSG_RETENTION = '7200'; // Amazon SQS automatically deletes messages that have been in a queue for more than the maximum message retention period.
 const MSSQL_SYSTEM_DATABASES = [
     'master',
     'mastlog',
@@ -1213,6 +1214,7 @@ export {
     WLMDB_COST_ALLOCATION_TAG,
     BILLING,
     PRICING,
+    SQS_MSG_RETENTION,
     WF_TOKEN,
     BXP_TOKEN,
     IAM_LINKEDROLE_CONDITION,
