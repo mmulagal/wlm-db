@@ -81,7 +81,7 @@ const UndetectedHosts = () => {
                     header={
                         <div className={styles.headerDialog}>
                             <Typography variant="Regular_20">Detect host</Typography>
-                            <Typography variant="Regular_14">Step 2/2</Typography>
+                            <Typography variant="Semibold_14">Step 2 out of 2</Typography>
                         </div>
                     }
                     content={<UndetectedSecondDialog />}
@@ -98,7 +98,7 @@ const UndetectedHosts = () => {
                 header={
                     <div className={styles.headerDialog}>
                         <Typography variant="Regular_20">Detect host</Typography>
-                        <Typography variant="Regular_14">Step 1/2</Typography>
+                        <Typography variant="Semibold_14">Step 1 / 2</Typography>
                     </div>
                 }
                 content={<UndetectedHostDialogContent />}

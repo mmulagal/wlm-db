@@ -6,7 +6,8 @@ const initialInventoryState: any = {
     detectManageUserName: '',
     detectManagePassword: '',
     detectOntapUsername: '',
-    detectOntapPassword: ''
+    detectOntapPassword: '',
+    detectHostRadio: 'Yes, Manage host via workload factory'
 };
 
 const inventorySlice = createSlice({
@@ -31,6 +32,9 @@ const inventorySlice = createSlice({
         },
         setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
             state.detectOntapPassword = action.payload;
+        },
+        setRadioValueDetect: (state, action: PayloadAction<any>) => {
+            state.detectHostRadio = action.payload;
         }
     }
 });
@@ -41,7 +45,8 @@ export const {
     setDetectManageUserName,
     setDetectManagePassword,
     setDetectONTAPUserName,
-    setDetectONTAPPassword
+    setDetectONTAPPassword,
+    setRadioValueDetect
 } = inventorySlice.actions;
 
 export default inventorySlice;
