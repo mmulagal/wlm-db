@@ -7,7 +7,7 @@ Metadata:
     AWS::CloudFormation::Interface:
         ParameterGroups:
             - Label:
-                  default: Amazon FSx for NetApp ONTAP file system configuration
+                  default: Amazon FSx for NetApp ONTAP file system configuration.
               Parameters:
                   - DeploymentMode
                   - FSxFileSystemName
@@ -22,7 +22,7 @@ Metadata:
               Parameters:
                   - FSxSvmName
             - Label:
-                  default: SQL Server volumes' configuration for Amazon FSx for NetApp ONTAP file system
+                  default: Volume configuration for the Amazon FSx for NetApp ONTAP file system.
               Parameters:
                   - FSxDataVolumeName
                   - FSxDataVolumeSize
@@ -166,7 +166,7 @@ Parameters:
         Default: wlmdb_fsx_tempdb_volume
 
     FSxTempDbVolumeSize:
-        Description: size of the tempdb volume in megabytes (MiB).
+        Description: Size of the tempdb volume in megabytes (MiB).
         Type: Number
         Default: 200
 
@@ -185,6 +185,7 @@ Parameters:
         Type: String
 
     VPCCIDR:
+        Description: CIDR Block for the VPC.
         Type: String
         Default: 10.0.0.0/16
 
@@ -455,7 +456,7 @@ Outputs:
         Export:
             Name: !Sub ${AWS::StackName}-FSxSvmLogicalId
     FSxSvmArn:
-        Description: ARN Of the storage virtual machine
+        Description: ARN of the storage virtual machine
         Value: !GetAtt FSxSvmConfiguration.ResourceARN
         Export:
             Name: !Sub ${AWS::StackName}-FSxSvmArn
