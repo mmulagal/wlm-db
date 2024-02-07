@@ -55,7 +55,7 @@ Metadata:
                   - AMIID
                   - BYOLAMI
             - Label:
-                  default: AWS Configuration.
+                  default: AWS Configuration
               Parameters:
                   - AssetsBucketName
                   - AssetsS3KeyPrefix
